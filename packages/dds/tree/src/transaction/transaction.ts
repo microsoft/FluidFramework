@@ -33,13 +33,13 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     command: (
         forest: IForestSubscription,
         editor: TEditor
-    ) => CommandResult,
-): CommandResult {
+    ) => TransactionResult,
+): TransactionResult {
     const t = new Transaction(checkout.forest, checkout.changeFamily);
     const result = command(checkout.forest, t.editor);
     const changes = t.editor.getChanges();
     const edit = checkout.changeFamily.rebaser.compose(changes);
-    if (result === CommandResult.Abort) {
+    if (result === TransactionResult.Abort) {
         // Roll back changes
         const inverse = checkout.changeFamily.rebaser.invert(edit);
 
@@ -56,7 +56,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     return result;
 }
 
-enum CommandResult {
+export enum TransactionResult {
     Abort,
     Apply,
 }

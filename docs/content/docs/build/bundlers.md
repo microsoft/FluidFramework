@@ -1,7 +1,7 @@
 ---
 title: Fluid and Bundlers
 aliases:
-  - "/start/bundlers/"
+  - "/build/bundlers/"
 ---
 
 This article describes some known issues with bundlers and answers some commonly asked questions about the Fluid

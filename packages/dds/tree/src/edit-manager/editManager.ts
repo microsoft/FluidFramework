@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
 import { AnchorSet, Delta } from "../tree";
-import { brand, Brand, fail, RecursiveReadonly } from "../util";
+import { Brand, fail, RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -26,8 +26,18 @@ export type SessionId = string;
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
 export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> {
+    // The trunk represents the list of received sequenced changes.
+    // The change in each commit is rebased onto the previous change in the list.
     private readonly trunk: Commit<TChangeset>[] = [];
+    /**
+     * Branches are maintained to represent the local change list that the issuing client would have had
+     * at the time of submitting the last edit on the branch.
+     * This means the last change on a branch is always in its original (non-rebased) form.
+     */
     private readonly branches: Map<SessionId, Branch<TChangeset>> = new Map();
+    // This is the ordered list of changes made by this client which have not yet been confirmed as sequenced changes.
+    // The first change in this list is based on the last change in the trunk.
+    // Every other change in this list is based on the change preceding it.
     private localChanges: TChangeset[] = [];
     private localSessionId: SessionId | undefined;
 
@@ -56,11 +66,11 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     public addSequencedChange(newCommit: Commit<TChangeset>): Delta.Root {
         if (this.trunk.length > 0) {
             const lastSeqNumber = this.trunk[this.trunk.length - 1].seqNumber;
-            const nextSeqNumber: SeqNumber = brand(lastSeqNumber as number + 1);
-            assert(newCommit.seqNumber === nextSeqNumber,
-                0x34a /* Expected incoming commit to be next sequenced commit */);
+            assert(
+                newCommit.seqNumber > lastSeqNumber,
+                "Incoming remote op sequence# <= local collabWindow's currentSequence#",
+            );
         }
-
         if (newCommit.sessionId === this.localSessionId) {
             // `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
             // `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
@@ -74,7 +84,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         }
 
         const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
-        this.rebaseBranch(branch, newCommit.refNumber);
+        this.updateBranch(branch, newCommit.refNumber);
         const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit.changeset, branch);
 
         // Note: we never use the refNumber of a commit in the trunk
@@ -105,7 +115,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             changeToRebase,
         );
 
-        return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsBetween(branch.refSeq, undefined));
+        return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
@@ -137,8 +147,22 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         return netChange;
     }
 
-    private rebaseBranch(branch: Branch<TChangeset>, newRef: SeqNumber) {
-        const trunkChanges = this.getCommitsBetween(branch.refSeq, newRef);
+    /**
+     * Updates the `branch` to reflect the local changes that the session owner would have had after
+     * they learned of the commit with sequence number `newRef` being sequenced.
+     * This is accomplished by rebasing the branch's changes over any new trunk changes up to and including `newRef`.
+     * Changes with sequence number less than or equal to `newRef` are removed from the branch,
+     * since they are now part of the trunk this branch is based on.
+     * @param branch - The branch to update.
+     * @param newRef - The point in the trunk to rebase the branch up to.
+     */
+    private updateBranch(branch: Branch<TChangeset>, newRef: SeqNumber) {
+        const trunkChanges = this.getCommitsAfterAndUpToInclusive(branch.refSeq, newRef);
+        if (trunkChanges.length === 0) {
+            assert(branch.refSeq === newRef, "Expected trunk changes");
+            // This early return avoids rebasing the branch changes over an empty sandwich.
+            return;
+        }
         const newBranchChanges: Commit<TChangeset>[] = [];
         const inverses: TChangeset[] = [];
 
@@ -172,14 +196,37 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         );
     }
 
-    private getCommitsBetween(first: SeqNumber, last: SeqNumber | undefined): Commit<TChangeset>[] {
-        const firstIndex = this.getCommitIndex(first);
-        const lastIndex = last === undefined ? undefined : this.getCommitIndex(last);
-        return this.trunk.slice(firstIndex, lastIndex);
+    /**
+     * @param pred - The sequence number of the commit immediately before the commits of interest.
+     * @param last - The sequence number of the last commit of interest.
+     * @returns The trunk commits with sequence numbers greater than `pred` and smaller or equal to `last`,
+     * ordered in sequencing order.
+     */
+    private getCommitsAfterAndUpToInclusive(pred: SeqNumber, last: SeqNumber): Commit<TChangeset>[] {
+        // This check is not just a fast-path for the common case where no concurrent edits occurred;
+        // it also serves to handle the case where `last` represents the initial state before any commits.
+        if (pred === last) {
+            return [];
+        }
+        // If there is no corresponding commit, we assume `pred` refers to initial state of the DDS.
+        const firstIndex = (this.getCommitIndex(pred) ?? -1) + 1;
+        const lastIndex = this.getCommitIndex(last) ?? fail("Unknown sequence number");
+        return this.trunk.slice(firstIndex, lastIndex + 1);
     }
 
-    private getCommitIndex(seqNumber: SeqNumber): number {
-        return this.trunk.findIndex((commit) => commit.seqNumber === seqNumber);
+    /**
+     * @param pred - The sequence number of the commit immediately before the commits of interest.
+     * @returns The trunk commits with sequence numbers greater than `pred`
+     */
+    private getCommitsAfter(pred: SeqNumber): Commit<TChangeset>[] {
+        // If there is no corresponding commit, we assume `pred` refers to initial state of the DDS.
+        const firstIndex = (this.getCommitIndex(pred) ?? -1) + 1;
+        return this.trunk.slice(firstIndex);
+    }
+
+    private getCommitIndex(seqNumber: SeqNumber): number | undefined {
+        const index = this.trunk.findIndex((commit) => commit.seqNumber === seqNumber);
+        return index === -1 ? undefined : index;
     }
 
     private getOrCreateBranch(sessionId: SessionId, refSeq: SeqNumber): Branch<TChangeset> {

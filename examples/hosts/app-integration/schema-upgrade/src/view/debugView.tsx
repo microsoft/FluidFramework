@@ -44,14 +44,20 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
         const migrationStateChangedHandler = () => {
             setMigrationState(model.getMigrationState());
         };
+        model.on("stopping", migrationStateChangedHandler);
         model.on("migrating", migrationStateChangedHandler);
         model.on("migrated", migrationStateChangedHandler);
         migrationStateChangedHandler();
         return () => {
+            model.off("stopping", migrationStateChangedHandler);
             model.off("migrating", migrationStateChangedHandler);
             model.off("migrated", migrationStateChangedHandler);
         };
     }, [model]);
+
+    const proposedVersionStatus = model.proposedVersion === undefined
+        ? "No proposed version for migration yet"
+        : `Proposed version to migrate to: ${model.proposedVersion}`;
 
     const acceptedVersionStatus = model.acceptedVersion === undefined
         ? "No accepted version for migration yet"
@@ -90,9 +96,11 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
             <div>
                 Status:
                 { migrationState === MigrationState.collaborating && " Normal collaboration" }
+                { migrationState === MigrationState.stopping && " Migration proposed" }
                 { migrationState === MigrationState.migrating && " Migration in progress" }
                 { migrationState === MigrationState.migrated && " Migration complete" }
             </div>
+            <div>{ proposedVersionStatus }</div>
             <div>{ acceptedVersionStatus }</div>
             <div>{ migratedContainerStatus }</div>
         </div>
