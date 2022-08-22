@@ -34,6 +34,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
+    "test:benchmark:report": "mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r node_modules/@fluidframework/mocha-test-setup --reporter ../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r source-map-support/register --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
