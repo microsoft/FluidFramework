@@ -2649,7 +2649,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } else {
             maybeCompressedContent = content;
             metadata = opMetadataInternal;
-            contentLength = serializedContent.length;
+            contentLength = serializedContent ? serializedContent.length : 0;
         }
 
         // submitRuntimeMessage is expecting contents as an object
