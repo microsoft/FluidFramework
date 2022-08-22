@@ -33,12 +33,13 @@ export interface IImportExportModel<ImportType, ExportType> {
 
 export enum MigrationState {
     collaborating,
+    stopping,
     migrating,
     migrated,
 }
 
 export interface IMigratableModelEvents extends IEvent {
-    (event: "migrating" | "migrated", listener: () => void);
+    (event: "stopping" | "migrating" | "migrated", listener: () => void);
 }
 
 // TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
@@ -51,6 +52,10 @@ export interface IMigratableModel
      */
     getMigrationState(): MigrationState;
 
+    /**
+     * The proposed migratory version, if migration has been proposed.
+     */
+    proposedVersion: string | undefined;
     /**
      * The accepted migratory version, if migration has been accepted.
      */

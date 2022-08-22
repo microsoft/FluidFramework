@@ -116,7 +116,7 @@
     "@microsoft/api-extractor": "^7.22.2",
     "c8": "^7.7.1",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "lerna": "^5.1.8",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.6",
