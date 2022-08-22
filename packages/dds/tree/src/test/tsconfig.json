@@ -12,7 +12,7 @@
     },
     "include": [
         "./**/*"
-    ],
+, "../util/testChangeRebaser.ts"    ],
     "references": [
         {
             "path": "../.."
