@@ -21,7 +21,6 @@ import child_process from "child_process";
 import fs from "fs";
 import { detectVersionScheme, getLatestReleaseFromList, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
-// import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
 import { Logger } from "../common/logging";
 
 export function getFileVersion() {
