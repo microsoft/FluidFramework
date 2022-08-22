@@ -71,7 +71,7 @@ stages:
         pool: ${{ parameters.poolBuild }}
         variables:
           releaseBuildVar: $[variables.releaseBuild]
-          toolFolder: ${{ variables.buildDirectory }}/tools/write-perf-to-kusto
+          toolFolder: ${{ variables.buildDirectory }}/tools/perf-test-processing
         steps:
         # Setup
         - checkout: self

@@ -232,11 +232,11 @@ stages:
           - task: npmAuthenticate@0
             displayName: 'npm authenticate (internal feed)'
             inputs:
-              workingFile: ${{ parameters.buildDirectory }}/tools/write-perf-to-kusto/.npmrc
+              workingFile: ${{ parameters.buildDirectory }}/tools/perf-test-processing/.npmrc
           - task: npmAuthenticate@0
             displayName: 'npm authenticate (office feed)'
             inputs:
-              workingFile: ${{ parameters.buildDirectory }}/tools/write-perf-to-kusto/.npmrc
+              workingFile: ${{ parameters.buildDirectory }}/tools/perf-test-processing/.npmrc
               customEndpoint: 'Office Packages - Readonly'
           # Run tests and process results
           - task: Npm@1
@@ -251,7 +251,7 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
-                cd tools/write-perf-to-kusto;
+                cd tools/perf-test-processing;
                 npm i;
                 npm run tsc;
                 node dist/index.js '../../benchmarkOutput';
