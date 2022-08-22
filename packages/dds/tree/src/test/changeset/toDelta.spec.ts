@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { TreeSchemaIdentifier } from "../..";
 import {
     ProtoNode,
     toDelta as toDeltaImpl,
     Transposed as T,
 } from "../../changeset";
+import { TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKey, Delta } from "../../tree";
 import { brand, brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";
@@ -49,7 +49,7 @@ describe("toDelta", () => {
     it("set root value", () => {
         const changeset: T.MarkList = [{
             type: "Modify",
-            value: { type: "Set", value: 1 },
+            value: { id: 0, value: 1 },
         }];
         const mark: Delta.Modify = {
             type: Delta.MarkType.Modify,
@@ -68,7 +68,7 @@ describe("toDelta", () => {
                     42,
                     {
                         type: "Modify",
-                        value: { type: "Set", value: 1 },
+                        value: { id: 0, value: 1 },
                     },
                 ],
             },
@@ -321,7 +321,7 @@ describe("toDelta", () => {
                     1,
                     {
                         type: "Modify",
-                        value: { type: "Set", value: 1 },
+                        value: { id: opId, value: 1 },
                     },
                 ],
             },
@@ -356,11 +356,11 @@ describe("toDelta", () => {
                     type: "MInsert",
                     id: opId,
                     content: content[0],
-                    value: { type: "Set", value: 4242 },
+                    value: { id: opId, value: 4242 },
                     fields: {
                         foo: [{
                             type: "Modify",
-                            value: { type: "Set", value: 4343 },
+                            value: { id: opId, value: 4343 },
                         }],
                     },
                 }],
@@ -435,7 +435,7 @@ describe("toDelta", () => {
                                 type: "MInsert",
                                 id: opId,
                                 content: { type, value: 45 },
-                                value: { type: "Set", value: 4545 },
+                                value: { id: opId, value: 4545 },
                             }],
                         ],
                     },

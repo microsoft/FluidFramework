@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TaskManager } from "@fluid-experimental/task-manager";
-import { Quorum } from "@fluid-internal/quorum";
+import { IQuorum, Quorum } from "@fluid-experimental/quorum";
+import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@fluidframework/register-collection";
 
 import type { IMigrationTool } from "./interfaces";
 
@@ -18,9 +19,9 @@ const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
 export class MigrationTool extends DataObject implements IMigrationTool {
-    private _quorum: Quorum | undefined;
-    private _crc: ConsensusRegisterCollection<string> | undefined;
-    private _taskManager: TaskManager | undefined;
+    private _quorum: IQuorum<string> | undefined;
+    private _crc: IConsensusRegisterCollection<string> | undefined;
+    private _taskManager: ITaskManager | undefined;
     private _newContainerId: string | undefined;
 
     private get quorum() {
@@ -64,8 +65,12 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         await this.crc.write(newContainerIdKey, id);
     }
 
+    public get proposedVersion() {
+        return this.quorum.getPending(newVersionKey) ?? this.quorum.get(newVersionKey);
+    }
+
     public get acceptedVersion() {
-        return this.quorum.get(newVersionKey) as string | undefined;
+        return this.quorum.get(newVersionKey);
     }
 
     public async proposeVersion(newVersion: string) {
@@ -112,11 +117,17 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     }
 
     protected async hasInitialized() {
-        const quorumHandle = this.root.get(quorumKey);
-        this._quorum = await quorumHandle.get();
+        const quorumHandle = this.root.get<IFluidHandle<IQuorum<string>>>(quorumKey);
+        this._quorum = await quorumHandle?.get();
 
-        const crcHandle = this.root.get(crcKey);
-        this._crc = await crcHandle.get();
+        const crcHandle = this.root.get<IFluidHandle<IConsensusRegisterCollection<string>>>(crcKey);
+        this._crc = await crcHandle?.get();
+
+        this.quorum.on("pending", (key: string) => {
+            if (key === newVersionKey) {
+                this.emit("newVersionProposed");
+            }
+        });
 
         this.quorum.on("accepted", (key: string) => {
             if (key === newVersionKey) {
@@ -131,8 +142,8 @@ export class MigrationTool extends DataObject implements IMigrationTool {
             }
         });
 
-        const taskManagerHandle = this.root.get(taskManagerKey);
-        this._taskManager = await taskManagerHandle.get();
+        const taskManagerHandle = this.root.get<IFluidHandle<ITaskManager>>(taskManagerKey);
+        this._taskManager = await taskManagerHandle?.get();
     }
 }
 
