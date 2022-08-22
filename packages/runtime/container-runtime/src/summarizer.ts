@@ -382,11 +382,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 // executing the refreshLatestSummaryAck.
                 // https://dev.azure.com/fluidframework/internal/_workitems/edit/779
                 await this.runningSummarizer.lockedRefreshSummaryAckAction(async () =>
-                    this.internalsProvider.refreshLatestSummaryAck(
-                        summaryOpHandle,
-                        summaryAckHandle,
-                        refSequenceNumber,
-                        summaryLogger,
+                    this.internalsProvider.refreshLatestSummaryAck({
+                        proposalHandle: summaryOpHandle,
+                        ackHandle: summaryAckHandle,
+                        summaryRefSeq: refSequenceNumber,
+                        summaryLogger },
                     ).catch(async (error) => {
                         // If the error is 404, so maybe the fetched version no longer exists on server. We just
                         // ignore this error in that case, as that means we will have another summaryAck for the
