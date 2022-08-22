@@ -8,25 +8,29 @@ import { fail } from "../util";
 import { Skip, Transposed as T } from "./format";
 
 export function isAttach(mark: T.Mark): mark is T.Attach {
-    return isObjMark(mark) && "type" in mark &&
-        (
+    return isObjMark(mark)
+        && "type" in mark
+        && (
             mark.type === "Insert"
             || mark.type === "MInsert"
             || mark.type === "MoveIn"
             || mark.type === "MMoveIn"
             || mark.type === "Bounce"
             || mark.type === "Intake"
-        );
+        )
+    ;
 }
 
 export function isReattach(mark: T.Mark): mark is T.Reattach | T.ModifyReattach {
-    return isObjMark(mark) && "type" in mark &&
-        (
+    return isObjMark(mark)
+        && "type" in mark
+        && (
             mark.type === "Revive"
             || mark.type === "MRevive"
             || mark.type === "Return"
             || mark.type === "MReturn"
-        );
+        )
+    ;
 }
 
 export function isTomb(mark: T.Mark): mark is T.Tomb {
@@ -70,6 +74,18 @@ export function isEqualGaps(lhs: T.GapEffect[] | undefined, rhs: T.GapEffect[] |
         }
     }
     return true;
+}
+
+/**
+ * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
+ */
+export function isEqualPlace(lhs: Readonly<T.HasPlaceFields>, rhs: Readonly<T.HasPlaceFields>): boolean {
+    return lhs.heed === rhs.heed
+    && lhs.tiebreak === rhs.tiebreak
+    && lhs.src?.id === rhs.src?.id
+    && lhs.src?.change === rhs.src?.change
+    && lhs.scorch?.id === rhs.scorch?.id
+    && lhs.scorch?.change === rhs.scorch?.change;
 }
 
 export function isEqualGapEffect(lhs: Readonly<T.GapEffect>, rhs: Readonly<T.GapEffect>): boolean {
@@ -261,14 +277,7 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
         case "Insert":
         case "MoveIn": {
             const lhsAttach = lhs as T.Insert | T.MoveIn;
-            if (
-                rhs.id === lhsAttach.id
-                && rhs.heed === lhsAttach.heed
-                && rhs.tiebreak === lhsAttach.tiebreak
-                && rhs.src?.id === lhsAttach.src?.id
-                && rhs.src?.change === lhsAttach.src?.change
-                && rhs.scorch?.id === lhsAttach.scorch?.id
-                && rhs.scorch?.change === lhsAttach.scorch?.change) {
+            if (rhs.id === lhsAttach.id ?? isEqualPlace(lhsAttach, rhs)) {
                 if (rhs.type === "Insert") {
                     const lhsInsert = lhsAttach as T.Insert;
                     lhsInsert.content.push(...rhs.content);

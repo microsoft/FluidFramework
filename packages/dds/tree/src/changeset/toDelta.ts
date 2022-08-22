@@ -7,6 +7,7 @@ import { unreachableCase } from "@fluidframework/common-utils";
 import { brand, brandOpaque, clone, fail, OffsetListFactory } from "../util";
 import { FieldKey, Value, Delta } from "../tree";
 import { ProtoNode, Transposed as T } from "./format";
+import { isSkipMark } from "./utils";
 
 /**
  * Converts a Changeset into a Delta.
@@ -23,7 +24,7 @@ export function toDelta(changeset: T.LocalChangeset): Delta.Root {
 function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
     const out = new OffsetListFactory<Delta.Mark>();
     for (const mark of marks) {
-        if (typeof mark === "number") {
+        if (isSkipMark(mark)) {
             out.pushOffset(mark);
         } else {
             // Inline into `switch(mark.type)` once we upgrade to TS 4.7
@@ -205,7 +206,7 @@ function applyOrCollectModifications(
             const outMarks = new OffsetListFactory<InsertedFieldsMark>();
             let index = 0;
             for (const mark of modifyFields[key]) {
-                if (typeof mark === "number") {
+                if (isSkipMark(mark)) {
                     index += mark;
                     outMarks.pushOffset(mark);
                 } else {
