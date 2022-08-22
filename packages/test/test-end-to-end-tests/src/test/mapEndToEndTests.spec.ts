@@ -435,6 +435,24 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
                 sharedMap.set("key1", "v1");
                 await provider.ensureSynchronized();
             });
+
+        it("Negative test with unset concurrentOpSend feature gate", async () => {
+            await setupContainers(testContainerConfig, { "Fluid.Container.ConcurrentOpSend": false });
+            sharedMap.on("valueChanged", (changed, local) => {
+                if (!local) {
+                    assert.equal(changed.key, "key2", "Incorrect value for key1 in container 1");
+                }
+                // Avoid re-entrancy by setting a new key
+                if (changed.key !== "key2") {
+                    sharedMap2.set("key2", "v2");
+                }
+            });
+            // Set 1st key to trigger above valueChanged
+            sharedMap.set("key1", "v1");
+            await provider.ensureSynchronized();
+            assert.equal(sharedMap.get("key1"), "v1", "The new value is not updated in map 1");
+            assert.equal(sharedMap2.get("key2"), "v2", "The new value is not updated in map 2");
+        });
     });
 
     it("Should rollback set", async () => {
