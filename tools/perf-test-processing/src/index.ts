@@ -8,8 +8,10 @@ import path from "path";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { ConsoleLogger } from "./logger";
 
+// Allow for dynamic injection of a logger. Leveraged in internal CI pipelines.
+// The parameter to getTestLogger() is a delay to apply after flushing the buffer.
 const _global: any = global;
-let logger: ITelemetryBufferedLogger = _global.getTestLogger?.(10000);
+let logger: ITelemetryBufferedLogger = _global.getTestLogger?.(5_000);
 
 if (logger === undefined) {
     logger = new ConsoleLogger();
@@ -28,6 +30,7 @@ while (dirs.length > 0) {
             dirs.push(direntFullPath);
             return;
         }
+        // We expect the files to be processed to be .json files. Ignore everything else.
         if (!dirent.name.endsWith(".json")) {
             return;
         }
@@ -54,7 +57,7 @@ filesToProcess.forEach((fullPath) => {
             });
         });
     } catch (err) {
-        console.error(err);
+        console.error(`Unexpected error processing file '${fullPath}'.\n${err}`);
     }
 });
 

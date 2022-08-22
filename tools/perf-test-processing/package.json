@@ -1,12 +1,12 @@
 {
-  "name": "@fluid-tools/write-perf-to-kusto",
+  "name": "@fluid-tools/perf-test-processing",
   "version": "1.0.0",
-  "description": "Tool to take performance benchmark output files and write them to kusto",
+  "description": "Tool to take performance benchmark output files and write them to our monitoring systems",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "tools/benchmark"
+    "directory": "tools/perf-test-processing"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
@@ -18,11 +18,8 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "eslint": "eslint src",
-    "eslint:fix": "eslint src --fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
-    "start": "node dist/index.js '/workspaces/FluidFramework/experimental/dds/tree/benchOutput' '/workspaces/FluidFramework/packages/dds/tree/benchOutput'",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc"
   },
