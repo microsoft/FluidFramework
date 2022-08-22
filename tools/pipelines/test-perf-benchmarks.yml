@@ -100,6 +100,29 @@ stages:
           displayName: Use Node 14.x
           inputs:
             version: 14.x
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'ci --unsafe-perm'
+            customRegistry: 'useNpmrc'
+
+        # Set version
+        - template: templates/include-set-package-version.yml
+          parameters:
+            buildDirectory: ${{ variables.buildDirectory }}
+            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            tagName: ${{ parameters.tagName }}
+
+        # Build
+        - ${{ if ne(parameters.taskBuild, 'false') }}:
+          - task: Npm@1
+            displayName: npm run ${{ parameters.taskBuild }}
+            inputs:
+              command: 'custom'
+              workingDir: ${{ variables.buildDirectory }}
+              customCommand: 'run ${{ parameters.taskBuild }}'
 
         # Run performance tests
         # - Add custom npm feeds to the tool's .npmrc file
@@ -143,19 +166,19 @@ stages:
             customCommand: 'install @ff-internal/aria-logger'
             customRegistry: 'useNpmrc'
 
-        # - task: Npm@1
-        #   displayName: 'Run performance benchmarks - runtime'
-        #   inputs:
-        #     command: 'custom'
-        #     workingDir: ${{ variables.buildDirectory }}
-        #     customCommand: 'run test:benchmark:report'
+        - task: Npm@1
+          displayName: 'Run performance benchmarks - runtime'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'run test:benchmark:report'
 
-        # - task: Npm@1
-        #   displayName: 'Consolidate output files - runtime'
-        #   inputs:
-        #     command: 'custom'
-        #     workingDir: ${{ variables.buildDirectory }}
-        #     customCommand: 'run test:benchmark:copyresults'
+        - task: Npm@1
+          displayName: 'Consolidate output files - runtime'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'run test:benchmark:copyresults'
 
         - task: Bash@3
           displayName: 'Write runtime perf benchmarks to Aria/Kusto'
@@ -165,10 +188,6 @@ stages:
             script: |
               npm i;
               npm run build:compile;
-              pwd;
-              echo "$(toolFolder)";
-              ls;
-              ls -R node_modules/@fluidframework;
               node --require @ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
@@ -177,28 +196,3 @@ stages:
             targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
             artifactName: 'benchmark-test-outputs'
             condition: succeededOrFailed()
-
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
-            customCommand: 'ci --unsafe-perm'
-            customRegistry: 'useNpmrc'
-
-        # Set version
-        - template: templates/include-set-package-version.yml
-          parameters:
-            buildDirectory: ${{ variables.buildDirectory }}
-            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            tagName: ${{ parameters.tagName }}
-
-
-        # Build
-        - ${{ if ne(parameters.taskBuild, 'false') }}:
-          - task: Npm@1
-            displayName: npm run ${{ parameters.taskBuild }}
-            inputs:
-              command: 'custom'
-              workingDir: ${{ variables.buildDirectory }}
-              customCommand: 'run ${{ parameters.taskBuild }}'
