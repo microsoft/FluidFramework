@@ -7,9 +7,9 @@
 
 import child_process from "child_process";
 import * as fs from "fs";
+import { getSimpleVersion, getIsLatest } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
-import { getSimpleVersion, getIsLatest } from "../../lib";
 
 export default class GenerateBuildVersionCommand extends BaseCommand<
     typeof GenerateBuildVersionCommand.flags

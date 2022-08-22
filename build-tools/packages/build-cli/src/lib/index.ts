@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { getIsLatest, getSimpleVersion } from "./buildVersion";
 export { bumpPackageDependencies, PackageWithRangeSpec } from "./bump";

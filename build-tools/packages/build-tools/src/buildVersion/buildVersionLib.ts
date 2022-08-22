@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable camelcase,no-process-exit,unicorn/no-process-exit */
-
 /**
  * This script is used by the build server to compute the version number of the packages.
  * The release version number is based on what's in the lerna.json/package.json.
@@ -19,14 +17,22 @@
  *      The computed version output to the console.
  */
 
-import { sort as sort_semver, gte as gte_semver, prerelease as prerelease_semver } from "semver";
-import { Logger } from "@fluidframework/build-tools";
-import {
-    detectVersionScheme,
-    getLatestReleaseFromList,
-    isInternalVersionScheme,
-    getVersionFromTag,
-} from "@fluid-tools/version-tools";
+import child_process from "child_process";
+import fs from "fs";
+import { detectVersionScheme, getLatestReleaseFromList } from "@fluid-tools/version-tools";
+import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
+import { Logger } from "../common/logging";
+
+export function getFileVersion() {
+    if (fs.existsSync("./lerna.json")) {
+        return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" })).version;
+    }
+    if (fs.existsSync("./package.json")) {
+        return JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" })).version;
+    }
+    console.error(`ERROR: lerna.json or package.json not found`);
+    process.exit(5);
+}
 
 function parseFileVersion(file_version: string, build_id?: number) {
     const split = file_version.split("-");
@@ -37,18 +43,15 @@ function parseFileVersion(file_version: string, build_id?: number) {
     /**
      * Use the build id for patch number if given
      */
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (build_id) {
         // split the prerelease out
-        const r = release_version.split(".");
+        const r = release_version.split('.');
         if (r.length !== 3) {
             console.error(`ERROR: Invalid format for release version ${release_version}`);
             process.exit(9);
         }
-
-        // eslint-disable-next-line unicorn/prefer-number-properties, radix
         r[2] = (parseInt(r[2]) + build_id).toString();
-        release_version = r.join(".");
+        release_version = r.join('.');
     }
 
     return { release_version, prerelease_version };
@@ -62,17 +65,12 @@ function getBuildSuffix(arg_release: boolean, build_num: string) {
 }
 
 /* A simpler CI version that append the build number at the end in the prerelease */
-function generateSimpleVersion(
-    release_version: string,
-    prerelease_version: string,
-    build_suffix: string,
-) {
+function generateSimpleVersion(release_version: string, prerelease_version: string, build_suffix: string) {
     // Generate the full version string
     if (prerelease_version) {
         if (build_suffix) {
             return `${release_version}-${prerelease_version}.${build_suffix}`;
         }
-
         return `${release_version}-${prerelease_version}`;
     }
 
@@ -83,19 +81,12 @@ function generateSimpleVersion(
     return release_version;
 }
 
-export function getSimpleVersion(
-    file_version: string,
-    arg_build_num: string,
-    arg_release: boolean,
-    patch: boolean,
-) {
+export function getSimpleVersion(file_version: string, arg_build_num: string, arg_release: boolean, patch: boolean) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    // eslint-disable-next-line unicorn/prefer-number-properties, radix
-    const build_id = patch ? parseInt(arg_build_num.split(".")[0]) : undefined;
+    const build_id = patch ? parseInt(arg_build_num.split('.')[0]) : undefined;
 
     const { release_version, prerelease_version } = parseFileVersion(file_version, build_id);
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const build_suffix = build_id ? "" : getBuildSuffix(arg_release, arg_build_num);
     const fullVersion = generateSimpleVersion(release_version, prerelease_version, build_suffix);
     return fullVersion;
@@ -108,8 +99,20 @@ type TagPrefix = string | "client" | "server" | "azure";
  * @param tags - An array of tags as strings.
  * @returns An array of tags that match the prefix.
  */
-const filterTags = (prefix: TagPrefix, tags: string[]): string[] =>
-    tags.filter((v) => v.startsWith(`${prefix}_v`));
+const filterTags = (prefix: TagPrefix, tags: string[]): string[] => tags.filter(v => v.startsWith(`${prefix}_v`));
+
+/**
+ * Extracts versions from the output of `git tag -l` in the working directory. The returned array will be sorted
+ * ascending by semver version rules.
+ *
+ * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
+ * @returns An array of versions extracted from the output of `git tag -l`.
+ */
+function getVersions(prefix: TagPrefix) {
+    const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
+    const tags = raw_tags.split(/\s+/g).map(t => t.trim());
+    return getVersionsFromStrings(prefix, tags);
+}
 
 /**
  * Extracts versions from an array of strings, sorts them according to semver rules, and returns the sorted array.
@@ -120,7 +123,7 @@ const filterTags = (prefix: TagPrefix, tags: string[]): string[] =>
  */
 export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
     const filtered = filterTags(prefix, tags);
-    const versions = filtered.map((tag) => tag.slice(`${prefix}_v`.length));
+    const versions = filtered.map((tag) => tag.substring(`${prefix}_v`.length));
     sort_semver(versions);
     return versions;
 }
@@ -131,42 +134,22 @@ export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
  * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
  * pre-release version).
  */
-// eslint-disable-next-line max-params
-export function getIsLatest(
-    prefix: TagPrefix,
-    current_version: string,
-    input_tags: string[],
-    // eslint-disable-next-line default-param-last
-    includeInternalVersions = false,
-    log?: Logger,
-) {
-    const versions = input_tags.filter((t) => {
-        if (t === undefined) {
-            return false;
-        }
+export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[], includeInternalVersions = false, log?: Logger) {
+    const versions = input_tags !== undefined ? getVersionsFromStrings(prefix, input_tags) : getVersions(prefix);
 
-        if (!t.startsWith(`${prefix}_v`)) {
-            return false;
-        }
+    // The last item in the array is the latest because the array is already sorted.
+    let latestTaggedRelease = includeInternalVersions ? getLatestReleaseFromList(versions) : versions.slice(-1)[0] ?? "0.0.0";
 
-        if (includeInternalVersions) {
-            return true;
-        }
-
-        const v = getVersionFromTag(t);
-        if (v === undefined) {
-            return false;
-        }
-
-        return !isInternalVersionScheme(v);
-    });
-    const latestTaggedRelease = getLatestReleaseFromList(versions);
+    // const hasInternalReleases = versions.some(v => isInternalVersionScheme(v));
+    // const hasInternalPrereleases = versions.some(v => isInternalVersionScheme(v, true));
+    if (includeInternalVersions) {
+        latestTaggedRelease = getLatestReleaseFromList(versions);
+    }
 
     log?.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
-    const currentIsGreater = gte_semver(current_version, latestTaggedRelease);
-    const currentIsPrerelease = includeInternalVersions
-        ? detectVersionScheme(current_version) === "internalPrerelease"
-        : prerelease_semver(current_version) !== null;
-
+    const currentIsGreater = gt_semver(current_version, latestTaggedRelease);
+    const currentIsPrerelease =
+        prerelease_semver(current_version) !== null
+        && detectVersionScheme(current_version) !== "internalPrerelease";
     return currentIsGreater && !currentIsPrerelease;
 }

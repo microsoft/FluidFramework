@@ -7,7 +7,7 @@ export {
     getSimpleVersion,
     getVersionsFromStrings,
     getIsLatest,
-} from "./buildVersion/buildVersion";
+} from "./buildVersion/buildVersionLib";
 export { bumpDependencies, cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
 export {
     bumpRepo

@@ -13,6 +13,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
+    "flub": "bin/flub",
     "fluid-build": "bin/fluid-build",
     "fluid-build-version": "bin/fluid-build-version",
     "fluid-bump-version": "bin/fluid-bump-version",
@@ -21,8 +22,7 @@
     "fluid-layer-check": "bin/fluid-layer-check",
     "fluid-repo-policy-check": "bin/fluid-repo-policy-check",
     "fluid-run-bundle-analyses": "bin/fluid-run-bundle-analyses",
-    "fluid-type-validator": "bin/fluid-type-validator",
-    "flub": "bin/flub"
+    "fluid-type-validator": "bin/fluid-type-validator"
   },
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
