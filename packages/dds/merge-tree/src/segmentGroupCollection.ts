@@ -27,7 +27,7 @@ export class SegmentGroupCollection {
     }
 
     public dequeue(): SegmentGroup | undefined {
-        return this.segmentGroups.pop()?.data;
+        return this.segmentGroups.shift()?.data;
     }
 
     public pop?(): SegmentGroup | undefined {

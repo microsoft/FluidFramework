@@ -80,7 +80,9 @@ export class List<T> implements
     pop(): ListNode<T> | undefined {
         return this.remove(this.last);
     }
-    push(...items: T[]) {
+
+    push(item: T): ListNodeRange<T>;
+    push(...items: T[]): ListNodeRange<T> | undefined {
         this._len += items.length;
         const start = this.headNode._prev;
         return insertAfter(start, ... items);
@@ -90,7 +92,7 @@ export class List<T> implements
         return this.remove(this.first);
     }
 
-    unshift(...items: T[]) {
+    unshift(...items: T[]): ListNodeRange<T> | undefined {
         this._len += items.length;
         return insertAfter(this.headNode, ... items);
     }

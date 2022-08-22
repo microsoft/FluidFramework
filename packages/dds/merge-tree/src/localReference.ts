@@ -264,7 +264,7 @@ export class LocalReferenceCollection {
             refsAtOffset.at
             ?? new List();
 
-        lref.link(this.segment, offset, atRefs.push(lref));
+        lref.link(this.segment, offset, atRefs.push(lref).last);
 
         if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
             this.hierRefCount++;
@@ -281,6 +281,7 @@ export class LocalReferenceCollection {
             assertLocalReferences(lref);
             lref.getListNode()?.list?.remove(
                 lref.getListNode());
+
             lref.link(
                 lref.getSegment(),
                 lref.getOffset(),
@@ -345,9 +346,9 @@ export class LocalReferenceCollection {
         }
         const offset = lref.getOffset();
         const refsAtOffset = this.refsByOffset[offset];
-        if (refsAtOffset?.before === listNode.list
-            || refsAtOffset?.at === listNode.list
-            || refsAtOffset?.after === listNode.list) {
+        if (refsAtOffset?.before?.includes(listNode)
+            || refsAtOffset?.at?.includes(listNode)
+            || refsAtOffset?.after?.includes(listNode)) {
                 return true;
             }
         return false;

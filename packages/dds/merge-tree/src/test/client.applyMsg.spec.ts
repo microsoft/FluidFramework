@@ -25,7 +25,8 @@ describe("client.applyMsg", () => {
     });
 
     it("Interleaved inserts, annotates, and deletes", () => {
-        const changes = new Map<number, { msg: ISequencedDocumentMessage; segmentGroup: SegmentGroup; }>();
+        const changes =
+            new Map<number, { msg: ISequencedDocumentMessage; segmentGroup?: SegmentGroup | SegmentGroup[]; }>();
         assert.equal(client.mergeTree.pendingSegments?.length, 0);
         for (let i = 0; i < 100; i++) {
             const len = client.getLength();
@@ -38,7 +39,7 @@ describe("client.applyMsg", () => {
                     const msg = client.makeOpMessage(
                         client.removeRangeLocal(pos1, pos2),
                         i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last!.data });
+                    changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
                     break;
                 }
 
@@ -46,7 +47,7 @@ describe("client.applyMsg", () => {
                 case 4: {
                     const str = `${i}`.repeat(imod6 + 5);
                     const msg = client.makeOpMessage(client.insertTextLocal(pos1, str), i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last!.data });
+                    changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
                     break;
                 }
 
@@ -61,7 +62,7 @@ describe("client.applyMsg", () => {
                         },
                         undefined);
                     const msg = client.makeOpMessage(op, i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last!.data });
+                    changes.set(i, { msg, segmentGroup: client.peekPendingSegmentGroups() });
                     break;
                 }
                 default:
@@ -71,8 +72,10 @@ describe("client.applyMsg", () => {
         for (let i = 0; i < 100; i++) {
             const msg = changes.get(i)!.msg;
             client.applyMsg(msg);
-            const segments = changes.get(i)!.segmentGroup.segments;
-            for (const seg of segments) {
+            const segmentGroup = changes.get(i)?.segmentGroup;
+            assert(!Array.isArray(segmentGroup) && segmentGroup !== undefined,
+                "segment group should be defined and not an array");
+            for (const seg of segmentGroup.segments) {
                 switch (i % 6) {
                     case 0:
                     case 5:

@@ -113,15 +113,15 @@ export class Client {
      * It is used to get the segment group(s) for the previous operations.
      * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
      */
-    public peekPendingSegmentGroups(count: number = 1) {
-        let node = this._mergeTree.pendingSegments?.first;
+    public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
+        let node = this._mergeTree.pendingSegments?.last;
         if (count === 1 && node) {
-            return node.data;
+            return node?.data;
         }
         const taken: SegmentGroup[] = [];
         while (taken.length < count && node) {
-            taken.push(node.data);
-            node = node.next;
+            taken.unshift(node.data);
+            node = node.prev;
         }
         return taken;
     }
@@ -737,7 +737,7 @@ export class Client {
         resetOp: IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): IMergeTreeDeltaOp[] {
         assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
-        const NACKedSegmentGroup = this._mergeTree.pendingSegments?.pop()?.data;
+        const NACKedSegmentGroup = this._mergeTree.pendingSegments?.shift()?.data;
         assert(segmentGroup === NACKedSegmentGroup,
             0x034 /* "Segment group not at head of merge tree pending queue" */);
 
