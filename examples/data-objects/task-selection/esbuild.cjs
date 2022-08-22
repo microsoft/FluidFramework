@@ -37,7 +37,7 @@ const esbuild = require("esbuild");
 // };
 
 esbuild.build({
-    entryPoints: ["src/index.ts"],
+    entryPoints: ["src/app.ts"],
     bundle: true,
     metafile: true, // needs to be set
     outdir: "dist/", // needs to be set

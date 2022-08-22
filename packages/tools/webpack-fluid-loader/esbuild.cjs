@@ -42,6 +42,7 @@ esbuild.build({
     metafile: true, // needs to be set
     outdir: "dist/", // needs to be set
     sourcemap: true,
+    platform: "node",
     define: {
         "process.env.NODE_DEBUG": `"false"`,
         "process.env.FLUID_CLIENT": `"local"`,

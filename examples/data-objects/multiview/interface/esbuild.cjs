@@ -51,7 +51,7 @@ esbuild.build({
             files: [{
                 entryPoints: ["src/index.ts"],
                 filename: "index.html",
-                htmlTemplate: "src/index.html"
+                // htmlTemplate: "src/index.html"
             }],
         }),
         // NodePolyFillsPlugin,
