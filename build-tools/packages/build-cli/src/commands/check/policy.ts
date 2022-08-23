@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 /* eslint-disable unicorn/prefer-module */
 /* eslint-disable import/no-internal-modules */
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -6,10 +10,6 @@
 /* eslint-disable @typescript-eslint/promise-function-async */
 /* eslint-disable array-callback-return */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 
 import * as fs from "fs";
 import { EOL as newline } from "os";
