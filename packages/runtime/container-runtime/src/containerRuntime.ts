@@ -817,6 +817,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _orderSequentiallyCalls: number = 0;
     private readonly _flushMode: FlushMode;
     private needsFlush = false;
+    private flushMicroTaskExists = false;
 
     private _connected: boolean;
 
@@ -2545,7 +2546,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;
-        let addedBatchMetadata = false;
 
         // We should add the batch metadata regardless of the connected state
         if (this.currentlyBatching() && !this.needsFlush) {
@@ -2554,7 +2554,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 batch: true,
             };
             this.needsFlush = true;
-            addedBatchMetadata = true;
         }
 
         if (this.canSendOps()) {
@@ -2562,10 +2561,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in TurnBased flush mode we will trigger a flush at the next turn break
-            if (addedBatchMetadata && this.flushMode === FlushMode.TurnBased) {
+            if (this.flushMode === FlushMode.TurnBased && !this.flushMicroTaskExists) {
+                this.flushMicroTaskExists = true;
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 Promise.resolve().then(() => {
+                    this.flushMicroTaskExists = false;
                     this.flush();
                 });
             }

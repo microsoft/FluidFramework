@@ -52,6 +52,7 @@ describeLoaderCompat("Layout", (getTestObjectProvider) => {
     });
 
     beforeEach(() => {
+        doc.remove(0, doc.length);
         root = document.createElement("section");
     });
 

@@ -23,7 +23,7 @@ import {
     LocalCodeLoader,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 describe("Document Dirty", () => {
     const documentId = "documentDirtyTest";
@@ -115,9 +115,6 @@ describe("Document Dirty", () => {
                     ],
                     undefined,
                     [innerRequestHandler],
-                    {
-                        flushMode: FlushMode.Immediate,
-                    },
                 );
 
             const urlResolver = new LocalResolver();
