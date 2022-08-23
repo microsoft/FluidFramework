@@ -7,7 +7,7 @@ export * from "./object-forest";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
 export * from "./schemaIndex";
-export * from "./treeTextCursor";
+export * from "./treeTextCursorLegacy";
 export * from "./sequence-change-family";
 export * from "./defaultSchema";
 export { isNeverField, ChangeHandler, FieldKind, Multiplicity, FullSchemaPolicy } from "./modular-schema";

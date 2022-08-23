@@ -6,7 +6,7 @@
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
 import { Anchor, DetachedField } from "../tree";
-import { ITreeCursor, TreeNavigationResult } from "./cursor";
+import { ITreeCursor, TreeNavigationResult } from "./cursorLegacy";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,

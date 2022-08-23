@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { jsonableTreeFromCursor, RootedTextCursor, singleTextCursor } from "../treeTextCursor";
+import { jsonableTreeFromCursor, RootedTextCursor, singleTextCursor } from "../treeTextCursorLegacy";
 import {
     DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
 } from "../../dependency-tracking";

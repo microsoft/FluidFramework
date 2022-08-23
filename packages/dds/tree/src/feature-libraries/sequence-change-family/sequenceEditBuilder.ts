@@ -8,7 +8,7 @@ import { Transposed as T } from "../../changeset";
 import { ITreeCursor } from "../../forest";
 import { AnchorSet, UpPath, Value, Delta, getDepth } from "../../tree";
 import { fail } from "../../util";
-import { jsonableTreeFromCursor } from "../treeTextCursor";
+import { jsonableTreeFromCursor } from "../treeTextCursorLegacy";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
 import { SequenceChangeset } from "./sequenceChangeset";
 

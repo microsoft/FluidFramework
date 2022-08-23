@@ -18,7 +18,7 @@ import {
 import { Index, SummaryElement, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
 import { JsonableTree, Delta } from "../tree";
-import { jsonableTreeFromCursor } from "./treeTextCursor";
+import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 
 /** The storage key for the blob in the summary containing tree data */
 const treeBlobKey = "ForestTree";

@@ -5,14 +5,11 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    ITreeCursor,
-    TreeNavigationResult,
-    mapCursorField,
-    SynchronousNavigationResult,
+    ITreeCursorNew as ITreeCursor,
+    CursorLocationType,
+    mapCursorFieldNew as mapCursorField,
 } from "../forest";
 import {
-    DetachedField,
-    detachedFieldAsKey,
     FieldKey,
     FieldMap,
     getGenericTreeField,
@@ -51,7 +48,7 @@ import { fail } from "../util";
  * @returns a TextCursor for a single JsonableTree.
  */
 export function singleTextCursor(root: JsonableTree): TextCursor {
-    return new TextCursor([root], 0);
+    return new TextCursor(root);
 }
 
 /**
@@ -60,34 +57,186 @@ export function singleTextCursor(root: JsonableTree): TextCursor {
  * TODO: object-forest's cursor is mostly a superset of this functionality.
  * Maybe do a refactoring to deduplicate this.
  */
-export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
+export class TextCursor implements ITreeCursor {
     // Indices traversed to visit this node: does not include current level (which is stored in `index`).
-    protected readonly indexStack: number[] = [];
+    protected readonly indexStack: (number | undefined)[] = [];
     // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
-    protected readonly siblingStack: JsonableTree[][] = [];
-    // Keys traversed to visit this node, including detached field at the beginning if there is one.
-    protected readonly keyStack: FieldKey[] = [];
+    protected readonly siblingStack: (readonly JsonableTree[] | readonly FieldKey[] | FieldKey)[] = [];
 
-    protected siblings: JsonableTree[];
-    protected index: number;
+    protected siblings: readonly JsonableTree[] | readonly FieldKey[] | FieldKey;
 
-    public constructor(root: JsonableTree[], index: number, field?: DetachedField) {
-        this.index = index;
-        this.siblings = root;
-        if (field) {
-            this.keyStack.push(detachedFieldAsKey(field));
-        }
-    }
+    // Always set when in "Nodes" mode. Undefined when numeric index for field is unknown.
+    // When undefined, get siblings is a FieldKey.
+    protected index: number | undefined;
 
     /**
-     * @returns true iff this cursor is rooted in a detached field.
+     * Might start at special root where fields are detached sequences.
      */
-    public isRooted(): boolean {
-        return this.keyStack.length === this.siblingStack.length + 1;
+    public constructor(root: JsonableTree) {
+        this.siblings = [root];
+        this.index = 0;
+    }
+
+    getCurrentFieldKey(): FieldKey {
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+        if (Array.isArray(this.siblings)) {
+            return this.siblings[this.index as number] as FieldKey;
+        }
+        return this.siblings as FieldKey;
+    }
+    getCurrentFieldLength(): number {
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+        return this.getField().length;
+    }
+    enterChildNode(index: number): void {
+        assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+        const siblings = this.getField();
+        const child = siblings[index];
+        assert(child !== undefined, "child must exist");
+        this.siblingStack.push(this.siblings);
+        this.indexStack.push(this.index);
+        this.index = index;
+        this.siblings = siblings;
+    }
+    getPath(): UpPath {
+        throw new Error("Method not implemented.");
+    }
+    enterField(key: FieldKey): void {
+        throw new Error("Method not implemented.");
+    }
+
+    public get mode(): CursorLocationType {
+        return this.siblingStack.length % 2 === 0 ? CursorLocationType.Nodes : CursorLocationType.Fields;
+    }
+
+    public get pending(): boolean {
+        return false;
+    }
+
+    public nextField(skipPending: boolean): boolean {
+        if (this.mode === CursorLocationType.Nodes) {
+            // Implicitly enter first field
+            assert(this.index !== undefined, "index should not be undefined in Nodes mode");
+            const fields = keys((this.siblings as readonly JsonableTree[])[this.index]);
+            if (fields.length === 0) {
+                // No fields, so implicitly exit fields.
+                return false;
+            }
+
+            this.siblingStack.push(this.siblings);
+            this.siblings = keys((this.siblings as readonly JsonableTree[])[this.index]);
+            this.indexStack.push(this.index);
+            this.index = 0;
+            return true;
+        }
+
+        // Already in "Fields" mode, so go to next field.
+        if (this.index === undefined) {
+            // Navigated down to this field using a key, not iteration.
+            // Start iterating from this field:
+
+            // Iteration order is only defined for an individual iteration.
+            // If starting in the middle because accessed using `enterField`,
+            // we can unconditionally start iteration at the end.
+            this.upToNode();
+            return false;
+
+            // TODO: if requiring stable iteration order, use the below code:
+            // const key = this.siblings as FieldKey;
+            // const parents = this.siblingStack[this.siblingStack.length - 1] as readonly JsonableTree[];
+            // const parent: JsonableTree = parents[this.indexStack[this.indexStack.length - 1] as number];
+            // this.siblings = keys(parent);
+            // this.index = this.siblings.indexOf(key);
+            // // If key was not found, was in empty field, can start anywhere.
+            // this.index = 0;
+        }
+
+        assert(Array.isArray(this.siblings), "siblings should be an array");
+        if (this.index === this.siblings.length - 1) {
+            this.upToNode();
+            return false;
+        }
+
+        this.index += 1;
+        return true;
+    }
+
+    public seek(offset: number): boolean {
+        if (this.mode === CursorLocationType.Fields) {
+            // Implicitly enter node
+            assert(offset !== 0, "cannot implicitly enter node with 0 offset");
+            const len = this.getCurrentFieldLength();
+            const dst = offset < 0 ? len - offset : offset - 1;
+            if (dst > 0 && dst < len) {
+                this.enterChildNode(dst);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        // Already in "Fields" mode, so go to next field.
+        if (this.index === undefined) {
+            // Navigated down to this field using a key, not iteration.
+            // Start iterating from this field:
+
+            // Iteration order is only defined for an individual iteration.
+            // If starting in the middle because accessed using `enterField`,
+            // we can unconditionally start iteration at the end.
+            this.upToNode();
+            return false;
+
+            // TODO: if requiring stable iteration order, use the below code:
+            // const key = this.siblings as FieldKey;
+            // const parents = this.siblingStack[this.siblingStack.length - 1] as readonly JsonableTree[];
+            // const parent: JsonableTree = parents[this.indexStack[this.indexStack.length - 1] as number];
+            // this.siblings = keys(parent);
+            // this.index = this.siblings.indexOf(key);
+            // // If key was not found, was in empty field, can start anywhere.
+            // this.index = 0;
+        }
+
+        assert(Array.isArray(this.siblings), "siblings should be an array");
+        if (this.index === this.siblings.length - 1) {
+            this.upToNode();
+            return false;
+        }
+
+        this.index += 1;
+        return true;
+    }
+
+    public upToNode(): void {
+        assert(this.mode === CursorLocationType.Fields, "can only navigate up from field when in field");
+        const index = this.indexStack.pop();
+        this.index = index;
+        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
+    }
+
+    public upToField(): void {
+        assert(this.mode === CursorLocationType.Nodes, "can only navigate up from node when in node");
+        const index = this.indexStack.pop();
+        this.index = index;
+        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
     }
 
     protected getNode(): JsonableTree {
-        return this.siblings[this.index];
+        assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
+        return (this.siblings as JsonableTree[])[this.index as number];
+    }
+
+    protected getField(): readonly JsonableTree[] {
+        assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
+        const parents = this.siblingStack[this.siblingStack.length - 1] as readonly JsonableTree[];
+        const parent: JsonableTree = parents[this.indexStack[this.indexStack.length - 1] as number];
+        let key: FieldKey;
+        if (this.index === undefined) {
+            key = this.siblings as FieldKey;
+        } else {
+            key = (this.siblings as readonly FieldKey[])[this.index];
+        }
+        const field = getGenericTreeField(parent, key, false);
+        return field;
     }
 
     get value(): Value {
@@ -98,103 +247,34 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
         return this.getNode().type;
     }
 
-    get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(getGenericTreeFieldMap(this.getNode(), false)) as Iterable<FieldKey>;
+    public get currentIndexInField(): number {
+        assert(this.mode === CursorLocationType.Nodes, "can only node's index when in node");
+        return this.index as number;
     }
 
-    down(key: FieldKey, index: number): SynchronousNavigationResult {
-        const siblings = getGenericTreeField(this.getNode(), key, false);
-        const child = siblings[index];
-        if (child !== undefined) {
-            this.indexStack.push(this.index);
-            this.siblingStack.push(this.siblings);
-            this.keyStack.push(key);
-            this.siblings = siblings;
-            this.index = index;
-            return TreeNavigationResult.Ok;
-        }
-        return TreeNavigationResult.NotFound;
+    public get currentChunkStart(): number {
+        return this.currentIndexInField;
     }
 
-    seek(offset: number): SynchronousNavigationResult {
-        const index = offset + this.index;
-        const child = this.siblings[index];
-        if (child !== undefined) {
-            this.index = index;
-            return TreeNavigationResult.Ok;
-        }
-        return TreeNavigationResult.NotFound;
-    }
-
-    up(): SynchronousNavigationResult {
-        const index = this.indexStack.pop();
-        if (index === undefined) {
-            // At root already (and made no changes to current location)
-            return TreeNavigationResult.NotFound;
-        }
-
-        this.index = index;
-        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-        this.keyStack.pop();
-        return TreeNavigationResult.Ok;
-    }
-
-    length(key: FieldKey): number {
-        return getGenericTreeField(this.getNode(), key, false).length;
+    public get currentChunkLength(): number {
+        return 1;
     }
 }
 
-/**
- * TextCursor for a tree that is rooted in a DetachedField.
- * Like with {@link UpPath} the highest key in the tree is the {@link DetachedField}.
- */
-export class RootedTextCursor extends TextCursor {
-    public constructor(root: JsonableTree[], index: number, field: DetachedField) {
-        super(root, index, field);
-    }
-
-    getParentFieldKey(): FieldKey {
-        return this.keyStack[this.keyStack.length - 1];
-    }
-
-    getPath(): UpPath {
-        // Perf Note:
-        // This is O(depth) in tree.
-        // If many different anchors are created, this could be optimized to amortize the costs.
-        // For example, the cursor could cache UpPaths from the anchorSet when creating an anchor,
-        // then reuse them as a starting point when making another.
-        // Could cache this at one depth, and remember the depth.
-        // When navigating up, adjust cached anchor if present.
-
-        let path: UpPath | undefined;
-        const length = this.indexStack.length;
-        assert(this.siblingStack.length === length, 0x34c /* Unexpected siblingStack.length */);
-        assert(this.keyStack.length === length + 1, 0x34d /* Unexpected keyStack.length */);
-        for (let height = 0; height < length; height++) {
-            path = {
-                parent: path,
-                parentIndex: this.indexStack[height],
-                parentField: this.keyStack[height],
-            };
-        }
-        path = {
-            parent: path,
-            parentIndex: this.index,
-            parentField: this.keyStack[length],
-        };
-        return path;
-    }
+function keys(tree: JsonableTree): readonly FieldKey[] {
+    return Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, false)) as FieldKey[];
 }
 
 /**
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
+    assert(cursor.mode === CursorLocationType.Nodes, "must start at node");
     let fields: FieldMap<JsonableTree> | undefined;
-    for (const key of cursor.keys) {
+    while (cursor.nextField(false)) {
         fields ??= {};
-        const field: JsonableTree[] = mapCursorField(cursor, key, jsonableTreeFromCursor);
-        fields[key as string] = field;
+        const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
+        fields[cursor.getCurrentFieldKey() as string] = field;
     }
 
     const node: JsonableTree = {

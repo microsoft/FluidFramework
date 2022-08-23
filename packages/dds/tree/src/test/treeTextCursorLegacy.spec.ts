@@ -9,7 +9,7 @@ import { defaultSchemaPolicy, ObjectForest } from "../feature-libraries";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { jsonableTreeFromCursor, singleTextCursor } from "../feature-libraries/treeTextCursor";
+import { jsonableTreeFromCursor, singleTextCursor } from "../feature-libraries/treeTextCursorLegacy";
 import { initializeForest, ITreeCursor, TreeNavigationResult } from "../forest";
 import { SchemaData, StoredSchemaRepository } from "../schema-stored";
 

@@ -8,6 +8,11 @@ export {
     TreeNavigationResult,
     mapCursorField,
     SynchronousNavigationResult,
+} from "./cursorLegacy";
+export {
+    ITreeCursor as ITreeCursorNew,
+    CursorLocationType,
+    mapCursorField as mapCursorFieldNew,
 } from "./cursor";
 export * from "./forest";
 export {

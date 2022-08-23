@@ -125,6 +125,8 @@ export interface ITreeCursor {
      * Sets mode to `Nodes`
      *
      * Only valid when `mode` is `Fields`.
+     *
+     * TODO: what to do if at root?
      */
     upToNode(): void;
 
@@ -133,6 +135,9 @@ export interface ITreeCursor {
      * Sets mode to `Fields`
      *
      * Same as seek Number.POSITIVE_INFINITY, but only valid when `mode` is `Nodes`.
+     *
+     * TODO: what to do if at root?
+     * TODO: Maybe merge to make a single "Up"?
      */
     upToField(): void;
 
