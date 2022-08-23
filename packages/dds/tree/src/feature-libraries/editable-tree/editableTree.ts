@@ -45,38 +45,69 @@ class ObjectEditableTree implements IEditableTree {
 	}
 }
 
-const tryMoveDown = (cursor: ITreeSubscriptionCursor, key: FieldKey): TreeNavigationResult => {
-	const result = cursor.down(key, 0);
+const tryMoveDown = (cursor: ITreeSubscriptionCursor, key: FieldKey):
+	{ result: TreeNavigationResult; isArray: boolean; } => {
+	let result = cursor.down(key, 0);
+	// TODO make better
+	let isArray = !!cursor.length(EmptyKey);
 	if (result === TreeNavigationResult.NotFound) {
 		// maybe an array?
-		return cursor.down(EmptyKey, Number(key));
+		result = cursor.down(EmptyKey, Number(key));
+	} else {
+		if (isArray && cursor.down(EmptyKey, 0) === TreeNavigationResult.Ok) {
+			cursor.up();
+		} else {
+			isArray = false;
+		}
 	}
-	return result;
+	return { result, isArray };
 };
+
+function accessArrayCursor(cursor: ITreeSubscriptionCursor) {
+	return function* () {
+		const length = cursor.length(EmptyKey);
+		let nextIndex = 0;
+		while (nextIndex < length) {
+			cursor.down(EmptyKey, nextIndex++);
+			const value = cursor.value;
+			cursor.up();
+			yield value;
+		}
+	};
+}
 
 const handler: ProxyHandler<ObjectEditableTree> = {
 	get: (target: ObjectEditableTree, key: string | symbol): any => {
-		if (typeof key === "symbol") {
-			return Reflect.get(target, key);
+		if (typeof key === "string") {
+			const { result, isArray } = tryMoveDown(target.cursor, key as FieldKey);
+			if (result === TreeNavigationResult.Ok) {
+				const value = target.cursor.value === undefined
+					? target.getChildNode(isArray ? EmptyKey : key as FieldKey)
+					: target.cursor.value;
+				target.cursor.up();
+				return value;
+			}
 		}
-		const result = tryMoveDown(target.cursor, key as FieldKey);
-		if (result === TreeNavigationResult.NotFound) {
-			return Reflect.get(target, key);
+		// TODO test
+		if (key === Symbol.iterator) {
+			return accessArrayCursor(target.cursor);
 		}
-		const value = target.cursor.value === undefined
-			? target.getChildNode(key as FieldKey)
-			: target.cursor.value;
-		target.cursor.up();
-		return value;
+		return Reflect.get(target, key);
 	},
 	set: (target: ObjectEditableTree, key: string | symbol, value: any): boolean => {
 		throw new Error("Not implemented.");
 	},
 	has: (target: ObjectEditableTree, key: string | symbol): boolean => {
-		if (key === proxySymbol) {
-			return true;
+		if (typeof key === "symbol") {
+			// TODO test
+			if (key === proxySymbol) {
+				return true;
+			} else if (key === Symbol.iterator) {
+				return true;
+			}
+			return false;
 		}
-		const result = tryMoveDown(target.cursor, key as FieldKey);
+		const { result } = tryMoveDown(target.cursor, key as FieldKey);
 		if (result === TreeNavigationResult.Ok) {
 			target.cursor.up();
 			return true;
@@ -90,7 +121,7 @@ const handler: ProxyHandler<ObjectEditableTree> = {
 		if (key === proxySymbol) {
 			return { configurable: true, enumerable: true, value: key, writable: false };
 		}
-		const result = tryMoveDown(target.cursor, key as FieldKey);
+		const { result } = tryMoveDown(target.cursor, key as FieldKey);
 		if (result === TreeNavigationResult.Ok) {
 			const value = target.cursor.value === undefined
 				? target.getChildNode(key as FieldKey)
