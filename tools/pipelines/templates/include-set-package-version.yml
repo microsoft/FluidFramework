@@ -16,6 +16,18 @@ parameters:
 # Set version
 steps:
 - task: Bash@3
+  name: PrependPath
+  displayName: Prepend build-tools path to
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      # Prepend the cli bin dir to the path. See
+      # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
+      # more information.
+      echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
+
+- task: Bash@3
   name: InstallBuildTools
   displayName: Install Fluid Build Tools
   inputs:
@@ -26,13 +38,8 @@ steps:
       npm ci
       popd
 
-      # Prepend the cli bin dir to the path. See
-      # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
-      # more information.
-      echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
-
       echo "$PATH"
-      which flub
+      flub
 
 - task: Bash@3
   name: SetVersion
