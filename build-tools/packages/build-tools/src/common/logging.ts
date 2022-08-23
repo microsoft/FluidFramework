@@ -9,17 +9,17 @@ import { commonOptions } from "./commonOptions";
 export type LoggingFunction = (msg: string | Error, ...args: unknown[]) => void;
 
 export interface Logger {
-    log: LoggingFunction,
-    logWarning: LoggingFunction,
-    logError: LoggingFunction,
-    logVerbose: LoggingFunction
+    info: LoggingFunction,
+    warning: LoggingFunction,
+    error: LoggingFunction,
+    verbose: LoggingFunction
 }
 
 export const defaultLogger: Logger = {
-    log: logStatus,
-    logWarning: logStatus,
-    logError: logError,
-    logVerbose: logVerbose
+    info: logStatus,
+    warning: logStatus,
+    error: logError,
+    verbose: logVerbose
 }
 
 export function logVerbose(msg: string | Error) {
