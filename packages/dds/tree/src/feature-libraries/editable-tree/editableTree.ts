@@ -10,7 +10,7 @@ export const proxySymbol = Symbol.for("editable-tree");
 
 /**
  * A dummy placeholder for a Proxy target.
- */ 
+ */
 export interface IEditableTree {}
 
 /**
