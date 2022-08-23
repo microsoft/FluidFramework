@@ -61,11 +61,11 @@ export const gcTreeKey = "gc";
 export const gcBlobPrefix = "__gc";
 
 // Feature gate key to turn GC on / off.
-const runGCKey = "Fluid.GarbageCollection.RunGC";
+export const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Feature gate key to turn GC sweep on / off.
-// const runSweepKey = "Fluid.GarbageCollection.RunSweep";
+export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to turn GC test mode on / off.
-const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
+export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
@@ -80,7 +80,7 @@ const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
-const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
+export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
@@ -690,7 +690,7 @@ export class GarbageCollector implements IGarbageCollector {
             const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
             const baseGCDetailsMap = unpackChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
-            // Currently, the nodes may write the GC data. So, we need to update it's base GC details with the
+            // Currently, the nodes may write the GC data. So, we need to update its base GC details with the
             // unreferenced timestamp. Once we start writing the GC data here, we won't need to do this anymore.
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 if (nodeData.unreferencedTimestampMs !== undefined) {

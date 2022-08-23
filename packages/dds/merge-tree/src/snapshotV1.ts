@@ -200,7 +200,7 @@ export class SnapshotV1 {
                     prev = segment;
                 }
             } else {
-                // This segment needs to preserve it's metadata as it may be referenced by future ops.  It's ineligible
+                // This segment needs to preserve its metadata as it may be referenced by future ops.  It's ineligible
                 // for coalescing, so emit the 'prev' segment now (if any).
                 pushSeg(prev);
                 prev = undefined;
