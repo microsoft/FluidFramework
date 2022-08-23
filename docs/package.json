@@ -32,7 +32,6 @@
   "dependencies": {
     "@fluid-tools/api-markdown-documenter": "file:../tools/api-markdown-documenter",
     "@microsoft/api-extractor-model": "^7.23.0",
-    "@tylerbu/custom-api-documenter": "~0.3.4-7",
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.28",
@@ -56,7 +55,6 @@
     "node-fetch": "^2.6.7",
     "replace-in-file": "^6.2.0",
     "rimraf": "^2.6.2",
-    "run-script-os": "^1.1.5",
     "serve": "^13.0.2",
     "shelljs": "^0.8.5"
   }
