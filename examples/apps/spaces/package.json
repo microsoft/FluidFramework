@@ -76,7 +76,7 @@
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "css-loader": "^1.0.0",
     "eslint": "~8.6.0",

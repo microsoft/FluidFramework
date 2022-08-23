@@ -5,8 +5,20 @@
 
 import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 
+/**
+ * Serializes and deserializes changes.
+ * Supports both binary and JSON formats.
+ * Due to data using these formats being persisted in documents,
+ * any format for encoding that was ever actually used should be supported for decoding for all future versions.
+ *
+ * TODO: Nothing in here is specific to changes. Maybe make this interface more general.
+ */
 export abstract class ChangeEncoder<TChange> {
-    public abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatible;
+    /**
+     * Encodes `change` into a JSON compatible object.
+     */
+    public abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleReadOnly;
+
     /**
      * Binary encoding.
      * Override to do better than just Json.
@@ -19,7 +31,10 @@ export abstract class ChangeEncoder<TChange> {
         return IsoBuffer.from(json);
     }
 
-    public abstract decodeJson(formatVersion: number, change: JsonCompatible): TChange;
+    /**
+     * Decodes `change` from a JSON compatible object.
+     */
+    public abstract decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TChange;
 
     /**
      * Binary decoding.
@@ -31,6 +46,7 @@ export abstract class ChangeEncoder<TChange> {
         return this.decodeJson(formatVersion, jsonable);
     }
 }
+
 /**
  * Use for Json compatible data.
  *
@@ -39,3 +55,18 @@ export abstract class ChangeEncoder<TChange> {
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | { [P in string]: JsonCompatible; };
+
+/**
+ * Use for readonly view of Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleReadOnly =
+    | string
+    | number
+    | boolean
+    // eslint-disable-next-line @rushstack/no-new-null
+    | null
+    | readonly JsonCompatibleReadOnly[]
+    | { readonly [P in string]: JsonCompatibleReadOnly | undefined; };

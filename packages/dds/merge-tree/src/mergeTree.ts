@@ -1406,7 +1406,7 @@ export class MergeTree {
                     const splitNode = this.split(block);
                     if (block === this.root) {
                         this.updateRoot(splitNode);
-                        // Update root already updates all it's children ordinals
+                        // Update root already updates all its children ordinals
                         ordinalUpdateNode = undefined;
                     } else {
                         this.insertChildNode(block.parent!, splitNode, block.index + 1);

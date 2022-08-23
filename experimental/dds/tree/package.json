@@ -75,7 +75,7 @@
     "@types/random-js": "^1.0.31",
     "chai": "^4.2.0",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "easy-table": "^1.1.1",
     "env-cmd": "^10.1.0",
