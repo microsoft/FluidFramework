@@ -264,10 +264,14 @@ function generateTwitterStatus(type: "standard" | "retweet", random: IRandom,
     const retweetCount = Math.floor(random.integer(0, 99999));
     const favoriteCount = Math.floor(random.integer(0, 99999));
     const twitterUser = generateTwitterUser(random, userDescFieldMarkovChain, alphabet);
-    const shouldAddHashtagEntity = random.bool();
-    const shouldAddUrlEntity = random.bool();
-    const shouldAddUserMentionsEntity = random.bool();
-    const shouldAddMediaEntity = random.bool();
+    // The following boolean values mirror the statistical probability of the original json
+    const shouldAddHashtagEntity = type === "standard" ? random.bool(0.07) : random.bool(0.027397);
+    const shouldAddUrlEntity = type === "standard" ? random.bool(0.12) : random.bool(0.068493);
+    const shouldAddUserMentionsEntity = type === "standard" ? random.bool(0.12) : random.bool(0.068493);
+    const shouldAddMediaEntity = type === "standard" ? random.bool(0.06) : random.bool(0.0547945);
+    const shouldAddInReplyToStatusId = type === "standard" ? random.bool(0.06) : random.bool(0.027397);
+    // in reply to screen name & in reply to user id always appear together
+    const shouldAddInReplyToUserIdAndScreenName = type === "standard" ? random.bool(0.09) : random.bool(0.041095);
 
     const twitterStatus: any = {
         metadata: {
@@ -277,7 +281,7 @@ function generateTwitterStatus(type: "standard" | "retweet", random: IRandom,
         created_at: getRandomDateString(random, new Date("2005-01-01"), new Date("2022-01-01")),
         id: Number(statusIdString),
         id_str: `${statusIdString}`,
-        text: textFieldMarkovChain.generateSentence(100),
+        text: textFieldMarkovChain.generateSentence(123), // average length the original json text field is 123
         // source can have unicode nested in it
         source: `<a href=\"https://twitter.com/${twitterUser.screen_name}\" rel=\"nofollow\">
          ${random.string(random.integer(2, 30), alphabet)}</a>`,
@@ -302,16 +306,22 @@ function generateTwitterStatus(type: "standard" | "retweet", random: IRandom,
         lang: "ja",
     };
     if (type === "standard") {
-        const inReplyToStatusId = random.bool() ? getRandomNumberString(random, 18, 18) : null;
-        const inReplyToUserId = random.bool() ? getRandomNumberString(random, 10, 10) : null;
+        const shouldAddRetweet = random.bool(0.73);
+        if (shouldAddRetweet) {
+            twitterStatus.retweeted_status =
+                generateTwitterStatus("retweet", random, textFieldMarkovChain, userDescFieldMarkovChain, alphabet);
+        }
+    }
+    if (shouldAddInReplyToStatusId) {
+        const inReplyToStatusId = getRandomNumberString(random, 18, 18);
         twitterStatus.in_reply_to_status_id = inReplyToStatusId !== null ? Number(inReplyToStatusId) : null;
         twitterStatus.in_reply_to_status_id_str = inReplyToStatusId !== null ? inReplyToStatusId : null;
+    }
+    if (shouldAddInReplyToUserIdAndScreenName) {
+        const inReplyToUserId = getRandomNumberString(random, 10, 10);
         twitterStatus.in_reply_to_user_id = inReplyToUserId !== null ? Number(inReplyToUserId) : null;
         twitterStatus.in_reply_to_user_id_str = inReplyToUserId !== null ? inReplyToUserId : null;
-        twitterStatus.in_reply_to_screen_name = inReplyToUserId !== null ?
-            getRandomEnglishString(random, false, 6, 30) : null;
-        twitterStatus.retweeted_status =
-            generateTwitterStatus("retweet", random, textFieldMarkovChain, userDescFieldMarkovChain, alphabet);
+        twitterStatus.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
     }
 
     if (shouldAddHashtagEntity) {
@@ -410,7 +420,7 @@ function generateTwitterUser(random: IRandom, userDescFieldMarkovChain: SpaceEff
         // screen names do not include unicode characters
         screen_name: getRandomEnglishString(random, false, 6, 30),
         location: "",
-        description: userDescFieldMarkovChain.generateSentence(100),
+        description: userDescFieldMarkovChain.generateSentence(75),
         url: null,
         entities: {
             // This always appears on a user, even if its empty.

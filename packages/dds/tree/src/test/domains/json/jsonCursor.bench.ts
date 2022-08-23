@@ -13,7 +13,7 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./canada";
 import { generateTwitterJsonByByteSize } from "./twitter";
-import { createAlphabetFromUnicodeRange } from "./jsonGeneratorUtils";
+import { createAlphabetFromUnicodeRange, twitterRawJson } from "./jsonGeneratorUtils";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -110,6 +110,110 @@ const canada = generateCanada(
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 describe("ITreeCursor", () => {
+    const ogJson = twitterRawJson();
+    const textFieldLengths: number[] = [];
+    const userDescFieldLengths: number[] = [];
+    const userScreenNameFieldLengths: number[] = [];
+    const userNameFieldLengths: number[] = [];
+    let tweetsWithRetweetTweet = 0;
+
+    let tweetsWithHashtagEntity = 0;
+    let tweetsWithNonEmptyHashtagEntity = 0;
+
+    let tweetsWithUrlEntity = 0;
+    let tweetsWithNonEmptyUrlEntity = 0;
+
+    let tweetsWithUserMentionEntity = 0;
+    let tweetsWithNonEmptyUserMentionEntity = 0;
+
+    let tweetsWithMediaEntity = 0;
+    let tweetsWithNonEmptyMediaEntity = 0;
+
+    let tweetsWithNonNullInReplyToStatusId = 0;
+    let tweetsWithNonNullinReplyToUserId = 0;
+    let tweetsWithNonNullinReplyToScreeName = 0;
+
+    let tweetWithInReplyUserAndScreen = 0;
+
+    let tweetWithUrlAndUserMentionEntity = 0;
+
+    let retweetCount = 0;
+
+    ogJson.statuses.forEach((status) => {
+        textFieldLengths.push(status.text.length);
+        userDescFieldLengths.push(status.user.description.length);
+        userScreenNameFieldLengths.push(status.user.screen_name.length);
+        userNameFieldLengths.push(status.user.name.length);
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        // eslint-disable-next-line no-param-reassign
+        // status = status.retweeted_status;
+        // if (!status) {
+        //     return;
+        // }
+
+        if (status.retweeted_status) {
+            tweetsWithRetweetTweet++;
+            textFieldLengths.push(status.retweeted_status.text.length);
+            userDescFieldLengths.push(status.retweeted_status.user.description.length);
+        }
+
+        retweetCount++;
+        if (status.entities.hashtags) {
+            tweetsWithHashtagEntity++;
+            if (status.entities.hashtags.length > 0) {
+                tweetsWithNonEmptyHashtagEntity++;
+            }
+        }
+        if (status.entities.urls) {
+            tweetsWithUrlEntity++;
+            if (status.entities.urls.length > 0) {
+                tweetsWithNonEmptyUrlEntity++;
+            }
+        }
+        if (status.entities.user_mentions) {
+            tweetsWithUserMentionEntity++;
+            if (status.entities.urls.length > 0) {
+                tweetsWithNonEmptyUserMentionEntity++;
+            }
+        }
+        if (status.entities.media) {
+            tweetsWithMediaEntity++;
+            if (status.entities.media.length > 0) {
+                tweetsWithNonEmptyMediaEntity++;
+            }
+        }
+        if (status.in_reply_to_status_id) {
+            tweetsWithNonNullInReplyToStatusId++;
+        }
+        if (status.in_reply_to_user_id) {
+            tweetsWithNonNullinReplyToUserId++;
+        }
+        if (status.in_reply_to_screen_name) {
+            tweetsWithNonNullinReplyToScreeName++;
+        }
+        if (status.in_reply_to_user_id && status.in_reply_to_screen_name) {
+            tweetWithInReplyUserAndScreen++;
+        }
+        if (status.entities.urls.length > 0 && status.entities.user_mentions.length > 0) {
+            tweetWithUrlAndUserMentionEntity++;
+        }
+    });
+
+    // const averageTextFieldLen = textFieldLengths.reduce(
+    //     (accumulator, value) => { return accumulator + value; }, 0) / textFieldLengths.length;
+    //  const maxTextFieldLen = Math.max(...textFieldLengths);
+    //  const minTextFieldLen = Math.min(...textFieldLengths);
+
+    //  const averageUserDescFieldLen = userDescFieldLengths.reduce(
+    //     (accumulator, value) => { return accumulator + value; }, 0) / textFieldLengths.length;
+    //  const maxUserDescFieldLen = Math.max(...textFieldLengths);
+    //  const minUserDescFieldLen = Math.min(...textFieldLengths);
+
+
+
+
     bench("canada", () => canada);
     bench("twitter", () => twitter);
 });
