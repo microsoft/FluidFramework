@@ -145,9 +145,7 @@ function processDependencies(
         const existing = repoPackageJson.dependencies[dep];
         if (existing) {
             if (existing !== version) {
-                logger.error(
-                    `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
-                );
+                logger.error(`Dependency version mismatch for ${dep}: ${existing} and ${version}`);
             }
 
             continue;
@@ -176,9 +174,7 @@ function processDevDependencies(
         const existing = repoPackageJson.dependencies[dep] ?? repoPackageJson.devDependencies[dep];
         if (existing) {
             if (existing !== version) {
-                logger.error(
-                    `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
-                );
+                logger.error(`Dependency version mismatch for ${dep}: ${existing} and ${version}`);
             }
 
             continue;
