@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-telemetry",
-  "version": "0.1037.1000",
+  "version": "0.1037.2000",
   "description": "Fluid server telemetry utilities",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -52,7 +52,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.33.1000-74526",
+    "@fluidframework/common-utils": "^1.0.0",
     "json-stringify-safe": "^5.0.1",
     "path-browserify": "^1.0.1",
     "serialize-error": "^8.1.0",

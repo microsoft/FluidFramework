@@ -15,6 +15,7 @@ import {
 } from "./constants";
 import {
      LocalReferenceCollection,
+     LocalReferencePosition,
 } from "./localReference";
 import { MergeTree } from "./mergeTree";
 import {
@@ -45,24 +46,53 @@ import {
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
 
+/**
+ * Common properties for a node in a merge tree.
+ */
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
     /**
      * The length of the contents of the node.
      */
     cachedLength: number;
+    /**
+     * The index of this node in its parent's list of children.
+     */
     index: number;
+    /**
+     * A string that can be used for comparing the location of this node to other `MergeNode`s in the same tree.
+     * `a.ordinal < b.ordinal` if and only if `a` comes before `b` in a pre-order traversal of the tree.
+     */
     ordinal: string;
     isLeaf(): this is ISegment;
 }
 
 export type IMergeNode = IMergeBlock | ISegment;
 
-// Node with segments as children
+/**
+ * Internal (i.e. non-leaf) node in a merge tree.
+ */
 export interface IMergeBlock extends IMergeNodeCommon {
     needsScour?: boolean;
+    /**
+     * Number of direct children of this node
+     */
     childCount: number;
+    /**
+     * Array of child nodes.
+     *
+     * @remarks To avoid reallocation, this is always initialized to have maximum length as deemed by
+     * the merge tree's branching factor. Use `childCount` to determine how many children this node actually has.
+     */
     children: IMergeNode[];
+    /**
+     * Supports querying the total length of all descendants of this IMergeBlock from the perspective of any
+     * (clientId, seq) within the collab window.
+     *
+     * @remarks This is only optional for implementation reasons (internal nodes can be created/moved without
+     * immediately initializing the partial lengths). Aside from mid-update on tree operations, these lengths
+     * objects are always defined.
+     */
     partialLengths?: PartialSequenceLengths;
     hierBlock(): IHierBlock | undefined;
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
@@ -85,10 +115,27 @@ export interface IHierBlock extends IMergeBlock {
     rangeStacks: RangeStackMap;
 }
 
+/**
+ * Contains removal information associated to an {@link ISegment}.
+ */
 export interface IRemovalInfo {
+    /**
+     * Local seq at which this segment was removed, if the removal is yet-to-be acked.
+     */
+    localRemovedSeq?: number;
+    /**
+     * Seq at which this segment was removed.
+     */
     removedSeq: number;
+    /**
+     * List of client IDs that have removed this segment.
+     * The client that actually removed the segment (i.e. whose removal op was sequenced first) is stored as the first
+     * client in this list. Other clients in the list have all issued concurrent ops to remove the segment.
+     * @remarks When this list has length \> 1, this is referred to as the "overlapping remove" case.
+     */
     removedClientIds: number[];
 }
+
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
     if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
         return maybe as IRemovalInfo;
@@ -99,17 +146,45 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 
 /**
  * A segment representing a portion of the merge tree.
+ * Segments are leaf nodes of the merge tree and contain data.
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
+    /**
+     * Manages pending local state for properties on this segment.
+     */
     propertyManager?: PropertiesManager;
+    /**
+     * Local seq at which this segment was inserted. If this is defined, `seq` will be UnassignedSequenceNumber.
+     * Once the segment is acked, this field is cleared.
+     */
     localSeq?: number;
+    /**
+     * Local seq at which this segment was removed. If this is defined, `removedSeq` will initially be set to
+     * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
+     * will be updated to the seq at which that client removed this segment.
+     *
+     * Like `localSeq`, this field is cleared once the local removal of the segment is acked.
+     */
     localRemovedSeq?: number;
-    seq?: number;  // If not present assumed to be previous to window min
+    /**
+     * Seq at which this segment was inserted.
+     * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
+     */
+    seq?: number;
+    /**
+     * Short clientId for the client that inserted this segment.
+     */
     clientId: number;
+    /**
+     * Local references added to this segment.
+     */
     localRefs?: LocalReferenceCollection;
+    /**
+     * Properties that have been added to this segment via annotation.
+     */
     properties?: PropertySet;
     addProperties(
         newProps: PropertySet,
@@ -237,6 +312,7 @@ export interface MergeTreeStats {
 export interface SegmentGroup {
     segments: ISegment[];
     previousProps?: PropertySet[];
+    removedReferences?: LocalReferencePosition[];
     localSeq: number;
 }
 
@@ -416,7 +492,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 leafSegment.parent = this.parent;
 
                 // Give the leaf a temporary yet valid ordinal.
-                // when this segment is put in the tree, it will get it's real ordinal,
+                // when this segment is put in the tree, it will get its real ordinal,
                 // but this ordinal meets all the necessary invariants for now.
                 leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 

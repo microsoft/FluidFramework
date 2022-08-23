@@ -36,12 +36,12 @@ trigger:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -60,12 +60,12 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml

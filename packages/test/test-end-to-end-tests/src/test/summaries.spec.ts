@@ -496,7 +496,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
             "Summary Parent should match ack handle of previous summary");
     });
 
-    it.skip("Single commit summary/Last summary should not be discarded due to missing SummaryOp", async function() {
+    it("Single commit summary/Last summary should not be discarded due to missing SummaryOp", async function() {
         if (provider.driver.type !== "odsp") {
             this.skip();
         }

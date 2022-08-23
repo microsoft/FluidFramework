@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
 import { AnchorSet, Delta, FieldKey, UpPath } from "../../tree";
-import { SequenceEditBuilder, TextCursor } from "../../feature-libraries";
+import { SequenceEditBuilder, singleTextCursor } from "../../feature-libraries";
 import { brand, brandOpaque } from "../../util";
 
 const rootKey = brand<FieldKey>("root");
@@ -142,7 +142,7 @@ describe("SequenceEditBuilder", () => {
                 content,
             }],
         ]]);
-        builder.insert(root, new TextCursor(nodeX));
+        builder.insert(root, singleTextCursor(nodeX));
     });
 
     it("Can insert a child node", () => {
@@ -173,7 +173,7 @@ describe("SequenceEditBuilder", () => {
                 ]]),
             }],
         ]]);
-        builder.insert(root_foo2_foo5, new TextCursor(nodeX));
+        builder.insert(root_foo2_foo5, singleTextCursor(nodeX));
         assert.deepEqual(deltas, [expected]);
     });
 

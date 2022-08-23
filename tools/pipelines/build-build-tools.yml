@@ -28,11 +28,11 @@ trigger:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - build-tools
     - tools/pipelines/build-build-tools.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -45,12 +45,12 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
     - build-tools
     - tools/pipelines/build-build-tools.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml

@@ -23,7 +23,7 @@ const simpleCoordinateComponentId = "simpleCoordinate";
 const triangleCoordinateComponentId1 = "triangle1";
 const triangleCoordinateComponentId2 = "triangle2";
 const triangleCoordinateComponentId3 = "triangle3";
-const constellationComponentId = "constellation";
+const constellationComponentName = "constellation";
 
 const registryEntries = new Map([
     Coordinate.getFactory().registryEntry,
@@ -31,9 +31,12 @@ const registryEntries = new Map([
 ]);
 
 // Just a little helper, since we're going to create multiple coordinates.
-const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string) => {
+const createAndAttachCoordinate = async (runtime: IContainerRuntime, name: string) => {
+    const dataStore = await runtime.createDataStore(Coordinate.getFactory().type);
+    const aliasResult = await dataStore.trySetAlias(name);
     const simpleCoordinateComponentRuntime =
-        await runtime.createRootDataStore(Coordinate.ComponentName, id);
+        aliasResult === "Success" ? dataStore : await runtime.getRootDataStore(name);
+
     return requestFluidObject<ICoordinate>(simpleCoordinateComponentRuntime, "/");
 };
 
@@ -64,7 +67,7 @@ const defaultViewRequestHandler: RuntimeRequestHandler =
             const triangleCoordinate3 = await requestObjectStoreFromId<Coordinate>(
                 request, runtime, triangleCoordinateComponentId3);
             const constellation = await requestObjectStoreFromId<Constellation>(
-                request, runtime, constellationComponentId);
+                request, runtime, constellationComponentName);
             const viewResponse = (
                 <DefaultView
                     simpleCoordinate={simpleCoordinate}
@@ -109,9 +112,11 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         triangleCoordinate3.y = 60;
 
         // Create the constellation component
-        const constellationComponent = await requestFluidObject<Constellation>(
-            await runtime.createRootDataStore(Constellation.ComponentName, constellationComponentId),
-            "/");
+        const dataStore = await runtime.createDataStore(Constellation.getFactory().type);
+        const aliasResult = await dataStore.trySetAlias(constellationComponentName);
+        const component =
+            aliasResult === "Success" ? dataStore : await runtime.getRootDataStore(constellationComponentName);
+        const constellationComponent = await requestFluidObject<Constellation>(component, "/");
 
         // Add a few stars
         await constellationComponent.addStar(86, 74);

@@ -17,6 +17,7 @@ import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils"
 import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { GenericError } from "@fluidframework/container-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
     const mapId = "mapId";
@@ -134,6 +135,20 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         // Max op size is 768000, round down to account for some overhead
         const largeString = generateStringOfSize(750000);
         const messageCount = 1;
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+
+        assertMapValues(dataObject2map, messageCount, largeString);
+    });
+
+    it("Batched small ops pass when batch is larger than max op size", async function() {
+        // flush mode is not applicable for the local driver
+        if (provider.driver.type === "local") {
+            this.skip();
+        }
+        await setupContainers({ ...testContainerConfig, runtimeOptions: { flushMode: FlushMode.Immediate } }, {});
+        const largeString = generateStringOfSize(500000);
+        const messageCount = 10;
         setMapKeys(dataObject1map, messageCount, largeString);
         await provider.ensureSynchronized();
 

@@ -10,7 +10,7 @@ import {
     reservedTileLabelsKey,
     Marker,
 } from "@fluidframework/merge-tree";
-import { SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
+import { getTextAndMarkers, SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import CodeMirror from "codemirror";
 
@@ -85,7 +85,7 @@ export class CodeMirrorView implements IFluidHTMLView {
 
         this.codeMirrorPresenceManager = new CodeMirrorPresenceManager(this.codeMirror, this.presenceManager);
 
-        const { parallelText } = this.text.getTextAndMarkers("pg");
+        const { parallelText } = getTextAndMarkers(this.text, "pg");
         const text = parallelText.join("\n");
         this.codeMirror.setValue(text);
 
