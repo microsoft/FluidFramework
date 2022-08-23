@@ -434,5 +434,16 @@ export class PendingStateManager implements IDisposable {
             }
             pendingStatesCount--;
         }
+
+        // There are some cases where ops are stashed but not flushed. We need to ensure they are resubmitted
+        while (messageBatchQueue.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const message = messageBatchQueue.dequeue()!;
+            this.stateHandler.reSubmit(
+                message.messageType,
+                message.content,
+                message.localOpMetadata,
+                message.opMetadata);
+        }
     }
 }

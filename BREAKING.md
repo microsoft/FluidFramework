@@ -23,6 +23,10 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
 - [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
 - [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
+- [Signature from  `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
+- [Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
+- [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
+
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
@@ -39,14 +43,34 @@ This field has been deprecated and will be removed in a future breaking change. 
     ):
 ```
 
+### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
+`enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
+
+### Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface
+`ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
+```diff
+    async refreshLatestSummaryAck(
+-       proposalHandle: string | undefined,
+-       ackHandle: string,
+-       summaryRefSeq: number,
+-       summaryLogger: ITelemetryLogger,
++       options: IRefreshSummaryAckOptions,
+    ):
+```
+
+### Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package
+The utility classes `TelemetryNullLogger` and `BaseTelemetryNullLogger` are deprecated in the `@fluidframework/common-utils` package and have been moved to the `@fluidframework/telemetry-utils` package.  Please update your imports to take these from the new location.
+
+### IFluidContainerEvents event naming correction
+Renamed **dispose** to **disposed** to better communicate the state and align with currently emitted event.
+It's not a breaking change, but worth noting: we are now also exposing optional error (ICriticalContainerError) field with **disposed** event.
+
 ## 3.0.0 Breaking changes
 - [Remove `IContainerRuntime.flush`](#remove-icontainerruntimeflush)
 
 ### Remove `IContainerRuntime.flush`
 `IContainerRuntime.flush` has been removed. If a more manual/ensured flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
 
-### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
-`enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
 # 2.0.0
 
 ## 2.0.0 Upcoming changes

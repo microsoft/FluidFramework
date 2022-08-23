@@ -4,7 +4,7 @@
  */
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
-import { SchemaRepository } from "../schema-stored";
+import { StoredSchemaRepository } from "../schema-stored";
 import { Anchor, DetachedField } from "../tree";
 import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
@@ -35,7 +35,7 @@ export interface IForestSubscription extends Dependee {
      *
      * The root's schema is tracked under {@link rootFieldKey}.
      */
-    readonly schema: SchemaRepository & Dependee;
+    readonly schema: StoredSchemaRepository;
 
     readonly rootField: DetachedField;
 

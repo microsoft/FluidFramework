@@ -39,9 +39,9 @@
   },
   "dependencies": {
     "@fluid-experimental/get-container": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/quorum": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluid-experimental/react-inputs": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluid-experimental/task-manager": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluid-internal/quorum": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluidframework/aqueduct": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluidframework/cell": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluidframework/common-definitions": "^0.20.1",

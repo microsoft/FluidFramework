@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.3.2000 win32-x64 node-v14.18.1
+@fluid-tools/build-cli/0.3.2000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -108,6 +108,7 @@ USAGE
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
 * [`flub version VERSION`](#flub-version-version)
+* [`flub version latest`](#flub-version-latest)
 
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
 
@@ -303,9 +304,43 @@ EXAMPLES
   You can use ^ and ~ as a shorthand.
 
     $ flub version ^1.0.0
+
+  You can use the 'current' bump type to calculate ranges without bumping the version.
+
+    $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
 _See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/version.ts)_
+
+## `flub version latest`
+
+Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+```
+USAGE
+  $ flub version latest -r <value> [--json] [--prerelease]
+
+FLAGS
+  -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
+                             multiple versions, or a space-delimited list of versions can be provided using a single
+                             argument.
+  --prerelease               Include prerelease versions. By default, prerelease versions are excluded.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+EXAMPLES
+  You can use the --versions (-r) flag multiple times.
+
+    $ flub version latest -r 2.0.0 -r 2.0.0-internal.1.0.0 -r 1.0.0 -r 0.56.1000
+
+  You can omit the repeated --versions (-r) flag and pass a space-delimited list instead.
+
+    $ flub version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
+```
 <!-- commandsstop -->
 
 ## Trademark

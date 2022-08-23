@@ -153,7 +153,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
-    refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -448,6 +448,14 @@ export interface IProvideSummarizer {
 }
 
 // @public
+export interface IRefreshSummaryAckOptions {
+    readonly ackHandle: string;
+    readonly proposalHandle: string | undefined;
+    readonly summaryLogger: ITelemetryLogger;
+    readonly summaryRefSeq: number;
+}
+
+// @public
 export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
     gcStats?: IGCStats;
 }
@@ -504,7 +512,7 @@ export interface ISummarizerEvents extends IEvent {
 
 // @public (undocumented)
 export interface ISummarizerInternalsProvider {
-    refreshLatestSummaryAck(proposalHandle: string, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 }
 

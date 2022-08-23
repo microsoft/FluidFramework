@@ -3,23 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer } from "@fluidframework/container-definitions";
-
-export interface IModelCodeLoader<ModelType> {
-    /**
-     * Check if the IModelCodeLoader knows how to instantiate an appropriate model for the provided container code
-     * version.  It is async to permit dynamic model loading - e.g. referring to a remote service to determine if
-     * the requested model is available.
-     * @param version - the container code version to check
-     */
-    supportsVersion: (version: string) => Promise<boolean>;
-
-    /**
-     * Instantiate and return the appropriate model for the given container, bound to the given container's contents.
-     */
-    getModel: (container: IContainer) => Promise<ModelType>;
-}
-
 export interface IModelLoader<ModelType> {
     /**
      * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.

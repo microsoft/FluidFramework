@@ -618,6 +618,7 @@ export interface IRelativePosition {
 
 // @public
 export interface IRemovalInfo {
+    localRemovedSeq?: number;
     removedClientIds: number[];
     removedSeq: number;
 }
@@ -1130,6 +1131,8 @@ export interface SegmentGroup {
     // (undocumented)
     previousProps?: PropertySet[];
     // (undocumented)
+    removedReferences?: LocalReferencePosition[];
+    // (undocumented)
     segments: ISegment[];
 }
 
@@ -1165,9 +1168,7 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 }
 
 // @public
-export class SortedSegmentSet<T extends ISegment | {
-    readonly segment: ISegment;
-} = ISegment> {
+export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T): void;
     // (undocumented)
@@ -1179,6 +1180,11 @@ export class SortedSegmentSet<T extends ISegment | {
     // (undocumented)
     get size(): number;
 }
+
+// @public (undocumented)
+export type SortedSegmentSetItem = ISegment | {
+    readonly segment: ISegment;
+};
 
 // @public (undocumented)
 export class Stack<T> {
