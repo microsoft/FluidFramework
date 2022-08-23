@@ -137,7 +137,7 @@ export class List<T> implements
     private _len: number = 0;
     private readonly headNode: HeadNode<T> | DataNode<T> = new HeadNode(this);
     public get length() { return this._len; }
-    public get empty() { return this.headNode._next === this.headNode; }
+    public get empty() { return this._len === 0; }
     public get first(): ListNode<T> | undefined {
         return this.headNode.next;
     }
