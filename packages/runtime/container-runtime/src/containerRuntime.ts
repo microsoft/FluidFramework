@@ -2610,10 +2610,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         serializedContent: string,
         serverMaxOpSize: number,
         batch: boolean,
-        opMetadataInternal: any = undefined,
+        opMetadataInternal: Record<string, unknown> | undefined = undefined,
     ): number {
         let maybeCompressedContent: any;
-        let metadata: any;
+        let metadata: Record<string, unknown> | undefined;
         let contentLength: number;
 
         if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
