@@ -82,8 +82,9 @@ export interface ITreeCursor {
      * @returns a path to the current node.
      *
      * Only valid when `mode` is `Nodes`.
+     * Assumes root node is special node above detached sequences.
      */
-    getPath(): UpPath;
+    getPath(): UpPath | undefined;
 
     /**
      * Index (within its parent field) of the current node.
