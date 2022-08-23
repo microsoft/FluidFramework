@@ -20,7 +20,7 @@ import { TinyliciousRunnerFactory } from "./runnerFactory";
 // a monolithic process, it still uses sockets to communicate with the historian service.  For these call,
 // keep the TCP connection open so that they can be reused
 // TODO: Set this globally since the Historian use the global Axios default instance.  Make this encapsulated.
-Axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
+Axios.defaults.httpAgent = new http.Agent({ keepAlive: true, timeout: (60 * 1000) * 4 });
 
 const configPath = path.join(__dirname, "../config.json");
 
