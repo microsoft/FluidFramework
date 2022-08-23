@@ -98,7 +98,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      * @virtual
      */
     public emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string {
-        return super.emit(stringBuilder, docNode, options);
+        return super.emit(stringBuilder, docNode, options).trim();
     }
 
     /**
