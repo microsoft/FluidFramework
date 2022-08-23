@@ -113,18 +113,18 @@ export class Client {
      * It is used to get the segment group(s) for the previous operations.
      * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
      */
-    public peekPendingSegmentGroups(count: number = 1) {
-        if (count === 1) {
-            return this._mergeTree.pendingSegments?.last();
+    public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
+        const pending = this._mergeTree.pendingSegments;
+        let node = pending?.last;
+        if (count === 1 || pending === undefined) {
+            return node?.data;
         }
-        let taken = 0;
-        return this._mergeTree.pendingSegments?.some(() => {
-            if (taken < count) {
-                taken++;
-                return true;
-            }
-            return false;
-        }, true);
+        const taken: SegmentGroup[] = new Array(Math.min(count, pending.length));
+        for (let i = taken.length - 1; i >= 0; i--) {
+            taken[i] = node!.data;
+            node = node!.prev;
+        }
+        return taken;
     }
 
     /**
@@ -738,7 +738,7 @@ export class Client {
         resetOp: IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): IMergeTreeDeltaOp[] {
         assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
-        const NACKedSegmentGroup = this._mergeTree.pendingSegments?.dequeue();
+        const NACKedSegmentGroup = this._mergeTree.pendingSegments?.shift()?.data;
         assert(segmentGroup === NACKedSegmentGroup,
             0x034 /* "Segment group not at head of merge tree pending queue" */);
 
@@ -800,7 +800,7 @@ export class Client {
             if (newOp) {
                 const newSegmentGroup: SegmentGroup = { segments: [], localSeq: segmentGroup.localSeq };
                 segment.segmentGroups.enqueue(newSegmentGroup);
-                this._mergeTree.pendingSegments!.enqueue(newSegmentGroup);
+                this._mergeTree.pendingSegments!.push(newSegmentGroup);
                 opList.push(newOp);
             }
         }
