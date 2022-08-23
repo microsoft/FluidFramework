@@ -1,5 +1,0 @@
-{
-    "tags": [ "forest-proxy" ],
-    "exports": [ "index"],
-    "imports": ["schema","tree","dependency-tracking","forest","util","rebase","feature-libraries"]
-}

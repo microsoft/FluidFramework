@@ -5,9 +5,9 @@
 import { strict as assert } from "assert";
 import { StoredSchemaRepository } from "../../schema-stored";
 import { initializeForest } from "../../forest";
-import { JsonableTree, buildForest, proxifyForest, JsonCursor, jsonableTreeFromCursor, EmptyKey } from "../..";
+import { JsonableTree, buildForest, JsonCursor, jsonableTreeFromCursor, EmptyKey } from "../..";
 import { brand } from "../../util";
-import { defaultSchemaPolicy } from "../../feature-libraries";
+import { defaultSchemaPolicy, getEditableTree } from "../../feature-libraries";
 
 const person: JsonableTree = {
 	type: brand("Test:Person-1.0.0"),
@@ -42,7 +42,7 @@ const buildTestProxy = (data: JsonableTree): any => {
 	const forest = buildForest(schema);
 	initializeForest(forest, [data]);
 
-	const proxy = proxifyForest(forest);
+	const proxy = getEditableTree(forest);
 	return proxy;
 };
 
@@ -85,6 +85,11 @@ describe("forest-proxy", () => {
 		assert.deepEqual(Object.keys(proxy.address), ["street", "zip", "phones"]);
 		assert.equal(proxy.address.street, "treeStreet");
 		assert.equal(proxy.address.phones[1], 123456879);
+		const expectedPhones = ["+49123456778", 123456879];
+		let i = 0;
+		for (const phone of proxy.address.phones) {
+			assert.equal(phone, expectedPhones[i++]);
+		}
 	});
 
 	it("read upwards", () => {
