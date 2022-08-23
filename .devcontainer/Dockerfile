@@ -4,7 +4,7 @@
 # Fluid Development Container based on "docker-from-docker" template:
 # https://github.com/microsoft/vscode-dev-containers/blob/master/containers/docker-from-docker/.devcontainer/Dockerfile
 
-ARG NODE_VERSION=12
+ARG NODE_VERSION=14
 
 # 'node:${VARIANT}' base image includes the following:
 #

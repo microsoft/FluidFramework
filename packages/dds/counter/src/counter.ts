@@ -35,8 +35,7 @@ interface ICounterSnapshotFormat {
 const snapshotFileName = "header";
 
 /**
- * A `SharedCounter` is a shared object which holds a number that can be incremented or decremented.
- * @public
+ * A shared object that holds a number that can be incremented or decremented.
  *
  * @remarks
  * ### Creation
@@ -47,6 +46,10 @@ const snapshotFileName = "header";
  * const factory = SharedCounter.getFactory();
  * const counter = factory.create(this.runtime, id) as SharedCounter;
  * ```
+ *
+ * The initial value of a new `SharedCounter` is 0.
+ * If you wish to initialize the counter to a different value, you may call {@link ISharedCounter.increment} before
+ * attaching the Container, or before inserting it into an existing shared object.
  *
  * ### Usage
  *
@@ -64,6 +67,10 @@ const snapshotFileName = "header";
  *     console.log(`The counter incremented by ${incrementAmount} and now has a value of ${newValue}`);
  * });
  * ```
+ *
+ * Note that SharedCounter only operates on integer values. This is validated at runtime.
+ *
+ * @public
  */
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
     /**

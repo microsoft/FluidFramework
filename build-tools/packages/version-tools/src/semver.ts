@@ -66,6 +66,17 @@ export function incRange(
     }
 }
 
+/**
+ * Detects the type of upgrade constraint that a version range represents. Only works for Fluid internal version scheme
+ * versions.
+ *
+ * @param range - The range to check.
+ * @returns The constraint type.
+ *
+ * @remarks
+ *
+ * Throws an Error if the range is not valid.
+ */
 export function detectConstraintType(range: string): "minor" | "patch" {
     const minVer = semver.minVersion(range);
     if (minVer === null) {

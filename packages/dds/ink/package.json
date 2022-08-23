@@ -80,7 +80,7 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
     "mocha": "^10.0.0",
