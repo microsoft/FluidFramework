@@ -17,7 +17,7 @@ parameters:
 steps:
 - task: Bash@3
   name: PrependPath
-  displayName: Prepend build-tools path to
+  displayName: Prepend build-tools CLI to path
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
@@ -34,11 +34,11 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
+      echo "$PATH"
       pushd "$(Build.SourcesDirectory)/build-tools"
       npm ci
       popd
 
-      echo "$PATH"
       flub
 
 - task: Bash@3
