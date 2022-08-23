@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "./buildVersion";
+import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "./buildVersionLib";
 
 export function test() {
     // Test version with id, no prerelease
