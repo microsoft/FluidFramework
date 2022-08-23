@@ -263,7 +263,7 @@ export interface GenericTreeNode<TChild> extends NodeData {
 }
 
 // @public
-export function getEditableTree(forest: IEditableForest, cursor?: ITreeSubscriptionCursor): IEditableTree;
+export function getEditableTree(forest: IEditableForest): IEditableTree;
 
 // @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {

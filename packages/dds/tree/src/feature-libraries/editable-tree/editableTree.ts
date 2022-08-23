@@ -148,7 +148,7 @@ const handler: ProxyHandler<ObjectEditableTree> = {
 };
 
 function proxify(forest: IEditableForest, cursor?: ITreeSubscriptionCursor): IEditableTree {
-	// A TargetForest constructor unconditionally allocates a new cursor or forks the one if exists.
+	// An ObjectEditableTree constructor unconditionally allocates a new cursor or forks the one if exists.
 	// Keep in mind that they must be cleared at some point (e.g. before writing to the forest).
 	// It does not modify the cursor.
 	const target = new ObjectEditableTree(forest, cursor);
@@ -166,9 +166,8 @@ function proxify(forest: IEditableForest, cursor?: ITreeSubscriptionCursor): IEd
 /**
  * Proxify a Forest to showcase basic interaction scenarios.
  * This function forwards Forest to be proxified to minimize exported signature.
- * It is the only package level export for forestProxy.
- * @returns a proxy wrapping the given {@link IEditableForest}.
+ * @returns {@link IEditableTree} a proxy wrapping the given {@link IEditableForest}.
  */
-export function getEditableTree(forest: IEditableForest, cursor?: ITreeSubscriptionCursor): IEditableTree {
-	return proxify(forest, cursor);
+export function getEditableTree(forest: IEditableForest): IEditableTree {
+	return proxify(forest);
 }
