@@ -19,6 +19,10 @@ if (logger === undefined) {
 
 const filesToProcess: string[] = [];
 
+// The tool expects paths with files to be processed to be passed as arguments when invoking it, e.g.
+//   node dist/index.js /my/first/path/ /another/path/
+// The first two entries in process.argv are the executable (node) and the executed file (dist/index.js);
+// skip those two.
 const dirs = process.argv.slice(2);
 
 while (dirs.length > 0) {
