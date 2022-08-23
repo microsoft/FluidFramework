@@ -82,7 +82,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @param id - optional name of the shared counter
      * @returns newly create shared counter (but not attached yet)
      */
-    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter {
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
     }
 
@@ -104,14 +104,14 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     /**
      * {@inheritDoc ISharedCounter.value}
      */
-    public get value() {
+    public get value(): number {
         return this._value;
     }
 
     /**
      * {@inheritDoc ISharedCounter.increment}
      */
-    public increment(incrementAmount: number) {
+    public increment(incrementAmount: number): void {
         // Incrementing by floating point numbers will be eventually inconsistent, since the order in which the
         // increments are applied affects the result.  A more-robust solution would be required to support this.
         if (incrementAmount % 1 !== 0) {
@@ -127,7 +127,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         this.submitLocalMessage(op);
     }
 
-    private incrementCore(incrementAmount: number) {
+    private incrementCore(incrementAmount: number): void {
         this._value += incrementAmount;
         this.emit("incremented", incrementAmount, this._value);
     }
@@ -162,7 +162,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * Called when the object has disconnected from the delta stream.
      * @internal
      */
-    protected onDisconnect() { }
+    protected onDisconnect(): void { }
 
     /**
      * Process a counter operation (op).
@@ -173,7 +173,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * For messages from a remote client, this will be undefined.
      * @internal
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as IIncrementOperation;
 
