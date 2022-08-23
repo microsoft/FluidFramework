@@ -17,7 +17,7 @@ import { CounterFactory } from "./counterFactory";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
 
 /**
- * Describes the op format for incrementing the counter
+ * Describes the operation (op) format for incrementing the counter.
  */
 interface IIncrementOperation {
     type: "increment";
@@ -28,7 +28,9 @@ interface IIncrementOperation {
  * Used in snapshotting.
  */
 interface ICounterSnapshotFormat {
-    // The value of the counter
+    /**
+     * The value of the counter.
+     */
     value: number;
 }
 
@@ -163,7 +165,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     protected onDisconnect() { }
 
     /**
-     * Process a counter operation
+     * Process a counter operation (op).
      *
      * @param message - the message to prepare
      * @param local - whether the message was sent by the local client
@@ -191,6 +193,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @internal
      */
     protected applyStashedOp() {
-        throw new Error("not implemented");
+        throw new Error("Not implemented");
     }
 }
