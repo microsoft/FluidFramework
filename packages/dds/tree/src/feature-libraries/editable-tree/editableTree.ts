@@ -48,10 +48,10 @@ class ObjectEditableTree implements IEditableTree {
 const tryMoveDown = (cursor: ITreeSubscriptionCursor, key: FieldKey):
 	{ result: TreeNavigationResult; isArray: boolean; } => {
 	let result = cursor.down(key, 0);
-	// TODO make better
 	let isArray = !!cursor.length(EmptyKey);
+	// TODO make better
 	if (result === TreeNavigationResult.NotFound) {
-		// maybe an array?
+		// reading an array
 		result = cursor.down(EmptyKey, Number(key));
 	} else {
 		if (isArray && cursor.down(EmptyKey, 0) === TreeNavigationResult.Ok) {
@@ -86,9 +86,10 @@ const handler: ProxyHandler<ObjectEditableTree> = {
 					: target.cursor.value;
 				target.cursor.up();
 				return value;
+			} else if (isArray && key === "length") {
+				return target.cursor.length(EmptyKey);
 			}
 		}
-		// TODO test
 		if (key === Symbol.iterator) {
 			return accessArrayCursor(target.cursor);
 		}
@@ -99,7 +100,6 @@ const handler: ProxyHandler<ObjectEditableTree> = {
 	},
 	has: (target: ObjectEditableTree, key: string | symbol): boolean => {
 		if (typeof key === "symbol") {
-			// TODO test
 			if (key === proxySymbol) {
 				return true;
 			} else if (key === Symbol.iterator) {
@@ -115,6 +115,14 @@ const handler: ProxyHandler<ObjectEditableTree> = {
 		return false;
 	},
 	ownKeys(target: ObjectEditableTree) {
+		const length = target.cursor.length(EmptyKey);
+		if (length) {
+			const dummy: string[] = [];
+			for (let i = 0; i < length; i++) {
+				dummy.push("");
+			}
+			return Object.getOwnPropertyNames(dummy);
+		}
 		return target.cursor.keys as string[];
 	},
 	getOwnPropertyDescriptor(target: ObjectEditableTree, key: string | symbol) {
