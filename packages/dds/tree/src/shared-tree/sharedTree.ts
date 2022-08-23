@@ -30,6 +30,7 @@ import { AnchorSet } from "../tree";
  * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
+ * TODO: expose or implement Checkout.
  */
 export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
     implements Checkout<SequenceEditBuilder, SequenceChangeset> {

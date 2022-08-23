@@ -81,7 +81,7 @@
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "lerna": "^4.0.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",

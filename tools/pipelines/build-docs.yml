@@ -127,6 +127,7 @@ stages:
             echo RELEASE_VERSION: $(RELEASE_VERSION)
             echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
             echo N1_VERSION: $(N1_VERSION)
+            echo HUGO_PARAMS_APPINSIGHTKEY=$(HUGO_PARAMS_APPINSIGHTKEY)
             echo releasePipeline ${{ variables.releasePipeline }}
             echo latestPipeline ${{ variables.latestPipeline }}
             echo n1Pipeline ${{ variables.n1Pipeline }}
