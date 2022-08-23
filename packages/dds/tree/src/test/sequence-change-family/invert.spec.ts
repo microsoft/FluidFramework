@@ -51,11 +51,11 @@ describe("SequenceChangeFamily - Invert", () => {
 
             it("insert => delete", () => {
                 const input = asForest([
-                    [{
+                    {
                         type: "Insert",
                         id: 1,
                         content: [{ type, value: 42 }, { type, value: 43 }],
-                    }],
+                    },
                 ]);
                 const expected = asForest([
                     {
@@ -70,12 +70,12 @@ describe("SequenceChangeFamily - Invert", () => {
 
             it("modified insert => delete", () => {
                 const input = asForest([
-                    [{
+                    {
                         type: "MInsert",
                         id: 1,
                         content: { type, value: 42 },
                         fields: { foo: [{ type: "Modify", value: { id: 1, value: 42 } }] },
-                    }],
+                    },
                 ]);
                 const expected = asForest([
                     {

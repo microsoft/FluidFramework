@@ -6,7 +6,7 @@
 import {
     getInputLength,
     getOutputLength,
-    isAttachGroup,
+    isAttach,
     isDetachMark,
     isGapEffectMark,
     isReattach,
@@ -74,7 +74,7 @@ function composeMarkLists(
             // We have reached a region of the field that the base change does not affect.
             // We therefore adopt the new mark as is.
             factory.push(clone(newMark));
-        } else if (isAttachGroup(newMark)) {
+        } else if (isAttach(newMark)) {
             // Content that is being attached by the new changeset cannot interact with base changes.
             // Note that attach marks from different changesets can only target the same gap if they are concurrent.
             // This method assumes that `newMarkList` is based on `baseMarkList`, so they are not concurrent.
@@ -149,9 +149,6 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
     if (isSkipMark(newMark)) {
         return baseMark;
     }
-    if (isAttachGroup(baseMark)) {
-        return composeWithAttachGroup(baseMark, newMark);
-    }
     const baseType = baseMark.type;
     const newType = newMark.type;
     if (newType === "MDelete" || baseType === "MDelete") {
@@ -160,6 +157,37 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
         fail("TODO: support modifications to deleted subtree");
     }
     switch (baseType) {
+        case "Insert":
+            switch (newType) {
+                case "Modify": {
+                    return {
+                        ...newMark,
+                        type: "MInsert",
+                        id: baseMark.id,
+                        content: baseMark.content[0],
+                    };
+                }
+                case "Delete": {
+                    // The insertion made by the base change is subsequently deleted.
+                    // TODO: preserve the insertions as muted
+                    return 0;
+                }
+                default: fail("Not implemented");
+            }
+        case "MInsert": {
+            switch (newType) {
+                case "Modify": {
+                    updateModifyLike(newMark, baseMark);
+                    return baseMark;
+                }
+                case "Delete": {
+                    // The insertion made by the base change is subsequently deleted.
+                    // TODO: preserve the insertions as muted
+                    return 0;
+                }
+                default: fail("Not implemented");
+            }
+        }
         case "Modify": {
             switch (newType) {
                 case "Modify": {
@@ -194,36 +222,6 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
                 }
                 default: fail("Not implemented");
             }
-        }
-        default: fail("Not implemented");
-    }
-}
-
-function composeWithAttachGroup(baseMark: T.AttachGroup, newMark: T.SizedObjectMark): T.Mark {
-    const newType = newMark.type;
-    switch (newType) {
-        case "Modify": {
-            const attach = baseMark[0];
-            const baseType = attach.type;
-            switch (baseType) {
-                case "Insert":
-                    return [{
-                        ...newMark,
-                        type: "MInsert",
-                        id: attach.id,
-                        content: attach.content[0],
-                    }];
-                case "MInsert": {
-                    updateModifyLike(newMark, attach);
-                    return [attach];
-                }
-                default: fail("Not implemented");
-            }
-        }
-        case "Delete": {
-            // The insertion of the previous change is subsequently deleted.
-            // TODO: preserve the insertion as muted
-            return 0;
         }
         default: fail("Not implemented");
     }

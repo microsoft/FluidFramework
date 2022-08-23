@@ -7,6 +7,7 @@ import { unreachableCase } from "@fluidframework/common-utils";
 import { brand, brandOpaque, clone, fail, OffsetListFactory } from "../util";
 import { FieldKey, Value, Delta } from "../tree";
 import { ProtoNode, Transposed as T } from "./format";
+import { isSkipMark } from "./utils";
 
 /**
  * Converts a Changeset into a Delta.
@@ -23,59 +24,51 @@ export function toDelta(changeset: T.LocalChangeset): Delta.Root {
 function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
     const out = new OffsetListFactory<Delta.Mark>();
     for (const mark of marks) {
-        if (typeof mark === "number") {
+        if (isSkipMark(mark)) {
             out.pushOffset(mark);
-        } else if (Array.isArray(mark)) {
-            for (const attach of mark) {
-                // Inline into `switch(attach.type)` once we upgrade to TS 4.7
-                const type = attach.type;
-                switch (type) {
-                    case "Insert": {
-                        const insertMark: Delta.Insert = {
-                            type: Delta.MarkType.Insert,
-                            content: cloneTreeContent(attach.content),
-                        };
-                        out.pushContent(insertMark);
-                        break;
-                    }
-                    case "MInsert": {
-                        const cloned = cloneAndModify(attach);
-                        if (cloned.fields.size > 0) {
-                            const insertMark: Delta.InsertAndModify = {
-                                type: Delta.MarkType.InsertAndModify,
-                                ...cloned,
-                            };
-                            out.pushContent(insertMark);
-                        } else {
-                            const insertMark: Delta.Insert = {
-                                type: Delta.MarkType.Insert,
-                                content: [cloned.content],
-                            };
-                            out.pushContent(insertMark);
-                        }
-                        break;
-                    }
-                    case "MoveIn": {
-                        const moveMark: Delta.MoveIn = {
-                            type: Delta.MarkType.MoveIn,
-                            moveId: brandOpaque<Delta.MoveId>(attach.id),
-                        };
-                        out.pushContent(moveMark);
-                        break;
-                    }
-                    case "MMoveIn":
-                        fail(ERR_NOT_IMPLEMENTED);
-                    case "Bounce":
-                    case "Intake":
-                        // These have no impacts on the document state.
-                        break;
-                    default: unreachableCase(type);
-                }
-            }
         } else {
             // Inline into `switch(mark.type)` once we upgrade to TS 4.7
             const type = mark.type;
             switch (type) {
+                case "Insert": {
+                    const insertMark: Delta.Insert = {
+                        type: Delta.MarkType.Insert,
+                        content: cloneTreeContent(mark.content),
+                    };
+                    out.pushContent(insertMark);
+                    break;
+                }
+                case "MInsert": {
+                    const cloned = cloneAndModify(mark);
+                    if (cloned.fields.size > 0) {
+                        const insertMark: Delta.InsertAndModify = {
+                            type: Delta.MarkType.InsertAndModify,
+                            ...cloned,
+                        };
+                        out.pushContent(insertMark);
+                    } else {
+                        const insertMark: Delta.Insert = {
+                            type: Delta.MarkType.Insert,
+                            content: [cloned.content],
+                        };
+                        out.pushContent(insertMark);
+                    }
+                    break;
+                }
+                case "MoveIn": {
+                    const moveMark: Delta.MoveIn = {
+                        type: Delta.MarkType.MoveIn,
+                        moveId: brandOpaque<Delta.MoveId>(mark.id),
+                    };
+                    out.pushContent(moveMark);
+                    break;
+                }
+                case "MMoveIn":
+                    fail(ERR_NOT_IMPLEMENTED);
+                case "Bounce":
+                case "Intake":
+                    // These have no impacts on the document state.
+                    break;
                 case "Modify": {
                     if (mark.tomb === undefined) {
                         out.pushContent({
@@ -213,48 +206,40 @@ function applyOrCollectModifications(
             const outMarks = new OffsetListFactory<InsertedFieldsMark>();
             let index = 0;
             for (const mark of modifyFields[key]) {
-                if (typeof mark === "number") {
+                if (isSkipMark(mark)) {
                     index += mark;
                     outMarks.pushOffset(mark);
-                } else if (Array.isArray(mark)) {
-                    for (const attach of mark) {
-                        // Inline into `switch(attach.type)` once we upgrade to TS 4.7
-                        const type = attach.type;
-                        switch (type) {
-                            case "Insert": {
-                                const content = cloneTreeContent(attach.content);
-                                outNodes.splice(index, 0, ...content);
-                                index += content.length;
-                                outMarks.pushOffset(content.length);
-                                break;
-                            }
-                            case "MInsert": {
-                                const cloned = cloneAndModify(attach);
-                                if (cloned.fields.size > 0) {
-                                    outMarks.pushContent({
-                                        type: Delta.MarkType.Modify,
-                                        fields: cloned.fields,
-                                    });
-                                }
-                                outNodes.splice(index, 0, cloned.content);
-                                index += 1;
-                                break;
-                            }
-                            case "MoveIn":
-                            case "MMoveIn":
-                                // TODO: convert into a Delta.MoveIn/MoveInAndModify
-                                fail(ERR_NOT_IMPLEMENTED);
-                            case "Bounce":
-                                fail(ERR_BOUNCE_ON_INSERT);
-                            case "Intake":
-                                fail(ERR_INTAKE_ON_INSERT);
-                            default: unreachableCase(type);
-                        }
-                    }
                 } else {
                     // Inline into `switch(mark.type)` once we upgrade to TS 4.7
                     const type = mark.type;
                     switch (type) {
+                        case "Insert": {
+                            const content = cloneTreeContent(mark.content);
+                            outNodes.splice(index, 0, ...content);
+                            index += content.length;
+                            outMarks.pushOffset(content.length);
+                            break;
+                        }
+                        case "MInsert": {
+                            const cloned = cloneAndModify(mark);
+                            if (cloned.fields.size > 0) {
+                                outMarks.pushContent({
+                                    type: Delta.MarkType.Modify,
+                                    fields: cloned.fields,
+                                });
+                            }
+                            outNodes.splice(index, 0, cloned.content);
+                            index += 1;
+                            break;
+                        }
+                        case "MoveIn":
+                        case "MMoveIn":
+                            // TODO: convert into a Delta.MoveIn/MoveInAndModify
+                            fail(ERR_NOT_IMPLEMENTED);
+                        case "Bounce":
+                            fail(ERR_BOUNCE_ON_INSERT);
+                        case "Intake":
+                            fail(ERR_INTAKE_ON_INSERT);
                         case "Modify": {
                             if ("tomb" in mark) {
                                 continue;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetTag, isAttachGroup, isSkipMark, OpId, Transposed as T } from "../../changeset";
+import { ChangesetTag, isSkipMark, OpId, Transposed as T } from "../../changeset";
 import { fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
@@ -63,25 +63,16 @@ function invertMarkList(markList: T.MarkList, opIdToTag: IdToTagLookup): T.MarkL
 function invertMark(mark: T.Mark, opIdToTag: IdToTagLookup): T.Mark[] {
     if (isSkipMark(mark)) {
         return [mark];
-    } else if (isAttachGroup(mark)) {
-        const inverseMarks: T.Mark[] = [];
-        for (const attach of mark) {
-            switch (attach.type) {
-                case "Insert":
-                case "MInsert": {
-                    inverseMarks.push({
-                        type: "Delete",
-                        id: attach.id,
-                        count: attach.type === "Insert" ? attach.content.length : 1,
-                    });
-                    break;
-                }
-                default: fail("Not implemented");
-            }
-        }
-        return inverseMarks;
     } else {
         switch (mark.type) {
+            case "Insert":
+            case "MInsert": {
+                return [{
+                    type: "Delete",
+                    id: mark.id,
+                    count: mark.type === "Insert" ? mark.content.length : 1,
+                }];
+            }
             case "Delete": {
                 return [{
                     type: "Revive",

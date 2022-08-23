@@ -52,11 +52,11 @@ export namespace Transposed {
 
 	export type Mark =
 		| SizedMark
-		| AttachGroup;
+		| Attach;
 
 	export type ObjectMark =
 		| SizedObjectMark
-		| AttachGroup;
+		| Attach;
 
 	export type SizedMark =
 		| Skip
@@ -70,8 +70,6 @@ export namespace Transposed {
 		| ModifyReattach
 		| ModifyDetach
 		| GapEffectSegment;
-
-	export type AttachGroup = Attach[];
 
 	export interface Tomb {
 		type: "Tomb";
