@@ -8,10 +8,15 @@ import { TreeSchemaIdentifier } from "../../schema-stored";
 
 export const proxySymbol = Symbol.for("editable-tree");
 
-export interface IEditableTree {
-	get type(): TreeSchemaIdentifier;
-}
+/**
+ * A dummy placeholder for a Proxy target.
+ */ 
+export interface IEditableTree {}
 
+/**
+ * ObjectEditableTree is a Proxy target.
+ * It holds an instance of an allocated Cursor and its child nodes to traverse the Forest.
+ */
 class ObjectEditableTree implements IEditableTree {
 	public readonly cursor: ITreeSubscriptionCursor;
 	private readonly _children: Map<string, IEditableTree>;
@@ -76,6 +81,9 @@ function accessArrayCursor(cursor: ITreeSubscriptionCursor) {
 	};
 }
 
+/**
+ * A Proxy handler provides a basic read/write access to the Forest by means of the cursors.
+ */
 const handler: ProxyHandler<ObjectEditableTree> = {
 	get: (target: ObjectEditableTree, key: string | symbol): any => {
 		if (typeof key === "string") {
