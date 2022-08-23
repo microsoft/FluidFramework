@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "./buildVersionLib";
+import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "./buildVersion";
 
 export function test() {
     // Test version with id, no prerelease
@@ -66,30 +66,6 @@ export function test() {
     assert.equal(getIsLatest("client", "0.59.4001-1234", test_tags), false);
     assert.equal(getIsLatest("client", "0.60.3000-1234", test_tags), false);
     assert.equal(getIsLatest("client", "0.60.3000", test_tags), true);
-
-    // Add a Fluid internal release version
-    // Deliberately not sorted here; highest version is 0.59.3000
-    const post1_tags = [
-        "client_v1.0.0",
-        "client_v1.2.3",
-        "client_v1.2.3-63294",
-        "client_v2.0.0-internal.1.0.0",
-        "client_v2.0.0-internal.1.0.0.12345",
-        "client_v0.59.1000",
-        "client_v0.59.3000-67119",
-        "client_v0.59.3000",
-        "client_v0.59.2001",
-        "client_v0.59.3000-66610",
-        "client_v0.59.2000",
-        "client_v0.59.1001",
-    ];
-
-    // test_tags.push("client_v2.0.0-internal.1.0.0", "client_v0.60.3000");
-    assert.equal(getIsLatest("client", "0.59.4000", post1_tags), false);
-    assert.equal(getIsLatest("client", "0.59.3001", post1_tags), false);
-    assert.equal(getIsLatest("client", "2.0.0-internal.1.0.0", post1_tags), true);
-    assert.equal(getIsLatest("client", "2.0.0-internal.1.0.0.12345", post1_tags), false);
-    assert.equal(getIsLatest("client", "1.2.3", post1_tags), true);
 
     console.log("Test passed!");
 }
