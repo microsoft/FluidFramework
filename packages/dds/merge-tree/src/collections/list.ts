@@ -20,10 +20,9 @@ export interface ListNodeRange<T> {
 class HeadNode<T> {
     public _next: HeadNode<T> | DataNode<T> = this;
     public _prev: HeadNode<T> | DataNode<T> = this;
-    public headNode: HeadNode<T>;
+    public headNode: HeadNode<T> = this;
     private readonly _list?: List<T>;
     constructor(list: List<T> | undefined) {
-        this.headNode = this;
         if (list) {
             this._list = list;
         }

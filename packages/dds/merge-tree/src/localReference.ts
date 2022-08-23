@@ -279,8 +279,9 @@ export class LocalReferenceCollection {
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         if (this.has(lref)) {
             assertLocalReferences(lref);
-            lref.getListNode()?.list?.remove(
-                lref.getListNode());
+
+            const node = lref.getListNode();
+            node?.list?.remove(node);
 
             lref.link(
                 lref.getSegment(),

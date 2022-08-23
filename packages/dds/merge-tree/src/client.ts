@@ -114,14 +114,15 @@ export class Client {
      * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
      */
     public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
-        let node = this._mergeTree.pendingSegments?.last;
-        if (count === 1) {
+        const pending = this._mergeTree.pendingSegments;
+        let node = pending?.last;
+        if (count === 1 || pending === undefined) {
             return node?.data;
         }
-        const taken: SegmentGroup[] = [];
-        while (taken.length < count && node) {
-            taken.unshift(node.data);
-            node = node.prev;
+        const taken: SegmentGroup[] = new Array(Math.min(count, pending.length));
+        for (let i = taken.length - 1; i >= 0; i--) {
+            taken[i] = node!.data;
+            node = node!.prev;
         }
         return taken;
     }
