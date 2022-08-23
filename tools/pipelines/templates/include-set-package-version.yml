@@ -26,13 +26,11 @@ steps:
       npm ci
       popd
 
-      npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
+      echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
 
-      echo "##vso[task.setvariable variable=path]$(PATH):$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
-
-      prefix=$(npm config get prefix)
-      echo $prefix
-      ln -s "$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin/run" "$(prefix)/bin/flub"
+      # prefix=$(npm config get prefix)
+      # echo $prefix
+      # ln -s "$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin/run" "$(prefix)/bin/flub"
 
       flub help
 
