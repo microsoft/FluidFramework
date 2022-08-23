@@ -1,7 +1,9 @@
+import { makeRandom } from "./random";
 import { IRandom } from "./types";
 
 abstract class MarkovChain {
-    protected static readonly MARKOV_SENTENCE_BEGIN_KEY = "MARKOV_SENTENCE_BEGIN_KEY_01$#@%^#";
+    public static readonly MARKOV_SENTENCE_BEGIN_KEY = "MARKOV_SENTENCE_BEGIN_KEY_01$#@%^#";
+    public static readonly MARKOV_SENTENCE_END_KEY = "MARKOV_SENTENCE_END_KEY_01$#@%^#";
     public abstract initialize(predicitionPoints: string[][]): void;
     public abstract generateSentence(...args: any): string;
 
@@ -51,7 +53,7 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
     readonly chain: Record<string, Record<string, number>>;
     readonly random: IRandom;
 
-    constructor(random: IRandom, chain?: Record<string, Record<string, number>>) {
+    constructor(random: IRandom = makeRandom(1), chain?: Record<string, Record<string, number>>) {
         super();
         if (chain) {
             this.chain = chain;
@@ -69,10 +71,15 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
     public initialize(sentences: string[][]) {
         sentences.forEach((sentence) => {
             let prevWord: string | null = null;
-            sentence.forEach((word) => {
+            for (let i = 0; i < sentence.length; i++) {
+                const word = sentence[i];
+                if (this.chain[word] === undefined) {
+                    this.chain[word] = {};
+                }
+
                 // This case will occur at the beginning of a sentence which is why the given word is added to the
                 // MARKOV_SENTENCE_BEGIN_KEY within the markov chain.
-                if (prevWord === null) {
+                if (i === 0) {
                     prevWord = word;
                     const markovChainRoot = this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY];
                     if (markovChainRoot !== undefined) {
@@ -83,15 +90,17 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
                             markovChainRoot[word] = 1;
                         }
                     } else {
-                        this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] = {};
+                        this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] = { [word]: 1 };
                     }
-                }
+                } else if (prevWord !== null) {
+                    if (i === sentence.length - 1) {
+                        if (this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] !== undefined) {
+                            this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] += 1;
+                        } else {
+                            this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] = 1;
+                        }
+                    }
 
-                if (this.chain[word] === undefined) {
-                    this.chain[word] = {};
-                }
-
-                if (word !== prevWord) {
                     const currentWordCount = this.chain[prevWord][word];
                     if (currentWordCount !== undefined) {
                         this.chain[prevWord][word] = currentWordCount + 1;
@@ -100,7 +109,16 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
                     }
                     prevWord = word;
                 }
-            });
+            }
+
+            if (sentence.length === 1) {
+                const word = sentence[0];
+                if (this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] !== undefined) {
+                    this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] += 1;
+                } else {
+                    this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] = 1;
+                }
+            }
         });
     }
 
@@ -123,18 +141,30 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
 
         sentence += rootWord;
         let currWord = rootWord;
-        let lastKnownSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
+        let currWordSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
+        let prevWordSpacing = currWordSpacing;
         let nextWordChoices = markovChain[currWord];
         while (sentence.length < maxLength && Object.keys(nextWordChoices).length !== 0) {
+            prevWordSpacing = currWordSpacing;
             currWord = this.randomlySelectWord(nextWordChoices);
-            if (lastKnownSpacing === "NO_SPACES") {
+            if (currWord === MarkovChain.MARKOV_SENTENCE_END_KEY) {
+                break;
+            }
+            currWordSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
+
+            if (currWordSpacing === "UNKNOWN") {
+                if (prevWordSpacing === "NO_SPACES") {
+                    sentence += `${currWord}`;
+                } else {
+                    sentence += ` ${currWord}`;
+                }
+            } else if (currWordSpacing === "NO_SPACES") {
                 sentence += `${currWord}`;
-            } else {
+            } else if (currWordSpacing === "SPACED") {
                 sentence += ` ${currWord}`;
             }
 
             nextWordChoices = markovChain[currWord];
-            lastKnownSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
         }
 
         return sentence;
@@ -155,7 +185,7 @@ export class PerformanceMarkovChain extends MarkovChain {
     readonly chain: Record<string, string[]>;
     readonly random: IRandom;
 
-    constructor(random: IRandom, chain?: Record<string, string[]>) {
+    constructor(random: IRandom = makeRandom(1), chain?: Record<string, string[]>) {
         super();
         if (chain) {
             this.chain = chain;
@@ -172,26 +202,34 @@ export class PerformanceMarkovChain extends MarkovChain {
     public initialize(sentences: string[][]) {
         sentences.forEach((sentence) => {
             let prevWord: string | null = null;
-            sentence.forEach((word) => {
-                if (prevWord === null) {
-                    prevWord = word;
-                    const rootWords = this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY];
-                    if (rootWords !== undefined) {
-                        rootWords.push(word);
-                    } else {
-                        this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] = [];
-                    }
-                }
-
+            for (let i = 0; i < sentence.length; i++) {
+                const word = sentence[i];
                 if (this.chain[word] === undefined) {
                     this.chain[word] = [];
                 }
-
-                if (word !== prevWord) {
+                // This case will occur at the beginning of a sentence which is why the given word is added to the
+                // MARKOV_SENTENCE_BEGIN_KEY within the markov chain.
+                if (i === 0) {
+                    prevWord = word;
+                    const markovChainRoot = this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY];
+                    if (markovChainRoot !== undefined) {
+                        markovChainRoot.push(word);
+                    } else {
+                        this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] = [word];
+                    }
+                } else if (prevWord !== null) {
+                    if (i === sentence.length - 1) {
+                        this.chain[word].push(MarkovChain.MARKOV_SENTENCE_END_KEY);
+                    }
                     this.chain[prevWord].push(word);
                     prevWord = word;
                 }
-            });
+            }
+
+            if (sentence.length === 1) {
+                const word = sentence[0];
+                this.chain[word].push(MarkovChain.MARKOV_SENTENCE_END_KEY);
+            }
         });
 
         return this.chain;
@@ -215,17 +253,29 @@ export class PerformanceMarkovChain extends MarkovChain {
         const rootWord = rootWordChoices[this.random.integer(0, rootWordChoices.length - 1)];
         sentence += rootWord;
         let currWord = rootWord;
-        let lastKnownSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
+        let currWordSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
+        let prevWordSpacing = currWordSpacing;
+        // let lastKnownSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
         let nextWordChoices = this.chain[currWord];
         while (sentence.length < maxLength && nextWordChoices.length !== 0) {
+            prevWordSpacing = currWordSpacing;
             currWord = nextWordChoices[Math.floor(this.random.integer(0, nextWordChoices.length - 1))];
-            if (lastKnownSpacing === "NO_SPACES") {
+            if (currWord === MarkovChain.MARKOV_SENTENCE_END_KEY) {
+                break;
+            }
+            currWordSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
+            if (currWordSpacing === "UNKNOWN") {
+                if (prevWordSpacing === "NO_SPACES") {
+                    sentence += `${currWord}`;
+                } else {
+                    sentence += ` ${currWord}`;
+                }
+            } else if (currWordSpacing === "NO_SPACES") {
                 sentence += `${currWord}`;
-            } else {
+            } else if (currWordSpacing === "SPACED") {
                 sentence += ` ${currWord}`;
             }
             nextWordChoices = this.chain[currWord];
-            lastKnownSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
         }
 
         return sentence;

@@ -281,7 +281,7 @@ function generateTwitterStatus(type: "standard" | "retweet", random: IRandom,
         created_at: getRandomDateString(random, new Date("2005-01-01"), new Date("2022-01-01")),
         id: Number(statusIdString),
         id_str: `${statusIdString}`,
-        text: textFieldMarkovChain.generateSentence(123), // average length the original json text field is 123
+        text: textFieldMarkovChain.generateSentence(144), // average length the original json text field is 123
         // source can have unicode nested in it
         source: `<a href=\"https://twitter.com/${twitterUser.screen_name}\" rel=\"nofollow\">
          ${random.string(random.integer(2, 30), alphabet)}</a>`,
@@ -420,7 +420,7 @@ function generateTwitterUser(random: IRandom, userDescFieldMarkovChain: SpaceEff
         // screen names do not include unicode characters
         screen_name: getRandomEnglishString(random, false, 6, 30),
         location: "",
-        description: userDescFieldMarkovChain.generateSentence(75),
+        description: userDescFieldMarkovChain.generateSentence(144),
         url: null,
         entities: {
             // This always appears on a user, even if its empty.
@@ -561,9 +561,11 @@ export function isJapaneseSymbolOrPunctuation(ch: string) {
 }
 
 /**
+ * This method creates an array of sentences where a sentence is an array of words. Its intended use is with creating a
+ * markovChain. (See the MarkovChain class).
+ *
  * Japanese is not space separated but individual characters are counted as words here words.
  * We count a series of english charaters, numbers, symbols or escape characters without spaces in between as a word.
- *
  * 1. we will first space separate the text,
  * 2. we will iterate over each character in each space separated word.
  * 2a. If the char is a Japanese it will be counted as a complete word.
