@@ -104,6 +104,7 @@ USAGE
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
 * [`flub commands`](#flub-commands)
+* [`flub generate buildVersion [FILE]`](#flub-generate-buildversion-file)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
@@ -208,6 +209,36 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.0/src/commands/commands.ts)_
+
+## `flub generate buildVersion [FILE]`
+
+This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
+
+```
+USAGE
+  $ flub generate buildVersion [FILE] --build <value> [--testBuild] [--release release] [--patch] [--base <value>] [--tag
+    <value>] [-i] [--test] [-v]
+
+FLAGS
+  -i, --includeInternalVersions  Include Fluid internal versions.
+  -v, --verbose                  Verbose logging.
+  --base=<value>                 The base version. This will be read from lerna.json/package.json if not provided.
+  --build=<value>                (required) The CI build number.
+  --patch                        Indicates the build is a patch build.
+  --release=<option>             Indicates the build is a release build.
+                                 <options: release>
+  --tag=<value>                  The tag name to use.
+  --test
+  --testBuild                    Indicates the build is a test build.
+
+DESCRIPTION
+  This command is used to compute the version number of Fluid packages. The release version number is based on what's in
+  the lerna.json/package.json. The CI will supply the build number and branch to determine the prerelease suffix if it
+  is not a tagged build
+
+EXAMPLES
+  $ flub generate buildVersion
+```
 
 ## `flub generate packageJson`
 

@@ -5,7 +5,7 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "types": ["node"],
-    "noUnusedLocals": false
+    "noUnusedLocals": false,
   },
   "include": ["src/**/*"],
   "exclude": ["src/test/**/*"],

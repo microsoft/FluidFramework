@@ -24,16 +24,15 @@ steps:
     script: |
       pushd "$(Build.SourcesDirectory)/build-tools"
       npm ci
+      npm run build:full
       popd
-      npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
 
-      echo "##vso[task.setvariable variable=path]$(PATH):$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
+      pushd "$(Build.SourcesDirectory)/build-tools/packages/build-cli"
+      filename=$(npm pack --dry-run --json | jq '.[0].filename')
+      echo $filename
+      npm pack
 
-      prefix=$(npm config get prefix)
-      echo $prefix
-      # ln -s "$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin/run" "$(prefix)/bin/flub"
-
-      flub
+      npm install --global $filename
 
 - task: Bash@3
   name: SetVersion
