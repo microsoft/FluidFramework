@@ -5,3 +5,4 @@
 
 export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 export const OdcFileSiteOrigin = "https://1drv.ms";
+export const RaasApiSiteOrigin = "https://home.microsoftpersonalcontent.com";
