@@ -26,13 +26,13 @@ steps:
       npm ci
       popd
 
+      # Prepend the cli bin dir to the path. See
+      # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
+      # more information.
       echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
 
-      # prefix=$(npm config get prefix)
-      # echo $prefix
-      # ln -s "$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin/run" "$(prefix)/bin/flub"
-
-      flub help
+      echo "$PATH"
+      which flub
 
 - task: Bash@3
   name: SetVersion
