@@ -1552,9 +1552,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             this.pendingSubDirectories.set(op.subdirName, [newMessageId]);
         }
         if (op.type === "deleteSubDirectory") {
-            const count = this.pendingDeleteSubDirectoriesCount.get(op.subdirName);
-            this.pendingDeleteSubDirectoriesCount.set(op.subdirName,
-                count !== undefined ? count + 1 : 1);
+            const count = this.pendingDeleteSubDirectoriesCount.get(op.subdirName) ?? 0;
+            this.pendingDeleteSubDirectoriesCount.set(op.subdirName, count + 1);
         }
         return newMessageId;
     }
