@@ -34,7 +34,6 @@ trigger:
     include:
     - common/build/build-common
     - tools/pipelines/build-build-common.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -54,7 +53,6 @@ pr:
     include:
     - common/build/build-common
     - tools/pipelines/build-build-common.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml

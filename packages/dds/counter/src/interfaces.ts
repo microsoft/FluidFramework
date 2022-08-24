@@ -36,7 +36,7 @@ export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     /**
      * Increments or decrements the value.  Must only increment or decrement by a whole number value.
      *
-     * @param incrementAmount - a whole number to increment or decrement by.
+     * @param incrementAmount - A whole number to increment or decrement by.
      */
     increment(incrementAmount: number): void;
 }

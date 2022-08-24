@@ -33,7 +33,8 @@
     "postpack": "cd dist && tar -cvf ../sequence.test-files.tar ./test",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:mocha": "mocha --recursive dist/test/**/*.spec.js -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test:memory": "mocha --config src/test/memory/.mocharc.js",
+    "test:mocha": "mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
     "test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true npm run test:mocha",
@@ -80,6 +81,7 @@
   "devDependencies": {
     "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluid-internal/test-dds-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluid-tools/benchmark": "^0.42.0",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.3.1000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
