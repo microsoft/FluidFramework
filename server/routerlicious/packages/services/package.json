@@ -60,7 +60,7 @@
     "@fluidframework/server-services-telemetry": "^0.1037.2000",
     "@fluidframework/server-services-utils": "^0.1037.2000",
     "@socket.io/redis-emitter": "^4.1.0",
-    "amqplib": "^0.8.0",
+    "amqplib": "^0.10.2",
     "axios": "^0.26.0",
     "debug": "^4.1.1",
     "ioredis": "^4.24.2",

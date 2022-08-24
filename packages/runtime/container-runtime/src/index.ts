@@ -18,7 +18,6 @@ export {
     isRuntimeMessage,
     RuntimeMessage,
     unpackRuntimeMessage,
-    ScheduleManager,
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
@@ -40,6 +39,7 @@ export {
     IPendingMessage,
     IPendingState,
 } from "./pendingStateManager";
+export { ScheduleManager } from "./scheduleManager";
 export { Summarizer } from "./summarizer";
 export {
     EnqueueSummarizeResult,

@@ -15,6 +15,7 @@ import {
 } from "./constants";
 import {
      LocalReferenceCollection,
+     LocalReferencePosition,
 } from "./localReference";
 import { MergeTree } from "./mergeTree";
 import {
@@ -118,6 +119,10 @@ export interface IHierBlock extends IMergeBlock {
  * Contains removal information associated to an {@link ISegment}.
  */
 export interface IRemovalInfo {
+    /**
+     * Local seq at which this segment was removed, if the removal is yet-to-be acked.
+     */
+    localRemovedSeq?: number;
     /**
      * Seq at which this segment was removed.
      */
@@ -307,6 +312,7 @@ export interface MergeTreeStats {
 export interface SegmentGroup {
     segments: ISegment[];
     previousProps?: PropertySet[];
+    removedReferences?: LocalReferencePosition[];
     localSeq: number;
 }
 
@@ -486,7 +492,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 leafSegment.parent = this.parent;
 
                 // Give the leaf a temporary yet valid ordinal.
-                // when this segment is put in the tree, it will get it's real ordinal,
+                // when this segment is put in the tree, it will get its real ordinal,
                 // but this ordinal meets all the necessary invariants for now.
                 leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 

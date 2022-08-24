@@ -387,8 +387,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.
-     * @param clientId - ID of the client. It's old ID when in disconnected state and
-     * it's new client ID when we are connecting or connected.
+     * @param clientId - ID of the client. Its old ID when in disconnected state and
+     * its new client ID when we are connecting or connected.
      */
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
