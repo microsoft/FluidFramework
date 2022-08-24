@@ -52,15 +52,15 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         "Checks that the dependencies between Fluid Framework packages are following policies.";
 
     static flags = {
-        resolve: Flags.boolean({
-            description: `Resolve errors if possible`,
+        fix: Flags.boolean({
+            description: `Fix errors if possible`,
             required: false,
-            char: "h",
+            char: "f",
         }),
         handler: Flags.string({
             description: `Filter handler names by <regex>`,
             required: false,
-            char: "h",
+            char: "d",
         }),
         path: Flags.string({
             description: `Filter file paths by <regex>`,
@@ -70,13 +70,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         stdin: Flags.boolean({
             description: `Get file from stdin`,
             required: false,
-            char: "s",
         }),
         ...BaseCommand.flags,
     };
 
     async run() {
-        const { flags } = await this.parse(CheckPolicy);
+        const flags = this.processedFlags;
         const exclusions: RegExp[] = require("../../data/exclusions.json").map(
             (e: string) => new RegExp(e, "i"),
         );
