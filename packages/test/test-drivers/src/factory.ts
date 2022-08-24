@@ -4,7 +4,6 @@
  */
 
 import http from "http";
-import Agent from "agentkeepalive";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "./localServerTestDriver";
@@ -37,7 +36,7 @@ function patchHttpRequestToForceKeepAlive() {
 
     httpRequestPatched = true;
 
-    const httpAgent = new Agent({ keepAlive: true, freeSocketTimeout: 4000 });
+    const httpAgent = new http.Agent({ keepAlive: true, scheduling: "fifo" });
     const oldRequest = http.request;
     http.request = ((url, options, callback) => {
         // There are two variant of the API
