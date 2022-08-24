@@ -182,9 +182,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             for (const h of handlers) {
                 const final = h.final;
                 if (final) {
-                    const result = runWithPerf(h.name, "final", () => {
+                    const result = runWithPerf(h.name, "final", () =>
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         final(pathToGitRoot, flags.fix)
-                    });
+                    );
                     if (result?.error) {
                         this.error(result.error);
                     }
