@@ -75,7 +75,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     };
 
     async run() {
-        const { flags } = await this.parse(CheckPolicy);
+        const flags = this.processedFlags;
         const exclusions: RegExp[] = require("../../data/exclusions.json").map(
             (e: string) => new RegExp(e, "i"),
         );
