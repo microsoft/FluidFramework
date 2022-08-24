@@ -160,6 +160,8 @@ export class SummaryManager implements IDisposable {
         switch (this.state) {
             case SummaryManagerState.Off: {
                 if (shouldSummarizeState.shouldSummarize) {
+                    // eslint-disable-next-line max-len
+                    alert("YOU'VE GOT THE SUMMARIZER!\n\nYou're the only client who will see most alerts when an Inactive Object is used");
                     this.startSummarization();
                 }
                 return;
@@ -171,6 +173,7 @@ export class SummaryManager implements IDisposable {
             }
             case SummaryManagerState.Running: {
                 if (shouldSummarizeState.shouldSummarize === false) {
+                    alert("YOU LOST THE SUMMARIZER!\n\nYou will no longer see most alerts for Inactive Object usage");
                     this.stop(shouldSummarizeState.stopReason);
                 }
                 return;

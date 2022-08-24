@@ -721,6 +721,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private closeCore(error?: ICriticalContainerError) {
         assert(!this.closed, 0x315 /* re-entrancy */);
 
+        if (this.clientDetails.type === summarizerClientType) {
+            alert("SUMMARIZER IS CLOSING");
+        }
         try {
             // Ensure that we raise all key events even if one of these throws
             try {
