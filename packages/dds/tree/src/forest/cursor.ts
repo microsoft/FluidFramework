@@ -37,6 +37,8 @@ export interface ITreeCursor {
      * This can be used to skip to the end of a large number of consecutive pending fields.
      *
      * NOT allowed if mode is `Nodes` and also `pending`.
+     *
+     * TODO: consider splitting out a `firstField` method, or using a foreEachField method instead.
      */
     nextField(skipPending: boolean): boolean;
 
@@ -49,6 +51,8 @@ export interface ITreeCursor {
      * For example, `-1` would seek to the last node and `1` would seek to the first.
      *
      * NOT allowed if mode is `Fields` and also `pending`.
+     *
+     * TODO: consider splitting out a `firstNode` method, or using a foreEachNode method instead.
      */
     seek(offset: number): boolean;
 
