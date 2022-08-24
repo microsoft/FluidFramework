@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
-import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
-import { PackageName } from "@rushstack/node-core-library";
+import { ApiItem, ApiItemKind, ApiPackage } from "@microsoft/api-extractor-model";
 
-import { getQualifiedApiItemName } from "./utilities";
+import { getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
 
 // TODOs:
 // - use `kind` not `type` (and link to ApiModel docs)
@@ -200,7 +199,7 @@ export namespace DefaultPolicies {
                 return "index";
             case ApiItemKind.Package:
                 return Utilities.getSafeFilenameForName(
-                    PackageName.getUnscopedName(apiItem.displayName),
+                    getUnscopedPackageName(apiItem as ApiPackage),
                 );
             default:
                 return getQualifiedApiItemName(apiItem);

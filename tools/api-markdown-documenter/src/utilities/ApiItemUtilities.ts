@@ -22,6 +22,7 @@ import {
     ApiStaticMixin,
 } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
+import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
 
 import { Heading } from "../Heading";
@@ -164,6 +165,15 @@ export function getLinkUrlForApiItem(
     }
 
     return `${uriBase}/${documentPath}${headingPostfix}`;
+}
+
+/**
+ * Gets the unscoped version of the provided package's name.
+ *
+ * @example For the package `@foo/bar`, this would return `bar`.
+ */
+export function getUnscopedPackageName(apiPackage: ApiPackage): string {
+    return PackageName.getUnscopedName(apiPackage.displayName);
 }
 
 /**
