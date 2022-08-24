@@ -14,10 +14,6 @@ const fs = require("fs-extra");
 const path = require("path");
 const os = require("os");
 
-
-// TODOs:
-// - Filter packages we generate docs for
-
 const apiReportsDirectoryPath = path.resolve(__dirname, "_api-extractor-temp", "_build");
 const apiDocsDirectoryPath = path.resolve(__dirname, "content", "docs", "apis");
 
