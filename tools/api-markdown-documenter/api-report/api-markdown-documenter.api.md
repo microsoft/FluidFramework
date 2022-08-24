@@ -80,6 +80,7 @@ interface ChildSectionProperties {
 export namespace DefaultPolicies {
     const defaultDocumentBoundaries: ApiItemKind[];
     const defaultHierarchyBoundaries: ApiItemKind[];
+    export function defaultFileNamePolicy(apiItem: ApiItem): string;
     export function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
     export function defaultLinkTextPolicy(apiItem: ApiItem): string;
     export function defaultUriBaseOverridePolicy(): string | undefined;
@@ -169,6 +170,9 @@ export interface EmitterOptions extends IMarkdownEmitterOptions {
     getLinkUrlApiItem: (apiItem: ApiItem) => string | undefined;
     headingLevel?: number;
 }
+
+// @public
+export type FileNamePolicy = (apiItem: ApiItem) => string;
 
 // @public
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[];
@@ -310,6 +314,7 @@ export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocC
 // @public
 export interface PolicyOptions {
     documentBoundaries?: DocumentBoundaries;
+    fileNamePolicy?: FileNamePolicy;
     headingTitlePolicy?: HeadingTitlePolicy;
     hierarchyBoundaries?: HierarchyBoundaries;
     includeBreadcrumb?: boolean;
