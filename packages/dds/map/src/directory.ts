@@ -699,7 +699,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
     private shouldProcessMessage(subDir: SubDirectory, msg: ISequencedDocumentMessage) {
         // If the message is either from the creator of directory or this directory was created when
-        // container was detached or in case this directory is already live(known to other clients)
+        // container was detached or in case this directory is already live (known to other clients)
         // and the op was created after the directory was created then apply this op.
         if (subDir.clientIds.includes(msg.clientId) || subDir.clientIds.includes("detached") ||
             (subDir.sequenceNumber !== -1 && subDir.sequenceNumber <= msg.referenceSequenceNumber)) {
