@@ -10,15 +10,7 @@ import * as child_process from "child_process";
 // eslint-disable-next-line unicorn/import-style
 import * as path from "path";
 import { Flags } from "@oclif/core";
-import {
-    copyrightFileHeaderHandlers,
-    npmPackageContentsHandlers,
-    dockerfilePackageHandler,
-    fluidCaseHandler,
-    lockfilesHandlers,
-    assertShortCodeHandler,
-    Handler,
-} from "@fluidframework/build-tools";
+import { handlers } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 
 const readStdin: () => Promise<string | undefined> = async () => {
@@ -67,7 +59,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             description: `Filter exclusions path`,
             required: false,
             char: "e",
-            default: "exclusions.json"
+            default: "exclusions.json",
         }),
         stdin: Flags.boolean({
             description: `Get file from stdin`,
@@ -76,168 +68,54 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         ...BaseCommand.flags,
     };
 
+    static handlerActionPerf = new Map<policyAction, Map<string, number>>();
+    static processed = 0;
+    static count = 0;
+    static pathToGitRoot = "";
+    static exclusions: RegExp[];
+    static handlerRegex: RegExp;
+    static pathRegex: RegExp;
+
     async run() {
         const flags = this.processedFlags;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const exclusions: RegExp[] = require(`../../data/${flags.exclusions}`).map(
+
+        CheckPolicy.handlerRegex =
+            typeof flags.handler === "string" ? new RegExp(flags.handler, "i") : /.?/;
+        CheckPolicy.pathRegex = typeof flags.path === "string" ? new RegExp(flags.path, "i") : /.?/;
+
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
+        CheckPolicy.exclusions = require(`../../data/${flags.exclusions}`).map(
             (e: string) => new RegExp(e, "i"),
         );
-        const handlerRegex =
-            typeof flags.handler === "string" ? new RegExp(flags.handler, "i") : /.?/;
-        const pathRegex = typeof flags.path === "string" ? new RegExp(flags.path, "i") : /.?/;
-        let pathToGitRoot = "";
-        let count = 0;
-        let processed = 0;
-
-        /**
-         * declared file handlers
-         */
-        const handlers: Handler[] = [
-            ...copyrightFileHeaderHandlers,
-            ...npmPackageContentsHandlers,
-            dockerfilePackageHandler,
-            fluidCaseHandler,
-            ...lockfilesHandlers,
-            assertShortCodeHandler,
-        ];
-        const handlerActionPerf = new Map<policyAction, Map<string, number>>();
-
-        const runWithPerf = <T>(
-            name: string,
-            action: policyAction,
-            run: () => T,
-        ): T => {
-            const actionMap = handlerActionPerf.get(action) ?? new Map<string, number>();
-            let dur = actionMap.get(name) ?? 0;
-
-            const start = Date.now();
-            const result = run();
-            dur += Date.now() - start;
-
-            actionMap.set(name, dur);
-            handlerActionPerf.set(action, actionMap);
-            return result;
-        };
-
-        // route files to their handlers by regex testing their full paths
-        // synchronize output, exit code, and resolve decision for all handlers
-        const routeToHandlers = (file: string) => {
-            handlers
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                .filter((handler) => handler.match.test(file) && handlerRegex.test(handler.name))
-                // eslint-disable-next-line array-callback-return
-                .map((handler) => {
-                    const result = runWithPerf(handler.name, "handle", () =>
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                        handler.handler(file, pathToGitRoot),
-                    );
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    if (result) {
-                        let output = `${newline}file failed policy check: ${file}${newline}${result}`;
-                        const resolver = handler.resolver;
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                        if (flags.fix && resolver) {
-                            output += `${newline}attempting to resolve: ${file}`;
-                            const resolveResult = runWithPerf(handler.name, "resolve", () =>
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                                resolver(file, pathToGitRoot),
-                            );
-
-                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                            if (resolveResult.message) {
-                                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-                                output += newline + resolveResult.message;
-                            }
-
-                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                            if (!resolveResult.resolved) {
-                                this.exit(1);
-                            }
-                        } else {
-                            this.exit(1);
-                        }
-
-                        this.log(output);
-                    }
-                });
-        };
-
-        const handleLine = (line: string) => {
-            const filePath = path.join(pathToGitRoot, line).trim().replace(/\\/g, "/");
-
-            if (pathRegex.test(line) && fs.existsSync(filePath)) {
-                count++;
-                if (exclusions.every((value) => !value.test(line))) {
-                    try {
-                        routeToHandlers(filePath);
-                    } finally {
-                        runPolicyCheck();
-                        logStats();
-                    }
-
-                    processed++;
-                } else {
-                    this.log(`Excluded: ${line}`);
-                }
-            }
-        };
-
-        const runPolicyCheck = () => {
-            for (const h of handlers) {
-                const final = h.final;
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                if (final) {
-                    const result = runWithPerf(h.name, "final", () =>
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                        final(pathToGitRoot, flags.fix)
-                    );
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    if (result?.error) {
-                        this.error(result.error);
-                    }
-                }
-            }
-        };
-
-        const logStats = () => {
-            this.log(
-                `Statistics: ${processed} processed, ${count - processed} excluded, ${count} total`,
-            );
-            for (const [action, handlerPerf] of handlerActionPerf.entries()) {
-                this.log(`Performance for "${action}":`);
-                for (const [handler, dur] of handlerPerf.entries()) {
-                    this.log(`\t${handler}: ${dur / 1000}:`);
-                }
-            }
-        };
 
         if (flags.fix) {
             this.log("Resolving errors if possible.");
         }
 
         if (flags.handler !== undefined) {
-            this.log(`Filtering handlers by regex: ${handlerRegex}`);
+            this.log(`Filtering handlers by regex: ${CheckPolicy.handlerRegex}`);
         }
 
         if (flags.path !== undefined) {
-            this.log(`Filtering file paths by regex: ${pathRegex}`);
+            this.log(`Filtering file paths by regex: ${CheckPolicy.pathRegex}`);
         }
 
         if (flags.stdin) {
             const pipeString = await readStdin();
 
             if (pipeString !== undefined) {
-                pipeString.split("\n").map((line: string) => handleLine(line));
-                return;
+                pipeString.split("\n").map((line: string) => this.handleLine(line));
             }
 
-            runPolicyCheck();
-            logStats();
-            return;
+            try {
+                runPolicyCheck(flags.fix);
+            } finally {
+                this.logStats();
+            }
         }
 
         // eslint-disable-next-line camelcase
-        pathToGitRoot = child_process
+        CheckPolicy.pathToGitRoot = child_process
             .execSync("git rev-parse --show-cdup", { encoding: "utf8" })
             .trim();
         // eslint-disable-next-line camelcase
@@ -252,7 +130,123 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             scriptOutput = `${scriptOutput}${data.toString()}`;
         });
         p.stdout.on("close", () => {
-            scriptOutput.split("\n").map((line: string) => handleLine(line));
+            scriptOutput.split("\n").map((line: string) => this.handleLine(line));
         });
+    }
+
+    // route files to their handlers by regex testing their full paths
+    // synchronize output, exit code, and resolve decision for all handlers
+    routeToHandlers(file: string) {
+        const filteredHandlers = handlers
+            .filter(
+                (handler) =>
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-return
+                    handler.match.test(file) && CheckPolicy.handlerRegex.test(handler.name),
+            );
+
+        for (const handler of filteredHandlers) {
+            const result = runWithPerf(handler.name, "handle", () =>
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                handler.handler(file, CheckPolicy.pathToGitRoot),
+            );
+
+            if (result === undefined) {
+                return;
+            }
+
+            let output = `${newline}file failed policy check: ${file}${newline}${result}`;
+            const resolver = handler.resolver;
+
+            if (!this.processedFlags.fix || resolver === undefined) {
+                this.exit(1);
+                return;
+            }
+
+            output += `${newline}attempting to resolve: ${file}`;
+            const resolveResult = runWithPerf(handler.name, "resolve", () =>
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                resolver(file, CheckPolicy.pathToGitRoot),
+            );
+
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            if (resolveResult.message) {
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+                output += newline + resolveResult.message;
+            }
+
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            if (!resolveResult.resolved) {
+                this.exit(1);
+            }
+
+            this.log(output);
+        }
+    }
+
+    logStats() {
+        this.log(
+            `Statistics: ${CheckPolicy.processed} processed, ${
+                CheckPolicy.count - CheckPolicy.processed
+            } excluded, ${CheckPolicy.count} total`,
+        );
+        for (const [action, handlerPerf] of CheckPolicy.handlerActionPerf.entries()) {
+            this.log(`Performance for "${action}":`);
+            for (const [handler, dur] of handlerPerf.entries()) {
+                this.log(`\t${handler}: ${dur / 1000}:`);
+            }
+        }
+    }
+
+    handleLine(line: string) {
+        const filePath = path.join(CheckPolicy.pathToGitRoot, line).trim().replace(/\\/g, "/");
+
+        if (!CheckPolicy.pathRegex.test(line) || !fs.existsSync(filePath)) {
+            return;
+        }
+
+        CheckPolicy.count++;
+        if (CheckPolicy.exclusions.every((value) => !value.test(line))) {
+            this.log(`Excluded: ${line}`);
+            return;
+        }
+
+        try {
+            this.routeToHandlers(filePath);
+            runPolicyCheck(this.processedFlags.fix);
+        } catch {
+            this.logStats();
+        }
+
+        CheckPolicy.processed++;
+    }
+}
+
+function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
+    const actionMap = CheckPolicy.handlerActionPerf.get(action) ?? new Map<string, number>();
+    let dur = actionMap.get(name) ?? 0;
+
+    const start = Date.now();
+    const result = run();
+    dur += Date.now() - start;
+
+    actionMap.set(name, dur);
+    CheckPolicy.handlerActionPerf.set(action, actionMap);
+    return result;
+}
+
+function runPolicyCheck(fix: boolean) {
+    for (const h of handlers) {
+        const final = h.final;
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (final) {
+            const result = runWithPerf(h.name, "final", () =>
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                final(CheckPolicy.pathToGitRoot, fix),
+            );
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            if (result?.error) {
+                throw new Error(result.error);
+            }
+        }
     }
 }
