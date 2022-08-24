@@ -117,7 +117,8 @@ function main() {
     }
 
     if (arg_tag !== undefined) {
-        const includeInternalVersions = (process.env["VERSION_INCLUDE_INTERNAL_VERSIONS"] === "true");
+        const includeInternalVersions = process.env["VERSION_INCLUDE_INTERNAL_VERSIONS"] === "true"
+            || process.env["VERSION_INCLUDE_INTERNAL_VERSIONS"] === "True";
         const isLatest = getIsLatest(arg_tag, version, undefined, includeInternalVersions);
         console.log(`isLatest=${isLatest}`);
         if (arg_release && isLatest) {

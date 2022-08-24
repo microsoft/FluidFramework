@@ -86,7 +86,6 @@ extends:
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
-    includeInternalVersions: true
 
     preCG:
     - task: UseNode@1
