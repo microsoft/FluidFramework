@@ -91,7 +91,7 @@ function frontMatterFromApiItem(apiItem, config, markdownEmitter) {
         frontMatter.package = "undefined";
     }
 
-    return JSON.stringify(frontMatter).trim();
+    return JSON.stringify(frontMatter, undefined, 2).trim();
 }
 
 async function main() {
