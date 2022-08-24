@@ -479,7 +479,6 @@ declare function get_old_InterfaceDeclaration_IRootSummarizerNodeWithGC():
 declare function use_current_InterfaceDeclaration_IRootSummarizerNodeWithGC(
     use: TypeOnly<current.IRootSummarizerNodeWithGC>);
 use_current_InterfaceDeclaration_IRootSummarizerNodeWithGC(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRootSummarizerNodeWithGC());
 
 /*

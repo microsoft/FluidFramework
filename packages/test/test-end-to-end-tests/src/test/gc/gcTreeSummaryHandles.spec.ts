@@ -396,47 +396,4 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
             await submitSummaryAndValidateState(summarizerClient2, isTreeHandle);
         });
     });
-
-    describe("Stores handle in summary when GC state does not change", () => {
-        it("Rewrites blob when data is not at root", async () => {
-            provider = getTestObjectProvider({ syncSummarizer: true });
-            // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
-            // time the summarizer client uploads a summary.
-            (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-                provider.documentServiceFactory,
-                uploadSummaryCb,
-            );
-            mainContainer = await createContainer();
-            dataStoreA = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
-
-            // Create data stores B and C, and mark them as referenced.
-            dataStoreB = await requestFluidObject<ITestFluidObject>(
-                await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type), "");
-            dataStoreA.root.set("dataStoreB", dataStoreB.handle);
-            dataStoreC = await requestFluidObject<ITestFluidObject>(
-                await dataStoreA.context.containerRuntime.createDataStore(dataObjectFactory.type), "");
-            dataStoreA.root.set("dataStoreC", dataStoreC.handle);
-
-            settings["Fluid.GarbageCollection.WriteDataAtRoot"] = "false";
-            summarizerClient1 = await getNewSummarizer();
-            const summaryResult = await submitAndAckSummary(provider,
-                summarizerClient1,
-                logger,
-                false, // fullTree
-            );
-            assert(latestUploadedSummary !== undefined, "Did not get a summary");
-            assert(latestUploadedSummary.tree[gcTreeKey] === undefined, "Expected gc not to be written at root!");
-
-            // Write data at root
-            settings["Fluid.GarbageCollection.WriteDataAtRoot"] = "true";
-            const summarizerClient2 = await getNewSummarizer(summaryResult.ackedSummary.summaryAck.contents.handle);
-            await submitSummaryAndValidateState(summarizerClient2, isTree);
-        });
-
-        afterEach(() => {
-            latestAckedSummary = undefined;
-            latestSummaryContext = undefined;
-            latestUploadedSummary = undefined;
-        });
-    });
 });
