@@ -7,6 +7,18 @@ import { expect } from "chai";
 import { getArrayStatistics } from "../ReporterUtilities";
 
 describe("getArrayStatistics() function", () => {
+    it("Throws if percentageOfSamplesToUse is out of range", () => {
+        const array = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+        expect(() => getArrayStatistics(array, 0.05)).to.throw(
+            Error,
+            "percentageOfSamplesToUse must be between 0.1 and 1 (inclusive)",
+            "Did not reject percentageOfSamplesToUse < 0.1");
+        expect(() => getArrayStatistics(array, 1.01)).to.throw(
+            Error,
+            "percentageOfSamplesToUse must be between 0.1 and 1 (inclusive)",
+            "Did not reject percentageOfSamplesToUse > 1.0");
+    });
+
     it("Computes correct values when not dropping samples", () => {
         const array = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
         const results = getArrayStatistics(array);
