@@ -27,7 +27,7 @@
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
-    "start": "npm run build:md-magic && hugo server"
+    "start": "hugo server"
   },
   "dependencies": {
     "@fluid-tools/api-markdown-documenter": "file:../tools/api-markdown-documenter",
