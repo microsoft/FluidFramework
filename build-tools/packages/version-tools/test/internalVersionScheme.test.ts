@@ -41,6 +41,18 @@ describe("internalScheme", () => {
             assert.isFalse(result);
         });
 
+        it("2.0.0-internal.1.1.0.123 is a valid internal prerelease version", () => {
+            const input = `2.0.0-internal.1.1.0.123`;
+            const result = isInternalVersionScheme(input, true);
+            assert.isTrue(result);
+        });
+
+        it("2.0.0-internal.1.1.0 is a valid internal version when prerelease is true", () => {
+            const input = `2.0.0-internal.1.1.0`;
+            const result = isInternalVersionScheme(input, true);
+            assert.isTrue(result);
+        });
+
         it("2.0.0 is not internal scheme (no prerelease)", () => {
             const input = `2.0.0`;
             const result = isInternalVersionScheme(input);

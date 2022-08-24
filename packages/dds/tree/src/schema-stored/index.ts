@@ -4,11 +4,10 @@
  */
 
 export {
-    FieldSchema, FieldKind, ValueSchema, GlobalFieldKey, TreeSchema,
-    TreeSchemaIdentifier, LocalFieldKey, NamedTreeSchema, SchemaRepository,
-    Named, TreeTypeSet,
+    FieldSchema, ValueSchema, GlobalFieldKey, TreeSchema,
+    TreeSchemaIdentifier, LocalFieldKey, NamedTreeSchema,
+    Named, TreeTypeSet, SchemaPolicy, FieldKindIdentifier,
+    SchemaDataReader,
 } from "./schema";
-export { anyField, anyTree, neverField, neverTree } from "./specialSchema";
-export { StoredSchemaRepository } from "./storedSchemaRepository";
-export { treeSchema, fieldSchema, emptyField, rootFieldKey, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";
-export { isNeverField, isNeverTree, allowsRepoSuperset, allowsTreeSchemaIdentifierSuperset } from "./comparison";
+export { StoredSchemaRepository, SchemaData } from "./storedSchemaRepository";
+export { treeSchema, fieldSchema, rootFieldKey, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";
