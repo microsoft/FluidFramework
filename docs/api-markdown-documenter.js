@@ -23,12 +23,17 @@ const os = require("os");
 const apiReportsDirectoryPath = path.resolve(__dirname, "_api-extractor-temp", "_build");
 const apiDocsDirectoryPath = path.resolve(__dirname, "content", "docs", "apis");
 
+/**
+ * Creates Hugo front-matter for the given API item.
+ * This will be appended to the top of the generated API documents.
+ *
+ * @param {ApiItem} apiItem - The root API item of the document being rendered.
+ * @param {MarkdownDocumenterConfiguration} config
+ * @param {MarkdownEmitter} markdownEmitter
+ *
+ * @returns The JSON-formatted Hugo front-matter as a `string`.
+ */
 function frontMatterFromApiItem(apiItem, config, markdownEmitter) {
-    const frontMatter = {};
-    frontMatter.kind = apiItem.kind;
-    frontMatter.title = apiItem.displayName.replace(/"/g, '').replace(/!/g, '');
-    let apiMembers = apiItem.members;
-
     function extractSummary(docComment) {
         const stringBuilder = new StringBuilder();
         const summary = docComment.summarySection;
@@ -41,7 +46,13 @@ function frontMatterFromApiItem(apiItem, config, markdownEmitter) {
         return stringBuilder.toString().replace(/"/g, "'").trim();
     }
 
+    const frontMatter = {};
+    frontMatter.title = apiItem.displayName.replace(/"/g, '').replace(/!/g, '');
+    let apiMembers = apiItem.members;
     switch (apiItem.kind) {
+        case ApiItemKind.Model:
+            frontMatter.title = "Package Reference";
+            break;
         case ApiItemKind.Class:
             if (apiItem.tsdocComment) {
                 frontMatter.summary = extractSummary(apiItem.tsdocComment);
@@ -71,6 +82,8 @@ function frontMatterFromApiItem(apiItem, config, markdownEmitter) {
         default:
             break;
     }
+
+    frontMatter.kind = apiItem.kind;
 
     frontMatter.members = new Map();
     apiMembers.forEach(element => {
