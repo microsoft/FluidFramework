@@ -84,7 +84,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                 : /.?/;
 
         // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
-        const exclusions: RegExp[] = require(`../../data/${this.processedFlags.exclusions}`).map(
+        const exclusions: RegExp[] = require(this.processedFlags.exclusions).map(
             (e: string) => new RegExp(e, "i"),
         );
 
