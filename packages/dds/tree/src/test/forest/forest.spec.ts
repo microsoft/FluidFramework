@@ -201,9 +201,10 @@ export function testForest(suiteName: string, factory: (schema: StoredSchemaRepo
                 assert.equal(reader.value, undefined);
             });
 
-            it.skip("set fields", () => {
+            it("set fields", () => {
                 const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
-                const content: JsonableTree[] = [{ type: jsonObject.name,
+                const content: JsonableTree[] = [{
+                    type: jsonObject.name,
                     fields: {
                         x: [{
                             type: jsonNumber.name,
