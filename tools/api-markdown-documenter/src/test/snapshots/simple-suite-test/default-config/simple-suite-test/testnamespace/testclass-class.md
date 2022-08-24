@@ -1,7 +1,6 @@
-
 # TestClass
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace) &gt; [TestClass](./simple-suite-test/testnamespace/testclass-class)
 
 Test class
 
@@ -13,21 +12,21 @@ class TestClass
 
 ## Constructors
 
-|  Constructor | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-constructor) |  |  | Test class constructor |
+|  Constructor | Return Type | Description |
+|  --- | --- | --- |
+|  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-constructor) |  | Test class constructor |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) |  | string | Test interface property |
+|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) | readonly | string | Test interface property |
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-method) |  | Promise&lt;string&gt; | Test class method |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-method) | Promise&lt;string&gt; | Test class method |
 
 ## Constructor Details
 
@@ -76,4 +75,3 @@ testClassMethod(testParameter: string): Promise<string>;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | string | A string |
-

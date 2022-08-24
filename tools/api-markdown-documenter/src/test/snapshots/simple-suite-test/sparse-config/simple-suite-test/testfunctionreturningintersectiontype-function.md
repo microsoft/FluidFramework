@@ -1,5 +1,7 @@
-
 # testFunctionReturningIntersectionType
+
+> This is a test deprecation notice. Here is a [link](docs/simple-suite-test/testfunctionreturninguniontype-function) to something else!
+> 
 
 Test function that returns an inline type
 

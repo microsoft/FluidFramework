@@ -1,4 +1,3 @@
-
 # testClassEventProperty
 
 Test class event property

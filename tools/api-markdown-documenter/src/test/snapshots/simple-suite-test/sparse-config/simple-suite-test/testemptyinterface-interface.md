@@ -1,4 +1,3 @@
-
 # TestEmptyInterface
 
 An empty interface

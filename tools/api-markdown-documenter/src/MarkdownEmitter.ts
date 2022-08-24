@@ -98,7 +98,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      * @virtual
      */
     public emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string {
-        return super.emit(stringBuilder, docNode, options);
+        return super.emit(stringBuilder, docNode, options).trim();
     }
 
     /**
@@ -141,7 +141,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                 break;
             }
             default:
-                super.writeNode(docNode, context, false);
+                super.writeNode(docNode, context, docNodeSiblings);
                 break;
         }
     }
@@ -177,18 +177,17 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             const linkUrl = options.getLinkUrlApiItem(result.resolvedApiItem);
 
             if (linkUrl !== undefined) {
-                let linkText: string = docLinkTag.linkText || "";
-                if (linkText.length === 0) {
+                let rawLinkText = docLinkTag.linkText;
+                if (rawLinkText === undefined || rawLinkText.length === 0) {
                     // Generate a name such as Namespace1.Namespace2.MyClass.myMethod()
-                    linkText = result.resolvedApiItem.getScopedNameWithinPackage();
+                    rawLinkText = result.resolvedApiItem.getScopedNameWithinPackage();
                 }
-                if (linkText.length > 0) {
-                    const encodedLinkText: string = this.getEscapedText(
-                        linkText.replace(/\s+/g, " "),
+                if (rawLinkText.length > 0) {
+                    this.writeLink(
+                        this.getEscapedText(rawLinkText.replace(/\s+/g, " ")),
+                        linkUrl,
+                        context,
                     );
-                    context.writer.write("[");
-                    context.writer.write(encodedLinkText);
-                    context.writer.write(`](${linkUrl})`);
                 } else {
                     logWarning("Unable to determine link text");
                 }
@@ -198,10 +197,43 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             logWarning(`Unable to resolve reference "${elementText}": ` + result.errorMessage);
 
             // Emit item as simple italicized text, so that at least something appears in the generated output
-            context.writer.write(
-                `*${docLinkTag.linkText === undefined ? elementText : docLinkTag.linkText}*`,
+            this.writePlainText(
+                docLinkTag.linkText === undefined ? elementText : docLinkTag.linkText,
+                { ...context, italicRequested: true },
             );
         }
+    }
+
+    /**
+     * Writes a Markdown link for the provided `docLinkTag` if possible, otherwise writes plain text (in italics) if
+     * the item being linked to cannot be resolved.
+     *
+     * @remarks {@link MarkdownEmitter.apiModel} can be used to resolve links between API members.
+     *
+     * @override
+     * @virtual
+     */
+    protected writeLinkTagWithUrlDestination(
+        docLinkTag: DocLinkTag,
+        context: EmitterContext,
+    ): void {
+        if (docLinkTag.urlDestination === undefined) {
+            throw new Error("URL link function was called for link with no URL target.");
+        }
+
+        const rawLinkText =
+            docLinkTag.linkText !== undefined ? docLinkTag.linkText : docLinkTag.urlDestination;
+
+        return this.writeLink(rawLinkText.replace(/\s+/g, " "), docLinkTag.urlDestination, context);
+    }
+
+    /**
+     * Writes a Markdown link for the provided link text and target.
+     *
+     * @virtual
+     */
+    protected writeLink(linkText: string, linkTarget: string, context: EmitterContext): void {
+        context.writer.write(`[${linkText}](${linkTarget})`);
     }
 
     /**
@@ -289,7 +321,6 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             writer.write(`${listSymbol} `);
             this.writeNode(docList.nodes[i], context, docList.nodes.length !== 1);
             writer.ensureNewLine();
-            writer.writeLine();
         }
     }
 
@@ -305,16 +336,15 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     ): void {
         const writer: IndentedWriter = context.writer;
 
-        writer.ensureNewLine();
+        writer.ensureSkippedLine();
 
         writer.increaseIndent("> ");
 
         this.writeNode(docNoteBox.content, context, docNodeSiblings);
-        writer.ensureNewLine();
 
         writer.decreaseIndent();
 
-        writer.writeLine();
+        writer.ensureSkippedLine();
     }
 
     /**

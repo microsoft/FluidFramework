@@ -1,4 +1,3 @@
-
 # testInterfaceProperty
 
 Test interface property

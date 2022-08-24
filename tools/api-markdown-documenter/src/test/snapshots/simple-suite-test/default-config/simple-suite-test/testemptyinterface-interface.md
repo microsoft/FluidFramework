@@ -1,7 +1,6 @@
-
 # TestEmptyInterface
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface)
 
 An empty interface
 

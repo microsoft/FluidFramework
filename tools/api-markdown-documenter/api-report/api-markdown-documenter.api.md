@@ -55,6 +55,13 @@ export { ApiItemKind }
 export { ApiModel }
 
 // @public
+export enum ApiModifier {
+    Optional = "optional",
+    Readonly = "readonly",
+    Static = "static"
+}
+
+// @public
 export type ApiModuleLike = ApiPackage | ApiNamespace;
 
 export { ApiPackage }
@@ -73,7 +80,10 @@ interface ChildSectionProperties {
 export namespace DefaultPolicies {
     const defaultDocumentBoundaries: ApiItemKind[];
     const defaultHierarchyBoundaries: ApiItemKind[];
+    export function defaultFileNamePolicy(apiItem: ApiItem): string;
     export function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
+    export function defaultLinkTextPolicy(apiItem: ApiItem): string;
+    export function defaultPackageFilterPolicy(): boolean;
     export function defaultUriBaseOverridePolicy(): string | undefined;
 }
 
@@ -163,10 +173,16 @@ export interface EmitterOptions extends IMarkdownEmitterOptions {
 }
 
 // @public
+export type FileNamePolicy = (apiItem: ApiItem) => string;
+
+// @public
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[];
 
 // @public
 export function getAncestralHierarchy(apiItem: ApiItem, includePredecate: (apiItem: ApiItem) => boolean, breakPredicate?: (apiItem: ApiItem) => boolean): ApiItem[];
+
+// @public
+export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
@@ -187,16 +203,22 @@ export function getFirstAncestorWithOwnDocument(apiItem: ApiItem, documentBounda
 export function getHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, headingLevel?: number): Heading;
 
 // @public
-export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string | undefined;
+export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
 
 // @public
-export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): Link;
+export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, textOverride?: string): Link;
 
 // @public
 export function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
 
 // @public
+export function getModifiers(apiItem: ApiItem): ApiModifier[];
+
+// @public
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
+
+// @public
+export function getUnscopedPackageName(apiPackage: ApiPackage): string;
 
 // @public
 export interface Heading {
@@ -221,11 +243,12 @@ export interface IDocListParameters extends IDocNodeContainerParameters {
 
 // @public
 export interface Link {
-    documentPath: string;
-    headingId?: string;
     text: string;
-    uriBase: string;
+    url: string;
 }
+
+// @public
+export type LinkTextPolicy = (apiItem: ApiItem) => string;
 
 // @public
 export enum ListKind {
@@ -267,8 +290,12 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
     protected writeEmphasisSpan(docEmphasisSpan: DocEmphasisSpan, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual
     protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeSiblings: boolean): void;
+    // @virtual
+    protected writeLink(linkText: string, linkTarget: string, context: EmitterContext): void;
     // @virtual @override
     protected writeLinkTagWithCodeDestination(docLinkTag: DocLinkTag, context: EmitterContext): void;
+    // @virtual @override
+    protected writeLinkTagWithUrlDestination(docLinkTag: DocLinkTag, context: EmitterContext): void;
     // @virtual
     protected writeList(docList: DocList, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual @override
@@ -293,12 +320,18 @@ interface MemberTableProperties {
 export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public
+export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
+
+// @public
 export interface PolicyOptions {
     documentBoundaries?: DocumentBoundaries;
+    fileNamePolicy?: FileNamePolicy;
     headingTitlePolicy?: HeadingTitlePolicy;
     hierarchyBoundaries?: HierarchyBoundaries;
     includeBreadcrumb?: boolean;
     includeTopLevelDocumentHeading?: boolean;
+    linkTextPolicy?: LinkTextPolicy;
+    packageFilterPolicy?: PackageFilterPolicy;
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
 
@@ -339,7 +372,10 @@ function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumen
 function renderDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
 // @public
-function renderDeprecationNotice(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderDefaultValueCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
+
+// @public
+function renderDeprecationNoticeSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration): MarkdownDocument[];
@@ -351,10 +387,10 @@ function renderEmptyTableCell(config: Required<MarkdownDocumenterConfiguration>)
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public
-function renderExample(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+function renderExampleSection(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
-function renderExamples(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph;
@@ -387,14 +423,15 @@ declare namespace RenderingHelpers {
         renderHeadingForApiItem,
         renderHeading,
         renderBetaWarning,
-        renderSummary,
-        renderRemarks,
-        renderDeprecationNotice,
-        renderExamples,
-        renderExample,
+        renderSummarySection,
+        renderRemarksSection,
+        renderDeprecationNoticeSection,
+        renderExamplesSection,
+        renderExampleSection,
         renderParametersSection,
         renderChildDetailsSection,
         renderChildrenUnderHeading,
+        renderLink,
         DocExampleProperties,
         ChildSectionProperties,
         renderMemberTables,
@@ -409,6 +446,7 @@ declare namespace RenderingHelpers {
         renderReturnTypeCell,
         renderApiTitleCell,
         renderModifiersCell,
+        renderDefaultValueCell,
         renderPropertyTypeCell,
         renderParameterTitleCell,
         renderParameterTypeCell,
@@ -445,6 +483,9 @@ function renderInterfaceSection(apiInterface: ApiInterface, config: Required<Mar
 
 // @public
 function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+
+// @public
+function renderLink(link: Link, config: Required<MarkdownDocumenterConfiguration>): DocLinkTag;
 
 // @public
 function renderMemberTables(memberTableProperties: readonly MemberTableProperties[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
@@ -495,7 +536,7 @@ function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], config
 function renderPropertyTypeCell(apiProperty: ApiPropertyItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
-function renderRemarks(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderRemarksSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
@@ -507,7 +548,7 @@ export type RenderSectionWithInnerContent = (apiItem: ApiItem, innerSectionBody:
 function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-function renderSummary(apiItem: ApiItem): DocSection | undefined;
+function renderSummarySection(apiItem: ApiItem): DocSection | undefined;
 
 // @public
 function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
@@ -523,8 +564,5 @@ function renderTypeParameters(typeParameters: readonly TypeParameter[], config: 
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
-
-// @public
-export function urlFromLink(link: Link): string;
 
 ```

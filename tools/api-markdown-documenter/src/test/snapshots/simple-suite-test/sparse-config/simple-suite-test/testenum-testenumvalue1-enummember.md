@@ -1,4 +1,3 @@
-
 # TestEnumValue1
 
 Test enum value 1 (string)

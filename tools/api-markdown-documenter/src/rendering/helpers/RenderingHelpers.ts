@@ -40,7 +40,7 @@ import {
 import { Node as AstNode, Parent as AstParentNode } from "unist";
 
 import { Heading } from "../../Heading";
-import { Link, urlFromLink } from "../../Link";
+import { Link } from "../../Link";
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocHeading, DocNoteBox } from "../../doc-nodes";
 import {
@@ -54,7 +54,7 @@ import {
     getQualifiedApiItemName,
     mergeSections,
 } from "../../utilities";
-import { renderParametersSummaryTable } from "./TablesRenderingHelpers";
+import { renderParametersSummaryTable } from "./TableRenderingHelpers";
 
 /**
  * Renders a section for an API signature.
@@ -334,32 +334,30 @@ export function renderBreadcrumb(
         doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries),
     ).reverse(); // Reverse from ascending to descending order
 
-    function createLinkTag(link: Link): DocLinkTag {
-        const linkUrl = urlFromLink(link);
-        return new DocLinkTag({
-            configuration: config.tsdocConfiguration,
-            tagName: "@link",
-            linkText: link.text,
-            urlDestination: linkUrl,
-        });
-    }
+    const separator = new DocPlainText({
+        configuration: config.tsdocConfiguration,
+        text: " > ",
+    });
 
+    // Render ancestry links
     let writtenAnythingYet = false;
     for (const hierarchyItem of ancestry) {
         if (writtenAnythingYet) {
-            docNodes.push(
-                new DocPlainText({
-                    configuration: config.tsdocConfiguration,
-                    text: " > ",
-                }),
-            );
+            docNodes.push(separator);
         }
 
         const link = getLinkForApiItem(hierarchyItem, config);
-        docNodes.push(createLinkTag(link));
+        docNodes.push(renderLink(link, config));
 
         writtenAnythingYet = true;
     }
+
+    // Render entry for the item itself
+    if (writtenAnythingYet) {
+        docNodes.push(separator);
+    }
+    const link = getLinkForApiItem(apiItem, config);
+    docNodes.push(renderLink(link, config));
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
         new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes),
@@ -409,7 +407,7 @@ export function renderBetaWarning(config: Required<MarkdownDocumenterConfigurati
 /**
  * Renders a section containing the API item's summary comment if it has one.
  */
-export function renderSummary(apiItem: ApiItem): DocSection | undefined {
+export function renderSummarySection(apiItem: ApiItem): DocSection | undefined {
     return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
         ? apiItem.tsdocComment.summarySection
         : undefined;
@@ -426,7 +424,7 @@ export function renderSummary(apiItem: ApiItem): DocSection | undefined {
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
-export function renderRemarks(
+export function renderRemarksSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
@@ -453,7 +451,7 @@ export function renderRemarks(
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
-export function renderDeprecationNotice(
+export function renderDeprecationNoticeSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
@@ -487,7 +485,7 @@ export function renderDeprecationNotice(
  *
  * @returns The doc section if the API item had any `@example` comment blocks, otherwise `undefined`.
  */
-export function renderExamples(
+export function renderExamplesSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
@@ -502,13 +500,13 @@ export function renderExamples(
 
         // If there is only 1 example, render it with the default (un-numbered) heading
         if (exampleBlocks.length === 1) {
-            return renderExample({ apiItem, content: exampleBlocks[0].content }, config);
+            return renderExampleSection({ apiItem, content: exampleBlocks[0].content }, config);
         }
 
         const exampleSections: DocSection[] = [];
         for (let i = 0; i < exampleBlocks.length; i++) {
             exampleSections.push(
-                renderExample(
+                renderExampleSection(
                     { apiItem, content: exampleBlocks[i].content, exampleNumber: i + 1 },
                     config,
                 ),
@@ -558,7 +556,7 @@ export interface DocExampleProperties {
  * @param example - The example to render.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderExample(
+export function renderExampleSection(
     example: DocExampleProperties,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
@@ -655,9 +653,9 @@ export interface ChildSectionProperties {
 export function renderChildDetailsSection(
     childSections: readonly ChildSectionProperties[],
     config: Required<MarkdownDocumenterConfiguration>,
-    renderChild: (apiItem) => SectionAstNode,
-): SectionAstNode | undefined {
-    const childNodes: SectionAstNode[] = [];
+    renderChild: (apiItem) => DocSection,
+): DocSection | undefined {
+    const childNodes: DocSection[] = [];
 
     for (const childSection of childSections) {
         // Only render contents for a section if the item kind is one that gets rendered to its parent's document
@@ -682,4 +680,56 @@ export function renderChildDetailsSection(
     return childNodes.length === 0
         ? undefined
         : mergeSections(childNodes, config.tsdocConfiguration);
+}
+
+/**
+ * Renders a section containing a list of sub-sections for the provided list of child API items.
+ *
+ * @remarks Displayed as a heading with the provided title, followed by a series a sub-sections for each child item.
+ *
+ * @param childItems - The child API items to be displayed as sub-contents.
+ * @param headingTitle - The title of the section-root heading.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param renderChild - Callback for rendering each child item as a sub-section.
+ *
+ * @returns The doc section if there were any child items provided, otherwise `undefined`.
+ */
+export function renderChildrenUnderHeading(
+    childItems: readonly ApiItem[],
+    headingTitle: string,
+    config: Required<MarkdownDocumenterConfiguration>,
+    renderChild: (childItem: ApiItem) => DocSection,
+): DocSection | undefined {
+    if (childItems.length === 0) {
+        return undefined;
+    }
+
+    const childSections: DocSection[] = childItems.map((childItem) => renderChild(childItem));
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        renderHeading(
+            {
+                title: headingTitle,
+            },
+            config,
+        ),
+        mergeSections(childSections, config.tsdocConfiguration),
+    ]);
+}
+
+/**
+ * Renders a Link tag for the provided link.
+ * @param link - The link to render.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderLink(
+    link: Link,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocLinkTag {
+    return new DocLinkTag({
+        configuration: config.tsdocConfiguration,
+        tagName: "@link",
+        linkText: link.text,
+        urlDestination: link.url,
+    });
 }

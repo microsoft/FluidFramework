@@ -1,7 +1,6 @@
-
 # simple-suite-test
 
-[(model)](./index)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test)
 
 Test package
 
@@ -41,52 +40,53 @@ const foo = bar;
 
 ## Interfaces
 
-|  Interface | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) |  | An empty interface |
-|  [TestInterface](./simple-suite-test/testinterface-interface) |  | Test interface |
-|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface) |  | Test interface that extends other interfaces |
-|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) |  | Test interface with generic type parameter |
+|  Interface | Description |
+|  --- | --- |
+|  [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) | An empty interface |
+|  [TestInterface](./simple-suite-test/testinterface-interface) | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
 ## Classes
 
-|  Class | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestClass](./simple-suite-test/testclass-class) |  | Test class |
+|  Class | Description |
+|  --- | --- |
+|  [TestAbstractClass](./simple-suite-test/testabstractclass-class) | A test abstract class. |
+|  [TestClass](./simple-suite-test/testclass-class) | Test class |
 
 ## Namespaces
 
-|  Namespace | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestNamespace](./simple-suite-test/testnamespace-namespace) |  | Test Namespace |
+|  Namespace | Description |
+|  --- | --- |
+|  [TestNamespace](./simple-suite-test/testnamespace-namespace) | Test Namespace |
 
 ## Types
 
-|  TypeAlias | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) |  | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
-|  [TypeAlias](./simple-suite-test#typealias-typealias) |  | Test Type-Alias |
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
+|  [TypeAlias](./simple-suite-test#typealias-typealias) | Test Type-Alias |
 
 ## Functions
 
-|  Function | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testFunction(testParameter)](./simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
-|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) |  | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
-|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) |  | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
-|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
+|  Function | Return Type | Description |
+|  --- | --- | --- |
+|  [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) | TTypeParameter | Test function |
+|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
+|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
+|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
 ## Enumerations
 
-|  Enum | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEnum](./simple-suite-test#testenum-enum) |  | Test Enum |
+|  Enum | Description |
+|  --- | --- |
+|  [TestEnum](./simple-suite-test#testenum-enum) | Test Enum |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [testConst](./simple-suite-test#testconst-variable) |  | Test Constant |
+|  [testConst](./simple-suite-test#testconst-variable) | readonly | Test Constant |
 
 ## Type Details
 
@@ -133,14 +133,15 @@ This is a test [link](./simple-suite-test/testinterface-interface) to another AP
 #### Signature {#testfunction-signature}
 
 ```typescript
-export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter): TTypeParameter;
+export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
 
 #### Parameters {#testfunction-parameters}
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  testParameter | TTypeParameter | A test parameter |
+|  Parameter | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  testParameter |  | TTypeParameter | A test parameter |
+|  testOptionalParameter | optional | TTypeParameter |  |
 
 ### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
@@ -156,6 +157,9 @@ export declare function testFunctionReturningInlineType(): {
 ```
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
+
+> This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
+> 
 
 Test function that returns an inline type
 
@@ -211,11 +215,11 @@ export declare enum TestEnum
 
 #### Flags
 
-|  Flag | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEnumValue1](./simple-suite-test#testenum-testenumvalue1-enummember) |  | Test enum value 1 (string) |
-|  [TestEnumValue2](./simple-suite-test#testenum-testenumvalue2-enummember) |  | Test enum value 2 (number) |
-|  [TestEnumValue3](./simple-suite-test#testenum-testenumvalue3-enummember) |  | Test enum value 3 (default) |
+|  Flag | Description |
+|  --- | --- |
+|  [TestEnumValue1](./simple-suite-test#testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
+|  [TestEnumValue2](./simple-suite-test#testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
+|  [TestEnumValue3](./simple-suite-test#testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
 
 #### FlagDetails
 

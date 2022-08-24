@@ -1,4 +1,3 @@
-
 # testFunctionReturningInlineType
 
 Test function that returns an inline type

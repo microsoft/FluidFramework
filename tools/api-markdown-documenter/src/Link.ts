@@ -5,8 +5,6 @@
 
 /**
  * Represents a link to some documentation element.
- *
- * @remarks A complete URL link can be created from its components (see {@link urlFromLink}).
  */
 export interface Link {
     /**
@@ -15,25 +13,7 @@ export interface Link {
     text: string;
 
     /**
-     * URI base of the element being linked to.
+     * Link target URL
      */
-    uriBase: string;
-
-    /**
-     * Path to the document being linked to. Relative to {@link Link.uriBase}.
-     */
-    documentPath: string;
-
-    /**
-     * Optional ID of a heading in the document being linked to.
-     */
-    headingId?: string;
-}
-
-/**
- * Generates a complete URL for the provided {@link Link} object.
- */
-export function urlFromLink(link: Link): string {
-    const headingPostfix = link.headingId === undefined ? "" : `#${link.headingId}`;
-    return `${link.uriBase}/${link.documentPath}${headingPostfix}`;
+    url: string;
 }

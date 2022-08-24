@@ -1,4 +1,3 @@
-
 # TestEnum
 
 Test Enum
@@ -33,11 +32,11 @@ export declare enum TestEnum
 
 ## Flags
 
-|  Flag | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEnumValue1](docs/simple-suite-test/testenum-testenumvalue1-enummember) |  | Test enum value 1 (string) |
-|  [TestEnumValue2](docs/simple-suite-test/testenum-testenumvalue2-enummember) |  | Test enum value 2 (number) |
-|  [TestEnumValue3](docs/simple-suite-test/testenum-testenumvalue3-enummember) |  | Test enum value 3 (default) |
+|  Flag | Description |
+|  --- | --- |
+|  [TestEnumValue1](docs/simple-suite-test/testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
+|  [TestEnumValue2](docs/simple-suite-test/testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
+|  [TestEnumValue3](docs/simple-suite-test/testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
 
 ## FlagDetails
 

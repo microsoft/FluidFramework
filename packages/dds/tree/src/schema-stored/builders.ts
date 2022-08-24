@@ -5,7 +5,8 @@
 
 import { brand, brandOpaque } from "../util";
 import {
-    FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    FieldKindIdentifier,
+    FieldSchema, GlobalFieldKey, LocalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "./schema";
 
 /**
@@ -39,16 +40,15 @@ export const itemsKey: LocalFieldKey = brand("items");
 export const rootFieldKey = brandOpaque<GlobalFieldKey>("rootFieldKey");
 
 /**
- * Default field which only permits emptiness.
+ * Helper for building {@link FieldSchema}.
  */
-export const emptyField: FieldSchema = {
-    kind: FieldKind.Forbidden,
-};
-
-export function fieldSchema(kind: FieldKind, types: readonly TreeSchemaIdentifier[]): FieldSchema {
+export function fieldSchema(
+    kind: { identifier: FieldKindIdentifier; },
+    types?: Iterable<TreeSchemaIdentifier>,
+): FieldSchema {
     return {
-        kind,
-        types: new Set(types),
+        kind: kind.identifier,
+        types: types === undefined ? undefined : new Set(types),
     };
 }
 
@@ -60,11 +60,14 @@ const defaultExtraGlobalFields = false;
 export interface TreeSchemaBuilder {
     readonly localFields?: { [key: string]: FieldSchema; };
     readonly globalFields?: Iterable<GlobalFieldKey>;
-    readonly extraLocalFields?: FieldSchema;
+    readonly extraLocalFields: FieldSchema;
     readonly extraGlobalFields?: boolean;
     readonly value?: ValueSchema;
 }
 
+/**
+ * Helper for building {@link TreeSchema}.
+ */
 export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
     const localFields = new Map();
     const local = data.localFields ?? {};
@@ -78,7 +81,7 @@ export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
     return {
         localFields,
         globalFields: new Set(data.globalFields ?? []),
-        extraLocalFields: data.extraLocalFields ?? emptyField,
+        extraLocalFields: data.extraLocalFields,
         extraGlobalFields: data.extraGlobalFields ?? defaultExtraGlobalFields,
         value: data.value ?? ValueSchema.Nothing,
     };

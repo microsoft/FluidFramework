@@ -2,7 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
+import { ApiItem, ApiItemKind, ApiPackage } from "@microsoft/api-extractor-model";
+
+import { getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
 
 // TODOs:
 // - use `kind` not `type` (and link to ApiModel docs)
@@ -36,6 +39,23 @@ export type DocumentBoundaries = ApiItemKind[];
 export type HierarchyBoundaries = ApiItemKind[];
 
 /**
+ * Policy for generating file names.
+ *
+ * @remarks Note that this is not the complete file name, but the "leaf" component of the final file name.
+ * Additional prefixes and suffixes will be appended to ensure file name collisions do not occur.
+ *
+ * This also does not contain the file extension.
+ *
+ * @example We are given a class API item "Bar" in package "Foo".
+ * This policy returns "foo".
+ * The final file name might be something like "foo-bar-class".
+ *
+ * @param apiItem - The API item for which the pre-modification file name is being generated.
+ * @returns The pre-modification file name for the API item.
+ */
+export type FileNamePolicy = (apiItem: ApiItem) => string;
+
+/**
  * Policy for overriding the URI base for a specific API item.
  *
  * @remarks This can be used to match on particular item kinds, package names, etc., and adjust the links generated
@@ -52,10 +72,26 @@ export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
 /**
  * Policy for generating heading titles for API items.
  *
- * @param apiItem - The API item in question.
+ * @param apiItem - The API item for which the heading is being generated.
  * @returns The heading title for the API item.
  */
 export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
+
+/**
+ * Policy for generating text in links to API items.
+ *
+ * @param apiItem - The API item for which the link is being generated.
+ * @returns The text to use in the link to the API item.
+ */
+export type LinkTextPolicy = (apiItem: ApiItem) => string;
+
+/**
+ * Policy for filtering packages.
+ *
+ * @param apiPackage - The package that may or may not be filtered.
+ * @returns `true` if the package should be filtered out of documentation generation (i.e. **should not** be included in the output). `false` otherwise.
+ */
+export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
 
 /**
  * Policy configuration options
@@ -95,6 +131,13 @@ export interface PolicyOptions {
     hierarchyBoundaries?: HierarchyBoundaries;
 
     /**
+     * See {@link FileNamePolicy}.
+     *
+     * @defaultValue {@link DefaultPolicies.defaultFileNamePolicy}
+     */
+    fileNamePolicy?: FileNamePolicy;
+
+    /**
      * See {@link UriBaseOverridePolicy}.
      *
      * @defaultValue {@link DefaultPolicies.defaultUriBaseOverridePolicy}
@@ -107,6 +150,20 @@ export interface PolicyOptions {
      * @defaultValue {@link DefaultPolicies.defaultHeadingTitlePolicy}
      */
     headingTitlePolicy?: HeadingTitlePolicy;
+
+    /**
+     * See {@link LinkTextPolicy}.
+     *
+     * @defaultValue {@link DefaultPolicies.defaultLinkTextPolicy}
+     */
+    linkTextPolicy?: LinkTextPolicy;
+
+    /**
+     * See {@link PackageFilterPolicy}.
+     *
+     * @defaultValue {@link DefaultPolicies.defaultPackageFilterPolicy}
+     */
+    packageFilterPolicy?: PackageFilterPolicy;
 }
 
 export namespace DefaultPolicies {
@@ -143,6 +200,28 @@ export namespace DefaultPolicies {
     ];
 
     /**
+     * Default {@link PolicyOptions.fileNamePolicy}.
+     *
+     * Uses the item's qualified API name, but is handled differently for the following items:
+     *
+     * - Model: Uses "index".
+     * - Package: Uses the unscoped package name.
+     *
+     */
+    export function defaultFileNamePolicy(apiItem: ApiItem): string {
+        switch (apiItem.kind) {
+            case ApiItemKind.Model:
+                return "index";
+            case ApiItemKind.Package:
+                return Utilities.getSafeFilenameForName(
+                    getUnscopedPackageName(apiItem as ApiPackage),
+                );
+            default:
+                return getQualifiedApiItemName(apiItem);
+        }
+    }
+
+    /**
      * Default {@link PolicyOptions.uriBaseOverridePolicy}.
      *
      * Always uses default URI base.
@@ -164,16 +243,42 @@ export namespace DefaultPolicies {
                 return apiItem.displayName;
         }
     }
+
+    /**
+     * Default {@link PolicyOptions.headingTitlePolicy}.
+     *
+     * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
+     */
+    export function defaultLinkTextPolicy(apiItem: ApiItem): string {
+        switch (apiItem.kind) {
+            case ApiItemKind.Model:
+                return "Packages";
+            default:
+                return Utilities.getConciseSignature(apiItem);
+        }
+    }
+
+    /**
+     * Default {@link PolicyOptions.packageFilterPolicy}.
+     *
+     * Unconditionally returns `false` (i.e. no packages will be filtered out).
+     */
+    export function defaultPackageFilterPolicy(): boolean {
+        return false;
+    }
 }
 
 /**
- * Default {@link PolicyOptions} configuration
+ * Default {@link PolicyOptions} configuration.
  */
 export const defaultPolicyOptions: Required<PolicyOptions> = {
     includeTopLevelDocumentHeading: true,
     includeBreadcrumb: true,
     documentBoundaries: DefaultPolicies.defaultDocumentBoundaries,
     hierarchyBoundaries: DefaultPolicies.defaultHierarchyBoundaries,
+    fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
     headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
+    linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
+    packageFilterPolicy: DefaultPolicies.defaultPackageFilterPolicy,
 };

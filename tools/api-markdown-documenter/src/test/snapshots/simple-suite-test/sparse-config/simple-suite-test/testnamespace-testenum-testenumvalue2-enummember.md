@@ -1,4 +1,3 @@
-
 # TestEnumValue2
 
 Test enum value 2

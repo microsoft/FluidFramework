@@ -1,7 +1,6 @@
-
 # TestInterfaceExtendingOtherInterfaces
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface)
 
 Test interface that extends other interfaces
 
@@ -23,9 +22,9 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testMethod(input)](./simple-suite-test/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) |  | number | Test interface method accepting a string and returning a number. |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testMethod(input)](./simple-suite-test/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
 ## Method Details
 
@@ -48,4 +47,3 @@ testMethod(input: string): number;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | string | A string |
-
