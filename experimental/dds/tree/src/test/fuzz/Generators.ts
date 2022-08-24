@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import Random from 'random-js';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
 	AsyncWeights,
+	IRandom,
 	createWeightedAsyncGenerator,
 	done,
 	makeRandom,
@@ -332,7 +332,7 @@ const makeEditGenerator = (
 	async function setPayloadGenerator({ dataStoreRuntime, idList, random, view }: EditState): Promise<FuzzChange> {
 		const nodeToModify = random.pick(idList);
 		const getPayloadContents = async (
-			random: Random
+			random: IRandom
 		): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
 			if (random.bool()) {
 				return random.string(4);

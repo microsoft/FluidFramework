@@ -7,7 +7,7 @@ import classNames from "classnames";
 import * as React from "react";
 import { iconMarginRight, iconWidth, InspectorMessages, unit } from "./constants";
 import { Field } from "./Field";
-import { IInspectorRow } from "./InspectorTableTypes";
+import { IEditableValueCellProps } from "./InspectorTableTypes";
 import { TooltipedField } from "./TooltipedField";
 
 const styles = () => createStyles({
@@ -40,26 +40,6 @@ const styles = () => createStyles({
     "background-color": "black",
   },
 });
-
-export interface IEditableValueCellProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  /**
-   * Indicates whether we are following references or not.
-   * Defaults to true.
-   */
-  followReferences?: boolean;
-  /**
-   * A callback that returns the icons based on the row data.
-   */
-  iconRenderer: (rowData: IInspectorRow) => React.ReactNode;
-  /**
-   * The row data of the row which contains the cell.
-   */
-  rowData: IInspectorRow;
-  /**
-   * Indicates if read only mode is enabled
-   */
-  readOnly: boolean;
-}
 
 /**
  * Inspector table value column cell, which allows viewing and editing the value of the property for which

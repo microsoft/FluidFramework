@@ -5,7 +5,11 @@ This package contains utility for running various functionality inside a Fluid F
 Allows some execution to be made on a container given a provided ODSP snapshot.
 
 ### Sample command
-`node fluidRunner exportFile --codeLoader=compiledBundle.js --inputFile=inputFileName.fluid --outputFolder=outputFolderName --scenario=test --telemetryFile=telemetryFile.txt`
+If package is installed globally:
+`node fluid-runner exportFile --codeLoader=compiledBundle.js --inputFile=inputFileName.fluid --outputFolder=outputFolderName --scenario=test --telemetryFile=telemetryFile.txt`
+
+If working directly on this package:
+`node bin/fluidRunner exportFile --codeLoader=compiledBundle.js --inputFile=inputFileName.fluid --outputFolder=outputFolderName --scenario=test --telemetryFile=telemetryFile.txt`
 
 ### Code Loader bundle format
 The Code Loader bundle should provide defined exports required for this functionality.

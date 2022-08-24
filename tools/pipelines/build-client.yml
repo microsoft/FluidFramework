@@ -33,6 +33,7 @@ trigger:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
@@ -44,7 +45,6 @@ trigger:
     - lerna.json
     - lerna-package-lock.json
     - tools/pipelines/build-client.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -58,6 +58,7 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
@@ -69,7 +70,6 @@ pr:
     - lerna.json
     - lerna-package-lock.json
     - tools/pipelines/build-client.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -107,4 +107,3 @@ extends:
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
-

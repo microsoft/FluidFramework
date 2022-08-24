@@ -17,6 +17,7 @@ resources:
       - release/*
       - main
       - next
+      - lts
 
 variables:
 - group: prague-key-vault
