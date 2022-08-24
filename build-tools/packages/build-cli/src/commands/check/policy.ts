@@ -136,7 +136,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                     if (result) {
                         let output = `${newline}file failed policy check: ${file}${newline}${result}`;
                         const resolver = handler.resolver;
-                        if (flags.resolve && resolver) {
+                        if (flags.fix && resolver) {
                             output += `${newline}attempting to resolve: ${file}`;
                             const resolveResult = runWithPerf(handler.name, "resolve", () =>
                                 resolver(file, pathToGitRoot),
@@ -183,7 +183,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                 const final = h.final;
                 if (final) {
                     const result = runWithPerf(h.name, "final", () =>
-                        final(pathToGitRoot, flags.resolve),
+                        final(pathToGitRoot, flags.fix),
                     );
                     if (result?.error) {
                         this.error(result.error);
@@ -204,7 +204,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             }
         };
 
-        if (flags.resolve) {
+        if (flags.fix) {
             this.log("Resolving errors if possible.");
         }
 
