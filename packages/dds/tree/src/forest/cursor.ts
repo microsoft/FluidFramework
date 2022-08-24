@@ -142,7 +142,7 @@ export interface ITreeCursor {
      * Same as seek Number.POSITIVE_INFINITY, but only valid when `mode` is `Nodes`.
      *
      * TODO: what to do if at root?
-     * TODO: Maybe merge to make a single "Up"?
+     * TODO: Maybe merge with upToNode to make a single "Up"?
      */
     upToField(): void;
 
@@ -200,7 +200,7 @@ export function reduceField<T>(
     assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
     let output: T = initial;
     while (cursor.seek(1)) {
-        output = (f(cursor, output));
+        output = f(cursor, output);
     }
     return output;
 }
