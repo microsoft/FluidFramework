@@ -35,3 +35,4 @@ export { handler as fluidCaseHandler } from "./repoPolicyCheck/handlers/fluidCas
 export { handlers as lockfilesHandlers } from "./repoPolicyCheck/handlers/lockfiles";
 export { handlers as npmPackageContentsHandlers } from "./repoPolicyCheck/handlers/npmPackages";
 export { Handler } from "./repoPolicyCheck/common";
+export { handlers } from "../src/repoPolicyCheck/handlers/index";
