@@ -123,7 +123,7 @@ async function main() {
         includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
         fileNamePolicy: (apiItem) => {
             return apiItem.kind === ApiItemKind.Model
-                ? "_index"
+                ? "_index" // Hugo syntax for a page with content sub-directories
                 : DefaultPolicies.defaultFileNamePolicy(apiItem);
         }
     });
