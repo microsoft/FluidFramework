@@ -2498,6 +2498,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             runSweep?: boolean;
             /** True to generate full GC data */
             fullGC?: boolean;
+            /** True to override testMode (delete upon unreferencing) */
             testMode?: boolean;
         },
     ): Promise<IGCStats> {

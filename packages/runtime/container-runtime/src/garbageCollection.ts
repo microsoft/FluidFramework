@@ -147,7 +147,7 @@ export interface IGarbageCollector {
     readonly trackGCState: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
-        options: { logger?: ITelemetryLogger; runSweep?: boolean; fullGC?: boolean; },
+        options: { logger?: ITelemetryLogger; runSweep?: boolean; fullGC?: boolean; testMode?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(
@@ -742,10 +742,13 @@ export class GarbageCollector implements IGarbageCollector {
             runSweep?: boolean;
             /** True to generate full GC data */
             fullGC?: boolean;
+            /** True to override testMode (delete upon unreferencing) */
+            testMode?: boolean;
         },
     ): Promise<IGCStats> {
         const {
             fullGC = this.gcOptions.runFullGC === true || this.summaryStateNeedsReset,
+            testMode = this.testMode,
         } = options;
 
         const logger = options.logger
@@ -759,7 +762,7 @@ export class GarbageCollector implements IGarbageCollector {
             const gcData = await this.runtime.getGCData(fullGC);
             const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
 
-            const gcStats = await this.runPostGCSteps(gcData, gcResult, logger);
+            const gcStats = await this.runPostGCSteps(gcData, gcResult, logger, testMode);
             event.end({ ...gcStats });
             this.completedRuns++;
             return gcStats;
@@ -773,7 +776,12 @@ export class GarbageCollector implements IGarbageCollector {
         await this.runtime.updateStateBeforeGC();
     }
 
-    private async runPostGCSteps(gcData: IGarbageCollectionData, gcResult: IGCResult, logger: ITelemetryLogger) {
+    private async runPostGCSteps(
+        gcData: IGarbageCollectionData,
+        gcResult: IGCResult,
+        logger: ITelemetryLogger,
+        testMode: boolean,
+    ) {
         // Generate statistics from the current run. This is done before updating the current state because it
         // generates some of its data based on previous state of the system.
         const gcStats = this.generateStats(gcResult);
