@@ -226,10 +226,6 @@ export interface ISummaryBaseConfiguration {
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
     state: "enabled";
     /**
-     * @deprecated - please move all implementation to minIdleTime and maxIdleTime
-     */
-    idleTime: number;
-    /**
      * Defines the maximum allowed time, since the last received Ack, before running the summary
      * with reason maxTime.
      * For example, say we receive ops one by one just before the idle time is triggered.
@@ -291,8 +287,6 @@ export type ISummaryConfiguration =
 
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
-
-    idleTime: 15 * 1000, // 15 secs.
 
     minIdleTime: 0,
 
