@@ -182,9 +182,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             for (const h of handlers) {
                 const final = h.final;
                 if (final) {
-                    const result = runWithPerf(h.name, "final", () =>
-                        final(pathToGitRoot, flags.fix),
-                    );
+                    const result = runWithPerf(h.name, "final", () => {
+                        final(pathToGitRoot, flags.fix)
+                    });
                     if (result?.error) {
                         this.error(result.error);
                     }
