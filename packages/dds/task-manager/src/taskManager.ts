@@ -22,7 +22,10 @@ import { ITaskManager, ITaskManagerEvents } from "./interfaces";
 /**
  * Description of a task manager operation
  */
-type ITaskManagerOperation = ITaskManagerVolunteerOperation | ITaskManagerAbandonOperation;
+type ITaskManagerOperation =
+    ITaskManagerVolunteerOperation |
+    ITaskManagerAbandonOperation |
+    ITaskManagerCompletedOperation;
 
 interface ITaskManagerVolunteerOperation {
     type: "volunteer";
@@ -34,8 +37,13 @@ interface ITaskManagerAbandonOperation {
     taskId: string;
 }
 
+interface ITaskManagerCompletedOperation {
+    type: "completed";
+    taskId: string;
+}
+
 interface IPendingOp {
-    type: "volunteer" | "abandon";
+    type: "volunteer" | "abandon" | "completed";
     messageId: number;
 }
 
@@ -139,6 +147,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
     // connectionWatcher emits an event whenever we get connected or disconnected.
     private readonly connectionWatcher: EventEmitter = new EventEmitter();
+    // completedWatcher emits an event whenever the local client calls markAsCompleted() on a task.
+    private readonly completedWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
     /**
@@ -191,6 +201,24 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             }
 
             this.removeClientFromQueue(taskId, clientId);
+        });
+
+        this.opWatcher.on("completed", (taskId: string, clientId: string, local: boolean, messageId: number) => {
+            if (runtime.connected && local) {
+                const pendingOp = this.latestPendingOps.get(taskId);
+                assert(pendingOp !== undefined, 0x07d /* "Unexpected op" */);
+                // TODO: check below comment and stuff, see if applicable
+                // Need to check the id, since it's possible to markAsComplete multiple times before the acks
+                if (messageId === pendingOp.messageId) {
+                    assert(pendingOp.type === "completed", 0x07e /* "Unexpected op type" */);
+                    // Delete the pending, because we no longer have an outstanding op
+                    this.latestPendingOps.delete(taskId);
+                }
+            }
+
+            this.deleteQueueForTask(taskId);
+            this.completedWatcher.emit("completed", taskId);
+            this.emit("completed", taskId);
         });
 
         runtime.getQuorum().on("removeMember", (clientId: string) => {
@@ -259,6 +287,19 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.latestPendingOps.set(taskId, pendingOp);
     }
 
+    private submitCompletedOp(taskId: string) {
+        const op: ITaskManagerCompletedOperation = {
+            type: "completed",
+            taskId,
+        };
+        const pendingOp: IPendingOp = {
+            type: "completed",
+            messageId: ++this.messageId,
+        };
+        this.submitLocalMessage(op, pendingOp.messageId);
+        this.latestPendingOps.set(taskId, pendingOp);
+    }
+
     public async volunteerForTask(taskId: string) {
         // If we have the lock, resolve immediately
         if (this.assigned(taskId)) {
@@ -283,6 +324,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
                     this.connectionWatcher.off("disconnect", rejectOnDisconnect);
+                    this.completedWatcher.off("completed", checkIfCompleted);
                     resolve(true);
                 }
             };
@@ -295,6 +337,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.connectionWatcher.off("disconnect", rejectOnDisconnect);
+                this.completedWatcher.off("completed", checkIfCompleted);
                 reject(new Error(`Abandoned before acquiring lock: ${taskId}`));
             };
 
@@ -302,12 +345,26 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
                 this.connectionWatcher.off("disconnect", rejectOnDisconnect);
+                this.completedWatcher.off("completed", checkIfCompleted);
                 reject(new Error(`Disconnected before acquiring lock: ${taskId}`));
+            };
+
+            const checkIfCompleted = (eventTaskId: string) => {
+                if (eventTaskId !== taskId) {
+                    return;
+                }
+
+                this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+                this.abandonWatcher.off("abandon", checkIfAbandoned);
+                this.connectionWatcher.off("disconnect", rejectOnDisconnect);
+                this.completedWatcher.off("completed", checkIfCompleted);
+                resolve(false);
             };
 
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
             this.abandonWatcher.on("abandon", checkIfAbandoned);
             this.connectionWatcher.on("disconnect", rejectOnDisconnect);
+            this.completedWatcher.on("completed", checkIfCompleted);
         });
 
         if (!this.queued(taskId)) {
@@ -339,12 +396,27 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             this.abandonWatcher.off("abandon", checkIfAbandoned);
             this.connectionWatcher.off("disconnect", disconnectHandler);
             this.connectionWatcher.off("connect", submitVolunteerOp);
+            this.completedWatcher.off("completed", checkIfCompleted);
+
+            this.subscribedTasks.delete(taskId);
+        };
+
+        const checkIfCompleted = (eventTaskId: string) => {
+            if (eventTaskId !== taskId) {
+                return;
+            }
+
+            this.abandonWatcher.off("abandon", checkIfAbandoned);
+            this.connectionWatcher.off("disconnect", disconnectHandler);
+            this.connectionWatcher.off("connect", submitVolunteerOp);
+            this.completedWatcher.off("completed", checkIfCompleted);
 
             this.subscribedTasks.delete(taskId);
         };
 
         this.abandonWatcher.on("abandon", checkIfAbandoned);
         this.connectionWatcher.on("disconnect", disconnectHandler);
+        this.completedWatcher.on("completed", checkIfCompleted);
 
         if (!this.connected) {
             disconnectHandler();
@@ -406,6 +478,22 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
     public subscribed(taskId: string): boolean {
         return this.subscribedTasks.has(taskId);
+    }
+
+    public async markAsCompleted(taskId: string): Promise<void> {
+        if (!this.assigned(taskId)) {
+            throw new Error(`Attempted to mark task as complete while not being assigned: ${taskId}`);
+        }
+
+        if (!this.connected) {
+            throw new Error(`Attempted to lock in disconnected state: ${taskId}`);
+        }
+
+        const markCompleteP = new Promise<void>((resolve, reject) => {
+            this.submitCompletedOp(taskId);
+            resolve();
+        });
+        return markCompleteP;
     }
 
     /**
@@ -484,6 +572,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     this.opWatcher.emit("abandon", op.taskId, message.clientId, local, messageId);
                     break;
 
+                case "completed":
+                    this.opWatcher.emit("completed", op.taskId, message.clientId, local, messageId);
+                    break;
+
                 default:
                     throw new Error("Unknown operation");
             }
@@ -535,6 +627,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         for (const taskId of this.taskQueues.keys()) {
             this.removeClientFromQueue(taskId, clientId);
         }
+    }
+
+    /**
+     * Delete queue for a given taskId.
+     */
+    private deleteQueueForTask(taskId: string) {
+        this.taskQueues.delete(taskId);
     }
 
     // This seems like it should be unnecessary if we can trust to receive the join/leave messages and

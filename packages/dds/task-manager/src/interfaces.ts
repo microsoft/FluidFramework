@@ -10,7 +10,7 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
      * Notifies when the local client has reached or left the front of the queue.  Does not account for known pending
      * ops, but instead only reflects the current state.
      */
-    (event: "assigned" | "lost", listener: (taskId: string) => void);
+    (event: "assigned" | "completed" | "lost", listener: (taskId: string) => void);
 }
 
 /**
@@ -58,4 +58,11 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
      * @param taskId - Identifier for the task
      */
     subscribed(taskId: string): boolean;
+
+    /**
+     * Marks a task as completed.  Promise resolves if the task is successfully marked as complete, and rejects if it
+     * fails for any reason.
+     * @param taskId - Identifier for the task
+     */
+    markAsCompleted(taskId: string): Promise<void>;
 }
