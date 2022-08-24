@@ -206,7 +206,7 @@ export interface ITestObjectProvider {
 export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
-    ensureSynchronized(...containers: IContainer[]): Promise<void>;
+    ensureSynchronized(timeoutDuration?: number, ...containers: IContainer[]): Promise<void>;
     pauseProcessing(...containers: IContainer[]): Promise<void>;
     processIncoming(...containers: IContainer[]): Promise<void>;
     processOutgoing(...containers: IContainer[]): Promise<void>;

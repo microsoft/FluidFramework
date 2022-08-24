@@ -9,7 +9,7 @@ import { Container } from "@fluidframework/container-loader";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
-import { timeoutAwait, defaultTimeoutDurationMs } from "./timeoutUtils";
+import { timeoutAwait, timeoutPromise, defaultTimeoutDurationMs } from "./timeoutUtils";
 
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");
@@ -161,6 +161,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      */
     public async ensureSynchronized(timeoutDuration = defaultTimeoutDurationMs, ...containers: IContainer[]) {
         const resumed = this.resumeProcessing(...containers);
+        const start = Date.now();
 
         let waitingSequenceNumberSynchronized = false;
         // eslint-disable-next-line no-constant-condition
@@ -186,14 +187,14 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         waitingSequenceNumberSynchronized = true;
                         debugWait("Waiting for sequence number synchronized");
                         await timeoutAwait(this.waitForAnyInboundOps(containersToApply), {
-                            durationMs: timeoutDuration,
-                            errorMsg: "Timeout on waiting for sequence nuumber synchronized",
+                            durationMs: timeoutDuration - (Date.now() - start),
+                            errorMsg: "Timeout on waiting for sequence number synchronized",
                         });
                     }
                 } else {
                     waitingSequenceNumberSynchronized = false;
                     await timeoutAwait(this.waitForPendingClients(pendingClients), {
-                        durationMs: timeoutDuration,
+                        durationMs: timeoutDuration - (Date.now() - start),
                         errorMsg: "Timeout on waiting for pending join or leave op",
                     });
                 }
@@ -201,14 +202,25 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 // Wait for all the containers to be saved
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
+                const dirtyContainersCount = dirtyContainers.length;
                 waitingSequenceNumberSynchronized = false;
-                await timeoutAwait(Promise.all(dirtyContainers.map(async (c) => Promise.race(
-                    [new Promise((resolve) => c.once("saved", resolve)),
-                    new Promise((resolve) => c.once("closed", resolve))],
-                ))), {
-                    durationMs: timeoutDuration,
-                    errorMsg: "Timeout on waiting containers to be saved",
-                });
+                await Promise.all(dirtyContainers.map(async (c) => Promise.race(
+                    [timeoutPromise(
+                        (resolve) => c.once("saved", () => resolve()),
+                        {
+                            durationMs: (timeoutDuration - (Date.now() - start)) / dirtyContainersCount,
+                            errorMsg: "Timeout on waiting a container to be saved",
+                        },
+                    ),
+                    timeoutPromise(
+                        (resolve) => c.once("closed", () => resolve()),
+                        {
+                            durationMs: (timeoutDuration - (Date.now() - start)) / dirtyContainersCount,
+                            errorMsg: "Timeout on waiting a container to be closed",
+                        },
+                    ),
+                    ],
+                )));
             }
 
             // yield a turn to allow side effect of the ops we just processed execute before we check again
@@ -219,7 +231,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         // don't call pause if resumed is empty and pause everything, which is not what we want
         if (resumed.length !== 0) {
             await timeoutAwait(this.pauseProcessing(...resumed), {
-                durationMs: timeoutDuration,
+                durationMs: timeoutDuration - (Date.now() - start),
                 errorMsg: "Timeout on waiting for pausing all resumed containers",
             });
         }
