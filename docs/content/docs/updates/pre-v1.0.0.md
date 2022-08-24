@@ -185,8 +185,8 @@ The 0.50 release contains internal changes to the Framework.
 
 ### Other notable changes
 
-- [IFluidContainer]{{< relref "apis/ifluidcontainer-interface.md" >}}s have a new property,
-  [isDirty]({{< relref "apis/ifluidcontainer-interface.md#isdirty-PropertySignature" >}}), which will be true if
+- [IFluidContainer][]s have a new property,
+  [isDirty]({{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md#isdirty-propertysignature" >}}), which will be true if
   the container has outstanding operations that have not been acknowledged by the Fluid service. Using this property
   correctly can help prevent data loss due to service connectivity issues ({{< issue 7891 >}}).
 
@@ -238,8 +238,8 @@ better reflect their experimental state. If you use these classes, you can add a
 
 ### Other notable changes
 
-- The published {{< relref "apis/fluid-framework.md" >}} package now publishes ESNext modules ({{< issue 7474 >}}).
-- Various APIs in [@fluidframework/azure-client]{{< relref "apis/azure-client.md" >}} and [@fluidframework/tinylicious-client]{{< relref "apis/tinylicious-client.md" >}} now return [IFluidContainer][]s instead of [FluidContainer][]s.
+- The published [fluid-framework][] package now publishes ESNext modules ({{< issue 7474 >}}).
+- Various APIs in [@fluidframework/azure-client][] and [@fluidframework/tinylicious-client][] now return [IFluidContainer][]s instead of [FluidContainer][]s.
   This change should have no effect to developers since the runtime object is the same ({{< issue 7457 >}}).
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
@@ -258,8 +258,13 @@ better reflect their experimental state. If you use these classes, you can add a
 
 <!-- API links -->
 
-[AzureClient]: {{< relref "/docs/apis/azure-client.md" >}}
-[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
+[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+
 [FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
 [IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
 
