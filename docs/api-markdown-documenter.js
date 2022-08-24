@@ -23,6 +23,137 @@ const apiReportsDirectoryPath = path.resolve(__dirname, "_api-extractor-temp", "
 const apiDocsDirectoryPath = path.resolve(__dirname, "content", "docs", "apis");
 
 /**
+ * Custom {@link MarkdownEmitter} that generates HTML tables
+ */
+class HugoEmitter extends MarkdownEmitter {
+    constructor(apiModel) {
+        super(apiModel);
+    }
+
+    writeNoteBox(docNoteBox, context) {
+        const writer = context.writer;
+
+        writer.ensureNewLine();
+
+        writer.writeLine(`{{% callout ${docNoteBox.type} ${docNoteBox.title ? docNoteBox.title : ""} %}}`);
+
+        this.writeNode(docNoteBox.content, context, false);
+        writer.ensureNewLine();
+
+        writer.writeLine('{{% /callout %}}');
+        writer.writeLine();
+    }
+
+    /**
+     * Writes the provided table in HTML format.
+     *
+     * @param {DocTable} docTable - The table to be written.
+     * @param {MarkdownEmitterContext} context - The Emitter context.
+     *
+     * @override
+     */
+    writeTable(docTable, context) {
+        const writer = context.writer;
+        const childContext = {
+            ...context,
+            insideHTML: true,
+            insideTable: true,
+        }
+
+        let columnCount = 0;
+        if (docTable.header) {
+            columnCount = docTable.header.cells.length;
+        }
+        for (const row of docTable.rows) {
+            if (row.cells.length > columnCount) {
+                columnCount = row.cells.length;
+            }
+        }
+
+        // Write the table header
+        writer.writeLine(`<table class="table table-striped table-hover">`);
+        writer.increaseIndent();
+        writer.writeLine('<thead>');
+        writer.increaseIndent();
+        writer.writeLine('<tr>');
+        writer.increaseIndent();
+        for (let i = 0; i < columnCount; ++i) {
+            if (docTable.header) {
+                const cell = docTable.header.cells[i];
+                if (cell) {
+                    writer.writeLine('<th scope="col">');
+                    writer.increaseIndent();
+                    this.writeNode(cell.content, childContext, false);
+                    writer.ensureNewLine();
+                    writer.decreaseIndent();
+                    writer.writeLine('</th>');
+                }
+            }
+        }
+        writer.decreaseIndent();
+        writer.writeLine('</tr>');
+        writer.decreaseIndent();
+        writer.writeLine('</thead>');
+
+        writer.writeLine('<tbody>');
+        writer.increaseIndent();
+        for (const row of docTable.rows) {
+            writer.writeLine('<tr>');
+            writer.increaseIndent();
+            for (const cell of row.cells) {
+                writer.writeLine('<td>');
+                writer.increaseIndent();
+                this.writeNode(cell.content, childContext, false);
+                writer.ensureNewLine();
+                writer.decreaseIndent();
+                writer.writeLine('</td>');
+            }
+            writer.decreaseIndent();
+            writer.writeLine('</tr>');
+        }
+
+        writer.decreaseIndent();
+        writer.writeLine('</tbody>');
+        writer.decreaseIndent();
+        writer.writeLine('</table>')
+        writer.writeLine();
+    }
+
+    /**
+     * Writes the specified link.
+     * If in an HTML context, the link will be written in HTML format.
+     * Otherwise, it will be written as a standard Markdown-format link.
+     *
+     * @param {string} linkText - The display text of the link being written.
+     * @param {string} linkTarget - The target URL of the link being written.
+     * @param {MarkdownEmitterContext} context - The Emitter context.
+     *
+     * @override
+     */
+    writeLink(linkText, linkTarget, context) {
+        if (context.insideHTML) {
+            this.writeHtmlLink(linkText, linkTarget, context);
+        } else {
+            if(context.insideTable) {
+                console.error("---MD LINK IN TABLE---");
+            }
+            super.writeLink(linkText, linkTarget, context);
+        }
+    }
+
+    /**
+     * Writes an HTML-formatted link for the given target and text.
+     *
+     * @param {string} linkText - The display text of the link being written.
+     * @param {string} linkTarget - The target URL of the link being written.
+     * @param {MarkdownEmitterContext} context - The Emitter context.
+     */
+    writeHtmlLink(linkText, linkTarget, context) {
+        context.writer.write(`<a href='${linkTarget}'>${linkText}</a>`);
+    }
+}
+
+/**
  * Creates Hugo front-matter for the given API item.
  * This will be appended to the top of the generated API documents.
  *
@@ -148,7 +279,7 @@ async function main() {
         console.log(`Writing document for "${document.apiItem.displayName}"...`);
 
         // Emit markdown for API docs
-        const markdownEmitter = new MarkdownEmitter(config.apiModel);
+        const markdownEmitter = new HugoEmitter(config.apiModel);
         let generatedMarkdown;
         try {
             generatedMarkdown = emitMarkdown(document, config, markdownEmitter);
