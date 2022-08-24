@@ -5,8 +5,9 @@
 import { FieldKey, EmptyKey } from "../../tree";
 import { IEditableForest, TreeNavigationResult, ITreeSubscriptionCursor } from "../../forest";
 import { TreeSchemaIdentifier } from "../../schema-stored";
+import { brand } from "../../util";
 
-export const proxySymbol = Symbol.for("editable-tree");
+export const editableTreeProxySymbol: unique symbol = Symbol("editable-tree-proxy");
 
 /**
  * A tree with can be traversed and edited.
@@ -86,13 +87,13 @@ function accessArrayCursor(cursor: ITreeSubscriptionCursor) {
  * A Proxy handler provides a basic read/write access to the Forest by means of the cursors.
  */
 const handler: ProxyHandler<ObjectEditableTree> = {
-	get: (target: ObjectEditableTree, key: string | symbol): any => {
+	get: (target: ObjectEditableTree, key: string | symbol): unknown => {
 		if (typeof key === "string") {
-			const { result, isArray } = tryMoveDown(target.cursor, key as FieldKey);
+			const { result, isArray } = tryMoveDown(target.cursor, brand(key));
 			if (result === TreeNavigationResult.Ok) {
 				const value = target.cursor.value === undefined
-					? target.getChildNode(isArray ? EmptyKey : key as FieldKey)
-					: target.cursor.value;
+					? target.getChildNode(isArray ? EmptyKey : brand(key))
+					: { value: target.cursor.value, type: target.cursor.type };
 				target.cursor.up();
 				return value;
 			} else if (isArray && key === "length") {
@@ -104,19 +105,19 @@ const handler: ProxyHandler<ObjectEditableTree> = {
 		}
 		return Reflect.get(target, key);
 	},
-	set: (target: ObjectEditableTree, key: string | symbol, value: any): boolean => {
+	set: (target: ObjectEditableTree, key: string | symbol, value: unknown): boolean => {
 		throw new Error("Not implemented.");
 	},
 	has: (target: ObjectEditableTree, key: string | symbol): boolean => {
 		if (typeof key === "symbol") {
-			if (key === proxySymbol) {
+			if (key === editableTreeProxySymbol) {
 				return true;
 			} else if (key === Symbol.iterator) {
 				return true;
 			}
 			return false;
 		}
-		const { result } = tryMoveDown(target.cursor, key as FieldKey);
+		const { result } = tryMoveDown(target.cursor, brand(key));
 		if (result === TreeNavigationResult.Ok) {
 			target.cursor.up();
 			return true;
@@ -135,22 +136,25 @@ const handler: ProxyHandler<ObjectEditableTree> = {
 		return target.cursor.keys as string[];
 	},
 	getOwnPropertyDescriptor(target: ObjectEditableTree, key: string | symbol) {
-		if (key === proxySymbol) {
-			return { configurable: true, enumerable: true, value: key, writable: false };
-		}
-		const { result } = tryMoveDown(target.cursor, key as FieldKey);
-		if (result === TreeNavigationResult.Ok) {
-			const value = target.cursor.value === undefined
-				? target.getChildNode(key as FieldKey)
-				: target.cursor.value;
-			const descriptor = {
-				configurable: true,
-				enumerable: true,
-				value,
-				writable: true,
-			};
-			target.cursor.up();
-			return descriptor;
+		if (typeof key === "symbol") {
+			if (key === editableTreeProxySymbol) {
+				return { configurable: true, enumerable: true, value: key, writable: false };
+			}
+		} else {
+			const { result } = tryMoveDown(target.cursor, brand(key));
+			if (result === TreeNavigationResult.Ok) {
+				const value = target.cursor.value === undefined
+					? target.getChildNode(brand(key))
+					: { value: target.cursor.value, type: target.cursor.type };
+				const descriptor = {
+					configurable: true,
+					enumerable: true,
+					value,
+					writable: true,
+				};
+				target.cursor.up();
+				return descriptor;
+			}
 		}
 		return undefined;
 	},
@@ -162,11 +166,11 @@ function proxify(forest: IEditableForest, cursor?: ITreeSubscriptionCursor): IEd
 	// It does not modify the cursor.
 	const target = new ObjectEditableTree(forest, cursor);
 	const proxy = new Proxy(target, handler);
-	Object.defineProperty(proxy, proxySymbol, {
+	Object.defineProperty(proxy, editableTreeProxySymbol, {
 		enumerable: false,
 		configurable: true,
 		writable: false,
-		value: proxySymbol,
+		value: editableTreeProxySymbol,
 	});
 
 	return proxy;

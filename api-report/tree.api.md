@@ -162,6 +162,9 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @public (undocumented)
+export const editableTreeProxySymbol: unique symbol;
+
+// @public (undocumented)
 const empty: Root;
 
 // @public
@@ -275,10 +278,8 @@ export interface IEditableForest extends IForestSubscription {
     applyDelta(delta: Delta.Root): void;
 }
 
-// @public (undocumented)
+// @public
 export interface IEditableTree {
-    // (undocumented)
-    get type(): TreeSchemaIdentifier;
 }
 
 // @public
