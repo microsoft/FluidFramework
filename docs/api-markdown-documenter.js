@@ -14,6 +14,11 @@ const fs = require("fs-extra");
 const path = require("path");
 const os = require("os");
 
+/**
+ * RegExp patterns for packages to include in generated documentation suite.
+ * Packages whose names don't match any of these patterns will be omitted.
+ */
+const packagesToInclude = [/fluid-framework/, /@fluidframework\/.*/, /@fluidtools\/.*/];
 
 // TODOs:
 // - Filter packages we generate docs for
@@ -125,6 +130,12 @@ async function main() {
             return apiItem.kind === ApiItemKind.Model
                 ? "_index" // Hugo syntax for a page with content sub-directories
                 : DefaultPolicies.defaultFileNamePolicy(apiItem);
+        },
+        packageFilterPolicy: (apiPackage) => {
+            const name = apiPackage.name;
+            const match = packagesToInclude.some((regExp) => name.match(regExp) !== null);
+            // Policy lambda is in terms of what things should be filtered out. So invert match.
+            return !match;
         }
     });
 
