@@ -213,6 +213,9 @@ export function getModifiers(apiItem: ApiItem): ApiModifier[];
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
+export function getUnscopedPackageName(apiPackage: ApiPackage): string;
+
+// @public
 export interface Heading {
     id?: string;
     level?: number;

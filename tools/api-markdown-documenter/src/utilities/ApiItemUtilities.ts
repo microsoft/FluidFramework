@@ -271,6 +271,15 @@ export function getFileNameForApiItem(
 }
 
 /**
+ * Gets the unscoped version of the provided package's name.
+ *
+ * @example For the package `@foo/bar`, this would return `bar`.
+ */
+export function getUnscopedPackageName(apiPackage: ApiPackage): string {
+    return PackageName.getUnscopedName(apiPackage.displayName);
+}
+
+/**
  * Gets the raw, unscoped file name segment for the API item.
  *
  * @remarks This is generally the qualified API name, but is handled differently for `Model` and `Package` items.
@@ -283,9 +292,7 @@ function getUnscopedFileNameSegment(
         case ApiItemKind.Model:
             return "index";
         case ApiItemKind.Package:
-            return Utilities.getSafeFilenameForName(
-                PackageName.getUnscopedName(apiItem.displayName),
-            );
+            return Utilities.getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
         default:
             return getQualifiedApiItemName(apiItem);
     }
