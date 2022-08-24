@@ -47,6 +47,8 @@ const readStdin: () => Promise<string | undefined> = () => {
     });
 };
 
+type policyAction = "handle" | "resolve" | "final";
+
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
         "Checks that the dependencies between Fluid Framework packages are following policies.";
@@ -103,11 +105,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             ...lockfilesHandlers,
             assertShortCodeHandler,
         ];
-        const handlerActionPerf = new Map<"handle" | "resolve" | "final", Map<string, number>>();
+        const handlerActionPerf = new Map<policyAction, Map<string, number>>();
 
         const runWithPerf = <T>(
             name: string,
-            action: "handle" | "resolve" | "final",
+            action: policyAction,
             run: () => T,
         ): T => {
             const actionMap = handlerActionPerf.get(action) ?? new Map<string, number>();
