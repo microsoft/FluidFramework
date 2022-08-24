@@ -107,9 +107,9 @@ object of the correct type or `undefined`.
 
 <!-- API links -->
 
-[AzureClient]: {{< ref "/docs/apis/azure-client.md" >}}
-[TinyliciousClient]: {{< ref "/docs/apis/azure-client.md" >}}
-[FluidContainer]: {{< ref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
-[IFluidContainer]: {{< ref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+[AzureClient]: {{< relref "/docs/apis/azure-client.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
