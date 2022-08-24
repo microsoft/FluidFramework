@@ -60,7 +60,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         handler: Flags.string({
             description: `Filter handler names by <regex>`,
             required: false,
-            char: "h",
+            char: "d",
         }),
         path: Flags.string({
             description: `Filter file paths by <regex>`,
