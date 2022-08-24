@@ -16,9 +16,7 @@ const os = require("os");
 
 
 // TODOs:
-// - Why aren't links working?
 // - Filter packages we generate docs for
-// - Landing page replacement issues
 // - Styling (in particular, tables)
 
 const apiReportsDirectoryPath = path.resolve(__dirname, "_api-extractor-temp", "_build");
