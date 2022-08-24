@@ -13,6 +13,13 @@ const fs = require("fs-extra");
 const path = require("path");
 const os = require("os");
 
+
+// TODOs:
+// - Why aren't links working?
+// - Filter packages we generate docs for
+// - Landing page replacement issues
+// - Styling (in particular, tables)
+
 const apiReportsDirectoryPath = path.resolve(__dirname, "_api-extractor-temp", "_build");
 const apiDocsDirectoryPath = path.resolve(__dirname, "content", "docs", "apis");
 
@@ -86,11 +93,6 @@ function frontMatterFromApiItem(apiItem, config, markdownEmitter) {
 
     return JSON.stringify(frontMatter).trim();
 }
-
-// TODOs:
-// - why aren't links working?
-// - Landing page replacement issues
-// - Styling (in particular, tables)
 
 async function main() {
     // Delete existing documentation output
