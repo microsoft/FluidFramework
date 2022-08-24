@@ -166,8 +166,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             const resolver = handler.resolver;
 
             if (!this.processedFlags.fix || resolver === undefined) {
-                this.exit(1);
-                return;
+                return this.exit(1);
             }
 
             output += `${newline}attempting to resolve: ${file}`;
@@ -184,7 +183,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!resolveResult.resolved) {
-                this.exit(1);
+                return this.exit(1);
             }
 
             this.log(output);
