@@ -101,8 +101,8 @@ export interface Covariant<T> {
 
 // @public (undocumented)
 export const enum CursorLocationType {
-    Fields = 0,
-    Nodes = 1
+    Fields = 1,
+    Nodes = 0
 }
 
 // @public
@@ -809,9 +809,7 @@ export class TextCursorNew implements ITreeCursorNew {
     protected getNode(): JsonableTree;
     // (undocumented)
     getPath(): UpPath | undefined;
-    // (undocumented)
     protected index: number | undefined;
-    // (undocumented)
     protected readonly indexStack: (number | undefined)[];
     // (undocumented)
     get mode(): CursorLocationType;

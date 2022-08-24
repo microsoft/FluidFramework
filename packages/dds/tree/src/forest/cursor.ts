@@ -159,16 +159,16 @@ export interface ITreeCursor {
 
 export const enum CursorLocationType {
     /**
-     * Can iterate through fields of a node.
-     * At a "current field".
-     */
-    Fields,
-
-    /**
      * Can iterate through nodes in a field.
      * At a "current node".
      */
     Nodes,
+
+    /**
+     * Can iterate through fields of a node.
+     * At a "current field".
+     */
+    Fields,
 }
 
 export interface ITreeCursorSynchronous extends ITreeCursor{

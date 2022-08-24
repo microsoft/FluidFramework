@@ -60,19 +60,25 @@ type SiblingsOrKey = readonly JsonableTree[] | readonly FieldKey[] | FieldKey;
  * Maybe do a refactoring to deduplicate this.
  */
 export class TextCursor implements ITreeCursor {
-    // Indices traversed to visit this node: does not include current level (which is stored in `index`).
-    // Even indexes are of nodes and odd indexes are for fields.
-    // Only odd (field) indexes may be undefined.
-    // If undefined, corresponding siblingStack entry must be the FieldKey for the field.
+    /**
+     * Indices traversed to visit this node: does not include current level (which is stored in `index`).
+     * Even indexes are of nodes and odd indexes are for fields.
+     * Only odd (field) indexes may be undefined.
+     * If undefined, corresponding siblingStack entry must be the FieldKey for the field.
+     */
     protected readonly indexStack: (number | undefined)[] = [];
-    // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
-    // Even indexes are of nodes and odd indexes are for fields.
+    /**
+     * Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
+     * Even indexes are of nodes and odd indexes are for fields.
+     */
     private readonly siblingStack: SiblingsOrKey[] = [];
 
     private siblings: SiblingsOrKey;
 
-    // Always set when in "Nodes" mode. Undefined when numeric index for field is unknown.
-    // When undefined, get siblings is a FieldKey.
+    /**
+     * Always set when in "Nodes" mode. Undefined when numeric index for field is unknown.
+     * When undefined, get siblings is a FieldKey.
+     */
     protected index: number | undefined;
 
     /**
@@ -111,8 +117,7 @@ export class TextCursor implements ITreeCursor {
     public enterChildNode(index: number): void {
         assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         const siblings = this.getField();
-        const child = siblings[index];
-        assert(child !== undefined, "child must exist");
+        assert(index in siblings, "child must exist");
         this.siblingStack.push(this.siblings);
         this.indexStack.push(this.index);
         this.index = index;
@@ -209,12 +214,11 @@ export class TextCursor implements ITreeCursor {
         }
 
         assert(Array.isArray(this.siblings), "siblings should be an array");
-        if (this.index === this.siblings.length - 1) {
+        this.index += 1;
+        if (this.index === this.siblings.length) {
             this.upToNode();
             return false;
         }
-
-        this.index += 1;
         return true;
     }
 
@@ -232,35 +236,14 @@ export class TextCursor implements ITreeCursor {
             }
         }
 
-        // Already in "Fields" mode, so go to next field.
-        if (this.index === undefined) {
-            // Navigated down to this field using a key, not iteration.
-            // Start iterating from this field:
-
-            // Iteration order is only defined for an individual iteration.
-            // If starting in the middle because accessed using `enterField`,
-            // we can unconditionally start iteration at the end.
-            this.upToField();
-            return false;
-
-            // TODO: if requiring stable iteration order, use the below code:
-            // const key = this.siblings as FieldKey;
-            // const parents = this.siblingStack[this.siblingStack.length - 1] as readonly JsonableTree[];
-            // const parent: JsonableTree = parents[this.indexStack[this.indexStack.length - 1] as number];
-            // this.siblings = keys(parent);
-            // this.index = this.siblings.indexOf(key);
-            // // If key was not found, was in empty field, can start anywhere.
-            // this.index = 0;
-        }
-
         assert(Array.isArray(this.siblings), "siblings should be an array");
-        if (this.index === this.siblings.length - 1) {
+        assert(typeof this.index === "number", "index should be a number");
+        this.index += offset;
+        if (this.index in this.siblings) {
+            return true;
+        }
             this.upToField();
             return false;
-        }
-
-        this.index += 1;
-        return true;
     }
 
     public upToNode(): void {
