@@ -9,7 +9,8 @@ import { TreeSchemaIdentifier } from "../../schema-stored";
 export const proxySymbol = Symbol.for("editable-tree");
 
 /**
- * A dummy placeholder for a Proxy target.
+ * A tree with can be traversed and edited.
+ * TODO: support editing.
  */
 export interface IEditableTree {}
 
