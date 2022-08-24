@@ -206,7 +206,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.opWatcher.on("completed", (taskId: string, clientId: string, local: boolean, messageId: number) => {
             if (runtime.connected && local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
-                assert(pendingOp !== undefined, 0x07d /* "Unexpected op" */);
+                assert(pendingOp !== undefined, "Unexpected op");
                 // TODO: check below comment and stuff, see if applicable
                 // Need to check the id, since it's possible to markAsComplete multiple times before the acks
                 if (messageId === pendingOp.messageId) {
