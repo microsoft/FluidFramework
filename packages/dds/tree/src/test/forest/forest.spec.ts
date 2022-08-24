@@ -11,9 +11,9 @@ import {
     StoredSchemaRepository,
 } from "../../schema-stored";
 import { IEditableForest, initializeForest, TreeNavigationResult } from "../../forest";
-import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../../domains";
+import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject, jsonBoolean } from "../../domains";
 import { recordDependency } from "../../dependency-tracking";
-import { clonePath, Delta, detachedFieldAsKey, JsonableTree, UpPath } from "../../tree";
+import { clonePath, Delta, detachedFieldAsKey, FieldKey, JsonableTree, UpPath } from "../../tree";
 import { defaultSchemaPolicy, FieldKinds, isNeverField, jsonableTreeFromCursor } from "../..";
 import { brand } from "../../util";
 import { MockDependent } from "../utils";
@@ -149,7 +149,22 @@ export function testForest(suiteName: string, factory: (schema: StoredSchemaRepo
         });
 
         // TODO: test more kinds of deltas, including moves.
-        describe("can apply deltas with", () => {
+        describe.only("can apply deltas with", () => {
+            it("ensures cursors are cleared before applying deltas", () => {
+                const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
+                const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
+                initializeForest(forest, content);
+                const anchor = forest.root(forest.rootField);
+
+                const reader = forest.allocateCursor();
+                forest.tryMoveCursorTo(anchor, reader);
+
+                const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
+                const rootField = detachedFieldAsKey(forest.rootField);
+                const delta: Delta.Root = new Map([[rootField, [setValue]]]);
+                assert.throws(() => forest.applyDelta(delta));
+            });
+
             it("setValue", () => {
                 const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
                 const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
@@ -186,6 +201,43 @@ export function testForest(suiteName: string, factory: (schema: StoredSchemaRepo
                 assert.equal(reader.value, undefined);
             });
 
+            it.skip("set fields", () => {
+                const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
+                const content: JsonableTree[] = [{ type: jsonObject.name,
+                    fields: {
+                        x: [{
+                            type: jsonNumber.name,
+                            value: 0,
+                        }],
+                        y: [{
+                            type: jsonNumber.name,
+                            value: 1,
+                        }],
+                    },
+                }];
+                initializeForest(forest, content);
+
+                const xField = brand<FieldKey>("x");
+                const setField: Delta.Modify = {
+                    type: Delta.MarkType.Modify,
+                    fields: new Map([[xField, [
+                        { type: Delta.MarkType.Delete, count: 1 },
+                        { type: Delta.MarkType.Insert, content: [{ type: jsonBoolean.name, value: true }] },
+                    ]]]),
+                };
+                // TODO: make type-safe
+                const rootField = detachedFieldAsKey(forest.rootField);
+                const delta: Delta.Root = new Map([[rootField, [setField]]]);
+                forest.applyDelta(delta);
+
+                const anchor = forest.root(forest.rootField);
+                const reader = forest.allocateCursor();
+                assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
+                assert.equal(reader.down(xField, 0), TreeNavigationResult.Ok);
+
+                assert.equal(reader.value, true);
+            });
+
             it("delete", () => {
                 const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
                 const content: JsonableTree[] = [
@@ -195,10 +247,11 @@ export function testForest(suiteName: string, factory: (schema: StoredSchemaRepo
                 initializeForest(forest, content);
                 const anchor = forest.root(forest.rootField);
 
-                // TODO: does does this select what to delete?
+                // Deltas are applied onto a field in order. This will delete the first item in the field.
+                // To select a different item to delete, use skips.
                 const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
                 const rootField = detachedFieldAsKey(forest.rootField);
-                const delta: Delta.Root = new Map([[rootField, [0, mark]]]);
+                const delta: Delta.Root = new Map([[rootField, [mark]]]);
                 // TODO: make type-safe
                 forest.applyDelta(delta);
 
@@ -207,6 +260,29 @@ export function testForest(suiteName: string, factory: (schema: StoredSchemaRepo
                 assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
                 assert.equal(reader.value, 2);
                 assert.equal(reader.seek(1), TreeNavigationResult.NotFound);
+            });
+
+            it("a skip", () => {
+                const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
+                const content: JsonableTree[] = [
+                    { type: jsonNumber.name, value: 1 },
+                    { type: jsonNumber.name, value: 2 },
+                ];
+                initializeForest(forest, content);
+                const anchor = forest.root(forest.rootField);
+
+                const skip: Delta.Skip = 1;
+                const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
+                const rootField = detachedFieldAsKey(forest.rootField);
+                const delta: Delta.Root = new Map([[rootField, [skip, mark]]]);
+                // TODO: make type-safe
+                forest.applyDelta(delta);
+
+                // Inspect resulting tree: should just have `2`.
+                const reader = forest.allocateCursor();
+                assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
+                assert.equal(reader.value, 1);
+                assert.equal(reader.seek(2), TreeNavigationResult.NotFound);
             });
         });
 
