@@ -86,6 +86,14 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 export type LinkTextPolicy = (apiItem: ApiItem) => string;
 
 /**
+ * Policy for filtering packages.
+ *
+ * @param apiPackage - The package that may or may not be filtered.
+ * @returns `true` if the package should be filtered out of documentation generation (i.e. **should not** be included in the output). `false` otherwise.
+ */
+export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
+
+/**
  * Policy configuration options
  */
 export interface PolicyOptions {
@@ -149,6 +157,13 @@ export interface PolicyOptions {
      * @defaultValue {@link DefaultPolicies.defaultLinkTextPolicy}
      */
     linkTextPolicy?: LinkTextPolicy;
+
+    /**
+     * See {@link PackageFilterPolicy}.
+     *
+     * @defaultValue {@link DefaultPolicies.defaultPackageFilterPolicy}
+     */
+    packageFilterPolicy?: PackageFilterPolicy;
 }
 
 export namespace DefaultPolicies {
@@ -242,10 +257,19 @@ export namespace DefaultPolicies {
                 return Utilities.getConciseSignature(apiItem);
         }
     }
+
+    /**
+     * Default {@link PolicyOptions.packageFilterPolicy}.
+     *
+     * Unconditionally returns `false` (i.e. no packages will be filtered out).
+     */
+    export function defaultPackageFilterPolicy(): boolean {
+        return false;
+    }
 }
 
 /**
- * Default {@link PolicyOptions} configuration
+ * Default {@link PolicyOptions} configuration.
  */
 export const defaultPolicyOptions: Required<PolicyOptions> = {
     includeTopLevelDocumentHeading: true,
@@ -256,4 +280,5 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
     headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
     linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
+    packageFilterPolicy: DefaultPolicies.defaultPackageFilterPolicy,
 };

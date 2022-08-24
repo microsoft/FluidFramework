@@ -83,6 +83,7 @@ export namespace DefaultPolicies {
     export function defaultFileNamePolicy(apiItem: ApiItem): string;
     export function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
     export function defaultLinkTextPolicy(apiItem: ApiItem): string;
+    export function defaultPackageFilterPolicy(): boolean;
     export function defaultUriBaseOverridePolicy(): string | undefined;
 }
 
@@ -315,6 +316,9 @@ interface MemberTableProperties {
 export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public
+export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
+
+// @public
 export interface PolicyOptions {
     documentBoundaries?: DocumentBoundaries;
     fileNamePolicy?: FileNamePolicy;
@@ -323,6 +327,7 @@ export interface PolicyOptions {
     includeBreadcrumb?: boolean;
     includeTopLevelDocumentHeading?: boolean;
     linkTextPolicy?: LinkTextPolicy;
+    packageFilterPolicy?: PackageFilterPolicy;
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
 
