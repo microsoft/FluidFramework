@@ -1,4 +1,3 @@
-
 # TestInterface
 
 Test interface
@@ -20,4 +19,3 @@ interface TestInterface
 |  Method | Return Type | Description |
 |  --- | --- | --- |
 |  [testInterfaceMethod()](docs/simple-suite-test/testnamespace-testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
-

@@ -1,4 +1,3 @@
-
 # sealedMethod
 
 A test `@sealed` method.

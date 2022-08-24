@@ -20,12 +20,8 @@ const tomb = "Dummy Changeset Tag";
 
 const testMarks: [string, T.Mark][] = [
     ["SetValue", { type: "Modify", value: { id: 0, value: 42 } }],
-    ["MInsert", [{ type: "MInsert", id: 0, content: { type, value: 42 }, value: { id: 0, value: 43 } }]],
-    ["Insert-1x2", [{ type: "Insert", id: 0, content: [{ type, value: 42 }, { type, value: 43 }] }]],
-    ["Insert-2x1", [
-        { type: "Insert", id: 0, content: [{ type, value: 42 }] },
-        { type: "Insert", id: 1, content: [{ type, value: 43 }] },
-    ]],
+    ["MInsert", { type: "MInsert", id: 0, content: { type, value: 42 }, value: { id: 0, value: 43 } }],
+    ["Insert", { type: "Insert", id: 0, content: [{ type, value: 42 }, { type, value: 43 }] }],
     ["Delete", { type: "Delete", id: 0, count: 2 }],
     ["Revive", { type: "Revive", id: 0, count: 2, tomb }],
 ];

@@ -1,4 +1,3 @@
-
 # testMethod
 
 Test interface method accepting a string and returning a number.
@@ -18,4 +17,3 @@ testMethod(input: string): number;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | string | A string |
-

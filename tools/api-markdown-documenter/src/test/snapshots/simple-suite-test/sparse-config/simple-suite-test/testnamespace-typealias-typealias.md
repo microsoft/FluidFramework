@@ -1,4 +1,3 @@
-
 # TypeAlias
 
 Test Type-Alias

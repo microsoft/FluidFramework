@@ -1,4 +1,3 @@
-
 # abstractPropertyGetter
 
 A test abstract getter property.

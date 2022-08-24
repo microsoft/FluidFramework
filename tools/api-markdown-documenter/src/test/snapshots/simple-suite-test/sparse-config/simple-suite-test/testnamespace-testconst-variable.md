@@ -1,4 +1,3 @@
-
 # TestConst
 
 Test Constant

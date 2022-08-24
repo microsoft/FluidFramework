@@ -1,4 +1,3 @@
-
 # testClassGetterProperty
 
 Test class getter-only property

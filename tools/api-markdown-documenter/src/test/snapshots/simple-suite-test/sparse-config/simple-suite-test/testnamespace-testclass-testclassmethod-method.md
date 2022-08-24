@@ -1,4 +1,3 @@
-
 # testClassMethod
 
 Test class method
@@ -14,4 +13,3 @@ testClassMethod(testParameter: string): Promise<string>;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | string | A string |
-

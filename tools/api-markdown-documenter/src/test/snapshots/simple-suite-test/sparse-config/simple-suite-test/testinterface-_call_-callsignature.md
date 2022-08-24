@@ -1,4 +1,3 @@
-
 # (call)
 
 Test interface event call signature

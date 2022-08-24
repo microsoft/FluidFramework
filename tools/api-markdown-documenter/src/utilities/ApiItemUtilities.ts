@@ -168,6 +168,15 @@ export function getLinkUrlForApiItem(
 }
 
 /**
+ * Gets the unscoped version of the provided package's name.
+ *
+ * @example For the package `@foo/bar`, this would return `bar`.
+ */
+export function getUnscopedPackageName(apiPackage: ApiPackage): string {
+    return PackageName.getUnscopedName(apiPackage.displayName);
+}
+
+/**
  * Gets the file path for the specified API item.
  *
  * @remarks
@@ -196,7 +205,7 @@ export function getFilePathForApiItem(
 
     let path = fileName;
     for (const hierarchyItem of documentAncestry) {
-        const segmentName = getUnscopedFileNameSegment(hierarchyItem, config);
+        const segmentName = config.fileNamePolicy(hierarchyItem);
         path = Path.join(segmentName, path);
     }
     return path;
@@ -223,7 +232,7 @@ export function getFileNameForApiItem(
 ): string {
     const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
-    let unscopedFileName = getUnscopedFileNameSegment(targetDocumentItem, config);
+    let unscopedFileName = config.fileNamePolicy(targetDocumentItem);
 
     // For items of kinds other than `Model` or `Package` (which are handled specially file-system-wise),
     // append the item kind to disambiguate file names resulting from members whose names may conflict in a
@@ -253,7 +262,7 @@ export function getFileNameForApiItem(
         hierarchyItem.kind !== ApiItemKind.Model &&
         !doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)
     ) {
-        const segmentName = getUnscopedFileNameSegment(hierarchyItem, config);
+        const segmentName = config.fileNamePolicy(hierarchyItem);
         if (segmentName.length === 0) {
             throw new Error("Segment name must be non-empty.");
         }
@@ -268,34 +277,6 @@ export function getFileNameForApiItem(
     }
 
     return scopedFileName;
-}
-
-/**
- * Gets the unscoped version of the provided package's name.
- *
- * @example For the package `@foo/bar`, this would return `bar`.
- */
-export function getUnscopedPackageName(apiPackage: ApiPackage): string {
-    return PackageName.getUnscopedName(apiPackage.displayName);
-}
-
-/**
- * Gets the raw, unscoped file name segment for the API item.
- *
- * @remarks This is generally the qualified API name, but is handled differently for `Model` and `Package` items.
- */
-function getUnscopedFileNameSegment(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
-): string {
-    switch (apiItem.kind) {
-        case ApiItemKind.Model:
-            return "index";
-        case ApiItemKind.Package:
-            return Utilities.getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
-        default:
-            return getQualifiedApiItemName(apiItem);
-    }
 }
 
 /**

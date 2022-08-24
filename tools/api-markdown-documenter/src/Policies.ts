@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
-import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import { ApiItem, ApiItemKind, ApiPackage } from "@microsoft/api-extractor-model";
+
+import { getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
 
 // TODOs:
 // - use `kind` not `type` (and link to ApiModel docs)
@@ -35,6 +37,23 @@ export type DocumentBoundaries = ApiItemKind[];
  * TODO
  */
 export type HierarchyBoundaries = ApiItemKind[];
+
+/**
+ * Policy for generating file names.
+ *
+ * @remarks Note that this is not the complete file name, but the "leaf" component of the final file name.
+ * Additional prefixes and suffixes will be appended to ensure file name collisions do not occur.
+ *
+ * This also does not contain the file extension.
+ *
+ * @example We are given a class API item "Bar" in package "Foo".
+ * This policy returns "foo".
+ * The final file name might be something like "foo-bar-class".
+ *
+ * @param apiItem - The API item for which the pre-modification file name is being generated.
+ * @returns The pre-modification file name for the API item.
+ */
+export type FileNamePolicy = (apiItem: ApiItem) => string;
 
 /**
  * Policy for overriding the URI base for a specific API item.
@@ -104,6 +123,13 @@ export interface PolicyOptions {
     hierarchyBoundaries?: HierarchyBoundaries;
 
     /**
+     * See {@link FileNamePolicy}.
+     *
+     * @defaultValue {@link DefaultPolicies.defaultFileNamePolicy}
+     */
+    fileNamePolicy?: FileNamePolicy;
+
+    /**
      * See {@link UriBaseOverridePolicy}.
      *
      * @defaultValue {@link DefaultPolicies.defaultUriBaseOverridePolicy}
@@ -159,6 +185,28 @@ export namespace DefaultPolicies {
     ];
 
     /**
+     * Default {@link PolicyOptions.fileNamePolicy}.
+     *
+     * Uses the item's qualified API name, but is handled differently for the following items:
+     *
+     * - Model: Uses "index".
+     * - Package: Uses the unscoped package name.
+     *
+     */
+    export function defaultFileNamePolicy(apiItem: ApiItem): string {
+        switch (apiItem.kind) {
+            case ApiItemKind.Model:
+                return "index";
+            case ApiItemKind.Package:
+                return Utilities.getSafeFilenameForName(
+                    getUnscopedPackageName(apiItem as ApiPackage),
+                );
+            default:
+                return getQualifiedApiItemName(apiItem);
+        }
+    }
+
+    /**
      * Default {@link PolicyOptions.uriBaseOverridePolicy}.
      *
      * Always uses default URI base.
@@ -204,6 +252,7 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
     includeBreadcrumb: true,
     documentBoundaries: DefaultPolicies.defaultDocumentBoundaries,
     hierarchyBoundaries: DefaultPolicies.defaultHierarchyBoundaries,
+    fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
     headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
     linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,

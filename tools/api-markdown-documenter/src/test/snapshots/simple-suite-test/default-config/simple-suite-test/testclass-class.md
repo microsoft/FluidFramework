@@ -1,4 +1,3 @@
-
 # TestClass
 
 [Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestClass](./simple-suite-test/testclass-class)

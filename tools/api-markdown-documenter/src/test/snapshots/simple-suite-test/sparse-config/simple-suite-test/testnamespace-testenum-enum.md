@@ -1,4 +1,3 @@
-
 # TestEnum
 
 Test Enum

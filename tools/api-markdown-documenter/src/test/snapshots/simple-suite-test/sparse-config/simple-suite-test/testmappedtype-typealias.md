@@ -1,4 +1,3 @@
-
 # TestMappedType
 
 Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum)

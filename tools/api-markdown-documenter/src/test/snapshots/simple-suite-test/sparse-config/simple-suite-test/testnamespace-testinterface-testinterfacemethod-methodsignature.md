@@ -1,4 +1,3 @@
-
 # testInterfaceMethod
 
 Test interface method

@@ -1,4 +1,3 @@
-
 # simple-suite-test
 
 [Packages](docs/index) &gt; [simple-suite-test](docs/simple-suite-test)
@@ -88,4 +87,3 @@ const foo = bar;
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
 |  [testConst](docs/simple-suite-test/testconst-variable) | readonly | Test Constant |
-

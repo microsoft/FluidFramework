@@ -1,4 +1,3 @@
-
 # virtualMethod
 
 Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method)<!-- -->.

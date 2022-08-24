@@ -1,4 +1,3 @@
-
 # TestNamespace
 
 Test Namespace
@@ -64,4 +63,3 @@ export declare namespace TestNamespace
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestConst](docs/simple-suite-test/testnamespace-testconst-variable) | readonly | Test Constant |
-

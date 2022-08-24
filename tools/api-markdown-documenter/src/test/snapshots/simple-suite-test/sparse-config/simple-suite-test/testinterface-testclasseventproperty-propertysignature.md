@@ -1,4 +1,3 @@
-
 # testClassEventProperty
 
 Test interface event property

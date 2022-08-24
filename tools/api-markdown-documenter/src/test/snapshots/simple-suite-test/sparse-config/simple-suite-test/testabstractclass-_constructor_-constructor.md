@@ -1,4 +1,3 @@
-
 # (constructor)
 
 This is a constructor.
@@ -15,4 +14,3 @@ protected constructor(privateProperty: number, protectedProperty: TestEnum);
 |  --- | --- | --- |
 |  privateProperty | number |  |
 |  protectedProperty | [TestEnum](docs/simple-suite-test/testenum-enum) |  |
-

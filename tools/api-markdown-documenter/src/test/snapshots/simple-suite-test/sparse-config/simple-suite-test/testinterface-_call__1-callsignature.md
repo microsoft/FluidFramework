@@ -1,4 +1,3 @@
-
 # (call)
 
 Another example call signature

@@ -1,4 +1,3 @@
-
 # testFunction
 
 Test function
@@ -19,4 +18,3 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 |  --- | --- | --- | --- |
 |  testParameter |  | TTypeParameter | A test parameter |
 |  testOptionalParameter | optional | TTypeParameter |  |
-

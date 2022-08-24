@@ -1,4 +1,3 @@
-
 # TestInterfaceExtendingOtherInterfaces
 
 [Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface)
@@ -48,4 +47,3 @@ testMethod(input: string): number;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | string | A string |
-

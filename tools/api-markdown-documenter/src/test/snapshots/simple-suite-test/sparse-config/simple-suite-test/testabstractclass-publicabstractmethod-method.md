@@ -1,4 +1,3 @@
-
 # publicAbstractMethod
 
 A test public abstract method.

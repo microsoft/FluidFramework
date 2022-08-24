@@ -1,4 +1,3 @@
-
 # simple-suite-test
 
 [Packages](docs/index) &gt; [simple-suite-test](docs/simple-suite-test)
