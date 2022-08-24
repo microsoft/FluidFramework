@@ -6,7 +6,7 @@
 /**
  * This script is used by the build server to compute the version number of the packages.
  * The release version number is based on what's in the lerna.json/package.json.
- * The CI will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
+ * The CI will supply the build number and branch to determine the prerelease suffix if it is not a tagged build.
  *
  * Input:
  *      ./lerna.json or ./package.json - base version number to use
