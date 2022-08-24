@@ -1,21 +1,18 @@
 {
-  // "extends": "../tsconfig",
-  "parserOptions": {
-    "project": ["./tsconfig.json"],
-  },
+  "extends": "@fluidframework/build-common/ts-common-config.json",
   "compilerOptions": {
-    "noEmit": true,
     "declaration": true,
     "importHelpers": true,
-    "module": "commonjs",
-    "outDir": "dist",
-    "rootDir": "src",
-    "strict": true,
-    "target": "es2019",
-    "types": ["node"],
-    "esModuleInterop": true,
-    "incremental": true,
-    "pretty": true,
+    "declarationMap": false,
+    "noUnusedLocals": false,
+    "rootDir": "./",
+    "outDir": "../dist/test",
+    "types": ["node", "mocha", "chai"],
+    "skipLibCheck": true,
   },
-  "references": [{ "path": ".." }],
+  "references": [
+    {
+      "path": "..",
+    },
+  ],
 }
