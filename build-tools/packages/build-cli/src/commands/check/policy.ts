@@ -52,8 +52,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         "Checks that the dependencies between Fluid Framework packages are properly layered.";
 
     static flags = {
-        resolve: Flags.boolean({
-            description: `Resolve errors if possible`,
+        fix: Flags.boolean({
+            description: `Fix errors if possible`,
             required: false,
             char: "f",
         }),
