@@ -22,7 +22,6 @@ const pkgName = pkg.name;
 
 // For test builds, the package version starts with 0.0.0.  Code need to know the original version.
 // CI build create one with original version prefix is emitted into the environment for code logic to be used here.
-// See tools/pipelines/scripts/build-version.js
 const pkgVersion = process.env.SETVERSION_CODEVERSION
     ? process.env.SETVERSION_CODEVERSION
     : pkg.version;

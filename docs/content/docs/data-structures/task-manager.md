@@ -1,6 +1,5 @@
 ---
-title: Ink
-menuPosition: 10
+title: TaskManager
 status: unwritten
 draft: true
 ---
