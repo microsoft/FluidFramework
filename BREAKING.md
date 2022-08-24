@@ -23,29 +23,25 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
 - [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
 - [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
-- [Add assertion that closes container in DeltaManager if sending an op while concurrently processing another op](#add-assertion-that-closes-container-in-DeltaManager-if-sending-an-op-while-concurrently-processing-another-op)
-
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
 ### Remove `ShareLinkTypes` interface
 `ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Singnature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
-
+```diff
     function createOdspCreateContainerRequest(
         siteUrl: string,
         driveId: string,
         filePath: string,
         fileName: string,
-        createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
-    ):
+-       createShareLinkType?: ShareLinkTypes,
++       createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
+    ): 
+```
+
 
 ### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
-
-### Add assertion that closes container in `DeltaManager` if sending an op while concurrently processing another op
-A check has been added to the `submit` function in `deltaManager.ts`. This check will be disabled by default via the
-`preventConcurrentOpSend` boolean. Set this to true to enable this check and close the container if attempting to send an op while processing another op. This temporary option will be removed and will thus require many tests to be fixed.
-
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
@@ -902,7 +898,7 @@ The `SharedNumberSequence` and `SharedObjectSequence` have been deprecated and a
 Additionally, `useSyncedArray()` from `@fluid-experimental/react` has been removed, as it depended on the `SharedObjectArray`.
 
 ### `IContainer` interface updated to complete 0.53 changes
-The breaking changes introduced in [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs) have now been completed in 0.54. The following additions ,to the `IContainer` interface are no longer optional but rather mandatory:
+The breaking changes introduced in [`IContainer` interface updated to expose actively used `Container` public APIs](#IContainer-interface-updated-to-expose-actively-used-Container-public-APIs) have now been completed in 0.54. The following additions to the `IContainer` interface are no longer optional but rather mandatory:
 - `connectionState`
 - `connected`
 - `audience`
@@ -2559,6 +2555,11 @@ ErrorType enum has been broken into 3 distinct enums / layers:
 ### Sequence snapshot format change
 
 Due to a change in the sequence's snapshot format clients running a version less than 0.19 will not be able to load snapshots generated in 0.21. This will affect all sequence types includes shared string, and sparse matrix. If you need to support pre-0.19 clients please contact us for mitigations.
+
+### ITelemetryBaseLogger.supportsTags deleted
+
+Proper support for tagged events will be assumed going forward. Only at the loader-runtime boundary do we retain
+a concession for backwards compatibility, but that's done outside of this interface.
 
 ## 0.20 Breaking Changes
 

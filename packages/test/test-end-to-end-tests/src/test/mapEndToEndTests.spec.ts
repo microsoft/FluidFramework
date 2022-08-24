@@ -367,12 +367,10 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
                 }),
             },
         };
+
         container = await provider.makeTestContainer(configWithFeatureGates) as Container;
-
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
-
         containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
         clearEventCount = 0;
         changedEventData = [];
@@ -439,9 +437,6 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         it("Negative test with unset concurrentOpSend feature gate", async () => {
             await setupContainers(testContainerConfig, { "Fluid.Container.ConcurrentOpSend": false });
             sharedMap.on("valueChanged", (changed, local) => {
-                if (!local) {
-                    assert.equal(changed.key, "key2", "Incorrect value for key1 in container 1");
-                }
                 // Avoid re-entrancy by setting a new key
                 if (changed.key !== "key2") {
                     sharedMap2.set("key2", "v2");

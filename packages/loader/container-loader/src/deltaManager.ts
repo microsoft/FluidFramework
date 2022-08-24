@@ -213,7 +213,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (!batch) {
             this.flush();
         }
-
         const message = this.connectionManager.prepareMessageToSend(messagePartial);
         if (message === undefined) {
             return -1;
