@@ -71,22 +71,19 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static processed = 0;
     static count = 0;
     static pathToGitRoot = "";
-    static exclusions: RegExp[];
-    static handlerRegex: RegExp;
-    static pathRegex: RegExp;
 
     async run() {
-        CheckPolicy.handlerRegex =
+        const handlerRegex: RegExp =
             typeof this.processedFlags.handler === "string"
                 ? new RegExp(this.processedFlags.handler, "i")
                 : /.?/;
-        CheckPolicy.pathRegex =
+        const pathRegex: RegExp =
             typeof this.processedFlags.path === "string"
                 ? new RegExp(this.processedFlags.path, "i")
                 : /.?/;
 
         // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
-        CheckPolicy.exclusions = require(`../../data/${this.processedFlags.exclusions}`).map(
+        const exclusions: RegExp[] = require(`../../data/${this.processedFlags.exclusions}`).map(
             (e: string) => new RegExp(e, "i"),
         );
 
@@ -95,18 +92,22 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
 
         if (this.processedFlags.handler !== undefined) {
-            this.log(`Filtering handlers by regex: ${CheckPolicy.handlerRegex}`);
+            this.log(`Filtering handlers by regex: ${handlerRegex}`);
         }
 
         if (this.processedFlags.path !== undefined) {
-            this.log(`Filtering file paths by regex: ${CheckPolicy.pathRegex}`);
+            this.log(`Filtering file paths by regex: ${pathRegex}`);
         }
 
         if (this.processedFlags.stdin) {
             const pipeString = await readStdin();
 
             if (pipeString !== undefined) {
-                pipeString.split("\n").map((line: string) => this.handleLine(line));
+                pipeString
+                    .split("\n")
+                    .map((line: string) =>
+                        this.handleLine(line, handlerRegex, pathRegex, exclusions),
+                    );
             }
 
             try {
@@ -134,7 +135,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             scriptOutput = `${scriptOutput}${data.toString()}`;
         });
         p.stdout.on("close", () => {
-            scriptOutput.split("\n").map((line: string) => this.handleLine(line));
+            scriptOutput
+                .split("\n")
+                .map((line: string) => this.handleLine(line, handlerRegex, pathRegex, exclusions));
             try {
                 runPolicyCheck(this.processedFlags.fix);
             } finally {
@@ -145,11 +148,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     // route files to their handlers by regex testing their full paths
     // synchronize output, exit code, and resolve decision for all handlers
-    routeToHandlers(file: string) {
+    routeToHandlers(file: string, handlerRegex: RegExp) {
         const filteredHandlers = handlers.filter(
             (handler) =>
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-return
-                handler.match.test(file) && CheckPolicy.handlerRegex.test(handler.name),
+                handler.match.test(file) && handlerRegex.test(handler.name),
         );
 
         for (const handler of filteredHandlers) {
@@ -204,21 +207,21 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
     }
 
-    handleLine(line: string) {
+    handleLine(line: string, handlerRegex: RegExp, pathRegex: RegExp, exclusions: RegExp[]) {
         const filePath = path.join(CheckPolicy.pathToGitRoot, line).trim().replace(/\\/g, "/");
 
-        if (!CheckPolicy.pathRegex.test(line) || !fs.existsSync(filePath)) {
+        if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
             return;
         }
 
         CheckPolicy.count++;
-        if (CheckPolicy.exclusions.every((value) => !value.test(line))) {
+        if (exclusions.every((value) => !value.test(line))) {
             this.log(`Excluded: ${line}`);
             return;
         }
 
         try {
-            this.routeToHandlers(filePath);
+            this.routeToHandlers(filePath, handlerRegex);
             runPolicyCheck(this.processedFlags.fix);
         } catch {
             this.logStats();
