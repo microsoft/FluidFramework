@@ -64,6 +64,7 @@ filesToProcess.forEach((fullPath) => {
             logger.send({
                 category: "performance",
                 eventName: "Benchmark",
+                benchmarkType: "ExecutionTime",
                 ...props,
             });
         });
