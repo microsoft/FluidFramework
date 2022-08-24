@@ -2,18 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable unicorn/prefer-module */
-/* eslint-disable import/no-internal-modules */
-/* eslint-disable @typescript-eslint/no-require-imports */
-/* eslint-disable unicorn/import-style */
-/* eslint-disable camelcase */
-/* eslint-disable @typescript-eslint/promise-function-async */
-/* eslint-disable array-callback-return */
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
 import * as fs from "fs";
 import { EOL as newline } from "os";
+// eslint-disable-next-line camelcase
 import * as child_process from "child_process";
+// eslint-disable-next-line unicorn/import-style
 import * as path from "path";
 import { Flags } from "@oclif/core";
 import {
@@ -27,7 +21,7 @@ import {
 } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 
-const readStdin: () => Promise<string | undefined> = () => {
+const readStdin: () => Promise<string | undefined> = async () => {
     return new Promise((resolve) => {
         const stdin = process.openStdin();
         stdin.setEncoding("utf-8");
@@ -84,6 +78,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     async run() {
         const flags = this.processedFlags;
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const exclusions: RegExp[] = require(`../../data/${flags.exclusions}`).map(
             (e: string) => new RegExp(e, "i"),
         );
@@ -128,24 +123,33 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         // synchronize output, exit code, and resolve decision for all handlers
         const routeToHandlers = (file: string) => {
             handlers
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 .filter((handler) => handler.match.test(file) && handlerRegex.test(handler.name))
+                // eslint-disable-next-line array-callback-return
                 .map((handler) => {
                     const result = runWithPerf(handler.name, "handle", () =>
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         handler.handler(file, pathToGitRoot),
                     );
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (result) {
                         let output = `${newline}file failed policy check: ${file}${newline}${result}`;
                         const resolver = handler.resolver;
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                         if (flags.fix && resolver) {
                             output += `${newline}attempting to resolve: ${file}`;
                             const resolveResult = runWithPerf(handler.name, "resolve", () =>
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                                 resolver(file, pathToGitRoot),
                             );
 
+                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                             if (resolveResult.message) {
+                                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                                 output += newline + resolveResult.message;
                             }
 
+                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                             if (!resolveResult.resolved) {
                                 this.exit(1);
                             }
@@ -181,11 +185,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         const runPolicyCheck = () => {
             for (const h of handlers) {
                 const final = h.final;
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 if (final) {
                     const result = runWithPerf(h.name, "final", () =>
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         final(pathToGitRoot, flags.fix)
                     );
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (result?.error) {
                         this.error(result.error);
                     }
@@ -220,7 +226,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         if (flags.stdin) {
             const pipeString = await readStdin();
 
-            if (pipeString) {
+            if (pipeString !== undefined) {
                 pipeString.split("\n").map((line: string) => handleLine(line));
                 return;
             }
@@ -230,9 +236,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             return;
         }
 
+        // eslint-disable-next-line camelcase
         pathToGitRoot = child_process
             .execSync("git rev-parse --show-cdup", { encoding: "utf8" })
             .trim();
+        // eslint-disable-next-line camelcase
         const p = child_process.spawn("git", [
             "ls-files",
             "-co",
