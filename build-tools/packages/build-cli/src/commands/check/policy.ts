@@ -67,6 +67,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             required: false,
             char: "p",
         }),
+        exclusions: Flags.string({
+            description: `Filter exclusions path`,
+            required: false,
+            char: "e",
+            default: "exclusions.json"
+        }),
         stdin: Flags.boolean({
             description: `Get file from stdin`,
             required: false,
@@ -76,7 +82,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     async run() {
         const flags = this.processedFlags;
-        const exclusions: RegExp[] = require("../../data/exclusions.json").map(
+        const exclusions: RegExp[] = require(`../../data/${flags.exclusions}`).map(
             (e: string) => new RegExp(e, "i"),
         );
         const handlerRegex =
