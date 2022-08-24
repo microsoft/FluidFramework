@@ -5,7 +5,8 @@ const {
     loadModel,
     markdownDocumenterConfigurationWithDefaults,
     MarkdownEmitter,
-    renderDocuments
+    renderDocuments,
+    DefaultPolicies
 } = require("@fluid-tools/api-markdown-documenter");
 const { StringBuilder } = require("@microsoft/tsdoc");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
@@ -122,6 +123,11 @@ async function main() {
         newlineKind: "lf",
         uriRoot: "/docs/apis",
         includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
+        fileNamePolicy: (apiItem) => {
+            return apiItem.kind === ApiItemKind.Model
+                ? "_index"
+                : DefaultPolicies.defaultFileNamePolicy(apiItem);
+        }
     });
 
     console.log("Generating API docs...");
