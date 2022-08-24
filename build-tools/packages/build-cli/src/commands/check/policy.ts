@@ -5,8 +5,7 @@
 
 import * as fs from "fs";
 import { EOL as newline } from "os";
-// eslint-disable-next-line camelcase
-import * as child_process from "child_process";
+import * as childProcess from "child_process";
 // eslint-disable-next-line unicorn/import-style
 import * as path from "path";
 import { Flags } from "@oclif/core";
@@ -77,30 +76,33 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static pathRegex: RegExp;
 
     async run() {
-        const flags = this.processedFlags;
-
         CheckPolicy.handlerRegex =
-            typeof flags.handler === "string" ? new RegExp(flags.handler, "i") : /.?/;
-        CheckPolicy.pathRegex = typeof flags.path === "string" ? new RegExp(flags.path, "i") : /.?/;
+            typeof this.processedFlags.handler === "string"
+                ? new RegExp(this.processedFlags.handler, "i")
+                : /.?/;
+        CheckPolicy.pathRegex =
+            typeof this.processedFlags.path === "string"
+                ? new RegExp(this.processedFlags.path, "i")
+                : /.?/;
 
         // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
-        CheckPolicy.exclusions = require(`../../data/${flags.exclusions}`).map(
+        CheckPolicy.exclusions = require(`../../data/${this.processedFlags.exclusions}`).map(
             (e: string) => new RegExp(e, "i"),
         );
 
-        if (flags.fix) {
+        if (this.processedFlags.fix) {
             this.log("Resolving errors if possible.");
         }
 
-        if (flags.handler !== undefined) {
+        if (this.processedFlags.handler !== undefined) {
             this.log(`Filtering handlers by regex: ${CheckPolicy.handlerRegex}`);
         }
 
-        if (flags.path !== undefined) {
+        if (this.processedFlags.path !== undefined) {
             this.log(`Filtering file paths by regex: ${CheckPolicy.pathRegex}`);
         }
 
-        if (flags.stdin) {
+        if (this.processedFlags.stdin) {
             const pipeString = await readStdin();
 
             if (pipeString !== undefined) {
@@ -108,41 +110,47 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             }
 
             try {
-                runPolicyCheck(flags.fix);
+                runPolicyCheck(this.processedFlags.fix);
             } finally {
                 this.logStats();
             }
+
+            return;
         }
 
-        // eslint-disable-next-line camelcase
-        CheckPolicy.pathToGitRoot = child_process
+        CheckPolicy.pathToGitRoot = childProcess
             .execSync("git rev-parse --show-cdup", { encoding: "utf8" })
             .trim();
-        // eslint-disable-next-line camelcase
-        const p = child_process.spawn("git", [
+
+        const p = childProcess.spawn("git", [
             "ls-files",
             "-co",
             "--exclude-standard",
             "--full-name",
         ]);
+
         let scriptOutput = "";
         p.stdout.on("data", (data) => {
             scriptOutput = `${scriptOutput}${data.toString()}`;
         });
         p.stdout.on("close", () => {
             scriptOutput.split("\n").map((line: string) => this.handleLine(line));
+            try {
+                runPolicyCheck(this.processedFlags.fix);
+            } finally {
+                this.logStats();
+            }
         });
     }
 
     // route files to their handlers by regex testing their full paths
     // synchronize output, exit code, and resolve decision for all handlers
     routeToHandlers(file: string) {
-        const filteredHandlers = handlers
-            .filter(
-                (handler) =>
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-return
-                    handler.match.test(file) && CheckPolicy.handlerRegex.test(handler.name),
-            );
+        const filteredHandlers = handlers.filter(
+            (handler) =>
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-return
+                handler.match.test(file) && CheckPolicy.handlerRegex.test(handler.name),
+        );
 
         for (const handler of filteredHandlers) {
             const result = runWithPerf(handler.name, "handle", () =>
