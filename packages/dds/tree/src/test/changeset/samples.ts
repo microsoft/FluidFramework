@@ -11,7 +11,7 @@ import { Effects, Transposed as T } from "../../changeset";
  */
 export namespace InsertRoot {
     export const e1: T.MarkList = [
-        [{
+        {
             type: "Insert",
             id: 0, // ID of the insert operation
             content: [ // Serialized trees
@@ -38,7 +38,7 @@ export namespace InsertRoot {
                     },
                 },
             ],
-        }],
+        },
     ];
 }
 
@@ -58,11 +58,11 @@ export namespace SwapCousins {
             fields: {
                 foo: [
                     { type: "MoveOut", id: 0, count: 1 },
-                    [{ type: "MoveIn", id: 1, count: 1 }],
+                    { type: "MoveIn", id: 1, count: 1 },
                 ],
                 bar: [
                     { type: "MoveOut", id: 1, count: 1 },
-                    [{ type: "MoveIn", id: 0, count: 1 }],
+                    { type: "MoveIn", id: 0, count: 1 },
                 ],
             },
         }],
@@ -107,27 +107,27 @@ export namespace SwapParentChild {
                             }],
                         },
                     },
-                    [{
+                    {
                         type: "MMoveIn",
                         id: 1,
                         fields: {
                             bar: [
-                                [{
+                                {
                                     type: "MMoveIn",
                                     id: 0,
                                     fields: {
                                         baz: [
-                                            [{
+                                            {
                                                 type: "MoveIn",
                                                 id: 2,
                                                 count: 1,
-                                            }],
+                                            },
                                         ],
                                     },
-                                }],
+                                },
                             ],
                         },
-                    }],
+                    },
                 ],
             },
         }],
@@ -182,11 +182,11 @@ export namespace ScenarioA {
                     },
                 ],
                 bar: [
-                    [{
+                    {
                         type: "MoveIn",
                         id: 0,
                         count: 3, // B C D
-                    }],
+                    },
                 ],
             },
         }],
@@ -199,7 +199,7 @@ export namespace ScenarioA {
             fields: {
                 foo: [
                     2,
-                    [{ type: "Insert", id: 0, content: [nodeX], heed: Effects.All }],
+                    { type: "Insert", id: 0, content: [nodeX], heed: Effects.All },
                 ],
             },
         }],
@@ -238,11 +238,9 @@ export namespace ScenarioA {
                     },
                 ],
                 bar: [
-                    [
-                        { type: "MoveIn", id: 0, count: 0 }, // B C
-                        { type: "MoveIn", id: 1, count: 0 }, // C-D
-                        { type: "MoveIn", id: 2, count: 1 }, // D
-                    ],
+                    { type: "MoveIn", id: 0, count: 0 }, // B C
+                    { type: "MoveIn", id: 1, count: 0 }, // C-D
+                    { type: "MoveIn", id: 2, count: 1 }, // D
                 ],
             },
         }],
@@ -257,7 +255,7 @@ export namespace ScenarioA {
                 foo: [
                     1,
                     { type: "Tomb", change: 1, count: 1 }, // B
-                    [{ type: "Insert", id: 0, content: [nodeX], heed: Effects.All }],
+                    { type: "Insert", id: 0, content: [nodeX], heed: Effects.All },
                     { type: "Tomb", change: 1, count: 1 }, // C
                 ],
             },
@@ -274,21 +272,19 @@ export namespace ScenarioA {
                 foo: [
                     1,
                     { type: "Tomb", change: 1, count: 1 }, // B
-                    [{ type: "Bounce", id: 0, heed: Effects.All }],
+                    { type: "Bounce", id: 0, heed: Effects.All },
                     { type: "Tomb", change: 1, count: 1 }, // C
                 ],
                 bar: [
-                    [
-                        {
-                            type: "Insert",
-                            id: 0,
-                            content: [nodeX],
-                            heed: Effects.All,
-                            src: { change: 2, id: 0 },
-                        },
-                        { type: "Intake", change: 2, id: 1 },
-                        { type: "Intake", change: 2, id: 2 },
-                    ],
+                    {
+                        type: "Insert",
+                        id: 0,
+                        content: [nodeX],
+                        heed: Effects.All,
+                        src: { change: 2, id: 0 },
+                    },
+                    { type: "Intake", change: 2, id: 1 },
+                    { type: "Intake", change: 2, id: 2 },
                 ],
             },
         }],

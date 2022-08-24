@@ -31,7 +31,6 @@ trigger:
     include:
     - common/lib/driver-definitions
     - tools/pipelines/build-driver-definitions.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -48,7 +47,6 @@ pr:
     include:
     - common/lib/driver-definitions
     - tools/pipelines/build-driver-definitions.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
