@@ -23,6 +23,8 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     SynchronousNavigationResult,
+    ITreeCursorNew,
+    CursorLocationType,
 } from "./forest";
 
 export {
@@ -79,4 +81,7 @@ export {
     isNeverField,
     FullSchemaPolicy,
     defaultSchemaPolicy,
+    singleTextCursorNew,
+    TextCursorNew,
+    jsonableTreeFromCursorNew,
 } from "./feature-libraries";

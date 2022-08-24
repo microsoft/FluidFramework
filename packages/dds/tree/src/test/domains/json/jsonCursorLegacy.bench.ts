@@ -6,15 +6,13 @@
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import {
-    ITreeCursorNew, jsonableTreeFromCursor, jsonableTreeFromCursorNew, singleTextCursorNew, jsonTypeSchema,
-} from "../../..";
+import { buildForest, ITreeCursor, jsonableTreeFromCursor, singleTextCursor, jsonTypeSchema, FieldKey } from "../../..";
+import { initializeForest, TreeNavigationResult, reduceField } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { JsonCursor } from "../../../domains/json/jsonCursor";
+import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
-import { reduceFieldNew } from "../../../forest";
 import { generateCanada } from "./json";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -71,28 +69,35 @@ function bench(name: string, getJson: () => any) {
         },
     });
 
-    const cursorFactories: [string, () => ITreeCursorNew][] = [
-        ["TextCursor", () => singleTextCursorNew(encodedTree)],
+    const cursorFactories: [string, () => ITreeCursor][] = [
+        ["JsonCursor", () => new JsonCursor(json)],
+        ["TextCursor", () => singleTextCursor(encodedTree)],
+        ["object-forest Cursor", () => {
+            const forest = buildForest(schema);
+            initializeForest(forest, [encodedTree]);
+            const cursor = forest.allocateCursor();
+            assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
+            return cursor;
+        }],
     ];
 
-    const consumers: [string, (cursor: ITreeCursorNew) => void][] = [
-        // ["cursorToJsonObject", cursorToJsonObjectNew],
-        ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+    const consumers: [string, (cursor: ITreeCursor) => void][] = [
+        ["cursorToJsonObject", cursorToJsonObject],
+        ["jsonableTreeFromCursor", jsonableTreeFromCursor],
         ["sum", sum],
     ];
 
     for (const [consumerName, consumer] of consumers) {
         for (const [factoryName, factory] of cursorFactories) {
-            let cursor: ITreeCursorNew;
+            let cursor: ITreeCursor;
             benchmark({
                 type: BenchmarkType.Measurement,
                 title: `${consumerName}(${factoryName}): '${name}'`,
                 before: () => {
                     cursor = factory();
-                    // TODO: validate behavior
-                    // assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-                    // assert.deepEqual(
-                    //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+                    assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+                    assert.deepEqual(
+                        jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
                 },
                 benchmarkFn: () => {
                     consumer(cursor);
@@ -102,14 +107,14 @@ function bench(name: string, getJson: () => any) {
     }
 }
 
-function sum(cursor: ITreeCursorNew): number {
+function sum(cursor: ITreeCursor): number {
     let total = 0;
     const value = cursor.value;
     if (typeof value === "number") {
         total += value;
     }
-    while (cursor.nextField(false)) {
-        total += reduceFieldNew(cursor, total, sum);
+    for (const key of cursor.keys) {
+        total += reduceField(cursor, key, total, sum);
     }
     return total;
 }
@@ -120,6 +125,6 @@ const canada = generateCanada(
         ? undefined
         : [2, 10]);
 
-describe("ITreeCursor", () => {
+describe("ITreeCursor Legacy", () => {
     bench("canada", () => canada);
 });

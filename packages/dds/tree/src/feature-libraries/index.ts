@@ -8,6 +8,11 @@ export * from "./defaultRebaser";
 export * from "./forestIndex";
 export * from "./schemaIndex";
 export * from "./treeTextCursorLegacy";
+export {
+	singleTextCursor as singleTextCursorNew,
+	TextCursor as TextCursorNew,
+	jsonableTreeFromCursor as jsonableTreeFromCursorNew,
+} from "./treeTextCursor";
 export * from "./sequence-change-family";
 export * from "./defaultSchema";
 export { isNeverField, ChangeHandler, FieldKind, Multiplicity, FullSchemaPolicy } from "./modular-schema";

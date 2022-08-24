@@ -190,3 +190,13 @@ export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) 
     }
     return output;
 }
+
+export function reduceField<T>(
+    cursor: ITreeCursor, initial: T, f: (cursor: ITreeCursor, initial: T) => T): T {
+    assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
+    let output: T = initial;
+    while (cursor.seek(1)) {
+        output = (f(cursor, output));
+    }
+    return output;
+}

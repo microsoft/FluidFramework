@@ -67,9 +67,9 @@ export class TextCursor implements ITreeCursor {
     protected readonly indexStack: (number | undefined)[] = [];
     // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
     // Even indexes are of nodes and odd indexes are for fields.
-    protected readonly siblingStack: SiblingsOrKey[] = [];
+    private readonly siblingStack: SiblingsOrKey[] = [];
 
-    protected siblings: SiblingsOrKey;
+    private siblings: SiblingsOrKey;
 
     // Always set when in "Nodes" mode. Undefined when numeric index for field is unknown.
     // When undefined, get siblings is a FieldKey.
