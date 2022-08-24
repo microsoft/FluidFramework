@@ -212,7 +212,7 @@ _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blo
 
 ## `flub generate buildVersion [FILE]`
 
-This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
+This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
 
 ```
 USAGE
@@ -233,8 +233,8 @@ FLAGS
 
 DESCRIPTION
   This command is used to compute the version number of Fluid packages. The release version number is based on what's in
-  the lerna.json/package.json. The CI will supply the build number and branch to determine the prerelease suffix if it
-  is not a tagged build
+  the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease
+  suffix if it is not a tagged build
 
 EXAMPLES
   $ flub generate buildVersion

@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable camelcase */
-
-import child_process from "child_process";
+import * as childProcess from "child_process";
 import * as fs from "fs";
 import { getSimpleVersion, getIsLatest } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
 
+/**
+ * This command class is used to compute the version number of Fluid packages. The release version number is based on
+ * what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the
+ * prerelease suffix if it is not a tagged build.
+ */
 export default class GenerateBuildVersionCommand extends BaseCommand<
     typeof GenerateBuildVersionCommand.flags
 > {
-    static description = `This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
+    static description = `This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
 
     static examples = ["<%= config.bin %> <%= command.id %>"];
 
@@ -77,7 +80,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
         if (flags.patch === false && flags.tag !== undefined) {
             const tagName = `${flags.tag}_v${fileVersion}`;
-            const out = child_process.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
+            const out = childProcess.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
             if (out.trim() === tagName) {
                 if (isRelease) {
                     this.error(`Tag ${tagName} already exist`);

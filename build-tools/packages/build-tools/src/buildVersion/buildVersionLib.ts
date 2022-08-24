@@ -23,6 +23,9 @@ import { detectVersionScheme, getLatestReleaseFromList, isInternalVersionScheme 
 import * as semver from "semver";
 import { Logger } from "../common/logging";
 
+/**
+ * Gets a version from lerna.json if it exists, package.json otherwise. Exits the process if neither file is found.
+ */
 export function getFileVersion() {
     if (fs.existsSync("./lerna.json")) {
         return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" })).version;
@@ -34,27 +37,27 @@ export function getFileVersion() {
     process.exit(5);
 }
 
-function parseFileVersion(file_version: string, build_id?: number) {
-    const split = file_version.split("-");
-    let release_version = split[0];
+function parseFileVersion(fileVersion: string, buildId?: number) {
+    const split = fileVersion.split("-");
+    let releaseVersion = split[0];
     split.shift();
-    const prerelease_version = split.join("-");
+    const prereleaseVersion = split.join("-");
 
     /**
      * Use the build id for patch number if given
      */
-    if (build_id) {
+    if (buildId) {
         // split the prerelease out
-        const r = release_version.split('.');
+        const r = releaseVersion.split('.');
         if (r.length !== 3) {
-            console.error(`ERROR: Invalid format for release version ${release_version}`);
+            console.error(`ERROR: Invalid format for release version ${releaseVersion}`);
             process.exit(9);
         }
-        r[2] = (parseInt(r[2]) + build_id).toString();
-        release_version = r.join('.');
+        r[2] = (parseInt(r[2]) + buildId).toString();
+        releaseVersion = r.join('.');
     }
 
-    return { release_version, prerelease_version };
+    return { releaseVersion, prereleaseVersion };
 }
 
 /**
@@ -81,18 +84,21 @@ function generateSimpleVersion(release_version: string, prerelease_version: stri
     return release_version;
 }
 
-export function getSimpleVersion(file_version: string, arg_build_num: string, arg_release: boolean, patch: boolean) {
+/**
+ * Generates a simpler version scheme used for some packages and prereleases.
+ */
+export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, patch: boolean) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    const build_id = patch ? parseInt(arg_build_num.split('.')[0]) : undefined;
+    const buildId = patch ? parseInt(argBuildNum.split('.')[0]) : undefined;
 
-    const { release_version, prerelease_version } = parseFileVersion(file_version, build_id);
-    const build_suffix = build_id ? "" : getBuildSuffix(arg_release, arg_build_num);
-    const fullVersion = generateSimpleVersion(release_version, prerelease_version, build_suffix);
+    const { releaseVersion, prereleaseVersion } = parseFileVersion(fileVersion, buildId);
+    const build_suffix = buildId ? "" : getBuildSuffix(argRelease, argBuildNum);
+    const fullVersion = generateSimpleVersion(releaseVersion, prereleaseVersion, build_suffix);
     return fullVersion;
 }
 
-type TagPrefix = string | "client" | "server" | "azure";
+type TagPrefix = string | "client" | "server" | "azure" | "build-tools";
 
 /**
  * @param prefix - The tag prefix to filter the tags by (client, server, etc.).

@@ -254,6 +254,11 @@ export function getLatestReleaseFromList(versionList: string[], allowPrereleases
     return latest;
 }
 
+/**
+ * Parses a version from a git tag.
+ * @param tag - The tag.
+ * @returns A version parsed from the tag.
+ */
 export function getVersionFromTag(tag: string): string | undefined {
     const tagSplit = tag.split("_v");
     if (tagSplit.length !== 2) {
