@@ -98,21 +98,39 @@ const tTable = {
  * object that the Benchmark library does.
  *
  * @param array - List of numbers for which to compute the statistics.
+ * @param percentageOfSamplesToUse - Percentage of samples to use to get the statistics. The samples at the extremes
+ *                                   (lowest, highest) are the ones that get discarded. If an odd number of samples need
+ *                                   to be discarded, 1 more sample is discarded from the higher end than the lower end.
  * @returns
  */
-export function getArrayStatistics(array: number[]): Benchmark.Stats {
-    const n = array.length;
+ export function getArrayStatistics(array: number[], percentageOfSamplesToUse: number = 1): Benchmark.Stats {
+    if (percentageOfSamplesToUse < 0.1 || percentageOfSamplesToUse > 1) {
+        throw new Error("percentageOfSamplesToUse must be between 0.1 and 1 (inclusive)");
+    }
+    let finalSamples = array;
+
+    // Drop samples if indicated
+    if (percentageOfSamplesToUse < 1) {
+        // Need to provide an explicit compare function so numbers aren't sorted lexicographically. Also,
+        // spread-copy the array because sort() works in place and we don't want to mutate the original array.
+        finalSamples = [...array].sort((a, b) => a - b);
+        const n = finalSamples.length;
+        const samplesToDrop = Math.round(n * (1 - percentageOfSamplesToUse));
+        finalSamples = finalSamples.splice(Math.floor(samplesToDrop / 2), n - samplesToDrop);
+    }
+
+    const n = finalSamples.length;
     let max = -Infinity;
     let min = Infinity;
     let mean = 0;
-    array.forEach((x) => {
+    finalSamples.forEach((x) => {
         mean += x;
         if (x > max) { max = x; }
         if (x < min) { min = x; }
     });
     mean /= n;
 
-    const variance = array.map((x) => (x - mean) ** 2).reduce((a, b) => a + b) / n;
+    const variance = finalSamples.map((x) => (x - mean) ** 2).reduce((a, b) => a + b) / n;
     const deviation = Math.sqrt(variance);
     const sem = deviation / Math.sqrt(n); // Standard Error of the Mean
     const df = n - 1; // Degrees of Freedom
@@ -121,5 +139,5 @@ export function getArrayStatistics(array: number[]): Benchmark.Stats {
     const moe = sem * critical; // Margin of Error
     const rme = (moe / Math.abs(mean)) * 100 || 0; // Relative Margin of Error
 
-    return { mean, variance, deviation, moe, sem, sample: array, rme };
+    return { mean, variance, deviation, moe, sem, sample: finalSamples, rme };
 }

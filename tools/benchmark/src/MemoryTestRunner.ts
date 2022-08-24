@@ -37,6 +37,7 @@ import { getArrayStatistics } from "./ReporterUtilities";
 export interface MemoryBenchmarkStats {
     runs: number;
     samples: { before: MemoryTestData; after: MemoryTestData; };
+    stats: Benchmark.Stats | undefined;
     aborted: boolean;
     error?: Error;
 }
@@ -81,6 +82,11 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
 	 * The kind of benchmark.
 	 */
 	type?: BenchmarkType;
+
+    /**
+     * Percentage of samples (0.1 - 1) to use for calculating the statistics. Defaults to 1.
+     */
+    samplePercentageToUse?: number;
 }
 
 /**
@@ -113,6 +119,7 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
         title: args.title,
         benchmarkFn: args.benchmarkFn,
         type: args.type ?? BenchmarkType.Measurement,
+        samplePercentageToUse: args.samplePercentageToUse ?? 1,
     };
 
     options.title = `${performanceTestSuiteTag} @${BenchmarkType[options.type]} ${options.title}`;
@@ -208,12 +215,13 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
                     heapSpace: [],
                 },
             },
+            stats: undefined,
             aborted: false,
         };
 
         try {
             const startTime = performance.now();
-            let heapUsedStats: Benchmark.Stats;
+            let heapUsedStats: Benchmark.Stats | undefined;
             do {
                 global.gc();
                 benchmarkStats.samples.before.memoryUsage.push(process.memoryUsage());
@@ -240,9 +248,11 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
                     heapUsedArray.push(benchmarkStats.samples.after.memoryUsage[i].heapUsed
                                         - benchmarkStats.samples.before.memoryUsage[i].heapUsed);
                 }
-                heapUsedStats = getArrayStatistics(heapUsedArray);
+                heapUsedStats = getArrayStatistics(heapUsedArray, options.samplePercentageToUse);
             } while (benchmarkStats.runs < options.minSampleCount
                 || heapUsedStats.rme > options.maxRelativeMarginOfError);
+
+            benchmarkStats.stats = heapUsedStats;
         } catch (error) {
             benchmarkStats.aborted = true;
             benchmarkStats.error = error as Error;
