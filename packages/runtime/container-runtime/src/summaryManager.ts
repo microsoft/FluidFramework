@@ -154,6 +154,8 @@ export class SummaryManager implements IDisposable {
     }
 
     private readonly refreshSummarizer = () => {
+        function safeAlert(m: string) { try { alert(m); } catch { console.log("FAILED TO ALERT"); } }
+
         // Transition states depending on shouldSummarize, which is a calculated property
         // that is only true if this client is connected and is the elected summarizer.
         const shouldSummarizeState = this.getShouldSummarizeState();
@@ -161,7 +163,7 @@ export class SummaryManager implements IDisposable {
             case SummaryManagerState.Off: {
                 if (shouldSummarizeState.shouldSummarize) {
                     // eslint-disable-next-line max-len
-                    alert("YOU'VE GOT THE SUMMARIZER!\n\nYou're the only client who will see most alerts when an Inactive Object is used");
+                    safeAlert("YOU'VE GOT THE SUMMARIZER!\n\nYou're the only client who will see most alerts when an Inactive Object is used");
                     this.startSummarization();
                 }
                 return;
@@ -173,7 +175,8 @@ export class SummaryManager implements IDisposable {
             }
             case SummaryManagerState.Running: {
                 if (shouldSummarizeState.shouldSummarize === false) {
-                    alert("YOU LOST THE SUMMARIZER!\n\nYou will no longer see most alerts for Inactive Object usage");
+                    // eslint-disable-next-line max-len
+                    safeAlert("YOU LOST THE SUMMARIZER!\n\nYou will no longer see most alerts for Inactive Object usage");
                     this.stop(shouldSummarizeState.stopReason);
                 }
                 return;
