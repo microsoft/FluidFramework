@@ -392,7 +392,7 @@ export class ConnectionManager implements IConnectionManager {
             if (this._reconnectMode === ReconnectMode.Never) {
                 throw new UsageError("API is not supported for non-connecting or closed container");
             }
-            let reconnect = false;
+            // let reconnect = false;
             if (this.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
                 // See comment in the "readonly" event handler to deltaManager set up by
@@ -404,13 +404,13 @@ export class ConnectionManager implements IConnectionManager {
                     this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
                 }
 
-                reconnect = this.disconnectFromDeltaStream("Force readonly");
+                this.disconnectFromDeltaStream("Force readonly");
             }
             this.props.readonlyChangeHandler(this.readonly);
-            if (reconnect) {
-                // reconnect if we disconnected from before.
-                this.triggerConnect("read");
-            }
+            // if (reconnect) {
+            //     // reconnect if we disconnected from before.
+            //     this.triggerConnect("read");
+            // }
         }
     }
 
@@ -451,6 +451,7 @@ export class ConnectionManager implements IConnectionManager {
         // by all DDSes). This will make it impossible to figure out if ops actually made it through,
         // so DDSes will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
         if (this.shouldJoinWrite()) {
+            // TODO: take a look into this?
             requestedMode = "write";
         }
 
