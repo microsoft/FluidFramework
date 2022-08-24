@@ -1,4 +1,3 @@
-
 # testClassMethod
 
 Test class method
@@ -19,4 +18,3 @@ testClassMethod(input: TTypeParameterA): TTypeParameterA;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
-

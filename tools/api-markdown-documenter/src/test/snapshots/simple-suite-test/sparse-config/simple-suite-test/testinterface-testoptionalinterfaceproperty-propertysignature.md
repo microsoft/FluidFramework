@@ -1,4 +1,3 @@
-
 # testOptionalInterfaceProperty
 
 Test optional property

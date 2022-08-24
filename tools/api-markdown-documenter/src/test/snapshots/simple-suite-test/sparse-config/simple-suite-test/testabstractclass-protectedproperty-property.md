@@ -1,4 +1,3 @@
-
 # protectedProperty
 
 A test protected property.

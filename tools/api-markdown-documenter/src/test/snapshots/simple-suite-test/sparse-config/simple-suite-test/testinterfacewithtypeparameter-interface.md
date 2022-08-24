@@ -1,4 +1,3 @@
-
 # TestInterfaceWithTypeParameter
 
 Test interface with generic type parameter
@@ -22,4 +21,3 @@ export interface TestInterfaceWithTypeParameter<T>
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [testProperty](docs/simple-suite-test/testinterfacewithtypeparameter-testproperty-propertysignature) | T | A test interface property using generic type parameter |
-

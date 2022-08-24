@@ -1,4 +1,3 @@
-
 # TestInterface
 
 Test interface
@@ -33,4 +32,3 @@ export interface TestInterface
 |  Method | Return Type | Description |
 |  --- | --- | --- |
 |  [testInterfaceMethod()](docs/simple-suite-test/testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
-

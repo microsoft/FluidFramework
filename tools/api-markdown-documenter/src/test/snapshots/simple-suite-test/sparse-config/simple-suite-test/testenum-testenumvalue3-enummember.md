@@ -1,4 +1,3 @@
-
 # TestEnumValue3
 
 Test enum value 3 (default)

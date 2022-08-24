@@ -1,4 +1,3 @@
-
 # testClassProperty
 
 Test class property

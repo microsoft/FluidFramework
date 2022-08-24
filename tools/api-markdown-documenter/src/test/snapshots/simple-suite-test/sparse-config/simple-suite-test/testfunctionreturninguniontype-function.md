@@ -1,4 +1,3 @@
-
 # testFunctionReturningUnionType
 
 Test function that returns an inline type

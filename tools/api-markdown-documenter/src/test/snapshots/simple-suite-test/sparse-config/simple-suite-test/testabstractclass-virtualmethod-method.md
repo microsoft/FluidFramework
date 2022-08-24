@@ -1,4 +1,3 @@
-
 # virtualMethod
 
 A test `@virtual` method.
