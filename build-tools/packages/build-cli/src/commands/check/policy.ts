@@ -70,7 +70,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         stdin: Flags.boolean({
             description: `Get file from stdin`,
             required: false,
-            char: "s",
         }),
         ...BaseCommand.flags,
     };
