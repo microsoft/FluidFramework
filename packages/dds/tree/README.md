@@ -238,9 +238,9 @@ graph LR;
 `@fluid-internal/tree` depends on the Fluid runtime (various packages in `@fluidframework/*`)
 and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-internal`).
 `@fluid-internal/tree` is also complex,
-so its implementation is broken up into several parts with have carefully controlled dependencies to help ensure the codebase is maintainable.
+so its implementation is broken up into several parts which have carefully controlled dependencies to help ensure the codebase is maintainable.
 The goal of this internal structuring is to make evolution and maintenance easy.
-Some of the principals used to guide this are:
+Some of the principles used to guide this are:
 
 - Avoid cyclic dependencies:
 
@@ -256,9 +256,9 @@ Some of the principals used to guide this are:
 - Reducing transitive dependencies:
 
     Try to keep the total number of dependencies of a given component small when possible, with a particular emphasis on avoiding stateful dependencies for code with complex conditional logic.
-    This is important for testability, since complex conditional logic requires heavy unit testing, which is very difficult for stateful system and systems with lots of dependencies.
+    This is important for testability, since complex conditional logic requires heavy unit testing, which is very difficult for stateful systems and systems with lots of dependencies.
 
-    Another aspect of reducing transitive dependencies is reducing the required dependencies for particular sceneries.
+    Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
     This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
     `shared-tree-core` is an excellent example of this: it can be run with no indexes, and trivial a change family allowing it to have very few required dependencies.
     This often takes the form of either depending on interfaces (which can have their implementation swapped out or mocked), like [`ChangeFamily`](./src/change-family/README.md), or collection functionality in a registry, like we do for `FieldKinds` and `shared-tree-core`'s indexes.
@@ -267,9 +267,9 @@ Some of the principals used to guide this are:
     this approach also makes the lifecycle for new features easier to manage, since they can be fully implemented and tested without having to modify code outside of themselves.
     This makes pre-releases, stabilization and eventual deprecation of these features much easier, and even makes publishing them from separate packages possible if it ends up needing an even more separated lifecycle.
 
-    Additionally, this architectural approach can lead to smaller applications by not pulling in unended functionality.
+    Additionally, this architectural approach can lead to smaller applications by not pulling in unneeded functionality.
 
-These approaches have lead to a dependency structure that looks roughly like the below diagram.
+These approaches have led to a dependency structure that looks roughly like the diagram below.
 A more exact structure can be observed from the `fence.json` files which are enforced via [good-fences](https://www.npmjs.com/package/good-fences).
 In this diagram, some dependency arrows for dependencies which are already included transitively are omitted.
 
