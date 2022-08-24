@@ -290,8 +290,12 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
     protected writeEmphasisSpan(docEmphasisSpan: DocEmphasisSpan, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual
     protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeSiblings: boolean): void;
+    // @virtual
+    protected writeLink(linkText: string, linkTarget: string, context: EmitterContext): void;
     // @virtual @override
     protected writeLinkTagWithCodeDestination(docLinkTag: DocLinkTag, context: EmitterContext): void;
+    // @virtual @override
+    protected writeLinkTagWithUrlDestination(docLinkTag: DocLinkTag, context: EmitterContext): void;
     // @virtual
     protected writeList(docList: DocList, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual @override
