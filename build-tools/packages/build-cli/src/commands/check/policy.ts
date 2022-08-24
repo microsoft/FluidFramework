@@ -55,7 +55,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         resolve: Flags.boolean({
             description: `Resolve errors if possible`,
             required: false,
-            char: "h",
+            char: "f",
         }),
         handler: Flags.string({
             description: `Filter handler names by <regex>`,
