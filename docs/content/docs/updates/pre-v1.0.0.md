@@ -239,5 +239,28 @@ better reflect their experimental state. If you use these classes, you can add a
 ### Other notable changes
 
 - The published {{< relref "apis/fluid-framework.md" >}} package now publishes ESNext modules ({{< issue 7474 >}}).
-- Various APIs in [@fluidframework/azure-client]{{< relref "apis/azure-client.md" >}} and [@fluidframework/tinylicious-client]{{< relref "apis/tinylicious-client.md" >}} now return [IFluidContainer]{{< relref "apis/ifluidcontainer-interface" >}}s instead of [FluidContainer]{{< relref "fluidcontainer-class.md" >}}s.
+- Various APIs in [@fluidframework/azure-client]{{< relref "apis/azure-client.md" >}} and [@fluidframework/tinylicious-client]{{< relref "apis/tinylicious-client.md" >}} now return [IFluidContainer][]s instead of [FluidContainer][]s.
   This change should have no effect to developers since the runtime object is the same ({{< issue 7457 >}}).
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Distributed Data Structures -->
+
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+
+<!-- API links -->
+
+[AzureClient]: {{< ref "/docs/apis/azure-client.md" >}}
+[TinyliciousClient]: {{< ref "/docs/apis/azure-client.md" >}}
+[FluidContainer]: {{< ref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< ref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

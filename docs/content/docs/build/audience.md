@@ -117,13 +117,18 @@ In some cases, the user data could be generated locally or fetched from an exter
 
 [Fluid container]: {{< relref "containers.md" >}}
 
-<!-- Classes and interfaces -->
+<!-- Distributed Data Structures -->
 
-[FluidContainer]: {{< relref "fluidcontainer.md" >}}
-[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "sequences.md" >}}
-[SharedString]: {{< relref "string.md" >}}
+[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+
+<!-- API links -->
+
+[AzureClient]: {{< ref "/docs/apis/azure-client.md" >}}
+[TinyliciousClient]: {{< ref "/docs/apis/azure-client.md" >}}
+[FluidContainer]: {{< ref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< ref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
