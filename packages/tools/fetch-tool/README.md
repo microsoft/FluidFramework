@@ -24,6 +24,11 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
       --snapshotVersionIndex <number> : Index of the version to dump
       --saveDir <outdir>              : Save data of the snapshots and messages
 
+### Example
+
+- `node bin/fluid-fetch --saveDir test 'URL'`
+- You will need to get your URL from office.com. The URL will look something like https://www.office.com/launch/fluid/...'
+
 ## Example Output
 
 ### Messages Stats
