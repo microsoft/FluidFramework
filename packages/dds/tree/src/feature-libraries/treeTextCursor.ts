@@ -236,8 +236,7 @@ export class TextCursor implements ITreeCursor {
             }
         }
 
-        assert(Array.isArray(this.siblings), "siblings should be an array");
-        assert(typeof this.index === "number", "index should be a number");
+        assert(this.index !== undefined, "index should be a number");
         this.index += offset;
         if (this.index in this.siblings) {
             return true;
