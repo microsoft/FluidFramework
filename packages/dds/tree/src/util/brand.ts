@@ -76,9 +76,18 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
         ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name>
         : never;
 
-type ValueFromBranded<T extends BrandedType<any, string>> =
+/**
+ * Implementation detail of type branding. Should not be used directly outside this file,
+ * but shows up as part of branded types so API-Extractor requires it to be exported.
+ */
+export type ValueFromBranded<T extends BrandedType<any, string>> =
     T extends BrandedType<infer ValueType, string> ? ValueType : never;
-type NameFromBranded<T extends BrandedType<any, string>> =
+
+/**
+ * Implementation detail of type branding. Should not be used directly outside this file,
+ * but shows up as part of branded types so API-Extractor requires it to be exported.
+ */
+export type NameFromBranded<T extends BrandedType<any, string>> =
     T extends BrandedType<any, infer Name> ? Name : never;
 
 /**
