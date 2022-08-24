@@ -1,6 +1,6 @@
 # Editable Tree
 
-Editable Tree is a simple API prividing an access to a Forest data.
+Editable Tree is a simple API for accessing a Forest's data.
 
 An entry point is a `getEditableTree` function which returns a JS Proxy typed as `IEditableTree` allowing to read and write nodes of the Fores in a "JavaScript-object"-like manner, thus hiding all the Forest complexity.
 
