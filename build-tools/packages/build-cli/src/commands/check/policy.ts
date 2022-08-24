@@ -49,7 +49,7 @@ const readStdin: () => Promise<string | undefined> = () => {
 
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
-        "Checks that the dependencies between Fluid Framework packages are properly layered.";
+        "Checks that the dependencies between Fluid Framework packages are following policies.";
 
     static flags = {
         resolve: Flags.boolean({
