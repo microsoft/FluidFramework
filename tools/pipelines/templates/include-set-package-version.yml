@@ -34,11 +34,13 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      echo "$PATH"
       pushd "$(Build.SourcesDirectory)/build-tools"
       npm ci
       popd
-      flub
+
+      # Output the help and full command list for debugging purposes
+      flub --help
+      flub commands
 
 - task: Bash@3
   name: SetVersion
@@ -61,10 +63,6 @@ steps:
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
       echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
-
-      # Output the help and full command list for debugging purposes
-      flub --help
-      flub commands
 
       # Generate the build version
       flub generate buildVersion
