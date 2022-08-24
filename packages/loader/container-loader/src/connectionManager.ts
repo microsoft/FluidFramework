@@ -405,6 +405,9 @@ export class ConnectionManager implements IConnectionManager {
                 }
 
                 this.disconnectFromDeltaStream("Force readonly");
+            } else {
+                // reconnect since we were previously in readonly mode
+                this.triggerConnect("read");
             }
             this.props.readonlyChangeHandler(this.readonly);
             // if (reconnect) {
