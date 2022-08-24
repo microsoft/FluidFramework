@@ -54,6 +54,7 @@ so it makes sense to do forward-thinking on implementing obliterate in a way tha
 
 For that reason, naming choices of fields and semantics for the remainder of the document will be written in terms of obliterate being the special case
 "move this range out of existence".
+This should alleviate any back-compat issues if/when we do decide to implement move (esp. fields that end up in ops or snapshots).
 The current proposal is to use the runtime value "null" to represent "out of existence", but this choice is flexible.
 In prose, for terseness that operation will still be called obliterate.
 After describing obliterate's design, this document [digs into how the design can be extended to work for move](##Move).
