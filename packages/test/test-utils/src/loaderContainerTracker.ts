@@ -202,20 +202,20 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 // Wait for all the containers to be saved
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
-                const dirtyContainersCount = dirtyContainers.length;
+                const remainedDuration = timeoutDuration - (Date.now() - start);
                 waitingSequenceNumberSynchronized = false;
                 await Promise.all(dirtyContainers.map(async (c) => Promise.race(
                     [timeoutPromise(
                         (resolve) => c.once("saved", () => resolve()),
                         {
-                            durationMs: (timeoutDuration - (Date.now() - start)) / dirtyContainersCount,
+                            durationMs: remainedDuration / dirtyContainers.length,
                             errorMsg: "Timeout on waiting a container to be saved",
                         },
                     ),
                     timeoutPromise(
                         (resolve) => c.once("closed", () => resolve()),
                         {
-                            durationMs: (timeoutDuration - (Date.now() - start)) / dirtyContainersCount,
+                            durationMs: remainedDuration / dirtyContainers.length,
                             errorMsg: "Timeout on waiting a container to be closed",
                         },
                     ),
