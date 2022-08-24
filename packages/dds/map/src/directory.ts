@@ -788,12 +788,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     local,
                     localOpMetadata,
                 ) => {
-                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    if (subdir) {
-                        const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                        if (parentSubdir) {
-                            parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
-                        }
+                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+                    if (parentSubdir) {
+                        parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
                     }
                 },
                 submit: (op: IDirectoryDeleteSubDirectoryOperation, localOpMetadata: unknown) => {
