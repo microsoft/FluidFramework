@@ -153,6 +153,15 @@ jobs:
                 'tylerbutler',
               ]
             });
+            await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/labels', {
+              owner: 'microsoft',
+              repo: 'FluidFramework',
+              issue_number: newPr.data.number,
+              labels: [
+                'main-next-integrate',
+                'do-not-squash-merge'
+              ]
+            })
   remove-from-queue:
     runs-on: ubuntu-latest
     concurrency:

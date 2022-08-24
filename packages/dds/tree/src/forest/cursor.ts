@@ -77,7 +77,7 @@ export function mapCursorField<T>(cursor: ITreeCursor, key: FieldKey, f: (cursor
     const output: T[] = [];
     let result = cursor.down(key, 0);
     if (result !== TreeNavigationResult.Ok) {
-        assert(result === TreeNavigationResult.NotFound, "pending not supported in mapCursorField");
+        assert(result === TreeNavigationResult.NotFound, 0x34e /* pending not supported in mapCursorField */);
         // This has to be special cased (and not fall through the code below)
         // since the call to `up` needs to be skipped.
         return [];
@@ -86,7 +86,7 @@ export function mapCursorField<T>(cursor: ITreeCursor, key: FieldKey, f: (cursor
         output.push(f(cursor));
         result = cursor.seek(1);
     }
-    assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
+    assert(result === TreeNavigationResult.NotFound, 0x34f /* expected enumeration to end at end of field */);
     cursor.up();
     return output;
 }

@@ -28,9 +28,9 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.33.1000-74526",
-    "@fluidframework/server-services-client": "^0.1037.1000-0",
-    "@fluidframework/server-services-core": "^0.1037.1000-0",
+    "@fluidframework/common-utils": "^1.0.0",
+    "@fluidframework/server-services-client": "^0.1037.1000",
+    "@fluidframework/server-services-core": "^0.1037.1000",
     "nconf": "^0.12.0",
     "node-rdkafka": "^2.11.0",
     "sillyname": "^0.1.0"
@@ -38,7 +38,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/server-test-utils": "^0.1037.1000-0",
+    "@fluidframework/server-test-utils": "^0.1037.1000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/amqplib": "^0.5.17",
     "@types/debug": "^4.1.5",

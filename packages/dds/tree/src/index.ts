@@ -30,7 +30,7 @@ export {
     FieldSchema, ValueSchema, TreeSchema, FieldKind,
     emptyField, neverTree,
     SchemaRepository, StoredSchemaRepository,
-    rootFieldKey,
+    rootFieldKey, TreeTypeSet,
 } from "./schema-stored";
 
 export {

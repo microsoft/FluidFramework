@@ -7,79 +7,191 @@ import { ISession, NetworkError } from "@fluidframework/server-services-client";
 import { IDocument, ICollection } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
+const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
+
+/**
+ * Create a new session for a document that does not have a session defined,
+ * and store document's new session in storage.
+ */
+async function createNewSession(
+    ordererUrl: string,
+    historianUrl: string,
+    documentId,
+    documentsCollection: ICollection<IDocument>,
+    lumberjackProperties: Record<string, any>,
+): Promise<ISession> {
+    const newSession: ISession = {
+        ordererUrl,
+        historianUrl,
+        isSessionAlive: true,
+        isSessionActive: false,
+    };
+    try {
+        await documentsCollection.upsert(
+            {
+                documentId,
+            },
+            {
+                session: newSession,
+            },
+            null);
+    } catch (error) {
+        Lumberjack.error("Error persisting new document session to DB", lumberjackProperties, error);
+        throw new NetworkError(500, "Failed to persist new document session");
+    }
+    Lumberjack.info(
+        `The Session ${JSON.stringify(newSession)} was inserted into the document collection`,
+        lumberjackProperties,
+    );
+    return newSession;
+}
+
+/**
+ * Update an existing session for a document to be alive,
+ * change the session location to this service's location if possible,
+ * and store document's updated session in storage.
+ */
+async function updateExistingSession(
+    ordererUrl: string,
+    historianUrl: string,
+    document: IDocument,
+    existingSession: ISession,
+    documentId,
+    documentsCollection: ICollection<IDocument>,
+    sessionStickinessDurationMs: number,
+    lumberjackProperties: Record<string, any>,
+): Promise<ISession> {
+    let updatedDeli: string | undefined;
+    let updatedScribe: string | undefined;
+    let updatedOrdererUrl: string | undefined;
+    let updatedHistorianUrl: string | undefined;
+    // Session stickiness keeps the a given document in 1 location for the configured
+    // stickiness duration after the session ends. In the case of periodic op backup, this can ensure
+    // that ops are backed up to a global location before a session is allowed to move.
+    // Otherwise, a moved session could end up without access to ops that still only exist in a location's
+    // non-global storage.
+    const isSessionSticky = document.lastAccessTime !== undefined
+        ? Date.now() - document.lastAccessTime > sessionStickinessDurationMs
+        : false; // If no session end has been recorded, allow session to move.
+    // Allow session stickiness to be overridden by manually deleting a session's orderer/historian urls.
+    const sessionHasLocation: boolean = !!existingSession.ordererUrl && !!existingSession.historianUrl;
+    if (!isSessionSticky || !sessionHasLocation) {
+        // Allow session location to be moved.
+        if (existingSession.ordererUrl !== ordererUrl || existingSession.historianUrl !== historianUrl) {
+            // Previous session was in a different location. Move to current location.
+            // Reset logOffset, ordererUrl, and historianUrl when moving session location.
+            Lumberjack.info(
+                `Reset logOffset, ordererUrl, and historianUrl when switching cluster.`,
+                lumberjackProperties,
+            );
+            updatedOrdererUrl = ordererUrl;
+            updatedHistorianUrl = historianUrl;
+            if (document.deli !== "") {
+                const deli = JSON.parse(document.deli);
+                deli.logOffset = -1;
+                updatedDeli = JSON.stringify(deli);
+            }
+            if (document.scribe !== "") {
+                const scribe = JSON.parse(document.scribe);
+                scribe.logOffset = -1;
+                updatedScribe = JSON.stringify(scribe);
+            }
+        }
+    }
+
+    const updatedSession: ISession = {
+        ordererUrl: updatedOrdererUrl ?? existingSession.ordererUrl,
+        historianUrl: updatedHistorianUrl ?? existingSession.historianUrl,
+        // Update the status to isSessionAlive=true, since the session is now discovered.
+        isSessionAlive: true,
+        // If session was not alive, it cannot be "active"
+        isSessionActive: false,
+    };
+    try {
+        await documentsCollection.upsert(
+            {
+                documentId,
+            },
+            {
+                deli: updatedDeli ?? document.deli,
+                scribe: updatedScribe ?? document.scribe,
+                session: updatedSession,
+            },
+            null);
+    } catch (error) {
+        Lumberjack.error("Error persisting update to existing document session", lumberjackProperties, error);
+        throw new NetworkError(500, "Failed to persist update to document session");
+    }
+    return updatedSession;
+}
+
+/**
+ * A discovered session's isSessionAlive property will be true regardless of session state before discovery.
+ * A session is considered "fresh" when discovery flips the isSessionAlive property from false to true.
+ * Discovery flips isSessionAlive from false to true when session is newly created, moved, or started.
+ *
+ * When a session is fresh, we send isSessionAlive=false to consumer to communicate session is fresh.
+ */
+function convertSessionToFreshSession(session: ISession, lumberjackProperties): ISession {
+    const discoveredNewSession: ISession = {
+        ...session,
+        // Indicate to consumer that session was newly created.
+        isSessionAlive: false,
+    };
+    Lumberjack.info(
+        `Returning the session from the discovery: ${JSON.stringify(discoveredNewSession)}`,
+        lumberjackProperties,
+    );
+    return discoveredNewSession;
+}
+
 /**
  * Return to the caller with the status of the session.
  */
-export async function getSession(ordererUrl: string,
+export async function getSession(
+    ordererUrl: string,
     historianUrl: string,
     tenantId: string,
     documentId: string,
-    documentsCollection: ICollection<IDocument>): Promise<ISession> {
+    documentsCollection: ICollection<IDocument>,
+    sessionStickinessDurationMs: number = defaultSessionStickinessDurationMs,
+): Promise<ISession> {
     const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-    const tempDocument: IDocument = await documentsCollection.findOne({ tenantId, documentId });
-    if (!tempDocument || tempDocument.scheduledDeletionTime !== undefined) {
+    const document: IDocument = await documentsCollection.findOne({ tenantId, documentId });
+    if (!document || document.scheduledDeletionTime !== undefined) {
         throw new NetworkError(404, "Document is deleted and cannot be accessed.");
     }
-    let tempSession: ISession = tempDocument.session;
-    if (!tempSession) {
-        tempSession = {
+    // Session can be undefined for documents that existed before the concept of service sessions.
+    const existingSession: ISession | undefined = document.session;
+
+    if (!existingSession) {
+        // Create a new session for the document and persist to DB.
+        const newSession: ISession = await createNewSession(
             ordererUrl,
             historianUrl,
-            isSessionAlive: true,
-        };
-        await documentsCollection.upsert(
-            {
-                documentId,
-            },
-            {
-                deli: tempDocument.deli,
-                scribe: tempDocument.scribe,
-                session: tempSession,
-            },
-            {});
-        Lumberjack.info(`The Session ${JSON.stringify(tempSession)} was inserted into the document collection`,
-            lumberjackProperties);
+            documentId,
+            documentsCollection,
+            lumberjackProperties,
+        );
+        return convertSessionToFreshSession(newSession, lumberjackProperties);
     }
 
-    let tempDeli = tempDocument.deli;
-    let tempScribe = tempDocument.scribe;
-    const isSessionAlive: boolean = tempSession ? tempSession.isSessionAlive : true;
-    if (tempSession && !tempSession.isSessionAlive) {
-        // Reset logOffset, ordererUrl, and historianUrl when switching cluster.
-        if ((tempSession.ordererUrl !== undefined && tempSession.ordererUrl !== ordererUrl) ||
-            (tempSession.historianUrl !== undefined && tempSession.historianUrl !== historianUrl)) {
-            Lumberjack.info(`Reset logOffset, ordererUrl, and historianUrl when switching cluster.`,
-                lumberjackProperties);
-            const deli = JSON.parse(tempDeli);
-            deli.logOffset = -1;
-            tempDeli = JSON.stringify(deli);
-            tempSession.ordererUrl = ordererUrl;
-            tempSession.historianUrl = historianUrl;
-            if (tempDocument.scribe !== "") {
-                const scribe = JSON.parse(tempScribe);
-                scribe.logOffset = -1;
-                tempScribe = JSON.stringify(scribe);
-            }
-        }
-
-        // Update the status to isSessionAlive, since the session is now active.
-        tempSession.isSessionAlive = true;
-        await documentsCollection.upsert(
-            {
-                documentId,
-            },
-            {
-                deli: tempDeli,
-                scribe: tempScribe,
-                session: tempSession,
-            },
-            {});
+    if (existingSession.isSessionAlive) {
+        // Existing session is considered alive/discovered, so return to consumer as-is.
+        return existingSession;
     }
 
-    // The tempSession.isSessionAlive would be updated as whether the session was alive before the request came.
-    tempSession.isSessionAlive = isSessionAlive;
-    Lumberjack.info(`Returning the session from the discovery: ${JSON.stringify(tempSession)}`,
-        lumberjackProperties);
-    return tempSession;
+    // Session is not alive/discovered, so update and persist changes to DB.
+    const updatedSession: ISession = await updateExistingSession(
+        ordererUrl,
+        historianUrl,
+        document,
+        existingSession,
+        documentId,
+        documentsCollection,
+        sessionStickinessDurationMs,
+        lumberjackProperties,
+    );
+    return convertSessionToFreshSession(updatedSession, lumberjackProperties);
 }

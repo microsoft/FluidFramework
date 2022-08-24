@@ -14,7 +14,6 @@ export {
     ISummaryConfigurationDisableSummarizer,
     ISummaryConfigurationDisableHeuristics,
     IContainerRuntimeOptions,
-    IPendingRuntimeState,
     IRootSummaryTreeWithStats,
     isRuntimeMessage,
     RuntimeMessage,

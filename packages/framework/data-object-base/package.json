@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/data-object-base",
-  "version": "2.0.0-internal.1.0.0",
+  "version": "2.0.0-internal.1.1.0",
   "description": "Data object base for synchronously and lazily loaded object scenarios",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -60,22 +60,22 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/container-runtime": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/datastore": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/request-handler": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/shared-object-base": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/common-utils": "^1.0.0",
+    "@fluidframework/container-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-runtime": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/datastore": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/request-handler": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/shared-object-base": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@1.1.0",
+    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@^1.1.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",

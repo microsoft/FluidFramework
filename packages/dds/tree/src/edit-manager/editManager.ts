@@ -15,8 +15,8 @@ export interface Commit<TChangeset> {
     changeset: TChangeset;
 }
 
-export type SessionId = Brand<number, "edit-manager.SessionId">;
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
+export type SessionId = string;
 
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
@@ -29,15 +29,24 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     private readonly trunk: Commit<TChangeset>[] = [];
     private readonly branches: Map<SessionId, Branch<TChangeset>> = new Map();
     private localChanges: TChangeset[] = [];
+    private localSessionId: SessionId | undefined;
 
     public constructor(
-        private readonly localSessionId: SessionId,
-        private readonly changeFamily: TChangeFamily,
+        public readonly changeFamily: TChangeFamily,
         public readonly anchors?: AnchorSet,
     ) { }
 
+    public setLocalSessionId(id: SessionId) {
+        assert(this.localSessionId === undefined || this.localSessionId === id, "Local session ID cannot be changed");
+        this.localSessionId = id;
+    }
+
     public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
         return this.trunk;
+    }
+
+    public getLastSequencedChange(): TChangeset {
+        return this.trunk[this.trunk.length - 1].changeset;
     }
 
     public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
@@ -48,7 +57,8 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         if (this.trunk.length > 0) {
             const lastSeqNumber = this.trunk[this.trunk.length - 1].seqNumber;
             const nextSeqNumber: SeqNumber = brand(lastSeqNumber as number + 1);
-            assert(newCommit.seqNumber === nextSeqNumber, "Expected incoming commit to be next sequenced commit");
+            assert(newCommit.seqNumber === nextSeqNumber,
+                0x34a /* Expected incoming commit to be next sequenced commit */);
         }
 
         if (newCommit.sessionId === this.localSessionId) {

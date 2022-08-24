@@ -7,7 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-import { demoCodeLoader, DemoModelCodeLoader } from "./demoLoaders";
+import { DemoCodeLoader, DemoModelCodeLoader } from "./demoLoaders";
 import { ModelLoader } from "./modelLoading";
 import { externalDataSource } from "./externalData";
 import { IMigratableModel, IVersionedModel } from "./migrationInterfaces";
@@ -39,8 +39,8 @@ const render = (model: IVersionedModel) => {
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     // This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
-    // versions, we could check its version here and select the appropriate view.
-    // TODO: Better view code loading.
+    // versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
+    // view code loader to pull in the view dynamically based on the version we discover.
     if (isInventoryListContainer1(model) || isInventoryListContainer2(model)) {
         ReactDOM.render(
             React.createElement(InventoryListContainerView, { model }),
@@ -65,10 +65,14 @@ const render = (model: IVersionedModel) => {
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
+    // If we assumed the container code could consistently present a model to us, we could bake that assumption
+    // in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
+    // (unknown) container version.  So the ModelLoader would be replaced by whatever the consistent request call
+    // (e.g. container.request({ url: "mode" })) looks like.
     const modelLoader = new ModelLoader<IMigratableModel>({
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
-        codeLoader: demoCodeLoader,
+        codeLoader: new DemoCodeLoader(),
         modelCodeLoader: new DemoModelCodeLoader(),
         generateCreateNewRequest: createTinyliciousCreateNewRequest,
     });
@@ -96,9 +100,8 @@ async function start(): Promise<void> {
         model = await modelLoader.loadExisting(id);
     }
 
-    // TODO: Could be reasonable to merge Migrator into the ModelLoader, for a MigratingModelLoader.
-    // The eventing would be a little weird if the loader can load multiple models, but maybe it's OK to have one
-    // loader per model?
+    // The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
+    // the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
     const migrator = new Migrator(modelLoader, model, id);
     migrator.on("migrated", () => {
         model.close();
@@ -106,19 +109,30 @@ async function start(): Promise<void> {
         updateTabForId(migrator.currentModelId);
         model = migrator.currentModel;
     });
+    // If the ModelLoader doesn't know how to load the model required for migration, it emits "migrationNotSupported".
+    // For example, this might be hit if another client has a newer ModelLoader and proposes a version our
+    // ModelLoader doesn't know about.
+    // However, this will never be hit in this demo since we have a finite set of models to support.  If the model
+    // code loader pulls in the appropriate model dynamically, this might also never be hit since all clients
+    // theoretically are referencing the same model library.
     migrator.on("migrationNotSupported", (version: string) => {
-        // TODO: Figure out what a reasonable end-user experience might be in this case.
+        // To move forward, we would need to acquire a model loader capable of loading the given model, retry the
+        // load, and set up a new Migrator with the new model loader.
         console.error(`Tried to migrate to version ${version} which is not supported by the current ModelLoader`);
     });
 
-    // Could do some migration loop here -- repeat this until no further migration needed
-    // const versionToPropose = await getMaximumMigratableVersionFromSomeService(model.version); // string | undefined
-    // if (versionToPropose !== undefined) {
+    // This would be a good point to trigger normal upgrade logic - we're fully set up for migration, can inspect the
+    // model, and haven't rendered yet.  We could even migrate multiple times if necessary (e.g. if daisy-chaining is
+    // required).  E.g. something like:
+    // let versionToPropose: string;
+    // while (versionToPropose = await getMigrationTargetFromSomeService(model.version)) {
     //     model.proposeVersion(versionToPropose);
+    //     await new Promise<void>((resolve) => {
+    //         migrator.once("migrated", resolve);
+    //     });
     // }
+    // In this demo however, we trigger the proposal through the debug buttons.
 
-    // TODO: here I proceed to rendering without checking the migration state, but instead we could decline to render
-    // if we're going to immediately load a new container.  Consider whether this would be better.
     render(model);
     updateTabForId(id);
 }

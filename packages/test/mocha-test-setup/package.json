@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/mocha-test-setup",
-  "version": "2.0.0-internal.1.0.0",
+  "version": "2.0.0-internal.1.1.0",
   "description": "Utilities for Fluid tests",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -55,13 +55,13 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/test-driver-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/test-driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "mocha": "^10.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup-previous": "npm:@fluidframework/mocha-test-setup@1.1.0",
+    "@fluidframework/mocha-test-setup-previous": "npm:@fluidframework/mocha-test-setup@^1.1.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",

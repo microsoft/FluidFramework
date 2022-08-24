@@ -113,6 +113,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             // Before attaching, let's check to make sure no one else has already done the migration
             // To avoid creating unnecessary extra containers.
             if (migratable.getMigrationState() === MigrationState.migrated) {
+                this._migrationP = undefined;
+                this.takeAppropriateActionForCurrentMigratable();
                 return;
             }
 
@@ -124,6 +126,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
             // Again, it could be the case that someone else finished the migration during our attach.
             if (migratable.getMigrationState() === MigrationState.migrated) {
+                this._migrationP = undefined;
+                this.takeAppropriateActionForCurrentMigratable();
                 return;
             }
 

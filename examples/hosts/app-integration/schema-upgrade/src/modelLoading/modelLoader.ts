@@ -35,14 +35,15 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     }
 
     public async supportsVersion(version: string): Promise<boolean> {
-        // TODO: To really answer the question of whether we support a given version, we would want to check both the
-        // modelCodeLoader and also the codeLoader.  Consider what that might look like (e.g. augment codeLoader with
-        // some supportsVersion call).
+        // To really answer the question of whether we support a given version, we would want to check both the
+        // modelCodeLoader and also the codeLoader.  But for now, ICodeDetailsLoader doesn't have a supports()
+        // method.  We could attempt a load and catch the error, but it might not be desirable to load code just
+        // to check.  It might be desirable to add such a method to that interface.
         return this.modelCodeLoader.supportsVersion(version);
     }
 
-    // Would be preferable to have a way for the customer to call service.attach(model) rather than returning an
-    // attach callback here.  TODO: See if this is achievable.
+    // It would be preferable for attaching to look more like service.attach(model) rather than returning an attach
+    // callback here, but this callback at least allows us to keep the method off the model interface.
     public async createDetached(version: string): Promise<{ model: ModelType; attach: () => Promise<string>; }> {
         const supported = await this.modelCodeLoader.supportsVersion(version);
         if (!supported) {

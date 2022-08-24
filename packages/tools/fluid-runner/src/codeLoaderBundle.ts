@@ -9,7 +9,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * Contract that defines the necessary exports for the bundle provided at runtime
- * For an example, see "src/test/sampleCodeLoader.ts"
+ * For an example, see "src/test/sampleCodeLoaders/sampleCodeLoader.ts"
  */
  export interface ICodeLoaderBundle {
     /**
@@ -49,4 +49,10 @@ export interface IFluidFileConverter {
 export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return bundle?.fluidExport && typeof bundle.fluidExport === "object";
+}
+
+export function isFluidFileConverter(obj: any): obj is IFluidFileConverter {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return obj?.codeLoader && typeof obj.codeLoader === "object"
+        && obj.execute && typeof obj.execute === "function";
 }
