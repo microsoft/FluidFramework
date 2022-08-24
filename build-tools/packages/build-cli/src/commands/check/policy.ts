@@ -186,8 +186,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                         final(pathToGitRoot, flags.resolve),
                     );
                     if (result?.error) {
-                        this.exit(1);
-                        this.log(result.error);
+                        this.error(result.error);
                     }
                 }
             }
