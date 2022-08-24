@@ -4,9 +4,9 @@
  */
 
 import { ChangeEncoder, JsonCompatible } from "../../change-family";
-import { Transposed as T } from "../../changeset";
+import { ITransposed as T } from "../../changeset";
 
-export type SequenceChangeset = T.LocalChangeset;
+export type SequenceChangeset = T.ILocalChangeset;
 
 class SequenceChangeEncoder extends ChangeEncoder<SequenceChangeset> {
     public encodeForJson(formatVersion: number, change: SequenceChangeset): JsonCompatible {

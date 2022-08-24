@@ -11,7 +11,7 @@ import { ISequencedDocumentMessage, ISummaryTree, SummaryType } from "@fluidfram
 import { ITelemetryContext, ISummaryTreeWithStats, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, ISharedObjectEvents, SharedObject } from "@fluidframework/shared-object-base";
-import { ChangeFamily } from "../change-family";
+import { IChangeFamily } from "../change-family";
 import { Commit, EditManager } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
 import { brand } from "../util";
@@ -34,7 +34,7 @@ const formatVersion = 0;
  * TODO: actually implement
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
-export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TChange>>
+export class SharedTreeCore<TChange, TChangeFamily extends IChangeFamily<any, TChange>>
     extends SharedObject<ISharedTreeCoreEvents> {
     public readonly editManager: EditManager<TChange, TChangeFamily>;
 

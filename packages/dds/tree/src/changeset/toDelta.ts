@@ -6,7 +6,7 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { brand, brandOpaque, clone, fail, OffsetListFactory } from "../util";
 import { FieldKey, Value, Delta } from "../tree";
-import { ProtoNode, Transposed as T } from "./format";
+import { ProtoNode, ITransposed as T } from "./format";
 import { isSkipMark } from "./utils";
 
 /**
@@ -14,7 +14,7 @@ import { isSkipMark } from "./utils";
  * @param changeset - The Changeset to convert
  * @returns A Delta for applying the changes described in the given Changeset.
  */
-export function toDelta(changeset: T.LocalChangeset): Delta.Root {
+export function toDelta(changeset: T.ILocalChangeset): Delta.Root {
     // Save result to a constant to work around linter bug:
     // https://github.com/typescript-eslint/typescript-eslint/issues/5014
     const out: Delta.Root = convertFieldMarks<Delta.OuterMark>(changeset.marks);
@@ -147,7 +147,7 @@ function cloneTreeContent(content: ProtoNode[]): Delta.ProtoNode[] {
  *
  * The returned `fields` map may be empty if all modifications are applied by the function.
  */
-function cloneAndModify(insert: T.ModifyInsert): DeltaInsertModification {
+function cloneAndModify(insert: T.IModifyInsert): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
     const outNode = cloneTreeContent([insert.content])[0];
     const outModifications = applyOrCollectModifications(outNode, insert);
@@ -314,8 +314,8 @@ const ERR_RETURN_ON_INSERT = "Encountered a Return mark in an inserted field";
  * Modifications to a subtree as described by a Changeset.
  */
 interface ChangesetMods {
-    value?: T.SetValue;
-    fields?: T.FieldMarks;
+    value?: T.ISetValue;
+    fields?: T.IFieldMarks;
 }
 
 /**
@@ -341,7 +341,7 @@ function convertModify<TMarks>(modify: ChangesetMods): DeltaMods<TMarks> {
     return out;
 }
 
-function convertFieldMarks<TMarks>(fields: T.FieldMarks): Delta.FieldMarks<TMarks> {
+function convertFieldMarks<TMarks>(fields: T.IFieldMarks): Delta.FieldMarks<TMarks> {
     const outFields: Delta.FieldMarks<TMarks> = new Map();
     for (const key of Object.keys(fields)) {
         const marks = convertMarkList<TMarks>(fields[key]);

@@ -7,14 +7,14 @@ import { strict as assert } from "assert";
 import {
     ProtoNode,
     toDelta as toDeltaImpl,
-    Transposed as T,
+    ITransposed as T,
 } from "../../changeset";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKey, Delta } from "../../tree";
 import { brand, brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";
 
-function toDelta(changeset: T.LocalChangeset): Delta.Root {
+function toDelta(changeset: T.ILocalChangeset): Delta.Root {
     deepFreeze(changeset);
     const delta: Delta.Root = toDeltaImpl(changeset);
     return delta;
@@ -241,7 +241,7 @@ describe("toDelta", () => {
     });
 
     it("move across trees", () => {
-        const changeset: T.LocalChangeset = {
+        const changeset: T.ILocalChangeset = {
             marks: {
                 root: [{
                     type: "Modify",

@@ -15,7 +15,7 @@ import {
     MarkListFactory,
     splitMarkOnInput,
     splitMarkOnOutput,
-    Transposed as T,
+    ITransposed as T,
 } from "../../changeset";
 import { clone, fail, StackyIterator } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
@@ -36,7 +36,7 @@ export function compose(changes: SequenceChangeset[]): SequenceChangeset {
     if (changes.length === 1) {
         return changes[0];
     }
-    let composedFieldMarks: T.FieldMarks = {};
+    let composedFieldMarks: T.IFieldMarks = {};
     for (const change of changes) {
         composedFieldMarks = composeFieldMarks(composedFieldMarks, change.marks);
     }
@@ -45,8 +45,8 @@ export function compose(changes: SequenceChangeset[]): SequenceChangeset {
     };
 }
 
-function composeFieldMarks(baseFieldMarks: T.FieldMarks, newFieldMarks: T.FieldMarks): T.FieldMarks {
-    const composed: T.FieldMarks = {};
+function composeFieldMarks(baseFieldMarks: T.IFieldMarks, newFieldMarks: T.IFieldMarks): T.IFieldMarks {
+    const composed: T.IFieldMarks = {};
     for (const key of Object.keys(newFieldMarks)) {
         const composedMarkList = composeMarkLists(baseFieldMarks[key] ?? [], newFieldMarks[key]);
         if (composedMarkList.length > 0) {
@@ -208,7 +208,7 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
         case "Revive": {
             switch (newType) {
                 case "Modify": {
-                    const modRevive: T.ModifyReattach = {
+                    const modRevive: T.IModifyReattach = {
                         type: "MRevive",
                         id: baseMark.id,
                         tomb: baseMark.tomb,
@@ -227,7 +227,7 @@ function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
     }
 }
 
-function updateModifyLike(curr: T.Modify, base: T.ModifyInsert | T.Modify | T.ModifyReattach) {
+function updateModifyLike(curr: T.IModify, base: T.IModifyInsert | T.IModify | T.IModifyReattach) {
     if (curr.fields !== undefined) {
         base.fields = composeFieldMarks(base.fields ?? {}, curr.fields);
         if (Object.keys(base.fields).length === 0) {

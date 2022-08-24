@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangeFamily } from "../change-family";
+import { IChangeFamily } from "../change-family";
 import { AnchorSet, Delta } from "../tree";
 import { Brand, fail, RecursiveReadonly } from "../util";
 
@@ -25,7 +25,7 @@ export type SessionId = string;
 // TODO: Remove commits when they are no longer in the collab window
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
-export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> {
+export class EditManager<TChangeset, TChangeFamily extends IChangeFamily<any, TChangeset>> {
     // The trunk represents the list of received sequenced changes.
     // The change in each commit is rebased onto the previous change in the list.
     private readonly trunk: Commit<TChangeset>[] = [];

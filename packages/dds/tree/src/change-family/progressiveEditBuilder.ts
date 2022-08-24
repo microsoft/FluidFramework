@@ -4,12 +4,12 @@
  */
 
 import { AnchorSet, Delta } from "../tree";
-import { ChangeFamily } from "./changeFamily";
+import { IChangeFamily } from "./changeFamily";
 
 export abstract class ProgressiveEditBuilder<TChange> {
     private readonly changes: TChange[] = [];
     constructor(
-        private readonly changeFamily: ChangeFamily<unknown, TChange>,
+        private readonly changeFamily: IChangeFamily<unknown, TChange>,
         private readonly deltaReceiver: (delta: Delta.Root) => void,
         private readonly anchorSet: AnchorSet) {}
 

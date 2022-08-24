@@ -4,7 +4,7 @@
  */
 
 import { ProgressiveEditBuilder } from "../../change-family";
-import { Transposed as T } from "../../changeset";
+import { ITransposed as T } from "../../changeset";
 import { ITreeCursor } from "../../forest";
 import { AnchorSet, UpPath, Value, Delta, getDepth } from "../../tree";
 import { fail } from "../../util";
@@ -23,7 +23,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
     }
 
     public setValue(node: NodePath, value: Value) {
-        const modify: T.Modify & { value: T.SetValue; } = { type: "Modify", value: { id: 0 } };
+        const modify: T.IModify & { value: T.ISetValue; } = { type: "Modify", value: { id: 0 } };
         // Only set the `SetValue.value` field if the given `value` is defined.
         // This ensures the object properly round-trips through JSON.
         if (value !== undefined) {
@@ -35,13 +35,13 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
     public insert(place: PlacePath, cursor: ITreeCursor) {
         const id = this.opId++;
         const content = jsonableTreeFromCursor(cursor);
-        const insert: T.Insert = { type: "Insert", id, content: [content] };
+        const insert: T.IInsert = { type: "Insert", id, content: [content] };
         this.applyMarkAtPath(insert, place);
     }
 
     public delete(place: PlacePath, count: number) {
         const id = this.opId++;
-        const mark: T.Detach = { type: "Delete", id, count };
+        const mark: T.IDetach = { type: "Delete", id, count };
         this.applyMarkAtPath(mark, place);
     }
 
@@ -50,8 +50,8 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
             return;
         }
         const id = this.opId++;
-        const moveOut: T.Detach = { type: "MoveOut", id, count };
-        const moveIn: T.MoveIn = { type: "MoveIn", id, count };
+        const moveOut: T.IDetach = { type: "MoveOut", id, count };
+        const moveIn: T.IMoveIn = { type: "MoveIn", id, count };
         if (source.parent === destination.parent) {
             const srcIndex = source.parentIndex;
             const dstIndex = destination.parentIndex;
@@ -167,17 +167,17 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
         this.applyFieldMarksAtPath(toFieldMarks(mark, path), path.parent);
     }
 
-    private applyFieldMarksAtPath(marks: T.FieldMarks, path: UpPath | undefined) {
+    private applyFieldMarksAtPath(marks: T.IFieldMarks, path: UpPath | undefined) {
         this.applyChange({ marks: wrap(marks, path) });
     }
 }
 
 interface NestBranch {
-    marks: T.FieldMarks;
+    marks: T.IFieldMarks;
     path: UpPath | undefined;
 }
 
-function toFieldMarks(mark: T.Mark, node: UpPath): T.FieldMarks {
+function toFieldMarks(mark: T.Mark, node: UpPath): T.IFieldMarks {
     const key = node.parentField;
     const index = node.parentIndex;
     return {
@@ -185,9 +185,9 @@ function toFieldMarks(mark: T.Mark, node: UpPath): T.FieldMarks {
     };
 }
 
-function wrapN(mark: T.FieldMarks, node: UpPath | undefined, depth: number) {
+function wrapN(mark: T.IFieldMarks, node: UpPath | undefined, depth: number) {
     let currentNode: UpPath | undefined = node;
-    let out: T.FieldMarks = mark;
+    let out: T.IFieldMarks = mark;
     let currentDepth = 0;
     while (currentNode !== undefined && currentDepth < depth) {
         out = wrap1(out, currentNode);
@@ -197,9 +197,9 @@ function wrapN(mark: T.FieldMarks, node: UpPath | undefined, depth: number) {
     return { marks: out, path: currentNode };
 }
 
-function wrap(mark: T.FieldMarks, node: UpPath | undefined): T.FieldMarks {
+function wrap(mark: T.IFieldMarks, node: UpPath | undefined): T.IFieldMarks {
     let currentNode: UpPath | undefined = node;
-    let out: T.FieldMarks = mark;
+    let out: T.IFieldMarks = mark;
     while (currentNode !== undefined) {
         out = wrap1(out, currentNode);
         currentNode = currentNode.parent;
@@ -207,7 +207,7 @@ function wrap(mark: T.FieldMarks, node: UpPath | undefined): T.FieldMarks {
     return out;
 }
 
-function wrap1(marks: T.FieldMarks, node: UpPath): T.FieldMarks {
+function wrap1(marks: T.IFieldMarks, node: UpPath): T.IFieldMarks {
     return toFieldMarks({ type: "Modify", fields: marks }, node);
 }
 

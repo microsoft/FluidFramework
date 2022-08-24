@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetTag, isSkipMark, OpId, Transposed as T } from "../../changeset";
+import { ChangesetTag, isSkipMark, OpId, ITransposed as T } from "../../changeset";
 import { fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
@@ -42,8 +42,8 @@ export function invert(change: SequenceChangeset): SequenceChangeset {
 
 type IdToTagLookup = (id: OpId) => ChangesetTag;
 
-function invertFieldMarks(fieldMarks: T.FieldMarks, opIdToTag: IdToTagLookup): T.FieldMarks {
-    const inverseFieldMarks: T.FieldMarks = {};
+function invertFieldMarks(fieldMarks: T.IFieldMarks, opIdToTag: IdToTagLookup): T.IFieldMarks {
+    const inverseFieldMarks: T.IFieldMarks = {};
     for (const key of Object.keys(fieldMarks)) {
         const markList = fieldMarks[key];
         inverseFieldMarks[key] = invertMarkList(markList, opIdToTag);
@@ -89,7 +89,7 @@ function invertMark(mark: T.Mark, opIdToTag: IdToTagLookup): T.Mark[] {
                 }];
             }
             case "Modify": {
-                const modify: T.Modify = {
+                const modify: T.IModify = {
                     type: "Modify",
                 };
                 if (mark.value !== undefined) {

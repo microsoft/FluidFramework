@@ -5,7 +5,7 @@
 
 import { SequenceChangeset } from "../../feature-libraries";
 import { brand } from "../../util";
-import { Transposed as T, Value } from "../../changeset";
+import { ITransposed as T, Value } from "../../changeset";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 
 export function setRootValueTo(value: Value): SequenceChangeset {

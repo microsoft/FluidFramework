@@ -7,7 +7,7 @@ import { ChangeRebaser } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
 import { ChangeEncoder } from "./changeEncoder";
 
-export interface ChangeFamily<TEditor, TChange> {
+export interface IChangeFamily<TEditor, TChange> {
     buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): TEditor;
     intoDelta(change: TChange): Delta.Root;
     readonly rebaser: ChangeRebaser<TChange>;

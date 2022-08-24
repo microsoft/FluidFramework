@@ -4,7 +4,7 @@
  */
 
 import { IEditableForest, IForestSubscription } from "../forest";
-import { ChangeFamily, ProgressiveEditBuilder } from "../change-family";
+import { IChangeFamily, ProgressiveEditBuilder } from "../change-family";
 import { TransactionResult } from "../checkout";
 
 /**
@@ -12,7 +12,7 @@ import { TransactionResult } from "../checkout";
  */
 export interface Checkout<TEditor, TChange> {
     readonly forest: IEditableForest;
-    readonly changeFamily: ChangeFamily<TEditor, TChange>;
+    readonly changeFamily: IChangeFamily<TEditor, TChange>;
     submitEdit(edit: TChange): void;
 }
 
@@ -24,7 +24,7 @@ class Transaction<
     TChange,
 > {
     public readonly editor: TEditor;
-    constructor(private readonly forest: IEditableForest, changeFamily: ChangeFamily<TEditor, TChange>) {
+    constructor(private readonly forest: IEditableForest, changeFamily: IChangeFamily<TEditor, TChange>) {
         this.editor = changeFamily.buildEditor((delta) => this.forest.applyDelta(delta), forest.anchors);
     }
 }

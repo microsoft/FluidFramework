@@ -4,7 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
+import { ChangeEncoder, IChangeFamily, JsonCompatible } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
@@ -187,11 +187,11 @@ class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
     }
 }
 
-type TestChangeFamily = ChangeFamily<unknown, TestChangeset>;
+type TestChangeFamily = IChangeFamily<unknown, TestChangeset>;
 type TestEditManager = EditManager<TestChangeset, TestChangeFamily>;
 
 function changeFamilyFactory(): {
-    family: ChangeFamily<unknown, TestChangeset>;
+    family: IChangeFamily<unknown, TestChangeset>;
     rebaser: TestChangeRebaser;
 } {
     const rebaser = new TestChangeRebaser();
@@ -209,7 +209,7 @@ function editManagerFactory(): {
     rebaser: TestChangeRebaser;
 } {
     const { rebaser, family } = changeFamilyFactory();
-    const manager = new EditManager<TestChangeset, ChangeFamily<unknown, TestChangeset>>(
+    const manager = new EditManager<TestChangeset, IChangeFamily<unknown, TestChangeset>>(
         family,
     );
     manager.setLocalSessionId(localSessionId);

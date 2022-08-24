@@ -5,7 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { fail } from "../util";
-import { Skip, Transposed as T } from "./format";
+import { Skip, ITransposed as T } from "./format";
 
 export function isAttach(mark: T.Mark): mark is T.Attach {
     return isObjMark(mark)
@@ -21,7 +21,7 @@ export function isAttach(mark: T.Mark): mark is T.Attach {
     ;
 }
 
-export function isReattach(mark: T.Mark): mark is T.Reattach | T.ModifyReattach {
+export function isReattach(mark: T.Mark): mark is T.IReattach | T.IModifyReattach {
     return isObjMark(mark)
         && "type" in mark
         && (
@@ -33,11 +33,11 @@ export function isReattach(mark: T.Mark): mark is T.Reattach | T.ModifyReattach 
     ;
 }
 
-export function isTomb(mark: T.Mark): mark is T.Tomb {
+export function isTomb(mark: T.Mark): mark is T.ITomb {
     return isObjMark(mark) && "type" in mark && mark.type === "Tomb";
 }
 
-export function isGapEffectMark(mark: T.Mark): mark is T.GapEffectSegment {
+export function isGapEffectMark(mark: T.Mark): mark is T.IGapEffectSegment {
     return isObjMark(mark) && "type" in mark && mark.type === "Gap";
 }
 
@@ -79,7 +79,7 @@ export function isEqualGaps(lhs: T.GapEffect[] | undefined, rhs: T.GapEffect[] |
 /**
  * @returns `true` iff `lhs` and `rhs`'s `HasPlaceFields` fields are structurally equal.
  */
-export function isEqualPlace(lhs: Readonly<T.HasPlaceFields>, rhs: Readonly<T.HasPlaceFields>): boolean {
+export function isEqualPlace(lhs: Readonly<T.IHasPlaceFields>, rhs: Readonly<T.IHasPlaceFields>): boolean {
     return lhs.heed === rhs.heed
     && lhs.tiebreak === rhs.tiebreak
     && lhs.src?.id === rhs.src?.id
@@ -249,7 +249,7 @@ export function splitMarkOnOutput<TMark extends T.Mark>(mark: TMark, length: num
     }
 }
 
-export function isDetachMark(mark: T.Mark | undefined): mark is T.Detach | T.ModifyDetach {
+export function isDetachMark(mark: T.Mark | undefined): mark is T.IDetach | T.IModifyDetach {
     if (isObjMark(mark) && "type" in mark) {
         const type = mark.type;
         return type === "Delete" || type === "MDelete" || type === "MoveOut" || type === "MMoveOut";
@@ -276,13 +276,13 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
     switch (type) {
         case "Insert":
         case "MoveIn": {
-            const lhsAttach = lhs as T.Insert | T.MoveIn;
+            const lhsAttach = lhs as T.IInsert | T.IMoveIn;
             if (rhs.id === lhsAttach.id ?? isEqualPlace(lhsAttach, rhs)) {
                 if (rhs.type === "Insert") {
-                    const lhsInsert = lhsAttach as T.Insert;
+                    const lhsInsert = lhsAttach as T.IInsert;
                     lhsInsert.content.push(...rhs.content);
                 } else {
-                    const lhsMoveIn = lhsAttach as T.MoveIn;
+                    const lhsMoveIn = lhsAttach as T.IMoveIn;
                     lhsMoveIn.count += rhs.count;
                 }
                 return true;
@@ -291,7 +291,7 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
         }
         case "Delete":
         case "MoveOut": {
-            const lhsDetach = lhs as T.Detach;
+            const lhsDetach = lhs as T.IDetach;
             if (
                 rhs.id === lhsDetach.id
                 && rhs.tomb === lhsDetach.tomb
@@ -304,7 +304,7 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
         }
         case "Revive":
         case "Return": {
-            const lhsReattach = lhs as T.Reattach;
+            const lhsReattach = lhs as T.IReattach;
             if (
                 rhs.id === lhsReattach.id
                 && rhs.tomb === lhsReattach.tomb
@@ -315,7 +315,7 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
             break;
         }
         case "Gap": {
-            const lhsGap = lhs as T.GapEffectSegment;
+            const lhsGap = lhs as T.IGapEffectSegment;
             if (
                 rhs.tomb === lhsGap.tomb
                 && isEqualGaps(rhs.stack, lhsGap.stack)
@@ -326,7 +326,7 @@ export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): b
             break;
         }
         case "Tomb": {
-            const lhsTomb = lhs as T.Tomb;
+            const lhsTomb = lhs as T.ITomb;
             if (rhs.change === lhsTomb.change) {
                 lhsTomb.count += rhs.count;
                 return true;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeFamily } from "../../change-family";
+import { IChangeFamily } from "../../change-family";
 import { toDelta } from "../../changeset";
 import { AnchorSet, Delta } from "../../tree";
 import { sequenceChangeRebaser } from "./sequenceChangeRebaser";
@@ -14,7 +14,7 @@ function buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: Anch
     return new SequenceEditBuilder(deltaReceiver, anchorSet);
 }
 
-export type SequenceChangeFamily = ChangeFamily<SequenceEditBuilder, SequenceChangeset>;
+export type SequenceChangeFamily = IChangeFamily<SequenceEditBuilder, SequenceChangeset>;
 
 export const sequenceChangeFamily: SequenceChangeFamily = {
     rebaser: sequenceChangeRebaser,

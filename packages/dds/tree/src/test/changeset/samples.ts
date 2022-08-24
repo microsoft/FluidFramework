@@ -4,7 +4,7 @@
  */
 
 import { jsonArray, jsonNumber, jsonObject, jsonString } from "../../domains";
-import { Effects, Transposed as T } from "../../changeset";
+import { Effects, ITransposed as T } from "../../changeset";
 
 /**
  * Demonstrates how to represent a change that inserts a root tree.
@@ -48,7 +48,7 @@ const nodeX = { type: jsonString.name, value: "X" };
  * Demonstrates how to represent a change that swaps a pair of nodes from different traits.
  */
 export namespace SwapCousins {
-    export const e1: T.PeerChangeset = {
+    export const e1: T.IPeerChangeset = {
         moves: [
             { id: 0, src: { 0: { foo: 0 } }, dst: { 0: { bar: 0 } } },
             { id: 1, src: { 0: { bar: 0 } }, dst: { 0: { foo: 0 } } },
@@ -76,7 +76,7 @@ export namespace SwapCousins {
  * To:  ` R{ foo: C{ bar: B{ baz: D } } }`
  */
 export namespace SwapParentChild {
-    export const e1: T.PeerChangeset = {
+    export const e1: T.IPeerChangeset = {
         moves: [
             { id: 0, src: { 0: { foo: 0 } }, dst: { 0: { foo: { 0: { bar: 0 } } } } }, // B
             { id: 1, src: { 0: { foo: { 0: { bar: 0 } } } }, dst: { 0: { foo: 0 } } }, // C

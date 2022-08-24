@@ -11,7 +11,7 @@ import {
     isSkipMark,
     MarkListFactory,
     splitMarkOnInput,
-    Transposed as T,
+    ITransposed as T,
 } from "../../changeset";
 import { clone, fail, StackyIterator } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
@@ -38,8 +38,8 @@ export function rebase(change: SequenceChangeset, base: SequenceChangeset): Sequ
     };
 }
 
-function rebaseFieldMarks(change: T.FieldMarks, base: T.FieldMarks): T.FieldMarks {
-    const fields: T.FieldMarks = {};
+function rebaseFieldMarks(change: T.IFieldMarks, base: T.IFieldMarks): T.IFieldMarks {
+    const fields: T.IFieldMarks = {};
     for (const key of Object.keys(change)) {
         if (key in base) {
             fields[key] = rebaseMarkList(change[key], base[key]);

@@ -12,8 +12,8 @@ import { JsonableTree } from "../tree";
 /**
  * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
-export namespace Transposed {
-	export interface Transaction extends PeerChangeset {
+export namespace ITransposed {
+	export interface Transaction extends IPeerChangeset {
 		/**
 		 * The tag of the changeset that this transaction was originally issued after.
 		 */
@@ -28,20 +28,20 @@ export namespace Transposed {
 	/**
 	 * Represents changes to a document forest.
 	 */
-	export interface LocalChangeset {
-		marks: FieldMarks;
-		moves?: MoveEntry<TreeForestPath>[];
+	export interface ILocalChangeset {
+		marks: IFieldMarks;
+		moves?: IMoveEntry<ITreeForestPath>[];
 	}
 
 	/**
 	 * Represents changes to a document tree.
 	 */
-	export interface PeerChangeset {
+	export interface IPeerChangeset {
 		marks: MarkList;
-		moves?: MoveEntry[];
+		moves?: IMoveEntry[];
 	}
 
-	export interface MoveEntry<TPath = TreeRootPath> {
+	export interface IMoveEntry<TPath = TreeRootPath> {
 		id: OpId;
 		src: TPath;
 		dst: TPath;
@@ -63,37 +63,37 @@ export namespace Transposed {
 		| SizedObjectMark;
 
 	export type SizedObjectMark =
-		| Tomb
-		| Modify
-		| Detach
-		| Reattach
-		| ModifyReattach
-		| ModifyDetach
-		| GapEffectSegment;
+		| ITomb
+		| IModify
+		| IDetach
+		| IReattach
+		| IModifyReattach
+		| IModifyDetach
+		| IGapEffectSegment;
 
-	export interface Tomb {
+	export interface ITomb {
 		type: "Tomb";
 		change: ChangesetTag;
 		count: number;
 	}
 
-	export interface SetValue extends HasOpId {
+	export interface ISetValue extends IHasOpId {
 		/** Can be left unset to represent the value being cleared. */
 		value?: Value;
 	}
 
-	export interface Modify {
+	export interface IModify {
 		type: "Modify";
 		tomb?: ChangesetTag;
-		value?: SetValue;
-		fields?: FieldMarks;
+		value?: ISetValue;
+		fields?: IFieldMarks;
 	}
 
-	export interface FieldMarks {
+	export interface IFieldMarks {
 		[key: string]: MarkList;
 	}
 
-	export interface HasPlaceFields {
+	export interface IHasPlaceFields {
 		/**
 		 * Describes which kinds of concurrent slice operations should affect the target place.
 		 *
@@ -117,15 +117,15 @@ export namespace Transposed {
 		/**
 		 * Indicates a prior concurrent slice-move that the target place was affected by.
 		 */
-		src?: PriorOp;
+		src?: IPriorOp;
 
 		/**
 		 * Indicates a prior concurrent slice-delete that the target place was affected by.
 		 */
-		scorch?: PriorOp;
+		scorch?: IPriorOp;
 	}
 
-	export interface GapEffectPolicy {
+	export interface IGapEffectPolicy {
 		/**
 		 * When `true`, if a concurrent insertion that is sequenced before the range operation falls
 		 * within the bounds of the range, then the inserted content will *not* be included in the
@@ -145,16 +145,16 @@ export namespace Transposed {
 		includePosteriorInsertions?: true;
 	}
 
-	export interface Insert extends HasOpId, HasPlaceFields {
+	export interface IInsert extends IHasOpId, IHasPlaceFields {
 		type: "Insert";
 		content: ProtoNode[];
 	}
 
-	export interface ModifyInsert extends HasOpId, HasPlaceFields {
+	export interface IModifyInsert extends IHasOpId, IHasPlaceFields {
 		type: "MInsert";
 		content: ProtoNode;
-		value?: SetValue;
-		fields?: FieldMarks;
+		value?: ISetValue;
+		fields?: IFieldMarks;
 	}
 
 	/**
@@ -170,7 +170,7 @@ export namespace Transposed {
 	 * Bounce marks capture that information.
 	 * See ScenarioQ for an example.
 	 */
-	export interface Bounce extends HasOpId, HasPlaceFields {
+	export interface IBounce extends IHasOpId, IHasPlaceFields {
 		type: "Bounce";
 	}
 
@@ -180,11 +180,11 @@ export namespace Transposed {
 	 * may land in the gap. Without this, we would need to be able to retain information about the relative order in
 	 * time of any number of concurrent slice-moves. See scenario N.
 	 */
-	export interface Intake extends PriorOp {
+	export interface IIntake extends IPriorOp {
 		type: "Intake";
 	}
 
-	export interface MoveIn extends HasOpId, HasPlaceFields {
+	export interface IMoveIn extends IHasOpId, IHasPlaceFields {
 		type: "MoveIn";
 		/**
 		 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
@@ -192,19 +192,19 @@ export namespace Transposed {
 		count: NodeCount;
 	}
 
-	export interface ModifyMoveIn extends HasOpId, HasPlaceFields {
+	export interface IModifyMoveIn extends IHasOpId, IHasPlaceFields {
 		type: "MMoveIn";
-		value?: SetValue;
-		fields?: FieldMarks;
+		value?: ISetValue;
+		fields?: IFieldMarks;
 	}
 
-	export type Attach = Insert | ModifyInsert | MoveIn | ModifyMoveIn | Bounce | Intake;
+	export type Attach = IInsert | IModifyInsert | IMoveIn | IModifyMoveIn | IBounce | IIntake;
 
-	export type GapEffect = Scorch | Forward | Heal | Unforward;
+	export type GapEffect = IScorch | IForward | IHeal | IUnforward;
 
 	export type GapEffectType = GapEffect["type"];
 
-	export interface GapEffectSegment {
+	export interface IGapEffectSegment {
 		tomb?: ChangesetTag;
 		type: "Gap";
 		count: GapCount;
@@ -214,48 +214,48 @@ export namespace Transposed {
 		stack: GapEffect[];
 	}
 
-	export interface Scorch extends HasOpId, GapEffectPolicy {
+	export interface IScorch extends IHasOpId, IGapEffectPolicy {
 		type: "Scorch";
 	}
 
-	export interface Heal extends HasOpId, GapEffectPolicy {
+	export interface IHeal extends IHasOpId, IGapEffectPolicy {
 		type: "Heal";
 	}
 
-	export interface Forward extends HasOpId, GapEffectPolicy {
+	export interface IForward extends IHasOpId, IGapEffectPolicy {
 		type: "Forward";
 	}
 
-	export interface Unforward extends HasOpId, GapEffectPolicy {
+	export interface IUnforward extends IHasOpId, IGapEffectPolicy {
 		type: "Unforward";
 	}
 
-	export type NodeMark = Detach | Reattach;
+	export type NodeMark = IDetach | IReattach;
 
-	export interface Detach extends HasOpId {
+	export interface IDetach extends IHasOpId {
 		tomb?: ChangesetTag;
 		gaps?: GapEffect[];
 		type: "Delete" | "MoveOut";
 		count: NodeCount;
 	}
 
-	export interface ModifyDetach extends HasOpId {
+	export interface IModifyDetach extends IHasOpId {
 		type: "MDelete" | "MMoveOut";
 		tomb?: ChangesetTag;
-		value?: SetValue;
-		fields?: FieldMarks;
+		value?: ISetValue;
+		fields?: IFieldMarks;
 	}
 
-	export interface Reattach extends HasOpId {
+	export interface IReattach extends IHasOpId {
 		type: "Revive" | "Return";
 		tomb: ChangesetTag;
 		count: NodeCount;
 	}
-	export interface ModifyReattach extends HasOpId {
+	export interface IModifyReattach extends IHasOpId {
 		type: "MRevive" | "MReturn";
 		tomb: ChangesetTag;
-		value?: SetValue;
-		fields?: FieldMarks;
+		value?: ISetValue;
+		fields?: IFieldMarks;
 	}
 
 	/**
@@ -267,29 +267,29 @@ export namespace Transposed {
 	 * gap, or when a slice-move is applied to the gap that represents the start (or end) of a
 	 * field.
 	 */
-	export interface Tombstones {
+	export interface ITombstones {
 		count: NodeCount;
 		change: ChangesetTag;
 	}
 
-	export interface PriorOp {
+	export interface IPriorOp {
 		change: ChangesetTag;
 		id: OpId;
 	}
 }
 
-export interface HasLength {
+export interface IHasLength {
 	/**
 	 * Omit if 1.
 	 */
 	length?: number;
 }
 
-export interface TreeForestPath {
+export interface ITreeForestPath {
 	[label: string]: TreeRootPath;
 }
 
-export type TreeRootPath = number | { [label: number]: TreeForestPath; };
+export type TreeRootPath = number | { [label: number]: ITreeForestPath; };
 
 export enum RangeType {
 	Set = "Set",
@@ -305,7 +305,7 @@ export enum RangeType {
  */
 export type OpId = number;
 
-export interface HasOpId {
+export interface IHasOpId {
 	/**
 	 * The sequential ID assigned to a change within a transaction.
 	 */
