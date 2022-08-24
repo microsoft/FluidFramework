@@ -636,7 +636,7 @@ describe("Directory", () => {
             directory1 = createConnectedDirectory("directory1", containerRuntimeFactory);
             // Create a second directory1
             directory2 = createConnectedDirectory("directory2", containerRuntimeFactory);
-            // Create a second directory1
+            // Create a third directory3
             directory3 = createConnectedDirectory("directory3", containerRuntimeFactory);
         });
 
