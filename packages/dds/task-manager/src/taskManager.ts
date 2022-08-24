@@ -210,7 +210,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 // TODO: check below comment and stuff, see if applicable
                 // Need to check the id, since it's possible to markAsComplete multiple times before the acks
                 if (messageId === pendingOp.messageId) {
-                    assert(pendingOp.type === "completed", 0x07e /* "Unexpected op type" */);
+                    assert(pendingOp.type === "completed", "Unexpected op type");
                     // Delete the pending, because we no longer have an outstanding op
                     this.latestPendingOps.delete(taskId);
                 }
