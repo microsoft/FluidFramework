@@ -1,19 +1,96 @@
-const { loadModel, renderDocuments, emitMarkdown } = require("@fluid-tools/api-markdown-documenter");
+const {
+    emitMarkdown,
+    getLinkUrlForApiItem,
+    getUnscopedPackageName,
+    loadModel,
+    markdownDocumenterConfigurationWithDefaults,
+    MarkdownEmitter,
+    renderDocuments
+} = require("@fluid-tools/api-markdown-documenter");
+const { StringBuilder } = require("@microsoft/tsdoc");
+const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const fs = require("fs-extra");
 const path = require("path");
+const os = require("os");
 
 const apiReportsDirectoryPath = path.resolve(__dirname, "_api-extractor-temp", "_build");
 const apiDocsDirectoryPath = path.resolve(__dirname, "content", "docs", "apis");
 
+function frontMatterFromApiItem(apiItem, config, markdownEmitter) {
+    const frontMatter = {};
+    frontMatter.kind = apiItem.kind;
+    frontMatter.title = apiItem.displayName.replace(/"/g, '').replace(/!/g, '');
+    let apiMembers = apiItem.members;
+
+    function extractSummary(docComment) {
+        const stringBuilder = new StringBuilder();
+        const summary = docComment.summarySection;
+        markdownEmitter.emit(stringBuilder, summary, {
+            contextApiItem: apiItem,
+            getLinkUrlApiItem: (apiItemForFilename) => {
+                return getLinkUrlForApiItem(apiItemForFilename, config);
+            }
+        });
+        return stringBuilder.toString().replace(/"/g, "'").trim();
+    }
+
+    switch (apiItem.kind) {
+        case ApiItemKind.Class:
+            if (apiItem.tsdocComment) {
+                frontMatter.summary = extractSummary(apiItem.tsdocComment);
+            }
+            frontMatter.title += " Class";
+            break;
+        case ApiItemKind.Interface:
+            frontMatter.title += " Interface";
+            if (apiItem.tsdocComment) {
+                frontMatter.summary = extractSummary(apiItem.tsdocComment);
+            }
+            break;
+        case ApiItemKind.Package:
+            frontMatter.title += " Package";
+            apiMembers = apiItem.entryPoints[0].members;
+            if (apiItem.tsdocComment) {
+                frontMatter.summary = extractSummary(apiItem.tsdocComment);
+            }
+            break;
+        case ApiItemKind.Namespace:
+            frontMatter.title += " Namespace";
+            apiMembers = apiItem.members;
+            if (apiItem.tsdocComment) {
+                frontMatter.summary = extractSummary(apiItem.tsdocComment);
+            }
+            break;
+        default:
+            break;
+    }
+
+    frontMatter.members = new Map();
+    apiMembers.forEach(element => {
+        if (element.displayName === "") {
+            return;
+        }
+        if (!frontMatter.members[element.kind]) {
+            frontMatter.members[element.kind] = {};
+        }
+        frontMatter.members[element.kind][element.displayName] = getLinkUrlForApiItem(element, config);
+    });
+
+    const associatedPackage = apiItem.getAssociatedPackage();
+    if (associatedPackage) {
+        frontMatter.package = associatedPackage.name.replace(/"/g, '').replace(/!/g, '');
+        frontMatter.unscopedPackageName = getUnscopedPackageName(associatedPackage);
+    } else {
+        frontMatter.package = "undefined";
+    }
+
+    return JSON.stringify(frontMatter).trim();
+}
+
 // TODOs:
-// - Hugo frontmatter
 // - why aren't links working?
 // - Landing page replacement issues
 // - Styling (in particular, tables)
-
-// function appendHugoFrontMatter(document) {
-
-// }
 
 async function main() {
     // Delete existing documentation output
@@ -25,15 +102,22 @@ async function main() {
     console.log("Generating API model...");
     const apiModel = await loadModel(apiReportsDirectoryPath);
 
-    const config = {
+    const config = markdownDocumenterConfigurationWithDefaults({
         apiModel,
         newlineKind: "lf",
         uriRoot: "/docs/apis",
         includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
-    };
+    });
 
     console.log("Generating API docs...");
-    const documents = renderDocuments(config);
+    let documents;
+    try {
+        documents = renderDocuments(config);
+    } catch(error) {
+        console.error(`Encountered error while generating API documentation for "${document.apiItem.displayName}":`);
+        console.error(error);
+        throw error;
+    }
 
     console.log("Writing API docs...");
 
@@ -44,9 +128,39 @@ async function main() {
 
         console.log(`Writing document for "${document.apiItem.displayName}"...`);
 
-        const emittedMarkdown = emitMarkdown(document, config);
+        // Emit markdown for API docs
+        const markdownEmitter = new MarkdownEmitter(config.apiModel);
+        let generatedMarkdown;
+        try {
+            generatedMarkdown = emitMarkdown(document, config, markdownEmitter);
+        } catch (error) {
+            console.error(`Encountered error while emitting markdown for "${document.apiItem.displayName}":`);
+            console.error(error);
+            throw error;
+        }
 
-        await fs.writeFile(filePath, emittedMarkdown);
+        // Generate Hugo front-matter for the API item
+        let frontMatter;
+        try {
+            frontMatter = frontMatterFromApiItem(document.apiItem, config, markdownEmitter);
+        } catch (error) {
+            console.error(`Encountered error while generating front-matter for "${document.apiItem.displayName}":`);
+            console.error(error);
+            throw error;
+        }
+
+        const generatedContentNotice = "[//]: # (Do not edit this file. It is automatically generated by @fluidtools/api-markdown-documenter.)";
+
+        // Combine front-matter, generated content notice comment, and API docs into a single string, and write to disk
+        const fileContents = [frontMatter, generatedContentNotice, generatedMarkdown].join(`${os.EOL}${os.EOL}`).trim();
+
+        try {
+            await fs.writeFile(filePath, fileContents);
+        } catch (error) {
+            console.error(`Encountered error while writing file output for "${document.apiItem.displayName}":`);
+            console.error(error);
+            throw error;
+        }
     }));
 }
 
