@@ -95,12 +95,12 @@ export class TextCursor implements ITreeCursor {
     }
 
     private getStackedFieldKey(height: number): FieldKey {
-        assert(height % 2 === 1, "must be in fields mode");
+        assert(height % 2 === 1, "must field height");
         return getFieldKey(this.indexStack[height], this.siblingStack[height]);
     }
 
     private getStackedNodeIndex(height: number): number {
-        assert(height % 2 === 0, "must be in fields mode");
+        assert(height % 2 === 0, "must be node height");
         return this.indexStack[height] as number;
     }
 
@@ -117,7 +117,7 @@ export class TextCursor implements ITreeCursor {
     public enterChildNode(index: number): void {
         assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         const siblings = this.getField();
-        assert(index in siblings, "child must exist");
+        assert(index in siblings, "child must exist at index");
         this.siblingStack.push(this.siblings);
         this.indexStack.push(this.index);
         this.index = index;
