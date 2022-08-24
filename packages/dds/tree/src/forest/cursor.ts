@@ -14,11 +14,10 @@ export interface ITreeCursor {
      * What kind of place the cursor is at.
      * Determines which operations are allowed.
      */
-
     readonly mode: CursorLocationType;
     /*
      * True iff the current field or node (depending on mode) is "pending",
-     * meaning that is has not been downloaded.
+     * meaning that it has not been downloaded.
      */
     readonly pending: boolean;
 
