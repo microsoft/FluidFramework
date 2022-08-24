@@ -2,8 +2,11 @@
 
 Editable Tree is a simple API for accessing a Forest's data.
 
-An entry point is a `getEditableTree` function which returns a JS Proxy typed as `IEditableTree` allowing to read and write nodes of the Fores in a "JavaScript-object"-like manner, thus hiding all the Forest complexity.
+The entry point is `getEditableTree` which returns an `IEditableTree` which allows reading and writing nodes of the Forest in a "JavaScript-object"-like manner.
 
-This is intended to showcase basic read and write opeartions from and to the Forest based on a reference `ObjectForest` and a corresponding `Cursor` implementation.
+## Status
 
-Write operations require a schema-based data format convertion to be adopted/implemented, which will follow.
+Currently implementation uses a JavaScript proxy and is focused on reading the tree: support for editing is not yet implemented.
+
+Write operations will require a schema-based data format conversion to be implemented.
+
