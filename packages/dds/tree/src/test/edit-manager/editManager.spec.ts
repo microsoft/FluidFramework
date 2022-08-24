@@ -4,7 +4,6 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { verify } from "crypto";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
@@ -14,10 +13,12 @@ import { brand, makeArray, RecursiveReadonly } from "../../util";
 interface NonEmptyTestChangeset {
     /**
      * Identifies the document state that the changeset should apply to.
+     * Represented as the concatenation of all previous intentions.
      */
     inputContext: number[];
     /**
      * Identifies the document state brought about by applying the changeset to the document.
+     * Represented as the concatenation of all previous intentions and the intentions in this change.
      */
     outputContext: number[];
     /**
@@ -252,11 +253,11 @@ describe("EditManager", () => {
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         };
         assert.deepEqual(manager.addLocalChange(c1.changeset), asDelta([1]));
-        assert.deepEqual(manager.addSequencedChange(c1), asDelta([]));
+        assert.deepEqual(manager.addSequencedChange(c1), Delta.empty);
         assert.deepEqual(manager.addLocalChange(c2.changeset), asDelta([2]));
-        assert.deepEqual(manager.addSequencedChange(c2), asDelta([]));
+        assert.deepEqual(manager.addSequencedChange(c2), Delta.empty);
         assert.deepEqual(manager.addLocalChange(c3.changeset), asDelta([3]));
-        assert.deepEqual(manager.addSequencedChange(c3), asDelta([]));
+        assert.deepEqual(manager.addSequencedChange(c3), Delta.empty);
         checkChangeList(manager, [1, 2, 3]);
     });
 
@@ -283,9 +284,9 @@ describe("EditManager", () => {
         assert.deepEqual(manager.addLocalChange(c1.changeset), asDelta([1]));
         assert.deepEqual(manager.addLocalChange(c2.changeset), asDelta([2]));
         assert.deepEqual(manager.addLocalChange(c3.changeset), asDelta([3]));
-        assert.deepEqual(manager.addSequencedChange(c1), asDelta([]));
-        assert.deepEqual(manager.addSequencedChange(c2), asDelta([]));
-        assert.deepEqual(manager.addSequencedChange(c3), asDelta([]));
+        assert.deepEqual(manager.addSequencedChange(c1), Delta.empty);
+        assert.deepEqual(manager.addSequencedChange(c2), Delta.empty);
+        assert.deepEqual(manager.addSequencedChange(c3), Delta.empty);
         checkChangeList(manager, [1, 2, 3]);
     });
 
@@ -529,12 +530,12 @@ describe("EditManager", () => {
         assert.deepEqual(manager.addSequencedChange(c2), asDelta([-3, 2, 3]));
         assert.deepEqual(manager.addLocalChange(c6.changeset), asDelta([6]));
         assert.deepEqual(manager.addLocalChange(c8.changeset), asDelta([8]));
-        assert.deepEqual(manager.addSequencedChange(c3), asDelta([]));
+        assert.deepEqual(manager.addSequencedChange(c3), Delta.empty);
         assert.deepEqual(manager.addSequencedChange(c4), asDelta([-8, -6, 4, 6, 8]));
         assert.deepEqual(manager.addSequencedChange(c5), asDelta([-8, -6, 5, 6, 8]));
-        assert.deepEqual(manager.addSequencedChange(c6), asDelta([]));
+        assert.deepEqual(manager.addSequencedChange(c6), Delta.empty);
         assert.deepEqual(manager.addSequencedChange(c7), asDelta([-8, 7, 8]));
-        assert.deepEqual(manager.addSequencedChange(c8), asDelta([]));
+        assert.deepEqual(manager.addSequencedChange(c8), Delta.empty);
         assert.deepEqual(manager.addSequencedChange(c9), asDelta([9]));
         checkChangeList(manager, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
