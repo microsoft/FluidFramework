@@ -12,6 +12,8 @@ spec:
   selector:
     matchLabels:
       app: {{ template "historian.fullname" . }}
+      component: "{{ .Values.historian.name }}"
+      release: {{ .Release.Name }}
   replicas: {{ .Values.historian.replicas }}
   template:
     metadata:

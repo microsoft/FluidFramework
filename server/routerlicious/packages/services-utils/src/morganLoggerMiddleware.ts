@@ -45,10 +45,10 @@ export function jsonMorganLoggerMiddleware(
                 additionalProperties = computeAdditionalProperties(tokens, req, res);
             }
             const properties = {
-                [HttpProperties.method]: tokens.method(req, res),
+                [HttpProperties.method]: tokens.method(req, res) || "METHOD_UNAVAILABLE",
                 [HttpProperties.pathCategory]: `${req.baseUrl}${req.route?.path ?? "PATH_UNAVAILABLE"}`,
                 [HttpProperties.url]: tokens.url(req, res),
-                [HttpProperties.status]: tokens.status(req, res),
+                [HttpProperties.status]: tokens.status(req, res) || "STATUS_UNAVAILABLE",
                 [HttpProperties.requestContentLength]: tokens.req(req, res, "content-length"),
                 [HttpProperties.responseContentLength]: tokens.res(req, res, "content-length"),
                 [HttpProperties.responseTime]: tokens["response-time"](req, res),

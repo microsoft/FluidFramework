@@ -197,6 +197,15 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     };
 }
 
+// @public
+export interface IntervalLocator {
+    interval: SequenceInterval;
+    label: string;
+}
+
+// @public
+export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
+
 // @public (undocumented)
 export enum IntervalType {
     // (undocumented)
