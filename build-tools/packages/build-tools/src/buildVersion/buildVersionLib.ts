@@ -174,7 +174,7 @@ export function getIsLatest(
         latestTaggedRelease = "0.0.0";
     }
 
-    log?.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
+    log?.info(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
     const currentIsGreater = semver.gte(current_version, latestTaggedRelease);
     const currentIsPrerelease = includeInternalVersions
         ? detectVersionScheme(current_version) === "internalPrerelease"
