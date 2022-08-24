@@ -5,7 +5,6 @@
 
 import child_process from "child_process";
 import { getFileVersion, getIsLatest, getSimpleVersion } from "./buildVersionLib";
-import { test } from "./buildVersionTests";
 
 function main() {
     let arg_build_num: string | undefined;
@@ -52,11 +51,6 @@ function main() {
         }
         console.log(`ERROR: Invalid argument ${process.argv[i]}`);
         process.exit(1)
-    }
-
-    if (arg_test) {
-        test();
-        process.exit(0);
     }
 
     if (!arg_build_num) {

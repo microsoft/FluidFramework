@@ -136,7 +136,9 @@ export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
 
 /**
  * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
- * @param current_version  - The version to test; that is, the version to check for being the latest build.
+ * @param current_version - The version to test; that is, the version to check for being the latest build.
+ * @param input_tags - If provided, only these tags will be considered. Mostly useful for testing.
+ * @param includeInternalVersions - Whether to include Fluid internal builds, which are always
  * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
  * pre-release version).
  */

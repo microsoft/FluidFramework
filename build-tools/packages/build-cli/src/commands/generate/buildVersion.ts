@@ -67,14 +67,12 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
         if (flags.testBuild === true && isRelease) {
             this.error("Test build shouldn't be released");
-            this.exit(2);
         }
 
         if (flags.base === undefined) {
             fileVersion = this.getFileVersion();
             if (!fileVersion) {
                 this.error("Missing version in lerna.json/package.json");
-                this.exit(6);
             }
         }
 
@@ -84,7 +82,6 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             if (out.trim() === tagName) {
                 if (isRelease) {
                     this.error(`Tag ${tagName} already exist`);
-                    this.exit(7);
                 }
 
                 this.warn(`Tag ${tagName} already exist`);
