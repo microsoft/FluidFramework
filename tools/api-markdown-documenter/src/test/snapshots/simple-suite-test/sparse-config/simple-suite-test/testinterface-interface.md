@@ -18,6 +18,12 @@ export interface TestInterface
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
 
+## Construct Signatures
+
+|  ConstructSignature | Return Type | Description |
+|  --- | --- | --- |
+|  [(new)()](docs/simple-suite-test/testinterface-_new_-constructsignature) | [TestInterface](docs/simple-suite-test/testinterface-interface) | Test construct signature. |
+
 ## Properties
 
 |  Property | Modifiers | Default Value | Type | Description |
