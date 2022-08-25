@@ -255,8 +255,15 @@ Some of the principles used to guide this are:
 
 - Reducing transitive dependencies:
 
-    Try to keep the total number of dependencies of a given component small when possible, with a particular emphasis on avoiding stateful dependencies for code with complex conditional logic.
-    This is important for testability, since complex conditional logic requires heavy unit testing, which is very difficult for stateful systems and systems with lots of dependencies.
+    Try to keep the total number of dependencies of a given component small when possible.
+    This applies both at the module level, but also for the actual object defined by those modules.
+    One particular kind of dependency we make a particular effort to avoid are dependencies on stateful systems from code that has complex conditional logic.
+    One example of this is in [rebase](./src/rebase/README.md) where we ensured that the stateful system, `Rebaser` is not depended on by the actual change specific rebase policy.
+    Instead the actual replace policy logic for changes is behind the `ChangeRebaser` interface, which does not depend on `Rebaser` and exposes the policy as pure functions (and thus is stateless).
+    This is important for testability, since complex conditional logic (like `ChangeRebaser` implementations) require extensive unit testing,
+    which is very difficult (and often slow) for stateful systems and systems with lots of dependencies.
+    If we instead took the pattern of putting the change rebasing policy in `Rebaser` subclasses,
+    this would violate this guiding principal and result in much harder to isolate and test policy logic.
 
     Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
     This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
