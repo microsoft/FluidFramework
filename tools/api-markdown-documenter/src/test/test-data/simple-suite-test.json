@@ -391,7 +391,7 @@
         {
           "kind": "Class",
           "canonicalReference": "simple-suite-test!TestClass:class",
-          "docComment": "/**\n * Test class\n *\n * @remarks\n *\n * Here are some remarks about the class\n *\n * @typeParam TTypeParameterA - A type parameter\n *\n * @typeParam TTypeParameterB - Another type parameter\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test class\n *\n * @remarks\n *\n * Here are some remarks about the class\n *\n * @typeParam TTypeParameterA - A type parameter\n *\n * @typeParam TTypeParameterB - Another type parameter\n *\n * @see\n *\n * {@link TestAbstractClass}\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1053,7 +1053,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "simple-suite-test!TestInterface:interface",
-          "docComment": "/**\n * Test interface\n *\n * @remarks\n *\n * Here are some remarks about the interface\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test interface\n *\n * @remarks\n *\n * Here are some remarks about the interface\n *\n * @see\n *\n * {@link TestInterface.testInterfaceMethod}\n *\n * @see\n *\n * {@link TestInterface.testInterfaceProperty}\n *\n * @see\n *\n * {@link TestInterface.testOptionalInterfaceProperty}\n *\n * @see\n *\n * {@link TestInterface.testClassEventProperty}\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1183,6 +1183,33 @@
               ]
             },
             {
+              "kind": "ConstructSignature",
+              "canonicalReference": "simple-suite-test!TestInterface:new(1)",
+              "docComment": "/**\n * Test construct signature.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "new (): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TestInterface",
+                  "canonicalReference": "simple-suite-test!TestInterface:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": []
+            },
+            {
               "kind": "PropertySignature",
               "canonicalReference": "simple-suite-test!TestInterface#testClassEventProperty:member",
               "docComment": "/**\n * Test interface event property\n *\n * @remarks\n *\n * Here are some remarks about the event property\n *\n * @eventProperty\n */\n",
@@ -1297,7 +1324,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "simple-suite-test!TestInterfaceExtendingOtherInterfaces:interface",
-          "docComment": "/**\n * Test interface that extends other interfaces\n *\n * @remarks\n *\n * Here are some remarks about the interface\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test interface that extends other interfaces\n *\n * @remarks\n *\n * Here are some remarks about the interface\n *\n * @see\n *\n * - {@link TestInterface}\n *\n * - {@link TestInterfaceWithTypeParameter}\n *\n * - {@link TestMappedType}\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1494,7 +1521,7 @@
         {
           "kind": "Namespace",
           "canonicalReference": "simple-suite-test!TestNamespace:namespace",
-          "docComment": "/**\n * Test Namespace\n *\n * @remarks\n *\n * Here are some remarks about the namespace\n *\n * @example\n *\n * Example 1\n *\n * @example\n *\n * Example 2\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test Namespace\n *\n * @remarks\n *\n * Here are some remarks about the namespace\n *\n * @example\n *\n * Example 1\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @example\n *\n * Example 2\n * ```javascript\n * const bar = foo\n * ```\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1852,12 +1879,12 @@
             },
             {
               "kind": "TypeAlias",
-              "canonicalReference": "simple-suite-test!TestNamespace.TypeAlias:type",
+              "canonicalReference": "simple-suite-test!TestNamespace.TestTypeAlias:type",
               "docComment": "/**\n * Test Type-Alias\n *\n * @public\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
-                  "text": "type TypeAlias = "
+                  "text": "type TestTypeAlias = "
                 },
                 {
                   "kind": "Content",
@@ -1869,7 +1896,7 @@
                 }
               ],
               "releaseTag": "Public",
-              "name": "TypeAlias",
+              "name": "TestTypeAlias",
               "typeTokenRange": {
                 "startIndex": 1,
                 "endIndex": 2
