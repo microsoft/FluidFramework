@@ -125,7 +125,8 @@ stages:
         # - Add custom npm feeds to the tool's .npmrc file
         # - Authenticate to the custom npm feeds
         # - Install the aria-logger package from the custom npm feeds
-        # - Run tests
+        # - Run execution-time tests
+        # - Run memory-usage tests
         # - Process output files and send telemetry to Kusto
         - task: Bash@3
           displayName: 'Add custom feeds to .npmrc'
@@ -164,32 +165,63 @@ stages:
             customRegistry: 'useNpmrc'
 
         - task: Npm@1
-          displayName: 'Run performance benchmarks - runtime'
+          displayName: 'Run performance test - execution time'
           inputs:
             command: 'custom'
             workingDir: ${{ variables.buildDirectory }}
             customCommand: 'run test:benchmark:report'
 
         - task: Npm@1
-          displayName: 'Consolidate output files - runtime'
+          displayName: 'Consolidate output files - execution time'
           inputs:
             command: 'custom'
             workingDir: ${{ variables.buildDirectory }}
             customCommand: 'run test:benchmark:copyresults'
 
         - task: Bash@3
-          displayName: 'Write runtime perf benchmarks to Aria/Kusto'
+          displayName: 'Write measurements to Aria/Kusto - execution time'
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolFolder)
             script: |
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
+              node --require @ff-internal/aria-logger dist/processExecutionTimeTests.js '${{ variables.buildDirectory }}/benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - Benchmark tests output
+          displayName: 'Publish Artifact - Perf tests output - execution time'
           inputs:
             targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
-            artifactName: 'benchmark-test-outputs'
+            artifactName: 'perf-test-outputs_execution-time'
+            condition: succeededOrFailed()
+
+        - task: Npm@1
+          displayName: 'Run performance test - memory usage'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'run test:memory-profiling:report'
+
+        - task: Npm@1
+          displayName: 'Consolidate output files - memory usage'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'run test:memory-profiling:copyresults'
+
+        - task: Bash@3
+          displayName: 'Write measurements to Aria/Kusto - memory usage'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolFolder)
+            script: |
+              npm i;
+              npm run build:compile;
+              node --require @ff-internal/aria-logger dist/processMemoryTests.js '${{ variables.buildDirectory }}/memoryProfilingOutput';
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Artifact - Perf tests output - memory usage'
+          inputs:
+            targetPath: '${{ variables.buildDirectory }}/memoryProfilingOutput'
+            artifactName: 'perf-test-outputs_memory-usage'
             condition: succeededOrFailed()
