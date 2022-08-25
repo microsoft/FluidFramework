@@ -422,6 +422,12 @@ export class ConnectionManager implements IConnectionManager {
         this._readonlyPermissions = readonly;
         if (oldValue !== this.readonly) {
             this.props.readonlyChangeHandler(this.readonly);
+            if (this.readonly === true) {
+                this.disconnectFromDeltaStream("readonly from permissions");
+            } else {
+                // reconnect since we were previously in readonly mode
+                this.triggerConnect("read");
+            }
         }
     }
 
