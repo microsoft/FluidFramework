@@ -74,23 +74,24 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static pathToGitRoot = "";
 
     async run() {
+        if (this.processedFlags.fix) {
+            this.log("Resolving errors if possible.");
+        }
+
+        if (this.processedFlags.exclusions === undefined) {
+            this.error("ERROR: No exclusions file provided.");
+        }
+
         const handlerRegex: RegExp =
+            // eslint-disable-next-line no-negated-condition
             this.processedFlags.handler !== undefined
                 ? new RegExp(this.processedFlags.handler, "i")
                 : /.?/;
         const pathRegex: RegExp =
-            typeof this.processedFlags.path === "string"
+            // eslint-disable-next-line no-negated-condition
+            this.processedFlags.path !== undefined
                 ? new RegExp(this.processedFlags.path, "i")
                 : /.?/;
-
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
-        const exclusions: RegExp[] = require(this.processedFlags.exclusions).map(
-            (e: string) => new RegExp(e, "i"),
-        );
-
-        if (this.processedFlags.fix) {
-            this.log("Resolving errors if possible.");
-        }
 
         if (this.processedFlags.handler !== undefined) {
             this.log(`Filtering handlers by regex: ${handlerRegex}`);
@@ -99,6 +100,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         if (this.processedFlags.path !== undefined) {
             this.log(`Filtering file paths by regex: ${pathRegex}`);
         }
+
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
+        const exclusions: RegExp[] = require(this.processedFlags.exclusions).map(
+            (e: string) => new RegExp(e, "i"),
+        );
 
         if (this.processedFlags.stdin) {
             const pipeString = await readStdin();
