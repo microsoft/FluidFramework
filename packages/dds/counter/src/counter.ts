@@ -174,7 +174,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * Process a counter operation (op).
      *
      * @param message - The message to prepare.
-     * @param local - Whether the message was sent by the local client.
+     * @param local - Whether or not the message was sent by the local client.
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be `undefined`.
      *
