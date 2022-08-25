@@ -510,6 +510,9 @@ export class MergeTree {
                     if (rSeq > this.collabWindow.minSeq) {
                         return 0;
                     }
+                    // this segment removed and outside the collab window which means it is zamboni eligible
+                    // this also means the segment could not exist, so we should not consider it
+                    // when making decisions about conflict resolutions
                     return undefined;
                 }
                 return 0;

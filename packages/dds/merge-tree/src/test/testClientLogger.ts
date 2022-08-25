@@ -159,7 +159,7 @@ export class TestClientLogger {
         this.clients.forEach(
             (c) => {
                 if (c === this.clients[0]) { return; }
-                // ensure all clients have see the same ops
+                // ensure all clients have seen the same ops
                 assert.equal(
                     c.getCurrentSeq(),
                     this.clients[0].getCurrentSeq(),
