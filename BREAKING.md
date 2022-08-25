@@ -58,13 +58,6 @@ This field has been deprecated and will be removed in a future breaking change. 
     ):
 ```
 
-## 3.0.0 Breaking changes
-- [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
-
-### Remove ISummaryConfigurationHeuristics.idleTime
-`ISummaryConfigurationHeuristics.idleTime` has been removed. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
-Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
-
 ### Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package
 The utility classes `TelemetryNullLogger` and `BaseTelemetryNullLogger` are deprecated in the `@fluidframework/common-utils` package and have been moved to the `@fluidframework/telemetry-utils` package.  Please update your imports to take these from the new location.
 
@@ -73,7 +66,12 @@ Renamed **dispose** to **disposed** to better communicate the state and align wi
 It's not a breaking change, but worth noting: we are now also exposing optional error (ICriticalContainerError) field with **disposed** event.
 
 ## 3.0.0 Breaking changes
+- [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove `IContainerRuntime.flush`](#remove-icontainerruntimeflush)
+
+### Remove ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been removed. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
 
 ### Remove `IContainerRuntime.flush`
 `IContainerRuntime.flush` has been removed. If a more manual/ensured flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
