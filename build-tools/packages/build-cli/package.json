@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/build-cli",
-  "version": "0.4.2000",
+  "version": "0.4.2001",
   "description": "Build tools for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -42,8 +42,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.4.2000",
-    "@fluidframework/build-tools": "^0.4.2000",
+    "@fluid-tools/version-tools": "^0.4.2001",
+    "@fluidframework/build-tools": "^0.4.2001",
     "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
