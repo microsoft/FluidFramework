@@ -24,6 +24,12 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 * <b>TTypeParameterB</b>: Another type parameter
 
 
+## Events
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
+
 ## Constructors
 
 |  Constructor | Return Type | Description |
@@ -35,7 +41,6 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [abstractPropertyGetter](./simple-suite-test/testclass-class#abstractpropertygetter-property) | readonly | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
 |  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | readonly | number | Test class getter-only property |
 |  [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) | readonly | TTypeParameterB | Test class property |
 
@@ -46,6 +51,22 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  [publicAbstractMethod()](./simple-suite-test/testclass-class#publicabstractmethod-method) | void | A test public abstract method. |
 |  [testClassMethod(input)](./simple-suite-test/testclass-class#testclassmethod-method) | TTypeParameterA | Test class method |
 |  [virtualMethod()](./simple-suite-test/testclass-class#virtualmethod-method) | number | Overrides [TestAbstractClass.virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method)<!-- -->. |
+
+## Event Details
+
+### testClassEventProperty {#testclasseventproperty-property}
+
+Test class event property
+
+#### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the property
+
+#### Signature {#testclasseventproperty-signature}
+
+```typescript
+readonly testClassEventProperty: () => void;
+```
 
 ## Constructor Details
 
@@ -82,20 +103,6 @@ A test abstract getter property.
 
 ```typescript
 get abstractPropertyGetter(): TestMappedType;
-```
-
-### testClassEventProperty {#testclasseventproperty-property}
-
-Test class event property
-
-#### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the property
-
-#### Signature {#testclasseventproperty-signature}
-
-```typescript
-readonly testClassEventProperty: () => void;
 ```
 
 ### testClassGetterProperty {#testclassgetterproperty-property}
