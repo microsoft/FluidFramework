@@ -988,9 +988,17 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     public dispose(): void {
+        // window.gcAlert will be set by the app, or otherwise undefined and fallback to console.log
+        function gcAlert(m: string) {
+            try { (window as any).gcAlert(m); } catch { console.log("GC ALERT:\n", m); }
+        }
+
         if (this.sessionExpiryTimer !== undefined) {
             clearTimeout(this.sessionExpiryTimer);
             this.sessionExpiryTimer = undefined;
+        }
+        if (this.isSummarizerClient) {
+            gcAlert("SUMMARIZER IS CLOSING");
         }
     }
 
