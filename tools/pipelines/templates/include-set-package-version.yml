@@ -51,7 +51,7 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
-        npm install --global @fluid-internal/build-cli@$(FLUID_BUILD_TOOLS_VERSION)
+        npm install --global @fluid-tools/build-cli@$(FLUID_BUILD_TOOLS_VERSION)
 
 - task: Bash@3
   name: BuildToolsInstallCheck
