@@ -40,16 +40,13 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
             if (!checkSandwichRebase(changeA, changeB)) {
                 output.doUndoPair = [changeA, changeB];
             }
-
             for (const changeC of changes) {
                 if (!checkDiffRebaseOrder(changeA, changeB, changeC)) {
                     output.diffRebaseOrder = [changeA, changeB, changeC];
                 }
-
                 if (!checkDiffComposeOrder(changeA, changeB, changeC)) {
                     output.diffComposeOrder = [changeA, changeB, changeC];
                 }
-
                 if (!checkNestedComposeRebaseOrder(changeA, changeB, changeC)) {
                     output.nestedComposeRebaseOrder = [changeA, changeB, changeC];
                 }
@@ -65,12 +62,10 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
             changeA,
             compose([changeB, changeC]),
         );
-
         const rebaseChangeset2 = rebase(
             rebase(changeA, changeB),
             changeC,
         );
-
         return isEquivalent(rebaseChangeset1, rebaseChangeset2);
     }
 
@@ -80,14 +75,11 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
             changeA,
             compose([changeB, changeC]),
         ]);
-
         const changeset2 = compose([
             compose([changeA, changeB]),
             changeC,
         ]);
-
         const changeset3 = compose([changeA, changeB, changeC]);
-
         return isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeset3);
     }
 
@@ -96,7 +88,6 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
             compose([changeA, changeB]),
             changeC,
         );
-
         const changeset2 = compose([
             rebase(changeA, changeC),
             rebase(
@@ -108,7 +99,6 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
                 ]),
             ),
         ]);
-
         return isEquivalent(changeset1, changeset2);
     }
 
@@ -135,7 +125,6 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
             invert(changeA),
             changeA,
         ]);
-
         return isEquivalent(changeset, compose([]));
     }
 }
