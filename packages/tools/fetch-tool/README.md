@@ -28,8 +28,7 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
 
 - If not done already run `npm run build`
 - Example command `node bin/fluid-fetch --saveDir test 'URL'`
-- The URL will need to come from office.com and look something like https://www.office.com/launch/fluid/...'
-- For 401 authentication errors, getkeys has been run as stated above.
+- For 401 authentication errors, as stated above, check that [getkeys](../../../tools/getkeys) has been run.
 
 ## Example Output
 
