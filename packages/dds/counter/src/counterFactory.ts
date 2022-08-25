@@ -25,11 +25,17 @@ export class CounterFactory implements IChannelFactory {
         packageVersion: pkgVersion,
     };
 
-    public get type() {
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+     */
+    public get type(): string {
         return CounterFactory.Type;
     }
 
-    public get attributes() {
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+     */
+    public get attributes(): IChannelAttributes {
         return CounterFactory.Attributes;
     }
 
@@ -46,6 +52,9 @@ export class CounterFactory implements IChannelFactory {
         return counter;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+     */
     public create(document: IFluidDataStoreRuntime, id: string): ISharedCounter {
         const counter = new SharedCounter(id, document, this.attributes);
         counter.initializeLocal();

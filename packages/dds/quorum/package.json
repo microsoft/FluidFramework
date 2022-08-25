@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-internal/quorum",
+  "name": "@fluid-experimental/quorum",
   "version": "2.0.0-internal.1.1.0",
   "private": true,
   "description": "Distributed data structure for key-value pairs using quorum consensus",
@@ -80,7 +80,7 @@
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
     "mocha": "^10.0.0",
