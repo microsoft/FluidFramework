@@ -127,9 +127,11 @@ class MochaMemoryTestReporter {
                     console.log(`\n${bold(suiteName)}`);
 
                     const table = new Table();
+                    const failedTests = new Array<[string, MemoryBenchmarkStats]>();
                     suiteData?.forEach(([testName, testData]) => {
                         if (testData.aborted) {
                             table.cell("status", `${pad(4)}${red("×")}`);
+                            failedTests.push([testName, testData]);
                         } else {
                             table.cell("status", `${pad(4)}${green("✔")}`);
                         }
@@ -151,6 +153,11 @@ class MochaMemoryTestReporter {
                         table.newRow();
                     });
                     console.log(`${table.toString()}`);
+                    console.log("------------------------------------------------------");
+                    console.log(`${red("ERRORS:")}`);
+                    failedTests.forEach(([testName, testData]) => {
+                        console.log(`\n${red(testName)}`, "\n", testData.error);
+                    });
                     this.writeCompletedBenchmarks(suiteName);
                     this.inProgressSuites.delete(suiteName);
                 }
