@@ -395,6 +395,7 @@ export class PendingStateManager implements IDisposable {
                      * either receive the whole batch ack or nothing at all.
                      */
                     if (pendingState.opMetadata?.batch) {
+                        let endedWithFlush = false;
                         this.stateHandler.orderSequentially(() => {
                             do {
                                 if (pendingState.type === "message") {
@@ -404,6 +405,7 @@ export class PendingStateManager implements IDisposable {
                                         pendingState.localOpMetadata,
                                         pendingState.opMetadata);
                                 } else if (pendingState.type === "flush") {
+                                    endedWithFlush = true;
                                     break;
                                 }
 
@@ -412,6 +414,9 @@ export class PendingStateManager implements IDisposable {
                                 pendingStatesCount--;
                             } while (pendingStatesCount > 0);
                         });
+                        if (endedWithFlush) {
+                            this.stateHandler.flush();
+                        }
                     } else {
                         this.stateHandler.reSubmit(
                             pendingState.messageType,
