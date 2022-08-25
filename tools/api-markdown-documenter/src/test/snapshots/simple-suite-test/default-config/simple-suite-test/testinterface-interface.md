@@ -14,17 +14,17 @@ Here are some remarks about the interface
 export interface TestInterface 
 ```
 
-## Events
-
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
-
 ## Construct Signatures
 
 |  ConstructSignature | Return Type | Description |
 |  --- | --- | --- |
 |  [(new)()](./simple-suite-test/testinterface-interface#_new_-constructsignature) | [TestInterface](./simple-suite-test/testinterface-interface) | Test construct signature. |
+
+## Events
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
 
 ## Properties
 
@@ -46,6 +46,18 @@ export interface TestInterface
 |  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
 |  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
+## Construct Signature Details
+
+### (new) {#_new_-constructsignature}
+
+Test construct signature.
+
+#### Signature {#_new_-signature}
+
+```typescript
+new (): TestInterface;
+```
+
 ## Event Details
 
 ### testClassEventProperty {#testclasseventproperty-propertysignature}
@@ -60,18 +72,6 @@ Here are some remarks about the event property
 
 ```typescript
 readonly testClassEventProperty: () => void;
-```
-
-## Construct Signature Details
-
-### (new) {#_new_-constructsignature}
-
-Test construct signature.
-
-#### Signature {#_new_-signature}
-
-```typescript
-new (): TestInterface;
 ```
 
 ## Property Details

@@ -12,17 +12,17 @@ Here are some remarks about the interface
 export interface TestInterface 
 ```
 
-## Events
-
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
-
 ## Construct Signatures
 
 |  ConstructSignature | Return Type | Description |
 |  --- | --- | --- |
 |  [(new)()](docs/simple-suite-test/testinterface-_new_-constructsignature) | [TestInterface](docs/simple-suite-test/testinterface-interface) | Test construct signature. |
+
+## Events
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
 
 ## Properties
 
