@@ -612,7 +612,14 @@ export function renderTypeExcerptCell(
 export function renderEmptyTableCell(
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, []);
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, [
+            new DocPlainText({
+                configuration: config.tsdocConfiguration,
+                text: config.emptyTableCellText,
+            }),
+        ]),
+    ]);
 }
 
 /**

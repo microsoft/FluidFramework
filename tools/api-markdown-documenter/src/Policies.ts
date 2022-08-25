@@ -164,6 +164,13 @@ export interface PolicyOptions {
      * @defaultValue {@link DefaultPolicies.defaultPackageFilterPolicy}
      */
     packageFilterPolicy?: PackageFilterPolicy;
+
+    /**
+     * Contents to display in what would otherwise be empty table cells.
+     *
+     * @defaultValue ""
+     */
+    emptyTableCellText?: string;
 }
 
 export namespace DefaultPolicies {
@@ -281,4 +288,5 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
     headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
     linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
     packageFilterPolicy: DefaultPolicies.defaultPackageFilterPolicy,
+    emptyTableCellText: "",
 };

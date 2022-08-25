@@ -17,4 +17,4 @@ testClassMethod(input: TTypeParameterA): TTypeParameterA;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  input | TTypeParameterA |  |
+|  input | TTypeParameterA | 📝 |

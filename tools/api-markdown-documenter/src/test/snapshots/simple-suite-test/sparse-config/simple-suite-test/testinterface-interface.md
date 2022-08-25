@@ -28,7 +28,7 @@ export interface TestInterface
 
 |  Property | Modifiers | Default Value | Type | Description |
 |  --- | --- | --- | --- | --- |
-|  [testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
+|  [testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature) | 📝 | 📝 | number | Test interface property |
 |  [testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature) | optional | 0 | number | Test optional property |
 
 ## Methods

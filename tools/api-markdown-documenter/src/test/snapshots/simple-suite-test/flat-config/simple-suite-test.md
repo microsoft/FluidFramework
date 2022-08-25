@@ -130,7 +130,7 @@ export interface TestInterface
 
 |  Property | Modifiers | Default Value | Type | Description |
 |  --- | --- | --- | --- | --- |
-|  [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
+|  [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) | \-\-\- | \-\-\- | number | Test interface property |
 |  [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | optional | 0 | number | Test optional property |
 
 #### Methods
@@ -383,8 +383,8 @@ protected constructor(privateProperty: number, protectedProperty: TestEnum);
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  privateProperty | number |  |
-|  protectedProperty | [TestEnum](docs/simple-suite-test#testenum-enum) |  |
+|  privateProperty | number | \-\-\- |
+|  protectedProperty | [TestEnum](docs/simple-suite-test#testenum-enum) | \-\-\- |
 
 #### Property Details
 
@@ -607,7 +607,7 @@ testClassMethod(input: TTypeParameterA): TTypeParameterA;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  input | TTypeParameterA |  |
+|  input | TTypeParameterA | \-\-\- |
 
 ##### virtualMethod {#testclass-virtualmethod-method}
 
@@ -758,8 +758,8 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 
 |  Parameter | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  testParameter |  | TTypeParameter | A test parameter |
-|  testOptionalParameter | optional | TTypeParameter |  |
+|  testParameter | \-\-\- | TTypeParameter | A test parameter |
+|  testOptionalParameter | optional | TTypeParameter | \-\-\- |
 
 ### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
@@ -1076,7 +1076,7 @@ function testFunction(testParameter: number): number;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testParameter | number |  |
+|  testParameter | number | \-\-\- |
 
 #### Variable Details
 

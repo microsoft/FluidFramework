@@ -325,6 +325,7 @@ export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
 // @public
 export interface PolicyOptions {
     documentBoundaries?: DocumentBoundaries;
+    emptyTableCellText?: string;
     fileNamePolicy?: FileNamePolicy;
     headingTitlePolicy?: HeadingTitlePolicy;
     hierarchyBoundaries?: HierarchyBoundaries;

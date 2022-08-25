@@ -16,5 +16,5 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 
 |  Parameter | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  testParameter |  | TTypeParameter | A test parameter |
-|  testOptionalParameter | optional | TTypeParameter |  |
+|  testParameter | 📝 | TTypeParameter | A test parameter |
+|  testOptionalParameter | optional | TTypeParameter | 📝 |
