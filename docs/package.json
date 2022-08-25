@@ -12,25 +12,24 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "scripts": {
-    "build": "npm run build:api-rollup && npm run build:md-magic && npm run build:api-documenter && npm run hugo",
-    "build:api": "npm run build:api-rollup && npm run build:api-documenter",
+    "build": "run-s build:api build:md-magic hugo",
+    "build:api": "run-s build:api-rollup build:api-documenter",
     "build:api-documenter": "node api-markdown-documenter.js",
     "build:api-rollup": "rimraf ./_api-extractor-temp && node ./rollup-api-json.js ../_api-extractor-temp/doc-models/ ./_api-extractor-temp/",
-    "build:fast": "npm run build:api-rollup && concurrently npm:build:md-magic npm:build:api-documenter && npm run hugo",
-    "build:md-magic": "npm run build:md-magic:code && npm run build:md-magic:website",
+    "build:md-magic": "run-p build:md-magic:code build:md-magic:website",
     "build:md-magic:code": "node md-magic-code.js",
     "build:md-magic:website": "node md-magic-website.js",
-    "build:website": "npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documenter && npm run hugo",
-    "ci:build": "npm run download && npm run build",
+    "build:website": "run-s build:api-rollup build:md-magic:website build:api-documenter hugo",
+    "ci:build": "run-s download build",
     "clean": "rimraf public content/docs/apis _api-extractor-temp",
-    "download": "npm run download:api && npm run build:api-documenter",
+    "download": "run-s download:api build:api-documenter",
     "download:api": "download --extract --out ../_api-extractor-temp/doc-models/ https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz",
     "hugo": "hugo",
     "linkcheck": "npm run linkcheck:fast -- --external",
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
-    "start": "npm run build:md-magic:website && hugo server"
+    "start": "hugo server"
   },
   "dependencies": {
     "@fluid-tools/api-markdown-documenter": "file:../tools/api-markdown-documenter",
@@ -40,7 +39,6 @@
     "@vscode/codicons": "0.0.28",
     "broken-link-checker": "^0.7.8",
     "colors": "^1.2.1",
-    "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "cpy": "^8.1.2",
     "deepdash": "^5.3.9",
@@ -60,5 +58,8 @@
     "rimraf": "^2.6.2",
     "serve": "^13.0.2",
     "shelljs": "^0.8.5"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
   }
 }
