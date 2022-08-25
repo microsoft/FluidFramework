@@ -25,24 +25,11 @@ import {
     DocSection,
     StandardTags,
 } from "@microsoft/tsdoc";
-import {
-    heading as buildHeading,
-    code,
-    link,
-    list,
-    listItem,
-    paragraph,
-    strong,
-    table,
-    tableRow,
-    text,
-} from "mdast-builder";
-import { Node as AstNode, Parent as AstParentNode } from "unist";
 
 import { Heading } from "../../Heading";
 import { Link } from "../../Link";
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocHeading, DocNoteBox } from "../../doc-nodes";
+import { DocEmphasisSpan, DocHeading, DocList, DocNoteBox, ListKind } from "../../doc-nodes";
 import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,
@@ -50,7 +37,6 @@ import {
     getAncestralHierarchy,
     getHeadingForApiItem,
     getLinkForApiItem,
-    getLinkUrlForApiItem,
     getQualifiedApiItemName,
     mergeSections,
 } from "../../utilities";
@@ -69,16 +55,17 @@ import { renderParametersSummaryTable } from "./TableRenderingHelpers";
 export function renderSignature(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): AstNode | undefined {
+): DocSection | undefined {
     if (apiItem instanceof ApiDeclaredItem) {
-        const docNodes: DocNode[] = [];
-        docNodes.push(
-            renderHeading(
-                { title: "Signature", id: `${getQualifiedApiItemName(apiItem)}-signature` },
-                config,
-            ),
-        );
-        if (apiItem.excerpt.text.length > 0) {
+        const signatureExcerpt = apiItem.getExcerptWithModifiers();
+        if (signatureExcerpt !== "") {
+            const docNodes: DocNode[] = [];
+            docNodes.push(
+                renderHeading(
+                    { title: "Signature", id: `${getQualifiedApiItemName(apiItem)}-signature` },
+                    config,
+                ),
+            );
             docNodes.push(
                 new DocFencedCode({
                     configuration: config.tsdocConfiguration,
@@ -86,14 +73,14 @@ export function renderSignature(
                     language: "typescript",
                 }),
             );
-        }
 
             const renderedHeritageTypes = renderHeritageTypes(apiItem, config);
             if (renderedHeritageTypes !== undefined) {
                 docNodes.push(renderedHeritageTypes);
             }
 
-        return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
+            return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
+        }
     }
     return undefined;
 }
@@ -111,8 +98,8 @@ export function renderSignature(
 export function renderHeritageTypes(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): SectionAstNode | undefined {
-    const docNodes: AstNode[] = [];
+): DocSection | undefined {
+    const docNodes: DocNode[] = [];
 
     if (apiItem instanceof ApiClass) {
         // Render `extends` type if there is one.
@@ -141,7 +128,7 @@ export function renderHeritageTypes(
         }
 
         // Render type parameters if there are any.
-        const renderedTypeParameters = renderTypeParameters(apiItem.typeParameters);
+        const renderedTypeParameters = renderTypeParameters(apiItem.typeParameters, config);
         if (renderedTypeParameters !== undefined) {
             docNodes.push(renderedTypeParameters);
         }
@@ -159,13 +146,13 @@ export function renderHeritageTypes(
         }
 
         // Render type parameters if there are any.
-        const renderedTypeParameters = renderTypeParameters(apiItem.typeParameters);
+        const renderedTypeParameters = renderTypeParameters(apiItem.typeParameters, config);
         if (renderedTypeParameters !== undefined) {
             docNodes.push(renderedTypeParameters);
         }
     }
 
-    return buildSection(docNodes);
+    return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 /**
@@ -181,23 +168,29 @@ function renderHeritageTypeList(
     heritageTypes: readonly HeritageType[],
     label: string,
     config: Required<MarkdownDocumenterConfiguration>,
-): AstNode | undefined {
+): DocParagraph | undefined {
     if (heritageTypes.length > 0) {
-        const docNodes: AstNode[] = [];
+        const docNodes: DocNode[] = [];
 
-        docNodes.push(strong([text(`${label}: `)]));
+        docNodes.push(
+            new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
+                new DocPlainText({ configuration: config.tsdocConfiguration, text: `${label}: ` }),
+            ]),
+        );
 
         let needsComma: boolean = false;
         for (const heritageType of heritageTypes) {
             if (needsComma) {
-                docNodes.push(text(", "));
+                docNodes.push(
+                    new DocPlainText({ configuration: config.tsdocConfiguration, text: ", " }),
+                );
             }
 
             docNodes.push(renderExcerptWithHyperlinks(heritageType.excerpt, config));
             needsComma = true;
         }
 
-        return paragraph(docNodes);
+        return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
     }
     return undefined;
 }
@@ -216,28 +209,13 @@ function renderHeritageTypeList(
  */
 export function renderTypeParameters(
     typeParameters: readonly TypeParameter[],
-): SectionAstNode | undefined {
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
     if (typeParameters.length > 0) {
-        const docNodes: DocNode[] = [];
-
-        docNodes.push(
-            new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
-                    new DocPlainText({
-                        configuration: config.tsdocConfiguration,
-                        text: "Type parameters: ",
-                    }),
-                ]),
-            ]),
-        );
-
-        // TODO: DocList type?
+        const listItemNodes: DocNode[] = [];
         for (const typeParameter of typeParameters) {
             const paragraphNodes: DocNode[] = [];
 
-            paragraphNodes.push(
-                new DocPlainText({ configuration: config.tsdocConfiguration, text: "* " }),
-            ); // List bullet
             paragraphNodes.push(
                 new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
                     new DocPlainText({
@@ -248,17 +226,31 @@ export function renderTypeParameters(
             );
 
             if (typeParameter.tsdocTypeParamBlock !== undefined) {
-                listItemNodes.push(text(": "));
-                listItemNodes.push(docNodeToMdAst(typeParameter.tsdocTypeParamBlock.content));
+                paragraphNodes.push(
+                    new DocPlainText({ configuration: config.tsdocConfiguration, text: ": " }),
+                );
+                paragraphNodes.push(...typeParameter.tsdocTypeParamBlock.content.nodes);
             }
 
-            docNodes.push(
+            listItemNodes.push(
                 new DocParagraph({ configuration: config.tsdocConfiguration }, paragraphNodes),
             );
         }
-        docNodes.push(list("unordered", listItemNodes));
 
-        return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
+        return new DocSection({ configuration: config.tsdocConfiguration }, [
+            new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
+                    new DocPlainText({
+                        configuration: config.tsdocConfiguration,
+                        text: "Type parameters: ",
+                    }),
+                ]),
+            ]),
+            new DocList(
+                { configuration: config.tsdocConfiguration, listKind: ListKind.Unordered },
+                listItemNodes,
+            ),
+        ]);
     }
     return undefined;
 }
@@ -276,10 +268,9 @@ export function renderTypeParameters(
 export function renderExcerptWithHyperlinks(
     excerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
-): AstNode {
-    const docNodes: AstNode[] = [];
+): DocParagraph {
+    const docNodes: DocNode[] = [];
     for (const token of excerpt.spannedTokens) {
-        // TODO: is this needed?
         // Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
         // the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
         // discard any newlines and let the renderer do normal word-wrapping.
@@ -294,9 +285,13 @@ export function renderExcerptWithHyperlinks(
 
             if (apiItemResult.resolvedApiItem) {
                 docNodes.push(
-                    link(
-                        getLinkUrlForApiItem(apiItemResult.resolvedApiItem, config),
-                        unwrappedTokenText /* TODO: kids? */,
+                    renderLink(
+                        getLinkForApiItem(
+                            apiItemResult.resolvedApiItem,
+                            config,
+                            unwrappedTokenText,
+                        ),
+                        config,
                     ),
                 );
                 wroteHyperlink = true;
@@ -305,10 +300,15 @@ export function renderExcerptWithHyperlinks(
 
         // If the token was not one from which we generated hyperlink text, write as plain text instead
         if (!wroteHyperlink) {
-            docNodes.push(text(unwrappedTokenText));
+            docNodes.push(
+                new DocPlainText({
+                    configuration: config.tsdocConfiguration,
+                    text: unwrappedTokenText,
+                }),
+            );
         }
     }
-    return paragraph(docNodes);
+    return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 /**
@@ -373,10 +373,16 @@ export function renderBreadcrumb(
 export function renderHeadingForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): HeadingAstNode {
+): DocHeading {
     return renderHeading(getHeadingForApiItem(apiItem, config), config);
 }
 
+/**
+ * Helper function for rendering a heading.
+ *
+ * @param heading - The description of the heading to render.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderHeading(
     heading: Heading,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -573,10 +579,20 @@ export function renderExampleSection(
     ]);
 }
 
+/**
+ * Renders a section describing the list of parameters (if any) of a function-like API item.
+ *
+ * @remarks Displayed as a heading with a table representing the different parameters under it.
+ *
+ * @param apiFunctionLike - The function-like API item whose parameters will be described.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if the item had any parameters, otherwise `undefined`.
+ */
 export function renderParametersSection(
     apiFunctionLike: ApiFunctionLike,
     config: Required<MarkdownDocumenterConfiguration>,
-): SectionAstNode | undefined {
+): DocSection | undefined {
     if (apiFunctionLike.parameters.length === 0) {
         return undefined;
     }
@@ -586,30 +602,7 @@ export function renderParametersSection(
             { title: "Parameters", id: `${getQualifiedApiItemName(apiFunctionLike)}-parameters` },
             config,
         ),
-        renderParametersTable(apiFunctionLike.parameters, config),
-    ]);
-}
-
-export function renderChildrenUnderHeading(
-    childItems: readonly ApiItem[],
-    headingTitle: string,
-    config: Required<MarkdownDocumenterConfiguration>,
-    renderChild: (childItem: ApiItem) => DocSection,
-): DocSection | undefined {
-    if (childItems.length === 0) {
-        return undefined;
-    }
-
-    const childSections: DocSection[] = childItems.map((childItem) => renderChild(childItem));
-
-    return new DocSection({ configuration: config.tsdocConfiguration }, [
-        renderHeading(
-            {
-                title: headingTitle,
-            },
-            config,
-        ),
-        mergeSections(childSections, config.tsdocConfiguration),
+        renderParametersSummaryTable(apiFunctionLike.parameters, config),
     ]);
 }
 
