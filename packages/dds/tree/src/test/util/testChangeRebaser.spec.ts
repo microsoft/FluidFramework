@@ -28,33 +28,22 @@ const rebaser = commutativeRebaser({
 describe("testChangeRebaser", () => {
     it("test counter with safe integers", () => {
         const output = testChangeRebaser(rebaser, new Set([-1, 2, 3, 0, -2, 4]), (a, b) => a === b);
-        assert.equal(output.requirement1, "PASSED");
-        assert.equal(output.requirement2, "PASSED");
-        assert.equal(output.requirement3, "PASSED");
+        assert.equal(output.diffRebaseOrder, "PASSED");
+        assert.equal(output.diffComposeOrder, "PASSED");
+        assert.equal(output.nestedComposeRebaseOrder, "PASSED");
         assert.equal(output.doUndoPair, "PASSED");
-        assert.equal(output.requirement3, "PASSED");
+        assert.equal(output.sandwichRebase, "PASSED");
+        assert.equal(output.changeWithInverse, "PASSED");
     });
 
     it("test counter with unsafe integers", () => {
         const output = testChangeRebaser(rebaser, new Set([Number.MAX_SAFE_INTEGER, -10, 2]), (a, b) => a === b);
-        assert.equal(output.requirement1, "PASSED");
-        assert.notEqual(output.requirement2, "PASSED");
-        assert.equal(output.requirement3, "PASSED");
+        assert.equal(output.diffRebaseOrder, "PASSED");
+        assert.equal(output.diffComposeOrder, "PASSED");
+        assert.equal(output.nestedComposeRebaseOrder, "PASSED");
         assert.equal(output.doUndoPair, "PASSED");
         assert.equal(output.sandwichRebase, "PASSED");
-    });
-
-    it("test counter of floats with same number of digits", () => {
-        const output = testChangeRebaser(
-            rebaser,
-            new Set([1.1, 1.2]),
-            (a, b) => a === b,
-        );
-        assert.equal(output.requirement1, "PASSED");
-        assert.notEqual(output.requirement2, "PASSED");
-        assert.equal(output.requirement3, "PASSED");
-        assert.equal(output.doUndoPair, "PASSED");
-        assert.equal(output.sandwichRebase, "PASSED");
+        assert.equal(output.changeWithInverse, "PASSED");
     });
 
     it("test counter of floats with varying number of digits", () => {
@@ -63,11 +52,12 @@ describe("testChangeRebaser", () => {
             new Set([1.0, 1.22, -1.222]),
             (a, b) => a === b,
         );
-        assert.equal(output.requirement1, "PASSED");
-        assert.notEqual(output.requirement2, "PASSED");
-        assert.equal(output.requirement3, "PASSED");
+        assert.equal(output.diffRebaseOrder, "PASSED");
+        assert.equal(output.diffComposeOrder, "PASSED");
+        assert.equal(output.nestedComposeRebaseOrder, "PASSED");
         assert.equal(output.doUndoPair, "PASSED");
         assert.equal(output.sandwichRebase, "PASSED");
+        assert.equal(output.changeWithInverse, "PASSED");
     });
 
     // This test case contains all the different "edge case" numbers
@@ -91,10 +81,11 @@ describe("testChangeRebaser", () => {
             ]),
             (a, b) => a === b,
         );
-        assert.equal(output.requirement1, "PASSED");
-        assert.notEqual(output.requirement2, "PASSED");
-        assert.equal(output.requirement3, "PASSED");
+        assert.equal(output.diffRebaseOrder, "PASSED");
+        assert.equal(output.diffComposeOrder, "PASSED");
+        assert.equal(output.nestedComposeRebaseOrder, "PASSED");
         assert.equal(output.doUndoPair, "PASSED");
         assert.equal(output.sandwichRebase, "PASSED");
+        assert.equal(output.changeWithInverse, "PASSED");
     });
 });

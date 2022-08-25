@@ -6,9 +6,9 @@
 import { ChangeRebaser } from "../rebase";
 
 interface outputType {
-    "requirement1": string | any[];
-    "requirement2": string | any[];
-    "requirement3": string | any[];
+    "diffRebaseOrder": string | any[];
+    "diffComposeOrder": string | any[];
+    "nestedComposeRebaseOrder": string | any[];
     "doUndoPair": string | any[];
     "sandwichRebase": string | any[];
     "changeWithInverse": string | any[];
@@ -21,9 +21,9 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
     const invert = rebaser.invert.bind(rebaser);
 
     const output: outputType = {
-        requirement1: "PASSED",
-        requirement2: "PASSED",
-        requirement3: "PASSED",
+        diffRebaseOrder: "PASSED",
+        diffComposeOrder: "PASSED",
+        nestedComposeRebaseOrder: "PASSED",
         doUndoPair: "PASSED",
         sandwichRebase: "PASSED",
         changeWithInverse: "PASSED",
@@ -44,18 +44,18 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
             }
 
             for (const changeC of changes) {
-                if (!requirement1(changeA, changeB, changeC)) {
-                    output.requirement1 = [changeA, changeB, changeC];
+                if (!checkDiffRebaseOrder(changeA, changeB, changeC)) {
+                    output.diffRebaseOrder = [changeA, changeB, changeC];
                     return output;
                 }
 
-                if (!requirement2(changeA, changeB, changeC)) {
-                    output.requirement2 = [changeA, changeB, changeC];
+                if (!checkDiffComposeOrder(changeA, changeB, changeC)) {
+                    output.diffComposeOrder = [changeA, changeB, changeC];
                     return output;
                 }
 
-                if (!requirement3(changeA, changeB, changeC)) {
-                    output.requirement2 = [changeA, changeB, changeC];
+                if (!checkNestedComposeRebaseOrder(changeA, changeB, changeC)) {
+                    output.nestedComposeRebaseOrder = [changeA, changeB, changeC];
                     return output;
                 }
             }
@@ -65,7 +65,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
     return output;
 
     // Requirement testing the rebasing of composed changes and rebased changes.
-    function requirement1(changeA: TChange, changeB: TChange, changeC: TChange) {
+    function checkDiffRebaseOrder(changeA: TChange, changeB: TChange, changeC: TChange) {
         const rebaseChangeset1 = rebase(
             changeA,
             compose([changeB, changeC]),
@@ -80,7 +80,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
     }
 
     // Requirement checking different ordering of composed changes
-    function requirement2(changeA: TChange, changeB: TChange, changeC: TChange) {
+    function checkDiffComposeOrder(changeA: TChange, changeB: TChange, changeC: TChange) {
         const changeset1 = compose([
             changeA,
             compose([changeB, changeC]),
@@ -96,7 +96,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
         return isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeset3);
     }
 
-    function requirement3(changeA: TChange, changeB: TChange, changeC: TChange) {
+    function checkNestedComposeRebaseOrder(changeA: TChange, changeB: TChange, changeC: TChange) {
         const changeset1 = rebase(
             compose([changeA, changeB]),
             changeC,
