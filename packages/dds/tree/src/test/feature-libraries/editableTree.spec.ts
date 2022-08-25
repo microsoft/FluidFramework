@@ -5,9 +5,9 @@
 import { strict as assert } from "assert";
 import { StoredSchemaRepository } from "../../schema-stored";
 import { initializeForest } from "../../forest";
-import { JsonableTree, buildForest, JsonCursor, jsonableTreeFromCursor, EmptyKey } from "../..";
+import { JsonableTree, buildForest, EmptyKey, Value, NodeData } from "../..";
 import { brand } from "../../util";
-import { defaultSchemaPolicy, getEditableTree } from "../../feature-libraries";
+import { defaultSchemaPolicy, getEditableTree, IEditableTree } from "../../feature-libraries";
 
 const person: JsonableTree = {
 	type: brand("Test:Person-1.0.0"),
@@ -28,6 +28,10 @@ const person: JsonableTree = {
 						[EmptyKey as string]: [
 							{ type: brand("String"), value: "+49123456778" },
 							{ type: brand("Int32"), value: 123456879 },
+							{ type: brand("Test:Phone-1.0.0"), fields: {
+								number: [{ value: "012345", type: brand("String") }],
+								prefix: [{ value: "0123", type: brand("String") }],
+							} },
 						],
 					},
 				}],
@@ -53,10 +57,10 @@ describe("forest-proxy", () => {
 		assert.equal(Object.keys(proxy).length, 5);
 	});
 
-	it("cached children", () => {
-		const proxy = buildTestProxy(person);
-		assert.equal(proxy.address, proxy.address);
-	});
+	// it("cached children", () => {
+	// 	const proxy = buildTestProxy(person);
+	// 	assert.equal(proxy.address, proxy.address);
+	// });
 
 	it("get own property descriptor", () => {
 		const proxy = buildTestProxy(person);
@@ -97,20 +101,48 @@ describe("forest-proxy", () => {
 
 	it("access array data", () => {
 		const proxy = buildTestProxy(person);
-		assert.equal(proxy.address.phones.length, 2);
+		assert.equal(proxy.address.phones.length, 3);
 		assert.deepEqual(proxy.address.phones[1], { value: 123456879, type: "Int32" });
-		const expectedPhones = ["+49123456778", 123456879];
+		const expectedPhones = [
+			"+49123456778",
+			123456879,
+			{
+				number: { value: "012345", type: "String" },
+				prefix: { value: "0123", type: "String" },
+			},
+		];
 		let i = 0;
 		for (const phone of proxy.address.phones) {
-			assert.equal(phone.value, expectedPhones[i++]);
+			const expectedPhone = expectedPhones[i++];
+			if (phone.value) {
+				assert.equal(phone.value, expectedPhone);
+			} else {
+				assert.deepEqual(phone.number, (expectedPhone as any).number);
+				assert.deepEqual(phone.prefix, (expectedPhone as any).prefix);
+			}
 		}
 		assert.deepEqual(proxy.address.phones[0], { value: "+49123456778", type: "String" });
-		assert.deepEqual(Object.keys(proxy.address.phones), ["0", "1"]);
-		assert.deepEqual(Object.getOwnPropertyNames(proxy.address.phones), ["0", "1", "length"]);
-		const act = proxy.address.phones.map((phone: { value: unknown; }) => phone.value);
+		assert.deepEqual(Object.keys(proxy.address.phones), ["0", "1", "2"]);
+		assert.deepEqual(Object.getOwnPropertyNames(proxy.address.phones), ["0", "1", "2", "length"]);
+		const act = proxy.address.phones.map((phone: NodeData | IEditableTree): unknown => {
+			if (phone.value !== undefined) {
+				return phone.value as Value;
+			} else {
+				const res = {};
+				for (const key of Object.keys(phone)) {
+					(res as any)[key] = (phone as any)[key];
+				}
+				return res;
+			}
+		});
 		assert.deepEqual(act, expectedPhones);
-		proxy.address.phones.forEach((phone: { value: unknown; }, index: number) => {
-			assert.equal(expectedPhones[index], phone.value);
+		proxy.address.phones.forEach((phone: NodeData | IEditableTree, index: number) => {
+			if (phone.value) {
+				assert.equal(phone.value, expectedPhones[index]);
+			} else {
+				assert.deepEqual((phone as any).number, (expectedPhones[index] as any).number);
+				assert.deepEqual((phone as any).prefix, (expectedPhones[index] as any).prefix);
+			}
 		});
 	});
 
