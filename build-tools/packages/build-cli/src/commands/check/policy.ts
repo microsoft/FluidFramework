@@ -75,7 +75,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     async run() {
         const handlerRegex: RegExp =
-            typeof this.processedFlags.handler === "string"
+            this.processedFlags.handler !== undefined
                 ? new RegExp(this.processedFlags.handler, "i")
                 : /.?/;
         const pathRegex: RegExp =
