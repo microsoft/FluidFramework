@@ -712,6 +712,82 @@
             },
             {
               "kind": "Method",
+              "canonicalReference": "simple-suite-test!TestClass.testClassStaticMethod:member(1)",
+              "docComment": "/**\n * Test class static method\n *\n * @param foo - Some number\n *\n * @returns - Some string\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static testClassStaticMethod(foo: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": true,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "foo",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ],
+              "isOptional": false,
+              "name": "testClassStaticMethod"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "simple-suite-test!TestClass.testClassStaticProperty:member",
+              "docComment": "/**\n * Test static class property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static testClassStaticProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(foo: number) => string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "testClassStaticProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": true,
+              "isProtected": false
+            },
+            {
+              "kind": "Method",
               "canonicalReference": "simple-suite-test!TestClass#virtualMethod:member(1)",
               "docComment": "/**\n * Overrides {@link TestAbstractClass.virtualMethod}.\n *\n * @override\n */\n",
               "excerptTokens": [
