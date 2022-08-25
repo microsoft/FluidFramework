@@ -6,7 +6,7 @@
 import * as semver from "semver";
 import { VersionBumpTypeExtended } from "./bumpTypes";
 import { bumpInternalVersion, getVersionRange } from "./internalVersionScheme";
-import { adjustVersion, detectVersionScheme } from "./schemes";
+import { bumpVersionScheme, detectVersionScheme } from "./schemes";
 
 /**
  * Return the version RANGE incremented by the bump type (major, minor, or patch).
@@ -20,7 +20,7 @@ import { adjustVersion, detectVersionScheme } from "./schemes";
  * @param prerelease - If true, will bump to a prerelease version.
  * @returns a bumped range string.
  */
-export function incRange(
+export function bumpRange(
     range: string,
     bumpType: VersionBumpTypeExtended,
     prerelease = false,
@@ -42,7 +42,7 @@ export function incRange(
                 bumpType === "current"
                     ? originalNoPrerelease
                     : scheme === "virtualPatch"
-                    ? adjustVersion(originalNoPrerelease, bumpType, "virtualPatch")
+                    ? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
                     : semver.inc(originalNoPrerelease, bumpType);
             if (newVersion === null) {
                 throw new Error(`Failed to increment ${original}.`);
@@ -88,4 +88,32 @@ export function detectConstraintType(range: string): "minor" | "patch" {
 
     const maxSatisfying = semver.maxSatisfying([patch, minor], range);
     return maxSatisfying === patch ? "patch" : "minor";
+}
+
+/**
+ *
+ * @param v1 - The first version to compare.
+ * @param v2 - The second version to compare.
+ * @returns
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+export function detectBumpType(
+    v1: semver.SemVer | string | null,
+    v2: semver.SemVer | string | null,
+) {
+    const v1Parsed = semver.parse(v1);
+    if (v1Parsed === null) {
+        throw new Error(`Invalid version: ${v1}`);
+    }
+
+    const v2Parsed = semver.parse(v2);
+    if (v2Parsed === null) {
+        throw new Error(`Invalid version: ${v2}`);
+    }
+
+    if (semver.compareBuild(v1Parsed, v2Parsed) >= 0) {
+        return;
+    }
+
+    return semver.diff(v1Parsed, v2Parsed) || "build";
 }
