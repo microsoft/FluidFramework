@@ -49,6 +49,7 @@ import { ISummaryNack } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
@@ -104,6 +105,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // @deprecated (undocumented)
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
+    // (undocumented)
+    readonly debugBus: DebugBus;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -205,6 +208,17 @@ export interface ContainerRuntimeMessage {
     contents: any;
     // (undocumented)
     type: ContainerMessageType;
+}
+
+// Warning: (ae-forgotten-export) The symbol "IDebugBusEvents" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export class DebugBus extends TypedEventEmitter<IDebugBusEvents> {
+    constructor(runtime: ContainerRuntime);
+    // Warning: (ae-forgotten-export) The symbol "IDebugBusEventSignatures" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    broadcast<TEvent extends keyof IDebugBusEventSignatures>(event: TEvent, ...args: IDebugBusEventSignatures[TEvent]): void;
 }
 
 // @public (undocumented)

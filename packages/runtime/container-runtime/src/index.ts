@@ -25,6 +25,7 @@ export {
     RuntimeHeaders,
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
+    DebugBus,
 } from "./containerRuntime";
 export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";

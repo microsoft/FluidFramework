@@ -106,6 +106,8 @@
   },
   "typeValidation": {
     "version": "1.2.2",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_ContainerRuntime": { "forwardCompat": false }
+    }
   }
 }

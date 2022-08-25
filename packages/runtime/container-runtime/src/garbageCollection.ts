@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryErrorEvent, ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+/* eslint-disable max-len */
+
+import { ITaggedTelemetryPropertyType, ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
@@ -25,7 +27,6 @@ import {
     ISummarizeResult,
     ITelemetryContext,
     IGarbageCollectionNodeData,
-    IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import {
     mergeStats,
@@ -202,7 +203,7 @@ const UnreferencedState = {
 export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
 
 /** The event that is logged when unreferenced node is used after a certain time. */
-export interface IUnreferencedEventProps {
+interface IUnreferencedEventProps {
     usageType: "Changed" | "Loaded" | "Revived";
     state: UnreferencedState;
     id: string;
@@ -216,6 +217,8 @@ export interface IUnreferencedEventProps {
     externalRequest?: boolean;
     viaHandle?: boolean;
 }
+
+export type IUnreferencedEventPropsEx = { eventName: string; pkg?: ITaggedTelemetryPropertyType; fromPkg?: ITaggedTelemetryPropertyType; } & IUnreferencedEventProps;
 
 /**
  * Helper class that tracks the state of an unreferenced node such as the time it was unreferenced and if it can
@@ -425,8 +428,8 @@ export class GarbageCollector implements IGarbageCollector {
     // The number of times GC has successfully completed on this instance of GarbageCollector.
     private completedRuns = 0;
 
-    private readonly runtime: IGarbageCollectionRuntime;
-    private get debugBus() { return (this.runtime as ContainerRuntime).debugBus; }
+    private readonly runtime: ContainerRuntime;
+    private get debugBus() { return this.runtime.debugBus; }
     private readonly gcOptions: IGCRuntimeOptions;
     private readonly isSummarizerClient: boolean;
 
@@ -443,7 +446,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly getLastSummaryTimestampMs: () => number | undefined;
 
     protected constructor(createParams: IGarbageCollectorCreateParams) {
-        this.runtime = createParams.runtime;
+        this.runtime = createParams.runtime as ContainerRuntime;
         this.isSummarizerClient = createParams.isSummarizerClient;
         this.gcOptions = createParams.gcOptions;
         this.getNodePackagePath = createParams.getNodePackagePath;
@@ -458,13 +461,6 @@ export class GarbageCollector implements IGarbageCollector {
         ));
 
         let prevSummaryGCVersion: number | undefined;
-
-        (this.runtime as ContainerRuntime).on(
-            "signal",
-            (message: IInboundSignalMessage, local: boolean) => {
-                this.debugBus.emit(message.type, message.content);
-            },
-        );
 
         /**
          * The following GC state is enabled during container creation and cannot be changed throughout its lifetime:
@@ -997,17 +993,12 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     public dispose(): void {
-        // window.gcAlert will be set by the app, or otherwise undefined and fallback to console.log
-        function gcAlert(m: string) {
-            try { (window as any).gcAlert(m); } catch { console.log("GC ALERT:\n", m); }
-        }
-
         if (this.sessionExpiryTimer !== undefined) {
             clearTimeout(this.sessionExpiryTimer);
             this.sessionExpiryTimer = undefined;
         }
         if (this.isSummarizerClient) {
-            this.debugBus.emit("gcDisposed");
+            this.debugBus.broadcast<"gcDisposed">("gcDisposed");
         }
     }
 
@@ -1363,14 +1354,13 @@ export class GarbageCollector implements IGarbageCollector {
         if (this.isSummarizerClient) {
             this.pendingEventsQueue.push({ ...propsToLog, usageType, state });
         } else {
-            const event: ITelemetryErrorEvent = {
+            const event = {
                 ...propsToLog,
                 eventName: `${state}Object_${usageType}`,
                 pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-            };
+            } as const;
             this.mc.logger.sendErrorEvent(event);
-            this.debugBus.emit("inactiveObjectUsed", event);
-            (this.runtime as ContainerRuntime).submitSignal("inactiveObjectUsed", event);
+            this.debugBus.broadcast<"inactiveObjectUsed">("inactiveObjectUsed", { ...event, usageType, state });
         }
     }
 
@@ -1388,14 +1378,14 @@ export class GarbageCollector implements IGarbageCollector {
             if ((usageType === "Revived") === active) {
                 const pkg = await this.getNodePackagePath(eventProps.id);
                 const fromPkg = eventProps.fromId ? await this.getNodePackagePath(eventProps.fromId) : undefined;
-                const event: ITelemetryErrorEvent = {
+                const event = {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
                     pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
                     fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-                };
+                } as const;
                 logger.sendErrorEvent(event);
-                this.debugBus.emit("inactiveObjectUsed", event);
+                this.debugBus.broadcast<"inactiveObjectUsed">("inactiveObjectUsed", { ...event, usageType, state });
             }
         }
         this.pendingEventsQueue = [];

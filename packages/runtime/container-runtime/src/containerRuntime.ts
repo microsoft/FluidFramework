@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable max-len */
+
 import { EventEmitter } from "events";
-// eslint-disable-next-line max-len
 import { IEvent, ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
@@ -153,7 +155,7 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
-    IUnreferencedEventProps,
+    IUnreferencedEventPropsEx,
 } from "./garbageCollection";
 import {
     channelToDataStore,
@@ -809,14 +811,49 @@ export function getDeviceSpec() {
     return {};
 }
 
-interface IDebugBusEvents extends IEvent {
-    (event: "gotSummarizer" | "lostSummarizer" | "gcDisposed", listener: () => void);
-    (event: "inactiveObjectUsed",
-     listener: (props: { eventName: string; pkg?: string; fromPkg?: string; } & IUnreferencedEventProps) => void);
+export interface IDebugBusEventSignatures {
+    inactiveObjectUsed: [IUnreferencedEventPropsEx];
+    foo: [number, string];
+    gotSummarizer: [];
+    lostSummarizer: [];
+    gcDisposed: [];
 }
 
-class DebugBus extends TypedEventEmitter<IDebugBusEvents> {
+export interface IDebugBusEvents extends IEvent {
+    (event: keyof IDebugBusEventSignatures, listener: (...args: IDebugBusEventSignatures[typeof event]) => void);
+}
 
+// Using type since it would have several cases |'d together
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type KnownSignalMessages = {
+    type: "debugBusBroadcast";
+    content: { event: keyof IDebugBusEventSignatures; args: IDebugBusEventSignatures[keyof IDebugBusEventSignatures]; };
+};
+
+export class DebugBus extends TypedEventEmitter<IDebugBusEvents> {
+    constructor(
+        private readonly runtime: ContainerRuntime,
+    ) {
+        super();
+
+        // Dispatch broadcasted events to local event listeners
+        this.runtime.on(
+            "signal",
+            (message: KnownSignalMessages, local: boolean) => {
+                if (message.type === "debugBusBroadcast") {
+                    this.emit(message.content.event, ...message.content.args);
+                }
+            },
+        );
+    }
+
+    broadcast<TEvent extends keyof IDebugBusEventSignatures>(
+        event: TEvent,
+        ...args: IDebugBusEventSignatures[TEvent]
+    ) {
+        const signalMessage: KnownSignalMessages = { type: "debugBusBroadcast", content: { event, args } };
+        this.runtime.submitSignal(signalMessage.type, signalMessage.content);
+    }
 }
 
 /**
@@ -1018,7 +1055,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
     private readonly handleContext: ContainerFluidHandleContext;
 
-    public readonly debugBus: DebugBus = new DebugBus();
+    public readonly debugBus: DebugBus = new DebugBus(this);
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly mc: MonitoringContext;
@@ -2610,7 +2647,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 if (this.deltaManager.lastSequenceNumber !== summaryRefSeqNum) {
                     return {
                         continue: false,
-                        // eslint-disable-next-line max-len
                         error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
                     };
                 }
