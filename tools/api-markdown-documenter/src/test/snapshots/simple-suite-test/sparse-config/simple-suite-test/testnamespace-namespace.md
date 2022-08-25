@@ -12,9 +12,17 @@ Here are some remarks about the namespace
 
 Example 1
 
+```typescript
+const foo = bar;
+```
+
 ### Example 2 {#testnamespace-example2}
 
 Example 2
+
+```javascript
+const bar = foo
+```
 
 ## Signature {#testnamespace-signature}
 
@@ -62,4 +70,4 @@ export declare namespace TestNamespace
 
 |  TypeAlias | Description |
 |  --- | --- |
-|  [TypeAlias](docs/simple-suite-test/testnamespace-typealias-typealias) | Test Type-Alias |
+|  [TestTypeAlias](docs/simple-suite-test/testnamespace-testtypealias-typealias) | Test Type-Alias |
