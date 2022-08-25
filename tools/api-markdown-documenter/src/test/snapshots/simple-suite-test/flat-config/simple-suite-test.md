@@ -379,11 +379,11 @@ export declare abstract class TestAbstractClass
 
 #### Methods
 
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  [publicAbstractMethod()](docs/simple-suite-test#testabstractclass-publicabstractmethod-method) | void | A test public abstract method. |
-|  [sealedMethod()](docs/simple-suite-test#testabstractclass-sealedmethod-method) | string | A test <code>@sealed</code> method. |
-|  [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method) | number | A test <code>@virtual</code> method. |
+|  Method | Modifiers | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [publicAbstractMethod()](docs/simple-suite-test#testabstractclass-publicabstractmethod-method) | \-\-\- | void | A test public abstract method. |
+|  [sealedMethod()](docs/simple-suite-test#testabstractclass-sealedmethod-method) | sealed | string | A test <code>@sealed</code> method. |
+|  [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method) | virtual | number | A test <code>@virtual</code> method. |
 
 #### Constructor Details
 
@@ -501,7 +501,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | readonly | number | Test class getter-only property |
+|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | readonly, virtual | number | Test class getter-only property |
 |  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | readonly | TTypeParameterB | Test class property |
 |  [testClassStaticProperty](docs/simple-suite-test#testclass-testclassstaticproperty-property) | static | (foo: number) =&gt; string | Test static class property |
 
@@ -510,7 +510,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) | \-\-\- | void | A test public abstract method. |
-|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | \-\-\- | TTypeParameterA | Test class method |
+|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | sealed | TTypeParameterA | Test class method |
 |  [testClassStaticMethod(foo)](docs/simple-suite-test#testclass-testclassstaticmethod-method) | static | string | Test class static method |
 |  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) | \-\-\- | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
 

@@ -69,6 +69,18 @@ export enum ApiModifier {
      * Indicates a `static` member of a `class` or `interface`.
      */
     Static = "static",
+
+    /**
+     * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/virtual | @virtual}
+     * tag. This item is intended to be overridden by implementing types.
+     */
+    Virtual = "virtual",
+
+    /**
+     * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/sealed | @sealed}
+     * tag. This item may not to be overridden by implementing types.
+     */
+    Sealed = "sealed",
 }
 
 /**
@@ -593,6 +605,15 @@ export function getModifiers(apiItem: ApiItem): ApiModifier[] {
     if (ApiStaticMixin.isBaseClassOf(apiItem)) {
         if (apiItem.isStatic) {
             modifiers.push(ApiModifier.Static);
+        }
+    }
+
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+        if (apiItem.tsdocComment.modifierTagSet.isVirtual()) {
+            modifiers.push(ApiModifier.Virtual);
+        }
+        if (apiItem.tsdocComment.modifierTagSet.isSealed()) {
+            modifiers.push(ApiModifier.Sealed);
         }
     }
 

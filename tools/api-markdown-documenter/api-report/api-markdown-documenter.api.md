@@ -58,7 +58,9 @@ export { ApiModel }
 export enum ApiModifier {
     Optional = "optional",
     Readonly = "readonly",
-    Static = "static"
+    Sealed = "sealed",
+    Static = "static",
+    Virtual = "virtual"
 }
 
 // @public

@@ -23,8 +23,8 @@ export declare abstract class TestAbstractClass
 
 ## Methods
 
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  [publicAbstractMethod()](docs/simple-suite-test/testabstractclass-publicabstractmethod-method) | void | A test public abstract method. |
-|  [sealedMethod()](docs/simple-suite-test/testabstractclass-sealedmethod-method) | string | A test <code>@sealed</code> method. |
-|  [virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method) | number | A test <code>@virtual</code> method. |
+|  Method | Modifiers | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [publicAbstractMethod()](docs/simple-suite-test/testabstractclass-publicabstractmethod-method) | 📝 | void | A test public abstract method. |
+|  [sealedMethod()](docs/simple-suite-test/testabstractclass-sealedmethod-method) | sealed | string | A test <code>@sealed</code> method. |
+|  [virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method) | virtual | number | A test <code>@virtual</code> method. |
