@@ -262,7 +262,7 @@ Some of the principles used to guide this are:
     This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
     `shared-tree-core` is an excellent example of this: it can be run with no indexes, and trivial a change family allowing it to have very few required dependencies.
     This often takes the form of either depending on interfaces (which can have their implementation swapped out or mocked), like [`ChangeFamily`](./src/change-family/README.md), or collection functionality in a registry, like we do for `FieldKinds` and `shared-tree-core`'s indexes.
-    Dependency injection is one for of this.
+    Dependency injection is one example of a useful pattern for reducing transitive dependencies.
     In addition to simplifying reasoning about the system (less total to think about for a given scenario) and simplifying testing,
     this approach also makes the lifecycle for new features easier to manage, since they can be fully implemented and tested without having to modify code outside of themselves.
     This makes pre-releases, stabilization and eventual deprecation of these features much easier, and even makes publishing them from separate packages possible if it ends up needing an even more separated lifecycle.
