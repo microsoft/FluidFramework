@@ -12,9 +12,9 @@ export declare abstract class TestAbstractClass
 
 ## Constructors
 
-|  Constructor | Return Type | Description |
-|  --- | --- | --- |
-|  [(constructor)(privateProperty, protectedProperty)](./simple-suite-test/testabstractclass-class#_constructor_-constructor) |  | This is a constructor. |
+|  Constructor | Description |
+|  --- | --- |
+|  [(constructor)(privateProperty, protectedProperty)](./simple-suite-test/testabstractclass-class#_constructor_-constructor) | This is a constructor. |
 
 ## Properties
 

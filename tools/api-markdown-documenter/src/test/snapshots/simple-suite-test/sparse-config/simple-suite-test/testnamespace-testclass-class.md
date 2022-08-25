@@ -10,9 +10,9 @@ class TestClass
 
 ## Constructors
 
-|  Constructor | Return Type | Description |
-|  --- | --- | --- |
-|  [(constructor)(testClassProperty)](docs/simple-suite-test/testnamespace-testclass-_constructor_-constructor) |  | Test class constructor |
+|  Constructor | Description |
+|  --- | --- |
+|  [(constructor)(testClassProperty)](docs/simple-suite-test/testnamespace-testclass-_constructor_-constructor) | Test class constructor |
 
 ## Properties
 
