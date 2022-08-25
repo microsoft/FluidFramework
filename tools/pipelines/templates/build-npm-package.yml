@@ -81,6 +81,14 @@ parameters:
 - name: tagName
   type: string
 
+- name: includeInternalVersions
+  type: boolean
+  default: false
+
+- name: installBuildToolsFromRepo
+  type: boolean
+  default: false
+
 trigger: none
 
 variables:
