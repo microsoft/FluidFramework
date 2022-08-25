@@ -74,7 +74,7 @@ export class TestClientLogger {
     private ackedLine: string[] = [];
     private localLine: string[] = [];
     // initialize to private instance, so first real edit will create a new line
-    private lastOp: IMergeTreeOp | undefined;
+    private lastOp: any | undefined;
 
     constructor(
         private readonly clients: readonly TestClient[],
