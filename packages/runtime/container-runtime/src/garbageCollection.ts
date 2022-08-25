@@ -25,6 +25,7 @@ import {
     ISummarizeResult,
     ITelemetryContext,
     IGarbageCollectionNodeData,
+    IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions";
 import {
     mergeStats,
@@ -457,6 +458,13 @@ export class GarbageCollector implements IGarbageCollector {
         ));
 
         let prevSummaryGCVersion: number | undefined;
+
+        (this.runtime as ContainerRuntime).on(
+            "signal",
+            (message: IInboundSignalMessage, local: boolean) => {
+                this.debugBus.emit(message.type, message.content);
+            },
+        );
 
         /**
          * The following GC state is enabled during container creation and cannot be changed throughout its lifetime:
@@ -1362,6 +1370,7 @@ export class GarbageCollector implements IGarbageCollector {
             };
             this.mc.logger.sendErrorEvent(event);
             this.debugBus.emit("inactiveObjectUsed", event);
+            (this.runtime as ContainerRuntime).submitSignal("inactiveObjectUsed", event);
         }
     }
 
