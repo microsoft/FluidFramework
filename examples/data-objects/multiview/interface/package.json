@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-coordinate-interface",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "private": true,
   "description": "Interface for multiview sample",
   "homepage": "https://fluidframework.com",
