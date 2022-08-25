@@ -5,11 +5,35 @@
 
 import Benchmark from "benchmark";
 import { assert } from "chai";
+import { Suite } from "mocha";
+import { benchmarkTypes, performanceTestSuiteTag, userCategoriesSplitter } from "./Configuration";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual
  * output to the command line.
  */
+
+const tags = [performanceTestSuiteTag, ...benchmarkTypes.map((x) => `@${x}`)];
+
+/**
+ * Strip tags and user-specified category from a test suite's name.
+ */
+export const getSuiteName = (suite: Suite): string => getName(suite.fullTitle());
+
+/**
+ * Strip tags and user-specified category from the specified test/suite name.
+ */
+export function getName(name: string): string {
+    let s = name;
+    for (const tag of tags) {
+        s = s.replace(tag, "");
+    }
+    const indexOfSplitter = s.indexOf(userCategoriesSplitter);
+    if (indexOfSplitter >= 0) {
+        s = s.slice(0, indexOfSplitter);
+    }
+    return s.trim();
+}
 
 /**
  * @returns a red version of the input string

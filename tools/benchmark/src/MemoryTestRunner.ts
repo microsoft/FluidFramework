@@ -15,6 +15,7 @@ import {
     MochaExclusiveOptions,
     HookArguments,
     BenchmarkType,
+    userCategoriesSplitter,
 } from "./Configuration";
 import { getArrayStatistics } from "./ReporterUtilities";
 
@@ -87,6 +88,13 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
      * Percentage of samples (0.1 - 1) to use for calculating the statistics. Defaults to 1.
      */
     samplePercentageToUse?: number;
+
+    /**
+	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
+     * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
+     * only execute specific tests.
+	 */
+	category?: string;
 }
 
 /**
@@ -120,9 +128,13 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
         benchmarkFn: args.benchmarkFn,
         type: args.type ?? BenchmarkType.Measurement,
         samplePercentageToUse: args.samplePercentageToUse ?? 1,
+        category: args.category ?? "",
     };
 
     options.title = `${performanceTestSuiteTag} @${BenchmarkType[options.type]} ${options.title}`;
+    if (options.category !== "") {
+        options.title = `${options.title} ${userCategoriesSplitter} @${options.category}`;
+    }
 
     const itFunction = options.only ? it.only : it;
     const test = itFunction(options.title, async () => {

@@ -14,6 +14,7 @@ import {
     isParentProcess,
     isInPerformanceTestingMode,
     performanceTestSuiteTag,
+    userCategoriesSplitter,
 } from "./Configuration";
 import { BenchmarkData } from "./Reporter";
 
@@ -45,10 +46,15 @@ export function benchmark(args: BenchmarkArguments): Test {
         only: args.only ?? false,
         before: args.before ?? (() => {}),
         after: args.after ?? (() => {}),
+        category: args.category ?? "",
     };
     const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
     const typeTag = BenchmarkType[options.type];
-    const qualifiedTitle = `${performanceTestSuiteTag} @${typeTag} ${args.title}`;
+    let qualifiedTitle = `${performanceTestSuiteTag} @${typeTag} ${args.title}`;
+
+    if (options.category !== "") {
+        qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${options.category}`;
+    }
 
     const itFunction = options.only ? it.only : it;
     const test = itFunction(qualifiedTitle, async () => {
