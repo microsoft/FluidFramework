@@ -22,7 +22,6 @@ steps:
   - task: Bash@3
     name: PrependPath
     displayName: Prepend build-tools CLI to path
-    condition: eq(parameters.installBuildToolsFromRepo, true)
     inputs:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
