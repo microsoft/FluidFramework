@@ -14,13 +14,24 @@ Here are some remarks about the interface
 export interface TestInterface 
 ```
 
+## Events
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
+
 ## Properties
 
 |  Property | Modifiers | Default Value | Type | Description |
 |  --- | --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | readonly |  | () =&gt; void | Test interface event property |
 |  [testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
 |  [testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature) | optional | 0 | number | Test optional property |
+
+## Methods
+
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
 
 ## Call Signatures
 
@@ -29,13 +40,7 @@ export interface TestInterface
 |  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
 |  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
-## Methods
-
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  [testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
-
-## Property Details
+## Event Details
 
 ### testClassEventProperty {#testclasseventproperty-propertysignature}
 
@@ -50,6 +55,8 @@ Here are some remarks about the event property
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
+
+## Property Details
 
 ### testInterfaceProperty {#testinterfaceproperty-propertysignature}
 
@@ -73,6 +80,22 @@ Test optional property
 
 ```typescript
 testOptionalInterfaceProperty?: number;
+```
+
+## Method Details
+
+### testInterfaceMethod {#testinterfacemethod-methodsignature}
+
+Test interface method
+
+#### Remarks {#testinterfacemethod-remarks}
+
+Here are some remarks about the method
+
+#### Signature {#testinterfacemethod-signature}
+
+```typescript
+testInterfaceMethod(): void;
 ```
 
 ## Call Signature Details
@@ -103,20 +126,4 @@ Here are some remarks about the event call signature
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
-```
-
-## Method Details
-
-### testInterfaceMethod {#testinterfacemethod-methodsignature}
-
-Test interface method
-
-#### Remarks {#testinterfacemethod-remarks}
-
-Here are some remarks about the method
-
-#### Signature {#testinterfacemethod-signature}
-
-```typescript
-testInterfaceMethod(): void;
 ```
