@@ -1183,6 +1183,33 @@
               ]
             },
             {
+              "kind": "ConstructSignature",
+              "canonicalReference": "simple-suite-test!TestInterface:new(1)",
+              "docComment": "/**\n * Test construct signature.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "new (): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TestInterface",
+                  "canonicalReference": "simple-suite-test!TestInterface:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": []
+            },
+            {
               "kind": "PropertySignature",
               "canonicalReference": "simple-suite-test!TestInterface#testClassEventProperty:member",
               "docComment": "/**\n * Test interface event property\n *\n * @remarks\n *\n * Here are some remarks about the event property\n *\n * @eventProperty\n */\n",

@@ -20,6 +20,12 @@ export interface TestInterface
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
 
+## Construct Signatures
+
+|  ConstructSignature | Return Type | Description |
+|  --- | --- | --- |
+|  [(new)()](./simple-suite-test/testinterface-interface#_new_-constructsignature) | [TestInterface](./simple-suite-test/testinterface-interface) | Test construct signature. |
+
 ## Properties
 
 |  Property | Modifiers | Default Value | Type | Description |
@@ -54,6 +60,18 @@ Here are some remarks about the event property
 
 ```typescript
 readonly testClassEventProperty: () => void;
+```
+
+## Construct Signature Details
+
+### (new) {#_new_-constructsignature}
+
+Test construct signature.
+
+#### Signature {#_new_-signature}
+
+```typescript
+new (): TestInterface;
 ```
 
 ## Property Details
