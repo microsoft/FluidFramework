@@ -201,7 +201,7 @@ const UnreferencedState = {
 export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
 
 /** The event that is logged when unreferenced node is used after a certain time. */
-interface IUnreferencedEventProps {
+export interface IUnreferencedEventProps {
     usageType: "Changed" | "Loaded" | "Revived";
     state: UnreferencedState;
     id: string;
@@ -425,6 +425,7 @@ export class GarbageCollector implements IGarbageCollector {
     private completedRuns = 0;
 
     private readonly runtime: IGarbageCollectionRuntime;
+    private get debugBus() { return (this.runtime as ContainerRuntime).debugBus; }
     private readonly gcOptions: IGCRuntimeOptions;
     private readonly isSummarizerClient: boolean;
 
@@ -998,7 +999,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.sessionExpiryTimer = undefined;
         }
         if (this.isSummarizerClient) {
-            gcAlert("SUMMARIZER IS CLOSING");
+            this.debugBus.emit("gcDisposed");
         }
     }
 
@@ -1360,7 +1361,7 @@ export class GarbageCollector implements IGarbageCollector {
                 pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
             };
             this.mc.logger.sendErrorEvent(event);
-            (this.runtime as ContainerRuntime).emit("gcEvent", event);
+            this.debugBus.emit("inactiveObjectUsed", event);
         }
     }
 
@@ -1385,7 +1386,7 @@ export class GarbageCollector implements IGarbageCollector {
                     fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
                 };
                 logger.sendErrorEvent(event);
-                (this.runtime as ContainerRuntime).emit("gcEvent", event);
+                this.debugBus.emit("inactiveObjectUsed", event);
             }
         }
         this.pendingEventsQueue = [];

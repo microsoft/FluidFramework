@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+// eslint-disable-next-line max-len
+import { IEvent, ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
     IFluidHandle,
@@ -152,6 +153,7 @@ import {
     IGarbageCollectionRuntime,
     IGarbageCollector,
     IGCStats,
+    IUnreferencedEventProps,
 } from "./garbageCollection";
 import {
     channelToDataStore,
@@ -807,6 +809,16 @@ export function getDeviceSpec() {
     return {};
 }
 
+interface IDebugBusEvents extends IEvent {
+    (event: "gotSummarizer" | "lostSummarizer" | "gcDisposed", listener: () => void);
+    (event: "inactiveObjectUsed",
+     listener: (props: { eventName: string; pkg?: string; fromPkg?: string; } & IUnreferencedEventProps) => void);
+}
+
+class DebugBus extends TypedEventEmitter<IDebugBusEvents> {
+
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -1005,6 +1017,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.handleContext;
     }
     private readonly handleContext: ContainerFluidHandleContext;
+
+    public readonly debugBus: DebugBus = new DebugBus();
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly mc: MonitoringContext;
