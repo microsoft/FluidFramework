@@ -698,6 +698,23 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         return this.localValueMaker.fromSerializable(serializable);
     }
 
+    private getParentDirectory(relativePath: string): IDirectory | undefined {
+        const absolutePath = this.makeAbsolute(relativePath);
+        const subdirs = absolutePath.substr(1).split(posix.sep);
+        if (subdirs.length === 0) {
+            return undefined;
+        }
+        subdirs.pop();
+        return this.getWorkingDirectory(subdirs.join(posix.sep));
+    }
+
+    private isCurrentDirectoryDeletePending(relativePath: string): boolean {
+        const parentSubDir = this.getParentDirectory(relativePath) as SubDirectory | undefined;
+        const index = relativePath.lastIndexOf(posix.sep);
+        const dirName = relativePath.substring(index + 1);
+        return !!(parentSubDir?.isSubDirectoryDeletePending(dirName));
+    }
+
     /**
      * Set the message handlers for the directory.
      */
@@ -724,7 +741,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             {
                 process: (msg: ISequencedDocumentMessage, op: IDirectoryDeleteOperation, local, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    if (subdir) {
+                    // If there is pending delete op for this subDirectory, then don't apply the this op as we are going
+                    // to delete this subDirectory.
+                    if (subdir && !this.isCurrentDirectoryDeletePending(op.path)) {
                         subdir.processDeleteMessage(msg, op, local, localOpMetadata);
                     }
                 },
@@ -741,7 +760,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             {
                 process: (msg: ISequencedDocumentMessage, op: IDirectorySetOperation, local, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    if (subdir) {
+                    // If there is pending delete op for this subDirectory, then don't apply the this op as we are going
+                    // to delete this subDirectory.
+                    if (subdir && !this.isCurrentDirectoryDeletePending(op.path)) {
                         const context = local ? undefined : this.makeLocal(op.key, op.path, op.value);
                         subdir.processSetMessage(msg, op, context, local, localOpMetadata);
                     }
@@ -1180,16 +1201,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));
     }
 
-    private getParentDirectory(relativePath: string): IDirectory | undefined {
-        const absolutePath = this.makeAbsolute(relativePath);
-        const subdirs = absolutePath.substr(1).split(posix.sep);
-        if (subdirs.length === 0) {
-            return undefined;
-        }
-        subdirs.pop();
-        return this.directory.getWorkingDirectory(subdirs.join(posix.sep));
-    }
-
     /**
      * This checks if there is pending delete op for local delete for a given child subdirectory.
      * @param subDirName - directory name.
@@ -1349,11 +1360,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         local: boolean,
         localOpMetadata: unknown,
     ): void {
+        this.throwIfDisposed();
         if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
             return;
         }
-
-        this.throwIfDisposed();
         if (local) {
             assert(isClearLocalOpMetadata(localOpMetadata),
                 0x00f /* pendingMessageId is missing from the local client's operation */);
@@ -1385,7 +1395,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
 
         this.throwIfDisposed();
-        if (!this.needProcessStorageOperation(op, local, localOpMetadata)) {
+        if (!(this.isMessageForCurrentInstanceOfSubDirectory(msg)
+            && this.needProcessStorageOperation(op, local, localOpMetadata))) {
             return;
         }
         this.deleteCore(op.key, local);
@@ -1412,7 +1423,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
 
         this.throwIfDisposed();
-        if (!this.needProcessStorageOperation(op, local, localOpMetadata)) {
+        if (!(this.isMessageForCurrentInstanceOfSubDirectory(msg)
+            && this.needProcessStorageOperation(op, local, localOpMetadata))) {
             return;
         }
 
@@ -1793,15 +1805,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                     this.pendingKeys.delete(op.key);
                 }
             }
-            return false;
-        }
-
-        // If there is pending delete op for this subDirectory, then don't apply the this op as we are going
-        // to delete this subDirectory.
-        const parentSubDir = this.getParentDirectory(op.path) as SubDirectory | undefined;
-        const index = op.path.lastIndexOf(posix.sep);
-        const dirName = op.path.substring(index + 1);
-        if (parentSubDir?.isSubDirectoryDeletePending(dirName)) {
             return false;
         }
 
