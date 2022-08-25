@@ -26,9 +26,9 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (with alias): [function alias text](docs/simple-suite-test#testfunction-function)
 
-- Bad link (no alias): *InvalidItem*
+- Bad link (no alias): <i>InvalidItem</i>
 
-- Bad link (with alias): *even though I link to an invalid item, I would still like this text to be rendered*
+- Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i>
 
 ## Example {#simple-suite-test-example}
 
@@ -441,6 +441,12 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 * <b>TTypeParameterB</b>: Another type parameter
 
 
+#### Events
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
+
 #### Constructors
 
 |  Constructor | Return Type | Description |
@@ -452,7 +458,6 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
 |  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | readonly | number | Test class getter-only property |
 |  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | readonly | TTypeParameterB | Test class property |
 
@@ -463,6 +468,22 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) | void | A test public abstract method. |
 |  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | TTypeParameterA | Test class method |
 |  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
+
+#### Event Details
+
+##### testClassEventProperty {#testclass-testclasseventproperty-property}
+
+Test class event property
+
+###### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the property
+
+###### Signature {#testclasseventproperty-signature}
+
+```typescript
+readonly testClassEventProperty: () => void;
+```
 
 #### Constructor Details
 
@@ -499,20 +520,6 @@ A test abstract getter property.
 
 ```typescript
 get abstractPropertyGetter(): TestMappedType;
-```
-
-##### testClassEventProperty {#testclass-testclasseventproperty-property}
-
-Test class event property
-
-###### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the property
-
-###### Signature {#testclasseventproperty-signature}
-
-```typescript
-readonly testClassEventProperty: () => void;
 ```
 
 ##### testClassGetterProperty {#testclass-testclassgetterproperty-property}

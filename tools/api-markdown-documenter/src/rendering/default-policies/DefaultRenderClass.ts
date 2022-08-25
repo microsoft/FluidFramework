@@ -20,6 +20,40 @@ import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
 /**
  * Default policy for rendering doc sections for `Class` items.
+ *
+ * @remarks Format:
+ *
+ * - Tables
+ *
+ *   - event properties
+ *
+ *   - constructors
+ *
+ *   - properties
+ *
+ *   - methods
+ *
+ *   - call-signatures
+ *
+ *   - index-signatures
+ *
+ * - Details (for any types not rendered to their own documents - see
+ *   {@link PolicyOptions.documentBoundaries})
+ *
+ *   - event properties
+ *
+ *   - constructors
+ *
+ *   - properties
+ *
+ *   - methods
+ *
+ *   - call-signatures
+ *
+ *   - index-signatures
+ *
+ * Note: this ordering was established to mirror existing fluidframework.com rendering.
+ * The plan is to change this in a subsequent change (before public release).
  */
 export function renderClassSection(
     apiClass: ApiClass,
@@ -36,9 +70,15 @@ export function renderClassSection(
             (apiItem) => apiItem as ApiConstructor,
         );
 
-        const properties = filterByKind(apiClass.members, [ApiItemKind.Property]).map(
+        const allProperties = filterByKind(apiClass.members, [ApiItemKind.Property]).map(
             (apiItem) => apiItem as ApiProperty,
         );
+
+        // Split properties into event properties and non-event properties
+        const standardProperties = allProperties.filter(
+            (apiProperty) => !apiProperty.isEventProperty,
+        );
+        const eventProperties = allProperties.filter((apiProperty) => apiProperty.isEventProperty);
 
         const callSignatures = filterByKind(apiClass.members, [ApiItemKind.CallSignature]).map(
             (apiItem) => apiItem as ApiCallSignature,
@@ -56,6 +96,11 @@ export function renderClassSection(
         const renderedMemberTables = renderMemberTables(
             [
                 {
+                    headingTitle: "Events",
+                    itemKind: ApiItemKind.Property,
+                    items: eventProperties,
+                },
+                {
                     headingTitle: "Constructors",
                     itemKind: ApiItemKind.Constructor,
                     items: constructors,
@@ -63,7 +108,12 @@ export function renderClassSection(
                 {
                     headingTitle: "Properties",
                     itemKind: ApiItemKind.Property,
-                    items: properties,
+                    items: standardProperties,
+                },
+                {
+                    headingTitle: "Methods",
+                    itemKind: ApiItemKind.Method,
+                    items: methods,
                 },
                 {
                     headingTitle: "Call Signatures",
@@ -74,11 +124,6 @@ export function renderClassSection(
                     headingTitle: "Index Signatures",
                     itemKind: ApiItemKind.IndexSignature,
                     items: indexSignatures,
-                },
-                {
-                    headingTitle: "Methods",
-                    itemKind: ApiItemKind.Method,
-                    items: methods,
                 },
             ],
             config,
@@ -92,6 +137,11 @@ export function renderClassSection(
         const renderedDetailsSection = renderChildDetailsSection(
             [
                 {
+                    headingTitle: "Event Details",
+                    itemKind: ApiItemKind.Property,
+                    items: eventProperties,
+                },
+                {
                     headingTitle: "Constructor Details",
                     itemKind: ApiItemKind.Constructor,
                     items: constructors,
@@ -99,7 +149,12 @@ export function renderClassSection(
                 {
                     headingTitle: "Property Details",
                     itemKind: ApiItemKind.Property,
-                    items: properties,
+                    items: standardProperties,
+                },
+                {
+                    headingTitle: "Method Details",
+                    itemKind: ApiItemKind.MethodSignature,
+                    items: methods,
                 },
                 {
                     headingTitle: "Call Signature Details",
@@ -110,11 +165,6 @@ export function renderClassSection(
                     headingTitle: "Index Signature Details",
                     itemKind: ApiItemKind.IndexSignature,
                     items: indexSignatures,
-                },
-                {
-                    headingTitle: "Method Details",
-                    itemKind: ApiItemKind.MethodSignature,
-                    items: methods,
                 },
             ],
             config,

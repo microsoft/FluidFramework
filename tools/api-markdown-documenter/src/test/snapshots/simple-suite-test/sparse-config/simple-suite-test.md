@@ -26,9 +26,9 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (with alias): [function alias text](docs/simple-suite-test/testfunction-function)
 
-- Bad link (no alias): *InvalidItem*
+- Bad link (no alias): <i>InvalidItem</i>
 
-- Bad link (with alias): *even though I link to an invalid item, I would still like this text to be rendered*
+- Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i>
 
 ## Example {#simple-suite-test-example}
 
