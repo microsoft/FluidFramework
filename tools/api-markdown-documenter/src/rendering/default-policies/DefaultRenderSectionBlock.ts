@@ -13,6 +13,7 @@ import {
     renderExamplesSection,
     renderHeadingForApiItem,
     renderRemarksSection,
+    renderSeeAlso,
     renderSignature,
     renderSummarySection,
 } from "../helpers";
@@ -29,6 +30,7 @@ import {
  * 1. Examples (if any)
  * 1. Item Signature
  * 1. `innerSectionBody`
+ * 1. See (if any)
  *
  * @param apiItem - The API item being rendered.
  * @param innerSectionBody - A doc section of contents to be written after the standard metadata content types.
@@ -74,7 +76,7 @@ export function renderChildrenSection(
         docSections.push(renderedExamples);
     }
 
-    // Render signature
+    // Render signature (if any)
     const renderedSignature = renderSignature(apiItem, config);
     if (renderedSignature !== undefined) {
         docSections.push(renderedSignature);
@@ -83,6 +85,12 @@ export function renderChildrenSection(
     if (innerSectionBody !== undefined) {
         // Flatten contents into this section
         docSections.push(innerSectionBody);
+    }
+
+    // Render @see content (if any)
+    const renderedSee = renderSeeAlso(apiItem, config);
+    if (renderedSee !== undefined) {
+        docSections.push(renderedSee);
     }
 
     // Merge sections to reduce and simplify hierarchy

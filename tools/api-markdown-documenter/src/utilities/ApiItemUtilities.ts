@@ -556,6 +556,18 @@ export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined {
 }
 
 /**
+ * Gets the `@see` comment blocks from the API item if it has any.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
+ */
+export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
+    const blocks = getCustomBlockSections(apiItem, "@see");
+    return blocks.length === 0 ? undefined : blocks;
+}
+
+/**
  * Gets the {@link ApiModifier}s that apply to the provided API item.
  *
  * @param apiItem - The API item being queried.

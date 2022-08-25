@@ -38,6 +38,7 @@ import {
     getHeadingForApiItem,
     getLinkForApiItem,
     getQualifiedApiItemName,
+    getSeeBlocks,
     mergeSections,
 } from "../../utilities";
 import { renderParametersSummaryTable } from "./TableRenderingHelpers";
@@ -83,6 +84,42 @@ export function renderSignature(
         }
     }
     return undefined;
+}
+
+/**
+ * Renders a section for an API item's {@link https://tsdoc.org/pages/tags/see/ | @see} comment blocks.
+ *
+ * @remarks Displayed as a "See also" heading, followed by the contents of the API item's `@see` comment blocks
+ * merged into a single section.
+ *
+ * @param apiItem - The API item whose `@see` comment blocks will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if there was any signature content to render, otherwise `undefined`.
+ */
+export function renderSeeAlso(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    const seeBlocks = getSeeBlocks(apiItem);
+    if (seeBlocks === undefined || seeBlocks.length === 0) {
+        return undefined;
+    }
+
+    const docNodes: DocNode[] = [];
+    docNodes.push(
+        renderHeading(
+            { title: "See also", id: `${getQualifiedApiItemName(apiItem)}-see-also` },
+            config,
+        ),
+    );
+
+    // Merge `@see` blocks together
+    for (const seeBlock of seeBlocks) {
+        docNodes.push(...seeBlock.nodes);
+    }
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 /**

@@ -218,6 +218,9 @@ export function getModifiers(apiItem: ApiItem): ApiModifier[];
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
+export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
 export function getUnscopedPackageName(apiPackage: ApiPackage): string;
 
 // @public
@@ -417,6 +420,7 @@ function renderHeritageTypes(apiItem: ApiItem, config: Required<MarkdownDocument
 declare namespace RenderingHelpers {
     export {
         renderSignature,
+        renderSeeAlso,
         renderHeritageTypes,
         renderTypeParameters,
         renderExcerptWithHyperlinks,
@@ -548,6 +552,9 @@ function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<Markdow
 
 // @public
 export type RenderSectionWithInnerContent = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
+
+// @public
+function renderSeeAlso(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
