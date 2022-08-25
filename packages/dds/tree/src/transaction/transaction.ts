@@ -5,6 +5,7 @@
 
 import { IEditableForest, IForestSubscription } from "../forest";
 import { ChangeFamily, ProgressiveEditBuilder } from "../change-family";
+import { TransactionResult } from "../checkout";
 
 /**
  * The interface a checkout has to implement for a transaction to be able to be applied to it.
@@ -54,9 +55,4 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     checkout.submitEdit(edit);
 
     return result;
-}
-
-export enum TransactionResult {
-    Abort,
-    Apply,
 }

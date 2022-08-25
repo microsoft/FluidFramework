@@ -204,8 +204,6 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * @param options - Configuration options for this tree
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
-	constructor(...args: SharedTreeArgs<WriteFormat.v0_0_2>);
-	constructor(...args: SharedTreeArgs<WriteFormat.v0_1_1>);
 	constructor(...args: SharedTreeArgs) {
 		this.args = args;
 	}
@@ -392,20 +390,19 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	public static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
 
-	public static getFactory(...args: SharedTreeArgs): SharedTreeFactory {
-		const [writeFormat] = args;
+	/**
+	 * Get a factory for SharedTree to register with the data store, using the latest write version and default options.
+	 */
+	public static getFactory(): SharedTreeFactory;
+
+	public static getFactory(...args: SharedTreeArgs | []): SharedTreeFactory {
+		const [formatArg, options] = args;
+		const writeFormat = formatArg ?? WriteFormat.v0_1_1;
 		// 	On 0.1.1 documents, due to current code limitations, all clients MUST agree on the value of `summarizeHistory`.
 		//  Note that this means staged rollout changing this value should not be attempted.
 		//  It is possible to update shared-tree to correctly handle such a staged rollout, but that hasn't been implemented.
 		//  See the skipped test in SharedTreeFuzzTests.ts for more details on this issue.
-		switch (writeFormat) {
-			case WriteFormat.v0_0_2:
-				return new SharedTreeFactory(...(args as SharedTreeArgs<WriteFormat.v0_0_2>));
-			case WriteFormat.v0_1_1:
-				return new SharedTreeFactory(...(args as SharedTreeArgs<WriteFormat.v0_1_1>));
-			default:
-				fail('Unknown write format');
-		}
+		return new SharedTreeFactory(writeFormat, options);
 	}
 
 	/**

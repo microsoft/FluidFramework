@@ -10,6 +10,7 @@ import {
     IChannelServices,
     IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { ICheckout, TransactionResult } from "../checkout";
 import {
     defaultSchemaPolicy,
     ForestIndex, ObjectForest,
@@ -19,10 +20,10 @@ import {
     SequenceChangeset,
     SequenceEditBuilder,
 } from "../feature-libraries";
-import { IEditableForest, IForestSubscription } from "../forest";
+import { IForestSubscription } from "../forest";
 import { StoredSchemaRepository } from "../schema-stored";
 import { Index, SharedTreeCore } from "../shared-tree-core";
-import { Checkout, runSynchronousTransaction, TransactionResult } from "../transaction";
+import { Checkout as TransactionCheckout, runSynchronousTransaction } from "../transaction";
 import { AnchorSet } from "../tree";
 
 /**
@@ -33,8 +34,13 @@ import { AnchorSet } from "../tree";
  * TODO: expose or implement Checkout.
  */
 export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
-    implements Checkout<SequenceEditBuilder, SequenceChangeset> {
-    public forest: IEditableForest;
+implements ICheckout<SequenceEditBuilder> {
+    public readonly forest: IForestSubscription;
+    /**
+     * Rather than implementing TransactionCheckout, have a member that implements it.
+     * This allows keeping the `IEditableForest` private.
+     */
+    private readonly transactionCheckout: TransactionCheckout<SequenceEditBuilder, SequenceChangeset>;
 
     public constructor(
         id: string,
@@ -54,13 +60,18 @@ export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChange
                 );
 
             this.forest = forest;
+            this.transactionCheckout = {
+                forest,
+                changeFamily: this.changeFamily,
+                submitEdit: (edit) => this.submitEdit(edit),
+            };
     }
 
     public runTransaction(transaction: (
         forest: IForestSubscription,
         editor: SequenceEditBuilder,
     ) => TransactionResult): TransactionResult {
-        return runSynchronousTransaction(this, transaction);
+        return runSynchronousTransaction(this.transactionCheckout, transaction);
     }
 }
 
