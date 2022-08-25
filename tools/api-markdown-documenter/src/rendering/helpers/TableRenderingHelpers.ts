@@ -265,12 +265,15 @@ export function renderFunctionLikeSummaryTable(
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiItems.some((apiItem) => getModifiers(apiItem).length !== 0);
+    const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
 
     const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
     if (hasModifiers) {
         headerTitles.push("Modifiers");
     }
-    headerTitles.push("Return Type");
+    if (hasReturnTypes) {
+        headerTitles.push("Return Type");
+    }
     headerTitles.push("Description");
 
     const tableRows: DocTableRow[] = [];
@@ -279,7 +282,9 @@ export function renderFunctionLikeSummaryTable(
         if (hasModifiers) {
             rowCells.push(renderModifiersCell(apiItem, config));
         }
-        rowCells.push(renderReturnTypeCell(apiItem, config));
+        if (hasReturnTypes) {
+            rowCells.push(renderReturnTypeCell(apiItem, config));
+        }
         rowCells.push(renderApiSummaryCell(apiItem, config));
 
         tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));

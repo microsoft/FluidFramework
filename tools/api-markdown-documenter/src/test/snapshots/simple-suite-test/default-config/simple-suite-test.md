@@ -26,9 +26,9 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (with alias): [function alias text](./simple-suite-test#testfunction-function)
 
-- Bad link (no alias): *InvalidItem*
+- Bad link (no alias): <i>InvalidItem</i>
 
-- Bad link (with alias): *even though I link to an invalid item, I would still like this text to be rendered*
+- Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i>
 
 ## Example {#simple-suite-test-example}
 
@@ -38,15 +38,6 @@ A test example
 const foo = bar;
 ```
 
-## Interfaces
-
-|  Interface | Description |
-|  --- | --- |
-|  [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) | An empty interface |
-|  [TestInterface](./simple-suite-test/testinterface-interface) | Test interface |
-|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
-|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
-
 ## Classes
 
 |  Class | Description |
@@ -54,18 +45,11 @@ const foo = bar;
 |  [TestAbstractClass](./simple-suite-test/testabstractclass-class) | A test abstract class. |
 |  [TestClass](./simple-suite-test/testclass-class) | Test class |
 
-## Namespaces
+## Enumerations
 
-|  Namespace | Description |
+|  Enum | Description |
 |  --- | --- |
-|  [TestNamespace](./simple-suite-test/testnamespace-namespace) | Test Namespace |
-
-## Types
-
-|  TypeAlias | Description |
-|  --- | --- |
-|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
-|  [TypeAlias](./simple-suite-test#typealias-typealias) | Test Type-Alias |
+|  [TestEnum](./simple-suite-test#testenum-enum) | Test Enum |
 
 ## Functions
 
@@ -76,11 +60,20 @@ const foo = bar;
 |  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
 |  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
-## Enumerations
+## Interfaces
 
-|  Enum | Description |
+|  Interface | Description |
 |  --- | --- |
-|  [TestEnum](./simple-suite-test#testenum-enum) | Test Enum |
+|  [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) | An empty interface |
+|  [TestInterface](./simple-suite-test/testinterface-interface) | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
+
+## Namespaces
+
+|  Namespace | Description |
+|  --- | --- |
+|  [TestNamespace](./simple-suite-test/testnamespace-namespace) | Test Namespace |
 
 ## Variables
 
@@ -88,96 +81,12 @@ const foo = bar;
 |  --- | --- | --- |
 |  [testConst](./simple-suite-test#testconst-variable) | readonly | Test Constant |
 
-## Type Details
+## Types
 
-### TestMappedType {#testmappedtype-typealias}
-
-Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
-
-#### Remarks {#testmappedtype-remarks}
-
-Here are some remarks about the mapped type
-
-#### Signature {#testmappedtype-signature}
-
-```typescript
-export declare type TestMappedType = {
-    [K in TestEnum]: boolean;
-};
-```
-
-### TypeAlias {#typealias-typealias}
-
-Test Type-Alias
-
-#### Remarks {#typealias-remarks}
-
-Here are some remarks about the type alias
-
-#### Signature {#typealias-signature}
-
-```typescript
-export declare type TypeAlias = string;
-```
-
-## Function Details
-
-### testFunction {#testfunction-function}
-
-Test function
-
-#### Remarks {#testfunction-remarks}
-
-This is a test [link](./simple-suite-test/testinterface-interface) to another API member
-
-#### Signature {#testfunction-signature}
-
-```typescript
-export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
-```
-
-#### Parameters {#testfunction-parameters}
-
-|  Parameter | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  testParameter |  | TTypeParameter | A test parameter |
-|  testOptionalParameter | optional | TTypeParameter |  |
-
-### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
-
-Test function that returns an inline type
-
-#### Signature {#testfunctionreturninginlinetype-signature}
-
-```typescript
-export declare function testFunctionReturningInlineType(): {
-    foo: number;
-    bar: TestEnum;
-};
-```
-
-### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
-
-> This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
-> 
-
-Test function that returns an inline type
-
-#### Signature {#testfunctionreturningintersectiontype-signature}
-
-```typescript
-export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
-```
-
-### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
-
-Test function that returns an inline type
-
-#### Signature {#testfunctionreturninguniontype-signature}
-
-```typescript
-export declare function testFunctionReturningUnionType(): string | TestInterface;
-```
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
+|  [TypeAlias](./simple-suite-test#typealias-typealias) | Test Type-Alias |
 
 ## Enumeration Details
 
@@ -265,6 +174,65 @@ Here are some remarks about the enum value
 TestEnumValue3 = 4
 ```
 
+## Function Details
+
+### testFunction {#testfunction-function}
+
+Test function
+
+#### Remarks {#testfunction-remarks}
+
+This is a test [link](./simple-suite-test/testinterface-interface) to another API member
+
+#### Signature {#testfunction-signature}
+
+```typescript
+export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
+```
+
+#### Parameters {#testfunction-parameters}
+
+|  Parameter | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  testParameter |  | TTypeParameter | A test parameter |
+|  testOptionalParameter | optional | TTypeParameter |  |
+
+### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
+
+Test function that returns an inline type
+
+#### Signature {#testfunctionreturninginlinetype-signature}
+
+```typescript
+export declare function testFunctionReturningInlineType(): {
+    foo: number;
+    bar: TestEnum;
+};
+```
+
+### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
+
+> This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
+> 
+
+Test function that returns an inline type
+
+#### Signature {#testfunctionreturningintersectiontype-signature}
+
+```typescript
+export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
+```
+
+### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
+
+Test function that returns an inline type
+
+#### Signature {#testfunctionreturninguniontype-signature}
+
+```typescript
+export declare function testFunctionReturningUnionType(): string | TestInterface;
+```
+
 ## Variable Details
 
 ### testConst {#testconst-variable}
@@ -279,4 +247,36 @@ Here are some remarks about the variable
 
 ```typescript
 testConst = 42
+```
+
+## Type Details
+
+### TestMappedType {#testmappedtype-typealias}
+
+Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
+
+#### Remarks {#testmappedtype-remarks}
+
+Here are some remarks about the mapped type
+
+#### Signature {#testmappedtype-signature}
+
+```typescript
+export declare type TestMappedType = {
+    [K in TestEnum]: boolean;
+};
+```
+
+### TypeAlias {#typealias-typealias}
+
+Test Type-Alias
+
+#### Remarks {#typealias-remarks}
+
+Here are some remarks about the type alias
+
+#### Signature {#typealias-signature}
+
+```typescript
+export declare type TypeAlias = string;
 ```
