@@ -11,6 +11,7 @@ interface outputType {
     "requirement3": string | any[];
     "doUndoPair": string | any[];
     "sandwichRebase": string | any[];
+    "changeWithInverse": string | any[];
 }
 export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
     changes: ReadonlySet<TChange>,
@@ -25,9 +26,13 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
         requirement3: "PASSED",
         doUndoPair: "PASSED",
         sandwichRebase: "PASSED",
+        changeWithInverse: "PASSED",
     };
 
     for (const changeA of changes) {
+        if (!checkChangeWithInverse(changeA)) {
+            output.changeWithInverse = [changeA];
+        }
         for (const changeB of changes) {
             if (!checkDoUndoPair(changeA, changeB)) {
                 output.doUndoPair = [changeA, changeB];
@@ -59,6 +64,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
 
     return output;
 
+    // Requirement testing the rebasing of composed changes and rebased changes.
     function requirement1(changeA: TChange, changeB: TChange, changeC: TChange) {
         const rebaseChangeset1 = rebase(
             changeA,
@@ -73,6 +79,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
         return isEquivalent(rebaseChangeset1, rebaseChangeset2);
     }
 
+    // Requirement checking different ordering of composed changes
     function requirement2(changeA: TChange, changeB: TChange, changeC: TChange) {
         const changeset1 = compose([
             changeA,
@@ -110,7 +117,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
         return isEquivalent(changeset1, changeset2);
     }
 
-    // requirement regarding do-undo pair
+    // requirement for do-undo pair
     function checkDoUndoPair(changeA: TChange, changeB: TChange) {
         const inv = invert(changeB);
         const r1 = rebase(changeA, changeB);
@@ -118,12 +125,22 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
         return isEquivalent(r2, changeA);
     }
 
-    // requirement regarding sandwich rebasing
+    // requirement for sandwich rebasing
     function checkSandwichRebase(changeA: TChange, changeB: TChange) {
         const inv2 = invert(changeB);
         const r1 = rebase(changeA, changeB);
         const r2 = rebase(r1, inv2);
         const r3 = rebase(r2, changeB);
         return isEquivalent(r3, r2);
+    }
+
+    // requirement for compose of a change with it's inverse.
+    function checkChangeWithInverse(changeA: TChange) {
+        const changeset = compose([
+            invert(changeA),
+            changeA,
+        ]);
+
+        return isEquivalent(changeset, compose([]));
     }
 }
