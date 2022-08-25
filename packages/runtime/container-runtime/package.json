@@ -109,13 +109,16 @@
     "version": "2.0.0",
     "broken": {
       "VariableDeclaration_DefaultSummaryConfiguration": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "TypeAliasDeclaration_ISummaryConfiguration": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_ISummaryConfigurationHeuristics": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_IGeneratedSummaryStats": {
         "backCompat": false

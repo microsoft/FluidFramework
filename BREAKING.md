@@ -58,6 +58,13 @@ This field has been deprecated and will be removed in a future breaking change. 
     ):
 ```
 
+## 3.0.0 Breaking changes
+- [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
+
+### Remove ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been removed. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
 ### Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package
 The utility classes `TelemetryNullLogger` and `BaseTelemetryNullLogger` are deprecated in the `@fluidframework/common-utils` package and have been moved to the `@fluidframework/telemetry-utils` package.  Please update your imports to take these from the new location.
 
@@ -105,6 +112,8 @@ bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and
 - [OldestClientObserver moved to @fluid-experimental/oldest-client-observer](#oldestclientobserver-moved-to-@fluid-experimental/oldest-client-observer)
 - [Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
 - [Remove deprecated data structures from `@fluidframework/sequence`](#remove-deprecated-data-structures-from-fluidframeworksequence)
+- [Renamed lockTask to volunteerForTask from @fluid-experimental/task-manager](renamed-lockTask-to-volunteerForTask-from-@fluid-experimental/task-manager)
+- [Renamed haveTaskLock to assigned from @fluid-experimental/task-manager](renamed-haveTaskLock-to-assigned-from-@fluid-experimental/task-manager)
 
 ###  Update to React 17
 The following packages use React and thus were impacted:
@@ -223,6 +232,12 @@ The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use 
 
 ### Remove deprecated data structures from `@fluidframework/sequence`
 `SharedNumberSequence`, `SharedObjectSequence`, and `SharedMatrix` have been removed from `@fluidframework/sequence`. They are currently still available in `@fluid-experimental/sequence-deprecated.
+
+### Renamed lockTask to volunteerForTask from @fluid-experimental/task-manager
+`TaskManager.lockTask()` has been renamed `volunteerForTask()` and now returns a `Promise<boolean>` instead of a `Promise<void>`. Please update all usages accordingly.
+
+### Renamed haveTaskLock to assigned from @fluid-experimental/task-manager
+`TaskManager.haveTaskLock()` has been renamed `assigned()`. Please update all usages accordingly.
 
 # 1.2.0
 

@@ -1139,7 +1139,7 @@ export interface SegmentGroup {
 // @public (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
-    // (undocumented)
+    // @deprecated (undocumented)
     clear(): void;
     // (undocumented)
     copyTo(segment: ISegment): void;

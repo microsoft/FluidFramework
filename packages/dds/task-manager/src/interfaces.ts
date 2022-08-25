@@ -19,11 +19,19 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     /**
-     * Try to lock the task.  Promise resolves when the lock is acquired, or rejects if we are removed from the
-     * queue without acquiring the lock for any reason.
+     * Volunteer for the task.  Promise resolves true when the task is assigned to the local client. It rejects if the
+     * local client is removed from the queue without being assigned the task for any reason, such as disconnecting or
+     * abandoning the task while in queue.
      * @param taskId - Identifier for the task
      */
-    lockTask(taskId: string): Promise<void>;
+    volunteerForTask(taskId: string): Promise<boolean>;
+
+    /**
+     * Continuously volunteer to lock the task.  Watch the "assigned" event to determine if the task lock is assigned.
+     * We automatically re-enter the queue if the task lock is lost for any reason.
+     * @param taskId - Identifier for the task
+     */
+    subscribeToTask(taskId: string): void;
 
     /**
      * Exit the queue, releasing the task if currently locked.
@@ -36,7 +44,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
      * would release the lock.
      * @param taskId - Identifier for the task
      */
-    haveTaskLock(taskId: string): boolean;
+    assigned(taskId: string): boolean;
 
     /**
      * Check whether this client is either the current assignee for the task or is waiting in line or we expect they
@@ -44,4 +52,10 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
      * @param taskId - Identifier for the task
      */
     queued(taskId: string): boolean;
+
+    /**
+     * Check whether this client is subscribed for the task.
+     * @param taskId - Identifier for the task
+     */
+    subscribed(taskId: string): boolean;
 }
