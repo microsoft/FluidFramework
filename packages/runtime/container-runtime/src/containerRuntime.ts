@@ -2546,7 +2546,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
-            const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in TurnBased flush mode we will trigger a flush at the next turn break
             if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
@@ -2566,13 +2565,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             }
 
-            clientSequenceNumber = this.submitMessage(
-                type,
-                content,
-                serializedContent,
-                maxOpSize,
-                this._flushMode === FlushMode.TurnBased,
-                opMetadataInternal);
+            if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
+                clientSequenceNumber = this.submitRuntimeMessage(type,
+                    content, this._flushMode === FlushMode.TurnBased /* batch */, opMetadataInternal);
+            } else {
+                // If the content length is larger than the client configured message size
+                // instead of splitting the content, we will fail by explicitly closing the container
+                this.closeFn(new GenericError(
+                    "OpTooLarge",
+                    /* error */ undefined,
+                    {
+                        length: serializedContent.length,
+                        limit: defaultMaxOpSizeInBytes,
+                    }));
+                clientSequenceNumber = -1;
+            }
         }
 
         // Let the PendingStateManager know that a message was submitted.
@@ -2587,30 +2594,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
-    }
-
-    private submitMessage(
-        type: ContainerMessageType,
-        content: any,
-        serializedContent: string,
-        serverMaxOpSize: number,
-        batch: boolean,
-        opMetadataInternal: unknown = undefined,
-    ): number {
-        if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
-            return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
-        }
-
-        // If the content length is larger than the client configured message size
-        // instead of splitting the content, we will fail by explicitly close the container
-        this.closeFn(new GenericError(
-            "OpTooLarge",
-            /* error */ undefined,
-            {
-                length: serializedContent.length,
-                limit: defaultMaxOpSizeInBytes,
-            }));
-        return -1;
     }
 
     private submitSystemMessage(
