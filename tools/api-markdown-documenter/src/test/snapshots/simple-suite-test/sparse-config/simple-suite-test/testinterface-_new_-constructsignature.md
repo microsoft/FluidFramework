@@ -1,4 +1,4 @@
-# (new)
+# new (): TestInterface
 
 Test construct signature.
 

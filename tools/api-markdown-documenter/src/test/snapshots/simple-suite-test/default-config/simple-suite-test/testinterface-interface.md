@@ -48,7 +48,7 @@ export interface TestInterface
 
 ## Construct Signature Details
 
-### (new) {#_new_-constructsignature}
+### new (): TestInterface {#_new_-constructsignature}
 
 Test construct signature.
 
@@ -118,7 +118,7 @@ testInterfaceMethod(): void;
 
 ## Call Signature Details
 
-### (call) {#_call_-callsignature}
+### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#_call_-callsignature}
 
 Test interface event call signature
 
@@ -132,7 +132,7 @@ Here are some remarks about the event call signature
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-### (call) {#_call__1-callsignature}
+### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#_call__1-callsignature}
 
 Another example call signature
 
