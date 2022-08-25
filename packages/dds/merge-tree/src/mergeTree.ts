@@ -216,6 +216,7 @@ function tileShift(
             searchInfo.tile = marker;
         }
     }
+    return true;
 }
 
 function addTile(tile: ReferencePosition, tiles: object) {

@@ -877,7 +877,7 @@ export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T
 // @public (undocumented)
 export interface NodeAction<TClientData> {
     // (undocumented)
-    (node: IMergeNode, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, clientData: TClientData): boolean | void;
+    (node: IMergeNode, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, clientData: TClientData): boolean;
 }
 
 // @public (undocumented)
