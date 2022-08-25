@@ -22,17 +22,17 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 * <b>TTypeParameterB</b>: Another type parameter
 
 
-## Events
-
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
-
 ## Constructors
 
 |  Constructor | Description |
 |  --- | --- |
 |  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test/testclass-_constructor_-constructor) | Test class constructor |
+
+## Events
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
 
 ## Properties
 

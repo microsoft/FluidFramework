@@ -25,9 +25,9 @@ import { renderChildDetailsSection, renderMemberTables } from "../helpers";
  *
  * - Tables
  *
- *   - event properties
- *
  *   - constructors
+ *
+ *   - event properties
  *
  *   - properties
  *
@@ -40,9 +40,9 @@ import { renderChildDetailsSection, renderMemberTables } from "../helpers";
  * - Details (for any types not rendered to their own documents - see
  *   {@link PolicyOptions.documentBoundaries})
  *
- *   - event properties
- *
  *   - constructors
+ *
+ *   - event properties
  *
  *   - properties
  *
@@ -51,9 +51,6 @@ import { renderChildDetailsSection, renderMemberTables } from "../helpers";
  *   - call-signatures
  *
  *   - index-signatures
- *
- * Note: this ordering was established to mirror existing fluidframework.com rendering.
- * The plan is to change this in a subsequent change (before public release).
  */
 export function renderClassSection(
     apiClass: ApiClass,
@@ -96,14 +93,14 @@ export function renderClassSection(
         const renderedMemberTables = renderMemberTables(
             [
                 {
-                    headingTitle: "Events",
-                    itemKind: ApiItemKind.Property,
-                    items: eventProperties,
-                },
-                {
                     headingTitle: "Constructors",
                     itemKind: ApiItemKind.Constructor,
                     items: constructors,
+                },
+                {
+                    headingTitle: "Events",
+                    itemKind: ApiItemKind.Property,
+                    items: eventProperties,
                 },
                 {
                     headingTitle: "Properties",
@@ -137,14 +134,14 @@ export function renderClassSection(
         const renderedDetailsSection = renderChildDetailsSection(
             [
                 {
-                    headingTitle: "Event Details",
-                    itemKind: ApiItemKind.Property,
-                    items: eventProperties,
-                },
-                {
                     headingTitle: "Constructor Details",
                     itemKind: ApiItemKind.Constructor,
                     items: constructors,
+                },
+                {
+                    headingTitle: "Event Details",
+                    itemKind: ApiItemKind.Property,
+                    items: eventProperties,
                 },
                 {
                     headingTitle: "Property Details",

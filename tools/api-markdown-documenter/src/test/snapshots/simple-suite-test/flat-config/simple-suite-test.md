@@ -220,17 +220,17 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 * <b>TTypeParameterB</b>: Another type parameter
 
 
-#### Events
-
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
-
 #### Constructors
 
 |  Constructor | Description |
 |  --- | --- |
 |  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-constructor) | Test class constructor |
+
+#### Events
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
 
 #### Properties
 
@@ -247,22 +247,6 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) | void | A test public abstract method. |
 |  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | TTypeParameterA | Test class method |
 |  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
-
-#### Event Details
-
-##### testClassEventProperty {#testclass-testclasseventproperty-property}
-
-Test class event property
-
-###### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the property
-
-###### Signature {#testclasseventproperty-signature}
-
-```typescript
-readonly testClassEventProperty: () => void;
-```
 
 #### Constructor Details
 
@@ -288,6 +272,22 @@ constructor(privateProperty: number, protectedProperty: TestEnum, testClassPrope
 |  protectedProperty | [TestEnum](docs/simple-suite-test#testenum-enum) | See [TestAbstractClass.protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property)<!-- -->. |
 |  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property)<!-- -->. |
 |  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property)<!-- -->. |
+
+#### Event Details
+
+##### testClassEventProperty {#testclass-testclasseventproperty-property}
+
+Test class event property
+
+###### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the property
+
+###### Signature {#testclasseventproperty-signature}
+
+```typescript
+readonly testClassEventProperty: () => void;
+```
 
 #### Property Details
 
