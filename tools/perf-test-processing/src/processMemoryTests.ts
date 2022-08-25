@@ -50,8 +50,8 @@ filesToProcess.forEach((fullPath) => {
             const props = {
                 suiteName: data.suiteName,
                 testName: test.testName,
-                heapUsedAvg: test.stats.mean,
-                heapUsedStdDev: test.stats.deviation,
+                heapUsedAvg: test.testData.stats.mean,
+                heapUsedStdDev: test.testData.stats.deviation,
             };
 
             logger.send({
