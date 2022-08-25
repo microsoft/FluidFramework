@@ -48,11 +48,18 @@ export interface MemberTableProperties {
     items: readonly ApiItem[];
 }
 
+/**
+ * Renders a simple section containing a series of headings and tables, representing the API members of some parent
+ * item, organized by kind.
+ *
+ * @param memberTableProperties - List of table configurations.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderMemberTables(
     memberTableProperties: readonly MemberTableProperties[],
     config: Required<MarkdownDocumenterConfiguration>,
-): SectionAstNode | undefined {
-    const docSections: SectionAstNode[] = [];
+): DocSection | undefined {
+    const docSections: DocSection[] = [];
 
     for (const member of memberTableProperties) {
         const renderedTable = renderTableWithHeading(member, config);
@@ -61,7 +68,9 @@ export function renderMemberTables(
         }
     }
 
-    return docSections.length === 0 ? undefined : mergeAstSections(docSections);
+    return docSections.length === 0
+        ? undefined
+        : mergeSections(docSections, config.tsdocConfiguration);
 }
 
 /**
@@ -74,7 +83,7 @@ export function renderTableWithHeading(
     memberTableProperties: MemberTableProperties,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    const renderedTable = renderTable(
+    const renderedTable = renderSummaryTable(
         memberTableProperties.items,
         memberTableProperties.itemKind,
         config,
@@ -82,13 +91,10 @@ export function renderTableWithHeading(
 
     return renderedTable === undefined
         ? undefined
-        : {
-              children: [
-                  renderHeading({ title: memberTableProperties.headingTitle }),
-                  renderedTable,
-              ],
-              type: "section",
-          };
+        : new DocSection({ configuration: config.tsdocConfiguration }, [
+              renderHeading({ title: memberTableProperties.headingTitle }, config),
+              renderedTable,
+          ]);
 }
 
 /**
@@ -105,7 +111,7 @@ export function renderSummaryTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
-): AstNode | undefined {
+): DocTable | undefined {
     if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
         throw new Error(`Table rendering does not support provided API item kind: "${itemKind}".`);
     }
@@ -155,7 +161,7 @@ export function renderDefaultSummaryTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
-): AstNode | undefined {
+): DocTable | undefined {
     if (apiItems.length === 0) {
         return undefined;
     }
@@ -180,14 +186,13 @@ export function renderDefaultSummaryTable(
         tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
     }
 
-    return table();
-    // return new DocTable(
-    //     {
-    //         configuration: config.tsdocConfiguration,
-    //         headerTitles,
-    //     },
-    //     tableRows,
-    // );
+    return new DocTable(
+        {
+            configuration: config.tsdocConfiguration,
+            headerTitles,
+        },
+        tableRows,
+    );
 }
 
 /**
@@ -556,6 +561,40 @@ export function renderParameterTitleCell(
  */
 export function renderParameterTypeCell(
     apiParameter: Parameter,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocTableCell {
+    return renderTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
+}
+
+/**
+ * Renders a table cell containing the description ({@link https://tsdoc.org/pages/tags/param/ | @param}) comment
+ * of the provided parameter.
+ * If the parameter has no documentation, an empty cell will be rendered.
+ *
+ * @param apiParameter - The parameter whose comment will be rendered in the cell
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderParameterSummaryCell(
+    apiParameter: Parameter,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocTableCell {
+    return apiParameter.tsdocParamBlock === undefined
+        ? renderEmptyTableCell(config)
+        : new DocTableCell({ configuration: config.tsdocConfiguration }, [
+              apiParameter.tsdocParamBlock.content,
+          ]);
+}
+
+/**
+ * Renders a table cell containing type information.
+ * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * API suite (model).
+ *
+ * @param typeExcerpty - An excerpt describing the type to be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderTypeExcerptCell(
+    typeExcerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
     return new DocTableCell({ configuration: config.tsdocConfiguration }, [
