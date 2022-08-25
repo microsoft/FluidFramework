@@ -14,14 +14,14 @@ import {
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISerializableValue,
-         IValueChanged } from "../interfaces";
+         IValueChanged } from "../../interfaces";
 import { IMapSetOperation,
          IMapDeleteOperation,
          IMapClearOperation,
          IMapKeyEditLocalOpMetadata,
          IMapClearLocalOpMetadata,
-         MapLocalOpMetadata } from "../internalInterfaces";
-import { MapFactory, SharedMap } from "../map";
+         MapLocalOpMetadata } from "../../internalInterfaces";
+import { MapFactory, SharedMap } from "../../map";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();

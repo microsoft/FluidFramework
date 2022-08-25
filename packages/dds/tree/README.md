@@ -71,15 +71,21 @@ This diagram shows the ownership hierarchy during a transaction with solid arrow
 
 ```mermaid
 graph TD;
-    store["Data Store"]-->doc["Persisted Summaries"]
-    container["Fluid Container"]-->shared-tree;
-    shared-tree--"extends"-->shared-tree-core;
-    shared-tree-core-."reads".->doc;
-    shared-tree-core-->EditManager-->X["collab window & branches"];
-    shared-tree-core-->Indexes-->ForestIndex;
-    shared-tree-->checkout["default checkout"]-->transaction-."updates".->checkout;
-    transaction-->ProgressiveEditBuilder
-    checkout-."reads".->ForestIndex;
+    subgraph "Persisted Data"
+        store["Data Store"]-->doc["Persisted Summaries"]
+    end
+    container["Fluid Container"]-->shared-tree
+    subgraph "@fluid-internal/tree"
+        shared-tree--"extends"-->shared-tree-core
+        shared-tree-core-."reads".->doc
+        shared-tree-core-->EditManager-->X["collab window & branches"]
+        shared-tree-core-->Indexes-->ForestIndex
+        shared-tree-->checkout["default checkout"]
+        transaction-."updates".->checkout
+        transaction-->ProgressiveEditBuilder
+        checkout-."reads".->ForestIndex
+        checkout-->transaction
+    end
 ```
 
 `tree` is a DDS, and therefore it stores its persisted data in a Fluid Container, and is also owned by that same container.
@@ -111,11 +117,13 @@ could be added in the future.
 #### Viewing
 
 ```mermaid
-graph LR;
+flowchart LR;
     doc["Persisted Summaries"]--"Summary+Trailing ops"-->shared-tree-core
-    shared-tree--"configures"-->shared-tree-core
-    shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
-    ForestIndex--"Exposed by"-->checkout;
+    subgraph "@fluid-internal/tree"
+        shared-tree--"configures"-->shared-tree-core
+        shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
+        ForestIndex--"Exposed by"-->checkout
+    end
     checkout--"viewed by"-->app
 ```
 
@@ -151,7 +159,23 @@ When it is more designed, some details for how it works belong in this section (
 
 ### Editing
 
-TODO: add a diagram for this section.
+Edit related data flow with solid arrows.
+Key view related updates made in response with dotted arrows.
+
+This shows editing during a transaction:
+
+```mermaid
+flowchart RL
+    subgraph "@fluid-internal/tree"
+        transaction--"collects edits in"-->ProgressiveEditBuilder
+        ProgressiveEditBuilder--"updates anchors"-->AnchorSet
+        ProgressiveEditBuilder--"deltas for edits"-->transaction
+        transaction--"applies deltas to"-->forest["checkout's forest"]
+    end
+    command["App's command callback"]
+    command--"Edits"-->transaction
+    forest-."invalidation".->command
+```
 
 The application can use their view to locate places they want to edit.
 The application passes a "command" to the checkout which create a transaction that runs the command.
@@ -163,12 +187,48 @@ Each change is processed in two ways:
 -   the change is accumulated in a `ProgressiveEditBuilder` which will be used to create/encode the actual edit to send to Fluid.
 
 Once the command ends, the transaction is rolled back leaving the forest in a clean state.
-Then if the command did not error, a [`change-set`](./src/changeset/README.md) is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
+Then if the command did not error, a [`changeset`](./src/changeset/README.md) is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
 The checkout then rebases the op if any Ops came in while the transaction was pending (only possible for async transactions or if the checkout was behind due to it being async for some reason).
 Finally the checkout sends the op to `shared-tree-core` which submits it to Fluid.
 This submission results in the op becoming a local op, which `shared-tree-core` creates a delta for.
 This delta goes to the indexes, resulting in the ForestIndex and thus checkouts getting updated,
 as well as anything else subscribing to deltas.
 
+This shows completion of a transaction.
+Not shown are the rollback or changes to forest (and the resulting invalidation) and AnchorSet,
+then the updating of them with the final version of the edit.
+In the common case this can be skipped (since they cancel out).
+Also not shown is the (also usually unneeded) step of rebasing the changeset before storing it and sending it to the service.
+
+```mermaid
+flowchart LR
+    command["App's command callback"]--"commit"-->transaction
+    subgraph "@fluid-internal/tree"
+        transaction--"build"-->ProgressiveEditBuilder
+        ProgressiveEditBuilder--"changeset"-->transaction
+        transaction--"changeset (from builder)"-->core["shared-tree-core"]
+        core--"changeset"-->EditManager--"changeset"-->local["Local Branch"]
+    end
+    core--"Op"-->service["Fluid ordering service (Kafka)"]
+    service--"Sequenced Op"-->clients["All clients"]
+    service--"Sequenced Op"-->log["Op Log"]
+```
+
 When the op gets sequenced, `shared-tree-core` receives it back from the ordering service,
 rebases it as needed, and sends another delta to the indexes.
+
+```mermaid
+graph LR;
+    service["Fluid Service"]--"Sequenced Op"-->core["shared-tree-core"]
+    subgraph "@fluid-internal/tree"
+        core--"changeset"-->EditManager
+        EditManager--"add changeset"-->remote["remote branch"]
+        remote--"rebase into"-->main[main branch]
+        main--"rebase over new changeset"-->local["Local Branch"]
+        main--"sequenced changeset"-->Indexes
+        local--"delta"-->Indexes
+        Indexes--"delta"-->ForestIndex
+    end
+    ForestIndex--"invalidates"-->app
+    Indexes--"delta (for apps that want deltas)"-->app
+```
