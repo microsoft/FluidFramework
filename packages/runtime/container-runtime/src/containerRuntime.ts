@@ -813,9 +813,6 @@ export function getDeviceSpec() {
 
 export interface IDebugBusEventSignatures {
     inactiveObjectUsed: [IUnreferencedEventPropsEx];
-    foo: [number, string];
-    gotSummarizer: [];
-    lostSummarizer: [];
     gcDisposed: [];
 }
 

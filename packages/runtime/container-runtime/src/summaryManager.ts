@@ -154,19 +154,12 @@ export class SummaryManager implements IDisposable {
     }
 
     private readonly refreshSummarizer = () => {
-        // window.gcAlert will be set by the app, or otherwise undefined and fallback to console.log
-        function gcAlert(m: string) {
-            try { (window as any).gcAlert(m); } catch { console.log("GC ALERT:\n", m); }
-        }
-
         // Transition states depending on shouldSummarize, which is a calculated property
         // that is only true if this client is connected and is the elected summarizer.
         const shouldSummarizeState = this.getShouldSummarizeState();
         switch (this.state) {
             case SummaryManagerState.Off: {
                 if (shouldSummarizeState.shouldSummarize) {
-                    // eslint-disable-next-line max-len
-                    gcAlert("YOU'VE GOT THE SUMMARIZER!\n\nYou're the only client who will see most alerts when an Inactive Object is used");
                     this.startSummarization();
                 }
                 return;
@@ -178,8 +171,6 @@ export class SummaryManager implements IDisposable {
             }
             case SummaryManagerState.Running: {
                 if (shouldSummarizeState.shouldSummarize === false) {
-                    // eslint-disable-next-line max-len
-                    gcAlert("YOU LOST THE SUMMARIZER!\n\nYou will no longer see most alerts for Inactive Object usage");
                     this.stop(shouldSummarizeState.stopReason);
                 }
                 return;
