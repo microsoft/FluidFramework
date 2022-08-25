@@ -247,6 +247,15 @@ export interface IDocListParameters extends IDocNodeContainerParameters {
 }
 
 // @public
+export function isOptional(apiItem: ApiItem): boolean;
+
+// @public
+export function isReadonly(apiItem: ApiItem): boolean;
+
+// @public
+export function isStatic(apiItem: ApiItem): boolean;
+
+// @public
 export interface Link {
     text: string;
     url: string;

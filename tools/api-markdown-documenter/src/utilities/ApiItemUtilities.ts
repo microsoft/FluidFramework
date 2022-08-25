@@ -583,6 +583,39 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
 }
 
 /**
+ * Returns whether or not the provided API item is of a kind that can be marked as optional, and if it is
+ * indeed optional.
+ */
+export function isOptional(apiItem: ApiItem): boolean {
+    if (ApiOptionalMixin.isBaseClassOf(apiItem)) {
+        return apiItem.isOptional;
+    }
+    return false;
+}
+
+/**
+ * Returns whether or not the provided API item is of a kind that can be marked as readonly, and if it is
+ * indeed readonly.
+ */
+export function isReadonly(apiItem: ApiItem): boolean {
+    if (ApiReadonlyMixin.isBaseClassOf(apiItem)) {
+        return apiItem.isReadonly;
+    }
+    return false;
+}
+
+/**
+ * Returns whether or not the provided API item is of a kind that can be marked as static, and if it is
+ * indeed static.
+ */
+export function isStatic(apiItem: ApiItem): boolean {
+    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
+        return apiItem.isStatic;
+    }
+    return false;
+}
+
+/**
  * Gets the {@link ApiModifier}s that apply to the provided API item.
  *
  * @param apiItem - The API item being queried.
@@ -590,22 +623,16 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
 export function getModifiers(apiItem: ApiItem): ApiModifier[] {
     const modifiers: ApiModifier[] = [];
 
-    if (ApiOptionalMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.isOptional) {
-            modifiers.push(ApiModifier.Optional);
-        }
+    if (isOptional(apiItem)) {
+        modifiers.push(ApiModifier.Optional);
     }
 
-    if (ApiReadonlyMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.isReadonly) {
-            modifiers.push(ApiModifier.Readonly);
-        }
+    if (isReadonly(apiItem)) {
+        modifiers.push(ApiModifier.Readonly);
     }
 
-    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.isStatic) {
-            modifiers.push(ApiModifier.Static);
-        }
+    if (isStatic(apiItem)) {
+        modifiers.push(ApiModifier.Static);
     }
 
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
