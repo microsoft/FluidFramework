@@ -239,14 +239,16 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
 |  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | readonly | number | Test class getter-only property |
 |  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | readonly | TTypeParameterB | Test class property |
+|  [testClassStaticProperty](docs/simple-suite-test#testclass-testclassstaticproperty-property) | static | (foo: number) =&gt; string | Test static class property |
 
 #### Methods
 
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) | void | A test public abstract method. |
-|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | TTypeParameterA | Test class method |
-|  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
+|  Method | Modifiers | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
+|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) |  | TTypeParameterA | Test class method |
+|  [testClassStaticMethod(foo)](docs/simple-suite-test#testclass-testclassstaticmethod-method) | static | string | Test class static method |
+|  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
 
 #### Event Details
 
@@ -330,6 +332,16 @@ Here are some remarks about the property
 readonly testClassProperty: TTypeParameterB;
 ```
 
+##### testClassStaticProperty {#testclass-testclassstaticproperty-property}
+
+Test static class property
+
+###### Signature {#testclassstaticproperty-signature}
+
+```typescript
+static testClassStaticProperty: (foo: number) => string;
+```
+
 #### Method Details
 
 ##### publicAbstractMethod {#testclass-publicabstractmethod-method}
@@ -362,6 +374,22 @@ testClassMethod(input: TTypeParameterA): TTypeParameterA;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
+
+##### testClassStaticMethod {#testclass-testclassstaticmethod-method}
+
+Test class static method
+
+###### Signature {#testclassstaticmethod-signature}
+
+```typescript
+static testClassStaticMethod(foo: number): string;
+```
+
+###### Parameters {#testclassstaticmethod-parameters}
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  foo | number | Some number |
 
 ##### virtualMethod {#testclass-virtualmethod-method}
 
