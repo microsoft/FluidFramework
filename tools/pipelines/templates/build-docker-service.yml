@@ -62,6 +62,10 @@ parameters:
   type: string
   default: Small
 
+- name: installBuildToolsFromRepo
+  type: boolean
+  default: false
+
 trigger: none
 
 variables:
