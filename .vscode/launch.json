@@ -292,7 +292,7 @@
             },
             "sourceMaps": true,
             "stopOnEntry": false,
-            "pauseForSourceMap": true,
+            "pauseForSourceMap": false,
             "program": "${file}",
             "args": [
                 // "--fgrep",               // Uncomment to filter by test case name
