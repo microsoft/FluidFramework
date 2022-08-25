@@ -18,15 +18,11 @@ export function isVirtualPatch(version: semver.SemVer | string): boolean {
     return false;
 }
 
-/* eslint-disable tsdoc/syntax */
 /**
- * Translate a {@link VersionChangeType} for the virtual patch scenario where we overload a beta version number
- * to include all of major, minor, and patch.  Actual semver type is not translated
- * "major" maps to "minor" with "patch" = 1000 (<N + 1>.0.0 -> 0.<N + 1>.1000)
- * "minor" maps to "patch" * 1000 (x.<N + 1>.0 -> 0.x.<N + 1>000)
- * "patch" is unchanged (but remember the final patch number holds "minor" * 1000 + the incrementing "patch")
+ * @param versionBump - The bump type to do.
+ * @param versionString - The version to bump.
+ * @returns The bumped version.
  */
-/* eslint-enable tsdoc/syntax */
 export function bumpVirtualPatchVersion(
     versionBump: VersionBumpType,
     versionString: semver.SemVer | string,
@@ -66,6 +62,12 @@ export function bumpVirtualPatchVersion(
     return virtualVersion;
 }
 
+/**
+ * Translates a version using the Fluid virtualPatch version scheme into a standard semver.
+ *
+ * @param virtualPatchVersion - A Fluid virtualPatch version.
+ * @returns The translated version.
+ */
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer {
     const parsedVersion = semver.parse(virtualPatchVersion);
     assert(parsedVersion !== null);
@@ -87,6 +89,12 @@ export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | stri
     return newSemVer;
 }
 
+/**
+ * Translates a standard semver into the Fluid virtualPatch version scheme.
+ *
+ * @param virtualPatchVersion - A version.
+ * @returns The translated virtualPatch version.
+ */
 export function toVirtualPatchScheme(version: semver.SemVer | string): semver.SemVer {
     const parsedVersion = semver.parse(version);
     assert(parsedVersion !== null);
