@@ -265,7 +265,7 @@ describe("client.applyMsg", () => {
     });
 
     it("intersecting insert after local delete", () => {
-        const clients = createClientsAtInitialState("", "A", "B", "C");
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
         let seq = 0;
         const logger = new TestClientLogger(clients.all);
         const messages = [
@@ -284,7 +284,7 @@ describe("client.applyMsg", () => {
     });
 
     it("conflicting insert after shared delete", () => {
-        const clients = createClientsAtInitialState("Z", "A", "B", "C");
+        const clients = createClientsAtInitialState({ initialState: "Z" }, "A", "B", "C");
         let seq = 0;
 
         const logger = new TestClientLogger(clients.all);
@@ -303,7 +303,7 @@ describe("client.applyMsg", () => {
     });
 
     it("local remove followed by conflicting insert", () => {
-        const clients = createClientsAtInitialState("", "A", "B", "C");
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
 
         let seq = 0;
 
@@ -324,7 +324,7 @@ describe("client.applyMsg", () => {
     });
 
     it("intersecting insert with un-acked insert and delete", () => {
-        const clients = createClientsAtInitialState("", "A", "B", "C");
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
 
         let seq = 0;
         const messages = [
@@ -343,7 +343,7 @@ describe("client.applyMsg", () => {
     });
 
     it("conflicting insert over local delete", () => {
-        const clients = createClientsAtInitialState("", "A", "B", "C");
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B", "C");
 
         let seq = 0;
         const messages = [
@@ -373,7 +373,9 @@ describe("client.applyMsg", () => {
     });
 
     it("Local insert after acked local delete", () => {
-        const clients = createClientsAtInitialState("ZZ", "A", "B", "C");
+        const clients = createClientsAtInitialState(
+            { initialState: "ZZ", options: { mergeTreeUseNewLengthCalculations: true } },
+            "A", "B", "C");
 
         const logger = new TestClientLogger(clients.all);
 
@@ -401,7 +403,7 @@ describe("client.applyMsg", () => {
     });
 
     it("Remote Remove before conflicting insert", () => {
-        const clients = createClientsAtInitialState("Z", "A", "B", "C");
+        const clients = createClientsAtInitialState({ initialState: "Z" }, "A", "B", "C");
 
         const logger = new TestClientLogger(clients.all);
 
@@ -426,7 +428,7 @@ describe("client.applyMsg", () => {
     });
 
     it("Conflicting inserts at deleted segment position", () => {
-        const clients = createClientsAtInitialState("a----bcd-ef", "A", "B", "C");
+        const clients = createClientsAtInitialState({ initialState: "a----bcd-ef" }, "A", "B", "C");
 
         const logger = new TestClientLogger(clients.all);
 
@@ -451,7 +453,9 @@ describe("client.applyMsg", () => {
     });
 
     it("Inconsistent shared string after pausing connection #9703", () => {
-        const clients = createClientsAtInitialState("abcd", "A", "B", "C");
+        const clients = createClientsAtInitialState(
+            { initialState: "abcd", options: { mergeTreeUseNewLengthCalculations: true } },
+             "A", "B", "C");
 
         const logger = new TestClientLogger(clients.all);
 

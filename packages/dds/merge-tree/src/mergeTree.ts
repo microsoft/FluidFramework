@@ -505,11 +505,14 @@ export class MergeTree {
         const removalInfo = toRemovalInfo(segment);
         if (localSeq === undefined) {
             if (removalInfo !== undefined) {
-                const [rSeq] = normalizeSequenceNumberIfUnassigned(removalInfo.removedSeq);
-                if (rSeq > this.collabWindow.minSeq) {
-                    return 0;
+                if (this.options?.mergeTreeUseNewLengthCalculations !== true) {
+                    const [rSeq] = normalizeSequenceNumberIfUnassigned(removalInfo.removedSeq);
+                    if (rSeq > this.collabWindow.minSeq) {
+                        return 0;
+                    }
+                    return undefined;
                 }
-                return undefined;
+                return 0;
             } else {
                 return segment.cachedLength;
             }
@@ -1008,21 +1011,55 @@ export class MergeTree {
             } else {
                 const segment = node;
                 const removalInfo = toRemovalInfo(segment);
-                const [removedSeq, seq] = normalizeSequenceNumberIfUnassigned(
-                    removalInfo?.removedSeq,
-                    segment.seq);
+                if (this.options?.mergeTreeUseNewLengthCalculations === true) {
+                    const [removedSeq, seq] = normalizeSequenceNumberIfUnassigned(
+                        removalInfo?.removedSeq,
+                        segment.seq);
 
-                if (removalInfo !== undefined) {
-                    if (removedSeq <= this.collabWindow.minSeq) {
-                        return undefined;
+                    if (removalInfo !== undefined) {
+                        if (removedSeq <= this.collabWindow.minSeq) {
+                            return undefined;
+                        }
+                        if (removedSeq <= refSeq || removalInfo.removedClientIds.includes(clientId)) {
+                            return 0;
+                        }
                     }
-                    if (removedSeq <= refSeq || removalInfo.removedClientIds.includes(clientId)) {
+
+                    if (seq <= refSeq || segment.clientId === clientId) {
+                        return segment.cachedLength;
+                    } else {
+                        // the segment was inserted and removed before the
+                        // this context, so it will never exist for this
+                        // context
+                        if (removalInfo !== undefined
+                            && removalInfo.removedSeq !== UnassignedSequenceNumber) {
+                            return undefined;
+                        }
+                        // Segment invisible to client at reference sequence number/branch id/client id of op
                         return 0;
                     }
                 }
 
-                if (seq <= refSeq || segment.clientId === clientId) {
-                    return segment.cachedLength;
+                if (removalInfo !== undefined
+                    && removalInfo.removedSeq !== UnassignedSequenceNumber
+                    && removalInfo.removedSeq <= refSeq) {
+                    // this segment is a tombstone eligible for zamboni
+                    // so should never be considered, as it may not exist
+                    // on other clients
+                    return undefined;
+                }
+                if (((segment.clientId === clientId) ||
+                    ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= refSeq)))) {
+                    // Segment happened by reference sequence number or segment from requesting client
+                    if (removalInfo !== undefined) {
+                        if (removalInfo.removedClientIds.includes(clientId)) {
+                            return 0;
+                        } else {
+                            return segment.cachedLength;
+                        }
+                    } else {
+                        return segment.cachedLength;
+                    }
                 } else {
                     // the segment was inserted and removed before the
                     // this context, so it will never exist for this
