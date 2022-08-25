@@ -1324,7 +1324,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "simple-suite-test!TestInterfaceExtendingOtherInterfaces:interface",
-          "docComment": "/**\n * Test interface that extends other interfaces\n *\n * @remarks\n *\n * Here are some remarks about the interface\n *\n * @see\n *\n * - {@link TestInterface} - {@link TestInterfaceWithTypeParameter} - {@link TestMappedType}\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test interface that extends other interfaces\n *\n * @remarks\n *\n * Here are some remarks about the interface\n *\n * @see\n *\n * - {@link TestInterface}\n *\n * - {@link TestInterfaceWithTypeParameter}\n *\n * - {@link TestMappedType}\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
