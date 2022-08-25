@@ -207,6 +207,9 @@ The site theme/template lives in `themes/thxvscode`.
 | `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
 | `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
+| `build:md-magic:code` | `node md-magic-code.js` |
+| `build:md-magic:website` | `node md-magic-website.js` |
+| `build:website` | `npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documenter && npm run hugo` |
 | `ci:build` | `npm run download && npm run build` |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |

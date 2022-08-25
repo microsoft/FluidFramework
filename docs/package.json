@@ -17,7 +17,10 @@
     "build:api-documenter": "node api-markdown-documenter.js",
     "build:api-rollup": "rimraf ./_api-extractor-temp && node ./rollup-api-json.js ../_api-extractor-temp/doc-models/ ./_api-extractor-temp/",
     "build:fast": "npm run build:api-rollup && concurrently npm:build:md-magic npm:build:api-documenter && npm run hugo",
-    "build:md-magic": "node md.js",
+    "build:md-magic": "npm run build:md-magic:code && npm run build:md-magic:website",
+    "build:md-magic:code": "node md-magic-code.js",
+    "build:md-magic:website": "node md-magic-website.js",
+    "build:website": "npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documenter && npm run hugo",
     "ci:build": "npm run download && npm run build",
     "clean": "rimraf public content/docs/apis _api-extractor-temp",
     "download": "npm run download:api && npm run build:api-documenter",
@@ -27,7 +30,7 @@
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
-    "start": "hugo server"
+    "start": "npm run build:md-magic:website && hugo server"
   },
   "dependencies": {
     "@fluid-tools/api-markdown-documenter": "file:../tools/api-markdown-documenter",
