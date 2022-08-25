@@ -280,6 +280,18 @@ export interface IEditableForest extends IForestSubscription {
 
 // @public
 export interface IEditableTree {
+    // (undocumented)
+    readonly [cursorSymbol]: ITreeSubscriptionCursor;
+    // (undocumented)
+    readonly [forestSymbol]: IEditableForest;
+    // (undocumented)
+    [getChildNode]: ((key: FieldKey) => IEditableTree | undefined);
+    // (undocumented)
+    readonly [nodeMapSymbol]: Map<FieldKey, IEditableTree>;
+    // (undocumented)
+    get [type](): TreeSchemaIdentifier;
+    // (undocumented)
+    [key: string]: undefined | IEditableTree;
 }
 
 // @public

@@ -64,7 +64,7 @@ describe("forest-proxy", () => {
 		assert.deepEqual(descriptor, {
 			configurable: true,
 			enumerable: true,
-			value: "Adam",
+			value: { value: "Adam", type: "String" },
 			writable: true,
 		});
 	});
@@ -72,41 +72,46 @@ describe("forest-proxy", () => {
 	it("check has field and get value", () => {
 		const proxy = buildTestProxy(person);
 		assert.equal("name" in proxy, true);
-		assert.equal(proxy.name, "Adam");
+		assert.deepEqual(proxy.name, { value: "Adam", type: "String" });
 	});
 
 	it("read downwards", () => {
 		const proxy = buildTestProxy(person);
 		assert.deepEqual(Object.keys(proxy), ["name", "age", "salary", "friends", "address"]);
-		assert.equal(proxy.name, "Adam");
-		assert.equal(proxy.age, 35);
-		assert.equal(proxy.salary, 10420.2);
-		assert.deepEqual(proxy.friends, { Mat: "Mat" });
+		assert.deepEqual(proxy.name, { value: "Adam", type: "String" });
+		assert.deepEqual(proxy.age, { value: 35, type: "Int32" });
+		assert.deepEqual(proxy.salary, { value: 10420.2, type: "Float32" });
+		assert.deepEqual(proxy.friends, { value: { Mat: "Mat" }, type: "Map<String>" });
 		assert.deepEqual(Object.keys(proxy.address), ["street", "zip", "phones"]);
-		assert.equal(proxy.address.street, "treeStreet");
+		assert.deepEqual(proxy.address.street, { value: "treeStreet", type: "String" });
 	});
 
 	it("read upwards", () => {
 		const proxy = buildTestProxy(person);
 		assert.deepEqual(Object.keys(proxy.address), ["street", "zip", "phones"]);
-		assert.equal(proxy.address.phones[1], 123456879);
-		assert.equal(proxy.address.street, "treeStreet");
+		assert.deepEqual(proxy.address.phones[1], { value: 123456879, type: "Int32" });
+		assert.deepEqual(proxy.address.street, { value: "treeStreet", type: "String" });
 		assert.deepEqual(Object.keys(proxy), ["name", "age", "salary", "friends", "address"]);
-		assert.equal(proxy.name, "Adam");
+		assert.deepEqual(proxy.name, { value: "Adam", type: "String" });
 	});
 
 	it("access array data", () => {
 		const proxy = buildTestProxy(person);
 		assert.equal(proxy.address.phones.length, 2);
-		assert.equal(proxy.address.phones[1], 123456879);
+		assert.deepEqual(proxy.address.phones[1], { value: 123456879, type: "Int32" });
 		const expectedPhones = ["+49123456778", 123456879];
 		let i = 0;
 		for (const phone of proxy.address.phones) {
-			assert.equal(phone, expectedPhones[i++]);
+			assert.equal(phone.value, expectedPhones[i++]);
 		}
+		assert.deepEqual(proxy.address.phones[0], { value: "+49123456778", type: "String" });
 		assert.deepEqual(Object.keys(proxy.address.phones), ["0", "1"]);
-		const arrayKeys = Object.getOwnPropertyNames(proxy.address.phones);
-		assert.deepEqual(arrayKeys, ["0", "1", "length"]);
+		assert.deepEqual(Object.getOwnPropertyNames(proxy.address.phones), ["0", "1", "length"]);
+		const act = proxy.address.phones.map((phone: { value: unknown; }) => phone.value);
+		assert.deepEqual(act, expectedPhones);
+		proxy.address.phones.forEach((phone: { value: unknown; }, index: number) => {
+			assert.equal(expectedPhones[index], phone.value);
+		});
 	});
 
 	it("update property", () => {
