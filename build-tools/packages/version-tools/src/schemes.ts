@@ -224,9 +224,21 @@ export function adjustVersion(
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false) {
     let list: string[] = [];
 
+    // Check if the versionList is version strings or tag names
+    const isTagNames = versionList.some((v) => v.includes("_v"));
+    const versionsToIterate = isTagNames
+        ? versionList
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              .map((t) => getVersionFromTag(t)!)
+              .filter((t) => t !== undefined && t !== "" && t !== null)
+        : versionList;
+
     // Remove pre-releases from the list
     if (!allowPrereleases) {
-        list = versionList.filter((v) => {
+        list = versionsToIterate.filter((v) => {
+            if (v === undefined) {
+                return false;
+            }
             const hasSemverPrereleaseSection = semver.prerelease(v)?.length ?? 0 !== 0;
             const scheme = detectVersionScheme(v);
             const isPrerelease =
@@ -240,4 +252,18 @@ export function getLatestReleaseFromList(versionList: string[], allowPrereleases
     const latest = list[list.length - 1];
 
     return latest;
+}
+
+/**
+ * Parses a version from a git tag.
+ * @param tag - The tag.
+ * @returns A version parsed from the tag.
+ */
+export function getVersionFromTag(tag: string): string | undefined {
+    const tagSplit = tag.split("_v");
+    if (tagSplit.length !== 2) {
+        return undefined;
+    }
+
+    return tagSplit[1];
 }

@@ -70,7 +70,7 @@ export class Context {
     }
 
     public async collectVersionInfo(releaseGroup: MonoRepoKind | string): Promise<ReferenceVersionBag> {
-        this.logger.log("  Resolving published dependencies");
+        this.logger.info("  Resolving published dependencies");
 
         const depVersions =
             new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
@@ -130,7 +130,7 @@ export class Context {
 
                     if (prereleaseSatisfies(depBuildPackage.version, version)) {
                         if (!depVersions.get(depBuildPackage)) {
-                            this.logger.logVerbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`);
+                            this.logger.verbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`);
                             if (depBuildPackage.monoRepo) {
                                 pendingDepCheck.push(...depBuildPackage.monoRepo.packages);
                             } else {

@@ -110,7 +110,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -129,7 +128,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -158,7 +156,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -200,7 +197,6 @@ describe("Data Store Context Tests", () => {
                         makeLocallyVisibleFn,
                         snapshotTree: undefined,
                         isRootDataStore: false,
-                        writeGCDataAtRoot: true,
                         disableIsolatedChannels: false,
                     },
                 );
@@ -235,7 +231,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -275,7 +270,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -294,7 +288,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -315,7 +308,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -334,7 +326,6 @@ describe("Data Store Context Tests", () => {
                     makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -449,7 +440,6 @@ describe("Data Store Context Tests", () => {
                         storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                         scope,
                         createSummarizerNodeFn,
-                        writeGCDataAtRoot: true,
                         disableIsolatedChannels: !writeIsolatedChannels,
                     });
 
@@ -501,7 +491,6 @@ describe("Data Store Context Tests", () => {
                     scope,
                     createSummarizerNodeFn,
                     snapshotTree: undefined,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                     getBaseGCDetails: async () => undefined as unknown as IGarbageCollectionDetailsBase,
                 });
@@ -567,7 +556,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -603,7 +591,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -644,7 +631,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -680,7 +666,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 
@@ -724,7 +709,6 @@ describe("Data Store Context Tests", () => {
                     storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                     scope,
                     createSummarizerNodeFn,
-                    writeGCDataAtRoot: true,
                     disableIsolatedChannels: false,
                 });
 

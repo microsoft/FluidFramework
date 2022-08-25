@@ -257,10 +257,8 @@ export interface IFluidDataStoreChannel extends
     /**
      * After GC has run, called to notify this channel of routes that are used in it.
      * @param usedRoutes - The routes that are used in this channel.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
-     * as part of this GC run, this should be used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 
     /**
      * Notifies this object about changes in the connection state.
