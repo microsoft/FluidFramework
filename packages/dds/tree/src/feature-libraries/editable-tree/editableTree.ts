@@ -171,10 +171,10 @@ const handler: ProxyHandler<EditableTreeNode> = {
 				return { configurable: true, enumerable: true, value: key, writable: false };
 			}
 		} else {
-			const { result } = tryMoveDown(target[cursorSymbol], brand(key));
+			const { result, isArray } = tryMoveDown(target[cursorSymbol], brand(key));
 			if (result === TreeNavigationResult.Ok) {
 				const value = target[cursorSymbol].value === undefined
-					? target[getChildNode](brand(key))
+					? target[getChildNode](isArray ? EmptyKey : brand(key))
 					: { value: target[cursorSymbol].value, type: target[cursorSymbol].type };
 				const descriptor = {
 					configurable: true,
