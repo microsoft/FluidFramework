@@ -33,7 +33,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
         }),
         release: Flags.string({
             description: "Indicates the build is a release build.",
-            options: ["release"],
+            options: ["release", "none"],
             env: "VERSION_RELEASE",
         }),
         patch: Flags.boolean({
