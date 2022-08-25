@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.3.2000 win32-x64 node-v14.19.0
+@fluid-tools/build-cli/0.3.2000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -104,9 +104,12 @@ USAGE
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
 * [`flub commands`](#flub-commands)
+* [`flub generate buildVersion [FILE]`](#flub-generate-buildversion-file)
+* [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
 * [`flub version VERSION`](#flub-version-version)
+* [`flub version latest`](#flub-version-latest)
 
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
 
@@ -207,6 +210,53 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.0/src/commands/commands.ts)_
 
+## `flub generate buildVersion [FILE]`
+
+This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
+
+```
+USAGE
+  $ flub generate buildVersion [FILE] --build <value> [--testBuild] [--release release] [--patch] [--base <value>] [--tag
+    <value>] [-i] [--test] [-v]
+
+FLAGS
+  -i, --includeInternalVersions  Include Fluid internal versions.
+  -v, --verbose                  Verbose logging.
+  --base=<value>                 The base version. This will be read from lerna.json/package.json if not provided.
+  --build=<value>                (required) The CI build number.
+  --patch                        Indicates the build is a patch build.
+  --release=<option>             Indicates the build is a release build.
+                                 <options: release>
+  --tag=<value>                  The tag name to use.
+  --test
+  --testBuild                    Indicates the build is a test build.
+
+DESCRIPTION
+  This command is used to compute the version number of Fluid packages. The release version number is based on what's in
+  the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease
+  suffix if it is not a tagged build
+
+EXAMPLES
+  $ flub generate buildVersion
+```
+
+## `flub generate packageJson`
+
+Generate mono repo package json
+
+```
+USAGE
+  $ flub generate packageJson -g client|server|azure|build-tools [-v]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) release group
+                               <options: client|server|azure|build-tools>
+  -v, --verbose                Verbose logging.
+
+DESCRIPTION
+  Generate mono repo package json
+```
+
 ## `flub help [COMMAND]`
 
 Display help for flub.
@@ -285,9 +335,43 @@ EXAMPLES
   You can use ^ and ~ as a shorthand.
 
     $ flub version ^1.0.0
+
+  You can use the 'current' bump type to calculate ranges without bumping the version.
+
+    $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
 _See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/version.ts)_
+
+## `flub version latest`
+
+Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+```
+USAGE
+  $ flub version latest -r <value> [--json] [--prerelease]
+
+FLAGS
+  -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
+                             multiple versions, or a space-delimited list of versions can be provided using a single
+                             argument.
+  --prerelease               Include prerelease versions. By default, prerelease versions are excluded.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+EXAMPLES
+  You can use the --versions (-r) flag multiple times.
+
+    $ flub version latest -r 2.0.0 -r 2.0.0-internal.1.0.0 -r 1.0.0 -r 0.56.1000
+
+  You can omit the repeated --versions (-r) flag and pass a space-delimited list instead.
+
+    $ flub version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
+```
 <!-- commandsstop -->
 
 ## Trademark

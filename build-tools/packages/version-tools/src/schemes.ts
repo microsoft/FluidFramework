@@ -20,15 +20,22 @@ import { isInternalVersionRange, isInternalVersionScheme } from "./internalVersi
  *
  * - "internal" is the 2.0.0-internal.1.0.0 scheme.
  *
+ * - "internalPrerelease" is the 2.0.0-internal.1.0.0.[CI build #] scheme.
+ *
  * - "virtualPatch" is the 0.36.1002 scheme.
  */
-export type VersionScheme = "semver" | "internal" | "virtualPatch";
+export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "virtualPatch";
 
 /**
  * A typeguard to check if a string is a {@link VersionScheme}.
  */
 export function isVersionScheme(scheme: string): scheme is VersionScheme {
-    return scheme === "semver" || scheme === "internal" || scheme === "virtualPatch";
+    return (
+        scheme === "semver" ||
+        scheme === "internal" ||
+        scheme === "internalPrerelease" ||
+        scheme === "virtualPatch"
+    );
 }
 
 /**
@@ -47,10 +54,14 @@ function isVirtualPatch(version: semver.SemVer | string): boolean {
  * @param rangeOrVersion - a version or range string.
  * @returns The version scheme that the string is in.
  */
-export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
-    // First check if the string is a valid internal version
+export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme {
+    // First check if the string is a valid internal version. We need to check this
     if (isInternalVersionScheme(rangeOrVersion)) {
         return "internal";
+    }
+
+    if (isInternalVersionScheme(rangeOrVersion, true)) {
+        return "internalPrerelease";
     }
 
     if (semver.valid(rangeOrVersion) !== null) {
@@ -60,7 +71,7 @@ export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
         }
 
         return "semver";
-    } else if (semver.validRange(rangeOrVersion) !== null) {
+    } else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
         // Must be a range string
         if (isInternalVersionRange(rangeOrVersion)) {
             return "internal";
@@ -200,4 +211,59 @@ export function adjustVersion(
             fatal(`Unexpected version scheme: ${scheme}`);
         }
     }
+}
+
+/**
+ * Finds the highest version number in a list of versions, accounting for the Fluid internal version scheme.
+ *
+ * @param versionList - The array of versions to search.
+ * @param allowPrereleases - If true, prerelease versions will be included. Otherwise they will be filtered out, meaning
+ * only released versions will be returned.
+ * @returns The highest version number in the list.
+ */
+export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false) {
+    let list: string[] = [];
+
+    // Check if the versionList is version strings or tag names
+    const isTagNames = versionList.some((v) => v.includes("_v"));
+    const versionsToIterate = isTagNames
+        ? versionList
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              .map((t) => getVersionFromTag(t)!)
+              .filter((t) => t !== undefined && t !== "" && t !== null)
+        : versionList;
+
+    // Remove pre-releases from the list
+    if (!allowPrereleases) {
+        list = versionsToIterate.filter((v) => {
+            if (v === undefined) {
+                return false;
+            }
+            const hasSemverPrereleaseSection = semver.prerelease(v)?.length ?? 0 !== 0;
+            const scheme = detectVersionScheme(v);
+            const isPrerelease =
+                scheme === "internalPrerelease" ||
+                (hasSemverPrereleaseSection && scheme !== "internal");
+            return !isPrerelease;
+        });
+    }
+
+    list = semver.sort(list);
+    const latest = list[list.length - 1];
+
+    return latest;
+}
+
+/**
+ * Parses a version from a git tag.
+ * @param tag - The tag.
+ * @returns A version parsed from the tag.
+ */
+export function getVersionFromTag(tag: string): string | undefined {
+    const tagSplit = tag.split("_v");
+    if (tagSplit.length !== 2) {
+        return undefined;
+    }
+
+    return tagSplit[1];
 }

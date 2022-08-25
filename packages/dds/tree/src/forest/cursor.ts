@@ -66,7 +66,7 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
 }
 
 /**
- * @param cursor - tree who's field will be visited.
+ * @param cursor - tree whose field will be visited.
  * @param key - the field to visit.
  * @param f - builds output from field member, which will be selected in cursor when cursor is provided.
  *  If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.

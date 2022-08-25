@@ -5,7 +5,11 @@
 
 import { IEditableForest, IForestSubscription } from "../forest";
 import { ChangeFamily, ProgressiveEditBuilder } from "../change-family";
+import { TransactionResult } from "../checkout";
 
+/**
+ * The interface a checkout has to implement for a transaction to be able to be applied to it.
+ */
 export interface Checkout<TEditor, TChange> {
     readonly forest: IEditableForest;
     readonly changeFamily: ChangeFamily<TEditor, TChange>;
@@ -30,13 +34,13 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     command: (
         forest: IForestSubscription,
         editor: TEditor
-    ) => CommandResult,
-): CommandResult {
+    ) => TransactionResult,
+): TransactionResult {
     const t = new Transaction(checkout.forest, checkout.changeFamily);
     const result = command(checkout.forest, t.editor);
     const changes = t.editor.getChanges();
-    const edit = checkout.changeFamily.rebaser.compose(...changes);
-    if (result === CommandResult.Abort) {
+    const edit = checkout.changeFamily.rebaser.compose(changes);
+    if (result === TransactionResult.Abort) {
         // Roll back changes
         const inverse = checkout.changeFamily.rebaser.invert(edit);
 
@@ -51,9 +55,4 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     checkout.submitEdit(edit);
 
     return result;
-}
-
-enum CommandResult {
-    Abort,
-    Apply,
 }

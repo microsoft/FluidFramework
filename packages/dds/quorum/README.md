@@ -1,4 +1,4 @@
-# @fluid-internal/quorum
+# @fluid-experimental/quorum
 
 <!-- AUTO-GENERATED-CONTENT:START (TEMPLATE:src=readme-simple.md) -->
 <!-- This section is automatically generated. To update it, edit docs/md-magic.config.js  then run
