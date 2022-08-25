@@ -38,6 +38,15 @@ A test example
 const foo = bar;
 ```
 
+## Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) | An empty interface |
+|  [TestInterface](docs/simple-suite-test/testinterface-interface) | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
+
 ## Classes
 
 |  Class | Description |
@@ -51,6 +60,13 @@ const foo = bar;
 |  --- | --- |
 |  [TestEnum](docs/simple-suite-test/testenum-enum) | Test Enum |
 
+## Types
+
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum) |
+|  [TypeAlias](docs/simple-suite-test/typealias-typealias) | Test Type-Alias |
+
 ## Functions
 
 |  Function | Return Type | Description |
@@ -60,30 +76,14 @@ const foo = bar;
 |  [testFunctionReturningIntersectionType()](docs/simple-suite-test/testfunctionreturningintersectiontype-function) | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
 |  [testFunctionReturningUnionType()](docs/simple-suite-test/testfunctionreturninguniontype-function) | string \| [TestInterface](docs/simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
-## Interfaces
-
-|  Interface | Description |
-|  --- | --- |
-|  [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) | An empty interface |
-|  [TestInterface](docs/simple-suite-test/testinterface-interface) | Test interface |
-|  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
-|  [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
-
-## Namespaces
-
-|  Namespace | Description |
-|  --- | --- |
-|  [TestNamespace](docs/simple-suite-test/testnamespace-namespace) | Test Namespace |
-
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
 |  [testConst](docs/simple-suite-test/testconst-variable) | readonly | Test Constant |
 
-## Types
+## Namespaces
 
-|  TypeAlias | Description |
+|  Namespace | Description |
 |  --- | --- |
-|  [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum) |
-|  [TypeAlias](docs/simple-suite-test/typealias-typealias) | Test Type-Alias |
+|  [TestNamespace](docs/simple-suite-test/testnamespace-namespace) | Test Namespace |

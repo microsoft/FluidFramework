@@ -22,6 +22,12 @@ Example 2
 export declare namespace TestNamespace 
 ```
 
+## Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [TestInterface](docs/simple-suite-test/testnamespace-testinterface-interface) | Test interface |
+
 ## Classes
 
 |  Class | Description |
@@ -34,23 +40,17 @@ export declare namespace TestNamespace
 |  --- | --- |
 |  [TestEnum](docs/simple-suite-test/testnamespace-testenum-enum) | Test Enum |
 
+## Types
+
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TypeAlias](docs/simple-suite-test/testnamespace-typealias-typealias) | Test Type-Alias |
+
 ## Functions
 
 |  Function | Return Type | Description |
 |  --- | --- | --- |
 |  [testFunction(testParameter)](docs/simple-suite-test/testnamespace-testfunction-function) | number | Test function |
-
-## Interfaces
-
-|  Interface | Description |
-|  --- | --- |
-|  [TestInterface](docs/simple-suite-test/testnamespace-testinterface-interface) | Test interface |
-
-## Namespaces
-
-|  Namespace | Description |
-|  --- | --- |
-|  [TestSubNamespace](docs/simple-suite-test/testnamespace-testsubnamespace-namespace) | Test sub-namespace |
 
 ## Variables
 
@@ -58,8 +58,8 @@ export declare namespace TestNamespace
 |  --- | --- | --- |
 |  [TestConst](docs/simple-suite-test/testnamespace-testconst-variable) | readonly | Test Constant |
 
-## Types
+## Namespaces
 
-|  TypeAlias | Description |
+|  Namespace | Description |
 |  --- | --- |
-|  [TypeAlias](docs/simple-suite-test/testnamespace-typealias-typealias) | Test Type-Alias |
+|  [TestSubNamespace](docs/simple-suite-test/testnamespace-testsubnamespace-namespace) | Test sub-namespace |

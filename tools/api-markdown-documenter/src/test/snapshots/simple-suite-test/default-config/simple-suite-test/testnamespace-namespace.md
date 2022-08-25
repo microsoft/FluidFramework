@@ -24,6 +24,12 @@ Example 2
 export declare namespace TestNamespace 
 ```
 
+## Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | Test interface |
+
 ## Classes
 
 |  Class | Description |
@@ -36,23 +42,17 @@ export declare namespace TestNamespace
 |  --- | --- |
 |  [TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum) | Test Enum |
 
+## Types
+
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TypeAlias](./simple-suite-test/testnamespace-namespace#typealias-typealias) | Test Type-Alias |
+
 ## Functions
 
 |  Function | Return Type | Description |
 |  --- | --- | --- |
 |  [testFunction(testParameter)](./simple-suite-test/testnamespace-namespace#testfunction-function) | number | Test function |
-
-## Interfaces
-
-|  Interface | Description |
-|  --- | --- |
-|  [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | Test interface |
-
-## Namespaces
-
-|  Namespace | Description |
-|  --- | --- |
-|  [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace-namespace) | Test sub-namespace |
 
 ## Variables
 
@@ -60,11 +60,11 @@ export declare namespace TestNamespace
 |  --- | --- | --- |
 |  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | readonly | Test Constant |
 
-## Types
+## Namespaces
 
-|  TypeAlias | Description |
+|  Namespace | Description |
 |  --- | --- |
-|  [TypeAlias](./simple-suite-test/testnamespace-namespace#typealias-typealias) | Test Type-Alias |
+|  [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace-namespace) | Test sub-namespace |
 
 ## Enumeration Details
 
@@ -107,6 +107,18 @@ Test enum value 2
 TestEnumValue2 = 1
 ```
 
+## Type Details
+
+### TypeAlias {#typealias-typealias}
+
+Test Type-Alias
+
+#### Signature {#typealias-signature}
+
+```typescript
+type TypeAlias = boolean;
+```
+
 ## Function Details
 
 ### testFunction {#testfunction-function}
@@ -135,16 +147,4 @@ Test Constant
 
 ```typescript
 TestConst = "Hello world!"
-```
-
-## Type Details
-
-### TypeAlias {#typealias-typealias}
-
-Test Type-Alias
-
-#### Signature {#typealias-signature}
-
-```typescript
-type TypeAlias = boolean;
 ```

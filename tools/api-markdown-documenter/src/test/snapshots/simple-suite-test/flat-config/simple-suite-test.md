@@ -38,6 +38,15 @@ A test example
 const foo = bar;
 ```
 
+## Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) | An empty interface |
+|  [TestInterface](docs/simple-suite-test#testinterface-interface) | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test#testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
+
 ## Classes
 
 |  Class | Description |
@@ -51,6 +60,13 @@ const foo = bar;
 |  --- | --- |
 |  [TestEnum](docs/simple-suite-test#testenum-enum) | Test Enum |
 
+## Types
+
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum) |
+|  [TypeAlias](docs/simple-suite-test#typealias-typealias) | Test Type-Alias |
+
 ## Functions
 
 |  Function | Return Type | Description |
@@ -60,14 +76,11 @@ const foo = bar;
 |  [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
 |  [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-function) | string \| [TestInterface](docs/simple-suite-test#testinterface-interface) | Test function that returns an inline type |
 
-## Interfaces
+## Variables
 
-|  Interface | Description |
-|  --- | --- |
-|  [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) | An empty interface |
-|  [TestInterface](docs/simple-suite-test#testinterface-interface) | Test interface |
-|  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test#testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
-|  [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
+|  Variable | Modifiers | Description |
+|  --- | --- | --- |
+|  [testConst](docs/simple-suite-test#testconst-variable) | readonly | Test Constant |
 
 ## Namespaces
 
@@ -75,20 +88,253 @@ const foo = bar;
 |  --- | --- |
 |  [TestNamespace](docs/simple-suite-test#testnamespace-namespace) | Test Namespace |
 
-## Variables
+## Interface Details
 
-|  Variable | Modifiers | Description |
+### TestEmptyInterface {#testemptyinterface-interface}
+
+An empty interface
+
+#### Signature {#testemptyinterface-signature}
+
+```typescript
+export interface TestEmptyInterface 
+```
+
+### TestInterface {#testinterface-interface}
+
+Test interface
+
+#### Remarks {#testinterface-remarks}
+
+Here are some remarks about the interface
+
+#### Signature {#testinterface-signature}
+
+```typescript
+export interface TestInterface 
+```
+
+#### Construct Signatures
+
+|  ConstructSignature | Return Type | Description |
 |  --- | --- | --- |
-|  [testConst](docs/simple-suite-test#testconst-variable) | readonly | Test Constant |
+|  [(new)()](docs/simple-suite-test#testinterface-_new_-constructsignature) | [TestInterface](docs/simple-suite-test#testinterface-interface) | Test construct signature. |
 
-## Types
+#### Events
 
-|  TypeAlias | Description |
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
+
+#### Properties
+
+|  Property | Modifiers | Default Value | Type | Description |
+|  --- | --- | --- | --- | --- |
+|  [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
+|  [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | optional | 0 | number | Test optional property |
+
+#### Methods
+
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceMethod()](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
+
+#### Call Signatures
+
+|  CallSignature | Description |
 |  --- | --- |
-|  [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum) |
-|  [TypeAlias](docs/simple-suite-test#typealias-typealias) | Test Type-Alias |
+|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call_-callsignature) | Test interface event call signature |
+|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call__1-callsignature) | Another example call signature |
 
-## Classe Details
+#### Construct Signature Details
+
+##### (new) {#testinterface-_new_-constructsignature}
+
+Test construct signature.
+
+###### Signature {#_new_-signature}
+
+```typescript
+new (): TestInterface;
+```
+
+#### Event Details
+
+##### testClassEventProperty {#testinterface-testclasseventproperty-propertysignature}
+
+Test interface event property
+
+###### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the event property
+
+###### Signature {#testclasseventproperty-signature}
+
+```typescript
+readonly testClassEventProperty: () => void;
+```
+
+#### Property Details
+
+##### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
+
+Test interface property
+
+###### Remarks {#testinterfaceproperty-remarks}
+
+Here are some remarks about the property
+
+###### Signature {#testinterfaceproperty-signature}
+
+```typescript
+testInterfaceProperty: number;
+```
+
+##### testOptionalInterfaceProperty {#testinterface-testoptionalinterfaceproperty-propertysignature}
+
+Test optional property
+
+###### Signature {#testoptionalinterfaceproperty-signature}
+
+```typescript
+testOptionalInterfaceProperty?: number;
+```
+
+#### Method Details
+
+##### testInterfaceMethod {#testinterface-testinterfacemethod-methodsignature}
+
+Test interface method
+
+###### Remarks {#testinterfacemethod-remarks}
+
+Here are some remarks about the method
+
+###### Signature {#testinterfacemethod-signature}
+
+```typescript
+testInterfaceMethod(): void;
+```
+
+#### Call Signature Details
+
+##### (call) {#testinterface-_call_-callsignature}
+
+Test interface event call signature
+
+###### Remarks {#_call_-remarks}
+
+Here are some remarks about the event call signature
+
+###### Signature {#_call_-signature}
+
+```typescript
+(event: 'testCallSignature', listener: (input: unknown) => void): any;
+```
+
+##### (call) {#testinterface-_call__1-callsignature}
+
+Another example call signature
+
+###### Remarks {#_call__1-remarks}
+
+Here are some remarks about the event call signature
+
+###### Signature {#_call__1-signature}
+
+```typescript
+(event: 'anotherTestCallSignature', listener: (input: number) => string): number;
+```
+
+### TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-interface}
+
+Test interface that extends other interfaces
+
+#### Remarks {#testinterfaceextendingotherinterfaces-remarks}
+
+Here are some remarks about the interface
+
+#### Signature {#testinterfaceextendingotherinterfaces-signature}
+
+```typescript
+export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestInterfaceWithTypeParameter<number>, TestMappedType 
+```
+<b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)
+
+, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
+
+, [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
+
+
+#### Methods
+
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testMethod(input)](docs/simple-suite-test#testinterfaceextendingotherinterfaces-testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
+
+#### Method Details
+
+##### testMethod {#testinterfaceextendingotherinterfaces-testmethod-methodsignature}
+
+Test interface method accepting a string and returning a number.
+
+###### Remarks {#testmethod-remarks}
+
+Here are some remarks about the method
+
+###### Signature {#testmethod-signature}
+
+```typescript
+testMethod(input: string): number;
+```
+
+###### Parameters {#testmethod-parameters}
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  input | string | A string |
+
+### TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
+
+Test interface with generic type parameter
+
+#### Remarks {#testinterfacewithtypeparameter-remarks}
+
+Here are some remarks about the interface
+
+#### Signature {#testinterfacewithtypeparameter-signature}
+
+```typescript
+export interface TestInterfaceWithTypeParameter<T> 
+```
+<b>Type parameters:</b> 
+
+* <b>T</b>: A type parameter
+
+
+#### Properties
+
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  [testProperty](docs/simple-suite-test#testinterfacewithtypeparameter-testproperty-propertysignature) | T | A test interface property using generic type parameter |
+
+#### Property Details
+
+##### testProperty {#testinterfacewithtypeparameter-testproperty-propertysignature}
+
+A test interface property using generic type parameter
+
+###### Remarks {#testproperty-remarks}
+
+Here are some remarks about the property
+
+###### Signature {#testproperty-signature}
+
+```typescript
+testProperty: T;
+```
+
+## Class Details
 
 ### TestAbstractClass {#testabstractclass-class}
 
@@ -460,6 +706,38 @@ Here are some remarks about the enum value
 TestEnumValue3 = 4
 ```
 
+## Type Details
+
+### TestMappedType {#testmappedtype-typealias}
+
+Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum)
+
+#### Remarks {#testmappedtype-remarks}
+
+Here are some remarks about the mapped type
+
+#### Signature {#testmappedtype-signature}
+
+```typescript
+export declare type TestMappedType = {
+    [K in TestEnum]: boolean;
+};
+```
+
+### TypeAlias {#typealias-typealias}
+
+Test Type-Alias
+
+#### Remarks {#typealias-remarks}
+
+Here are some remarks about the type alias
+
+#### Signature {#typealias-signature}
+
+```typescript
+export declare type TypeAlias = string;
+```
+
 ## Function Details
 
 ### testFunction {#testfunction-function}
@@ -519,250 +797,20 @@ Test function that returns an inline type
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
 
-## Interface Details
+## Variable Details
 
-### TestEmptyInterface {#testemptyinterface-interface}
+### testConst {#testconst-variable}
 
-An empty interface
+Test Constant
 
-#### Signature {#testemptyinterface-signature}
+#### Remarks {#testconst-remarks}
 
-```typescript
-export interface TestEmptyInterface 
-```
+Here are some remarks about the variable
 
-### TestInterface {#testinterface-interface}
-
-Test interface
-
-#### Remarks {#testinterface-remarks}
-
-Here are some remarks about the interface
-
-#### Signature {#testinterface-signature}
+#### Signature {#testconst-signature}
 
 ```typescript
-export interface TestInterface 
-```
-
-#### Construct Signatures
-
-|  ConstructSignature | Return Type | Description |
-|  --- | --- | --- |
-|  [(new)()](docs/simple-suite-test#testinterface-_new_-constructsignature) | [TestInterface](docs/simple-suite-test#testinterface-interface) | Test construct signature. |
-
-#### Events
-
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
-
-#### Properties
-
-|  Property | Modifiers | Default Value | Type | Description |
-|  --- | --- | --- | --- | --- |
-|  [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
-|  [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | optional | 0 | number | Test optional property |
-
-#### Methods
-
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  [testInterfaceMethod()](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
-
-#### Call Signatures
-
-|  CallSignature | Description |
-|  --- | --- |
-|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call_-callsignature) | Test interface event call signature |
-|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call__1-callsignature) | Another example call signature |
-
-#### Construct Signature Details
-
-##### (new) {#testinterface-_new_-constructsignature}
-
-Test construct signature.
-
-###### Signature {#_new_-signature}
-
-```typescript
-new (): TestInterface;
-```
-
-#### Event Details
-
-##### testClassEventProperty {#testinterface-testclasseventproperty-propertysignature}
-
-Test interface event property
-
-###### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the event property
-
-###### Signature {#testclasseventproperty-signature}
-
-```typescript
-readonly testClassEventProperty: () => void;
-```
-
-#### Property Details
-
-##### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
-
-Test interface property
-
-###### Remarks {#testinterfaceproperty-remarks}
-
-Here are some remarks about the property
-
-###### Signature {#testinterfaceproperty-signature}
-
-```typescript
-testInterfaceProperty: number;
-```
-
-##### testOptionalInterfaceProperty {#testinterface-testoptionalinterfaceproperty-propertysignature}
-
-Test optional property
-
-###### Signature {#testoptionalinterfaceproperty-signature}
-
-```typescript
-testOptionalInterfaceProperty?: number;
-```
-
-#### Method Details
-
-##### testInterfaceMethod {#testinterface-testinterfacemethod-methodsignature}
-
-Test interface method
-
-###### Remarks {#testinterfacemethod-remarks}
-
-Here are some remarks about the method
-
-###### Signature {#testinterfacemethod-signature}
-
-```typescript
-testInterfaceMethod(): void;
-```
-
-#### Call Signature Details
-
-##### (call) {#testinterface-_call_-callsignature}
-
-Test interface event call signature
-
-###### Remarks {#_call_-remarks}
-
-Here are some remarks about the event call signature
-
-###### Signature {#_call_-signature}
-
-```typescript
-(event: 'testCallSignature', listener: (input: unknown) => void): any;
-```
-
-##### (call) {#testinterface-_call__1-callsignature}
-
-Another example call signature
-
-###### Remarks {#_call__1-remarks}
-
-Here are some remarks about the event call signature
-
-###### Signature {#_call__1-signature}
-
-```typescript
-(event: 'anotherTestCallSignature', listener: (input: number) => string): number;
-```
-
-### TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-interface}
-
-Test interface that extends other interfaces
-
-#### Remarks {#testinterfaceextendingotherinterfaces-remarks}
-
-Here are some remarks about the interface
-
-#### Signature {#testinterfaceextendingotherinterfaces-signature}
-
-```typescript
-export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestInterfaceWithTypeParameter<number>, TestMappedType 
-```
-<b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)
-
-, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
-
-, [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
-
-
-#### Methods
-
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  [testMethod(input)](docs/simple-suite-test#testinterfaceextendingotherinterfaces-testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
-
-#### Method Details
-
-##### testMethod {#testinterfaceextendingotherinterfaces-testmethod-methodsignature}
-
-Test interface method accepting a string and returning a number.
-
-###### Remarks {#testmethod-remarks}
-
-Here are some remarks about the method
-
-###### Signature {#testmethod-signature}
-
-```typescript
-testMethod(input: string): number;
-```
-
-###### Parameters {#testmethod-parameters}
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  input | string | A string |
-
-### TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
-
-Test interface with generic type parameter
-
-#### Remarks {#testinterfacewithtypeparameter-remarks}
-
-Here are some remarks about the interface
-
-#### Signature {#testinterfacewithtypeparameter-signature}
-
-```typescript
-export interface TestInterfaceWithTypeParameter<T> 
-```
-<b>Type parameters:</b> 
-
-* <b>T</b>: A type parameter
-
-
-#### Properties
-
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  [testProperty](docs/simple-suite-test#testinterfacewithtypeparameter-testproperty-propertysignature) | T | A test interface property using generic type parameter |
-
-#### Property Details
-
-##### testProperty {#testinterfacewithtypeparameter-testproperty-propertysignature}
-
-A test interface property using generic type parameter
-
-###### Remarks {#testproperty-remarks}
-
-Here are some remarks about the property
-
-###### Signature {#testproperty-signature}
-
-```typescript
-testProperty: T;
+testConst = 42
 ```
 
 ## Namespace Details
@@ -791,6 +839,12 @@ Example 2
 export declare namespace TestNamespace 
 ```
 
+#### Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [TestInterface](docs/simple-suite-test#testnamespace-testinterface-interface) | Test interface |
+
 #### Classes
 
 |  Class | Description |
@@ -803,23 +857,17 @@ export declare namespace TestNamespace
 |  --- | --- |
 |  [TestEnum](docs/simple-suite-test#testnamespace-testenum-enum) | Test Enum |
 
+#### Types
+
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TypeAlias](docs/simple-suite-test#testnamespace-typealias-typealias) | Test Type-Alias |
+
 #### Functions
 
 |  Function | Return Type | Description |
 |  --- | --- | --- |
 |  [testFunction(testParameter)](docs/simple-suite-test#testnamespace-testfunction-function) | number | Test function |
-
-#### Interfaces
-
-|  Interface | Description |
-|  --- | --- |
-|  [TestInterface](docs/simple-suite-test#testnamespace-testinterface-interface) | Test interface |
-
-#### Namespaces
-
-|  Namespace | Description |
-|  --- | --- |
-|  [TestSubNamespace](docs/simple-suite-test#testnamespace-testsubnamespace-namespace) | Test sub-namespace |
 
 #### Variables
 
@@ -827,13 +875,61 @@ export declare namespace TestNamespace
 |  --- | --- | --- |
 |  [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | readonly | Test Constant |
 
-#### Types
+#### Namespaces
 
-|  TypeAlias | Description |
+|  Namespace | Description |
 |  --- | --- |
-|  [TypeAlias](docs/simple-suite-test#testnamespace-typealias-typealias) | Test Type-Alias |
+|  [TestSubNamespace](docs/simple-suite-test#testnamespace-testsubnamespace-namespace) | Test sub-namespace |
 
-#### Classe Details
+#### Interface Details
+
+##### TestInterface {#testnamespace-testinterface-interface}
+
+Test interface
+
+###### Signature {#testinterface-signature}
+
+```typescript
+interface TestInterface 
+```
+
+###### Properties
+
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceProperty](docs/simple-suite-test#testnamespace-testinterface-testinterfaceproperty-propertysignature) | boolean | Test interface property |
+
+###### Methods
+
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceMethod()](docs/simple-suite-test#testnamespace-testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
+
+###### Property Details
+
+<b>testInterfaceProperty</b>
+
+Test interface property
+
+<b>Signature</b>
+
+```typescript
+testInterfaceProperty: boolean;
+```
+
+###### Method Details
+
+<b>testInterfaceMethod</b>
+
+Test interface method
+
+<b>Signature</b>
+
+```typescript
+testInterfaceMethod(): void;
+```
+
+#### Class Details
 
 ##### TestClass {#testnamespace-testclass-class}
 
@@ -952,6 +1048,18 @@ Test enum value 2
 TestEnumValue2 = 1
 ```
 
+#### Type Details
+
+##### TypeAlias {#testnamespace-typealias-typealias}
+
+Test Type-Alias
+
+###### Signature {#typealias-signature}
+
+```typescript
+type TypeAlias = boolean;
+```
+
 #### Function Details
 
 ##### testFunction {#testnamespace-testfunction-function}
@@ -970,66 +1078,6 @@ function testFunction(testParameter: number): number;
 |  --- | --- | --- |
 |  testParameter | number |  |
 
-#### Interface Details
-
-##### TestInterface {#testnamespace-testinterface-interface}
-
-Test interface
-
-###### Signature {#testinterface-signature}
-
-```typescript
-interface TestInterface 
-```
-
-###### Properties
-
-|  Property | Type | Description |
-|  --- | --- | --- |
-|  [testInterfaceProperty](docs/simple-suite-test#testnamespace-testinterface-testinterfaceproperty-propertysignature) | boolean | Test interface property |
-
-###### Methods
-
-|  Method | Return Type | Description |
-|  --- | --- | --- |
-|  [testInterfaceMethod()](docs/simple-suite-test#testnamespace-testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
-
-###### Property Details
-
-<b>testInterfaceProperty</b>
-
-Test interface property
-
-<b>Signature</b>
-
-```typescript
-testInterfaceProperty: boolean;
-```
-
-###### Method Details
-
-<b>testInterfaceMethod</b>
-
-Test interface method
-
-<b>Signature</b>
-
-```typescript
-testInterfaceMethod(): void;
-```
-
-#### Namespace Details
-
-##### TestSubNamespace {#testnamespace-testsubnamespace-namespace}
-
-Test sub-namespace
-
-###### Signature {#testsubnamespace-signature}
-
-```typescript
-namespace TestSubNamespace 
-```
-
 #### Variable Details
 
 ##### TestConst {#testnamespace-testconst-variable}
@@ -1042,62 +1090,14 @@ Test Constant
 TestConst = "Hello world!"
 ```
 
-#### Type Details
+#### Namespace Details
 
-##### TypeAlias {#testnamespace-typealias-typealias}
+##### TestSubNamespace {#testnamespace-testsubnamespace-namespace}
 
-Test Type-Alias
+Test sub-namespace
 
-###### Signature {#typealias-signature}
-
-```typescript
-type TypeAlias = boolean;
-```
-
-## Variable Details
-
-### testConst {#testconst-variable}
-
-Test Constant
-
-#### Remarks {#testconst-remarks}
-
-Here are some remarks about the variable
-
-#### Signature {#testconst-signature}
+###### Signature {#testsubnamespace-signature}
 
 ```typescript
-testConst = 42
-```
-
-## Type Details
-
-### TestMappedType {#testmappedtype-typealias}
-
-Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum)
-
-#### Remarks {#testmappedtype-remarks}
-
-Here are some remarks about the mapped type
-
-#### Signature {#testmappedtype-signature}
-
-```typescript
-export declare type TestMappedType = {
-    [K in TestEnum]: boolean;
-};
-```
-
-### TypeAlias {#typealias-typealias}
-
-Test Type-Alias
-
-#### Remarks {#typealias-remarks}
-
-Here are some remarks about the type alias
-
-#### Signature {#typealias-signature}
-
-```typescript
-export declare type TypeAlias = string;
+namespace TestSubNamespace 
 ```
