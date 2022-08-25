@@ -22,6 +22,10 @@ parameters:
     - default
     - skip
     - force
+- name: installBuildToolsFromRepo
+  displayName: Use the Fluid build tools that are in the repo (as opposed to installing the latest release from npm)
+  type: boolean
+  default: true
 
 trigger:
   branches:
@@ -62,5 +66,6 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    installBuildToolsFromRepo: ${{ parameters.installBuildToolsFromRepo }}
     buildDirectory: common/lib/common-utils
     tagName: common-utils

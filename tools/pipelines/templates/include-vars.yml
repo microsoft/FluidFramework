@@ -25,6 +25,8 @@ parameters:
 
 variables:
 - group: prague-key-vault
+# Variables that control how the Fluid build tools are installed and behave
+- group: build-tools-config
 - name: skipComponentGovernanceDetection
   value: true
 - name: testBuild

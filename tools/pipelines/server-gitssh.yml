@@ -21,6 +21,10 @@ parameters:
     - default
     - skip
     - force
+- name: installBuildToolsFromRepo
+  displayName: Use the Fluid build tools that are in the repo (as opposed to installing the latest release from npm)
+  type: boolean
+  default: true
 
 trigger:
   branches:
@@ -58,6 +62,7 @@ extends:
     releaseImage: true
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    installBuildToolsFromRepo: ${{ parameters.installBuildToolsFromRepo }}
     buildDirectory: server/gitssh
     containerName: fluidframework/routerlicious/gitssh
     setVersion: false

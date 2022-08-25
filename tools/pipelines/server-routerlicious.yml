@@ -30,6 +30,10 @@ parameters:
     - default
     - skip
     - force
+- name: installBuildToolsFromRepo
+  displayName: Use the Fluid build tools that are in the repo (as opposed to installing the latest release from npm)
+  type: boolean
+  default: true
 
 trigger:
   branches:
@@ -79,6 +83,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     releaseKind: ${{ parameters.releaseKind }}
+    installBuildToolsFromRepo: ${{ parameters.installBuildToolsFromRepo }}
     buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
