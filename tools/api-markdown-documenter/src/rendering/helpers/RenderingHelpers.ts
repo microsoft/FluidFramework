@@ -69,7 +69,7 @@ export function renderSignature(
             docNodes.push(
                 new DocFencedCode({
                     configuration: config.tsdocConfiguration,
-                    code: apiItem.getExcerptWithModifiers(),
+                    code: signatureExcerpt,
                     language: "typescript",
                 }),
             );
