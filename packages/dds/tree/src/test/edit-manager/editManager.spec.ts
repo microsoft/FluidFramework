@@ -182,7 +182,7 @@ class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
     }
 }
 
-class TestAnchorSet extends AnchorSet {
+class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
     public rebases: RecursiveReadonly<NonEmptyTestChangeset>[] = [];
     public intentions: number[] = [];
 }
@@ -695,7 +695,7 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
                         ...localIntentions,
                     );
                     assert.deepEqual(delta, asDelta(expected));
-                        // Update the intentions known to this client
+                    // Update the intentions known to this client
                     client.intentions.splice(
                         client.intentions.length - client.localChanges.length,
                         0,
