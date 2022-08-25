@@ -4,7 +4,7 @@
  */
 
 import { ChangeEncoder, JsonCompatible } from "../../change-family";
-import { ITransposed as T } from "../../changeset";
+import { Transposed as T } from "../../changeset";
 
 export type SequenceChangeset = T.ILocalChangeset;
 

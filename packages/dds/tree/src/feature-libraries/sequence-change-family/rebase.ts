@@ -11,7 +11,7 @@ import {
     isSkipMark,
     MarkListFactory,
     splitMarkOnInput,
-    ITransposed as T,
+    Transposed as T,
 } from "../../changeset";
 import { clone, fail, StackyIterator } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";

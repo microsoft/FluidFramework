@@ -6,7 +6,7 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { brand, brandOpaque, clone, fail, OffsetListFactory } from "../util";
 import { FieldKey, Value, Delta } from "../tree";
-import { ProtoNode, ITransposed as T } from "./format";
+import { ProtoNode, Transposed as T } from "./format";
 import { isSkipMark } from "./utils";
 
 /**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Skip, ITransposed as T } from "./format";
+import { Skip, Transposed as T } from "./format";
 import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
 
 /**

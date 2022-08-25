@@ -4,7 +4,7 @@
  */
 
 import { ProgressiveEditBuilder } from "../../change-family";
-import { ITransposed as T } from "../../changeset";
+import { Transposed as T } from "../../changeset";
 import { ITreeCursor } from "../../forest";
 import { AnchorSet, UpPath, Value, Delta, getDepth } from "../../tree";
 import { fail } from "../../util";

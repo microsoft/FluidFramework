@@ -12,8 +12,8 @@ import { JsonableTree } from "../tree";
 /**
  * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
-export namespace ITransposed {
-	export interface Transaction extends IPeerChangeset {
+export namespace Transposed {
+	export interface ITransaction extends IPeerChangeset {
 		/**
 		 * The tag of the changeset that this transaction was originally issued after.
 		 */
