@@ -2,12 +2,8 @@
     "tags": [ "shared-tree-core" ],
     "exports": ["index"],
     "imports": [
-        "changeset",
         "change-family",
-        "dependency-tracking",
         "edit-manager",
-        "rebase",
-        "schema-stored",
         "tree",
         "util"
     ]
