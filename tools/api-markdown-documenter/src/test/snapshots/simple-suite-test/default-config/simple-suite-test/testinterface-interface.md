@@ -145,3 +145,13 @@ Here are some remarks about the event call signature
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
+
+## See also {#testinterface-see-also}
+
+[TestInterface.testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature)
+
+[TestInterface.testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature)
+
+[TestInterface.testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature)
+
+[TestInterface.testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature)

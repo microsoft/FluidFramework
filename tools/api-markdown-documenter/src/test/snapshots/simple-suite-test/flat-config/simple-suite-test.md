@@ -246,6 +246,16 @@ Here are some remarks about the event call signature
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
+#### See also {#testinterface-see-also}
+
+[TestInterface.testInterfaceMethod()](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature)
+
+[TestInterface.testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature)
+
+[TestInterface.testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature)
+
+[TestInterface.testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature)
+
 ### TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-interface}
 
 Test interface that extends other interfaces
@@ -293,6 +303,14 @@ testMethod(input: string): number;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | string | A string |
+
+#### See also {#testinterfaceextendingotherinterfaces-see-also}
+
+- [TestInterface](docs/simple-suite-test#testinterface-interface)
+
+- [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)
+
+- [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
 
 ### TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
 
@@ -619,6 +637,10 @@ Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstrac
 /** @override */
 protected virtualMethod(): number;
 ```
+
+#### See also {#testclass-see-also}
+
+[TestAbstractClass](docs/simple-suite-test#testabstractclass-class)
 
 ## Enumeration Details
 

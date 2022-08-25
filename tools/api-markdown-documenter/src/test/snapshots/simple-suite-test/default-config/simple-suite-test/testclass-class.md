@@ -177,3 +177,7 @@ Overrides [TestAbstractClass.virtualMethod()](./simple-suite-test/testabstractcl
 /** @override */
 protected virtualMethod(): number;
 ```
+
+## See also {#testclass-see-also}
+
+[TestAbstractClass](./simple-suite-test/testabstractclass-class)

@@ -49,3 +49,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  [publicAbstractMethod()](docs/simple-suite-test/testclass-publicabstractmethod-method) | void | A test public abstract method. |
 |  [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) | TTypeParameterA | Test class method |
 |  [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method)<!-- -->. |
+
+## See also {#testclass-see-also}
+
+[TestAbstractClass](docs/simple-suite-test/testabstractclass-class)

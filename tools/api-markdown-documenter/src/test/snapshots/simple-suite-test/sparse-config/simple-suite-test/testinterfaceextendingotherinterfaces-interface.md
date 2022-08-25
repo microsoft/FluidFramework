@@ -23,3 +23,11 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 |  Method | Return Type | Description |
 |  --- | --- | --- |
 |  [testMethod(input)](docs/simple-suite-test/testinterfaceextendingotherinterfaces-testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
+
+## See also {#testinterfaceextendingotherinterfaces-see-also}
+
+- [TestInterface](docs/simple-suite-test/testinterface-interface)
+
+- [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)
+
+- [TestMappedType](docs/simple-suite-test/testmappedtype-typealias)

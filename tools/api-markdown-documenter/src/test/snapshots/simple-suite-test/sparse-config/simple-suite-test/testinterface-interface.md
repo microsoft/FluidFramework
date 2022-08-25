@@ -43,3 +43,13 @@ export interface TestInterface
 |  --- | --- |
 |  [(call)(event, listener)](docs/simple-suite-test/testinterface-_call_-callsignature) | Test interface event call signature |
 |  [(call)(event, listener)](docs/simple-suite-test/testinterface-_call__1-callsignature) | Another example call signature |
+
+## See also {#testinterface-see-also}
+
+[TestInterface.testInterfaceMethod()](docs/simple-suite-test/testinterface-testinterfacemethod-methodsignature)
+
+[TestInterface.testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature)
+
+[TestInterface.testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature)
+
+[TestInterface.testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature)

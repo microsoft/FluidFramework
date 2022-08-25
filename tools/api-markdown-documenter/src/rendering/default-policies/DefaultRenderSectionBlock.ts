@@ -88,9 +88,9 @@ export function renderChildrenSection(
     }
 
     // Render @see content (if any)
-    const renderedSee = renderSeeAlso(apiItem, config);
-    if (renderedSee !== undefined) {
-        docSections.push(renderedSee);
+    const renderedSeeAlso = renderSeeAlso(apiItem, config);
+    if (renderedSeeAlso !== undefined) {
+        docSections.push(renderedSeeAlso);
     }
 
     // Merge sections to reduce and simplify hierarchy

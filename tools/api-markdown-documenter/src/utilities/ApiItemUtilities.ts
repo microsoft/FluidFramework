@@ -563,8 +563,11 @@ export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined {
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
  */
 export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
-    const blocks = getCustomBlockSections(apiItem, "@see");
-    return blocks.length === 0 ? undefined : blocks;
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.seeBlocks !== undefined) {
+        const seeBlocks = apiItem.tsdocComment.seeBlocks.map((block) => block.content);
+        return seeBlocks.length === 0 ? undefined : seeBlocks;
+    }
+    return undefined;
 }
 
 /**

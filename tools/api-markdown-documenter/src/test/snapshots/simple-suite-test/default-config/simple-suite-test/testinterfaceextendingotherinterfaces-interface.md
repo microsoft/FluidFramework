@@ -47,3 +47,11 @@ testMethod(input: string): number;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | string | A string |
+
+## See also {#testinterfaceextendingotherinterfaces-see-also}
+
+- [TestInterface](./simple-suite-test/testinterface-interface)
+
+- [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)
+
+- [TestMappedType](./simple-suite-test#testmappedtype-typealias)
