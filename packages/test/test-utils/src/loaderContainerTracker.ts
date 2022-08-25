@@ -9,7 +9,7 @@ import { Container } from "@fluidframework/container-loader";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
-import { timeoutAwait, timeoutPromise, defaultTimeoutDurationMs } from "./timeoutUtils";
+import { timeoutAwait, timeoutPromise } from "./timeoutUtils";
 
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");
@@ -33,6 +33,7 @@ interface ContainerRecord {
 export class LoaderContainerTracker implements IOpProcessingController {
     private readonly containers = new Map<IContainer, ContainerRecord>();
     private lastProposalSeqNum: number = 0;
+    private readonly defaultTimeoutDurationMs: number = 2000;
 
     constructor(private readonly syncSummarizerClients: boolean = false) {}
 
@@ -159,9 +160,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
      *      - this overlaps with !isDirty, but include task scheduler ops.
      *      - Trailing NoOp is tracked and don't count as pending ops.
      */
-    public async ensureSynchronized(timeoutDuration = defaultTimeoutDurationMs, ...containers: IContainer[]) {
-        const resumed = this.resumeProcessing(...containers);
+    public async ensureSynchronized(...containers: IContainer[]) {
         const start = Date.now();
+        const resumed = this.resumeProcessing(...containers);
+        const timeoutDuration = this.defaultTimeoutDurationMs;
 
         let waitingSequenceNumberSynchronized = false;
         // eslint-disable-next-line no-constant-condition
@@ -208,17 +210,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
                     [timeoutPromise(
                         (resolve) => c.once("saved", () => resolve()),
                         {
-                            durationMs: remainedDuration / dirtyContainers.length,
+                            durationMs: remainedDuration,
                             errorMsg: "Timeout on waiting a container to be saved",
                         },
                     ),
-                    timeoutPromise(
-                        (resolve) => c.once("closed", () => resolve()),
-                        {
-                            durationMs: remainedDuration / dirtyContainers.length,
-                            errorMsg: "Timeout on waiting a container to be closed",
-                        },
-                    ),
+                    new Promise((resolve) => c.once("closed", resolve)),
                     ],
                 )));
             }
