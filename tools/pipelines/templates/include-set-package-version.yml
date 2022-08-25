@@ -16,9 +16,6 @@ parameters:
   type: boolean
   default: false
 
-variables:
-- group: build-tools-config
-
 # Set version
 steps:
 - ${{ if eq(parameters.installBuildToolsFromRepo, true) }}:
