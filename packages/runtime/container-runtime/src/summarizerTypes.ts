@@ -9,6 +9,7 @@ import {
     ITelemetryLogger,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import {
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
@@ -20,6 +21,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
+import { SummarizeReason } from "./summaryGenerator";
+import { ISummaryConfigurationHeuristics } from ".";
 
 /**
  * @deprecated - This will be removed in a later release.
@@ -58,15 +61,12 @@ export interface ISummarizerInternalsProvider {
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 
     /** Callback whenever a new SummaryAck is received, to update internal tracking state */
-    refreshLatestSummaryAck(
-        proposalHandle: string,
-        ackHandle: string,
-        summaryRefSeq: number,
-        summaryLogger: ITelemetryLogger,
-    ): Promise<void>;
+    refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
 }
 
-/** Options that control the behavior of a running summarizer. */
+/**
+ * @deprecated Options that control the behavior of a running summarizer.
+ * */
 export interface ISummarizerOptions {
     /**
      * Set to true to disable the default heuristics from running; false by default.
@@ -95,23 +95,39 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     /** clientId of parent (non-summarizing) container that owns summarizer container */
     readonly summarizerClientId: string | undefined;
     closeFn(): void;
+    /** @deprecated 1.0, please remove all implementations and usage */
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    /** @deprecated 1.0, please remove all implementations and usage */
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
 /** Options affecting summarize behavior. */
 export interface ISummarizeOptions {
     /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-    readonly fullTree?: boolean,
+    readonly fullTree?: boolean;
     /** True to ask the server what the latest summary is first; defaults to false */
-    readonly refreshLatestAck?: boolean,
+    readonly refreshLatestAck?: boolean;
+}
+
+/**
+ * Data required to update internal tracking state after receiving a Summary Ack.
+ */
+ export interface IRefreshSummaryAckOptions {
+    /** Handle from the ack's summary op. */
+    readonly proposalHandle: string | undefined;
+    /** Handle from the summary ack just received */
+    readonly ackHandle: string;
+    /** Reference sequence number from the ack's summary op */
+    readonly summaryRefSeq: number;
+    /** Telemetry logger to which telemetry events will be forwarded. */
+    readonly summaryLogger: ITelemetryLogger;
 }
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
-    readonly summaryLogger: ITelemetryLogger,
+    readonly summaryLogger: ITelemetryLogger;
     /** Tells when summary process should be cancelled */
-    readonly cancellationToken: ISummaryCancellationToken,
+    readonly cancellationToken: ISummaryCancellationToken;
 }
 
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
@@ -147,10 +163,8 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcTotalBlobsSize?: number;
     /** The number of gc blobs in this summary. */
     readonly gcBlobNodeCount?: number;
-    /** Sum of the sizes of all op contents since the last summary */
-    readonly opsSizesSinceLastSummary: number;
-    /** Number of non-system ops since the last summary @see isSystemMessage */
-    readonly nonSystemOpsSinceLastSummary: number;
+    /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
+    readonly summaryNumber: number;
 }
 
 /** Base results for all submitSummary attempts. */
@@ -281,7 +295,11 @@ export type SummarizerStopReason =
      * client to no longer be elected as responsible for summaries. Then it
      * tries to stop its spawned summarizer client.
      */
-    | "parentShouldNotSummarize"
+    | "notElectedParent"
+    /**
+     * We are not already running the summarizer and we are not the current elected client id.
+     */
+    | "notElectedClient"
     /** Summarizer client was disconnected */
     | "summarizerClientDisconnected"
     /* running summarizer threw an exception */
@@ -295,10 +313,18 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 export interface ISummarizer extends
-    IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
+    IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
+    /*
+     * Asks summarizer to move to exit.
+     * Summarizer will finish current processes, which may take a while.
+     * For example, summarizer may complete last summary before exiting.
+     */
     stop(reason: SummarizerStopReason): void;
 
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
+    /* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
+    close(): void;
+
+    run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
 
     /**
      * Attempts to generate a summary on demand. If already running, takes no action.
@@ -348,11 +374,23 @@ export interface ISummarizeHeuristicData {
     /** Most recent summary that received an ack */
     readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
 
+    /** Number of runtime ops since last summary */
+    numRuntimeOps: number;
+
+    /** Number of non-runtime ops since last summary */
+    numNonRuntimeOps: number;
+
+    /** Cumulative size in bytes of all the ops since the last summary */
+    totalOpsSize: number;
+
+    /** Wether or not this instance contains adjusted metrics due to missing op data */
+    hasMissingOpData: boolean;
+
     /**
-     * Initializes lastAttempt and lastSuccessfulAttempt based on the last summary.
+     * Updates lastAttempt and lastSuccessfulAttempt based on the last summary.
      * @param lastSummary - last ack summary
      */
-    initialize(lastSummary: ISummarizeAttempt): void;
+    updateWithLastSummaryAckInfo(lastSummary: ISummarizeAttempt): void;
 
     /**
      * Records a summary attempt. If the attempt was successfully sent,
@@ -368,7 +406,10 @@ export interface ISummarizeHeuristicData {
 
 /** Responsible for running heuristics determining when to summarize. */
 export interface ISummarizeHeuristicRunner {
-    /** Runs the heuristic to determine if it should try to summarize */
+    /** Start specific heuristic trackers (ex: idle timer) */
+    start(): void;
+
+    /** Runs the heuristics to determine if it should try to summarize */
     run(): void;
 
     /** Runs a different heuristic to check if it should summarize before closing */
@@ -380,7 +421,7 @@ export interface ISummarizeHeuristicRunner {
 
 type ISummarizeTelemetryRequiredProperties =
     /** Reason code for attempting to summarize */
-    "summarizeReason";
+    "reason";
 
 type ISummarizeTelemetryOptionalProperties =
     /** Number of attempts within the last time window, used for calculating the throttle delay. */
@@ -394,3 +435,68 @@ type ISummarizeTelemetryOptionalProperties =
 export type ISummarizeTelemetryProperties =
     Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
     Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
+
+/** Strategy used to heuristically determine when we should run a summary */
+export interface ISummaryHeuristicStrategy {
+    /** Summarize reason for this summarize heuristic strategy (ex: "maxTime") */
+    summarizeReason: Readonly<SummarizeReason>;
+
+    /**
+     * Determines if this strategy's summarize criteria been met
+     * @param configuration - summary configuration we are to check against
+     * @param heuristicData - heuristic data used to confirm conditions are met
+     */
+    shouldRunSummary(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean;
+}
+
+type SummaryGeneratorRequiredTelemetryProperties =
+    /** True to generate the full tree with no handle reuse optimizations */
+    "fullTree" |
+    /** Time since we last attempted to generate a summary */
+    "timeSinceLastAttempt" |
+    /** Time since we last successfully generated a summary */
+    "timeSinceLastSummary";
+
+type SummaryGeneratorOptionalTelemetryProperties =
+    /** Reference sequence number as of the generate summary attempt. */
+    "referenceSequenceNumber" |
+    /** minimum sequence number (at the reference sequence number) */
+    "minimumSequenceNumber" |
+    /** Delta between the current reference sequence number and the reference sequence number of the last attempt */
+    "opsSinceLastAttempt" |
+    /** Delta between the current reference sequence number and the reference sequence number of the last summary */
+    "opsSinceLastSummary" |
+    /** Delta in sum of op sizes between the current reference sequence number and the reference
+     *  sequence number of the last summary */
+    "opsSizesSinceLastSummary" |
+    /** Delta between the number of non-runtime ops since the last summary */
+    "nonRuntimeOpsSinceLastSummary" |
+    /** Wether or not this instance contains adjusted metrics due to missing op data */
+    "hasMissingOpData" |
+    /** Time it took to generate the summary tree and stats. */
+    "generateDuration" |
+    /** The handle returned by storage pointing to the uploaded summary tree. */
+    "handle" |
+    /** Time it took to upload the summary tree to storage. */
+    "uploadDuration" |
+    /** The client sequence number of the summarize op submitted for the summary. */
+    "clientSequenceNumber" |
+    /** Time it took for this summary to be acked after it was generated */
+    "ackWaitDuration" |
+    /** Reference sequence number of the ack/nack message */
+    "ackNackSequenceNumber" |
+    /** Actual sequence number of the summary op proposal. */
+    "summarySequenceNumber" |
+    /** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
+    "nackRetryAfter";
+
+export type SummaryGeneratorTelemetry =
+    Pick<ITelemetryProperties, SummaryGeneratorRequiredTelemetryProperties> &
+    Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
+
+export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
+    /** Number of times the summarizer run. */
+    summarizeCount: () => number;
+    /** Number of successful attempts to summarize. */
+    summarizerSuccessfulAttempts: () => number;
+}

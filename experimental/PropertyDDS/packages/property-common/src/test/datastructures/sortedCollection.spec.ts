@@ -122,7 +122,7 @@ describe("SortedCollection", function() {
     it("should clone the sorted collection", function() {
         const clone = collection.clone();
         expect(clone instanceof SortedCollection).to.equal(true);
-        expect(clone._sortedKeys).
-            to.eql(["1.1.0", "1.2.1", "1.10.5", "2.0.0", "2.1.0", "3.0.0", "4.0.0", "101.203.345"]);
+        expect(clone._sortedKeys)
+            .to.eql(["1.1.0", "1.2.1", "1.10.5", "2.0.0", "2.1.0", "3.0.0", "4.0.0", "101.203.345"]);
     });
 });

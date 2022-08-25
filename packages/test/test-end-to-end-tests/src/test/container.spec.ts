@@ -31,6 +31,7 @@ import {
     TestContainerRuntimeFactory,
     ITestObjectProvider,
     TestFluidObjectFactory,
+    timeoutPromise,
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl, IAnyDriverError } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -45,7 +46,9 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
-const codeDetails: IFluidCodeDetails = {package: "test"};
+const codeDetails: IFluidCodeDetails = { package: "test" };
+const timeoutMs = 500;
+
 // REVIEW: enable compat testing?
 describeNoCompat("Container", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -59,7 +62,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             this.skip();
         }
     });
-    before(async ()=>{
+    before(async () => {
         const loader = new Loader({
             logger: provider.logger,
             urlResolver: provider.urlResolver,
@@ -99,6 +102,31 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         );
     }
 
+    async function createConnectedContainer(): Promise<Container> {
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
+            TestDataObjectType,
+            getDataStoreFactory(),
+            {},
+            [innerRequestHandler]);
+        const localTestObjectProvider = new TestObjectProvider(
+            Loader,
+            provider.driver,
+            runtimeFactory);
+
+        const container = await localTestObjectProvider.makeTestContainer() as Container;
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "Container initial connection timeout" },
+        );
+        assert.strictEqual(
+            container.connectionState, ConnectionState.Connected,
+            "Container should be connected after creation",
+        );
+        return container;
+    }
+
     it("Load container successfully", async () => {
         const container = await loadContainer();
         assert.strictEqual(container.clientDetails.capabilities.interactive, true,
@@ -108,8 +136,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     itExpects(
         "Load container unsuccessfully",
         [
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure"},
-            {eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError},
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
+            { eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError },
         ],
         async () => {
             const documentServiceFactory = provider.documentServiceFactory;
@@ -127,9 +155,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
     itExpects("Load container with error",
     [
-        {eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception", error: "expectedFailure"},
-        {eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure"},
-        {eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError},
+        { eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception", error: "expectedFailure" },
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
+        { eventName: "TestException", error: "expectedFailure", errorType: ContainerErrorType.genericError },
     ],
     async () => {
         const documentServiceFactory = provider.documentServiceFactory;
@@ -160,7 +188,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         };
 
         const container = await loadContainer({ documentServiceFactory: mockFactory });
-        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.CatchingUp,
             "Container should be in Connecting state");
         // Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
         // Only closing container will break that cycle.
@@ -198,7 +226,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container.on("error", () => {
             errorRaised = true;
         });
-        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.CatchingUp,
             "Container should be in Connecting state");
         const err: IAnyDriverError = {
             errorType: DriverErrorType.genericError,
@@ -237,7 +265,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         container.on("error", () => {
             assert.ok(false, "Error event should not be raised.");
         });
-        assert.strictEqual(container.connectionState, ConnectionState.Connecting,
+        assert.strictEqual(container.connectionState, ConnectionState.CatchingUp,
             "Container should be in Connecting state");
         container.close();
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected,
@@ -278,7 +306,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     it("closeAndGetPendingLocalState() called on container", async () => {
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
             TestDataObjectType,
-            getDataStoreFactory());
+            getDataStoreFactory(),
+            { enableOfflineLoad: true });
 
         const localTestObjectProvider = new TestObjectProvider(
             Loader,
@@ -290,5 +319,203 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const pendingLocalState: IPendingLocalState = JSON.parse(container.closeAndGetPendingLocalState());
         assert.strictEqual(container.closed, true);
         assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
+    });
+
+    it("can call connect() and disconnect() on Container", async () => {
+        const container = await createConnectedContainer();
+
+        let disconnectedEventFired = false;
+        container.once("disconnected", () => { disconnectedEventFired = true; });
+        container.disconnect();
+        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
+
+        container.connect();
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "container connect() timeout" },
+        );
+        assert.strictEqual(container.connectionState, ConnectionState.Connected, "container can't connect()");
+    });
+
+    it("can control op processing with connect() and disconnect()", async () => {
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+                runtime.IFluidHandleContext.resolveHandle(request);
+        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
+            TestDataObjectType,
+            getDataStoreFactory(),
+            {},
+            [innerRequestHandler]);
+
+        const localTestObjectProvider = new TestObjectProvider(
+            Loader,
+            provider.driver,
+            runtimeFactory);
+
+        const container1 = await localTestObjectProvider.makeTestContainer() as Container;
+        await timeoutPromise(
+            (resolve) => container1.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "container1 initial connect timeout" },
+        );
+        assert.strictEqual(
+            container1.connectionState, ConnectionState.Connected,
+            "container is not connected after connected event fires",
+        );
+
+        const dataObject = await requestFluidObject<ITestDataObject>(container1, "default");
+        const directory1 = dataObject._root;
+        directory1.set("key", "value");
+        let value1 = await directory1.get("key");
+        assert.strictEqual(value1, "value", "value1 is not set");
+
+        const container2 = await localTestObjectProvider.loadTestContainer() as Container;
+        await timeoutPromise(
+            (resolve) => container2.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "container2 initial connect timeout" },
+        );
+        const dataObjectTest = await requestFluidObject<ITestDataObject>(container2, "default");
+        const directory2 = dataObjectTest._root;
+        await localTestObjectProvider.ensureSynchronized();
+        let value2 = await directory2.get("key");
+        assert.strictEqual(value2, "value", "value2 is not set");
+
+        let disconnectedEventFired = false;
+        container2.once("disconnected", () => { disconnectedEventFired = true; });
+        container2.disconnect();
+        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
+        assert.strictEqual(container2.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
+
+        directory1.set("key", "new-value");
+        value1 = await directory1.get("key");
+        assert.strictEqual(value1, "new-value", "value1 is not changed");
+
+        const valueChangePromise = timeoutPromise(
+            (resolve) => directory2.once("valueChanged", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "valueChanged timeout (expected error)" },
+        );
+        await assert.rejects(
+            valueChangePromise,
+            "valueChanged event fired while disconnected",
+        );
+        value2 = await directory2.get("key");
+        assert.notStrictEqual(value1, value2, "container2 processing ops after disconnect()");
+
+        container2.connect();
+        await timeoutPromise(
+            (resolve) => directory2.once("valueChanged", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "valueChanged timeout after connect()" },
+        );
+        value2 = await directory2.get("key");
+        assert.strictEqual(value1, value2, "container2 not processing ops after connect()");
+    });
+
+    it("can cancel connect() with disconnect()", async () => {
+        const container = await createConnectedContainer();
+
+        container.disconnect();
+
+        container.connect();
+        container.disconnect();
+        const connectPromise = timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "connected timeout (expected error)" },
+        );
+        await assert.rejects(
+            connectPromise,
+            "connected event fired after cancelling",
+        );
+        assert.strictEqual(
+            container.connectionState,
+            ConnectionState.Disconnected,
+            "container connected after disconnect()",
+        );
+        assert.strictEqual(
+            (container as any).deltaManager.connectionManager.pendingConnection, undefined,
+            "pendingConnection is not undefined",
+        );
+    });
+
+    it("can call connect() twice", async () => {
+        const container = await createConnectedContainer();
+
+        container.disconnect();
+
+        container.connect();
+        container.connect();
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "container connected event timeout" },
+        );
+        assert.strictEqual(
+            container.connectionState, ConnectionState.Connected,
+            "container not connected after two connect() calls",
+        );
+    });
+
+    it("can call connect() twice to change the connection mode", async () => {
+        const container = await createConnectedContainer();
+
+        container.disconnect();
+
+        container.connect();
+        (container as any).deltaManager.connectionManager.shouldJoinWrite = () => { return true; };
+        container.connect();
+
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "container connected event timeout" },
+        );
+
+        assert.strictEqual(
+            (container as any).connectionMode, "write",
+            "container in read mode after connecting with pending op",
+        );
+    });
+
+    it("can cancel call connect() twice then cancel with disconnect()", async () => {
+        const container = await createConnectedContainer();
+
+        container.disconnect();
+
+        container.connect();
+        container.connect();
+        container.disconnect();
+        const connectPromise = timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "connected timeout (expected error)" },
+        );
+        await assert.rejects(
+            connectPromise,
+            "connected event fired after cancelling",
+        );
+        assert.strictEqual(
+            container.connectionState,
+            ConnectionState.Disconnected,
+            "container connected after disconnect()",
+        );
+        assert.strictEqual(
+            (container as any).deltaManager.connectionManager.pendingConnection, undefined,
+            "pendingConnection is not undefined",
+        );
+    });
+
+    it("can rapidly call connect() and disconnect()", async () => {
+        const container = await createConnectedContainer();
+
+        container.disconnect();
+
+        container.connect();
+        container.disconnect();
+        container.connect();
+        container.disconnect();
+        container.connect();
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "connected event not fired after rapid disconnect() + connect()" },
+        );
+        assert.strictEqual(
+            container.connectionState, ConnectionState.Connected,
+            "container is not connected after rapid disconnect() + connect()",
+        );
     });
 });

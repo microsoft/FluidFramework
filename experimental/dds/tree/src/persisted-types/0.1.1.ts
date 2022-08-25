@@ -204,6 +204,17 @@ export interface CompressedBuildInternal<TId extends OpSpaceNodeId> {
  */
 export type CompressedBuildNode<TId extends OpSpaceNodeId> = CompressedPlaceholderTree<TId, DetachedSequenceId>;
 
+// TODO: `ChangeInternal`s should be assignable to this type without casting; this will require some test refactoring.
+/**
+ * This type should be used as an opaque handle in the public API for `ChangeInternal` objects.
+ * This is useful for supporting public APIs which involve working with a tree's edit history,
+ * which will involve changes that have already been internalized.
+ * @public
+ */
+export interface InternalizedChange {
+	InternalChangeBrand: '2cae1045-61cf-4ef7-a6a3-8ad920cb7ab3';
+}
+
 /**
  * {@inheritdoc (Change:type)}
  * @public

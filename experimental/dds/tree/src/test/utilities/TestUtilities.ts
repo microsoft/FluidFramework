@@ -6,7 +6,7 @@
 import { resolve } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
-import { SummaryCollection } from '@fluidframework/container-runtime';
+import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
@@ -21,16 +21,25 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	createAndAttachContainer,
+	ITestObjectProvider,
 } from '@fluidframework/test-utils';
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { TelemetryNullLogger } from '@fluidframework/common-utils';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
+import { TelemetryNullLogger } from '@fluidframework/telemetry-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { DetachedSequenceId, EditId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from '../../Identifiers';
+import {
+	AttributionId,
+	DetachedSequenceId,
+	EditId,
+	NodeId,
+	OpSpaceNodeId,
+	SessionId,
+	StableNodeId,
+} from '../../Identifiers';
 import { assert, fail, identity, ReplaceRecursive } from '../../Common';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
@@ -50,9 +59,10 @@ import { TraitLocation, TreeView } from '../../TreeView';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
 import { getNodeId, getNodeIdContext, NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities';
 import { newEdit, setTrait } from '../../EditUtilities';
-import { SharedTree } from '../../SharedTree';
+import { SharedTree, SharedTreeFactory } from '../../SharedTree';
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
 import { convertEditIds } from '../../IdConversion';
+import { OrderedEditSet } from '../../EditLog';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -100,6 +110,10 @@ export interface SharedTreeTestingOptions {
 	 */
 	writeFormat?: WriteFormat;
 	/**
+	 * Optional attribution ID to give to the new tree
+	 */
+	attributionId?: AttributionId;
+	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
 	setupEditId?: EditId;
@@ -122,7 +136,16 @@ export function testTrait(view: TreeView): TraitLocation {
 export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents {
-	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId, summarizeHistory, writeFormat } = options;
+	const {
+		id,
+		initialTree,
+		localMode,
+		containerRuntimeFactory,
+		setupEditId,
+		summarizeHistory,
+		writeFormat,
+		attributionId,
+	} = options;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -139,11 +162,17 @@ export function setUpTestSharedTree(
 	}
 
 	// Enable expensiveValidation
-	const factory = SharedTree.getFactory(
-		writeFormat ?? WriteFormat.v0_1_1,
-		summarizeHistory === undefined || summarizeHistory === true ? { uploadEditChunks: true } : false
-	);
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true);
+	let factory: SharedTreeFactory;
+	if (writeFormat === WriteFormat.v0_0_2) {
+		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+	} else {
+		const options = {
+			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: true } : false,
+			attributionId,
+		};
+		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
+	}
+	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id);
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
@@ -162,7 +191,7 @@ export function setUpTestSharedTree(
 		});
 	}
 
-	const newContainerRuntimeFactory = containerRuntimeFactory || new MockContainerRuntimeFactory();
+	const newContainerRuntimeFactory = containerRuntimeFactory ?? new MockContainerRuntimeFactory();
 
 	if (localMode === true) {
 		componentRuntime.local = true;
@@ -225,6 +254,10 @@ export interface LocalServerSharedTreeTestingOptions {
 	 */
 	writeFormat?: WriteFormat;
 	/**
+	 * Optional attribution ID to give to the new tree
+	 */
+	attributionId?: AttributionId;
+	/**
 	 * If not set, will upload edit chunks when they are full.
 	 */
 	uploadEditChunks?: boolean;
@@ -232,6 +265,10 @@ export interface LocalServerSharedTreeTestingOptions {
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
 	setupEditId?: EditId;
+	/**
+	 * If set, will be passed to the container on load
+	 */
+	pendingLocalState?: string;
 }
 
 const testObjectProviders: TestObjectProvider[] = [];
@@ -261,20 +298,22 @@ export async function setUpLocalServerTestSharedTree(
 		summarizeHistory,
 		writeFormat,
 		uploadEditChunks,
+		attributionId,
+		pendingLocalState,
 	} = options;
 
 	const treeId = id ?? 'test';
-	const registry: ChannelFactoryRegistry = [
-		[
-			treeId,
-			SharedTree.getFactory(
-				writeFormat ?? WriteFormat.v0_1_1,
-				summarizeHistory === undefined || summarizeHistory === true
-					? { uploadEditChunks: uploadEditChunks ?? true }
-					: false
-			),
-		],
-	];
+	let factory: SharedTreeFactory;
+	if (writeFormat === WriteFormat.v0_0_2) {
+		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+	} else {
+		const options = {
+			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: uploadEditChunks ?? true } : false,
+			attributionId,
+		};
+		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
+	}
+	const registry: ChannelFactoryRegistry = [[treeId, factory]];
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 
@@ -283,7 +322,18 @@ export async function setUpLocalServerTestSharedTree(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
 			{
-				summaryOptions: { initialSummarizerDelayMs: 0 },
+				enableOfflineLoad: true,
+				summaryOptions: {
+					summaryConfigOverrides: {
+						...DefaultSummaryConfiguration,
+						...{
+							minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
+							maxIdleTime: 1000,
+							maxTime: 1000 * 12,
+							initialSummarizerDelayMs: 0,
+						},
+					},
+				},
 			},
 			[innerRequestHandler]
 		);
@@ -308,7 +358,10 @@ export async function setUpLocalServerTestSharedTree(
 		const driver = new LocalServerTestDriver();
 		const loader = makeTestLoader(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.loadTestContainer` instead.
-		container = (await loader.resolve({ url: await driver.createContainerUrl(treeId), headers })) as Container;
+		container = (await loader.resolve(
+			{ url: await driver.createContainerUrl(treeId), headers },
+			pendingLocalState
+		)) as Container;
 		await waitContainerToCatchUp(container);
 	} else {
 		const driver = new LocalServerTestDriver();
@@ -413,7 +466,7 @@ export async function asyncFunctionThrowsCorrectly(
 	return errorMessage === expectedError;
 }
 
-/*
+/**
  * Returns true if two nodes have equivalent data, otherwise false.
  * Does not compare children or payloads.
  * @param nodes - two or more nodes to compare
@@ -585,6 +638,10 @@ export function stabilizeEdit(
 	return convertEditIds(edit, (id) => tree.convertToStableNodeId(id));
 }
 
+export function getEditLogInternal(tree: SharedTree): OrderedEditSet<ChangeInternal> {
+	return tree.edits as unknown as OrderedEditSet<ChangeInternal>;
+}
+
 /**
  * Spies on all future ops submitted to `containerRuntimeFactory`. When ops are submitted, they will be `push`ed into the
  * returned array.
@@ -611,4 +668,19 @@ export async function waitForSummary(mainContainer: IContainer): Promise<string>
 	const summaryCollection = new SummaryCollection(deltaManager, new TelemetryNullLogger());
 	const ackedSummary = await summaryCollection.waitSummaryAck(deltaManager.lastSequenceNumber);
 	return ackedSummary.summaryAck.contents.handle;
+}
+
+/**
+ * Runs an action while the given container has been paused
+ */
+export async function withContainerOffline<TReturn>(
+	provider: ITestObjectProvider,
+	container: IContainer,
+	action: () => TReturn
+): Promise<{ actionReturn: TReturn; pendingLocalState: string }> {
+	await provider.ensureSynchronized();
+	await provider.opProcessingController.pauseProcessing(container);
+	const actionReturn = action();
+	const pendingLocalState = container.closeAndGetPendingLocalState();
+	return { actionReturn, pendingLocalState };
 }

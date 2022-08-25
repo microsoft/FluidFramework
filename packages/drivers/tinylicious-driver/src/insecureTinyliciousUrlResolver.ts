@@ -11,7 +11,14 @@ import {
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 
+/**
+ * Default endpoint port. Will be used by the service if the consumer does not specify a port.
+ */
 export const defaultTinyliciousPort = 7070;
+
+/**
+ * Default endpoint URL base. Will be used by the service if the consumer does not specify an endpoint.
+ */
 export const defaultTinyliciousEndpoint = "http://localhost";
 
 /**

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { compare } from "semver";
 import { bufferToString } from "@fluidframework/common-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails, ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
@@ -18,10 +18,10 @@ import {
     ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
+import { IDocumentAttributes, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IntervalType, SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { IntervalType, SequenceInterval, SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -32,18 +32,93 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, itExpects } from "@fluidframework/test-version-utils";
 import {
     getSnapshotTreeFromSerializedContainer,
-    ISnapshotTreeWithBlobContents,
 // eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
+
+const fluidCodeDetails: IFluidCodeDetails = {
+    package: "detachedContainerTestPackage1",
+    config: {},
+};
+
+// Quorum val transormations
+const quorumKey = "code";
+const baseQuorum = [
+    [
+        quorumKey,
+        {
+            key: quorumKey,
+            value: fluidCodeDetails,
+            approvalSequenceNumber: 0,
+            commitSequenceNumber: 0,
+            sequenceNumber: 0,
+        },
+    ],
+];
+
+const baseAttributes = {
+    minimumSequenceNumber: 0,
+    sequenceNumber: 0,
+    term: 1,
+};
+
+const baseSummarizer = {
+    electionSequenceNumber: 0,
+};
+
+function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
+    return {
+        type: SummaryType.Tree,
+        tree: {
+            ".metadata": {
+                type: 2,
+                content: "{}",
+            },
+            ".electedSummarizer": {
+                type: 2,
+                content: JSON.stringify(summarizer),
+            },
+            ".protocol": {
+                type: 1,
+                tree: {
+                    quorumMembers: {
+                        type: SummaryType.Blob,
+                        content: "[]",
+                    },
+                    quorumProposals: {
+                        type: SummaryType.Blob,
+                        content: "[]",
+                    },
+                    quorumValues: {
+                        type: SummaryType.Blob,
+                        content: JSON.stringify(quorumVal),
+                    },
+                    attributes: {
+                        type: SummaryType.Blob,
+                        content: JSON.stringify(attr),
+                    },
+                },
+            },
+            ".app": {
+                type: 1,
+                tree: {
+                    [".channels"]: {
+                        type: SummaryType.Tree,
+                        tree: {},
+                    },
+                },
+            },
+        },
+    };
+}
 
 describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
     let disableIsolatedChannels = false;
 
     function assertSubtree(tree: ISnapshotTreeWithBlobContents, key: string, msg?: string):
-        ISnapshotTreeWithBlobContents
-    {
+        ISnapshotTreeWithBlobContents {
         const subTree = tree.trees[key];
         assert(subTree, msg ?? `${key} subtree not present`);
         return subTree;
@@ -167,7 +242,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
     const tests = () => {
         it("Dehydrated container snapshot", async () => {
-            const { container } =
+            const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
             const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
@@ -187,8 +262,9 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert(snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !== undefined,
                 "Blobs should contain attributes blob");
             // Check for default dataStore
-            const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
-            const datastoreAttributes = assertBlobContents<{ pkg: string }>(defaultDatastore, ".component");
+            const { datastoreTree: snapshotDefaultDataStore } =
+                assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
+            const datastoreAttributes = assertBlobContents<{ pkg: string; }>(snapshotDefaultDataStore, ".component");
             assert.strictEqual(datastoreAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
         });
 
@@ -214,10 +290,10 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
             // Check for newly create channel
             const defaultChannelsTree1 = assertChannelsTree(
-                assertDatastoreTree(snapshotTree1, "default").datastoreTree);
+                assertDatastoreTree(snapshotTree1, defaultDataStore.runtime.id).datastoreTree);
             assert(defaultChannelsTree1.trees.test1 === undefined,
                 "Test channel 1 should not be present in snapshot 1");
-            assertChannelTree(assertDatastoreTree(snapshotTree2, "default").datastoreTree, "test1",
+            assertChannelTree(assertDatastoreTree(snapshotTree2, defaultDataStore.runtime.id).datastoreTree, "test1",
                 "Test channel 1 should be present in snapshot 2");
         });
 
@@ -236,7 +312,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
-            assertDatastoreTree(snapshotTree, "default");
+            assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
 
             assertDatastoreTree(snapshotTree, dataStore2.runtime.id, "Handle Bounded dataStore should be in summary");
         });
@@ -253,7 +329,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await container2.request({ url: "/" });
             assert.strictEqual(response.status, 200, "Component should exist!!");
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -291,7 +366,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await container2.request({ url: "/" });
             assert.strictEqual(response.status, 200, "Component should exist!!");
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -329,7 +403,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await container1.request({ url: "/" });
             assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -356,8 +429,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
         itExpects("Storage in detached container",
         [
-            {eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer"},
-            {eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer"},
+            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
+            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
         ],
         async () => {
             const { container } =
@@ -396,16 +469,16 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
             const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
             sharedStringBefore.insertText(0, "Hello");
-            let interval0 = intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
-            let interval1 = intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
+            let interval0: SequenceInterval | undefined = intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
+            let interval1: SequenceInterval | undefined = intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
             let id0;
             let id1;
 
-            if (typeof(intervalsBefore.change) === "function") {
+            if (typeof (intervalsBefore.change) === "function") {
                 id0 = interval0.getIntervalId();
                 id1 = interval1.getIntervalId();
-                assert.strictEqual(typeof(id0), "string");
-                assert.strictEqual(typeof(id1), "string");
+                assert.strictEqual(typeof (id0), "string");
+                assert.strictEqual(typeof (id1), "string");
                 intervalsBefore.change(id0, 2, 3);
                 intervalsBefore.change(id1, 0, 3);
             }
@@ -422,22 +495,22 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                 JSON.stringify(sharedStringAfter.summarize()),
                 JSON.stringify(sharedStringBefore.summarize()),
                 "Summaries of shared string should match and contents should be same!!");
-            if (typeof(intervalsBefore.change) === "function" &&
-                typeof(intervalsAfter.change) === "function") {
+            if (typeof (intervalsBefore.change) === "function" &&
+                typeof (intervalsAfter.change) === "function") {
                 interval0 = intervalsAfter.getIntervalById(id0);
                 assert.notStrictEqual(interval0, undefined);
-                assert.strictEqual(interval0.start.getOffset(), 2);
-                assert.strictEqual(interval0.end.getOffset(), 3);
+                assert.strictEqual(interval0?.start.getOffset(), 2);
+                assert.strictEqual(interval0?.end.getOffset(), 3);
 
                 interval1 = intervalsAfter.getIntervalById(id1);
                 assert.notStrictEqual(interval1, undefined);
-                assert.strictEqual(interval1.start.getOffset(), 0);
-                assert.strictEqual(interval1.end.getOffset(), 3);
+                assert.strictEqual(interval1?.start.getOffset(), 0);
+                assert.strictEqual(interval1?.end.getOffset(), 3);
             }
             for (const interval of intervalsBefore) {
-                if (typeof(interval.getIntervalId) === "function") {
+                if (typeof (interval?.getIntervalId) === "function") {
                     const id = interval.getIntervalId();
-                    assert.strictEqual(typeof(id), "string");
+                    assert.strictEqual(typeof (id), "string");
                     if (id) {
                         assert.notStrictEqual(intervalsAfter.getIntervalById(id), undefined,
                             "Interval not present after rehydration");
@@ -449,7 +522,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             }
             for (const interval of intervalsAfter) {
                 assert.fail(
-                    `Unexpected interval after rehydration: ${interval.start.getOffset()}-${interval.end.getOffset()}`);
+                `Unexpected interval after rehydration: ${interval?.start.getOffset()}-${interval?.end.getOffset()}`,
+                );
             }
         });
 
@@ -493,10 +567,12 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
 
-            // Create another dataStore
-            const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
-            peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
+            // Create and reference another dataStore
+            const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            defaultDataStore.root.set("dataStore2", dataStore2.handle);
+            //* Unnecessary?
+            await provider.ensureSynchronized();
+
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");
             const snapshotTree = container.serialize();
@@ -538,10 +614,12 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
 
-            // Create another dataStore
-            const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
-            peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
+            // Create and reference another dataStore
+            const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            defaultDataStore.root.set("dataStore2", dataStore2.handle);
+            //* Unnecessary?
+            await provider.ensureSynchronized();
+
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");
             const snapshotTree = container.serialize();
@@ -697,7 +775,25 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
-            assertDatastoreTree(snapshotTree, "default");
+            assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
+        });
+
+        it("can rehydrate from arbitrary summary that is not generated from serialized container", async () => {
+            const summaryTree = buildSummaryTree(baseAttributes, baseQuorum, baseSummarizer);
+            const summaryString = JSON.stringify(summaryTree);
+
+            await assert.doesNotReject(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
+        });
+
+        it("can rehydrate from summary that does not start with seq. #0", async () => {
+            const attr = {
+                ...baseAttributes,
+                sequenceNumber: 5,
+            };
+            const summaryTree = buildSummaryTree(attr, baseQuorum, baseSummarizer);
+            const summaryString = JSON.stringify(summaryTree);
+
+            await assert.doesNotReject(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
         });
     };
 

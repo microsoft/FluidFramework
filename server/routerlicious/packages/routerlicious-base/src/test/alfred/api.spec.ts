@@ -15,6 +15,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-utils";
 import { TestCache } from "@fluidframework/server-test-utils";
+import { DeltaService } from "../../alfred/services";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -42,8 +43,7 @@ const defaultProvider = new nconf.Provider({}).defaults({
     }
 });
 
-if (!Lumberjack.isSetupCompleted())
-{
+if (!Lumberjack.isSetupCompleted()) {
     Lumberjack.setup([new TestEngine1()]);
 }
 
@@ -84,11 +84,12 @@ describe("Routerlicious", () => {
                 appTenant2,
             ];
             const defaultSingleUseTokenCache = new TestCache();
-            const scopes= [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite]
-            const tenantToken1 =`Basic ${generateToken(appTenant1.id, document1._id, appTenant1.key, scopes)}`;
-            const tenantToken2 =`Basic ${generateToken(appTenant2.id, document1._id, appTenant2.key, scopes)}`;
+            const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite]
+            const tenantToken1 = `Basic ${generateToken(appTenant1.id, document1._id, appTenant1.key, scopes)}`;
+            const tenantToken2 = `Basic ${generateToken(appTenant2.id, document1._id, appTenant2.key, scopes)}`;
             const defaultProducer = new TestProducer(new TestKafka());
             const defaultDb = await defaultMongoManager.getDatabase();
+            const defaultDeltaService = new DeltaService(defaultMongoManager, defaultTenantManager);
             const defaultDocumentsCollection = defaultDb.collection<IDocument>(documentsCollectionName);
             let app: express.Application;
             let supertest: request.SuperTest<request.Test>;
@@ -103,7 +104,7 @@ describe("Routerlicious", () => {
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
-                        defaultMongoManager,
+                        defaultDeltaService,
                         defaultProducer,
                         defaultDocumentsCollection);
                     supertest = request(app);
@@ -148,7 +149,7 @@ describe("Routerlicious", () => {
                     });
                     it("/:tenantId", async () => {
                         const token = () => `Basic ${generateToken(appTenant1.id, "", appTenant1.key, scopes)}`;
-                        await assertThrottle(`/documents/${appTenant1.id}`, token, {id: ""}, "post");
+                        await assertThrottle(`/documents/${appTenant1.id}`, token, { id: "" }, "post");
                     });
                 });
 
@@ -195,7 +196,7 @@ describe("Routerlicious", () => {
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
-                        defaultMongoManager,
+                        defaultDeltaService,
                         defaultProducer,
                         defaultDocumentsCollection);
                     supertest = request(app);
@@ -214,7 +215,7 @@ describe("Routerlicious", () => {
                     it("/:tenantId", async () => {
                         await supertest.post(`/documents/${appTenant1.id}`)
                             .set('Authorization', tenantToken1)
-                            .send({id: document1._id})
+                            .send({ id: document1._id })
                             .expect((res) => {
                                 assert.notStrictEqual(res.status, 401);
                                 assert.notStrictEqual(res.status, 403);
@@ -222,7 +223,7 @@ describe("Routerlicious", () => {
                     });
                     it("/:tenantId-invalidtoken", async () => {
                         await supertest.post(`/documents/${appTenant1.id}`)
-                            .send({id: document1._id})
+                            .send({ id: document1._id })
                             .expect(403);
                     });
                 });
@@ -261,7 +262,7 @@ describe("Routerlicious", () => {
                         defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
-                        defaultMongoManager,
+                        defaultDeltaService,
                         defaultProducer,
                         defaultDocumentsCollection);
                     supertest = request(app);
@@ -272,7 +273,7 @@ describe("Routerlicious", () => {
                         .set(correlationIdHeaderName, testCorrelationId)
                         .then((res) => {
                             assert.strictEqual(res.header?.[correlationIdHeaderName], testCorrelationId);
-                    });
+                        });
                 };
 
                 describe("/api/v1", () => {
@@ -323,7 +324,7 @@ describe("Routerlicious", () => {
                         new TestCache(),
                         defaultStorage,
                         defaultAppTenants,
-                        defaultMongoManager,
+                        defaultDeltaService,
                         defaultProducer,
                         defaultDocumentsCollection);
                     supertest = request(app);
@@ -333,7 +334,7 @@ describe("Routerlicious", () => {
                         const url = `/documents/${appTenant1.id}`;
                         await supertest.post(url)
                             .set('Authorization', tenantToken1)
-                            .send({id: ""})
+                            .send({ id: "" })
                             .expect((res) => {
                                 assert.notStrictEqual(res.status, 401);
                                 assert.notStrictEqual(res.status, 403);
@@ -341,7 +342,7 @@ describe("Routerlicious", () => {
 
                         await supertest.post(url)
                             .set('Authorization', tenantToken1)
-                            .send({id: ""})
+                            .send({ id: "" })
                             .expect(403);
                     });
                 });

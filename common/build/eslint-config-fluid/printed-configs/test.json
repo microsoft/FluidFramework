@@ -22,7 +22,10 @@
         "import",
         "unicorn",
         "react",
+        "unused-imports",
+        "tsdoc",
         "promise",
+        "jsdoc",
         "@typescript-eslint",
         "@rushstack/security",
         "@rushstack"
@@ -51,23 +54,18 @@
             "error"
         ],
         "@typescript-eslint/brace-style": [
-            "off"
+            "error",
+            "1tbs",
+            {
+                "allowSingleLine": true
+            }
         ],
         "@typescript-eslint/comma-dangle": [
             "error",
-            {
-                "arrays": "always-multiline",
-                "enums": "always-multiline",
-                "exports": "always-multiline",
-                "functions": "always-multiline",
-                "generics": "never",
-                "imports": "always-multiline",
-                "objects": "always-multiline",
-                "tuples": "always-multiline"
-            }
+            "always-multiline"
         ],
         "@typescript-eslint/comma-spacing": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/consistent-type-assertions": [
             "error",
@@ -92,7 +90,7 @@
             "off"
         ],
         "@typescript-eslint/func-call-spacing": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/indent": [
             "off"
@@ -101,10 +99,21 @@
             "off"
         ],
         "@typescript-eslint/keyword-spacing": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "off"
+            "error",
+            {
+                "multiline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "multilineDetection": "brackets",
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                }
+            }
         ],
         "@typescript-eslint/member-ordering": [
             "off"
@@ -177,7 +186,7 @@
             "error"
         ],
         "@typescript-eslint/no-namespace": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-non-null-asserted-optional-chain": [
             "error"
@@ -247,7 +256,8 @@
             "error"
         ],
         "@typescript-eslint/object-curly-spacing": [
-            "off"
+            "error",
+            "always"
         ],
         "@typescript-eslint/prefer-as-const": [
             "error"
@@ -258,7 +268,16 @@
         "@typescript-eslint/prefer-function-type": [
             "error"
         ],
+        "@typescript-eslint/prefer-includes": [
+            "error"
+        ],
         "@typescript-eslint/prefer-namespace-keyword": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-nullish-coalescing": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-optional-chain": [
             "error"
         ],
         "@typescript-eslint/prefer-readonly": [
@@ -320,12 +339,21 @@
         "@typescript-eslint/unified-signatures": [
             "error"
         ],
+        "array-bracket-spacing": [
+            "error"
+        ],
         "arrow-body-style": [
             "off"
         ],
         "arrow-parens": [
             "error",
             "always"
+        ],
+        "arrow-spacing": [
+            "error"
+        ],
+        "block-spacing": [
+            "error"
         ],
         "brace-style": [
             "off"
@@ -353,6 +381,10 @@
         ],
         "default-case": [
             "error"
+        ],
+        "dot-location": [
+            "error",
+            "property"
         ],
         "dot-notation": [
             "off"
@@ -450,6 +482,45 @@
             "error"
         ],
         "import/order": [
+            "error"
+        ],
+        "jsdoc/check-access": [
+            "error"
+        ],
+        "jsdoc/check-examples": [
+            "off"
+        ],
+        "jsdoc/check-indentation": [
+            "error"
+        ],
+        "jsdoc/check-line-alignment": [
+            "error"
+        ],
+        "jsdoc/check-tag-names": [
+            "off"
+        ],
+        "jsdoc/empty-tags": [
+            "error"
+        ],
+        "jsdoc/no-bad-blocks": [
+            "error"
+        ],
+        "jsdoc/require-asterisk-prefix": [
+            "error"
+        ],
+        "jsdoc/require-hyphen-before-param-description": [
+            "error"
+        ],
+        "jsdoc/require-param-description": [
+            "error"
+        ],
+        "jsdoc/require-returns-description": [
+            "error"
+        ],
+        "jsx-quotes": [
+            "error"
+        ],
+        "key-spacing": [
             "error"
         ],
         "keyword-spacing": [
@@ -827,6 +898,9 @@
         "space-infix-ops": [
             "off"
         ],
+        "space-unary-ops": [
+            "error"
+        ],
         "spaced-comment": [
             "error",
             "always",
@@ -838,6 +912,12 @@
                     ]
                 }
             }
+        ],
+        "switch-colon-spacing": [
+            "error"
+        ],
+        "tsdoc/syntax": [
+            "error"
         ],
         "unicorn/better-regex": [
             "error"
@@ -857,11 +937,23 @@
         "unicorn/no-unsafe-regex": [
             "error"
         ],
+        "unicorn/prefer-switch": [
+            "error"
+        ],
+        "unicorn/prefer-ternary": [
+            "error"
+        ],
+        "unicorn/prefer-type-error": [
+            "error"
+        ],
+        "unused-imports/no-unused-imports": [
+            "error"
+        ],
         "use-isnan": [
             "error"
         ],
         "valid-typeof": [
-            "off"
+            "error"
         ],
         "yoda": [
             "off"
@@ -895,6 +987,23 @@
                     ".js",
                     ".jsx"
                 ]
+            }
+        },
+        "jsdoc": {
+            "mode": "typescript",
+            "tagNamePreference": {
+                "arg": {
+                    "message": "Please use @param instead of @arg.",
+                    "replacement": "param"
+                },
+                "argument": {
+                    "message": "Please use @param instead of @argument.",
+                    "replacement": "param"
+                },
+                "return": {
+                    "message": "Please use @returns instead of @return.",
+                    "replacement": "returns"
+                }
             }
         }
     }

@@ -297,7 +297,7 @@ describe("Cell", () => {
             public async addOutboundRoutes() {
                 const newSubCell = createLocalCell(`subCell-${++this.subCellCount}`);
                 this.cell1.set(newSubCell.handle);
-                this._expectedRoutes = [ newSubCell.handle.absolutePath ];
+                this._expectedRoutes = [newSubCell.handle.absolutePath];
                 this.containerRuntimeFactory.processAllMessages();
             }
 
@@ -317,7 +317,7 @@ describe("Cell", () => {
                     },
                 };
                 this.cell1.set(containingObject);
-                this._expectedRoutes = [ newSubCell.handle.absolutePath, newSubCell2.handle.absolutePath ];
+                this._expectedRoutes = [newSubCell.handle.absolutePath, newSubCell2.handle.absolutePath];
                 this.containerRuntimeFactory.processAllMessages();
             }
         }

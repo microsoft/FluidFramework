@@ -16,11 +16,11 @@ import {
     ISummarizerEvents,
     SummarizerStopReason,
 } from "../summarizerTypes";
-import { TestQuorum } from "./testQuorum";
+import { TestQuorumClients } from "./testQuorumClients";
 
 describe("Summarizer Client Election", () => {
     const maxOps = 1000;
-    const testQuorum = new TestQuorum();
+    const testQuorum = new TestQuorumClients();
     let currentSequenceNumber: number = 0;
     const testDeltaManager = { get lastSequenceNumber() { return currentSequenceNumber; } };
     const mockLogger = new MockLogger();
@@ -67,6 +67,7 @@ describe("Summarizer Client Election", () => {
             // Approximation, as ideally it should become cancelled immediately after stop() call
             return this.state !== "running";
         }
+        public close() {}
         public stop(reason?: string): void {
             this.stopDeferred.resolve(reason);
         }
@@ -248,7 +249,7 @@ describe("Summarizer Client Election", () => {
                 ["s2", 4, false],
                 ["b", 7, true],
             ], { electedClientId: "s2", electedParentId: "s2", electionSequenceNumber: 432 });
-            assertState("b", "b" ,432, "auto-elect next eligible client");
+            assertState("b", "b", 432, "auto-elect next eligible client");
         });
 
         it("Should remain unelected with empty quorum", () => {
@@ -264,7 +265,7 @@ describe("Summarizer Client Election", () => {
             currentSequenceNumber = 678;
             createElection([
             ], { electedClientId: "x", electedParentId: "x", electionSequenceNumber: 432 });
-            assertState(undefined, undefined,432, "no client to elect");
+            assertState(undefined, undefined, 432, "no client to elect");
         });
 
         it("Should reelect during add/remove clients", async () => {
@@ -432,11 +433,11 @@ describe("Summarizer Client Election", () => {
     describe("No initial state", () => {
         it("Should reelect during add/remove clients", () => {
             createElection();
-            assertState(undefined, undefined,0, "no clients, should initially be undefined");
+            assertState(undefined, undefined, 0, "no clients, should initially be undefined");
 
             // Add non-interactive client, no effect
             addClient("s1", 1, false);
-            assertState(undefined, undefined,0, "only non-interactive client in quorum");
+            assertState(undefined, undefined, 0, "only non-interactive client in quorum");
 
             // Add interactive client, should elect
             addClient("a", 2, true);

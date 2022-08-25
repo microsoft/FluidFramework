@@ -13,11 +13,10 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    BindState,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import {
     assert,
     Deferred,
@@ -27,6 +26,7 @@ import {
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
+    LoggingError,
     raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
@@ -50,6 +50,7 @@ import {
     IInboundSignalMessage,
     ISummaryTreeWithStats,
     VisibilityState,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
     convertSnapshotTreeToSummaryTree,
@@ -69,6 +70,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
     GCDataBuilder,
+    removeRouteFromAllNodes,
     unpackChildNodesGCDetails,
     unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
@@ -152,7 +154,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
 
-    private bindState: BindState;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
@@ -180,10 +181,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     ) {
         super();
 
+        assert(!dataStoreContext.id.includes("/"),
+            0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */);
+
         this.logger = ChildLogger.create(
             dataStoreContext.logger,
             "FluidDataStoreRuntime",
-            {all:{ dataStoreId: uuid() }},
+            { all: { dataStoreId: uuid() } },
         );
 
         this.id = dataStoreContext.id;
@@ -195,8 +199,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const tree = dataStoreContext.baseSnapshot;
 
         this.channelsBaseGCDetails = new LazyPromise(async () => {
-            const baseGCDetails = await
-                (this.dataStoreContext.getBaseGCDetails?.() ?? this.dataStoreContext.getInitialGCSummaryDetails());
+            const baseGCDetails = await this.dataStoreContext.getBaseGCDetails();
             return unpackChildNodesGCDetails(baseGCDetails);
         });
 
@@ -260,8 +263,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.attachListener();
-        // If exists on storage or loaded from a snapshot, it should already be bound.
-        this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
 
         /**
@@ -348,6 +349,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public createChannel(id: string = uuid(), type: string): IChannel {
+        if (id.includes("/")) {
+            throw new UsageError(`Id cannot contain slashes: ${id}`);
+        }
+
         this.verifyNotClosed();
 
         assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
@@ -428,7 +433,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             handle.attachGraph();
         });
         this.pendingHandlesToMakeVisible.clear();
-        this.bindToContext();
+        this.dataStoreContext.makeLocallyVisible();
     }
 
     /**
@@ -436,21 +441,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public attachGraph() {
         this.makeVisibleAndAttachGraph();
-    }
-
-    /**
-     * Binds this runtime to the container
-     * This includes the following:
-     * 1. Sending an Attach op that includes all existing state
-     * 2. Attaching the graph if the data store becomes attached.
-     */
-    public bindToContext() {
-        if (this.bindState !== BindState.NotBound) {
-            return;
-        }
-        this.bindState = BindState.Binding;
-        this.dataStoreContext.bindToContext();
-        this.bindState = BindState.Bound;
     }
 
     public bind(handle: IFluidHandle): void {
@@ -638,10 +628,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * After GC has run, called to notify this channel of routes that are used in it. It calls the child contexts to
      * update their used routes.
      * @param usedRoutes - The routes that are used in all contexts in this channel.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
-     * as part of this GC run, this should be used to update the time when it happens.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Get a map of channel ids to routes used in it.
         const usedContextRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -652,7 +640,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         // Update the used routes in each context. Used routes is empty for unused context.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? [], gcTimestamp);
+            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? []);
         }
     }
 
@@ -675,6 +663,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
         if (channelBaseGCDetails === undefined) {
             channelBaseGCDetails = {};
+        } else if (channelBaseGCDetails.gcData?.gcNodes !== undefined) {
+            // Note: if the child channel has an explicit handle route to its parent, it will be removed here and
+            // expected to be added back by the parent when getGCData is called.
+            removeRouteFromAllNodes(channelBaseGCDetails.gcData.gcNodes, this.absolutePath);
         }
 
         // Currently, channel context's are always considered used. So, it there are no used routes for it, we still
@@ -689,8 +681,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to summarize
@@ -703,20 +700,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // (i.e. it has a base mapping) - then we go ahead and summarize
                 return isAttached;
             }).map(async ([contextId, context]) => {
-                // If BlobAggregationStorage is engaged, we have to write full summary for data stores
-                // BlobAggregationStorage relies on this behavior, as it aggregates blobs across DDSs.
-                // Not generating full summary will mean data loss, as we will overwrite aggregate blob in new summary,
-                // and any virtual blobs that stayed (for unchanged DDSs) will need aggregate blob in previous summary
-                // that is no longer present in this summary.
-                // This is temporal limitation that can be lifted in future once BlobAggregationStorage becomes smarter.
-                const contextSummary = await context.summarize(true /* fullTree */, trackState);
+                const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
                 summaryBuilder.addWithStats(contextId, contextSummary);
             }));
 
         return summaryBuilder.getSummaryTree();
     }
 
-    public getAttachSummary(): ISummaryTreeWithStats {
+    public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         /**
          * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
          * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
@@ -742,13 +733,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // Craft the .attributes file for each shared object
         for (const [contextId, context] of this.contexts) {
             if (!(context instanceof LocalChannelContextBase)) {
-                throw new Error("Should only be called with local channel handles");
+                throw new LoggingError("Should only be called with local channel handles");
             }
 
             if (!this.notBoundedChannelContextSet.has(contextId)) {
                 let summaryTree: ISummaryTreeWithStats;
                 if (context.isLoaded) {
-                    const contextSummary = context.getAttachSummary();
+                    const contextSummary = context.getAttachSummary(telemetryContext);
                     assert(
                         contextSummary.summary.type === SummaryType.Tree,
                         0x180 /* "getAttachSummary should always return a tree" */);
@@ -857,6 +848,29 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
     }
 
+    /**
+     * Revert a local op.
+     * @param content - The content of the original message.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    public rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
+        this.verifyNotClosed();
+
+        switch (type) {
+            case DataStoreMessageType.ChannelOp:
+                {
+                    // For Operations, find the right channel and trigger resubmission on it.
+                    const envelope = content as IEnvelope;
+                    const channelContext = this.contexts.get(envelope.address);
+                    assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
+                    channelContext.rollback(envelope.contents, localOpMetadata);
+                    break;
+                }
+            default:
+                throw new LoggingError(`Can't rollback ${type} message`);
+        }
+    }
+
     public async applyStashedOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const channelContext = this.contexts.get(envelope.address);
@@ -927,7 +941,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     private verifyNotClosed() {
         if (this._disposed) {
-            throw new Error("Runtime is closed");
+            throw new LoggingError("Runtime is closed");
         }
     }
 }
@@ -958,13 +972,13 @@ export const mixinRequestHandler = (
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string } | undefined >,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[]; content: string; } | undefined >,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {
             const firstName = path.shift();
             if (firstName === undefined) {
-                throw new Error("Path can't be empty");
+                throw new LoggingError("Path can't be empty");
             }
 
             let blob: ISummaryTree | ISummaryBlob = {

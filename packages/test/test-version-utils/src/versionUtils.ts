@@ -24,8 +24,8 @@ const resolutionCache = new Map<string, string>();
 const revision = 1;
 
 interface InstalledJson {
-    revision: number,
-    installed: string[],
+    revision: number;
+    installed: string[];
 }
 
 async function ensureInstalledJson() {
@@ -116,10 +116,23 @@ export function resolveVersion(requested: string, installed: boolean) {
         }
         throw new Error(`No matching version found in ${baseModulePath}`);
     } else {
-        const result = execSync(
+        let result = execSync(
             `npm v @fluidframework/container-loader@"${requested}" version --json`,
             { encoding: "utf8" },
         );
+        // if we are requesting an x.x.0-0 prerelease and failed the first try, try
+        // again using the virtualPatch schema
+        if (result === "") {
+            const requestedVersion = new semver.SemVer(requested.substring(requested.indexOf("^") + 1));
+            if (requestedVersion.patch === 0 && requestedVersion.prerelease.length > 0) {
+                const retryVersion = `^${requestedVersion.major}.${requestedVersion.minor}.1000-0`;
+                result = execSync(
+                    `npm v @fluidframework/container-loader@"${retryVersion}" version --json`,
+                    { encoding: "utf8" },
+                );
+            }
+        }
+
         try {
             const versions: string | string[] = JSON.parse(result);
             const version = Array.isArray(versions) ? versions.sort(semver.rcompare)[0] : versions;
@@ -216,10 +229,71 @@ export const loadPackage = (modulePath: string, pkg: string) =>
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-return
     require(path.join(modulePath, "node_modules", pkg));
 
+/**
+ * Used to get the major version number above or below the baseVersion.
+ * @param baseVersion - The base version to move from (eg. "0.60.0")
+ * @param requested - Number representing the major version to move from. These are
+ * generally negative to move back versions (eg. -1).
+ * Note: If the requested number is a string then that will be the returned value
+ */
 export function getRequestedRange(baseVersion: string, requested?: number | string): string {
     if (requested === undefined || requested === 0) { return baseVersion; }
     if (typeof requested === "string") { return requested; }
-    const version = new semver.SemVer(baseVersion);
-    // ask for prerelease in case we just bumpped the version and haven't release the previous version yet.
-    return `^${version.major}.${version.minor + requested}.0-0`;
+
+    const isInternal = baseVersion.includes("internal");
+
+    if (isInternal) {
+        const internalVersions = baseVersion.split("-internal.");
+        return internalSchema(internalVersions[0], internalVersions[1], requested);
+    }
+
+    let version;
+    try {
+        version = new semver.SemVer(baseVersion);
+    } catch (err: unknown) {
+        throw new Error(err as string);
+    }
+
+    // calculate requested major version number
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    const requestedMajorVersion = version.major + requested;
+    // if the major version number is bigger than 0 then return it as normal
+    if (requestedMajorVersion > 0) {
+        return `^${requestedMajorVersion}.0.0-0`;
+    }
+    // if the major version number is <= 0 then we return the equivalent pre-releases
+    const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+
+    // Minor number in 0.xx release represent a major change hence different rules
+    // are applied for computing the requested version.
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
+    // too old a version / non existing version requested
+    if (requestedMinorVersion <= 0) {
+        // cap at min version
+        return "^0.0.1-0";
+    }
+    return `^0.${requestedMinorVersion}.0-0`;
+}
+
+export function internalSchema(publicVersion: string, internalVersion: string, requested: number | string): string {
+    if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -1) { return `^1.0.0-0`; }
+    if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -2) { return `^0.59.0-0`; }
+    if (publicVersion === "2.0.0" && internalVersion === "2.0.0" && requested === -2) { return `^1.0.0-0`; }
+
+    if (publicVersion === "2.0.0" && internalVersion <= "2.0.0" && requested < -2) {
+        const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+        const requestedMinorVersion = lastPrereleaseVersion.minor + (requested as number) + 2;
+        return `^0.${requestedMinorVersion}.0-0`;
+    }
+
+    let parsedVersion;
+    try {
+        parsedVersion = new semver.SemVer(internalVersion);
+    } catch (err: unknown) {
+        throw new Error(err as string);
+    }
+
+    // eslint-disable-next-line max-len
+    return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${parsedVersion.major}.0.0`;
 }

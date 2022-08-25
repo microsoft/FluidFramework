@@ -27,6 +27,7 @@ trigger:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - server/gitssh
@@ -42,6 +43,7 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:

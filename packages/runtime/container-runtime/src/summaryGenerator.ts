@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     assert,
     Deferred,
@@ -27,13 +27,14 @@ import {
     SummarizeResultPart,
     ISummaryCancellationToken,
     ISummarizeTelemetryProperties,
+    SummaryGeneratorTelemetry,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
 export type raceTimerResult<T> =
-    { result: "done"; value: T } |
-    { result: IPromiseTimerResult["timerResult"] } |
-    { result: "cancelled" };
+    { result: "done"; value: T; } |
+    { result: IPromiseTimerResult["timerResult"]; } |
+    { result: "cancelled"; };
 
 /** Helper function to wait for a promise or PromiseTimer to elapse. */
 export async function raceTimer<T>(
@@ -54,47 +55,6 @@ export async function raceTimer<T>(
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
 const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
-
-type SummaryGeneratorRequiredTelemetryProperties =
-    /** True to generate the full tree with no handle reuse optimizations */
-    "fullTree" |
-    /** Time since we last attempted to generate a summary */
-    "timeSinceLastAttempt" |
-    /** Time since we last successfully generated a summary */
-    "timeSinceLastSummary";
-type SummaryGeneratorOptionalTelemetryProperties =
-    /** Reference sequence number as of the generate summary attempt. */
-    "referenceSequenceNumber" |
-    /** minimum sequence number (at the reference sequence number) */
-    "minimumSequenceNumber" |
-    /** Delta between the current reference sequence number and the reference sequence number of the last attempt */
-    "opsSinceLastAttempt" |
-    /** Delta between the current reference sequence number and the reference sequence number of the last summary */
-    "opsSinceLastSummary" |
-    /** Delta in sum of op sizes between the current reference sequence number and the reference
-     *  sequence number of the last summary */
-    "opsSizesSinceLastSummary" |
-    /** Delta between the number of non-system ops since the last summary @see isSystemMessage */
-    "nonSystemOpsSinceLastSummary" |
-    /** Time it took to generate the summary tree and stats. */
-    "generateDuration" |
-    /** The handle returned by storage pointing to the uploaded summary tree. */
-    "handle" |
-    /** Time it took to upload the summary tree to storage. */
-    "uploadDuration" |
-    /** The client sequence number of the summarize op submitted for the summary. */
-    "clientSequenceNumber" |
-    /** Time it took for this summary to be acked after it was generated */
-    "ackWaitDuration" |
-    /** Reference sequence number of the ack/nack message */
-    "ackNackSequenceNumber" |
-    /** Actual sequence number of the summary op proposal. */
-    "summarySequenceNumber" |
-    /** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
-    "nackRetryAfter";
-type SummaryGeneratorTelemetry =
-    Pick<ITelemetryProperties, SummaryGeneratorRequiredTelemetryProperties> &
-    Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
 
 export type SummarizeReason =
     /**
@@ -126,8 +86,6 @@ export type SummarizeReason =
      * stay connected long enough for summarizer client to catch up.
      */
     | "lastSummary"
-    /** Previous summary attempt failed, and we are retrying. */
-    | `retry${number}`
     /** On-demand summary requested with specified reason. */
     | `onDemand;${string}`
     /** Enqueue summarize attempt with specified reason. */
@@ -237,6 +195,8 @@ export class SummaryGenerator {
         const { refreshLatestAck, fullTree } = options;
         const logger = ChildLogger.create(this.logger, undefined, { all: summarizeProps });
 
+        // Note: timeSinceLastAttempt and timeSinceLastSummary for the
+        // first summary are basically the time since the summarizer was loaded.
         const timeSinceLastAttempt = Date.now() - this.heuristicData.lastAttempt.summaryTime;
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
         let summarizeTelemetryProps: SummaryGeneratorTelemetry = {
@@ -304,28 +264,7 @@ export class SummaryGenerator {
                 opsSinceLastAttempt: referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
                 opsSinceLastSummary,
             };
-            if (summaryData.stage !== "base") {
-                summarizeTelemetryProps = {
-                    ...summarizeTelemetryProps,
-                    ...summaryData.summaryStats,
-                    generateDuration: summaryData.generateDuration,
-                };
-
-                if (summaryData.stage !== "generate") {
-                    summarizeTelemetryProps = {
-                        ...summarizeTelemetryProps,
-                        handle: summaryData.handle,
-                        uploadDuration: summaryData.uploadDuration,
-                    };
-
-                    if (summaryData.stage !== "upload") {
-                        summarizeTelemetryProps = {
-                            ...summarizeTelemetryProps,
-                            clientSequenceNumber: summaryData.clientSequenceNumber,
-                        };
-                    }
-                }
-            }
+            summarizeTelemetryProps = this.addSummaryDataToTelemetryProps(summaryData, summarizeTelemetryProps);
 
             if (summaryData.stage !== "submit") {
                 return fail("submitSummaryFailure", summaryData.error, summarizeTelemetryProps);
@@ -354,7 +293,7 @@ export class SummaryGenerator {
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
-            summarizeEvent.reportEvent("generate", {...summarizeTelemetryProps});
+            summarizeEvent.reportEvent("generate", { ...summarizeTelemetryProps });
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
@@ -423,7 +362,7 @@ export class SummaryGenerator {
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
                     summaryAckOp: ackNackOp,
                     ackNackDuration,
-                }});
+                } });
             } else {
                 // Check for retryDelay in summaryNack response.
                 assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
@@ -433,8 +372,6 @@ export class SummaryGenerator {
 
                 // pre-0.58 error message prefix: summaryNack
                 const error = new LoggingError(`Received summaryNack: ${message}`, { retryAfterSeconds });
-                logger.sendErrorEvent(
-                    { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);
 
                 assert(getRetryDelaySecondsFromError(error) === retryAfterSeconds, 0x25f /* "retryAfterSeconds" */);
                 // This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
@@ -448,6 +385,45 @@ export class SummaryGenerator {
         } finally {
             this.pendingAckTimer.clear();
         }
+    }
+
+    private addSummaryDataToTelemetryProps(
+        summaryData: SubmitSummaryResult,
+        initialProps: SummaryGeneratorTelemetry,
+    ): SummaryGeneratorTelemetry {
+        switch (summaryData.stage) {
+            case "base": return initialProps;
+
+            case "generate": return {
+                ...initialProps,
+                ...summaryData.summaryStats,
+                generateDuration: summaryData.generateDuration,
+            };
+
+            case "upload": return {
+                ...initialProps,
+                ...summaryData.summaryStats,
+                generateDuration: summaryData.generateDuration,
+                handle: summaryData.handle,
+                uploadDuration: summaryData.uploadDuration,
+            };
+
+            case "submit": return {
+                ...initialProps,
+                ...summaryData.summaryStats,
+                generateDuration: summaryData.generateDuration,
+                handle: summaryData.handle,
+                uploadDuration: summaryData.uploadDuration,
+                clientSequenceNumber: summaryData.clientSequenceNumber,
+                hasMissingOpData: this.heuristicData.hasMissingOpData,
+                opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
+                nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
+            };
+
+            default: assert(true, 0x397 /* Unexpected summary stage */);
+        }
+
+        return initialProps;
     }
 
     private summarizeTimerHandler(time: number, count: number) {

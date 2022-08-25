@@ -20,7 +20,7 @@ describe("LocalChannelStorageService", () => {
         assert.deepStrictEqual(await ss.list(""), []);
         try {
             await ss.readBlob("test");
-        } catch (error) {
+        } catch (error: any) {
             assert.strictEqual(error.message, "Blob Not Found");
         }
     });
@@ -44,7 +44,7 @@ describe("LocalChannelStorageService", () => {
 
         assert.strictEqual(await ss.contains("foo"), true);
         assert.deepStrictEqual(await ss.list(""), ["foo"]);
-        assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar","utf8"));
+        assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar", "utf8"));
     });
 
     it("Nested Blob", async () => {
@@ -74,6 +74,6 @@ describe("LocalChannelStorageService", () => {
 
         assert.strictEqual(await ss.contains("nested/foo"), true);
         assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
-        assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar","utf8"));
+        assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar", "utf8"));
     });
 });

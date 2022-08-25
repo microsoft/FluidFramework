@@ -12,6 +12,8 @@ spec:
   selector:
     matchLabels:
       app: {{ template "routerlicious.name" . }}
+      component: "{{ .Values.deli.name }}"
+      release: {{ .Release.Name }}
   replicas: {{ .Values.deli.replicas }}
   template:
     metadata:
@@ -35,7 +37,9 @@ spec:
         - name: DEBUG
           value: "fluid:*"
         - name: NODE_ENV
-          value: production
+          value: "production"
+        - name: IS_FLUID_SERVER
+          value: "true"
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/packages/routerlicious/config/config.json

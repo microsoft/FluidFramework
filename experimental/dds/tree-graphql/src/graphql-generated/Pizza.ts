@@ -3,6 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import {
+	getString,
+	getFloat,
+	getInt,
+	getBoolean,
+	getID,
+	getNodeID,
+	getStringList,
+	getListTrait,
+} from '../graphql-plugins/SharedTreePlugin';
+
 export type Maybe<T> = T | null;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
@@ -51,29 +62,6 @@ export enum Drink {
 	Coke = 'COKE',
 	Lemonade = 'LEMONADE',
 }
-
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
-import {
-	getString,
-	getFloat,
-	getInt,
-	getBoolean,
-	getID,
-	getNodeID,
-	getScalar,
-	getStringList,
-	getFloatList,
-	getIntList,
-	getBooleanList,
-	getIDList,
-	getTrait,
-	getNonNullTrait,
-	getListTrait,
-} from '../graphql-plugins/SharedTreePlugin';
 
 export const resolvers = {
 	Query: {

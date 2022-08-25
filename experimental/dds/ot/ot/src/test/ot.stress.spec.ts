@@ -129,7 +129,7 @@ describe("SharedOT", () => {
 
                     const { length } = doc;
 
-                    switch(int32(4)) {
+                    switch (int32(4)) {
                         case 0: {
                             if (length > 0) {
                                 const start = int32(length);

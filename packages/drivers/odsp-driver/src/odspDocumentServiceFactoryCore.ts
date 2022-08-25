@@ -14,7 +14,10 @@ import {
     TelemetryLogger,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import {
+    getDocAttributesFromProtocolSummary,
+    ensureFluidResolvedUrl,
+} from "@fluidframework/driver-utils";
 import {
     TokenFetchOptions,
     OdspResourceTokenFetchOptions,
@@ -23,6 +26,10 @@ import {
     HostStoragePolicy,
     IFileEntry,
     IOdspUrlParts,
+    SharingLinkScope,
+    SharingLinkRole,
+    ShareLinkTypes,
+    ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
@@ -72,15 +79,22 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         if (filePath === undefined || filePath === null) {
             throw new Error("File path should be provided!!");
         }
+
+        const protocolSummary = createNewSummary?.tree[".protocol"];
+        if (protocolSummary) {
+            const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary as ISummaryTree);
+            if (documentAttributes?.sequenceNumber !== 0) {
+                throw new Error("Seq number in detached ODSP container should be 0");
+            }
+        }
+
+        const createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
         const newFileInfo: INewFileInfo = {
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
             filePath,
             filename: odspResolvedUrl.fileName,
-            // set createLinkType to undefined if enableShareLinkWithCreate is set to false,
-            // so that share link creation with create file can be enabled
-            createLinkType: this.hostPolicy.enableShareLinkWithCreate ?
-            odspResolvedUrl.shareLinkInfo?.createLink?.type : undefined,
+            createLinkType: createShareLinkParam,
         };
 
         const odspLogger = createOdspLogger(logger);
@@ -90,13 +104,18 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.persistedCache,
             this.nonPersistentCache,
             fileEntry,
-            odspLogger);
+            odspLogger,
+            clientIsSummarizer);
 
         return PerformanceEvent.timedExecAsync(
             odspLogger,
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
+                createShareLinkParam: JSON.stringify(createShareLinkParam),
+                enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
+                enableSingleRequestForShareLinkWithCreate:
+                    this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
             },
             async (event) => {
                 odspResolvedUrl = await createNewFluidFile(
@@ -113,6 +132,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     fileEntry,
                     this.hostPolicy.cacheCreateNewSummary ?? true,
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+                    odspResolvedUrl.isClpCompliantApp,
+                    this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+                    this.hostPolicy.enableShareLinkWithCreate,
                 );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);
@@ -144,6 +166,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             // create the key to separate the socket reuse cache
             this.socketReferenceKeyPrefix = uuid();
         }
+        // Set enableRedeemFallback by default as true.
+        this.hostPolicy.enableRedeemFallback = this.hostPolicy.enableRedeemFallback ?? true;
+        this.hostPolicy.sessionOptions = {
+            forceAccessTokenViaAuthorizationHeader: true,
+            ...this.hostPolicy.sessionOptions,
+        };
     }
 
     public async createDocumentService(
@@ -154,7 +182,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger), undefined, clientIsSummarizer);
     }
 
-    private async createDocumentServiceCore(
+    protected async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
         odspLogger: TelemetryLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
@@ -170,7 +198,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.persistedCache,
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-            odspLogger);
+            odspLogger,
+            clientIsSummarizer);
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,
@@ -201,4 +230,32 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             clientIsSummarizer,
         );
     }
+}
+
+/**
+ * Extract the sharing link kind from the resolved URL's query paramerters
+ */
+function getSharingLinkParams(
+    hostPolicy: HostStoragePolicy,
+    searchParams: URLSearchParams,
+): ShareLinkTypes | ISharingLinkKind | undefined {
+    // extract request parameters for creation of sharing link (if provided) if the feature is enabled
+    let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+    if (hostPolicy.enableSingleRequestForShareLinkWithCreate) {
+        const createLinkScope = searchParams.get("createLinkScope");
+        const createLinkRole = searchParams.get("createLinkRole");
+        if (createLinkScope && SharingLinkScope[createLinkScope]) {
+            createShareLinkParam = {
+                scope: SharingLinkScope[createLinkScope],
+                ...(createLinkRole && SharingLinkRole[createLinkRole] ?
+                    { role: SharingLinkRole[createLinkRole] } : {}),
+            };
+        }
+    } else if (hostPolicy.enableShareLinkWithCreate) {
+        const createLinkType = searchParams.get("createLinkType");
+        if (createLinkType && ShareLinkTypes[createLinkType]) {
+            createShareLinkParam = ShareLinkTypes[createLinkType || ""];
+        }
+    }
+    return createShareLinkParam;
 }

@@ -51,7 +51,13 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
     (event: "addProposal", listener: (proposal: ISequencedProposal) => void);
     (
         event: "approveProposal",
-        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void);
+        listener: (
+            sequenceNumber: number,
+            key: string,
+            value: any,
+            approvalSequenceNumber: number,
+        ) => void,
+    );
 }
 
 /**
@@ -82,10 +88,10 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
 /**
  * Interface combining tracking of clients as well as proposals in the Quorum.
  */
-export interface IQuorum extends
-    Omit<IQuorumClients, "on" | "once" | "off">,
-    Omit<IQuorumProposals, "on" | "once" | "off">,
-    IEventProvider<IQuorumEvents> { }
+export interface IQuorum
+    extends Omit<IQuorumClients, "on" | "once" | "off">,
+        Omit<IQuorumProposals, "on" | "once" | "off">,
+        IEventProvider<IQuorumEvents> {}
 
 export interface IProtocolState {
     sequenceNumber: number;

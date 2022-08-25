@@ -5,7 +5,11 @@
 
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+    ContainerRuntime,
+    IContainerRuntimeOptions,
+    DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     buildRuntimeRequestHandler,
@@ -22,7 +26,14 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             public type: string,
             public dataStoreFactory: IFluidDataStoreFactory,
             public runtimeOptions: IContainerRuntimeOptions = {
-                summaryOptions: { initialSummarizerDelayMs: 0 },
+                summaryOptions: {
+                    summaryConfigOverrides: {
+                        ...DefaultSummaryConfiguration,
+                        ...{
+                            initialSummarizerDelayMs: 0,
+                        },
+                    },
+                },
             },
             public requestHandlers: RuntimeRequestHandler[] = [],
         ) {
@@ -30,19 +41,15 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
         }
 
         public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-            await runtime.createRootDataStore(this.type, "default");
-
-            // Test detached creation
-            const root2Context = runtime.createDetachedRootDataStore([this.type], "default2");
-            const root2Runtime = await this.dataStoreFactory.instantiateDataStore(root2Context, /* existing */ false);
-            await root2Context.attachRuntime(this.dataStoreFactory, root2Runtime);
+            const rootContext = runtime.createDetachedRootDataStore([this.type], "default");
+            const rootRuntime = await this.dataStoreFactory.instantiateDataStore(rootContext, /* existing */ false);
+            await rootContext.attachRuntime(this.dataStoreFactory, rootRuntime);
         }
 
         public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
             // Validate we can load root data stores.
             // We should be able to load any data store that was created in initializeFirstTime!
             await runtime.getRootDataStore("default");
-            await runtime.getRootDataStore("default2");
         }
 
         async preInitialize(

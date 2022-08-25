@@ -4,7 +4,7 @@
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { PerformanceEvent} from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
@@ -23,7 +23,7 @@ type WorkingState = "working" | "done" | "canceled";
  * data in the right order. Take a look at UT for examples.
  * @param concurrency - level of concurrency
  * @param from - starting point of fetching data (inclusive)
- * @param to  - ending point of fetching data. exclusive, or undefined if unknown
+ * @param to - ending point of fetching data. exclusive, or undefined if unknown
  * @param payloadSize - batch size
  * @param logger - logger to use
  * @param requestCallback - callback to request batches
@@ -52,9 +52,8 @@ export class ParallelRequests<T> {
             from: number,
             to: number,
             strongTo: boolean,
-            props: ITelemetryProperties) => Promise<{ partial: boolean, cancel: boolean, payload: T[] }>,
-        private readonly responseCallback: (payload: T[]) => void)
-    {
+            props: ITelemetryProperties) => Promise<{ partial: boolean; cancel: boolean; payload: T[]; }>,
+        private readonly responseCallback: (payload: T[]) => void) {
         this.latestRequested = from;
         this.nextToDeliver = from;
         this.knewTo = (to !== undefined);
@@ -148,7 +147,7 @@ export class ParallelRequests<T> {
 
         assert(from < this.latestRequested, 0x109 /* "unexpected next chunk position" */);
 
-        return { from, to: this.latestRequested};
+        return { from, to: this.latestRequested };
     }
 
     private addRequest() {
@@ -355,6 +354,9 @@ export class Queue<T> implements IStream<T> {
  * @param telemetryEvent - telemetry event used to track consecutive batch of requests
  * @param strongTo - tells if ops in range from...to have to be there and have to be retrieved.
  * If false, returning less ops would mean we reached end of file.
+ * @param logger - logger object to use to log progress & errors
+ * @param signal - cancelation signal
+ * @param scenarioName - reason for fetching ops
  * @returns - an object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
@@ -363,14 +365,13 @@ async function getSingleOpBatch(
     strongTo: boolean,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
-    fetchReason?: string):
-        Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }>
-{
+    scenarioName?: string):
+        Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[]; }> {
     let lastSuccessTime: number | undefined;
 
     let retry: number = 0;
     const deltas: ISequencedDocumentMessage[] = [];
-    const nothing = { partial: false, cancel: true, payload: []};
+    const nothing = { partial: false, cancel: true, payload: [] };
 
     while (signal?.aborted !== true) {
         retry++;
@@ -387,7 +388,7 @@ async function getSingleOpBatch(
             const deltasRetrievedLast = messages.length;
 
             if (deltasRetrievedLast !== 0 || !strongTo) {
-                return { payload: deltas, cancel: false, partial: partialResult};
+                return { payload: deltas, cancel: false, partial: partialResult };
             }
 
             // Storage does not have ops we need.
@@ -428,7 +429,7 @@ async function getSingleOpBatch(
                     retry,
                     duration: performance.now() - startTime,
                     retryAfter,
-                    fetchReason,
+                    reason: scenarioName,
                 },
                 error);
 
@@ -448,6 +449,18 @@ async function getSingleOpBatch(
     return nothing;
 }
 
+/**
+ * Request ops from storage
+ * @param get - Getter callback to get individual batches
+ * @param concurrency - Number of concurrent requests to make
+ * @param fromTotal - starting sequence number to fetch (inclusive)
+ * @param toTotal - max (exclusive) sequence number to fetch
+ * @param payloadSize - Payload size
+ * @param logger - Logger to log progress and errors
+ * @param signal - Cancelation signal
+ * @param scenarioName - Reason for fetching ops
+ * @returns - Messages fetched
+ */
 export function requestOps(
     get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
     concurrency: number,
@@ -456,7 +469,7 @@ export function requestOps(
     payloadSize: number,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
-    fetchReason?: string,
+    scenarioName?: string,
 ): IStream<ISequencedDocumentMessage[]> {
     let requests = 0;
     let lastFetch: number | undefined;
@@ -471,7 +484,7 @@ export function requestOps(
     const telemetryEvent = PerformanceEvent.start(logger, {
         eventName: "GetDeltas",
         ...propsTotal,
-        fetchReason,
+        reason: scenarioName,
     });
 
     const manager = new ParallelRequests<ISequencedDocumentMessage>(
@@ -487,7 +500,7 @@ export function requestOps(
                 strongTo,
                 logger,
                 signal,
-                fetchReason,
+                scenarioName,
             );
         },
         (deltas: ISequencedDocumentMessage[]) => {
@@ -546,12 +559,11 @@ export function requestOps(
 }
 
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
-    read: async () => { return { done: true };},
+    read: async () => { return { done: true }; },
 };
 
 export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>):
-    IStream<ISequencedDocumentMessage[]>
-{
+    IStream<ISequencedDocumentMessage[]> {
     let messages: Promise<ISequencedDocumentMessage[]> | undefined = messagesArg;
     return {
         read: async () => {

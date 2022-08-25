@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { LoaderHeader } from '@fluidframework/container-definitions';
+import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { StableRange, StablePlace, BuildNode, Change } from '../../ChangeTypes';
 import { Mutable } from '../../Common';
@@ -15,6 +16,7 @@ import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
 import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types';
 import { SharedTree } from '../../SharedTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
+import { nilUuid } from '../../UuidUtilities';
 import { applyTestEdits } from '../Summary.tests';
 import { buildLeaf } from './TestNode';
 import {
@@ -50,6 +52,12 @@ export function runSharedTreeVersioningTests(
 			localMode: false,
 			writeFormat: newVersion,
 		};
+
+		it('defaults to latest version if no version is specified when creating factory', () => {
+			const sharedTree = SharedTree.getFactory().create(new MockFluidDataStoreRuntime(), 'SharedTree');
+			const writeFormats = Object.values(WriteFormat);
+			expect(sharedTree.getWriteFormat()).to.equal(writeFormats[writeFormats.length - 1]);
+		});
 
 		it('only processes edit ops if they have the same version', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
@@ -453,6 +461,30 @@ export function runSharedTreeVersioningTests(
 			expect(areRevisionViewsSemanticallyEqual(tree1.currentView, tree1, tree2.currentView, tree2)).to.be.true;
 		}).timeout(10000);
 
+		it('attributes all pre-upgrade IDs to the nil UUID after upgrading from 0.0.2', async () => {
+			const { testObjectProvider, tree: tree } = await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_0_2,
+			});
+
+			const attributionId = tree.attributionId;
+			expect(attributionId).to.equal(nilUuid);
+			const nodeId = tree.generateNodeId();
+			const stableNodeId = tree.convertToStableNodeId(nodeId);
+
+			tree.applyEdit(Change.insertTree(buildLeaf(nodeId), StablePlace.atStartOf(testTrait(tree.currentView))));
+
+			// New tree joins, causes an upgrade
+			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_1_1,
+				testObjectProvider,
+			});
+
+			await testObjectProvider.ensureSynchronized();
+			expect(tree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
+			expect(tree.attributeNodeId(nodeId)).to.equal(attributionId);
+			expect(tree2.attributeNodeId(tree2.convertToNodeId(stableNodeId))).to.equal(attributionId);
+		});
+
 		describe('telemetry', () => {
 			const events: ITelemetryBaseEvent[] = [];
 			const logger = { send: (event) => events.push(event) };
@@ -507,7 +539,7 @@ export function runSharedTreeVersioningTests(
 					version: newVersion,
 				};
 				containerRuntimeFactory.pushMessage({ contents: op });
-				(tree.editsInternal as EditLog).getLocalEdits = () => {
+				(tree.edits as EditLog).getLocalEdits = () => {
 					throw new Error('Simulated issue in update');
 				};
 				const matchesFailedVersionUpdate = (event: ITelemetryBaseEvent) =>

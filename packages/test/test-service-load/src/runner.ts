@@ -4,8 +4,12 @@
  */
 
 import commander from "commander";
-import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import {
+    ITestDriver,
+    TestDriverTypes,
+    DriverEndpoint,
+} from "@fluidframework/test-driver-definitions";
+import { Loader, ConnectionState } from "@fluidframework/container-loader";
 import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -40,12 +44,14 @@ async function main() {
         .requiredOption("-r, --runId <runId>",
             "run a child process with the given id. Requires --url option.", parseIntArg)
         .requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
+        .option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
         .option("-m, --enableOpsMetrics", "Enable capturing ops metrics")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
+    const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
     const profileArg: string = commander.profile;
     const url: string = commander.url;
     const runId: number = commander.runId;
@@ -73,6 +79,7 @@ async function main() {
 
     const result = await runnerProcess(
         driver,
+        endpoint,
         {
             runId,
             testConfig: profile,
@@ -124,6 +131,7 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T
  */
 async function runnerProcess(
     driver: TestDriverTypes,
+    endpoint: DriverEndpoint | undefined,
     runConfig: IRunConfig,
     url: string,
     seed: number,
@@ -133,15 +141,16 @@ async function runnerProcess(
     let metricsCleanup: () => void = () => {};
 
     try {
+        const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
         const loaderOptions = generateLoaderOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.loader);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader);
 
         const containerOptions = generateRuntimeOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.container);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container);
 
         const configurations = generateConfigurations(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.configurations);
-        const testDriver: ITestDriver = await createTestDriver(driver, seed, runConfig.runId);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations);
+        const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
             {
@@ -190,9 +199,7 @@ async function runnerProcess(
             });
 
             const container: IContainer = await loader.resolve({ url, headers });
-            // TODO: Remove null check after next release #8523
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            container.resume!();
+            container.connect();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
             if (enableOpsMetrics) {
@@ -219,7 +226,7 @@ async function runnerProcess(
 
             try {
                 printStatus(runConfig, `running`);
-                done = await test.run(runConfig, reset);
+                done = await test.run(runConfig, reset, logger);
                 reset = false;
                 printStatus(runConfig, done ? `finished` : "closed");
             } catch (error) {
@@ -253,8 +260,7 @@ function scheduleFaultInjection(
         const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs)(runConfig.randEng);
         printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`);
         setTimeout(() => {
-            // TODO: Remove null check after next release #8523
-            if (container.connected !== undefined && container.connected && container.resolvedUrl !== undefined) {
+            if (container.connectionState === ConnectionState.Connected && container.resolvedUrl !== undefined) {
                 const deltaConn =
                     ds.documentServices.get(container.resolvedUrl)?.documentDeltaConnection;
                 if (deltaConn !== undefined) {
@@ -300,8 +306,7 @@ function scheduleContainerClose(
     new Promise<void>((resolve) => {
         // wait for the container to connect write
         container.once("closed", () => resolve);
-        // TODO: Remove null check after next release #8523
-        if (container.connected !== undefined && !container.connected && !container.closed) {
+        if (container.connectionState !== ConnectionState.Connected && !container.closed) {
             container.once("connected", () => {
                 resolve();
                 container.off("closed", () => resolve);
@@ -348,7 +353,7 @@ function scheduleContainerClose(
 
 async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number) {
     // Use map to cache userName instead of recomputing.
-    const clientIdUserNameMap: { [clientId: string]: string } = {};
+    const clientIdUserNameMap: { [clientId: string]: string; } = {};
 
     const getUserName = (userContainer: IContainer) => {
         const clientId = userContainer.clientId;

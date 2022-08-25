@@ -12,11 +12,12 @@ import {
     gcBlobKey,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummarizerNodeConfigWithGC,
     ISummarizerNodeWithGC,
+    SummarizeInternalFn,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
@@ -35,10 +36,10 @@ class SummaryNodeWithGC extends SummaryNode {
     constructor(
         public readonly serializedUsedRoutes: string,
         summary: {
-            readonly referenceSequenceNumber: number,
-            readonly basePath: EscapedPath | undefined,
-            readonly localPath: EscapedPath,
-            additionalPath?: EscapedPath,
+            readonly referenceSequenceNumber: number;
+            readonly basePath: EscapedPath | undefined;
+            readonly localPath: EscapedPath;
+            additionalPath?: EscapedPath;
         },
     ) {
         super(summary);
@@ -74,9 +75,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // removed (from runGC flag in IContainerRuntimeOptions), this should be changed to be have no routes by default.
     private usedRoutes: string[] = [""];
 
-    // If this node is marked as unreferenced, the time when it marked as such.
-    private unreferencedTimestampMs: number | undefined;
-
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
     private readonly gcDisabled: boolean;
 
@@ -86,7 +84,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      */
     public constructor(
         logger: ITelemetryLogger,
-        private readonly summarizeFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        private readonly summarizeFn: (
+            fullTree: boolean,
+            trackState: boolean,
+            telemetryContext?: ITelemetryContext,
+        ) => Promise<ISummarizeInternalResult>,
         config: ISummarizerNodeConfigWithGC,
         changeSequenceNumber: number,
         /** Undefined means created without summary */
@@ -98,7 +100,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ) {
         super(
             logger,
-            async (fullTree: boolean) => summarizeFn(fullTree, true /* trackState */),
+            async (fullTree: boolean, _trackState: boolean, telemetryContext?: ITelemetryContext) =>
+                summarizeFn(fullTree, true /* trackState */, telemetryContext),
             config,
             changeSequenceNumber,
             latestSummary,
@@ -111,22 +114,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         this.baseGCDetailsP = new LazyPromise(async () => {
             return (await getBaseGCDetailsFn?.()) ?? { usedRoutes: [] };
         });
-    }
-
-    /**
-     * @deprecated - Renamed to getBaseGCDetails.
-     */
-    public getGCSummaryDetails(): IGarbageCollectionSummaryDetails {
-        return this.getBaseGCDetails();
-    }
-
-    // Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state.
-    public getBaseGCDetails(): IGarbageCollectionDetailsBase {
-        return {
-            gcData: this.gcData,
-            usedRoutes: this.usedRoutes,
-            unrefTimestamp: this.unreferencedTimestampMs,
-        };
     }
 
     /**
@@ -152,10 +139,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // Sort the used routes because we compare them with the current used routes to check if they changed between
         // summaries. Both are sorted so that the order of elements is the same.
         this.referenceUsedRoutes = baseGCDetails.usedRoutes?.sort();
-        this.unreferencedTimestampMs = baseGCDetails.unrefTimestamp;
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean = true): Promise<ISummarizeResult> {
+    public async summarize(
+        fullTree: boolean,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
         // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
         // summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
@@ -165,7 +155,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
         // If trackState is true, get summary from base summarizer node which tracks summary state.
         // If trackState is false, get summary from summarizeInternal.
-        return trackState ? super.summarize(fullTree) : this.summarizeFn(fullTree, trackState);
+        return trackState
+            ? super.summarize(fullTree, true /* trackState */, telemetryContext)
+            : this.summarizeFn(fullTree, trackState, telemetryContext);
     }
 
     /**
@@ -304,7 +296,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      */
     public createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: SummarizeInternalFn,
         /** Initial id or path part of this node */
         id: string,
         /**
@@ -362,7 +354,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
     }
 
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Sort the given routes before updating. This will ensure that the routes compared in hasUsedStateChanged()
         // are in the same order.
         this.usedRoutes = usedRoutes.sort();
@@ -371,16 +363,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // be tracked for this summary.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
             this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
-        }
-
-        if (this.isReferenced()) {
-            this.unreferencedTimestampMs = undefined;
-            return;
-        }
-
-        // If this node just became unreferenced, update its unreferencedTimestampMs.
-        if (this.unreferencedTimestampMs === undefined) {
-            this.unreferencedTimestampMs = gcTimestamp;
         }
     }
 
@@ -427,7 +409,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  */
 export const createRootSummarizerNodeWithGC = (
     logger: ITelemetryLogger,
-    summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+    summarizeInternalFn: SummarizeInternalFn,
     changeSequenceNumber: number,
     referenceSequenceNumber: number | undefined,
     config: ISummarizerNodeConfigWithGC = {},

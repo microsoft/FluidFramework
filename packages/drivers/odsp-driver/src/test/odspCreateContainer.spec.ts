@@ -33,14 +33,14 @@ describe("Odsp Create Container Test", () => {
         itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
         driveId,
         itemId,
-        id : "fakeSummaryHandle",
+        id: "fakeSummaryHandle",
     };
 
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
         async (_options) => "token",
         async (_options) => "token",
         new LocalPersistentCache(2000),
-        { snapshotOptions : { timeout : 2000 }},
+        { snapshotOptions: { timeout: 2000 } },
     );
 
     const createSummary = (putAppTree: boolean, putProtocolTree: boolean) => {
@@ -121,7 +121,7 @@ describe("Odsp Create Container Test", () => {
         const resolved = await resolver.resolve(request);
         const summary = createSummary(true, true);
 
-        try{
+        try {
             await mockFetchMultiple(
                 async () => createService(summary, resolved),
                 [
@@ -131,7 +131,7 @@ describe("Odsp Create Container Test", () => {
                     async () => okResponse({}, {}),
                 ],
             );
-        } catch (error) {
+        } catch (error: any) {
             assert.strictEqual(error.statusCode, undefined, "Wrong error code");
             assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
                 "Error type should be correct");

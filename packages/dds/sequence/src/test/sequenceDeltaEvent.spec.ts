@@ -57,17 +57,17 @@ describe("non-collab", () => {
         });
 
         function insertText(offset: number, text: string): void {
-            let deltaArgs: IMergeTreeDeltaCallbackArgs;
+            let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
             const op = client.insertTextLocal(offset, text);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, 1);
 
+            assert(op);
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, offset);
             assert.equal(event.first.segment.cachedLength, text.length);
@@ -101,17 +101,17 @@ describe("non-collab", () => {
         });
 
         function removeText(start: number, end: number): void {
-            let deltaArgs: IMergeTreeDeltaCallbackArgs;
+            let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
             const op = client.removeRangeLocal(start, end);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, 1);
 
+            assert(op);
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, start);
             assert.equal(event.first.segment.cachedLength, end - start);
@@ -172,33 +172,33 @@ describe("non-collab", () => {
             end: number,
             newProps: PropertySet,
             expected: IExpectedSegmentInfo[]): void {
-            let deltaArgs: IMergeTreeDeltaCallbackArgs;
+            let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
             const op = client.annotateRangeLocal(start, end, newProps, undefined);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, expected.length);
 
+            assert(op);
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, expected.length);
             for (let i = 0; i < expected.length; i = i + 1) {
                 assert.equal(event.ranges[i].position, expected[i].offset);
                 assert.equal(event.ranges[i].segment.cachedLength, expected[i].numChar);
-                assert.equal(Object.keys(event.ranges[i].segment.properties).length,
+                assert.equal(Object.keys(event.ranges[i].segment.properties ?? {}).length,
                     Object.keys(expected[i].props).length);
-                for (const key of Object.keys(event.ranges[i].segment.properties)) {
-                    assert.equal(event.ranges[i].segment.properties[key], expected[i].props[key]);
+                for (const key of Object.keys(event.ranges[i].segment.properties ?? {})) {
+                    assert.equal(event.ranges[i].segment.properties?.[key], expected[i].props[key]);
                 }
                 if (expected[i].propDeltas !== undefined) {
                     assert.equal(Object.keys(event.ranges[i].propertyDeltas).length,
-                        Object.keys(expected[i].propDeltas).length);
+                        Object.keys(expected[i].propDeltas ?? {}).length);
                     for (const key of Object.keys(event.ranges[i].propertyDeltas)) {
-                        assert.equal(event.ranges[i].propertyDeltas[key], expected[i].propDeltas[key]);
+                        assert.equal(event.ranges[i].propertyDeltas[key], expected[i].propDeltas?.[key]);
                     }
                 } else {
                     assert(event.ranges[i].propertyDeltas === undefined);
@@ -228,7 +228,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -241,8 +241,8 @@ describe("collab", () => {
 
             client.applyMsg(localInsertMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -260,7 +260,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -278,7 +277,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -289,8 +288,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -310,7 +309,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos);
             assert.equal(event.last.position, remoteInsertPos);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -328,7 +326,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -341,8 +339,8 @@ describe("collab", () => {
 
             client.applyMsg(localInsertMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -360,7 +358,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos);
             assert.equal(event.last.position, remoteInsertPos);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -379,7 +376,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -390,8 +387,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseq
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
@@ -411,7 +408,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
@@ -431,7 +427,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -444,8 +440,8 @@ describe("collab", () => {
 
             client.applyMsg(localInsertMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -463,7 +459,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos);
             assert.equal(event.last.position, remoteInsertPos);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -481,7 +476,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -492,8 +487,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -513,7 +508,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -536,7 +530,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -549,8 +543,8 @@ describe("collab", () => {
 
             client.applyMsg(localInsertMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos);
             assert.equal(event.last.position, localInsertPos);
             assert.equal(event.first.segment.cachedLength, localInsertText.length);
@@ -568,7 +562,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage1);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos1);
             assert.equal(event.last.position, remoteInsertPos1);
             assert.equal(event.first.segment.cachedLength, remoteInsertText1.length);
@@ -586,7 +579,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage2);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos2);
             assert.equal(event.last.position, remoteInsertPos2);
             assert.equal(event.first.segment.cachedLength, remoteInsertText2.length);
@@ -609,7 +601,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -620,8 +612,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos1);
             assert.equal(event.last.position, localInsertPos1);
             assert.equal(event.first.segment.cachedLength, localInsertText1.length);
@@ -641,7 +633,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage1);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteInsertPos + localInsertText1.length);
             assert.equal(event.last.position, remoteInsertPos + localInsertText1.length);
             assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
@@ -659,7 +650,6 @@ describe("collab", () => {
             client.applyMsg(localInsertMessage2);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localInsertPos2);
             assert.equal(event.last.position, localInsertPos2);
             assert.equal(event.first.segment.cachedLength, localInsertText2.length);
@@ -685,7 +675,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -698,8 +688,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -716,7 +706,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
@@ -734,7 +723,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -745,8 +734,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -765,7 +754,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
@@ -783,9 +771,9 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            const events: SequenceDeltaEvent[] = [];
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
-                event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
+                events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
             };
 
             const localRemoveMessage = client.makeOpMessage(
@@ -796,8 +784,9 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert.equal(events.length, 1);
+            const [event] = events;
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -813,10 +802,8 @@ describe("collab", () => {
 
             client.applyMsg(remoteRemoveMessage);
 
-            assert(!event.isLocal);
-            assert(event.isEmpty);
-            assert.strictEqual(event.first, undefined);
-            assert.strictEqual(event.last, undefined);
+            // No new event should be emitted since the delta is empty.
+            assert.equal(events.length, 1);
         });
 
         it("overlapping regions, same range, remote before local", () => {
@@ -827,9 +814,9 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            const events: SequenceDeltaEvent[] = [];
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
-                event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
+                events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
             };
 
             const localRemoveMessage = client.makeOpMessage(
@@ -838,8 +825,9 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert.equal(events.length, 1);
+            const [event] = events;
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -857,10 +845,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
-            assert(!event.isLocal);
-            assert(event.isEmpty);
-            assert.strictEqual(event.first, undefined);
-            assert.strictEqual(event.last, undefined);
+            // No new event should be emitted since the delta is empty.
+            assert.equal(events.length, 1);
         });
 
         it("overlapping regions, local shadows remote, local before remote", () => {
@@ -871,9 +857,9 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            const events: SequenceDeltaEvent[] = [];
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
-                event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
+                events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
             };
 
             const localRemoveMessage = client.makeOpMessage(
@@ -884,8 +870,9 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert.equal(events.length, 1);
+            const [event] = events;
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -901,10 +888,8 @@ describe("collab", () => {
 
             client.applyMsg(remoteRemoveMessage);
 
-            assert(!event.isLocal);
-            assert(event.isEmpty);
-            assert.strictEqual(event.first, undefined);
-            assert.strictEqual(event.last, undefined);
+            // No new event should be emitted since the delta is empty.
+            assert.equal(events.length, 1);
         });
 
         it("overlapping regions, local shadows remote, remote before local", () => {
@@ -915,9 +900,9 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            const events: SequenceDeltaEvent[] = [];
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
-                event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
+                events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
             };
 
             const localRemoveMessage = client.makeOpMessage(
@@ -926,8 +911,9 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert.equal(events.length, 1);
+            const [event] = events;
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -945,10 +931,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
-            assert(!event.isLocal);
-            assert(event.isEmpty);
-            assert.strictEqual(event.first, undefined);
-            assert.strictEqual(event.last, undefined);
+            // No new event should be emitted since the delta is empty.
+            assert.equal(events.length, 1);
         });
 
         it("overlapping regions, local range precedes remote range, local before remote", () => {
@@ -960,7 +944,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -973,8 +957,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -997,7 +981,6 @@ describe("collab", () => {
             const end = 10;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
@@ -1015,7 +998,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1026,8 +1009,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1052,7 +1035,6 @@ describe("collab", () => {
             const end = 10;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
@@ -1070,7 +1052,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1083,8 +1065,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1107,7 +1089,6 @@ describe("collab", () => {
             const end = 9;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
@@ -1125,7 +1106,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1136,8 +1117,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1162,7 +1143,6 @@ describe("collab", () => {
             const end = 9;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
@@ -1179,7 +1159,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1192,8 +1172,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1210,7 +1190,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 2);
             assert.equal(event.first.position, remoteRemovePosStart);
             // -1 is for split
@@ -1232,7 +1211,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1243,8 +1222,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
@@ -1263,7 +1242,6 @@ describe("collab", () => {
             client.applyMsg(localRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 2);
             assert.equal(event.first.position, remoteRemovePosStart);
             // -1 is for split
@@ -1293,7 +1271,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1306,7 +1284,8 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            assert(event);
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1326,7 +1305,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1347,7 +1326,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1358,7 +1337,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            assert(event);
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1378,7 +1358,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1400,7 +1380,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1413,7 +1393,8 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            assert(event);
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1433,7 +1414,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1454,7 +1435,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1465,7 +1446,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            assert(event);
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1487,7 +1469,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1507,7 +1489,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1520,7 +1502,8 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            assert(event);
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1540,7 +1523,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1561,7 +1544,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1572,7 +1555,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            assert(event);
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1592,7 +1576,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1642,7 +1626,7 @@ describe("collab", () => {
         function initialize() {
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1655,7 +1639,8 @@ describe("collab", () => {
 
             client.applyMsg(localMessage1);
 
-            verifyEventForAnnotate(event, true, false, secondWordStart, secondWordEnd,
+            assert(event);
+            verifyEventForAnnotate(event, true, secondWordStart, secondWordEnd,
                 [
                     {
                         numChar: secondWordEnd - secondWordStart,
@@ -1675,7 +1660,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage2);
 
-            verifyEventForAnnotate(event, true, false, fourthWordStart, fourthWordEnd,
+            verifyEventForAnnotate(event, true, fourthWordStart, fourthWordEnd,
                 [
                     {
                         numChar: fourthWordEnd - fourthWordStart,
@@ -1695,7 +1680,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage1);
 
-            verifyEventForAnnotate(event, false, false, thirdWordStart, thirdWordEnd,
+            verifyEventForAnnotate(event, false, thirdWordStart, thirdWordEnd,
                 [
                     {
                         numChar: thirdWordEnd - thirdWordStart,
@@ -1709,7 +1694,7 @@ describe("collab", () => {
         }
 
         function step1(seqnum: number, refseqnum: number) {
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1722,7 +1707,8 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, firstWordStart, fourthWordEnd,
+            assert(event);
+            verifyEventForAnnotate(event, false, firstWordStart, fourthWordEnd,
                 [
                     {
                         numChar: secondWordStart - firstWordStart,
@@ -1771,7 +1757,7 @@ describe("collab", () => {
         }
 
         function step2(seqnum: number, refseqnum: number) {
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1784,7 +1770,8 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, firstWordStart, secondWordEnd,
+            assert(event);
+            verifyEventForAnnotate(event, true, firstWordStart, secondWordEnd,
                 [
                     {
                         numChar: secondWordStart - firstWordStart,
@@ -1805,7 +1792,7 @@ describe("collab", () => {
         }
 
         function step3(seqnum: number, refseqnum: number) {
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1818,7 +1805,8 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, thirdWordStart, fourthWordEnd,
+            assert(event);
+            verifyEventForAnnotate(event, false, thirdWordStart, fourthWordEnd,
                 [
                     {
                         numChar: thirdWordEnd - thirdWordStart,
@@ -1846,7 +1834,7 @@ describe("collab", () => {
         }
 
         function step4(seqnum: number, refseqnum: number) {
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1859,7 +1847,8 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, secondWordStart, fourthWordEnd,
+            assert(event);
+            verifyEventForAnnotate(event, true, secondWordStart, fourthWordEnd,
                 [
                     {
                         numChar: secondWordEnd - secondWordStart,
@@ -1903,33 +1892,27 @@ describe("collab", () => {
         function verifyEventForAnnotate(
             event: SequenceDeltaEvent,
             isLocal: boolean,
-            isEmpty: boolean,
             start: number,
             end: number,
             expected: IExpectedSegmentInfo[],
         ): void {
             assert(event.isLocal === isLocal);
-            assert(event.isEmpty === isEmpty);
-            if (isEmpty) {
-                assert.equal(event.first.position, undefined);
-                return;
-            }
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, expected.length);
             for (let i = 0; i < expected.length; i = i + 1) {
                 assert.equal(event.ranges[i].position, expected[i].offset);
                 assert.equal(event.ranges[i].segment.cachedLength, expected[i].numChar);
-                assert.equal(Object.keys(event.ranges[i].segment.properties).length,
+                assert.equal(Object.keys(event.ranges[i].segment.properties ?? {}).length,
                     Object.keys(expected[i].props).length);
-                for (const key of Object.keys(event.ranges[i].segment.properties)) {
-                    assert.equal(event.ranges[i].segment.properties[key], expected[i].props[key]);
+                for (const key of Object.keys(event.ranges[i].segment.properties ?? {})) {
+                    assert.equal(event.ranges[i].segment.properties?.[key], expected[i].props[key]);
                 }
                 if (expected[i].propDeltas !== undefined) {
                     assert.equal(Object.keys(event.ranges[i].propertyDeltas).length,
-                        Object.keys(expected[i].propDeltas).length);
+                        Object.keys(expected[i].propDeltas ?? {}).length);
                     for (const key of Object.keys(event.ranges[i].propertyDeltas)) {
-                        assert.equal(event.ranges[i].propertyDeltas[key], expected[i].propDeltas[key]);
+                        assert.equal(event.ranges[i].propertyDeltas[key], expected[i].propDeltas?.[key]);
                     }
                 } else {
                     assert(isNullOrUndefined(event.ranges[i].propertyDeltas) ||
@@ -1959,7 +1942,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -1972,8 +1955,8 @@ describe("collab", () => {
 
             client.applyMsg(localInsertMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -1990,7 +1973,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart + insertText.length);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2010,7 +1992,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2021,8 +2003,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2039,7 +2021,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart + insertText.length);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2061,7 +2042,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2074,8 +2055,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2092,7 +2073,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2112,7 +2092,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2123,8 +2103,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2141,7 +2121,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2163,7 +2142,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2176,8 +2155,8 @@ describe("collab", () => {
 
             client.applyMsg(localInsertMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2194,7 +2173,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2214,7 +2192,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2225,8 +2203,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2243,7 +2221,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2265,7 +2242,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2278,8 +2255,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2296,7 +2273,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
@@ -2317,7 +2293,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2328,8 +2304,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2346,7 +2322,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
@@ -2369,7 +2344,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2382,8 +2357,8 @@ describe("collab", () => {
 
             client.applyMsg(localInsertMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2400,7 +2375,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart + insertText.length);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2419,7 +2393,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2430,8 +2404,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2448,7 +2422,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart + insertText.length);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2470,7 +2443,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2483,8 +2456,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2501,7 +2474,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2521,7 +2493,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2532,8 +2504,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2550,7 +2522,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2572,7 +2543,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2585,8 +2556,8 @@ describe("collab", () => {
 
             client.applyMsg(localInsertMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2603,7 +2574,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2623,7 +2593,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2634,8 +2604,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2652,7 +2622,6 @@ describe("collab", () => {
             client.applyMsg(remoteRemoveMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2674,7 +2643,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2685,8 +2654,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2705,7 +2674,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
@@ -2726,7 +2694,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2737,8 +2705,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2755,7 +2723,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.last.position + event.last.segment.cachedLength,
                 insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
@@ -2778,7 +2745,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2791,8 +2758,8 @@ describe("collab", () => {
 
             client.applyMsg(localInsertMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2815,7 +2782,6 @@ describe("collab", () => {
             const expectedRangeEnd2 = expectedRangeStart2 + "fox ".length;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, expectedRangeStart1);
             assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
             assert.equal(event.ranges.length, 2);
@@ -2838,7 +2804,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2849,8 +2815,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos);
             assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2873,7 +2839,6 @@ describe("collab", () => {
             const expectedRangeEnd2 = expectedRangeStart2 + "fox ".length;
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, expectedRangeStart1);
             assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
             assert.equal(event.ranges.length, 2);
@@ -2899,7 +2864,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2912,8 +2877,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2930,7 +2895,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeStart + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -2950,7 +2914,7 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
@@ -2961,8 +2925,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert(event);
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
@@ -2979,7 +2943,6 @@ describe("collab", () => {
             client.applyMsg(remoteInsertMessage);
 
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.first.position, deleteRangeStart);
             assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeStart + insertText.length);
             assert.equal(event.ranges.length, 1);
@@ -3006,17 +2969,17 @@ describe("SequenceDeltaEvent", () => {
     describe(".ranges", () => {
         it("single segment", () => {
             const insertText = "text";
-            let deltaArgs: IMergeTreeDeltaCallbackArgs;
+            let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
             const op = client.insertTextLocal(0, insertText);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, 1);
 
+            assert(op);
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.position, 0);
             assert.equal(event.first.segment.cachedLength, insertText.length);
@@ -3030,7 +2993,7 @@ describe("SequenceDeltaEvent", () => {
                 client.insertTextLocal(0, insertText);
             }
 
-            let deltaArgs: IMergeTreeDeltaCallbackArgs;
+            let deltaArgs: IMergeTreeDeltaCallbackArgs | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
             const op = client.annotateRangeLocal(
                 insertText.length,
@@ -3043,10 +3006,10 @@ describe("SequenceDeltaEvent", () => {
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, segmentCount);
 
+            assert(op);
             const event = new SequenceDeltaEvent({ op }, deltaArgs, client);
 
             assert(event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, segmentCount);
             assert.equal(event.first.position, insertText.length);
             for (let i = 0; i < segmentCount; i = i + 1) {
@@ -3075,14 +3038,14 @@ describe("SequenceDeltaEvent", () => {
                 client.insertTextLocal(i * 2 * textCount, "b".repeat(textCount));
             }
 
-            let event: SequenceDeltaEvent;
+            let event: SequenceDeltaEvent | undefined;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
                 event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
             client.applyMsg(remoteRemoveMessage);
 
+            assert(event);
             assert(!event.isLocal);
-            assert(!event.isEmpty);
             assert.equal(event.ranges.length, segmentCount);
             for (let i = 0; i < segmentCount; i = i + 1) {
                 assert.equal(event.ranges[i].position, (i + 1) * textCount);

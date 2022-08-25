@@ -4,15 +4,16 @@
  */
 
 import { strict as assert } from "assert";
+import { bufferToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { TelemetryNullLogger, bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { BlobAggregationStorage } from "../blobAggregationStorage";
 import { buildSnapshotTree } from "../buildSnapshotTree";
 
 export class FlattenedStorageService {
-    private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
+    private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string; }) {
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const path in tree.trees) {
             FlattenedStorageService.flattenTree(`${base}${path}/`, tree.trees[path], results);
@@ -24,7 +25,7 @@ export class FlattenedStorageService {
         }
     }
 
-    public readonly flattenedTree: { [path: string]: string } = {};
+    public readonly flattenedTree: { [path: string]: string; } = {};
 
     constructor(
         tree: ISnapshotTree,
@@ -155,20 +156,20 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
     const service = new FlattenedStorageService(snapshot, aggregator);
     assert(Object.keys(service.flattenedTree).length === 7,
         `Unexpected flattened tree size: ${Object.keys(service.flattenedTree).length}`);
-    assert (service.flattenedTree[".channels/blob1"] !== undefined);
-    assert (service.flattenedTree[".channels/dataStore1/.channels/blob2"] !== undefined);
-    assert (service.flattenedTree[".channels/dataStore1/.channels/blob3"] !== undefined);
-    assert (service.flattenedTree[".channels/dataStore1/.channels/channel1/blob4"] !== undefined);
-    assert (service.flattenedTree[".channels/dataStore2/.channels/blob5"] !== undefined);
+    assert(service.flattenedTree[".channels/blob1"] !== undefined);
+    assert(service.flattenedTree[".channels/dataStore1/.channels/blob2"] !== undefined);
+    assert(service.flattenedTree[".channels/dataStore1/.channels/blob3"] !== undefined);
+    assert(service.flattenedTree[".channels/dataStore1/.channels/channel1/blob4"] !== undefined);
+    assert(service.flattenedTree[".channels/dataStore2/.channels/blob5"] !== undefined);
 
-    assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/blob2"),"utf8")
+    assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/blob2"), "utf8")
         === "small string 2", "blob2 failed");
-    assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/blob3"),"utf8")
+    assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/blob3"), "utf8")
         === "not very small string - exceeding 40 bytes limit for sure", "blob3 failed");
     assert(bufferToString(await service.readBlob(".channels/dataStore1/.channels/channel1/blob4"),
         "utf8") === "small string again", "blob4 failed");
 
-    return { service, storage, snapshot};
+    return { service, storage, snapshot };
 }
 
 describe("BlobAggregationStorage", () => {

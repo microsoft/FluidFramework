@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+
+import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     channelsTreeName,
     CreateChildSummarizerNodeParam,
@@ -12,14 +13,15 @@ import {
     ISummarizerNode,
     ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+
 import {
     createRootSummarizerNode,
     IRootSummarizerNode,
 } from "../summarizerNode";
-import { mergeStats } from "../summaryUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { SummarizerNode } from "../summarizerNode/summarizerNode";
+import { mergeStats } from "../summaryUtils";
 
 describe("Runtime", () => {
     describe("Summarization", () => {
@@ -99,7 +101,7 @@ describe("Runtime", () => {
                 try {
                     fn();
                     throw Error(`${failMsg}: Expected to fail`);
-                } catch (error) {
+                } catch (error: any) {
                     assert(expectedErrors.some((e) => e === error.message), errMsg);
                 }
             }
@@ -113,7 +115,7 @@ describe("Runtime", () => {
                 try {
                     await fn();
                     throw Error(`${failMsg}: Expected to reject`);
-                } catch (error) {
+                } catch (error: any) {
                     assert(expectedErrors.some((e) => e === error.message), errMsg);
                 }
             }
@@ -195,9 +197,7 @@ describe("Runtime", () => {
 
                 it("Load base summary should do nothing for simple snapshot", async () => {
                     createRoot({ refSeq: 1 });
-                    const { baseSummary, outstandingOps } = await rootNode.loadBaseSummary(
-                        simpleSnapshot, readAndParseBlob);
-                    assert.strictEqual(outstandingOps.length, 0, "no outstanding ops");
+                    const baseSummary = await rootNode.loadBaseSummary(simpleSnapshot, readAndParseBlob);
                     assert.strictEqual(Object.keys(baseSummary.trees).length, 2, "only 2 subtrees");
                     assert(baseSummary.trees[ids[1]] !== undefined, "mid subtree");
 
@@ -209,9 +209,7 @@ describe("Runtime", () => {
 
                 it("Load base summary should strip channels subtree", async () => {
                     createRoot({ refSeq: 1 });
-                    const { baseSummary, outstandingOps } = await rootNode.loadBaseSummary(
-                        channelsSnapshot, readAndParseBlob);
-                    assert.strictEqual(outstandingOps.length, 0, "no outstanding ops");
+                    const baseSummary = await rootNode.loadBaseSummary(channelsSnapshot, readAndParseBlob);
                     assert.strictEqual(Object.keys(baseSummary.trees).length, 2, "only 2 subtrees");
                     assert(baseSummary.trees[channelsTreeName] !== undefined, "channels subtree");
 

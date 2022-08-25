@@ -11,7 +11,8 @@ import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const authEndpoint = config.get("auth:endpoint");
-    const tenantManager = new services.TenantManager(authEndpoint);
+    const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+    const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
     const foremanConfig = config.get("foreman");
     const messageSender = services.createMessageSender(config.get("rabbitmq"), foremanConfig);

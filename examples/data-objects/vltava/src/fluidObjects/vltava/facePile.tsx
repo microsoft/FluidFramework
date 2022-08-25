@@ -21,7 +21,7 @@ const facepileStyle: React.CSSProperties = {
 };
 
 interface IVltavaFacepileProps {
-    users: IVltavaUserDetails[]
+    users: IVltavaUserDetails[];
 }
 
 export const VltavaFacepile = (props: IVltavaFacepileProps) => {

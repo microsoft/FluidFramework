@@ -14,6 +14,6 @@ module.exports = {
     },
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"no-null/no-null": "off",
+        "tsdoc/syntax": "off",
 	},
 };

@@ -27,7 +27,7 @@ import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
 const normalizeOpts: ISnapshotNormalizerConfig =
-    {excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f)=>f.type)};
+    { excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f) => f.type) };
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
@@ -54,19 +54,31 @@ export function compareWithReferenceSnapshot(
 
     /**
      * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
-     * package versions with X before we compare them. This is how it will looks like:
-     * Before replace - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
-     * After replace  - "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+     * package versions with X before we compare them.
+     *
+     * @example
+     * This is how it will look:
+     * Before replace:
+     *
+     * ```
+     * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
+     * ```
+     *
+     * After replace:
+     *
+     * ```
+     * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
+     * ```
      */
     const packageVersionRegex = /\\"packageversion\\":\\"[^"]+\\"/gi;
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
     const normalizedSnapshot = JSON.parse(
-        stringify(getNormalizedFileSnapshot(snapshot), {space: 2})
+        stringify(getNormalizedFileSnapshot(snapshot), { space: 2 })
             .replace(packageVersionRegex, packageVersionPlaceholder),
     );
     const normalizedReferenceSnapshot = JSON.parse(
-        stringify(getNormalizedFileSnapshot(referenceSnapshot), {space: 2})
+        stringify(getNormalizedFileSnapshot(referenceSnapshot), { space: 2 })
             .replace(packageVersionRegex, packageVersionPlaceholder),
     );
 
@@ -132,8 +144,11 @@ export async function loadContainer(
     // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
     // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true, maxOpsSinceLastSummary: 100000 },
-        gcOptions: { writeDataAtRoot: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+        },
     };
     const codeLoader = new ReplayCodeLoader(
         new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),

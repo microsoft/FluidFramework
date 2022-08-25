@@ -5,9 +5,14 @@
     ],
     "compilerOptions": {
         "composite": true,
+        "jsx": "react",
         "strictNullChecks": false,
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "types": [
+            "react",
+            "react-dom"
+        ]
     },
     "include": [
         "src/**/*"

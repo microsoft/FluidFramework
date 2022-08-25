@@ -71,7 +71,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
     public volunteerForAutoRoll() {
         // Try to take the task and wait until we get it.  This may wait forever if the current task holder
         // doesn't release it.
-        this.taskManager.lockTask(autoRollTaskId)
+        this.taskManager.volunteerForTask(autoRollTaskId)
             .then(async () => {
                 // Attempt to reacquire the task if we lose it
                 this.taskManager.once("lost", () => {
@@ -109,7 +109,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
     }
 
     public hasTask() {
-        return this.taskManager.haveTaskLock(autoRollTaskId);
+        return this.taskManager.assigned(autoRollTaskId);
     }
 }
 
@@ -117,9 +117,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const TaskManagerDiceRollerInstantiationFactory =
-    new DataObjectFactory
-(
+export const TaskManagerDiceRollerInstantiationFactory = new DataObjectFactory(
     "@fluid-example/task-manager-dice-roller",
     TaskManagerDiceRoller,
     // Since TaskManager is a DDS, we need to register it for creation.

@@ -46,15 +46,14 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
  * Proxy over PureDataObject
  * Does delayed creation & initialization of PureDataObject
 */
-async function createDataObject<TObj extends PureDataObject,I extends DataObjectTypes = DataObjectTypes>(
+async function createDataObject<TObj extends PureDataObject, I extends DataObjectTypes = DataObjectTypes>(
     ctor: new (props: IDataObjectProps<I>) => TObj,
     context: IFluidDataStoreContext,
     sharedObjectRegistry: ISharedObjectRegistry,
     optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
     runtimeClassArg: typeof FluidDataStoreRuntime,
     existing: boolean,
-    initProps?: I["InitialState"])
-{
+    initProps?: I["InitialState"]) {
     // base
     let runtimeClass = runtimeClassArg;
 
@@ -75,7 +74,7 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     // Create object right away.
     // This allows object to register various callbacks with runtime before runtime
     // becomes globally available. But it's not full initialization - constructor can't
-    // access DDSs or other services of runtime as objects are not fully initialized.
+    // access DDSes or other services of runtime as objects are not fully initialized.
     // In order to use object, we need to go through full initialization by calling finishInitialization().
     const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
     const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
@@ -83,14 +82,14 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     const instance = new ctor({ runtime, context, providers, initProps });
 
     // if it's a newly created object, we need to wait for it to finish initialization
-    // as that results in creation of DDSs, before it gets attached, providing atomic
+    // as that results in creation of DDSes, before it gets attached, providing atomic
     // guarantee of creation.
     // WARNING: we can't do the same (yet) for already existing PureDataObject!
     // This will result in deadlock, as it tries to resolve internal handles, but any
     // handle resolution goes through root (container runtime), which can't route it back
     // to this data store, as it's still not initialized and not known to container runtime yet.
     // In the future, we should address it by using relative paths for handles and be able to resolve
-    // local DDSs while data store is not fully initialized.
+    // local DDSes while data store is not fully initialized.
     if (!existing) {
         await instance.finishInitialization(existing);
     }
@@ -107,8 +106,7 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
  * @typeParam I - The input types for the DataObject
  */
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes>
-    implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, IRootDataObjectFactory
-{
+    implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, IRootDataObjectFactory {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IFluidDataStoreRegistry | undefined;
 

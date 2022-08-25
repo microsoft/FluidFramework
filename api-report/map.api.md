@@ -19,10 +19,11 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public @sealed
-export class DirectoryFactory {
+export class DirectoryFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
@@ -52,38 +53,75 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
 }
 
 // @public
+export interface IDirectoryClearOperation {
+    path: string;
+    type: "clear";
+}
+
+// @public
+export interface IDirectoryCreateSubDirectoryOperation {
+    path: string;
+    subdirName: string;
+    type: "createSubDirectory";
+}
+
+// @public
 export interface IDirectoryDataObject {
-    // (undocumented)
     storage?: {
         [key: string]: ISerializableValue;
     };
-    // (undocumented)
     subdirectories?: {
         [subdirName: string]: IDirectoryDataObject;
     };
 }
 
 // @public
+export interface IDirectoryDeleteOperation {
+    key: string;
+    path: string;
+    type: "delete";
+}
+
+// @public
+export interface IDirectoryDeleteSubDirectoryOperation {
+    path: string;
+    subdirName: string;
+    type: "deleteSubDirectory";
+}
+
+// @public
 export interface IDirectoryEvents extends IEvent {
-    // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
-// @public (undocumented)
+// @public
+export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
+
+// @internal
 export interface IDirectoryNewStorageFormat {
-    // (undocumented)
     blobs: string[];
-    // (undocumented)
     content: IDirectoryDataObject;
 }
 
-// Warning: (ae-forgotten-export) The symbol "IDirectoryStorageOperation" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "IDirectorySubDirectoryOperation" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
+
+// @public
+export interface IDirectorySetOperation {
+    key: string;
+    path: string;
+    type: "set";
+    value: ISerializableValue;
+}
+
+// @public
+export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
+
+// @public
+export type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
 
 // @public
 export interface IDirectoryValueChanged extends IValueChanged {
@@ -91,12 +129,19 @@ export interface IDirectoryValueChanged extends IValueChanged {
 }
 
 // @public
+export interface ILocalValue {
+    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
+    readonly type: string;
+    readonly value: any;
+}
+
+// @public @deprecated
 export interface ISerializableValue {
     type: string;
     value: any;
 }
 
-// @public (undocumented)
+// @public
 export interface ISerializedValue {
     type: string;
     value: string | undefined;
@@ -112,10 +157,10 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
 
 // @public
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
-    // (undocumented)
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public
@@ -126,9 +171,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 
 // @public
 export interface ISharedMapEvents extends ISharedObjectEvents {
-    // (undocumented)
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
@@ -142,9 +185,8 @@ export interface IValueChanged {
 export class LocalValueMaker {
     constructor(serializer: IFluidSerializer);
     fromInMemory(value: any): ILocalValue;
-    // Warning: (ae-forgotten-export) The symbol "ILocalValue" needs to be exported by the entry point index.d.ts
     fromSerializable(serializable: ISerializableValue): ILocalValue;
-    }
+}
 
 // @public @sealed
 export class MapFactory implements IChannelFactory {
@@ -201,13 +243,15 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
     get size(): number;
     subdirectories(): IterableIterator<[string, IDirectory]>;
     // @internal
     submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 
@@ -235,12 +279,13 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
     set(key: string, value: any): this;
     get size(): number;
     // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
-
 
 ```

@@ -66,8 +66,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         testDbFactory: ITestDbFactory = new TestDbFactory({}),
         serviceConfiguration?: Partial<IServiceConfiguration>,
     ): ILocalDeltaConnectionServer {
-        if (!Lumberjack.isSetupCompleted())
-        {
+        if (!Lumberjack.isSetupCompleted()) {
             Lumberjack.setup([new TestEngine1()]);
         }
 

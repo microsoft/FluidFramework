@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { cloneGCData } from "@fluidframework/garbage-collector";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -15,7 +14,7 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "../summarizerNode/summarizerNodeWithGc";
 import { mergeStats } from "../summaryUtils";
@@ -54,8 +53,8 @@ describe("SummarizerNodeWithGC Tests", () => {
         // Initialize the values to be returned by getInternalGCData.
         internalGCData = {
             gcNodes: {
-                "/": [ node1Id, node2Id ],
-                "/gcNode1": [ subNode1Id ],
+                "/": [node1Id, node2Id],
+                "/gcNode1": [subNode1Id],
             },
         };
 
@@ -108,9 +107,9 @@ describe("SummarizerNodeWithGC Tests", () => {
                 usedRoutes: [""],
                 gcData: {
                     gcNodes: {
-                        "/": [ node1Id ],
-                        "gcNode1": [ "/" ],
-                        "gcNode2": [ subNode1Id, subNode2Id ],
+                        "/": [node1Id],
+                        "gcNode1": ["/"],
+                        "gcNode2": [subNode1Id, subNode2Id],
                     },
                 },
             };
@@ -149,7 +148,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
             // Add a new node to the GC data returned by getInternalGCData to make it different from cachedGCData above.
             // This will validate that the data returned by getGCData is not internalGCData.
-            internalGCData.gcNodes[subNode1Id] = [ "/", subNode2Id ];
+            internalGCData.gcNodes[subNode1Id] = ["/", subNode2Id];
 
             // Since nothing changed since last summary, summarizer node should return the data from the previous run.
             gcData = await summarizerNode.getGCData();
@@ -169,7 +168,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
             // Add a new node to the GC data returned by getInternalGCData to make it different from before.
             // This will validate that the data returned by getGCData is the new internalGCData.
-            internalGCData.gcNodes[subNode1Id] = [ "/", subNode2Id ];
+            internalGCData.gcNodes[subNode1Id] = ["/", subNode2Id];
 
             // Call getGCData() with fullGC = true. Even though nothing changed since last summary, this will force the
             // summarizer node to generate GC data by calling getInternalGCData.

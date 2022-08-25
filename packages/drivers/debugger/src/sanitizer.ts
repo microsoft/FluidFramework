@@ -581,29 +581,37 @@ export class Sanitizer {
         }
 
         // handle container message types
-        if (msgContents.type === "attach") {
-            // this one is like a regular attach op, except its contents aren't nested as deep
-            // run fixAttach directly and return
-            this.fixAttach(msgContents);
-        } else if (msgContents.type === "component") {
-            // this one functionally nests its contents one layer deeper
-            // bring up the contents object and continue as usual
-            this.fixOpContentsObject(msgContents.contents);
-        } else if (msgContents.type === "chunkedOp") {
-            // this is a (regular?) op split into multiple parts due to size, e.g. because it
-            // has an attached image, and where the chunkedOp is within the top-level op's contents
-            // (as opposed to being at the top-level).  The contents of the chunks need to be
-            // concatenated to form the complete stringified json object
-            // Early return here to skip re-stringify because no changes are made until the last
-            // chunk, and the ChunkedOpProcessor will handle everything at that point
-            return this.fixChunkedOp(message);
-        } else if (msgContents.type === "blobAttach") {
-            // TODO: handle this properly once blob api is used
-            this.debugMsg("TODO: blobAttach ops are skipped/unhandled");
-            return;
-        } else {
-            // A regular op
-            this.fixOpContentsObject(msgContents);
+        switch (msgContents.type) {
+            case "attach": {
+                // this one is like a regular attach op, except its contents aren't nested as deep
+                // run fixAttach directly and return
+                this.fixAttach(msgContents);
+                break;
+            }
+            case "component": {
+                // this one functionally nests its contents one layer deeper
+                // bring up the contents object and continue as usual
+                this.fixOpContentsObject(msgContents.contents);
+                break;
+            }
+            case "chunkedOp": {
+                // this is a (regular?) op split into multiple parts due to size, e.g. because it
+                // has an attached image, and where the chunkedOp is within the top-level op's contents
+                // (as opposed to being at the top-level).  The contents of the chunks need to be
+                // concatenated to form the complete stringified json object
+                // Early return here to skip re-stringify because no changes are made until the last
+                // chunk, and the ChunkedOpProcessor will handle everything at that point
+                return this.fixChunkedOp(message);
+            }
+            case "blobAttach": {
+                // TODO: handle this properly once blob api is used
+                this.debugMsg("TODO: blobAttach ops are skipped/unhandled");
+                return;
+            }
+            default: {
+                // A regular op
+                this.fixOpContentsObject(msgContents);
+            }
         }
 
         // re-stringify the json if needed

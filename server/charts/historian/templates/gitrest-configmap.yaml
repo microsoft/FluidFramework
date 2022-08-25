@@ -31,6 +31,7 @@ data:
             "lib": {
                 "name": "{{ .Values.gitrest.git.lib.name }}"
             },
-            "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }}
+            "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }},
+            "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }}
         }
     }

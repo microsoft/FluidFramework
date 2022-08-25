@@ -4,8 +4,8 @@
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = env => {
     return ({
@@ -40,6 +40,9 @@ module.exports = env => {
             }
         },
         plugins: [
+            new webpack.DefinePlugin({
+                'process.env.NODE_DEBUG': undefined,
+            }),
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",
             }),

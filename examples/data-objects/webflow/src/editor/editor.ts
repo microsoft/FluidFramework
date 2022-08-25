@@ -4,24 +4,13 @@
  */
 
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { paste } from "../clipboard/paste";
-import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
-import { caretEnter, Direction, getDeltaX, getDeltaY, KeyCode } from "../util";
-import { ownsNode } from "../util/event";
+import { FlowDocument } from "../document";
+import { Direction, getDeltaX, KeyCode } from "../util";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 import { Caret } from "./caret";
 import { debug } from "./debug";
-import * as styles from "./index.css";
-
-/**
- * The Host provides the Editor with a registry of view factories which will be used to render components that have
- * been inserted into the document.
- */
-export interface IFluidHTMLViewFactory {
-    createView(model: FluidObject, scope?: FluidObject): IFluidHTMLView;
-}
 
 export class Editor {
     private readonly layout: Layout;
@@ -29,8 +18,8 @@ export class Editor {
     private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, viewFactoryRegistry?: Map<string, IFluidHTMLViewFactory>, scope?: FluidObject) {
-        this.layout = new Layout(doc, root, formatter, viewFactoryRegistry, scope);
+    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, scope?: FluidObject) {
+        this.layout = new Layout(doc, root, formatter);
         this.caret = new Caret(this.layout);
 
         let scheduled = false;
@@ -89,25 +78,13 @@ export class Editor {
 
     private unlinkChildren(node: Node | HTMLElement) {
         while (node.lastChild) {
-            // Leave an inclusion's content alone.
-            if ("classList" in node && node.classList.contains(styles.inclusion)) {
-                break;
-            }
             const child = node.lastChild;
             node.removeChild(child);
             this.unlinkChildren(child);
         }
     }
 
-    private shouldHandleEvent(e: Event) {
-        return ownsNode(this.root, e.target as Node);
-    }
-
     private readonly onKeyDown = (e: KeyboardEvent) => {
-        if (!this.shouldHandleEvent(e)) {
-            return;
-        }
-
         switch (e.code) {
             case KeyCode.F4: {
                 console.clear();
@@ -121,14 +98,6 @@ export class Editor {
                 this.layout.sync();
                 break;
             }
-
-            case KeyCode.arrowLeft:
-                this.enterIfInclusion(e, this.caret.position - 1, Direction.left);
-                break;
-
-            case KeyCode.arrowRight:
-                this.enterIfInclusion(e, this.caret.position, Direction.right);
-                break;
 
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.backspace: {
@@ -146,19 +115,11 @@ export class Editor {
     };
 
     private readonly onPaste = (e: ClipboardEvent) => {
-        if (!this.shouldHandleEvent(e)) {
-            return;
-        }
-
         this.consume(e);
         paste(this.doc, e.clipboardData, this.caret.position);
     };
 
     private readonly onKeyPress = (e: KeyboardEvent) => {
-        if (!this.shouldHandleEvent(e)) {
-            return;
-        }
-
         this.consume(e);
 
         switch (e.code) {
@@ -189,18 +150,5 @@ export class Editor {
     private consume(e: Event) {
         e.preventDefault();
         e.stopPropagation();
-    }
-
-    private enterIfInclusion(e: Event, position: number, direction: Direction) {
-        const { segment } = this.doc.getSegmentAndOffset(position);
-        const kind = getDocSegmentKind(segment);
-        if (kind === DocSegmentKind.inclusion) {
-            const { node } = this.layout.segmentAndOffsetToNodeAndOffset(segment, 0);
-            const bounds = this.caret.bounds;
-            debug("Entering inclusion: (dx=%d,dy=%d,bounds=%o)", getDeltaX(direction), getDeltaY(direction), bounds);
-            if (caretEnter(node as Element, direction, bounds)) {
-                this.consume(e);
-            }
-        }
     }
 }

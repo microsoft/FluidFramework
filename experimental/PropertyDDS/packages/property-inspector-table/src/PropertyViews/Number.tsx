@@ -6,15 +6,14 @@
 import { ContainerProperty } from "@fluid-experimental/property-properties";
 import TextField, { TextFieldProps } from "@material-ui/core/TextField";
 import * as React from "react";
-import { IEditableValueCellProps } from "../EditableValueCell";
-import { IInspectorRow } from "../InspectorTableTypes";
-import { getPropertyValue } from "../utils";
+import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes";
+import { getPropertyValue } from "../propertyInspectorUtils";
 
 type NumberProps = (IEditableValueCellProps & {
-  onSubmit: (val: number, props: IEditableValueCellProps) => void,
-  rowData: IInspectorRow & { value: number },
-  TextFieldProps: TextFieldProps,
-  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
+  onSubmit: (val: number, props: IEditableValueCellProps) => void;
+  rowData: IInspectorRow & { value: number; };
+  TextFieldProps: TextFieldProps;
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>;
 });
 
 type HandleKeyDownType = (
@@ -50,7 +49,7 @@ export const NumberView: React.FunctionComponent<NumberProps> = (props) => {
     // @ts-ignore
     <TextField
       {...restProps}
-      type='number'
+      type="number"
       key={`${rowData.id}${value}`}
       onBlur={onBlur}
       defaultValue={value}

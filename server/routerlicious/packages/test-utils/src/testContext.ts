@@ -23,8 +23,7 @@ export class TestContext extends EventEmitter implements IContext {
         super();
         const lumberjackEngine = new TestEngine1();
 
-        if (!Lumberjack.isSetupCompleted())
-        {
+        if (!Lumberjack.isSetupCompleted()) {
             Lumberjack.setup([lumberjackEngine]);
         }
     }

@@ -4,8 +4,8 @@
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 const pkg = require("./package.json");
 const componentName = pkg.name.slice(1);
@@ -43,6 +43,9 @@ module.exports = env => {
             }
         },
         plugins: [
+            new webpack.ProvidePlugin({
+                process: 'process/browser'
+            }),
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",
             }),

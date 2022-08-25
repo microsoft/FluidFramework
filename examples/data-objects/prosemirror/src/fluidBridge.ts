@@ -233,7 +233,7 @@ export class ProseMirrorTransactionBuilder {
 
         let currentGroup: IThingGroup | undefined;
         const groups = new Array<IThingGroup>();
-        const annotations: { from: number, to: number, segment: ISegment, propertyDeltas?: any }[] = [];
+        const annotations: { from: number; to: number; segment: ISegment; propertyDeltas?: any; }[] = [];
         let position = 0;
 
         for (const thing of this.things) {
@@ -377,8 +377,8 @@ export function sliceToGroupOps(
 ): IMergeTreeDeltaOp[] {
     const ops = new Array<IMergeTreeDeltaOp>();
 
-    const sliceOpenStart = slice.openStart || 0;
-    const sliceOpenEnd = slice.openEnd || 0;
+    const sliceOpenStart = slice.openStart ?? 0;
+    const sliceOpenEnd = slice.openEnd ?? 0;
     let offset = from + adjustOffset(from, 0, 0, insert, gapDistance);
 
     slice.content.forEach((value, index) => {

@@ -20,13 +20,17 @@ import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    // @internal (undocumented)
+    // @internal
     protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
 // @public
 export class AzureClient {
     constructor(props: AzureClientProps);
+    copyContainer(id: string, containerSchema: ContainerSchema, version?: AzureContainerVersion): Promise<{
+        container: IFluidContainer;
+        services: AzureContainerServices;
+    }>;
     createContainer(containerSchema: ContainerSchema): Promise<{
         container: IFluidContainer;
         services: AzureContainerServices;
@@ -35,25 +39,34 @@ export class AzureClient {
         container: IFluidContainer;
         services: AzureContainerServices;
     }>;
-    }
+    getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+}
 
 // @public
 export interface AzureClientProps {
-    readonly connection: AzureConnectionConfig;
+    readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
 
 // @public
 export interface AzureConnectionConfig {
-    orderer: string;
-    storage: string;
-    tenantId: "local" | string;
+    endpoint: string;
     tokenProvider: ITokenProvider;
+    type: AzureConnectionConfigType;
 }
+
+// @public
+export type AzureConnectionConfigType = "local" | "remote";
 
 // @public
 export interface AzureContainerServices {
     audience: IAzureAudience;
+}
+
+// @public
+export interface AzureContainerVersion {
+    date?: string;
+    id: string;
 }
 
 // @public
@@ -63,14 +76,34 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
-    }
+}
+
+// @public
+export interface AzureGetVersionsOptions {
+    maxCount: number;
+}
+
+// @public
+export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
+    type: "local";
+}
 
 // @public
 export interface AzureMember<T = any> extends IMember {
-    // (undocumented)
     additionalDetails?: T;
-    // (undocumented)
     userName: string;
+}
+
+// @public
+export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
+    tenantId: string;
+    type: "remote";
+}
+
+// @public
+export interface AzureUser<T = any> extends IUser {
+    additionalDetails?: T;
+    name: string;
 }
 
 // @public
@@ -88,10 +121,6 @@ export { ITokenResponse }
 
 export { IUser }
 
-// @public
-export const LOCAL_MODE_TENANT_ID = "local";
-
 export { ScopeType }
-
 
 ```

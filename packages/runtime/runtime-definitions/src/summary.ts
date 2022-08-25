@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TelemetryEventPropertyType } from "@fluidframework/common-definitions";
 import {
     SummaryTree,
     ISummaryTree,
@@ -13,9 +14,11 @@ import {
 import {
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 
+/**
+ * Contains the aggregation data from a Tree/Subtree.
+ */
 export interface ISummaryStats {
     treeNodeCount: number;
     blobNodeCount: number;
@@ -24,16 +27,45 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
+/**
+ * Represents the summary tree for a node along with the statistics for that tree.
+ * For example, for a given data store, it contains the data for data store along with a subtree for
+ * each of its DDS.
+ * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
+ * will be taking part of the summarization process.
+ */
 export interface ISummaryTreeWithStats {
+    /** Represents an aggregation of node counts and blob sizes associated to the current summary information */
     stats: ISummaryStats;
+    /**
+     * A recursive data structure that will be converted to a snapshot tree and uploaded
+     * to the backend.
+     */
     summary: ISummaryTree;
 }
 
+/**
+ * Represents a summary at a current sequence number.
+ */
 export interface ISummarizeResult {
     stats: ISummaryStats;
     summary: SummaryTree;
 }
 
+/**
+ * Contains the same data as ISummaryResult but in order to avoid naming collisions,
+ * the data store summaries are wrapped around an array of labels identified by pathPartsForChildren.
+ *
+ * @example
+ * ```
+ * id:""
+ * pathPartsForChildren: ["path1"]
+ * stats: ...
+ * summary:
+ *   ...
+ *     "path1":
+ * ```
+ */
 export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
     /** Additional path parts between this node's ID and its children's IDs. */
@@ -53,17 +85,21 @@ export interface IGarbageCollectionNodeData {
  * GC data.
  */
 export interface IGarbageCollectionState {
-    gcNodes: { [ id: string ]: IGarbageCollectionNodeData };
+    gcNodes: { [ id: string ]: IGarbageCollectionNodeData; };
 }
 
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (
+    fullTree: boolean,
+    trackState: boolean,
+    telemetryContext?: ITelemetryContext,
+) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
     /**
      * True to reuse previous handle when unchanged since last acked summary.
      * Defaults to true.
      */
-    readonly canReuseHandle?: boolean,
+    readonly canReuseHandle?: boolean;
     /**
      * True to always stop execution on error during summarize, or false to
      * attempt creating a summary that is a pointer ot the last acked summary
@@ -73,7 +109,7 @@ export interface ISummarizerNodeConfig {
      * BUG BUG: Default to true while we investigate problem
      * with differential summaries
      */
-    readonly throwOnFailure?: true,
+    readonly throwOnFailure?: true;
 }
 
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
@@ -113,8 +149,14 @@ export interface ISummarizerNode {
      * If an error is encountered and throwOnFailure is false, it will try to make
      * a summary with a pointer to the previous summary + a blob of outstanding ops.
      * @param fullTree - true to skip optimizations and always generate the full tree
+     * @param trackState - indicates whether the summarizer node should track the state of the summary or not
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    summarize(fullTree: boolean): Promise<ISummarizeResult>;
+    summarize(
+        fullTree: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult>;
     /**
      * Checks if there are any additional path parts for children that need to
      * be loaded from the base summary. Additional path parts represent parts
@@ -136,7 +178,7 @@ export interface ISummarizerNode {
     loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: <T>(id: string) => Promise<T>,
-    ): Promise<{ baseSummary: ISnapshotTree, outstandingOps: ISequencedDocumentMessage[] }>;
+    ): Promise<ISnapshotTree>;
     /**
      * Records an op representing a change to this node/subtree.
      * @param op - op of change to record
@@ -145,7 +187,7 @@ export interface ISummarizerNode {
 
     createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: SummarizeInternalFn,
         /** Initial id or path part of this node */
         id: string,
         /**
@@ -159,11 +201,11 @@ export interface ISummarizerNode {
         config?: ISummarizerNodeConfig,
     ): ISummarizerNode;
 
-    getChild(id: string): ISummarizerNode | undefined
+    getChild(id: string): ISummarizerNode | undefined;
 }
 
 /**
- * Extends the functionality of ISummarizerNode to support garbage collection. It adds / udpates the following APIs:
+ * Extends the functionality of ISummarizerNode to support garbage collection. It adds / updates the following APIs:
  * - usedRoutes - The routes in this node that are currently in use.
  * - getGCData - A new API that can be used to get the garbage collection data for this node.
  * - summarize - Added a trackState flag which indicates whether the summarizer node should track the state of the
@@ -176,10 +218,9 @@ export interface ISummarizerNode {
  * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
-    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     createChild(
         /** Summarize function */
-        summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
+        summarizeInternalFn: SummarizeInternalFn,
         /** Initial id or path part of this node */
         id: string,
         /**
@@ -192,7 +233,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-        getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
+        getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
     ): ISummarizerNodeWithGC;
 
     /**
@@ -218,19 +259,40 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      * 2. To identify if this node or any of its children's used routes changed since last summary.
      *
      * @param usedRoutes - The routes that are used in this node.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If a node becomes unreferenced
-     * as part of this GC run, this timestamp is used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
-
-    /**
-     * @deprecated - Renamed to getBaseGCDetails.
-     * Returns the GC details that may be added to this node's summary.
-     */
-    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
-
-    /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
-    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 export const channelsTreeName = ".channels";
+
+/**
+ * Contains telemetry data relevant to summarization workflows.
+ * This object is expected to be modified directly by various summarize methods.
+ */
+export interface ITelemetryContext {
+    /**
+     * Sets value for telemetry data being tracked.
+     * @param prefix - unique prefix to tag this data with (ex: "fluid:map:")
+     * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
+     * @param value - value to attribute to this summary telemetry data
+     */
+    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+
+    /**
+     * Get the telemetry data being tracked
+     * @param prefix - unique prefix for this data (ex: "fluid:map:")
+     * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
+     * @returns undefined if item not found
+     */
+    get(prefix: string, property: string): TelemetryEventPropertyType;
+
+    /**
+     * Returns a serialized version of all the telemetry data.
+     * Should be used when logging in telemetry events.
+     */
+    serialize(): string;
+}
+
+export const blobCountPropertyName = "BlobCount";
+
+export const totalBlobSizePropertyName = "TotalBlobSize";

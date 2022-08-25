@@ -25,6 +25,8 @@ export interface IConnect {
     /**
      * Authorization token
      */
+    // TODO: Update this to use undefined instead of null.
+    // eslint-disable-next-line @rushstack/no-new-null
     token: string | null;
 
     /**
@@ -64,8 +66,8 @@ export interface IConnect {
      * Properties that client can send to server to tell info about client environment. These are a bunch of properties
      * separated by ";" which server can log to better understand client environment etc.
      * Format: "prop1:val1;prop2:val2;prop3:val3"
-    */
-    relayUserAgent?: string,
+     */
+    relayUserAgent?: string;
 }
 
 /**
@@ -164,5 +166,5 @@ export interface IConnected {
      * to better understand server environment etc. and use it in case error occurs.
      * Format: "prop1:val1;prop2:val2;prop3:val3"
      */
-    relayServiceAgent?: string,
+    relayServiceAgent?: string;
 }

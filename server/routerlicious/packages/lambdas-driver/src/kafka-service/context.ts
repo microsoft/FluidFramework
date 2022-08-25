@@ -36,8 +36,8 @@ export class Context extends EventEmitter implements IContext {
 
     /**
      * Closes the context with an error.
-     * @param error The error object or string
-     * @param errorData Additional information about the error
+     * @param error - The error object or string
+     * @param errorData - Additional information about the error
      */
     public error(error: any, errorData: IContextErrorData) {
         this.emit("error", error, errorData);

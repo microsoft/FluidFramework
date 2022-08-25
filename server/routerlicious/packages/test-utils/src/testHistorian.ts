@@ -20,17 +20,17 @@ export class TestHistorian implements IHistorian {
 
     // back-compat 0.1010 old-collection-format
     private readonly blobs: ICollection<
-        { _id: string; content: string, encoding: string, value?: git.ICreateBlobParams }>;
+        { _id: string; content: string; encoding: string; value?: git.ICreateBlobParams; }>;
     private readonly commits: ICollection<{
         _id: string;
-        message: string,
-        tree: string,
-        parents: string[],
-        author: git.IAuthor,
-        value?: git.ICreateCommitParams }>;
+        message: string;
+        tree: string;
+        parents: string[];
+        author: git.IAuthor;
+        value?: git.ICreateCommitParams; }>;
     private readonly trees: ICollection<
-        { _id: string; tree: git.ICreateTreeEntry[], base_tree?: string, value?: git.ICreateTreeParams }>;
-    private readonly refs: ICollection<{ _id: string; ref: string, sha: string, value?: git.ICreateRefParams }>;
+        { _id: string; tree: git.ICreateTreeEntry[]; base_tree?: string; value?: git.ICreateTreeParams; }>;
+    private readonly refs: ICollection<{ _id: string; ref: string; sha: string; value?: git.ICreateRefParams; }>;
 
     constructor(db: IDb = new TestDb({})) {
         this.blobs = db.collection("blobs");

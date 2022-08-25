@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
+# DisableDockerDetector "No feasible secure solution for OSS repos yet"
+
 FROM alpine:3.12
 
 # Install Git and OpenSSH so we can run a git server

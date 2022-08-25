@@ -15,27 +15,25 @@ import {
     numberCases,
 } from "@fluidframework/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-loader";
-import { ConfigTypes } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
     provideScopeLoader: booleanCases,
     maxClientLeaveWaitTime: numberCases,
-    noopCountFrequency: numberCases,
-    noopTimeFrequency: numberCases,
     summarizeProtocolTree: [undefined],
 };
 
 export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: Partial<OptionsMatrix<T>> | undefined) {
-    const realOptions: OptionsMatrix<T> = {...options};
-    if(optionsOverrides !== undefined) {
-        for(const key of Object.keys(optionsOverrides)) {
+    const realOptions: OptionsMatrix<T> = { ...options };
+    if (optionsOverrides !== undefined) {
+        for (const key of Object.keys(optionsOverrides)) {
             const override = optionsOverrides[key];
-            if(override !== undefined) {
-                if(Array.isArray(override)) {
+            if (override !== undefined) {
+                if (Array.isArray(override)) {
                     realOptions[key] = override;
-                }else{
-                    throw new Error(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
+                } else {
+                    throw new LoggingError(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
                 }
             }
         }
@@ -45,22 +43,22 @@ export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: P
 
 export const generateLoaderOptions =
     (seed: number, overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined): ILoaderOptions[] => {
-    return generatePairwiseOptions<ILoaderOptions>(
-        applyOverrides(loaderOptionsMatrix, overrides),
-        seed);
-};
+        return generatePairwiseOptions<ILoaderOptions>(
+            applyOverrides(loaderOptionsMatrix, overrides),
+            seed);
+    };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,
     gcAllowed: booleanCases,
     runFullGC: booleanCases,
-    runSweep: [false],
+    sweepAllowed: [false],
+    sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
-    disableIsolatedChannels: booleanCases,
+    disableIsolatedChannels: [undefined],
     disableSummaries: [false],
-    generateSummaries: [true],
     initialSummarizerDelayMs: numberCases,
     summaryConfigOverrides: [undefined],
     maxOpsSinceLastSummary: numberCases,
@@ -79,20 +77,21 @@ export function generateRuntimeOptions(
         gcOptions: [undefined, ...gcOptions],
         summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
-        useDataStoreAliasing: [undefined],
+        enableOfflineLoad: [undefined],
         flushMode: [undefined],
+        compressionOptions: [{ minimumSize: 500 }],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(
         applyOverrides(
             runtimeOptionsMatrix,
-            {...overrides, gcOptions: undefined, summaryOptions: undefined}),
+            { ...overrides, gcOptions: undefined, summaryOptions: undefined }),
         seed);
 }
 
 export function generateConfigurations(
-    seed: number, overrides: OptionsMatrix<Record<string,ConfigTypes>> | undefined,
-): Record<string,ConfigTypes>[] {
+    seed: number, overrides: OptionsMatrix<Record<string, ConfigTypes>> | undefined,
+): Record<string, ConfigTypes>[] {
     if (overrides === undefined) {
         return [{}];
     }

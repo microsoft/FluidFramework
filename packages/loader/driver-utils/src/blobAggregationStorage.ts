@@ -15,7 +15,6 @@ import {
     ISummaryTree,
     IVersion,
     SummaryType,
-    ITree,
 } from "@fluidframework/protocol-definitions";
 import {
     assert,
@@ -99,7 +98,7 @@ export abstract class SnapshotExtractor {
                     let subTree = snapshot;
                     for (const subPath of pathSplit.slice(0, pathSplit.length - 1)) {
                         if (subTree.trees[subPath] === undefined) {
-                            subTree.trees[subPath] = { blobs: {}, trees: {}};
+                            subTree.trees[subPath] = { blobs: {}, trees: {} };
                         }
                         subTree = subTree.trees[subPath];
                     }
@@ -146,7 +145,7 @@ class SnapshotExtractorInPlace extends SnapshotExtractor {
  * When snapshot is read, it will unpack aggregated blobs and provide them transparently to caller.
  */
 export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
-    // Tells data store if it can use incremental summary (i.e. reuse DDSs from previous summary
+    // Tells data store if it can use incremental summary (i.e. reuse DDSes from previous summary
     // when only one DDS changed).
     // The answer has to be know long before we enable actual packing. The reason for the is the following:
     // A the moment when we enable packing, we should assume that all clients out there wil already have bits
@@ -207,8 +206,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         private readonly logger: ITelemetryLogger,
         private readonly allowPacking: boolean,
         private readonly packingLevel: number,
-        private readonly blobCutOffSize?: number)
-    {
+        private readonly blobCutOffSize?: number) {
         super();
     }
 
@@ -230,11 +228,6 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         throw new Error("NYI");
-    }
-
-    // This is only used through Container.snapshot() for testing purposes
-    public async write(root: ITree, parents: string[], message: string, ref: string) {
-        return this.storage.write(root, parents, message, ref);
     }
 
     // for now we are not optimizing these blobs, with assumption that this API is used only
@@ -289,8 +282,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         summary: ISummaryTree,
         path = "",
         level = 0,
-        aggregatorArg?: BlobAggregator): Promise<ISummaryTree>
-    {
+        aggregatorArg?: BlobAggregator): Promise<ISummaryTree> {
         if (this.blobCutOffSize === undefined || this.blobCutOffSize < 0) {
             return summary;
         }
@@ -308,8 +300,8 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
             assert(level !== this.packingLevel, 0x23c /* "we are not packing at the right level" */);
         }
 
-        const newSummary: ISummaryTree = {...summary};
-        newSummary.tree = { ...newSummary.tree};
+        const newSummary: ISummaryTree = { ...summary };
+        newSummary.tree = { ...newSummary.tree };
         for (const key of Object.keys(summary.tree)) {
             const obj = summary.tree[key];
             // Get path relative to root of data store (where we do aggregation)
@@ -345,7 +337,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
                     }
                     // Ensure only whole data stores can be reused, no reusing at deeper level!
                     assert(level === 0, 0x0fc /* "tree reuse at lower level" */);
-                    assert(handlePath.indexOf("/") === -1,
+                    assert(!handlePath.includes("/"),
                         0x0fd /* "data stores are writing incremental summaries!" */);
                     break;
                 }

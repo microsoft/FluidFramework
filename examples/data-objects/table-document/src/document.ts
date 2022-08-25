@@ -6,16 +6,18 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp, LocalReference, PropertySet } from "@fluidframework/merge-tree";
+import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-    positionToRowCol,
-    rowColToPosition,
-    SharedNumberSequence,
-    SparseMatrix,
     IntervalType,
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
+import {
+    positionToRowCol,
+    rowColToPosition,
+    SparseMatrix,
+    SharedNumberSequence,
+} from "@fluid-experimental/sequence-deprecated";
 import { CellRange } from "./cellrange";
 import { TableDocumentType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
@@ -34,7 +36,7 @@ export interface ITableDocumentEvents extends IEvent {
  * @deprecated - TableDocument is an abandoned prototype.  Please use SharedMatrix with
  *               the IMatrixProducer/Consumer interfaces instead.
  */
-export class TableDocument extends DataObject<{Events: ITableDocumentEvents}> implements ITable {
+export class TableDocument extends DataObject<{ Events: ITableDocumentEvents; }> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new DataObjectFactory(
@@ -162,8 +164,8 @@ export class TableDocument extends DataObject<{Events: ITableDocumentEvents}> im
         this.forwardEvent(this.matrix, "op", "sequenceDelta");
     }
 
-    private readonly localRefToRowCol = (localRef: LocalReference) => {
-        const position = localRef.toPosition();
+    private readonly localRefToRowCol = (localRef: ReferencePosition) => {
+        const position = this.matrix.localReferencePositionToPosition(localRef);
         return positionToRowCol(position);
     };
 }

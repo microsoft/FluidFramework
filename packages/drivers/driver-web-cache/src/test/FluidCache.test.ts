@@ -24,8 +24,8 @@ function getFluidCache(config?: {
     partitionKey?: string | null;
 }) {
     return new FluidCache({
-        partitionKey: config?.partitionKey || mockPartitionKey,
-        maxCacheItemAge: config?.maxCacheItemAge || 3 * 24 * 60 * 60 * 1000,
+        partitionKey: config?.partitionKey ?? mockPartitionKey,
+        maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
     });
 }
 
@@ -54,11 +54,11 @@ function setupDateMock(startMockTime: number) {
 // Gets a mock cache entry from an item key, all entries returned will be for the same document.
 function getMockCacheEntry(
     itemKey: string,
-    options?: { docId: string },
+    options?: { docId: string; },
 ): ICacheEntry {
     return {
         file: {
-            docId: options?.docId || "myDocument",
+            docId: options?.docId ?? "myDocument",
             resolvedUrl: {
                 type: "fluid",
                 url: "https://bing.com/myDocument",

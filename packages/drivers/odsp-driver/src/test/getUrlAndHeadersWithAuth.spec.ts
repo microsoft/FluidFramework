@@ -34,7 +34,7 @@ describe("getUrlAndHeadersWithAuth", () => {
     const validateTokenEmbeddedIntoQueryString = (
         originalUrl: URL,
         token: string,
-        result: { url: string, headers: { [index: string]: string } },
+        result: { url: string; headers: { [index: string]: string; }; },
     ) => {
         const returnedUrl = new URL(result.url);
         assert.strictEqual(
@@ -47,7 +47,7 @@ describe("getUrlAndHeadersWithAuth", () => {
     const validateTokenEmbeddedIntoHeaders = (
         originalUrl: URL,
         token: string,
-        result: { url: string, headers: { [index: string]: string } },
+        result: { url: string; headers: { [index: string]: string; }; },
     ) => {
         const returnedUrl = new URL(result.url);
         assert.strictEqual(

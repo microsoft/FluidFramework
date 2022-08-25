@@ -24,7 +24,7 @@ const r11sServers = [
 
 export class RouterliciousUrlResolver implements IUrlResolver {
     constructor(
-        private readonly config: { provider: Provider, tenantId: string, documentId: string } | undefined,
+        private readonly config: { provider: Provider; tenantId: string; documentId: string; } | undefined,
         private readonly getToken: () => Promise<string>,
         private readonly hostUrl: string) {
     }

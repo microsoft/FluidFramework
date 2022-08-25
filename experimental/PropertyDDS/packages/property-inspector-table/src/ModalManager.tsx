@@ -11,6 +11,7 @@ interface IModalContext<P = any> {
    * A custom close handler that is invoked when the modal is closed.
    */
   closeHandler?: () => void;
+
   /**
    * Modal type currently being displayed. The string is matched to a React.Component
    */
@@ -27,7 +28,7 @@ export const ModalContext = React.createContext<IModalContext>({
   component: null,
   hideModal: () => { return; },
   props: {},
-  showModal : () => { return; },
+  showModal: () => { return; },
 });
 
 // eslint-disable-next-line @typescript-eslint/ban-types

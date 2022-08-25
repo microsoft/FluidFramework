@@ -66,7 +66,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
     constructor() { }
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-        if (request.headers && request.headers[DriverHeader.createNew]) {
+        if (request.headers?.[DriverHeader.createNew]) {
             const [siteURL, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);
@@ -82,7 +82,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     { driverVersion: pkgVersion });
             }
             let shareLinkInfo: ShareLinkInfoType | undefined;
-            if(createLinkType && createLinkType in ShareLinkTypes) {
+            if (createLinkType && createLinkType in ShareLinkTypes) {
                 shareLinkInfo = {
                     createLink: {
                         type: ShareLinkTypes[createLinkType],
@@ -108,7 +108,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 fileName,
                 summarizer: false,
                 codeHint: {
-                    containerPackageName: packageName ? packageName : undefined,
+                    containerPackageName: packageName ?? undefined,
                 },
                 fileVersion: undefined,
                 shareLinkInfo,

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+export { ConnectionState } from "./connectionState";
 export {
-    ConnectionState,
     Container,
     IContainerLoadOptions,
     IContainerConfig,
+    IPendingContainerState,
     waitContainerToCatchUp,
 } from "./container";
 export {
@@ -20,3 +21,7 @@ export {
     Loader,
     RelativeLoader,
 } from "./loader";
+export {
+    IProtocolHandler,
+    ProtocolHandlerBuilder,
+} from "./protocol";

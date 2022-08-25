@@ -7,16 +7,20 @@ import { assert } from "@fluidframework/common-utils";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
+    createDetachedLocalReferencePosition,
     createInsertSegmentOp,
     createRemoveRangeOp,
     IMergeTreeRemoveMsg,
     ISegment,
-    LocalReference,
+    LocalReferencePosition,
     Marker,
     MergeTreeDeltaType,
     PropertySet,
     ReferencePosition,
     ReferenceType,
+    refGetRangeLabels,
+    refGetTileLabels,
+    refHasRangeLabels,
     reservedMarkerIdKey,
     reservedRangeLabelsKey,
     reservedTileLabelsKey,
@@ -30,7 +34,6 @@ import {
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IFluidHTMLOptions } from "@fluidframework/view-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
 import { clamp, emptyArray, randomId, TagName, TokenList } from "../util";
 import { IHTMLAttributes } from "../util/attr";
@@ -43,14 +46,13 @@ export const enum DocSegmentKind {
     paragraph = "<p>",
     lineBreak = "<br>",
     beginTags = "<t>",
-    inclusion = "<?>",
     endTags = "</>",
 
-    // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+    // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
     endOfText = "eot",
 }
 
-const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion]);
+const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags]);
 
 const enum Workaround { checkpoint = "*" }
 
@@ -60,7 +62,7 @@ export const enum DocTile {
 }
 
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
-    // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+    // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
     if (segment === endOfTextSegment) {
         return DocSegmentKind.endOfText;
     }
@@ -73,8 +75,8 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
             case ReferenceType.Tile:
             case ReferenceType.Tile | ReferenceType.NestBegin:
 
-                const kind = (segment.hasRangeLabels() ? segment.getRangeLabels()[0] :
-                    segment.getTileLabels()[0]) as DocSegmentKind;
+                const kind = (refHasRangeLabels(segment) ? refGetRangeLabels(segment)[0] :
+                    refGetTileLabels(segment)[0]) as DocSegmentKind;
 
                 assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
 
@@ -85,7 +87,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
                 // will not close the range.)
-                assert(segment.getRangeLabels()[0] === DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
+                assert(refGetRangeLabels(segment)[0] === DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
                 return DocSegmentKind.endTags;
         }
     }
@@ -93,10 +95,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
 const empty = Object.freeze({});
 
-export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getComponentOptions = (segment: ISegment): IFluidHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
+export const getCss = (segment: ISegment): Readonly<{ style?: string; classList?: string; }> => segment.properties || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
@@ -116,7 +115,7 @@ const accumAsLeafAction = (
 ) => (accum)(position, segment, startOffset, endOffset);
 
 // TODO: We need the ability to create LocalReferences to the end of the document. Our
-//       workaround creates a LocalReference with an 'undefined' segment that is never
+//       workaround creates a ReferencePosition with an 'undefined' segment that is never
 //       inserted into the MergeTree.  We then special case this segment in localRefToPosition,
 //       addLocalRef, removeLocalRef, etc.
 //
@@ -125,7 +124,8 @@ const accumAsLeafAction = (
 //       to undefined segments.)
 //
 //       See: https://github.com/microsoft/FluidFramework/issues/86
-const endOfTextSegment = undefined as unknown as SharedStringSegment;
+const endOfTextReference = createDetachedLocalReferencePosition();
+const endOfTextSegment = endOfTextReference.getSegment() as SharedStringSegment;
 
 export interface IFlowDocumentEvents extends IEvent {
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString) => void);
@@ -153,9 +153,8 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
     private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: TagName.p });
     private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint] });
-    private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint] });
     private static readonly tagsProperties = Object.freeze({
-        [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint],
+        [reservedTileLabelsKey]: [DocTile.checkpoint],
         [reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
     });
 
@@ -188,47 +187,46 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     public getSegmentAndOffset(position: number) {
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         return position === this.length
             ? { segment: endOfTextSegment, offset: 0 }
             : this.sharedString.getContainingSegment(position);
     }
 
     public getPosition(segment: ISegment) {
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         return segment === endOfTextSegment
             ? this.length
             : this.sharedString.getPosition(segment);
     }
 
     public addLocalRef(position: number) {
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
-            return this.sharedString.createPositionReference(endOfTextSegment, 0, ReferenceType.Transient);
+            return endOfTextReference;
         }
 
         const { segment, offset } = this.getSegmentAndOffset(position);
-        const localRef = this.sharedString.createPositionReference(segment, offset, ReferenceType.SlideOnRemove);
+        const localRef = this.sharedString.createLocalReferencePosition(segment, offset, ReferenceType.SlideOnRemove, undefined);
 
         return localRef;
     }
 
-    public removeLocalRef(localRef: LocalReference) {
+    public removeLocalRef(localRef: LocalReferencePosition) {
         const segment = localRef.getSegment();
 
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (segment !== endOfTextSegment) {
-            this.sharedString.removeLocalReference(localRef);
+            this.sharedString.removeLocalReferencePosition(localRef);
         }
     }
 
-    public localRefToPosition(localRef: LocalReference) {
-        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+    public localRefToPosition(localRef: ReferencePosition) {
+        // Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
         if (localRef.getSegment() === endOfTextSegment) {
             return this.length;
         }
-
-        return localRef.toPosition();
+        return this.sharedString.localReferencePositionToPosition(localRef);
     }
 
     public insertText(position: number, text: string) {
@@ -318,14 +316,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
-            ...FlowDocument.inclusionProperties,
-            componentOptions, handle, style, classList: classList && classList.join(" "), view,
-        }));
-    }
-
     public setFormat(position: number, tag: TagName) {
         const { start } = this.findParagraph(position);
 
@@ -366,7 +356,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     public getTags(position: number): Readonly<Marker[]> {
         const tags = this.sharedString.getStackContext(position, [DocSegmentKind.beginTags])[DocSegmentKind.beginTags];
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return (tags && tags.items) || emptyArray;
+        return tags?.items || emptyArray;
     }
 
     public getStart(marker: Marker) {
@@ -419,7 +409,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.annotateRange(start, end, { attr });
     }
 
-    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition, pos: number } {
+    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition; pos: number; } {
         return this.sharedString.findTile(position, tileType as unknown as string, preceding);
     }
 
@@ -486,7 +476,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
-        const updates: { span: SegmentSpan, classList: string }[] = [];
+        const updates: { span: SegmentSpan; classList: string; }[] = [];
 
         this.visitRange((position, segment, startOffset, endOffset) => {
             const oldList = getCss(segment).classList;

@@ -14,7 +14,7 @@ import { forceType, Utilities } from "./utilities";
 
 /**
  * The function returns an iterator for {@link external:MapProperty MapProperty}.
- * @param target The {@link ComponentMap} that holds a reference
+ * @param target - The {@link ComponentMap} that holds a reference
  * to the {@link external:MapProperty MapProperty}.
  * @return An iterator.
  * @hidden
@@ -44,7 +44,7 @@ class ComponentMap extends Map {
     private readonly property!: MapProperty;
     /**
      * Sets the {@link external:MapProperty MapProperty} to operate on sets the Symbol.iterator attribute.
-     * @param property The {@link external:MapProperty MapProperty} to operate on.
+     * @param property - The {@link external:MapProperty MapProperty} to operate on.
      */
     constructor(property: MapProperty) {
         super();
@@ -173,7 +173,7 @@ class ComponentMap extends Map {
      */
     set(key: string, value: any) {
         if (typeof key !== "string") {
-            throw new Error(PropertyProxyErrors.ONLY_STRING_KEYS);
+            throw new TypeError(PropertyProxyErrors.ONLY_STRING_KEYS);
         }
 
         const asteriskFound = Utilities.containsAsterisk(key);

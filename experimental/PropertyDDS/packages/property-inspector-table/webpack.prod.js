@@ -2,16 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 const common = require('./webpack.common.js');
 
 
 const fs = require('fs');
 const path = require('path');
-const assert = require('assert');
 
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const _ = require('underscore');
 
 const baseConfig = require('./webpack.base.js');
@@ -108,7 +107,7 @@ const CommonWebpackLibTSConfig = function (args) {
   const params = getParams(args);
 
   const commonLibConfig = {
-    devtool: 'source-maps',
+    devtool: 'source-map',
     output: {
       library: params.name,
       path: params.distPath
@@ -190,7 +189,7 @@ module.exports = (env) => CommonWebpackLibTSConfig({
     }
     ],
     plugins: [
-      new ExtractTextPlugin('styles.css')
+      new HtmlWebpackPlugin('styles.css')
     ]
   })
 });

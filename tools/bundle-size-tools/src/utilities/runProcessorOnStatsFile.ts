@@ -15,7 +15,7 @@ import * as Webpack from 'webpack';
  */
 export function runProcessorsOnStatsFile(
   bundleName: string,
-  stats: Webpack.Stats.ToJsonOutput,
+  stats: Webpack.StatsCompilation,
   config: BundleBuddyConfig | undefined,
   statsProcessors: WebpackStatsProcessor[]
 ): BundleMetricSet {

@@ -29,7 +29,7 @@ export interface UploadedEditChunkContents {
  */
 export async function getUploadedEditChunkContents(sharedTree: SharedTree): Promise<UploadedEditChunkContents[]> {
 	const editChunks: UploadedEditChunkContents[] = [];
-	const { editChunks: editsOrHandles } = (sharedTree.edits as EditLog<ChangeInternal>).getEditLogSummary();
+	const { editChunks: editsOrHandles } = (sharedTree.edits as unknown as EditLog<ChangeInternal>).getEditLogSummary();
 	for (const { chunk } of editsOrHandles) {
 		if (!Array.isArray(chunk)) {
 			const handle = chunk as FluidEditHandle;

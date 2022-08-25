@@ -11,7 +11,7 @@ import { forceType, Utilities } from "./utilities";
 
 /**
  * Creates an iterator that can iterate over an {@link external:ArrayProperty ArrayProperty}.
- * @param target The ComponentArray that holds a reference to the
+ * @param target - The ComponentArray that holds a reference to the
  * {@link external:ArrayProperty ArrayProperty}.
  * @return {Iterator} The iterator.
  * @hidden
@@ -28,8 +28,8 @@ const createArrayIterator = (target: ComponentArray) => function*() {
 
 /**
  * Prepares the elements that are to be inserted into the {@link external:ArrayProperty ArrayProperty}.
- * @param property The ArrayProperty in which elements are to be inserted.
- * @param elements The elements to be inserted.
+ * @param property - The ArrayProperty in which elements are to be inserted.
+ * @param elements - The elements to be inserted.
  * @return The array that contains elements ready for insertion.
  * @hidden
  */
@@ -49,7 +49,7 @@ class ComponentArray extends Array {
 
     /**
      * Sets the {@link external:ArrayProperty ArrayProperty} to operate on sets the Symbol.iterator attribute.
-     * @param property The ArrayProperty to operate on.
+     * @param property - The ArrayProperty to operate on.
      */
     constructor(private readonly property: ArrayProperty) {
         super();
@@ -169,8 +169,11 @@ class ComponentArray extends Array {
         } else {
             popped = this.property.pop();
         }
-        if (PropertyFactory.instanceOf(popped, "BaseProperty")) { return PropertyProxy.proxify(popped); }
-        else { return popped; }
+        if (PropertyFactory.instanceOf(popped, "BaseProperty")) {
+            return PropertyProxy.proxify(popped);
+        } else {
+            return popped;
+        }
     }
 
     /**
@@ -201,8 +204,11 @@ class ComponentArray extends Array {
         } else {
             first = this.property.shift();
         }
-        if (PropertyFactory.instanceOf(first, "BaseProperty")) { return PropertyProxy.proxify(first); }
-        else { return first; }
+        if (PropertyFactory.instanceOf(first, "BaseProperty")) {
+            return PropertyProxy.proxify(first);
+        } else {
+            return first;
+        }
     }
 
     /**
@@ -242,11 +248,14 @@ class ComponentArray extends Array {
         const arrayLength = this.property.getLength();
 
         // If start is greater than the array, start is set to the length of the array
+        // eslint-disable-next-line @typescript-eslint/brace-style
         if (startValue > arrayLength) { startValue = arrayLength; }
         // If start is negative, we begin from the end of the array
         else if (startValue < 0) {
             startValue = arrayLength + startValue;
-            if (startValue < 0) { startValue = 0; }
+            if (startValue < 0) {
+                startValue = 0;
+            }
         }
 
         // Remove elements from array
@@ -280,8 +289,8 @@ class ComponentArray extends Array {
 
     /**
      * Swaps two elements in place in the array.
-     * @param idxOne The index of one of the elements to be swapped.
-     * @param idxTwo The index of one of the elements to be swapped.
+     * @param idxOne - The index of one of the elements to be swapped.
+     * @param idxTwo - The index of one of the elements to be swapped.
      */
     swap(idxOne: number, idxTwo: number) {
         if (idxOne >= this.property.getLength() || idxTwo >= this.property.getLength()) {

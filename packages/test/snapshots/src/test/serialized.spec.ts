@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/local-driver";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -28,12 +28,22 @@ import { SharedCounter } from "@fluidframework/counter";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 describe(`Container Serialization Backwards Compatibility`, () => {
     const loaderContainerTracker = new LoaderContainerTracker();
     let disableIsolatedChannels: boolean;
     let filename: string;
     const contentFolder = "content/serializedContainerTestContent";
+
+    // Ideally we would have each test call this.skip() but in this case they're created dynamically
+    // based on the contents of the folder which might or might not exist, so this is the alternative
+    // I came up with.
+    if (!fs.existsSync(contentFolder)) {
+        it(`Skipping dynamic tests in this suite - test collateral folder (${contentFolder}) doesn't exist`,
+            function() { this.skip(); });
+        return;
+    }
 
     for (filename of recurseFiles(contentFolder)) {
         disableIsolatedChannels = false;
@@ -169,7 +179,7 @@ function *recurseFiles(rootPath: string): IterableIterator<string> {
     for (const child of fs.readdirSync(rootPath)) {
         const filenameFull = `${rootPath}/${child}`;
         const stat = fs.statSync(filenameFull);
-        if (stat && stat.isDirectory()) {
+        if (stat?.isDirectory()) {
             yield *recurseFiles(filenameFull);
         } else {
             yield filenameFull;

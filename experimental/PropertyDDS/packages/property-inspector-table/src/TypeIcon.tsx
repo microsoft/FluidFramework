@@ -19,7 +19,7 @@ const useStyles = makeStyles({
   },
 }, { name: "TypeIcon" });
 
-export const TypeIcon: React.FunctionComponent<{ typeId: string }> = ({ typeId }) => {
+export const TypeIcon: React.FunctionComponent<{ typeId: string; }> = ({ typeId }) => {
   const classes = useStyles();
   return (
     <div className={classNames(classes.svgIcon)}>

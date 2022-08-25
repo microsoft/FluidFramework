@@ -28,25 +28,25 @@ export const joinDataSchema = {
                         name: { type: "string" },
                         email: { type: "string" },
                     },
-                    required: [ "id", "name", "email" ],
+                    required: ["id", "name", "email"],
                     additionalProperties: false,
                 },
             },
-            required: [ "user" ],
+            required: ["user"],
             additionalProperties: false,
         },
     },
-    required: [ "clientId", "detail" ],
+    required: ["clientId", "detail"],
     additionalProperties: false,
 };
 
 export const proposeContentsSchema = {
-    type: [ "string", "object" ],
+    type: ["string", "object"],
     properties: {
         key: { type: "string" },
         value: { type: "string" },
     },
-    required: [ "key" ],
+    required: ["key"],
     additionalProperties: false,
 };
 
@@ -65,15 +65,15 @@ export const proposeCodeSchema = {
                         version: { type: "string" },
                         fluid: { type: "object" },
                     },
-                    required: [ "name" ],
+                    required: ["name"],
                 },
                 config: { type: "object" },
             },
-            required: [ "package", "config" ],
+            required: ["package", "config"],
             additionalProperties: false,
         },
     },
-    required: [ "key", "value" ],
+    required: ["key", "value"],
     additionalProperties: false,
 };
 
@@ -83,7 +83,7 @@ const attachSnapshotEntriesSchema = {
     properties: {
         mode: { type: "string" },
         path: { type: "string" },
-        type: { enum: [ "Blob", "Tree" ] },
+        type: { enum: ["Blob", "Tree"] },
         value: {
             type: "object",
             oneOf: [
@@ -95,7 +95,7 @@ const attachSnapshotEntriesSchema = {
                         // Verify this
                         id: { type: "null" },
                     },
-                    required: [ "contents", "encoding" ],
+                    required: ["contents", "encoding"],
                     additionalProperties: false,
                 },
                 // type Tree
@@ -108,13 +108,13 @@ const attachSnapshotEntriesSchema = {
                         // Verify this
                         id: { type: "null" },
                     },
-                    required: [ "entries" ],
+                    required: ["entries"],
                     additionalProperties: false,
                 },
             ],
         },
     },
-    required: [ "mode", "path", "type", "value" ],
+    required: ["mode", "path", "type", "value"],
     additionalProperties: false,
 };
 
@@ -135,12 +135,12 @@ export const attachContentsSchema = {
                 // Verify this
                 id: { type: "null" },
             },
-            required: [ "entries" ],
+            required: ["entries"],
             additionalProperties: false,
         },
         type: { type: "string" },
     },
-    required: [ "id", "snapshot", "type" ],
+    required: ["id", "snapshot", "type"],
     additionalProperties: false,
 };
 
@@ -153,7 +153,7 @@ export const chunkedOpContentsSchema = {
         originalType: { type: "string" },
         totalChunks: { type: "number" },
     },
-    required: [ "chunkId", "contents", "originalType", "totalChunks" ],
+    required: ["chunkId", "contents", "originalType", "totalChunks"],
     additionalProperties: false,
 };
 
@@ -167,11 +167,11 @@ const contentsSchema = {
                 content: { type: "object" },
                 type: { type: "string" },
             },
-            required: [ "content", "type" ],
+            required: ["content", "type"],
             additionalProperties: false,
         },
     },
-    required: [ "address", "contents" ],
+    required: ["address", "contents"],
     additionalProperties: false,
 };
 
@@ -187,26 +187,26 @@ export const opContentsSchema = {
     oneOf: [
         {
             properties: {
-                type: { enum: [ "component" ] },
+                type: { enum: ["component"] },
                 contents: { $ref: "#/definitions/content" },
             },
-            required: [ "type", "contents" ],
+            required: ["type", "contents"],
             additionalProperties: false,
         },
         {
             properties: {
-                type: { enum: [ "attach" ] },
+                type: { enum: ["attach"] },
                 contents: { $ref: "#/definitions/attachContents" },
             },
-            required: [ "type", "contents" ],
+            required: ["type", "contents"],
             additionalProperties: false,
         },
         {
             properties: {
-                type: { enum: [ "chunkedOp" ] },
+                type: { enum: ["chunkedOp"] },
                 contents: { $ref: "#/definitions/chunkedOpContents" },
             },
-            required: [ "type", "contents" ],
+            required: ["type", "contents"],
             additionalProperties: false,
         },
         {
@@ -236,19 +236,19 @@ export const opContentsRegisterCollectionSchema = {
                         type: { type: "string" },
                         value: { },
                     },
-                    required: [ "type", "value" ],
+                    required: ["type", "value"],
                     additionalProperties: false,
                 },
                 type: {
                     type: "string",
-                    enum: [ "write" ],
+                    enum: ["write"],
                 },
             },
-            required: [ "key", "type" ],
+            required: ["key", "type"],
             additionalProperties: false,
         },
     },
-    required: [ "address", "contents" ],
+    required: ["address", "contents"],
     additionalProperties: false,
 };
 
@@ -269,7 +269,7 @@ export const opContentsMapSchema = {
                         type: { type: "string" },
                         value: { },
                     },
-                    required: [ "type" ],
+                    required: ["type"],
                     additionalProperties: false,
                 },
                 type: {
@@ -284,34 +284,34 @@ export const opContentsMapSchema = {
                     ],
                 },
             },
-            required: [ "type" ],
+            required: ["type"],
             additionalProperties: false,
             // specific property combinations based on type value
             oneOf: [
                 {
-                    properties: { type: { enum: [ "act" ] } },
-                    required: [ "key", "path", "value" ],
+                    properties: { type: { enum: ["act"] } },
+                    required: ["key", "path", "value"],
                 },
                 {
-                    properties: { type: { enum: [ "set" ] } },
-                    required: [ "key", "value" ],
+                    properties: { type: { enum: ["set"] } },
+                    required: ["key", "value"],
                 },
                 {
-                    properties: { type: { enum: [ "delete" ] } },
-                    required: [ "key" ],
+                    properties: { type: { enum: ["delete"] } },
+                    required: ["key"],
                 },
                 {
-                    properties: { type: { enum: [ "clear" ] } },
-                    required: [ "path" ],
+                    properties: { type: { enum: ["clear"] } },
+                    required: ["path"],
                 },
                 {
-                    properties: { type: { enum: [ "createSubDirectory", "deleteSubDirectory" ] } },
-                    required: [ "path", "subdirName" ],
+                    properties: { type: { enum: ["createSubDirectory", "deleteSubDirectory"] } },
+                    required: ["path", "subdirName"],
                 },
             ],
         },
     },
-    required: [ "address", "contents" ],
+    required: ["address", "contents"],
     additionalProperties: false,
 };
 
@@ -338,30 +338,30 @@ const mergeTreeDeltaOpSchema = {
             maximum: 2 /* MergeTreeDeltaType.ANNOTATE */,
         },
     },
-    required: [ "type" ],
+    required: ["type"],
     oneOf: [
         {
             properties: {
-                type: { enum: [ 0 /* MergeTreeDeltaType.INSERT */ ] },
-                seg: { type: [ "string", "object" ] },
+                type: { enum: [0] },
+                seg: { type: ["string", "object"] },
                 pos1: { type: "number" },
             },
-            required: [ "pos1" ],
+            required: ["pos1"],
             additionalProperties: false,
         },
         {
             properties: {
-                type: { enum: [ 1 /* MergeTreeDeltaType.REMOVE */ ] },
+                type: { enum: [1] },
                 register: { type: "string" },
                 pos1: { type: "number" },
                 pos2: { type: "number" },
             },
-            required: [ "pos1" ],
+            required: ["pos1"],
             additionalProperties: false,
         },
         {
             properties: {
-                type: { enum: [ 2 /* MergeTreeDeltaType.ANNOTATE */ ] },
+                type: { enum: [2] },
                 combiningOp: {
                     type: "object",
                     properties: {
@@ -370,7 +370,7 @@ const mergeTreeDeltaOpSchema = {
                         minValue: { },
                         name: { type: "string" },
                     },
-                    required: [ "name" ],
+                    required: ["name"],
                     additionalProperties: false,
                 },
                 pos1: { type: "number" },
@@ -380,7 +380,7 @@ const mergeTreeDeltaOpSchema = {
                 relativePos1: { $ref: "#/definitions/relativePos" },
                 relativePos2: { $ref: "#/definitions/relativePos" },
             },
-            required: [ "props" ],
+            required: ["props"],
             additionalProperties: false,
         },
     // There's something weird with the typings/settings here where this doesn't get
@@ -401,7 +401,7 @@ const mergeTreeGroupOpSchema = {
             maximum: 3 /* MergeTreeDeltaType.GROUP */,
         },
     },
-    required: [ "ops", "type" ],
+    required: ["ops", "type"],
     additionalProperties: false,
 };
 
@@ -415,7 +415,7 @@ export const opContentsMergeTreeDeltaOpSchema = {
         address: { type: "string" },
         contents: { $ref: "#/definitions/deltaOp" },
     },
-    required: [ "address", "contents" ],
+    required: ["address", "contents"],
     additionalProperties: false,
 };
 
@@ -430,6 +430,6 @@ export const opContentsMergeTreeGroupOpSchema = {
         address: { type: "string" },
         contents: { $ref: "#/definitions/groupOp" },
     },
-    required: [ "address", "contents" ],
+    required: ["address", "contents"],
     additionalProperties: false,
 };

@@ -5,7 +5,11 @@
 
 import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import {
+    ILoaderProps,
+    Loader,
+    waitContainerToCatchUp as waitContainerToCatchUp_original,
+} from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -47,25 +51,25 @@ export interface ITestObjectProvider {
      * Used to create a test Container. The Loader/ContainerRuntime/DataRuntime might be different versioned.
      * In generateLocalCompatTest(), this Container and its runtime will be arbitrarily-versioned.
      */
-    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader,
-    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>,
+    makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     /**
      *
      * @param url - Resolved container URL
      */
-    updateDocumentId(url: IResolvedUrl | undefined): void,
+    updateDocumentId(url: IResolvedUrl | undefined): void;
 
-    logger: ITelemetryBaseLogger,
-    documentServiceFactory: IDocumentServiceFactory,
-    urlResolver: IUrlResolver,
-    defaultCodeDetails: IFluidCodeDetails,
-    opProcessingController: IOpProcessingController,
+    logger: ITelemetryBaseLogger;
+    documentServiceFactory: IDocumentServiceFactory;
+    urlResolver: IUrlResolver;
+    defaultCodeDetails: IFluidCodeDetails;
+    opProcessingController: IOpProcessingController;
 
     ensureSynchronized(): Promise<void>;
-    reset(): void,
+    reset(): void;
 
-    documentId: string,
+    documentId: string;
     driver: ITestDriver;
 }
 
@@ -76,16 +80,16 @@ export enum DataObjectFactoryType {
 
 export interface ITestContainerConfig {
     /** TestFluidDataObject instead of PrimedDataStore */
-    fluidDataObjectType?: DataObjectFactoryType,
+    fluidDataObjectType?: DataObjectFactoryType;
 
     /** An array of channel name and DDS factory pair to create on container creation time */
-    registry?: ChannelFactoryRegistry,
+    registry?: ChannelFactoryRegistry;
 
     /** Container runtime options for the container instance */
-    runtimeOptions?: IContainerRuntimeOptions,
+    runtimeOptions?: IContainerRuntimeOptions;
 
     /** Loader options for the loader used to create containers */
-    loaderProps?: Partial<ILoaderProps>,
+    loaderProps?: Partial<ILoaderProps>;
 }
 
 export const createDocumentId = (): string => uuid();
@@ -133,43 +137,43 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
         super();
     }
 
-    private readonly expectedEvents: ({index: number, event: ITelemetryGenericEvent | undefined} | undefined)[] = [];
+    private readonly expectedEvents: ({ index: number; event: ITelemetryGenericEvent | undefined; } | undefined)[] = [];
     private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
     public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]) {
-        if(this.expectedEvents.length !== 0) {
+        if (this.expectedEvents.length !== 0) {
             // we don't have to error here. just no reason not to. given the events must be
             // ordered it could be tricky to figure out problems around multiple registrations.
             throw new Error(
                 "Expected events already registered.\n"
                 + "Call reportAndClearTrackedEvents to clear them before registering more");
         }
-        this.expectedEvents.push(... orderedExpectedEvents.map((event,index)=>({index, event})));
+        this.expectedEvents.push(... orderedExpectedEvents.map((event, index) => ({ index, event })));
     }
 
     send(event: ITelemetryBaseEvent): void {
         const ee = this.expectedEvents[0]?.event;
-        if(ee?.eventName === event.eventName) {
+        if (ee?.eventName === event.eventName) {
             let matches = true;
-            for(const key of Object.keys(ee)) {
-                if(ee[key] !== event[key]) {
+            for (const key of Object.keys(ee)) {
+                if (ee[key] !== event[key]) {
                     matches = false;
                     break;
                 }
             }
-            if(matches) {
+            if (matches) {
                 // we found an expected event
                 // so remove it from the list of expected events
                 // and if it is an error, change it to generic
                 // this helps keep our telemetry clear of
                 // expected errors.
                 this.expectedEvents.shift();
-                if(event.category === "error") {
+                if (event.category === "error") {
                     event.category = "generic";
                 }
             }
         }
-        if(event.category === "error") {
+        if (event.category === "error") {
             this.unexpectedErrors.push(event);
         }
 
@@ -190,7 +194,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider implements ITestObjectProvider {
-    private readonly _loaderContainerTracker = new LoaderContainerTracker();
+    private _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
     private _logger: EventAndErrorTrackingLogger | undefined;
@@ -225,6 +229,10 @@ export class TestObjectProvider implements ITestObjectProvider {
                 }));
         }
         return this._logger;
+    }
+
+    set logger(logger: EventAndErrorTrackingLogger) {
+        this._logger = logger;
     }
 
     get documentServiceFactory() {
@@ -367,7 +375,8 @@ export class TestObjectProvider implements ITestObjectProvider {
             url: await this.driver.createContainerUrl(this.documentId),
             headers: requestHeader,
         });
-        await waitContainerToCatchUp(container);
+        await this.waitContainerToCatchUp(container);
+
         return container;
     }
 
@@ -377,7 +386,7 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._urlResolver = undefined;
         this._documentIdStrategy.reset();
         const logError = getUnexpectedLogErrorException(this._logger);
-        if(logError) {
+        if (logError) {
             throw logError;
         }
         this._logger = undefined;
@@ -388,21 +397,38 @@ export class TestObjectProvider implements ITestObjectProvider {
         return this._loaderContainerTracker.ensureSynchronized();
     }
 
+    public async waitContainerToCatchUp(container: IContainer) {
+        // The original waitContainerToCatchUp() from container loader uses either Container.resume()
+        // or Container.connect() as part of its implementation. However, resume() was deprecated
+        // and eventually replaced with connect(). To avoid issues during LTS compatibility testing
+        // with older container versions issues, we use resume() when connect() is unavailable.
+        if ((container as any).connect === undefined) {
+            (container as any).connect = (container as any).resume;
+        }
+
+        return waitContainerToCatchUp_original(container);
+    }
+
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
         this._documentIdStrategy.update(resolvedUrl);
+    }
+
+    public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
+        this._loaderContainerTracker.reset();
+        this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
     }
 }
 
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string) {
-    if(logger === undefined) {
+    if (logger === undefined) {
         return;
     }
     const results = logger.reportAndClearTrackedEvents();
-    if(results.unexpectedErrors.length > 0) {
+    if (results.unexpectedErrors.length > 0) {
         return new Error(
             `${prefix ?? ""}Unexpected Errors in Logs:\n${JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
     }
-    if(results.expectedNotFound.length > 0) {
+    if (results.expectedNotFound.length > 0) {
         return new Error(
             `${prefix ?? ""}Expected Events not found:\n${JSON.stringify(results.expectedNotFound, undefined, 2)}`);
     }

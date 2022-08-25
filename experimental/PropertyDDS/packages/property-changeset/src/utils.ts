@@ -6,7 +6,7 @@
 import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
 import { eachOfSeries, eachSeries, ErrorCallback, series, timesSeries, whilst } from "async";
 
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 import isNumber from "lodash/isNumber";
 import isString from "lodash/isString";
 import isEmpty from "lodash/isEmpty";
@@ -39,29 +39,29 @@ export namespace Utils {
         /**
          * The(pre-order) callback function that is invoked for each property
          */
-        preCallback?: (context: TraversalContext) => any,
+        preCallback?: (context: TraversalContext) => any;
         /**
          * The (post-order) callback function that is invoked for each property
          */
-        postCallback?: (context: TraversalContext) => any,
+        postCallback?: (context: TraversalContext) => any;
         /**
          * An optional object that is passed to all invocations of the callback via the
          */
-        userData?: { [key: string]: any },
+        userData?: { [key: string]: any; };
         /**
          *  The operation that has been applied to the root of the ChangeSet (either 'insert' or 'modify')
          */
-        rootOperation?: OperationType,
+        rootOperation?: OperationType;
         /**
          *  The full typeid for the Property at the root of the ChangeSet
          */
-        rootTypeid?: string,
+        rootTypeid?: string;
     }
 
     /**
         * Traverses a ChangeSet recursively and invokes the callback for each visited property.
         *
-        * @param in_preCallback  - The (pre-order) callback function that is invoked for each property
+        * @param in_preCallback - The (pre-order) callback function that is invoked for each property
         * @param in_postCallback - The (post-order) callback function that is invoked for each property
         * @param in_context -  The traversal context for the currently processed property
         * @param in_levelCallback - A callback for when a node is reached
@@ -575,7 +575,7 @@ export namespace Utils {
     /**
      * Traverses a ChangeSet recursively and invokes the callback for each visited property.
      *
-     * @param in_preCallback  - The (pre-order) callback function that is invoked for each property
+     * @param in_preCallback - The (pre-order) callback function that is invoked for each property
      * @param in_postCallback - The (post-order) callback function that is invoked for each property
      * @param in_context -  The traversal context for the currently processed property
      */
@@ -944,7 +944,7 @@ export namespace Utils {
         /**
          * Returns true if the passed context is an empty object
          * @private
-         * @param in_context change set traversal context
+         * @param in_context - change set traversal context
          * @returns Wether the object is empty
          */
         _isEmptyObject(in_context: TraversalContext) {
@@ -1001,7 +1001,7 @@ export namespace Utils {
         /**
          * Replace the current nested ChangeSet by another one
          *
-         * @param in_newNestedChangeset The new content
+         * @param in_newNestedChangeset - The new content
          */
         replaceNestedChangeSet(in_newNestedChangeset: SerializedChangeSet) {
             let parent = this.getParentNestedChangeSet();
@@ -1303,7 +1303,7 @@ export namespace Utils {
      * @param in_callback - A callback that is used to emit every template
      * @param in_finalizer - A callback that is called when enumeration is completed
      *
-     * @returns  All templates that appear in the ChangeSet
+     * @returns All templates that appear in the ChangeSet
      *   The returned object has members key (string), corresponding to the type and value with the
      *   definition (object)
      */
@@ -1390,7 +1390,7 @@ export namespace Utils {
     /**
      * Searches through a ChangeSet and returns all Changes to a properties with a given typeid
      *
-     * @param in_typeid    - The typeid of the property to look for
+     * @param in_typeid - The typeid of the property to look for
      * @param in_changeSet - The ChangeSet to process
      * @param in_excludeTypeids - Exclude all typeids from the returned ChangeSet
      * @returns Returns the applied operations to entries of the given typeid. The returned maps for insert and modify map paths to ChangeSets
@@ -1579,7 +1579,7 @@ export namespace Utils {
      *     application.
      */
     export function getChangesToTokenizedPaths(
-        in_paths: Map<string, Map<string, any>> | { [key: string]: any },
+        in_paths: Map<string, Map<string, any>> | { [key: string]: any; },
         in_changeSet: any,
         in_callback: { (context: TraversalContext, nestedObj: any, tokenizedPath: string[], contractedPathSegment: boolean): void; (arg0: TraversalContext, arg1: any, arg2: any[], arg3: boolean): void; },
         in_options: { escapeLeadingDoubleUnderscore?: boolean; rootOperation?: OperationType; rootTypeid?: string; } = { escapeLeadingDoubleUnderscore: false, rootOperation: 'modify' }) {
@@ -1756,7 +1756,7 @@ export namespace Utils {
      * NOTE: Paths that traverse through sets and arrays are not supported.
      *
      * @param in_changeSet - The changeset to parse
-     * @param - List of paths to filter by. This can either be passed
+     * @param in_paths - List of paths to filter by. This can either be passed
      *     as a flat array of paths or as a Map with the tokenized, tree structured paths, see the
      *     documentation of getChangesToTokenizedPaths for an example.
      *     Note: duplicate paths will be ignored including ones that encompasse other paths
@@ -1772,7 +1772,7 @@ export namespace Utils {
         } else if (in_paths instanceof Map) {
             pathsToObj = in_paths;
         } else {
-            throw new Error("in_paths must be a list of paths or a map of the tokenized paths");
+            throw new TypeError("in_paths must be a list of paths or a map of the tokenized paths");
         }
 
         const rootChangeSet = {};
@@ -1969,7 +1969,7 @@ export namespace Utils {
      * Converts an array of paths to the tree structured representation that is needed
      * as input for the function getChangesToTokenizedPaths.
      *
-     * @param  in_paths - An array with paths
+     * @param in_paths - An array with paths
      * @returns {Map} A tree structured representation of the tokenized paths that can be
      *     passed to getChangesToTokenizedPaths and getFilteredChangeSetByPaths.
      */
@@ -2085,12 +2085,12 @@ export namespace Utils {
      *   }
      * }
      * @param in_changeSet - The changeset to extract paths from
-     * @param in_options] - Set of options
+     * @param in_options - Set of options
      * @param in_options.includeOperation - Flag to include the operation
      * @param in_options.includeTypeidInfo - Flag to include the typeid info
      * @returns - Flat list of paths
      */
-    export function extractPathsFromChangeSet(in_changeSet: SerializedChangeSet, in_options?: { includeOperation?: boolean; includeTypeidInfo?: boolean; }): { [key: string]: { operation: string, typeInfo: string } } {
+    export function extractPathsFromChangeSet(in_changeSet: SerializedChangeSet, in_options?: { includeOperation?: boolean; includeTypeidInfo?: boolean; }): { [key: string]: { operation: string; typeInfo: string; }; } {
         const paths = {};
         Utils.traverseChangeSetRecursively(in_changeSet, {
             preCallback(context) {

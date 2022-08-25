@@ -223,7 +223,7 @@ export class MoiraLambda implements IPartitionLambda {
                     Lumberjack.error(logMessage, lumberProperties);
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
             const logMessage = `Commit failed. ${e.message}`;
             this.context.log?.error(logMessage);
             if (this.serviceConfiguration.enableLumberjack) {

@@ -9,6 +9,7 @@ import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
@@ -69,7 +70,7 @@ describe("Container Runtime", () => {
             return messages as ISequencedDocumentMessage[];
         }
 
-        // Function to process an inbound op. It adds delay to simluate time taken in processing an op.
+        // Function to process an inbound op. It adds delay to simulate time taken in processing an op.
         function processOp(message: ISequencedDocumentMessage) {
             scheduleManager.beforeOpProcessing(message);
 
@@ -190,7 +191,7 @@ describe("Container Runtime", () => {
             DeltaScheduler's processing time to process`, async () => {
             await startDeltaManager();
             // Since each message takes more than DeltaScheduler.processingTime to process (see processOp above),
-            // we will send 1 non-batch op and more that one batch ops. This should ensure that we give up the JS turn
+            // we will send 1 non-batch op and more than one batch ops. This should ensure that we give up the JS turn
             // after the non-batch op is processed and then process the batch ops together in the next turn.
             const count = 3;
             const clientId: string = "test-client";
@@ -218,7 +219,7 @@ describe("Container Runtime", () => {
             DeltaScheduler's processing time to process`, async () => {
             await startDeltaManager();
             // Since each message takes more than DeltaScheduler.processingTime to process (see processOp above),
-            // we will send more that one batch ops and 1 non-batch op. This should ensure that we give up the JS turn
+            // we will send more than one batch ops and 1 non-batch op. This should ensure that we give up the JS turn
             // after the batch ops are processed and then process the non-batch op in the next turn.
             const count = 3;
             const clientId: string = "test-client";
@@ -240,6 +241,67 @@ describe("Container Runtime", () => {
             // a single turn.
             assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
             assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
+        });
+
+        it("Reconnects after receiving a leave op", async () => {
+            let deltaConnection2 = new MockDocumentDeltaConnection("test");
+            const service2 = new MockDocumentService(
+                undefined,
+                (newClient?: IClient) => {
+                    deltaConnection2 = new MockDocumentDeltaConnection("test");
+                    deltaConnection2.mode = newClient?.mode ?? "write";
+                    return deltaConnection2;
+                },
+            );
+
+            const client = { mode: "write", details: { capabilities: { interactive: true } } };
+
+            const deltaManager2 = new DeltaManager<ConnectionManager>(
+                () => service2,
+                DebugLogger.create("fluid:testDeltaManager"),
+                () => true,
+                (props: IConnectionManagerFactoryArgs) => new ConnectionManager(
+                    () => service2,
+                    client as IClient,
+                    true,
+                    DebugLogger.create("fluid:testConnectionManager"),
+                    props),
+            );
+            await deltaManager2.attachOpHandler(0, 0, 1, {
+                process(message: ISequencedDocumentMessage) {
+                    processOp(message);
+                    return {};
+                },
+                processSignal() { },
+            });
+            await new Promise((resolve) => {
+                deltaManager2.on("connect", resolve);
+                deltaManager2.connect({ reason: "test" });
+            });
+
+            assert.strictEqual(deltaManager2.connectionManager.connectionMode, "write",
+                "connection mode should be write");
+
+            const leaveMessage: ISequencedDocumentSystemMessage = {
+                clientId: "null",
+                data: `"${deltaManager2.connectionManager.clientId}"`,
+                minimumSequenceNumber: 0,
+                sequenceNumber: seq++,
+                type: MessageType.ClientLeave,
+                term: 1,
+                clientSequenceNumber: 1,
+                referenceSequenceNumber: 1,
+                contents: "",
+                timestamp: 1,
+            };
+
+            deltaConnection2.emitOp(docId, [leaveMessage]);
+            await new Promise((resolve) => {
+                deltaManager2.on("connect", resolve);
+            });
+
+            assert.strictEqual(deltaManager2.connectionManager.connectionMode, "read",
+                "new connection should be in read mode");
         });
     });
 });

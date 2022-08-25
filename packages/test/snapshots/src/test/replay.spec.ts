@@ -3,10 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Mode, processContent } from "../replayMultipleFiles";
+import { Mode, processContent, testCollateralExists } from "../replayMultipleFiles";
 
 describe("Snapshots", function() {
     this.timeout(300000);
+
+    let collateralExists = false;
+
+    before(() => {
+        collateralExists = testCollateralExists();
+    });
+
+    beforeEach(function() {
+        if (!collateralExists) {
+            this.skip();
+        }
+    });
 
     it("Stress Test", async () => {
         await processContent(Mode.Stress);

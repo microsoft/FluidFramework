@@ -4,7 +4,7 @@
  */
 
 import { Change, SharedTree } from "@fluid-experimental/tree";
-import { IAppState, IClient, IArrayish, makeBubble, makeClient } from "@fluid-experimental/bubblebench-common";
+import { IAppState, IClient, IArrayish, makeBubble, makeClient } from "@fluid-example/bubblebench-common";
 import { fromJson, TreeArrayProxy, TreeObjectProxy } from "./proxy";
 
 interface IApp { clients: IArrayish<IClient>; }

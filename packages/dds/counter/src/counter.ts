@@ -8,6 +8,7 @@ import {
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
+    IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
@@ -16,7 +17,7 @@ import { CounterFactory } from "./counterFactory";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
 
 /**
- * Describes the op format for incrementing the counter
+ * Describes the operation (op) format for incrementing the counter.
  */
 interface IIncrementOperation {
     type: "increment";
@@ -27,15 +28,16 @@ interface IIncrementOperation {
  * Used in snapshotting.
  */
 interface ICounterSnapshotFormat {
-    // The value of the counter
+    /**
+     * The value of the counter.
+     */
     value: number;
 }
 
 const snapshotFileName = "header";
 
 /**
- * A `SharedCounter` is a shared object which holds a number that can be incremented or decremented.
- * @public
+ * A shared object that holds a number that can be incremented or decremented.
  *
  * @remarks
  * ### Creation
@@ -46,6 +48,10 @@ const snapshotFileName = "header";
  * const factory = SharedCounter.getFactory();
  * const counter = factory.create(this.runtime, id) as SharedCounter;
  * ```
+ *
+ * The initial value of a new `SharedCounter` is 0.
+ * If you wish to initialize the counter to a different value, you may call {@link ISharedCounter.increment} before
+ * attaching the Container, or before inserting it into an existing shared object.
  *
  * ### Usage
  *
@@ -63,6 +69,10 @@ const snapshotFileName = "header";
  *     console.log(`The counter incremented by ${incrementAmount} and now has a value of ${newValue}`);
  * });
  * ```
+ *
+ * Note that SharedCounter only operates on integer values. This is validated at runtime.
+ *
+ * @public
  */
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
     /**
@@ -72,8 +82,12 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @param id - optional name of the shared counter
      * @returns newly create shared counter (but not attached yet)
      */
-    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter {
         return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
+    }
+
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+        super(id, runtime, attributes, "fluid_counter_");
     }
 
     /**
@@ -90,14 +104,14 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     /**
      * {@inheritDoc ISharedCounter.value}
      */
-    public get value() {
+    public get value(): number {
         return this._value;
     }
 
     /**
      * {@inheritDoc ISharedCounter.increment}
      */
-    public increment(incrementAmount: number) {
+    public increment(incrementAmount: number): void {
         // Incrementing by floating point numbers will be eventually inconsistent, since the order in which the
         // increments are applied affects the result.  A more-robust solution would be required to support this.
         if (incrementAmount % 1 !== 0) {
@@ -113,7 +127,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         this.submitLocalMessage(op);
     }
 
-    private incrementCore(incrementAmount: number) {
+    private incrementCore(incrementAmount: number): void {
         this._value += incrementAmount;
         this.emit("incremented", incrementAmount, this._value);
     }
@@ -148,10 +162,10 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * Called when the object has disconnected from the delta stream.
      * @internal
      */
-    protected onDisconnect() { }
+    protected onDisconnect(): void { }
 
     /**
-     * Process a counter operation
+     * Process a counter operation (op).
      *
      * @param message - the message to prepare
      * @param local - whether the message was sent by the local client
@@ -159,7 +173,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * For messages from a remote client, this will be undefined.
      * @internal
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as IIncrementOperation;
 
@@ -179,6 +193,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @internal
      */
     protected applyStashedOp() {
-        throw new Error("not implemented");
+        throw new Error("Not implemented");
     }
 }

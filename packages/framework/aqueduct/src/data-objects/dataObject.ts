@@ -22,11 +22,13 @@ import { DataObjectTypes } from "./types";
  *
  * @typeParam I - The optional input types used to strongly type the data object
  */
-export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I>
-{
+export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     private internalRoot: ISharedDirectory | undefined;
     private readonly rootDirectoryId = "root";
 
+    /**
+     * {@inheritDoc PureDataObject.request}
+     */
     public async request(request: IRequest): Promise<IResponse> {
         const requestParser = RequestParser.create(request);
         const itemId = requestParser.pathParts[0];
@@ -81,7 +83,11 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
         await super.initializeInternal(existing);
     }
 
-    protected getUninitializedErrorString(item: string) {
+    /**
+     * Generates an error string indicating an item is uninitialized.
+     * @param item - The name of the item that was uninitialized.
+     */
+    protected getUninitializedErrorString(item: string): string {
         return `${item} must be initialized before being accessed.`;
     }
 }

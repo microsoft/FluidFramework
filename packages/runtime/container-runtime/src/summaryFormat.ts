@@ -73,20 +73,14 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
-
-export type GCVersion = number;
-export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
+export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
     readonly summaryFormatVersion: 1;
-    /** The last message processed at the time of summary. Only primitive propertiy types are added to the summary. */
+    /** The last message processed at the time of summary. Only primitive property types are added to the summary. */
     readonly message: ISummaryMetadataMessage | undefined;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
-    /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
-    readonly gcFeature?: GCVersion;
-    /** Counter of the last summary happened, increments every time we summarize */
-    readonly summaryCount?: number;
-    /** If this is present, the session for this container will expire after this time and the container will close */
-    readonly sessionExpiryTimeoutMs?: number;
+    /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
+    readonly summaryNumber?: number;
 }
 
 export interface ICreateContainerMetadata {
@@ -94,6 +88,25 @@ export interface ICreateContainerMetadata {
     createContainerRuntimeVersion?: string;
     /** Timestamp of the container when it was first created */
     createContainerTimestamp?: number;
+}
+
+export type GCVersion = number;
+export interface IGCMetadata {
+    /**
+     * The version of the GC code that was run to generate the GC data that is written in the summary.
+     * Also, used to determine whether GC is enabled for this container or not:
+     * - A value of 0 or undefined means GC is disabled.
+     * - A value greater than 0 means GC is enabled.
+     */
+    readonly gcFeature?: GCVersion;
+    /** If this is present, the session for this container will expire after this time and the container will close */
+    readonly sessionExpiryTimeoutMs?: number;
+    /**
+     * Tells whether the GC sweep phase is enabled for this container.
+     * - True means sweep phase is enabled.
+     * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
+     */
+    readonly sweepEnabled?: boolean;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
@@ -146,7 +159,7 @@ export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): b
     return !!metadata && !metadata.disableIsolatedChannels;
 }
 
-export function getGCVersion(metadata?: IContainerRuntimeMetadata): GCVersion {
+export function getGCVersion(metadata?: IGCMetadata): GCVersion {
     if (!metadata) {
         // Force to 0/disallowed in prior versions
         return 0;
@@ -168,11 +181,22 @@ export const dataStoreAttributesBlobName = ".component";
 
 /**
  * Modifies summary tree and stats to put tree under .channels tree.
- * Converts from: {
+ *
+ * @param summarizeResult - Summary tree and stats to modify
+ *
+ * @example
+ * Converts from:
+ * ```typescript
+ * {
  *     type: SummaryType.Tree,
  *     tree: { a: {...}, b: {...}, c: {...} },
  * }
- * to: {
+ * ```
+ *
+ * to:
+ *
+ * ```typescript
+ * {
  *     type: SummaryType.Tree,
  *     tree: {
  *         ".channels": {
@@ -181,8 +205,8 @@ export const dataStoreAttributesBlobName = ".component";
  *         },
  *     },
  * }
+ * ```
  * And adds +1 to treeNodeCount in stats.
- * @param summarizeResult - summary tree and stats to modify
  */
 export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {
     summarizeResult.summary = {
@@ -204,6 +228,6 @@ export async function getFluidDataStoreAttributes(
     // snapshotFormatVersion is at least "0.1" (1), so we don't expect it to be anything else.
     const formatVersion = getAttributesFormatVersion(attributes);
     assert(formatVersion > 0,
-        0x1d5 /* `Invalid snapshot format version ${attributes.snapshotFormatVersion}` */);
+        0x1d5 /* Invalid snapshot format version */);
     return attributes;
 }

@@ -7,9 +7,10 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IConnectedEvents,
     IConnectedState,
@@ -18,6 +19,7 @@ import {
     SummaryManagerState,
 } from "../summaryManager";
 import { Summarizer } from "../summarizer";
+import { DefaultSummaryConfiguration } from "../containerRuntime";
 import {
     ISummarizer,
     ISummarizerEvents,
@@ -28,6 +30,13 @@ import { RunningSummarizer } from "../runningSummarizer";
 import { SummarizeHeuristicData } from "../summarizerHeuristics";
 import { SummaryCollection, ISummaryOpMessage } from "../summaryCollection";
 import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
+import { ISummarizerRuntime } from "..";
+
+class MockRuntime {
+    constructor(
+        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    ) { }
+}
 
 describe("Summary Manager", () => {
     let clock: sinon.SinonFakeTimers;
@@ -37,6 +46,7 @@ describe("Summary Manager", () => {
     const thisClientId = "this";
     const mockLogger = new MockLogger();
     const mockDeltaManager = new MockDeltaManager();
+    const mockRuntime = new MockRuntime(mockDeltaManager);
     let summaryManager: SummaryManager;
     let runningSummarizer: RunningSummarizer;
     // let runCount: number;
@@ -103,6 +113,7 @@ describe("Summary Manager", () => {
             // Approximation, as ideally it should become cancelled immediately after stop() call
             return this.state !== "running";
         }
+        public close() {}
         public stop(reason?: string): void {
             this.stopDeferred.resolve(reason);
         }
@@ -113,10 +124,10 @@ describe("Summary Manager", () => {
                 mockLogger,
                 summaryCollection.createWatcher(summarizerClientId),
                 {
-                    idleTime: 5000, // 5 sec (idle)
-                    maxTime: 5000 * 12, // 1 min (active)
-                    maxOps: 1000, // 1k ops (active)
-                    maxAckWaitTime: 120000, // 2 min
+                    ...DefaultSummaryConfiguration,
+                    ...{
+                        initialSummarizerDelayMs: 0,
+                    },
                 },
                 // submitSummaryCallback
                 async (options) => {
@@ -133,6 +144,7 @@ describe("Summary Manager", () => {
                 neverCancelledSummaryToken,
                 // stopSummarizerCallback
                 (reason) => { },
+                mockRuntime as any as ISummarizerRuntime,
             );
             await Promise.all([
                 this.stopDeferred.promise,
@@ -365,6 +377,24 @@ describe("Summary Manager", () => {
             clientElection.electClient(thisClientId); // force trigger refresh
             await flushPromises();
             assertRequests(1, "should request summarizer, bypassing initial delay");
+            completeSummarizerRequest();
+            await flushPromises();
+            assertState(SummaryManagerState.Running, "summarizer should be running");
+        });
+
+        it("Should bypass initial delay if enough ops pass and summarize if disconnected", async () => {
+            mockDeltaManager.lastSequenceNumber = 1001; // seq > opsToBypass
+            createSummaryManager({
+                initialDelayMs: 0,
+                opsToBypassInitialDelay: 1000,
+                connected: true,
+            });
+            clientElection.electClient(thisClientId);
+            connectedState.disconnect(); // To enforce stopReasonCanRunLastSummary == true.
+            await flushPromises();
+            mockDeltaManager.emit("op", summaryOp);
+            await flushPromises();
+            assertRequests(1, "should request summarizer and run the last summary.");
             completeSummarizerRequest();
             await flushPromises();
             assertState(SummaryManagerState.Running, "summarizer should be running");

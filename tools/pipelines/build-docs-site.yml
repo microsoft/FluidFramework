@@ -13,12 +13,12 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
     - docs
     - tools/pipelines/build-docs-site.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml

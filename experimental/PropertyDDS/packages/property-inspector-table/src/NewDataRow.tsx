@@ -17,7 +17,7 @@ const styles = () => createStyles({
     display: "flex",
     marginBottom: "5px",
   },
-  svgIcon : {
+  svgIcon: {
     marginRight: `${iconMarginRight}${unit}`,
   },
 });
@@ -27,17 +27,13 @@ export interface INewDataRowProps {
    * The data type to be added: Asset, Component or Property
    */
   dataType: string;
-  /**
-   * Callback that is invoked if the row is clicked.
-   */
-  onClick: () => void;
 }
 
 class NewDataRow extends React.Component<INewDataRowProps & WithStyles<typeof styles>> {
   public render() {
-    const {classes} = this.props;
+    const { classes } = this.props;
     return (
-      <div className={classNames(classes.row)} onClick={this.props.onClick}>
+      <div className={classNames(classes.row)}>
         <SvgIcon
           svgId={"plus-24"}
           height={iconHeight}
@@ -49,5 +45,5 @@ class NewDataRow extends React.Component<INewDataRowProps & WithStyles<typeof st
   }
 }
 
-const styledNewDataRow = withStyles(styles, {name: "NewDataRow"})(NewDataRow);
-export {styledNewDataRow as NewDataRow};
+const styledNewDataRow = withStyles(styles, { name: "NewDataRow" })(NewDataRow);
+export { styledNewDataRow as NewDataRow };

@@ -12,7 +12,7 @@ describe("parseFacetCodes", () => {
         const result = tryParseErrorResponse(text);
         assert(result.success);
         const stack = parseFacetCodes(result.errorResponse);
-        assert.deepStrictEqual(stack,["a"]);
+        assert.deepStrictEqual(stack, ["a"]);
    });
 
    it("can parse nested error", () => {
@@ -20,7 +20,7 @@ describe("parseFacetCodes", () => {
     const result = tryParseErrorResponse(text);
     assert(result.success);
     const stack = parseFacetCodes(result.errorResponse);
-    assert.deepStrictEqual(stack,["b","a"]);
+    assert.deepStrictEqual(stack, ["b", "a"]);
     });
 
    it("can parse doubly nested error", () => {
@@ -28,7 +28,7 @@ describe("parseFacetCodes", () => {
     const result = tryParseErrorResponse(text);
     assert(result.success);
     const stack = parseFacetCodes(result.errorResponse);
-    assert.deepStrictEqual(stack,["c","b","a"]);
+    assert.deepStrictEqual(stack, ["c", "b", "a"]);
     });
 
     it("tryParseErrorResponse fails on empty error", () => {
@@ -48,7 +48,7 @@ describe("parseFacetCodes", () => {
         const result = tryParseErrorResponse(text);
         assert(result.success);
         const stack = parseFacetCodes(result.errorResponse);
-        assert.deepStrictEqual(stack,[]);
+        assert.deepStrictEqual(stack, []);
     });
 
     it("can handle error with code property in some layers", () => {
@@ -56,6 +56,6 @@ describe("parseFacetCodes", () => {
         const result = tryParseErrorResponse(text);
         assert(result.success);
         const stack = parseFacetCodes(result.errorResponse);
-        assert.deepStrictEqual(stack,["a"]);
+        assert.deepStrictEqual(stack, ["a"]);
     });
 });

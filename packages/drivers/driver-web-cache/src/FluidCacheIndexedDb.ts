@@ -18,7 +18,7 @@ export const FluidDriverObjectStoreName = "driverStorage.V3";
 export const CurrentCacheVersion = 3;
 
 // Note that V1 and V2 were misspelled as "diver", and we need to keep using the misspelling here.
-export const oldVersionNameMapping: Partial<{ [key: number]: string }> = {
+export const oldVersionNameMapping: Partial<{ [key: number]: string; }> = {
     1: "diverStorage",
     2: "diverStorage.V2",
 };

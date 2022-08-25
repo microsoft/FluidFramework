@@ -6,7 +6,7 @@
  * @fileoverview Helper functions and classes to work with ChangeSets with indexed collections (sets and maps)
  */
 
- import {copy as cloneDeep} from "fastest-json-copy";
+ import { copy as cloneDeep } from "fastest-json-copy";
  import isEmpty from "lodash/isEmpty";
  import isEqual from "lodash/isEqual";
  import isObject from "lodash/isObject";
@@ -58,9 +58,9 @@ export namespace ChangeSetIndexedCollectionFunctions {
      * to the same property root and it will be applied behind the base ChangeSet (assuming that the changes are
      * relative to the state after the base ChangeSet has been applied. It will change the base ChangeSet.
      *
-     * @param io_basePropertyChanges    - The ChangeSet describing the initial state
+     * @param io_basePropertyChanges - The ChangeSet describing the initial state
      * @param in_appliedPropertyChanges - The ChangeSet to apply to this state
-     * @param in_typeid                 - The typeid of the contents collection
+     * @param in_typeid - The typeid of the contents collection
      *                                                                        (without the collection type)
      * @param in_options - Optional additional parameters
      * @param in_options.applyAfterMetaInformation - Additional meta information which help later to obtain

@@ -109,7 +109,7 @@ export class NetworkError extends Error {
      * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
      * @public
      */
-    public toJSON(): INetworkErrorDetails & { code: number } {
+    public toJSON(): INetworkErrorDetails & { code: number; } {
         return {
             code: this.code,
             message: this.message,
@@ -167,6 +167,7 @@ export function createFluidServiceNetworkError(
                 message,
                 false,  /* canRetry */
                 false); /* isFatal */
+        case 413:
         case 422:
             return new NetworkError(
                 statusCode,

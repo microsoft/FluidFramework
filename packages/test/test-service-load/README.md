@@ -51,6 +51,10 @@ This URL can be passed as-is to Fluid Debugger as well as fetch-tool.
 
 Specifies which test driver to use: odsp, routerlicious, tinylicious. The config for the drivers is pulled from the environment. See [Test Driver](../test-drivers/README.md).
 
+#### --driverEndpoint, -e
+
+Specifies which endpoint of test driver to use: odsp, odsp-df for odsp driver or frs, r11s, docker for routerlicious driver.
+
 #### --profile, -p
 
 Specifies which test profile to use from [testConfig.json](./testConfig.json). Defaults to **ci**.
@@ -68,6 +72,12 @@ If present, launch in Test Runner mode with the given runId (to distinguish from
 #### --debug, -dbg
 
 Launches each test runner with `--inspect-brk` and a unique Node debugging port. (Not compatible with `--runId`)
+
+#### --createTestId	
+
+If the `testId` argument is specified, the `createTestId` flag determines whether to load an exisiting
+document corresponding to the `testId` specified, or create a new one. When `createTestId` is set to true,
+a new document is created, and when `createTestId` is false, we try to load an existing document.
 
 #### --log, -l
 

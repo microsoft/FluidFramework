@@ -25,9 +25,9 @@ const verifyNoFluidPackages = async (dir: string) => {
             const fullPath = `${dir}/${entry.name}`;
             console.log(fullPath);
             const json = await fs.readJson(fullPath);
-            if (json && json.dependencies) {
+            if (json?.dependencies) {
                 const dependencyKeys = Object.keys(json.dependencies);
-                if (dependencyKeys && dependencyKeys.includes("@fluid-internal")) {
+                if (dependencyKeys?.includes("@fluid-internal")) {
                     assert.fail(fullPath);
                 }
             }

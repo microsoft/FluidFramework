@@ -10,6 +10,12 @@ import { KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafk
 import { RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
+// Kafka has an internal limit of 1Mb.
+// Runtime has a client-imposed limit of 768kb.
+// Set our enforced limit at 900kb to give space for any
+// mysterious overhead.
+const MaxKafkaMessageSize = 900 * 1024;
+
 export function createProducer(
     type: string,
     kafkaEndPoint: string,
@@ -34,6 +40,7 @@ export function createProducer(
                 numberOfPartitions,
                 replicationFactor,
                 maxBatchSize,
+                maxMessageSize: MaxKafkaMessageSize,
                 sslCACertFilePath,
             });
 
@@ -56,7 +63,9 @@ export function createProducer(
             topic,
             numberOfPartitions,
             replicationFactor,
-            maxBatchSize);
+            maxBatchSize,
+            MaxKafkaMessageSize,
+        );
         producer.on("error", (error) => {
             winston.error(error);
             Lumberjack.error(error);

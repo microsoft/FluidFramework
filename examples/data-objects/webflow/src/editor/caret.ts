@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReference } from "@fluidframework/merge-tree";
+import { LocalReferencePosition, ReferencePosition } from "@fluidframework/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
-import { CaretEventType, clamp, Direction, Dom, getDeltaX, getDeltaY, hasTagName, ICaretEvent, TagName } from "../util";
-import { ownsNode } from "../util/event";
+import { clamp, Dom, hasTagName, TagName } from "../util";
 import { updateRef } from "../util/localref";
 
 import { eotSegment, Layout } from "../view/layout";
 import { debug } from "./debug";
-import * as styles from "./index.css";
 
 export class Caret {
     private get doc() { return this.layout.doc; }
@@ -32,8 +30,8 @@ export class Caret {
             ? { start, end }
             : { start: end, end: start };
     }
-    private startRef: LocalReference;
-    private endRef: LocalReference;
+    private startRef: LocalReferencePosition;
+    private endRef: LocalReferencePosition;
 
     public constructor(private readonly layout: Layout) {
         this.startRef = this.doc.addLocalRef(0);
@@ -43,42 +41,6 @@ export class Caret {
 
         const root = layout.root;
         root.addEventListener("focus", () => { this.sync(); });
-        root.addEventListener(CaretEventType.leave, ((e: ICaretEvent) => {
-            const detail = e.detail;
-            debug("Leaving inclusion: (dx=%d,dy=%d,bounds=%o)", getDeltaX(detail.direction), getDeltaY(detail.direction), detail.caretBounds);
-            const node = e.target as Node;
-            if (root.contains(node)) {
-                let el = node.parentElement;
-
-                while (el && el !== root) {
-                    if (el.classList.contains(styles.inclusion)) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        const segment = this.layout.nodeToSegment(el);
-                        let position = this.doc.getPosition(segment);
-                        debug("  inclusion found @%d", position);
-
-                        switch (detail.direction) {
-                            case Direction.up:
-                            case Direction.left:
-                                break;
-                            default:
-                                position++;
-                        }
-
-                        // Defer setting the selection to avoid stealing focus and receiving the pending key event.
-                        requestAnimationFrame(() => {
-                            (root as HTMLElement).focus();
-                            this.setSelection(position, position);
-                            this.sync();
-                        });
-                        break;
-                    }
-                    el = el.parentElement;
-                }
-            }
-        }) as EventListener);
     }
 
     public setSelection(start: number, end: number) {
@@ -90,11 +52,6 @@ export class Caret {
     }
 
     public sync() {
-        if (!ownsNode(this.layout.root as HTMLElement, document.activeElement)) {
-            debug("  Caret.sync() ignored -- Editor not focused.");
-            return;
-        }
-
         debug("  Caret.sync()");
         const { node: startNode, nodeOffset: startOffset } = this.positionToNodeOffset(this.startRef);
         const { node: endNode, nodeOffset: endOffset } = this.positionToNodeOffset(this.endRef);
@@ -133,12 +90,12 @@ export class Caret {
         this.setSelection(start, end);
     };
 
-    private positionToNodeOffset(ref: LocalReference) {
-        let result: { node: Node, nodeOffset: number };
+    private positionToNodeOffset(ref: ReferencePosition) {
+        let result: { node: Node; nodeOffset: number; };
 
         const position = this.doc.localRefToPosition(ref);
         const { segment: rightSegment, offset: rightOffset } = this.doc.getSegmentAndOffset(position);
-        const rightKind = getDocSegmentKind(ref.segment);
+        const rightKind = getDocSegmentKind(ref.getSegment());
 
         // The position -> { node, offset } mapping places the caret "just before" the content at the given
         // position.  For text nodes, an offset of 0 is "just before" the first character.

@@ -17,9 +17,11 @@ export interface HostStoragePolicy {
     // (undocumented)
     concurrentOpsBatches?: number;
     concurrentSnapshotFetch?: boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     enableRedeemFallback?: boolean;
+    // @deprecated (undocumented)
     enableShareLinkWithCreate?: boolean;
+    enableSingleRequestForShareLinkWithCreate?: boolean;
     // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
@@ -38,6 +40,7 @@ export interface ICacheEntry extends IEntry {
 
 // @public (undocumented)
 export interface ICollabSessionOptions {
+    // @deprecated (undocumented)
     forceAccessTokenViaAuthorizationHeader?: boolean;
     unauthenticatedUserDisplayName?: string;
 }
@@ -61,9 +64,15 @@ export interface IFileEntry {
 export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
 
 // @public
-export interface IOdspError extends Omit<IDriverErrorBase, "errorType"> {
+export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
     readonly errorType: OdspErrorType;
+}
+
+// @public (undocumented)
+export interface IOdspErrorAugmentations {
+    facetCodes?: string[];
+    redirectLocation?: string;
     serverEpoch?: string;
 }
 
@@ -125,6 +134,20 @@ export interface IPersistedCache {
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
+// @public
+export interface ISharingLink extends ISharingLinkKind {
+    // (undocumented)
+    webUrl: string;
+}
+
+// @public
+export interface ISharingLinkKind {
+    // (undocumented)
+    role?: SharingLinkRole;
+    // (undocumented)
+    scope: SharingLinkScope;
+}
+
 // @public (undocumented)
 export interface ISnapshotOptions {
     // (undocumented)
@@ -143,7 +166,7 @@ export interface ISnapshotOptions {
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
 
 // @public (undocumented)
-export type OdspError = DriverError | IOdspError;
+export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
 // @public (undocumented)
 export enum OdspErrorType {
@@ -156,8 +179,6 @@ export enum OdspErrorType {
     // (undocumented)
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
-    // (undocumented)
-    locationRedirection = "locationRedirection",
     outOfStorageError = "outOfStorageError",
     // (undocumented)
     serviceReadOnly = "serviceReadOnly",
@@ -174,17 +195,38 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 // @public
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes;
-        link?: string;
+        type?: ShareLinkTypes | ISharingLinkKind;
+        link?: string | ISharingLink;
         error?: any;
+        shareId?: string;
     };
     sharingLinkToRedeem?: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export enum ShareLinkTypes {
     // (undocumented)
     csl = "csl"
+}
+
+// @public
+export enum SharingLinkRole {
+    // (undocumented)
+    edit = "edit",
+    // (undocumented)
+    view = "view"
+}
+
+// @public
+export enum SharingLinkScope {
+    // (undocumented)
+    anonymous = "anonymous",
+    // (undocumented)
+    default = "default",
+    // (undocumented)
+    organization = "organization",
+    // (undocumented)
+    users = "users"
 }
 
 // @public
@@ -208,7 +250,6 @@ export interface TokenResponse {
     fromCache?: boolean;
     token: string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

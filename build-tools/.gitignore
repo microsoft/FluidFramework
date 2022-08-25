@@ -1,0 +1,27 @@
+.cache-loader
+node_modules
+dist
+lib
+nyc
+*.log
+.DS_Store
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# c8 code coverage temporary files
+/coverage/tmp/
+
+# Temporary api-extractor build artifacts
+**/_api-extractor-temp/**
+
+# Bundle analysis artifacts
+bundleAnalysis
+
+# Misc pipeline artifacts
+artifacts
+
+# documentation tool artifact
+tsdoc-metadata.json
+
+packages/**/package-lock.json

@@ -63,11 +63,13 @@ export function configureLogging(configOrPath: nconf.Provider | string) {
 
     const lumberjackConfig = config.get("lumberjack");
     const engineList =
+        // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
         lumberjackConfig && lumberjackConfig.engineList ?
         lumberjackConfig.engineList as ILumberjackEngine[] :
         [new WinstonLumberjackEngine()];
 
     const schemaValidatorList =
+        // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
         lumberjackConfig && lumberjackConfig.schemaValidator ?
         lumberjackConfig.schemaValidator as ILumberjackSchemaValidator[] :
         undefined;

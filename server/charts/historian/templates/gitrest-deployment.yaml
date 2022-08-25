@@ -12,6 +12,8 @@ spec:
   selector:
     matchLabels:
       app: {{ template "historian.fullname" . }}
+      component: "{{ .Values.gitrest.name }}"
+      release: {{ .Release.Name }}
   strategy:
     type: Recreate
   template:
@@ -41,7 +43,9 @@ spec:
           containerPort: 3000
         env:
         - name: NODE_ENV
-          value: production
+          value: "production"
+        - name: IS_FLUID_SERVER
+          value: "true"
         volumeMounts:
         - name: data
           mountPath: /home/node/documents
@@ -60,4 +64,3 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: {{ .Values.gitrest.persistence.existingClaim | default (include "gitrest.fullname" .) }}
-

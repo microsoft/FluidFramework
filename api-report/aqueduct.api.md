@@ -52,7 +52,7 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
     // (undocumented)
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
-    }
+}
 
 // @public
 export abstract class BaseContainerService implements IFluidRouter {
@@ -77,19 +77,17 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
 // @public (undocumented)
 export type ContainerServiceRegistryEntries = Iterable<[
-    string,
-    (runtime: IContainerRuntime) => Promise<FluidObject>
+string,
+(runtime: IContainerRuntime) => Promise<FluidObject>
 ]>;
 
 // @public
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
-    // (undocumented)
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
-    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     protected get root(): ISharedDirectory;
-    }
+}
 
 // @public
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
@@ -203,6 +201,5 @@ export const serviceRoutePathRoot = "_services";
 
 // @public (undocumented)
 export function waitForAttach(dataStoreRuntime: IFluidDataStoreRuntime): Promise<void>;
-
 
 ```

@@ -39,7 +39,7 @@ export function generateToken(
     };
 
     const utf8Key = { utf8: key };
-    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 }
 
 export function generateUser(): IUser {

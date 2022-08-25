@@ -26,6 +26,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
@@ -51,7 +52,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     bind(handle: IFluidHandle): void;
     bindChannel(channel: IChannel): void;
-    bindToContext(): void;
     // (undocumented)
     get channelsRoutingContext(): this;
     // (undocumented)
@@ -69,7 +69,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    getAttachSummary(): ISummaryTreeWithStats;
+    getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
@@ -102,6 +102,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;
     // (undocumented)
@@ -112,8 +113,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitSignal(type: string, content: any): void;
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     // (undocumented)
@@ -142,7 +143,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     readonly routeContext: IFluidHandleContext;
     // (undocumented)
     protected readonly value: T;
-    }
+}
 
 // @public (undocumented)
 export interface ISharedObjectRegistry {
@@ -158,7 +159,6 @@ export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => 
     path: string[];
     content: string;
 } | undefined>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
-
 
 // (No @packageDocumentation comment for this package)
 

@@ -40,7 +40,7 @@ export class OdspUrlResolver implements IUrlResolver {
             true);
 
         const odspUrl = createOdspUrl({
-            siteUrl:`https://${this.server}`,
+            siteUrl: `https://${this.server}`,
             driveId,
             itemId,
             dataStorePath,

@@ -6,10 +6,7 @@
     "compilerOptions": {
         "rootDir": "./src",
         "outDir": "./dist",
-        "composite": true,
-        "types": [
-            "mocha"
-        ],
+        "composite": true
     },
     "include": [
         "src/**/*"

@@ -5,3 +5,4 @@ https://aka.ms/fluentui/
 https://github.com/microsoft/FluidFramework/edit/*
 https://twitter.com/intent/follow*
 https://twitter.com/intent/tweet*
+https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/*/latest.*

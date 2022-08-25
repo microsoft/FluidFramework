@@ -52,7 +52,7 @@ export const typeidToIconMap = {
 
 /**
  * returns the icon corresponding to a typeid
- * @param inTypeid the property typeid
+ * @param inTypeid - the property typeid
  * @return the Svg Icon corresponding to the typeid in the map
  */
 export const getIconFromTypeId = (inTypeid): React.ReactNode => {
@@ -64,7 +64,7 @@ export const getIconFromTypeId = (inTypeid): React.ReactNode => {
 
 /**
  * Returns the default inspector table icon based on the row data.
- * @param rowData The row data.
+ * @param rowData - The row data.
  */
 export const getDefaultInspectorTableIcons = (rowData: IInspectorRow): React.ReactNode => {
   let icon;

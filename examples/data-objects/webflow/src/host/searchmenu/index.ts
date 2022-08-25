@@ -5,8 +5,10 @@
 
 import { Dom, ICommand, KeyCode, randomId } from "../../util";
 import { debug } from "../debug";
-import * as style from "./index.css";
 import { View } from "./view";
+
+// eslint-disable-next-line import/no-unassigned-import
+import "./index.css";
 
 interface ISearchMenuProps {
     commands: ICommand[];
@@ -33,10 +35,10 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
 
     protected onAttach(props: Readonly<ISearchMenuProps>) {
         const root = document.createElement("div");
-        root.classList.add(style.searchMenu);
+        root.classList.add("searchMenu");
 
         this.inputElement.type = "text";
-        this.inputElement.classList.add(style.input);
+        this.inputElement.classList.add("input");
         this.inputElement.autocomplete = "off";
         // Assign the datalist a random 'id' and <input> element to the datalist.
         this.inputElement.setAttribute("list", this.datalistElement.id = randomId());

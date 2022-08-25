@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IContainer, IHostLoader, ILoaderOptions, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { LocalResolver, LocalDocumentServiceFactory} from "@fluidframework/local-driver";
+import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { requestFluidObject } from "@fluidframework/runtime-utils";

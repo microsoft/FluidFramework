@@ -4,11 +4,12 @@
  */
 
 import { getChunkParsedSize } from './getChunkParsedSize';
-import { Stats } from 'webpack';
+import { StatsCompilation } from 'webpack';
+import { fail } from 'assert';
 
 export interface ChunkSizeInfo {
   // The id of the chunk
-  chunkId: number;
+  chunkId: number | string;
 
   // The size of the chunk
   size: number;
@@ -34,13 +35,13 @@ export interface AggregatedChunkAnalysis {
  * @param stats - The webpack stats file
  * @param chunkName - The name of the chunk we wish to analyze.
  */
-export function getChunkAndDependencySizes(stats: Stats.ToJsonOutput, chunkName: string): AggregatedChunkAnalysis {
+export function getChunkAndDependencySizes(stats: StatsCompilation, chunkName: string): AggregatedChunkAnalysis {
   if (stats.chunks === undefined) {
     throw new Error('No chunks in the stats file given for bundle analysis');
   }
 
   // Find a chunk that has the desired name
-  const rootChunk = stats.chunks.find((c) => c.names.length > 0 && c.names.find((name) => name === chunkName));
+  const rootChunk = stats.chunks.find((c) => (c.names?.length ?? 0) > 0 && c.names!.find((name) => name === chunkName));
 
   if (rootChunk === undefined) {
     throw new Error(`Could not find chunk with name: ${chunkName} in the stats file`);
@@ -49,10 +50,10 @@ export function getChunkAndDependencySizes(stats: Stats.ToJsonOutput, chunkName:
   const dependencySizeInfo: ChunkSizeInfo[] = [];
 
   // To avoid duplicate work, keep track of all the dependencies we have already examined
-  const processedDependencies = new Set<number>();
+  const processedDependencies = new Set<number|string>();
 
   // Get the initial set of dependencies
-  const dependenciesToProcess = [...rootChunk.parents, ...rootChunk.siblings];
+  const dependenciesToProcess = [...rootChunk.parents ?? [], ...rootChunk.siblings ?? []];
 
   while (dependenciesToProcess.length > 0) {
     const chunkToProcess = dependenciesToProcess.pop()!;
@@ -66,6 +67,6 @@ export function getChunkAndDependencySizes(stats: Stats.ToJsonOutput, chunkName:
   return {
     name: chunkName,
     dependencies: dependencySizeInfo,
-    size: getChunkParsedSize(stats, rootChunk.id)
+    size: getChunkParsedSize(stats, rootChunk.id ?? fail("root chunk does not have id"))
   };
 }

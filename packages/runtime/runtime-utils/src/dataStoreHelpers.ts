@@ -97,8 +97,7 @@ export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreReg
 export function createDataStoreFactory(
     type: string,
     factory: Factory | Promise<Factory>,
-    ): IFluidDataStoreFactory & IFluidDataStoreRegistry
-{
+    ): IFluidDataStoreFactory & IFluidDataStoreRegistry {
     return {
         type,
         get IFluidDataStoreFactory() { return this; },

@@ -20,6 +20,7 @@ services:
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
+      - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules/zookeeper
@@ -34,6 +35,7 @@ services:
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
+      - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules/zookeeper
@@ -48,6 +50,7 @@ services:
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
+      - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules/zookeeper
@@ -62,6 +65,7 @@ services:
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
+      - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules/zookeeper
@@ -76,6 +80,7 @@ services:
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
+      - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules/zookeeper
@@ -90,6 +95,7 @@ services:
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
+      - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules/zookeeper
@@ -108,6 +114,7 @@ services:
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
+      - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
       - /usr/src/server/node_modules/zookeeper
@@ -123,6 +130,7 @@ services:
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
+      - IS_FLUID_SERVER=true
     volumes:
       - ./historian:/home/node/server
     restart: on-failure
@@ -133,6 +141,7 @@ services:
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
+      - IS_FLUID_SERVER=true
     volumes:
       - git:/home/node/documents
       - ./gitrest:/home/node/server

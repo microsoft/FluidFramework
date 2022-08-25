@@ -31,36 +31,34 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreRegistry,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
-    public documentId: string;
     public isLocalDataStore: boolean = true;
-    public packagePath: readonly string[];
-    public options: ILoaderOptions;
+    public packagePath: readonly string[] = undefined as any;
+    public options: ILoaderOptions = undefined as any;
     public clientId: string | undefined = uuid();
-    public clientDetails: IClientDetails;
+    public clientDetails: IClientDetails = undefined as any;
     public connected: boolean = true;
     public baseSnapshot: ISnapshotTree | undefined;
-    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    public containerRuntime: IContainerRuntimeBase;
-    public storage: IDocumentStorageService;
-    public IFluidDataStoreRegistry: IFluidDataStoreRegistry;
-    public IFluidHandleContext: IFluidHandleContext;
+    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> = undefined as any;
+    public containerRuntime: IContainerRuntimeBase = undefined as any;
+    public storage: IDocumentStorageService = undefined as any;
+    public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
+    public IFluidHandleContext: IFluidHandleContext = undefined as any;
 
     /**
      * Indicates the attachment state of the data store to a host service.
      */
-    public attachState: AttachState;
+    public attachState: AttachState = undefined as any;
 
     /**
      * @deprecated 0.16 Issue #1635, #3631
      */
     public createProps?: any;
-    public scope: FluidObject;
+    public scope: FluidObject = undefined as any;
 
     constructor(
         public readonly id: string = uuid(),
@@ -87,11 +85,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     }
 
     public getQuorum(): IQuorumClients {
-        return;
+        return undefined as any as IQuorumClients;
     }
 
     public getAudience(): IAudience {
-        return;
+        return undefined as any as IAudience;
     }
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
@@ -102,7 +100,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         throw new Error("Method not implemented.");
     }
 
-    public bindToContext(): void {
+    public makeLocallyVisible(): void {
         throw new Error("Method not implemented.");
     }
 
@@ -122,10 +120,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-        throw new Error("Method not implemented.");
-    }
-
-    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
         throw new Error("Method not implemented.");
     }
 

@@ -9,21 +9,23 @@
  * - absolute: entries expire after the given duration in MS, even if accessed multiple times in the mean time
  * - sliding: entries expire after the given duration in MS of inactivity (i.e. get resets the clock)
  */
-export type PromiseCacheExpiry = {
-    policy: "indefinite"
-} | {
-    policy: "absolute" | "sliding",
-    durationMs: number,
-};
+export type PromiseCacheExpiry =
+    | {
+          policy: "indefinite";
+      }
+    | {
+          policy: "absolute" | "sliding";
+          durationMs: number;
+      };
 
 /**
- * Options for configuring the PromiseCache
+ * Options for configuring the {@link PromiseCache}
  */
 export interface PromiseCacheOptions {
     /** Common expiration policy for all items added to this cache */
-    expiry?: PromiseCacheExpiry,
+    expiry?: PromiseCacheExpiry;
     /** If the stored Promise is rejected with a particular error, should the given key be removed? */
-    removeOnError?: (e: any) => boolean,
+    removeOnError?: (e: any) => boolean;
 }
 
 /**
@@ -36,19 +38,19 @@ class GarbageCollector<TKey> {
     constructor(
         private readonly expiry: PromiseCacheExpiry,
         private readonly cleanup: (key: TKey) => void,
-    ) { }
+    ) {}
 
     /**
      * Schedule GC for the given key, as applicable
      */
-    public schedule(key: TKey) {
+    public schedule(key: TKey): void {
         if (this.expiry.policy !== "indefinite") {
             this.gcTimeouts.set(
                 key,
-                setTimeout(
-                    () => { this.cleanup(key); this.cancel(key); },
-                    this.expiry.durationMs,
-                ),
+                setTimeout(() => {
+                    this.cleanup(key);
+                    this.cancel(key);
+                }, this.expiry.durationMs),
             );
         }
     }
@@ -56,7 +58,7 @@ class GarbageCollector<TKey> {
     /**
      * Cancel any pending GC for the given key
      */
-    public cancel(key: TKey) {
+    public cancel(key: TKey): void {
         const timeout = this.gcTimeouts.get(key);
         if (timeout !== undefined) {
             clearTimeout(timeout);
@@ -67,7 +69,7 @@ class GarbageCollector<TKey> {
     /**
      * Update any pending GC for the given key, as applicable
      */
-    public update(key: TKey) {
+    public update(key: TKey): void {
         // Cancel/reschedule new GC if the policy is sliding
         if (this.expiry.policy === "sliding") {
             this.cancel(key);
@@ -77,9 +79,9 @@ class GarbageCollector<TKey> {
 }
 
 /**
-* A specialized cache for async work, allowing you to safely cache the promised result of some async work
-* without fear of running it multiple times or losing track of errors.
-*/
+ * A specialized cache for async work, allowing you to safely cache the promised result of some async work
+ * without fear of running it multiple times or losing track of errors.
+ */
 export class PromiseCache<TKey, TResult> {
     private readonly cache = new Map<TKey, Promise<TResult>>();
     private readonly gc: GarbageCollector<TKey>;
@@ -93,7 +95,7 @@ export class PromiseCache<TKey, TResult> {
      */
     constructor({
         expiry = { policy: "indefinite" },
-        removeOnError = () => true,
+        removeOnError = (): boolean => true,
     }: PromiseCacheOptions = {}) {
         this.removeOnError = removeOnError;
         this.gc = new GarbageCollector<TKey>(expiry, (key) => this.remove(key));
@@ -102,7 +104,7 @@ export class PromiseCache<TKey, TResult> {
     /**
      * Check if there's anything cached at the given key
      */
-    public has(key: TKey) {
+    public has(key: TKey): boolean {
         return this.cache.has(key);
     }
 
@@ -120,7 +122,7 @@ export class PromiseCache<TKey, TResult> {
     /**
      * Remove the Promise for the given key, returning true if it was found and removed
      */
-    public remove(key: TKey) {
+    public remove(key: TKey): boolean {
         this.gc.cancel(key);
         return this.cache.delete(key);
     }
@@ -131,16 +133,13 @@ export class PromiseCache<TKey, TResult> {
      * @param key - key name where to store the async work
      * @param asyncFn - the async work to do and store, if not already in progress under the given key
      */
-    public async addOrGet(
-        key: TKey,
-        asyncFn: () => Promise<TResult>,
-    ): Promise<TResult> {
+    public async addOrGet(key: TKey, asyncFn: () => Promise<TResult>): Promise<TResult> {
         // NOTE: Do not await the Promise returned by asyncFn!
         // Let the caller do so once we return or after a subsequent call to get
         let promise = this.get(key);
         if (promise === undefined) {
             // Wrap in an async lambda in case asyncFn disabled @typescript-eslint/promise-function-async
-            const safeAsyncFn = async () => asyncFn();
+            const safeAsyncFn = async (): Promise<TResult> => asyncFn();
 
             // Start the async work and put the Promise in the cache
             promise = safeAsyncFn();
@@ -165,16 +164,12 @@ export class PromiseCache<TKey, TResult> {
      * @param key - key name where to store the async work
      * @param asyncFn - the async work to do and store, if not already in progress under the given key
      */
-    public add(
-        key: TKey,
-        asyncFn: () => Promise<TResult>,
-    ): boolean {
+    public add(key: TKey, asyncFn: () => Promise<TResult>): boolean {
         const alreadyPresent = this.has(key);
 
         // We are blindly adding the Promise to the cache here, which introduces a Promise in this scope.
         // Swallow Promise rejections here, since whoever gets this out of the cache to use it will await/catch.
-        this.addOrGet(key, asyncFn)
-            .catch(() => { });
+        this.addOrGet(key, asyncFn).catch(() => {});
 
         return !alreadyPresent;
     }
@@ -185,10 +180,7 @@ export class PromiseCache<TKey, TResult> {
      * @param key - key name where to store the async work
      * @param value - value to store
      */
-    public async addValueOrGet(
-        key: TKey,
-        value: TResult,
-    ): Promise<TResult> {
+    public async addValueOrGet(key: TKey, value: TResult): Promise<TResult> {
         return this.addOrGet(key, async () => value);
     }
 
@@ -198,10 +190,7 @@ export class PromiseCache<TKey, TResult> {
      * @param key - key name where to store the value
      * @param value - value to store
      */
-    public addValue(
-        key: TKey,
-        value: TResult,
-    ): boolean {
+    public addValue(key: TKey, value: TResult): boolean {
         return this.add(key, async () => value);
     }
 }

@@ -14,8 +14,6 @@ import { RedisOptions } from "ioredis";
 import * as winston from "winston";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
-    const mongoUrl = config.get("mongo:operationsDbEndpoint") as string;
-    const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
@@ -34,23 +32,32 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
-    const tenantManager = new services.TenantManager(authEndpoint);
+    const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+    const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+    const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 
     // Database connection for global db if enabled
-    let globalDbMongoManager;
-    let globalDb;
-    const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
-    if (globalDbEnabled) {
-        const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
-        const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
-        globalDbMongoManager = new core.MongoManager(globalDbMongoFactory, false);
-        globalDb = await globalDbMongoManager.getDatabase();
+    const factory = await services.getDbFactory(config);
+
+    const checkpointHeuristics = config.get("deli:checkpointHeuristics") as
+        core.IDeliCheckpointHeuristicsServerConfiguration;
+    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+    if (checkpointHeuristics && checkpointHeuristics.enable) {
+        core.DefaultServiceConfiguration.deli.checkpointHeuristics = checkpointHeuristics;
     }
-    // Connection to stored document details
-    const operationsDbMongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
-    const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory, false);
-    const operationsDb = await operationsDbMongoManager.getDatabase();
+
+    let globalDb: core.IDb;
+    if (globalDbEnabled) {
+        const globalDbReconnect = config.get("mongo:globalDbReconnect") as boolean ?? false;
+        const globalDbManager = new core.MongoManager(factory, globalDbReconnect, null, true);
+        globalDb = await globalDbManager.getDatabase();
+    }
+
+    const operationsDbManager = new core.MongoManager(factory, false);
+    const operationsDb = await operationsDbManager.getDatabase();
+
     const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
+
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await db.collection<core.IDocument>(documentsCollectionName);
 
@@ -108,14 +115,23 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     await broadcasterLambda.start();
 
+    const externalOrdererUrl: string = config.get("worker:serverUrl");
+    const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
+    const serviceConfiguration: core.IServiceConfiguration = {
+        ...core.DefaultServiceConfiguration,
+        externalOrdererUrl,
+        enforceDiscoveryFlow,
+    };
+
     return new DeliLambdaFactory(
-        operationsDbMongoManager,
+        operationsDbManager,
         collection,
         tenantManager,
+        undefined,
         combinedProducer,
         undefined,
         reverseProducer,
-        core.DefaultServiceConfiguration);
+        serviceConfiguration);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

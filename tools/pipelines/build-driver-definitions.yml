@@ -26,14 +26,11 @@ parameters:
 trigger:
   branches:
     include:
-    - main
-    - next
-    - release/*
+    - release/0.*
   paths:
     include:
     - common/lib/driver-definitions
     - tools/pipelines/build-driver-definitions.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -45,14 +42,11 @@ trigger:
 pr:
   branches:
     include:
-    - main
-    - next
-    - release/*
+    - release/0.*
   paths:
     include:
     - common/lib/driver-definitions
     - tools/pipelines/build-driver-definitions.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml

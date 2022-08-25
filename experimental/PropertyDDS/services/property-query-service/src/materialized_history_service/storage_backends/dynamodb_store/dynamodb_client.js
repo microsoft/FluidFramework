@@ -67,9 +67,10 @@ let WriteTransaction;
 class DynamoDBClient {
   /**
    * Instantiates the DynamoDB client, given an AWS configuration used to access DynamoDB.
+   * See {@link https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#constructor-property}
+   *
    * @param {object} awsConfig The AWS configuration.
    * @param {object} storeConfig Additional non-AWS config.
-   * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#constructor-property
    */
   constructor(awsConfig, storeConfig) {
     if (!BatchWriter) {
@@ -280,7 +281,7 @@ class DynamoDBClient {
    *       id: '...'
    *     }]
    *   }
-   * @see {@link #putItem} for a description of the item parameters.
+   * See {@link DynamoDBClient.putItem} for a description of the item parameters.
    * @param {Array<object>} batchParams.tableName An array
    */
   async batchWriteItem(batchParams) {

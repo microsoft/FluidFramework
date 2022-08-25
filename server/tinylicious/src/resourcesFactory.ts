@@ -6,7 +6,12 @@
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { generateToken, Historian } from "@fluidframework/server-services-client";
-import { MongoDatabaseManager, MongoManager, IResourcesFactory } from "@fluidframework/server-services-core";
+import {
+    MongoDatabaseManager,
+    MongoManager,
+    IResourcesFactory,
+    DefaultServiceConfiguration,
+} from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import { Server } from "socket.io";
@@ -14,10 +19,10 @@ import { Server } from "socket.io";
 import winston from "winston";
 import { TinyliciousResources } from "./resources";
 import {
-    DbFactory,
     PubSubPublisher,
     TaskMessageSender,
     TenantManager,
+    getDbFactory,
     WebServerFactory,
 } from "./services";
 
@@ -31,7 +36,8 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager(`http://localhost:${port}`);
-        const dbFactory = new DbFactory(config);
+        const dbFactory = await getDbFactory(config);
+
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);
         const databaseManager = new MongoDatabaseManager(
@@ -63,7 +69,14 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
                 return new Historian(url, false, false);
             },
             winston,
-            undefined /* serviceConfiguration */,
+            {
+                // Temporary disable generateServiceSummary, as it causes SummaryNack with client summaries
+                // See AB#1627
+                scribe: {
+                    ...DefaultServiceConfiguration.scribe,
+                    generateServiceSummary: false,
+                },
+            },
             pubsub);
 
         return new TinyliciousResources(

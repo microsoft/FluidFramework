@@ -1811,8 +1811,8 @@ describe("JS-Object-like property accessing ", function() {
                 });
 
                 it("check .findIndex() functionality", function() {
-                    expect(state.myTestProperty.myI32Array.
-                        findIndex((element) => (element < 15 && element > 5))).toEqual(1);
+                    expect(state.myTestProperty.myI32Array
+                        .findIndex((element) => (element < 15 && element > 5))).toEqual(1);
                 });
 
                 it("check .foreach() functionality", function() {

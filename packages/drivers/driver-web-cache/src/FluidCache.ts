@@ -73,7 +73,7 @@ export class FluidCache implements IPersistedCache {
             // Log how much storage space is currently being used by indexed db.
             // NOTE: This API is not supported in all browsers and it doesn't let you see the size of a specific DB.
             // Exception added when eslint rule was added, this should be revisited when modifying this code
-            if (navigator.storage && navigator.storage.estimate) {
+            if (navigator.storage?.estimate) {
                 const estimate = await navigator.storage.estimate();
 
                 // Some browsers have a usageDetails property that will tell you

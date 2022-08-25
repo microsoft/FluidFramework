@@ -4,7 +4,7 @@
     "default": {
       "name": "default",
       "createdDate": "2022-03-03 04:59:14Z",
-      "lastUpdatedDate": "2022-03-03 04:59:14Z"
+      "lastUpdatedDate": "2022-06-15 21:32:14Z"
     }
   },
   "results": {
@@ -23,7 +23,7 @@
       "ruleId": "@microsoft/sdl/no-inner-html",
       "justification": "Comes from jquery dependency. Tracked by https://github.com/microsoft/FluidFramework/issues/9316.",
       "createdDate": "2022-03-03 04:59:14Z",
-      "expirationDate": "2022-05-31 00:00:00Z",
+      "expirationDate": "2022-08-29 00:00:00Z",
       "type": null
     },
     "0d4fa60d5f0b4f1d15e59fc8d68612e8f79f722ef23af4b073a0167ab4878fd6": {
@@ -41,7 +41,7 @@
       "ruleId": "@microsoft/sdl/no-html-method",
       "justification": "Comes from jquery dependency. Tracked by https://github.com/microsoft/FluidFramework/issues/9316.",
       "createdDate": "2022-03-03 04:59:14Z",
-      "expirationDate": "2022-05-31 00:00:00Z",
+      "expirationDate": "2022-08-29 00:00:00Z",
       "type": null
     }
   }

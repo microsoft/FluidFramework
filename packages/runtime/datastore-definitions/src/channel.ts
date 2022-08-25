@@ -5,7 +5,11 @@
 
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+    IGarbageCollectionData,
+    ISummaryTreeWithStats,
+    ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -20,25 +24,53 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
-     * Generates summary of the channel synchronously.
-     * @returns A tree representing the summary of the channel.
+     * Generates summary of the channel synchronously. It is called when an `attach message`
+     * for a local channel is generated. In other words, when the channel is being attached
+     * to make it visible to other clients.
+     * Note: Since Attach Summary is generated for local channels when making them visible to
+     * remote clients, they don't have any previous summaries to compare against. For this reason,
+     * The attach summary cannot contain summary handles (paths to sub-trees or blobs).
+     * It can, however, contain ISummaryAttachment (handles to blobs uploaded async via the blob manager).
+     * @param fullTree - flag indicating whether the attempt should generate a full
+     * summary tree without any handles for unchanged subtrees.
+     * @param trackState - optimization for tracking state of objects across summaries. If the state
+     * of an object did not change since last successful summary, an ISummaryHandle can be used
+     * instead of re-summarizing it. If this is false, the expectation is that you should never
+     * send an ISummaryHandle since you are not expected to track state.
+     * Note: The goal is to remove the trackState and automatically decided whether the
+     * handles will be used or not: https://github.com/microsoft/FluidFramework/issues/10455
+     * @returns A summary capturing the current state of the channel.
      */
-    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    getAttachSummary(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
 
     /**
      * Generates summary of the channel asynchronously.
      * This should not be called where the channel can be modified while summarization is in progress.
-     * @returns A tree representing the summary of the channel.
+     * @param fullTree - flag indicating whether the attempt should generate a full
+     * summary tree without any handles for unchanged subtrees. It is only set to true when generating
+     * a summary from the entire container.
+     * @param trackState - This tells whether we should track state from this summary.
+     * @returns A summary capturing the current state of the channel.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
-     * True if the data structure is attached to storage.
+     * Checks if the channel is attached to storage.
+     * @returns True iff the channel is attached.
      */
     isAttached(): boolean;
 
     /**
-     * Enables the channel to send and receive ops
+     * Enables the channel to send and receive ops.
+     * @param services - Services to connect to
      */
     connect(services: IChannelServices): void;
 
@@ -79,7 +111,22 @@ export interface IDeltaHandler {
      */
     reSubmit(message: any, localOpMetadata: unknown): void;
 
+    /**
+     * Apply changes from an op. Used when rehydrating an attached container
+     * with pending changes. This prepares the SharedObject for seeing an ACK
+     * for the op or resubmitting the op upon reconnection.
+     * @param message - Contents of a stashed op.
+     * @returns localMetadata of the op, to be passed to process() or resubmit()
+     * when the op is ACKed or resubmitted, respectively
+     */
     applyStashedOp(message: any): unknown;
+
+    /**
+     * Revert a local op.
+     * @param message - The original message that was submitted.
+     * @param localOpMetadata - The local metadata associated with the original message.
+     */
+    rollback?(message: any, localOpMetadata: unknown): void;
 }
 
 /**
@@ -147,7 +194,20 @@ export interface IChannelServices {
 }
 
 /**
- * Definitions of a channel factory. Factories follow a common model but enable custom behavior.
+ * Definitions of a channel factory.
+ *
+ * The runtime must be able to produce "channels" of the correct in-memory object type for the collaborative session.
+ * Here "channels" are typically distributed data structures (DDSs).
+ *
+ * The runtime will consult with a registry of such factories during
+ * {@link https://fluidframework.com/docs/build/containers/ | Container} load and when receiving "attach" operations
+ * (ops), which indicate a new instance of a channel being introduced to the collaboration session, to produce the
+ * appropriate in-memory object.
+ *
+ * @example If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
+ * a the collaborating clients will need to have access to a factory that can produce the `SharedMap` obect.
+ *
+ * @remarks Factories follow a common model but enable custom behavior.
  */
 export interface IChannelFactory {
     /**

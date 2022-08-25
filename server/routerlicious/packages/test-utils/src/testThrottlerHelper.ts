@@ -13,7 +13,7 @@ import {
  * Super simple Token Bucket IThrottlerHelper implementation for use in tests.
  */
 export class TestThrottlerHelper implements IThrottlerHelper {
-    private readonly throttleStorage: { [key: string]: IThrottlingMetrics };
+    private readonly throttleStorage: { [key: string]: IThrottlingMetrics; };
 
     constructor(
         /**

@@ -5,8 +5,8 @@
 
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require('path');
-const merge = require('webpack-merge');
-// const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const { merge } = require("webpack-merge");
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = env => {
     const isProduction = env && env.production;
@@ -30,11 +30,13 @@ module.exports = env => {
                     }],
                     exclude: /node_modules/
                 },
-                {
-                    test: /\.js$/,
-                    use: [require.resolve("source-map-loader")],
-                    enforce: "pre"
-                },
+                // This example currently has missing sourcemap issues.
+                // Disabling source mapping allows it to be runnable with these issues.
+                // {
+                //     test: /\.js$/,
+                //     use: [require.resolve("source-map-loader")],
+                //     enforce: "pre"
+                // },
                 {
                     test: /\.css$/,
                     use: [
@@ -83,8 +85,6 @@ module.exports = env => {
         },
         devServer: {
             host: "0.0.0.0",
-            onBeforeSetupMiddleware: (devServer) => fluidRoute.before(devServer.app, devServer, env),
-            onAfterSetupMiddleware: (devServer) => fluidRoute.after(devServer.app, devServer, __dirname, env),
         },
         // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
         // This should be configurable under devServer.static.watch
@@ -94,7 +94,7 @@ module.exports = env => {
             ignored: "**/node_modules/**",
         },
         plugins: [
-            // new MonacoWebpackPlugin()
+            new MonacoWebpackPlugin()
             // new BundleAnalyzerPlugin()
         ]
     }, isProduction

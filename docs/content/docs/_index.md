@@ -35,9 +35,9 @@ Applications built with Fluid Framework require zero custom code on the server t
 scenarios such as real-time typing across text editors. Client developers can focus on customer experiences while
 letting Fluid do the work of keeping data in sync.
 
-Fluid Framework works with your application framework of choice. Whether you prefer straight JavaScript or
-a framework like React, Angular, or Vue, Fluid Framework makes building collaborative experiences simple and
-flexible.
+Fluid Framework works with your application framework of choice.
+Whether you prefer plain JavaScript or a framework like [React](https://reactjs.org), [Angular](https://angular.io),
+or [Vue](https://vuejs.org), Fluid Framework makes building collaborative experiences simple and flexible.
 
 ## How Fluid works
 
@@ -52,11 +52,11 @@ accurately produce the current state regardless of the order it receives operati
 
 The following is a typical flow.
 
-* Client code changes data locally.
-* Fluid runtime sends that change to the Fluid service.
-* Fluid service sequences that operation and broadcasts it to all clients.
-* Fluid runtime incorporates that operation into local data and raises a "valueChanged" event.
-* Client code handles that event (updates view, runs business logic).
+1. Client code changes data locally.
+2. Fluid runtime sends that change to the Fluid service.
+3. Fluid service sequences that operation and broadcasts it to all clients.
+4. Fluid runtime incorporates that operation into local data and raises a "valueChanged" event.
+5. Client code handles that event (updates view, runs business logic).
 
 ## Getting to version 1.0
 

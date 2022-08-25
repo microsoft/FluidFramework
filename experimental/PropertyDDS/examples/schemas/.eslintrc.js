@@ -14,7 +14,6 @@ module.exports = {
     },
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"no-null/no-null": "off",
         "unicorn/filename-case": "off",
         "import/no-default-export": "off",
 	},

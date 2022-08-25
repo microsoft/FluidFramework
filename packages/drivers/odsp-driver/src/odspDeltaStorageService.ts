@@ -31,17 +31,18 @@ export class OdspDeltaStorageService {
     }
 
     /**
-     * Retrieves ops from cache
+     * Retrieves ops from storage
      * @param from - inclusive
      * @param to - exclusive
      * @param telemetryProps - properties to add when issuing telemetry events
+     * @param scenarioName - reason for fetching ops
      * @returns ops retrieved & info if result was partial (i.e. more is available)
      */
      public async get(
         from: number,
         to: number,
         telemetryProps: ITelemetryProperties,
-        fetchReason?: string,
+        scenarioName?: string,
     ): Promise<IDeltasFetchResult> {
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
@@ -56,7 +57,7 @@ export class OdspDeltaStorageService {
 
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;
-            const headers: {[index: string]: any} = {
+            const headers: { [index: string]: any; } = {
                 "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
             };
 
@@ -78,7 +79,7 @@ export class OdspDeltaStorageService {
                 },
                 "ops",
                 true,
-                fetchReason,
+                scenarioName,
             );
             clearTimeout(timer);
             const deltaStorageResponse = response.content;
@@ -99,6 +100,7 @@ export class OdspDeltaStorageService {
                 from,
                 to,
                 ...telemetryProps,
+                reason: scenarioName,
             });
 
             // It is assumed that server always returns all the ops that it has in the range that was requested.
@@ -139,11 +141,11 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             const length = messages.length;
             const last = messages[length - 1].sequenceNumber;
             if (start !== from) {
-                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length});
+                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length });
                 messages.length = 0;
             }
             if (last + 1 !== from + length) {
-                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length});
+                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length });
                 // we can do better here by finding consecutive sub-block and return it
                 messages.length = 0;
             }
@@ -155,8 +157,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         toTotal: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-        fetchReason?: string)
-    {
+        fetchReason?: string) {
         // We do not control what's in the cache. Current API assumes that fetchMessages() keeps banging on
         // storage / cache until it gets ops it needs. This would result in deadlock if fixed range is asked from
         // cache and it's not there.
@@ -237,5 +238,5 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                 });
             }
         });
-}
+    }
 }

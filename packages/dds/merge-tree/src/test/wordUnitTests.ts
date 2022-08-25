@@ -4,17 +4,18 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import path from "path";
 import random from "random-js";
 import { Trace } from "@fluidframework/common-utils";
-import { LocalReference } from "../localReference";
 import { ReferenceType } from "../ops";
 import {
     createMap,
     extend,
     MapLike,
 } from "../properties";
+import { ReferencePosition } from "../referencePositions";
 import { TestClient } from "./testClient";
 import { loadTextFromFileWithMarkers } from "./testUtils";
 
@@ -36,7 +37,7 @@ export function propertyCopy() {
         map.set(a[i], v[i]);
     }
     let clockStart = clock();
-    let obj: MapLike<number>;
+    let obj: MapLike<number> = {};
     for (let j = 0; j < iterCount; j++) {
         obj = createMap<number>();
         for (let i = 0; i < propCount; i++) {
@@ -101,8 +102,7 @@ export function propertyCopy() {
     const grayMap = new Map<string, number>();
     for (let j = 0; j < iterCount; j++) {
         map.forEach((value, key) => {
-            // eslint-disable-next-line eqeqeq
-            if (diffMap.get(key) != value) {
+            if (diffMap.get(key) !== value) {
                 grayMap.set(key, 1);
             }
         });
@@ -115,7 +115,7 @@ export function propertyCopy() {
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
     const mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    const bookmarks: LocalReference[] = [];
+    const bookmarks: ReferencePosition[] = [];
     const len = client.getLength();
     for (let i = 0; i < bookmarkCount; i++) {
         const pos = random.integer(0, len - 1)(mt);
@@ -124,8 +124,8 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
         if (i & 1) {
             refType = ReferenceType.SlideOnRemove;
         }
-        const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
-        client.mergeTree.addLocalReference(lref);
+        const lref = client.mergeTree.createLocalReferencePosition(
+             segoff.segment!, segoff.offset!, refType, undefined);
         bookmarks.push(lref);
     }
     return bookmarks;
@@ -152,13 +152,13 @@ function measureFetch(startFile: string, withBookmarks = false) {
             //     caBegin = 0;
             // }
             // curPG.pos is ca end
-            const curPG = client.findTile(pos, "pg", false);
-            const properties = curPG.tile.properties;
-            const curSegOff = client.getContainingSegment(pos);
-            const curSeg = curSegOff.segment;
+            const curPG = client.findTile(pos, "pg", false)!;
+            const properties = curPG.tile.properties!;
+            const curSegOff = client.getContainingSegment(pos)!;
+            const curSeg = curSegOff.segment!;
             // Combine paragraph and direct properties
             extend(properties, curSeg.properties);
-            pos += (curSeg.cachedLength - curSegOff.offset);
+            pos += (curSeg.cachedLength - curSegOff.offset!);
             count++;
         }
     }

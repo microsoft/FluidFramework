@@ -9,7 +9,7 @@ import { PathHelper } from "./pathHelper";
 import { rebaseToRemoteChanges } from "./rebase";
 import { TemplateSchema } from "./templateSchema";
 import { TemplateValidator } from "./templateValidator";
-import { Utils} from "./utils";
+import { Utils } from "./utils";
 
 const { TraversalContext } = Utils;
 

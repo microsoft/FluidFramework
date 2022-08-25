@@ -66,7 +66,7 @@ export interface IInspectorModalProps extends React.HTMLAttributes<HTMLDivElemen
  * This function is a workaround to set the style of the div that wraps whatever one
  * passes to the `title` prop of the `SimpleModal`. If the text in the title is too long
  * wrapping div expands beyond the flex container. To prevent this min-width must be set to 0.
- * @param element The element this ref callback is passed to.
+ * @param element - The element this ref callback is passed to.
  */
 const setStyleOfTitleParentDiv = (element) => {
   if (element) {
@@ -98,7 +98,7 @@ export const InspectorModal: React.FunctionComponent<IInspectorModalProps> = (pr
             >
               <div className={classes.modaleTitle}>{title}</div>
               {hideModal ? (
-                <IconButton key='close' onClick={hideModal} className={classes.closeButton}>
+                <IconButton key="close" onClick={hideModal} className={classes.closeButton}>
                   <SvgIcon height={26} width={26} svgId={"clear-24"} hoverable />
                 </IconButton>
               ) : null}
@@ -107,7 +107,7 @@ export const InspectorModal: React.FunctionComponent<IInspectorModalProps> = (pr
               <div className={classes.subtitleText}>
                 {subtitle}
               </div>) : null}
-            <Divider variant='middle' className={classes.dividerStyle} />
+            <Divider variant="middle" className={classes.dividerStyle} />
           </DialogTitle>
           <DialogContent className={classNames(classes.dialogBody, props.bodyClassName)}>
             {children}

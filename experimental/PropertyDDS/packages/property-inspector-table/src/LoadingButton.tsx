@@ -30,7 +30,7 @@ interface ILoadingButtonState {
 }
 
 const LoadingButton: React.FunctionComponent<ILoadingButtonProps> =
-  ({children, disabled, forwardedRef, onClick, ...restProps}) => {
+  ({ children, disabled, forwardedRef, onClick, ...restProps }) => {
   let isMounted: boolean;
   const classes = useStyles();
 

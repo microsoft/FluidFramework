@@ -8,6 +8,8 @@ import {
     IDriverErrorBase,
     IAuthorizationError,
     DriverErrorType,
+    ILocationRedirectionError,
+    IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
@@ -42,7 +44,7 @@ export function isOnline(): OnlineStatus {
 }
 
 /** Telemetry props with driver-specific required properties */
-export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined };
+export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined; };
 
 /**
  * Generic network error class.
@@ -59,16 +61,9 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     }
 }
 
-// Todo GH #6214: Remove after next drive def bump. This is necessary as there is no
-// compatible way to augment an enum, as it can't be optional. So for now
-// we need to duplicate the value here. We likely need to rethink our
-// DriverErrorType strategy so that it supports extension with optional
-// value.
-const deltaStreamConnectionForbiddenStr = "deltaStreamConnectionForbidden";
-export class DeltaStreamConnectionForbiddenError extends LoggingError implements IFluidErrorBase {
-    static readonly errorType: string =
-        DriverErrorType[deltaStreamConnectionForbiddenStr] ?? deltaStreamConnectionForbiddenStr;
-    readonly errorType: string = DeltaStreamConnectionForbiddenError.errorType;
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
+    readonly errorType = DeltaStreamConnectionForbiddenError.errorType;
     readonly canRetry = false;
 
     constructor(message: string, props: DriverErrorTelemetryProps) {
@@ -88,6 +83,19 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     ) {
         // don't log claims or tenantId
         super(message, props, new Set(["claims", "tenantId"]));
+    }
+}
+
+export class LocationRedirectionError extends LoggingError implements ILocationRedirectionError, IFluidErrorBase {
+    readonly errorType = DriverErrorType.locationRedirection;
+    readonly canRetry = false;
+
+    constructor(
+        message: string,
+        readonly redirectUrl: IResolvedUrl,
+        props: DriverErrorTelemetryProps,
+    ) {
+        super(message, props);
     }
 }
 
@@ -143,7 +151,7 @@ export const createWriteError = (message: string, props: DriverErrorTelemetryPro
 
 export function createGenericNetworkError(
     message: string,
-    retryInfo: {canRetry: boolean, retryAfterMs?: number },
+    retryInfo: { canRetry: boolean; retryAfterMs?: number; },
     props: DriverErrorTelemetryProps,
 ): ThrottlingError | GenericNetworkError {
     if (retryInfo.retryAfterMs !== undefined && retryInfo.canRetry) {

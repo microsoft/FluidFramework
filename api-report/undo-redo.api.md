@@ -34,7 +34,7 @@ export class SharedMapUndoRedoHandler {
     attachMap(map: ISharedMap): void;
     // (undocumented)
     detachMap(map: ISharedMap): void;
-    }
+}
 
 // @public
 export class SharedSegmentSequenceRevertible implements IRevertible {
@@ -47,7 +47,7 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
     revert(): void;
     // (undocumented)
     readonly sequence: SharedSegmentSequence<ISegment>;
-    }
+}
 
 // @public
 export class SharedSegmentSequenceUndoRedoHandler {
@@ -56,7 +56,7 @@ export class SharedSegmentSequenceUndoRedoHandler {
     attachSequence<T extends ISegment>(sequence: SharedSegmentSequence<T>): void;
     // (undocumented)
     detachSequence<T extends ISegment>(sequence: SharedSegmentSequence<T>): void;
-    }
+}
 
 // @public
 export class UndoRedoStackManager {
@@ -73,7 +73,6 @@ export class UndoRedoStackManager {
     removeListener(event: "changePushed", listener: () => void): void;
     // (undocumented)
     undoOperation(): boolean;
-    }
-
+}
 
 ```

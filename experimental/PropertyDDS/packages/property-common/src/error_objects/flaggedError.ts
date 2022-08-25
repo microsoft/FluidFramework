@@ -5,9 +5,9 @@
 
 /**
  * Checks if a flag is set
- * @param  flags - flags set within an error object
- * @param  flag - A flag to be checked
- * @returns   True if the flag is set in passed flags, false otherwise.
+ * @param flags - Flags set within an error object
+ * @param flag - A flag to be checked
+ * @returns True if the flag is set in passed flags, false otherwise.
  */
  const _isFlagSet = (flags: number, flag: number) => {
     // eslint-disable-next-line no-bitwise
@@ -35,7 +35,7 @@ export class FlaggedError {
      * @returns True if the quiet flag is set.
      */
     isQuiet(): boolean {
-        return _isFlagSet(this.flags,FlaggedError.FLAGS.QUIET);
+        return _isFlagSet(this.flags, FlaggedError.FLAGS.QUIET);
     }
 
     /**

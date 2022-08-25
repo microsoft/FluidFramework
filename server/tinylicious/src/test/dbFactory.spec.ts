@@ -11,7 +11,7 @@ import * as util from "util";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import rimrafCallback from "rimraf";
-import { DbFactory } from "../services";
+import { getDbFactory } from "../services";
 
 const rimraf = util.promisify(rimrafCallback);
 
@@ -31,7 +31,7 @@ interface ITestDelta {
     tenantId: string;
     operation: {
         sequenceNumber: number;
-    }
+    };
 }
 
 /**
@@ -43,8 +43,8 @@ interface ITestConfig {
         db: {
             inMemory: boolean;
             path?: string;
-        }
-    }
+        };
+    };
 
     // dispose method to allow the config to do any cleanup - i.e. delete the temporary
     // directory used by leveldb
@@ -133,9 +133,9 @@ describe("Tinylicious", () => {
                 beforeEach(async () => {
                     config = configFactory.create();
                     const provider = new Provider().defaults(config.value);
-                    const dbFactory = new DbFactory(provider);
+                    const dbFactory = await getDbFactory(provider);
 
-                    db = await dbFactory.connect();
+                    db = await dbFactory.connect(false);
                 });
 
                 afterEach(async () => {

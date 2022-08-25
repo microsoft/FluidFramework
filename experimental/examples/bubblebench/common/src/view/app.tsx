@@ -122,7 +122,7 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
 
     // Observe changes to the visible size and update physics accordingly.
     const { ref } = useResizeObserver<HTMLDivElement>({
-        onResize: ({width, height}) => {
+        onResize: ({ width, height }) => {
             app.setSize(width, height);
         },
     });

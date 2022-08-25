@@ -18,6 +18,7 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISession } from '@fluidframework/server-services-client';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { IStream } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
@@ -35,28 +36,38 @@ export class DefaultTokenProvider implements ITokenProvider {
     fetchOrdererToken(): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(): Promise<ITokenResponse>;
-    }
+}
 
 // @public
 export class DeltaStorageService implements IDeltaStorageService {
-    constructor(url: string, restWrapper: RestWrapper, logger: ITelemetryLogger);
+    constructor(url: string, restWrapper: RestWrapper, logger: ITelemetryLogger, getRestWrapper?: () => Promise<RestWrapper>, getDeltaStorageUrl?: () => string);
     // (undocumented)
     get(tenantId: string, id: string, from: number, // inclusive
     to: number): Promise<IDeltasFetchResult>;
-    }
+}
 
 // @public
 export class DocumentDeltaStorageService implements IDocumentDeltaStorageService {
-    constructor(tenantId: string, id: string, storageService: IDeltaStorageService, documentStorageService: DocumentStorageService);
+    constructor(tenantId: string, id: string, deltaStorageService: IDeltaStorageService, documentStorageService: DocumentStorageService);
     // (undocumented)
     fetchMessages(from: number, to: number | undefined, abortSignal?: AbortSignal, cachedOnly?: boolean, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
-    }
+}
+
+// @public
+export class DocumentPostCreateError extends Error {
+    constructor(
+    innerError: Error);
+    // (undocumented)
+    readonly name = "DocumentPostCreateError";
+    // (undocumented)
+    get stack(): string | undefined;
+}
 
 // @public
 export class DocumentService implements api.IDocumentService {
     // Warning: (ae-forgotten-export) The symbol "ICache" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "ISnapshotTreeVersion" needs to be exported by the entry point index.d.ts
-    constructor(resolvedUrl: api.IResolvedUrl, ordererUrl: string, deltaStorageUrl: string, gitUrl: string, logger: ITelemetryLogger, tokenProvider: ITokenProvider, tenantId: string, documentId: string, driverPolicies: IRouterliciousDriverPolicies, blobCache: ICache<ArrayBufferLike>, snapshotTreeCache: ICache<ISnapshotTreeVersion>);
+    constructor(_resolvedUrl: api.IResolvedUrl, ordererUrl: string, deltaStorageUrl: string, storageUrl: string, logger: ITelemetryLogger, tokenProvider: ITokenProvider, tenantId: string, documentId: string, driverPolicies: IRouterliciousDriverPolicies, blobCache: ICache<ArrayBufferLike>, snapshotTreeCache: ICache<ISnapshotTreeVersion>, discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>);
     connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection>;
     connectToStorage(): Promise<api.IDocumentStorageService>;
@@ -67,7 +78,7 @@ export class DocumentService implements api.IDocumentService {
     // (undocumented)
     protected ordererUrl: string;
     // (undocumented)
-    readonly resolvedUrl: api.IResolvedUrl;
+    get resolvedUrl(): api.IResolvedUrl;
     // (undocumented)
     protected tenantId: string;
     // (undocumented)
@@ -76,7 +87,7 @@ export class DocumentService implements api.IDocumentService {
 
 // @public (undocumented)
 export class DocumentStorageService extends DocumentStorageServiceProxy {
-    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>);
+    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>, noCacheGitManager?: GitManager | undefined, getStorageManager?: (disableCache?: boolean) => Promise<GitManager>);
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
@@ -85,11 +96,14 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
     get logTailSha(): string | undefined;
     // (undocumented)
     manager: GitManager;
+    // (undocumented)
+    noCacheGitManager?: GitManager | undefined;
 }
 
 // @public (undocumented)
 export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
+    enableDiscovery?: boolean;
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
@@ -106,9 +120,7 @@ export interface ITokenProvider {
 
 // @public (undocumented)
 export interface ITokenResponse {
-    // (undocumented)
     fromCache?: boolean;
-    // (undocumented)
     jwt: string;
 }
 
@@ -134,8 +146,6 @@ export class NullBlobStorageService implements IDocumentStorageService {
     get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: api_2.ISummaryTree, context: ISummaryContext): Promise<string>;
-    // (undocumented)
-    write(tree: api_2.ITree, parents: string[], message: string, ref: string): Promise<api_2.IVersion>;
 }
 
 // @public
@@ -143,11 +153,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    // (undocumented)
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "fluid:";
-    }
-
+}
 
 // (No @packageDocumentation comment for this package)
 

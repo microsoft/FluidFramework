@@ -10,10 +10,11 @@ trigger:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
-    - packages/framework/azure-client
+    - azure/packages/azure-client
     - packages/framework/loader/container-loader
     - packages/framework/fluid-static
     - packages/drivers/routerlicious-driver
@@ -25,14 +26,17 @@ pr: none
 
 resources:
   pipelines:
-  - pipeline: client   # Name of the pipeline resource
+  - pipeline: client
     source: Build - client packages
+  - pipeline: azure
+    source: Build - azure
     trigger:
       branches:
         include:
         - releases/*
         - main
         - next
+        - lts
 
 variables:
 - group: prague-key-vault
@@ -40,9 +44,9 @@ variables:
   value: $(Pipeline.Workspace)/test
 
 stages:
-  # Run Azure FRS Tests
+  # Run Azure Client FRS Tests
   - stage:
-    displayName: e2e - azure
+    displayName: e2e - azure client with frs
     dependsOn: []
     jobs:
     - template: templates/include-test-real-service.yml
@@ -53,7 +57,24 @@ stages:
         testCommand: test:realsvc:azure
         testFileTarName: azure-client
         extraDependencies: "cross-env mocha @fluidframework/test-client-utils"
+        downloadAzureTestArtifacts: true
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
           azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
+
+  - stage:
+    displayName: e2e - azure client with azure local service
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/azure-client"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:tinylicious
+        testFileTarName: azure-client
+        extraDependencies: "cross-env mocha start-server-and-test @fluidframework/test-client-utils"
+        downloadAzureTestArtifacts: true
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

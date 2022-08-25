@@ -5,6 +5,46 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "flub",
+            "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "info",
+                "-g",
+                "build-tools",
+            ],
+        },
+        {
+            "name": "fluid-bump-version",
+            "program": "${workspaceFolder}/build-tools/packages/build-tools/dist/bumpVersion/bumpVersionCli.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "-d",
+                "@fluidframework/common-utils@^0.33.1000",
+            ],
+        },
+        {
+            "name": "layer-check",
+            "program": "${workspaceFolder}/build-tools/packages/build-tools/dist/layerCheck/layerCheck.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "args": [
+                "--verbose"
+            ],
+            "cwd": "${workspaceFolder}",
+            "type": "node"
+        },
+        {
             "type": "node",
             "request": "attach",
             "name": "Attach by Process ID",
@@ -92,11 +132,21 @@
             "port": 5858,
             "restart": true,
             "sourceMaps": true,
-            "localRoot": "${workspaceFolder}",
+            "localRoot": "${workspaceFolder}/server/routerlicious",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
+            "protocol": "inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to riddler",
+            "address": "localhost",
+            "port": 5865,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}/server/routerlicious",
+            "remoteRoot": "/usr/src/server",
             "protocol": "inspector",
             "trace": "sm"
         },
@@ -298,7 +348,9 @@
                 "--no-cache",
                 "${file}"
             ],
-            "runtimeArgs": ["--unhandled-rejections=strict"],
+            "runtimeArgs": [
+                "--unhandled-rejections=strict"
+            ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
         }

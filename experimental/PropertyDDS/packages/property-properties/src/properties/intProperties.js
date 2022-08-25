@@ -91,7 +91,6 @@ export class Integer64Property extends ValueProperty {
      * @protected
      * @extends property-properties.ValueProperty
      * @alias property-properties.Integer64Property
-     * @protected
      * @abstract
      * @category Value Properties
      */
@@ -105,12 +104,11 @@ export class Integer64Property extends ValueProperty {
     /**
      * Internal function to update the value of the Integer64Property
      *
-     * @param {Int64|String|Number} in_value the new value
+     * @param {Int64|String|Number} in_value - The new value
      * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
-     *                                             and trigger a modified event there. When batching updates, this
-     *                                             can be prevented via this flag.
+     * and trigger a modified event there. When batching updates, this can be prevented via this flag.
      * @return {boolean} true if the value was actually changed
-     * @throws if in_value is a string that contains characters other than numbers
+     * @throws If in_value is a string that contains characters other than numbers
      */
     _setValue(in_value, in_reportToView) {
         var oldLowValue = this._data.getValueLow();
@@ -145,9 +143,9 @@ export class Integer64Property extends ValueProperty {
     }
 
     /**
-     * @param {number} in_high set the higher 32 bit integer part
-     * @throws if in_high is not a number
-     * @return {boolen} true if the value was actually changed
+     * @param {number} in_high - Set the higher 32 bit integer part
+     * @throws If in_high is not a number
+     * @return {boolean} true if the value was actually changed
      */
     setValueHigh(in_high) {
         ConsoleUtils.assert(_.isNumber(in_high), MSG.IN_HIGH_MUST_BE_NUMBER + in_high);
@@ -162,9 +160,9 @@ export class Integer64Property extends ValueProperty {
     }
 
     /**
-     * @param {number} in_low set the lower 32 bit integer part
-     * @throws if in_low is not a number
-     * @return {boolen} true if the value was actually changed
+     * @param {number} in_low - Set the lower 32 bit integer part
+     * @throws If in_low is not a number
+     * @return {boolean} true if the value was actually changed
      */
     setValueLow(in_low) {
         ConsoleUtils.assert(_.isNumber(in_low), MSG.IN_LOW_MUST_BE_NUMBER + in_low);
@@ -239,7 +237,7 @@ export class Integer64Property extends ValueProperty {
     /**
      * The toString() method returns a string representing the specified Integer64 object.
      *
-     * @param {number} [in_radix = 10]  An integer between 2 and 36 specifying
+     * @param {number} [in_radix = 10] - An integer between 2 and 36 specifying
      *      the base to use for representing numeric values.
      * @return {string} A string representing the specified Integer64 object.
      */
@@ -250,9 +248,9 @@ export class Integer64Property extends ValueProperty {
     /**
      * The Integer64.fromString() method parses a string argument updates object's lower and higher 32 bit integer parts.
      *
-     * @param {string} in_string The value to parse. Leading whitespace in the string argument is ignored.
-     * @param {number} [in_radix = 10] An integer between 2 and 36 that represents the
-     *     radix (the base in mathematical numeral systems) of the above mentioned string.
+     * @param {string} in_string - The value to parse. Leading whitespace in the string argument is ignored.
+     * @param {number} [in_radix = 10] - An integer between 2 and 36 that represents the
+     * radix (the base in mathematical numeral systems) of the above mentioned string.
      * @throws if in_string is not a string
      * @throws if in_radix is entered but is not a number between 2 and 36
      * @throws if the property is a Uint64 property and in_string is a negative number

@@ -35,6 +35,7 @@ export type {
 	SessionUnique,
 	TraitLabel,
 	UuidString,
+	AttributionId,
 } from './Identifiers';
 export { isDetachedSequenceId } from './Identifiers';
 export type { OrderedEditSet, EditHandle } from './EditLog';
@@ -56,6 +57,7 @@ export {
 	ConstraintEffect,
 	Edit,
 	ChangeInternal,
+	InternalizedChange,
 	ChangeNode,
 	ChangeNode_0_0_2,
 	EditLogSummary,
@@ -89,6 +91,10 @@ export {
 	TraitLocationInternal,
 } from './persisted-types';
 export {
+	SharedTreeArgs,
+	SharedTreeOptions,
+	SharedTreeOptions_0_0_2,
+	SharedTreeOptions_0_1_1,
 	SharedTreeFactory,
 	SharedTree,
 	EditCommittedHandler,
@@ -97,6 +103,7 @@ export {
 	SequencedEditAppliedEventArguments,
 	EditApplicationOutcome,
 	ISharedTreeEvents,
+	StashedLocalOpMetadata,
 } from './SharedTree';
 export * from './EventTypes';
 export {
@@ -135,7 +142,7 @@ export {
 } from './TreeView';
 export { RevisionView, TransactionView } from './RevisionView';
 export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
-export { Transaction } from './Transaction';
+export { Transaction, TransactionEvent, TransactionEvents } from './Transaction';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package

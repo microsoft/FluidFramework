@@ -5,7 +5,7 @@
 
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 
 const pkg = require("./package.json");
 const fluidPackageName = pkg.name.slice(1);
@@ -17,15 +17,15 @@ module.exports = env => {
         entry: {
             main: "./src/index.ts"
         },
-        node: {
-            dgram: 'empty',
-            fs: 'empty',
-            net: 'empty',
-            tls: 'empty',
-            child_process: 'empty',
-        },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
+            fallback: {
+                dgram: false,
+                fs: false,
+                net: false,
+                tls: false,
+                child_process: false,
+            }
         },
         module: {
             rules: [{

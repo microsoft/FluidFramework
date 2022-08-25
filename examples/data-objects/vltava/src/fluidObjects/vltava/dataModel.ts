@@ -14,13 +14,13 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
 
 export interface IVltavaUserDetails {
-    name: string,
-    colorCode: number,
+    name: string;
+    colorCode: number;
 }
 
 export interface IVltavaLastEditedState {
-    user: IVltavaUserDetails,
-    time: string,
+    user: IVltavaUserDetails;
+    time: string;
 }
 
 export interface IVltavaDataModel extends EventEmitter {

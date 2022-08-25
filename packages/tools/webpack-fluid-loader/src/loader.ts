@@ -6,7 +6,7 @@
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { assert, BaseTelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import {
     AttachState,
     IFluidCodeResolver,
@@ -23,6 +23,7 @@ import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
+import { BaseTelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import {
@@ -65,6 +66,7 @@ export interface IDockerRouteOptions extends IBaseRouteOptions {
 
 export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
     mode: "r11s";
+    discoveryEndpoint?: string;
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
@@ -100,6 +102,7 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
         fluidModule.fluidExport;
     if (fluidModuleExport.IRuntimeFactory === undefined) {
         const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
+        assert(dataStoreFactory !== undefined, 0x317 /* dataStoreFactory is undefined */);
 
         const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
 
@@ -140,7 +143,7 @@ function makeSideBySideDiv(divId: string) {
 class WebpackCodeResolver implements IFluidCodeResolver {
     constructor(private readonly options: IBaseRouteOptions) { }
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
-        const baseUrl = details.config.cdn ?? `http://localhost:${this.options.port}`;
+        const baseUrl = details.config?.cdn ?? `http://localhost:${this.options.port}`;
         let pkg = details.package;
         if (typeof pkg === "string") {
             const resp = await fetch(`${baseUrl}/package.json`);
@@ -190,13 +193,19 @@ async function createWebLoader(
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
         const resolvedUrl = await urlResolver.resolve(await urlResolver.createRequestForCreateNew(documentId));
+        assert(resolvedUrl !== undefined, 0x318 /* resolvedUrl is undefined */);
         const innerDocumentService = await documentServiceFactory.createDocumentService(
             resolvedUrl,
             undefined, // logger
             false, // clientIsSummarizer
         );
+
+        const localDeltaConnectionServer = deltaConns.get(documentId);
+        assert(
+            localDeltaConnectionServer !== undefined,
+            0x319 /* No delta connection server associated with specified document ID */);
         documentServiceFactory = new LocalDocumentServiceFactory(
-            deltaConns.get(documentId),
+            localDeltaConnectionServer,
             undefined,
             innerDocumentService);
     }
@@ -278,9 +287,14 @@ export async function start(
         if (window.location.hash === "#prefetch") {
             assert(options.mode === "spo-df" || options.mode === "spo",
                 0x1ea /* "Prefetch snapshot only available for odsp!" */);
+
+            const resolvedUrl = await urlResolver.resolve({ url: documentUrl });
+            assert(resolvedUrl !== undefined, 0x31a /* resolvedUrl is undefined */);
+
             const prefetched = await prefetchLatestSnapshot(
-                await urlResolver.resolve({ url: documentUrl }),
-                async () => options.odspAccessToken,
+                resolvedUrl,
+                // TokenFetcher type is expressed using null instead of undefined
+                async () => options.odspAccessToken ?? null,
                 odspPersistantCache,
                 false /** forceAccessTokenViaAuthorizationHeader */,
                 new BaseTelemetryNullLogger(),
@@ -332,11 +346,12 @@ export async function start(
     }
 
     // For side by side mode, we need to create a second container and Fluid object.
-    if (rightDiv) {
+    if (rightDiv !== undefined) {
         // Create a new loader that is used to load the second container.
         const loader2 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
 
         // Create a new request url from the resolvedUrl of the first container.
+        assert(container1.resolvedUrl !== undefined, 0x31b /* container1.resolvedUrl is undefined */);
         const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
         containers.push(container2);
@@ -344,6 +359,7 @@ export async function start(
         await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
         // Handle the code upgrade scenario (which fires contextChanged)
         container2.on("contextChanged", () => {
+            assert(rightDiv !== undefined, 0x31c /* rightDiv is undefined */);
             getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv).catch(() => { });
         });
     }
@@ -371,7 +387,7 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
 
     // We should be retaining a reference to mountableView long-term, so we can call unmount() on it to correctly
     // remove it from the DOM if needed.
-    const mountableView: IFluidMountableView = fluidObject.IFluidMountableView;
+    const mountableView = fluidObject.IFluidMountableView;
     if (mountableView !== undefined) {
         mountableView.mount(div);
         return;
@@ -405,7 +421,7 @@ async function attachContainer(
     shouldUseContainerId: boolean,
 ) {
     // This is called once loading is complete to replace the url in the address bar with the new `url`.
-    const replaceUrl = (resolvedUrl: IResolvedUrl) => {
+    const replaceUrl = (resolvedUrl: IResolvedUrl | undefined) => {
         let [docUrl, title] = [url, documentId];
         if (shouldUseContainerId) {
             // for a r11s and t9s container we need to use the actual ID

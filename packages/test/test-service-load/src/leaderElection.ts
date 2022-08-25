@@ -21,7 +21,10 @@ export class LeaderElection {
     public setupLeaderElection() {
         this.dataStoreRuntime.on("signal", (signal: ISignalMessage) => this.handleSignal(signal));
         this.lastPinged = Date.now();
-        let interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
+        let interval;
+        if (this.dataStoreRuntime.connected && !this.dataStoreRuntime.disposed) {
+            interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
+        }
 
         this.dataStoreRuntime.once("dispose", () => {
             clearInterval(interval);
@@ -32,6 +35,7 @@ export class LeaderElection {
         });
 
         this.dataStoreRuntime.on("connected", () => {
+            clearInterval(interval);
             interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
         });
     }
@@ -40,14 +44,14 @@ export class LeaderElection {
         if (this.leaderId !== undefined && this.leaderId === this.dataStoreRuntime.clientId) {
             this.dataStoreRuntime.submitSignal("leaderMessage", "leaderMessage");
             this.updateLastPinged();
-        }else if(this.leaderId === undefined) {
+        } else if (this.leaderId === undefined) {
             this.logger.sendTelemetryEvent({
                 eventName: "LeaderUndefinedEventError",
                 testHarnessEvent: true,
             });
-        }else {
+        } else {
             const current = Date.now();
-            if(this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
+            if (this.lastPinged !== undefined && current - this.lastPinged > this.leaderWait) {
                 this.logger.sendTelemetryEvent({
                     eventName: "LeaderLostEventError",
                     testHarnessEvent: true,
@@ -59,8 +63,8 @@ export class LeaderElection {
     }
 
     private handleSignal(signal: ISignalMessage) {
-        if(signal.clientId !== null && signal.content === "leaderMessage") {
-            if(this.leaderId !== signal.clientId) {
+        if (signal.clientId !== null && signal.content === "leaderMessage") {
+            if (this.leaderId !== signal.clientId) {
                 this.logger.sendTelemetryEvent({
                     eventName: "UnexpectedLeaderEventWarning",
                     testHarnessEvent: true,
@@ -72,7 +76,7 @@ export class LeaderElection {
 
     private updateLastPinged() {
         this.lastPinged = Date.now();
-        if(this.lastPinged === undefined && this.prevPing !== undefined) {
+        if (this.lastPinged === undefined && this.prevPing !== undefined) {
             const time = this.lastPinged - this.prevPing;
             this.logger.sendTelemetryEvent({
                 eventName: "LeaderFound",

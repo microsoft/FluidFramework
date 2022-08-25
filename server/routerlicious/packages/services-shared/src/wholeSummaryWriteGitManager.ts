@@ -82,7 +82,7 @@ export class WholeSummaryWriteGitManager {
         wholeSummaryTreeEntry: WholeSummaryTreeEntry,
         summaryObject: SummaryObject,
     ): Promise<string> {
-        switch(summaryObject.type) {
+        switch (summaryObject.type) {
             case SummaryType.Blob:
                 return this.writeSummaryBlob(
                     ((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryBlob),

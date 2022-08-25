@@ -5,11 +5,9 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
+import { ISegment, ReferencePosition, MergeTreeMaintenanceType, LocalReferencePosition } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
 import { FlowDocument } from "../document";
-import { IFluidHTMLViewFactory } from "../editor";
 import { clamp, Dom, done, emptyObject, getSegmentRange, hasTagName, isTextNode, TagName } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
@@ -84,15 +82,15 @@ export class Layout extends EventEmitter {
     private _segmentStart = NaN;
     private _segmentEnd = NaN;
 
-    private startInvalid: LocalReference;
-    private endInvalid: LocalReference;
+    private startInvalid: LocalReferencePosition;
+    private endInvalid: LocalReferencePosition;
 
     private readonly scheduleRender: () => void;
 
     private renderPromise = done;
     private renderResolver: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, public readonly viewFactoryRegistry: Map<string, IFluidHTMLViewFactory> = new Map(), public readonly scope?: FluidObject) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>) {
         super();
 
         let scheduled = false;
@@ -258,8 +256,8 @@ export class Layout extends EventEmitter {
         // Look in the checkpoint's saved format stack at the depth we are about to push on to the
         // current format stack.
         const checkpoint = this.segmentToCheckpoint.get(segment);
-        const stack = checkpoint && checkpoint.formatStack;
-        const candidate = stack && stack[this.formatStack.length];
+        const stack = checkpoint?.formatStack;
+        const candidate = stack?.[this.formatStack.length];
 
         // If we find the same kind of formatter at the expected depth, pass the previous output state.
         const prevOut = (
@@ -545,7 +543,7 @@ export class Layout extends EventEmitter {
         this.invalidate(e.first.position, e.last.position + e.last.segment.cachedLength);
     };
 
-    private unionRef(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {
+    private unionRef(doc: FlowDocument, position: number | undefined, ref: ReferencePosition | undefined, fn: (a: number, b: number) => number, limit: number) {
         return fn(
             position === undefined
                 ? limit
@@ -561,10 +559,9 @@ export class Layout extends EventEmitter {
         let _end = end;
         // Union the delta range with the current invalidated range (if any).
         const doc = this.doc;
-        /* eslint-disable @typescript-eslint/unbound-method */
+
         _start = this.unionRef(doc, _start, this.startInvalid, Math.min, +Infinity);
         _end = this.unionRef(doc, _end, this.endInvalid, Math.max, -Infinity);
-        /* eslint-enable @typescript-eslint/unbound-method */
         this.startInvalid = updateRef(doc, this.startInvalid, _start);
         this.endInvalid = updateRef(doc, this.endInvalid, _end);
         this.scheduleRender();

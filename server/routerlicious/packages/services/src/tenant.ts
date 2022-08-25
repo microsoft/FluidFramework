@@ -39,12 +39,12 @@ export class Tenant implements core.ITenant {
  * Manages a collection of tenants
  */
 export class TenantManager implements core.ITenantManager {
-    constructor(private readonly endpoint: string) {
+    constructor(private readonly endpoint: string, private readonly internalHistorianUrl: string) {
     }
 
-    public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
+    public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string; }> {
         const restWrapper = new BasicRestWrapper();
-        const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
+        const result = await restWrapper.post<core.ITenantConfig & { key: string; }>(
             `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`,
             undefined,
         );
@@ -55,7 +55,7 @@ export class TenantManager implements core.ITenantManager {
         const restWrapper = new BasicRestWrapper();
         const [details, key] = await Promise.all([
             restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`,
-            { params: { includeDisabledTenant }}),
+            { includeDisabledTenant }),
             this.getKey(tenantId, includeDisabledTenant)]);
 
         const defaultQueryString = {
@@ -71,7 +71,7 @@ export class TenantManager implements core.ITenantManager {
             });
         };
         const defaultHeaders = getDefaultHeaders();
-        const baseUrl = `${details.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
+        const baseUrl = `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
         const tenantRestWrapper = new BasicRestWrapper(
             baseUrl,
             defaultQueryString,
@@ -83,7 +83,7 @@ export class TenantManager implements core.ITenantManager {
             getDefaultHeaders,
             getCorrelationId);
         const historian = new Historian(
-            `${details.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
+            `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,
             false,
             tenantRestWrapper);
@@ -104,7 +104,7 @@ export class TenantManager implements core.ITenantManager {
         const restWrapper = new BasicRestWrapper();
         const result = await restWrapper.get<core.ITenantKeys>(
             `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
-            { params: { includeDisabledTenant }},
+            { includeDisabledTenant },
         );
         return result.key1;
     }

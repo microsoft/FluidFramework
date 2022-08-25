@@ -31,7 +31,7 @@ export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> |
  * @typeParam T - The class of the DataObject
  */
 export type DataObjectClass<T extends IFluidLoadable>
-    = { readonly factory: IFluidDataStoreFactory } & LoadableObjectCtor<T>;
+    = { readonly factory: IFluidDataStoreFactory; } & LoadableObjectCtor<T>;
 
 /**
  * A SharedObjectClass is a class that has a factory that can create a DDS (SharedObject) and a
@@ -39,7 +39,7 @@ export type DataObjectClass<T extends IFluidLoadable>
  * @typeParam T - The class of the SharedObject
  */
 export type SharedObjectClass<T extends IFluidLoadable>
-    = { readonly getFactory: () => IChannelFactory } & LoadableObjectCtor<T>;
+    = { readonly getFactory: () => IChannelFactory; } & LoadableObjectCtor<T>;
 
 /**
  * An object with a constructor that will return an `IFluidLoadable`.
@@ -54,9 +54,10 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) =
  */
 export interface ContainerSchema {
     /**
-     * initialObjects defines loadable objects that will be created when the Container
-     * is first created. It uses the key as the id and the value as the loadable object to create.
+     * Defines loadable objects that will be created when the `Container` is first created.
+     * It uses the key as the id and the value as the loadable object to create.
      *
+     * @example
      * In the example below two objects will be created when the Container is first
      * created. One with id "map1" that will return a `SharedMap` and the other with
      * id "pair1" that will return a `KeyValueDataObject`.
@@ -83,12 +84,16 @@ export interface ContainerSchema {
 
 /**
  * Events that trigger when the roster of members in the Fluid session change.
- * Only changes that would be reflected in the returned map of IServiceAudience's getMembers method
- * will emit events.
+ * Only changes that would be reflected in the returned map of {@link IServiceAudience}'s
+ * {@link IServiceAudience.getMembers} method will emit events.
+ *
+ * @remarks
+ *
+ * The following is the list of events emitted.
  *
  * ### "membersChanged"
  *
- * The membersChanged event is emitted when a member is either added or removed.
+ * The "membersChanged" event is emitted when a member is either added or removed.
  *
  * #### Listener signature
  *
@@ -98,7 +103,7 @@ export interface ContainerSchema {
  *
  * ### "memberAdded"
  *
- * The memberAdded event is emitted when a member joins the audience.
+ * The "memberAdded" event is emitted when a member joins the audience.
  *
  * #### Listener signature
  *
@@ -111,7 +116,7 @@ export interface ContainerSchema {
  *
  * ### "memberRemoved"
  *
- * The memberRemoved event is emitted when a member leaves the audience.
+ * The "memberRemoved" event is emitted when a member leaves the audience.
  *
  * #### Listener signature
  *

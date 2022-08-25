@@ -14,6 +14,7 @@ export enum Constants {
 export interface IStorageDirectoryConfig {
     useRepoOwner: boolean;
     baseDir?: string;
+    suffixPath?: string;
 }
 
 export interface IExternalWriterConfig {
@@ -73,19 +74,27 @@ export interface IFileSystemManagerFactory {
     create(fileSystemManagerParams?: IFileSystemManagerParams): IFileSystemManager;
 }
 
+export interface IStorageRoutingId {
+    tenantId: string;
+    documentId: string;
+}
+
 export interface IRepoManagerParams {
     repoOwner: string;
     repoName: string;
+    storageRoutingId?: IStorageRoutingId;
     fileSystemManagerParams?: IFileSystemManagerParams;
 }
 
 export interface IRepositoryManagerFactory {
     /**
-     * Create a new repository and return its manager instance.
+     * Tries to create a new repository and return its manager instance.
+     * If the repository already exists, then it is returned.
      */
     create(params: IRepoManagerParams): Promise<IRepositoryManager>;
     /**
      * Open an existing repository and return its manager instance.
+     * If the repository does not exist, throws an error.
      */
     open(params: IRepoManagerParams): Promise<IRepositoryManager>;
 }
@@ -108,4 +117,16 @@ export enum GitObjectType {
     ext2 = 5,       /** < Reserved for future use. */
     ofsdelta = 6,   /** < A delta, base is given by an offset. */
     refdelta = 7,   /** < A delta, base is given by object id. */
+}
+
+export enum BaseGitRestTelemetryProperties {
+    directoryPath = "directoryPath",
+    ref = "ref",
+    repoName = "repoName",
+    repoOwner = "repoOwner",
+    repoPerDocEnabled = "repoPerDocEnabled",
+    sha = "sha",
+    softDelete = "softDelete",
+    storageName = "storageName",
+    summaryType = "summaryType",
 }

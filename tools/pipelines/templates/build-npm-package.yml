@@ -81,6 +81,10 @@ parameters:
 - name: tagName
   type: string
 
+- name: includeInternalVersions
+  type: boolean
+  default: false
+
 trigger: none
 
 variables:
@@ -148,6 +152,7 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
+                targetBranchName = $(System.PullRequest.TargetBranch)
 
                 release=$(release)"
 
@@ -248,20 +253,31 @@ stages:
             # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
             # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
             - task: Bash@3
+              displayName: 'Check for nyc/report directory'
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}
+                script: |
+                  test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No
+                  nyc/report directory'
+              condition: succeededOrFailed()
+            - task: Bash@3
               displayName: Patch Coverage Results
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}/nyc/report
                 script: |
-                  sed -e 's/\(filename=\".*[\\/]external \)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
-              condition: succeededOrFailed()
+                  sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+              condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+
             - task: PublishCodeCoverageResults@1
               displayName: Publish Code Coverage
               inputs:
                 codeCoverageTool: Cobertura
                 summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                 reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
-              condition: succeededOrFailed()
+                failIfCoverageEmpty: true
+              condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
           # Test - Upload results
           - task: PublishTestResults@2
@@ -288,11 +304,15 @@ stages:
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
-                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
+                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm && \
+                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
                   npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
+
+                  # This saves a list of the packages in the working directory in topological order to a temporary file.
+                  # Each package name is modified to match the packed tar files.
+                  npx lerna ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
                 else
-                  npm pack --unsafe-perm
+                  npm pack --unsafe-perm && \
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
 
@@ -348,10 +368,13 @@ stages:
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+              TARGET_BRANCH_NAME: $(System.PullRequest.TargetBranch)
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
+              script: |
+                echo $(System.PullRequest.TargetBranch)
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -370,14 +393,14 @@ stages:
               publishLocation: 'Container'
 
         - task: Bash@3
-          displayName: Check for extraenous modified files
+          displayName: Check for extraneous modified files
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|\(use' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
-                echo "##vso[task.logissue type=error]Build should not create extraenous files"
+                echo "##vso[task.logissue type=error]Build should not create extraneous files"
                 exit -1;
               fi
 

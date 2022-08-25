@@ -14,12 +14,12 @@ import {
     OrderedClientCollection,
     OrderedClientElection,
 } from "../orderedClientElection";
-import { TestQuorum } from "./testQuorum";
+import { TestQuorumClients } from "./testQuorumClients";
 
 describe("Ordered Client Collection", () => {
     let orderedClients: IOrderedClientCollection;
     const mockLogger = new MockLogger();
-    const testQuorum = new TestQuorum();
+    const testQuorum = new TestQuorumClients();
 
     let currentSequenceNumber: number = 0;
     const testDeltaManager = { get lastSequenceNumber() { return currentSequenceNumber; } };

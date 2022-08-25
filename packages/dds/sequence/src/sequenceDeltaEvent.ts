@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     Client,
     IMergeTreeDeltaCallbackArgs,
@@ -19,22 +20,21 @@ import {
 /**
  * Base class for SequenceDeltaEvent and SequenceMaintenanceEvent.
  *
- * The properties of this object and its sub-objects represent a point in time state
- * at the time the operation was applied. They will not take into any future modifications
- * performed to the underlying sequence and merge tree.
+ * The properties of this object and its sub-objects represent the state of the sequence at the
+ * point in time at which the operation was applied.
+ * They will not take into any future modifications performed to the underlying sequence and merge tree.
  */
 export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
-    public readonly isEmpty: boolean;
     public readonly deltaOperation: TOperation;
     private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
-    private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
-    private readonly pLast: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
+    private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
+    private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
     constructor(
         public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
         private readonly mergeTreeClient: Client,
     ) {
-        this.isEmpty = deltaArgs.deltaSegments.length === 0;
+        assert(deltaArgs.deltaSegments.length > 0, 0x2d8 /* "Empty change event should not be emitted." */);
         this.deltaOperation = deltaArgs.operation;
 
         this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(
@@ -44,7 +44,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
                     const newRange: ISequenceDeltaRange<TOperation> = {
                         operation: this.deltaArgs.operation,
                         position: this.mergeTreeClient.getPosition(delta.segment),
-                        propertyDeltas: delta.propertyDeltas,
+                        propertyDeltas: delta.propertyDeltas ?? {},
                         segment: delta.segment,
                     };
                     set.addOrUpdate(newRange);
@@ -53,25 +53,17 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
             });
 
         this.pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
-            () => {
-                if (this.isEmpty) {
-                    return undefined;
-                }
-                return this.sortedRanges.value.items[0];
-            });
+            () => this.sortedRanges.value.items[0],
+        );
 
         this.pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
-            () => {
-                if (this.isEmpty) {
-                    return undefined;
-                }
-                return this.sortedRanges.value.items[this.sortedRanges.value.size - 1];
-            });
+            () => this.sortedRanges.value.items[this.sortedRanges.value.size - 1],
+        );
     }
 
     /**
      * The in-order ranges affected by this delta.
-     * These may not be continuos.
+     * These may not be continuous.
      */
     public get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[] {
         return this.sortedRanges.value.items;
@@ -80,23 +72,21 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     /**
      * The client id of the client that made the change which caused the delta event
      */
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.mergeTreeClient.longClientId;
     }
 
     /**
-     * The first of the modified ranges. Undefined if delta is empty,
-     * like in the case where a delete comes in for a previously deleted range
+     * The first of the modified ranges.
      */
-    public get first(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
+    public get first(): Readonly<ISequenceDeltaRange<TOperation>> {
         return this.pFirst.value;
     }
 
     /**
-     * The last of the modified ranges. Undefined if delta is empty,
-     * like in the case where a delete comes in for a previously deleted range
+     * The last of the modified ranges.
      */
-    public get last(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
+    public get last(): Readonly<ISequenceDeltaRange<TOperation>> {
         return this.pLast.value;
     }
 }
@@ -104,11 +94,11 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 /**
  * The event object returned on sequenceDelta events.
  *
- * The properties of this object and its sub-objects represent a point in time state
- * at the time the operation was applied. They will not take into consideration any future modifications
- * performed to the underlying sequence and merge tree.
+ * The properties of this object and its sub-objects represent the state of the sequence at the
+ * point in time at which the operation was applied.
+ * They will not take into consideration any future modifications performed to the underlying sequence and merge tree.
  *
- * For group ops, each op will get it's own event, and the group op property will be set on the op args.
+ * For group ops, each op will get its own event, and the group op property will be set on the op args.
  *
  * Ops may get multiple events. For instance, an insert-replace will get a remove then an insert event.
  */
@@ -131,9 +121,9 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 /**
  * The event object returned on maintenance events.
  *
- * The properties of this object and its sub-objects represent a point in time state
- * at the time the operation was applied. They will not take into any future modifications
- * performed to the underlying sequence and merge tree.
+ * The properties of this object and its sub-objects represent the state of the sequence at the
+ * point in time at which the operation was applied.
+ * They will not take into consideration any future modifications performed to the underlying sequence and merge tree.
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
     constructor(
@@ -162,7 +152,7 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 }
 
 class Lazy<T> {
-    private pValue: T;
+    private pValue: T | undefined;
     private pEvaluated: boolean;
     constructor(private readonly valueGenerator: () => T) {
         this.pEvaluated = false;
@@ -177,6 +167,6 @@ class Lazy<T> {
             this.pEvaluated = true;
             this.pValue = this.valueGenerator();
         }
-        return this.pValue;
+        return this.pValue as T;
     }
 }

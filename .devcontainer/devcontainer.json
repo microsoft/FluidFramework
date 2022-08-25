@@ -7,17 +7,12 @@
         "dockerfile": "Dockerfile",
         // Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
         "args": {
-            "NODE_VERSION": "12"
+            "NODE_VERSION": "14"
         }
     },
     "runArgs": [ "--init" ],
     "mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
     "overrideCommand": false,
-
-    // Set *default* container specific settings.json values on container create.
-    "settings": {
-        "terminal.integrated.shell.linux": "/usr/bin/zsh"
-    },
 
     // Add the IDs of extensions you want installed when the container is created.
     "extensions": [
@@ -35,5 +30,13 @@
     "postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install",
 
     // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-    "remoteUser": "node"
+    "remoteUser": "node",
+    "features": {
+        "git-lfs": "latest",
+        // We do not install Azure CLI and Github CLI because of security considerations
+        // when creating Github Codespaces instances. It's ok to install them manually if
+        // using this file to develop in a local container.
+        // "azure-cli": "latest",  // DO NOT UNCOMMENT
+        // "github-cli": "latest", // DO NOT UNCOMMENT
+    }
 }

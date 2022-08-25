@@ -24,6 +24,7 @@ module.exports = {
 		// Prettier
 		'comma-dangle': 'off',
 		'@typescript-eslint/comma-dangle': 'off',
+		'@typescript-eslint/member-delimiter-style': 'off',
 		'max-len': 'off',
 
 		// Rules which could be re-enabled (by dropping these overrides, as they are enabled in base config) with some minor fixes:
@@ -39,10 +40,10 @@ module.exports = {
 			},
 		],
 
-		// eslint-plugin-no-null
+		// unicorn/no-null
 		// GraphQL uses null rather than undefined. See https://github.com/graphql/graphql-js/issues/1298
 		// TODO: Determine if we want to use a helper library to convert null to undefined automatically
-		'no-null/no-null': 'off',
+		'unicorn/no-null': 'off',
 	},
 	overrides: [
 		{

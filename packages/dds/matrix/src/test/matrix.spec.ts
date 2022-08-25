@@ -225,12 +225,12 @@ describe("Matrix", () => {
         // Vets that the matrix correctly handles noncontiguous handles when allocating a range
         // of more than one handle.
         it("remove 1 row, insert 2 rows", async () => {
-            matrix.insertRows(0,4);
-            matrix.insertCols(0,1);
-            matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [0,1,2,3]);
-            matrix.removeRows(2,1);
-            matrix.insertRows(0,2);
-            matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [84,45]);
+            matrix.insertRows(0, 4);
+            matrix.insertCols(0, 1);
+            matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [0, 1, 2, 3]);
+            matrix.removeRows(2, 1);
+            matrix.insertRows(0, 2);
+            matrix.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [84, 45]);
             await expect([
                 [84],
                 [45],
@@ -373,20 +373,20 @@ describe("Matrix", () => {
             });
 
             it("insert and set in new row", async () => {
-                matrix1.insertCols(0,2);
+                matrix1.insertCols(0, 2);
                 await expect();
-                matrix1.insertRows(0,1);
+                matrix1.insertRows(0, 1);
                 matrix1.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["x"]);
                 await expect([[undefined, "x"]]);
             });
 
             it("insert and set in new col", async () => {
-                matrix1.insertRows(0,2);
+                matrix1.insertRows(0, 2);
                 await expect([
                     [],
                     [],
                 ]);
-                matrix1.insertCols(0,1);
+                matrix1.insertCols(0, 1);
                 matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 1, ["x"]);
                 await expect([
                     [undefined],
@@ -569,34 +569,34 @@ describe("Matrix", () => {
 
             // Vets that the row/col of remote set operations are correctly adjusted.
             it("insert row & col vs. insert row and set", async () => {
-                matrix1.insertRows(0,4);
-                matrix1.insertCols(0,4);
+                matrix1.insertRows(0, 4);
+                matrix1.insertCols(0, 4);
 
                 const v = new Array(16).fill(0).map((_, index) => index);
 
                 matrix1.setCells(0, 0, 4, v);
                 await expect();
 
-                matrix1.insertRows(0,1);
-                matrix2.insertRows(0,2);
-                matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, ["A","B","C","D"]);
-                matrix1.insertCols(1,1);
+                matrix1.insertRows(0, 1);
+                matrix2.insertRows(0, 2);
+                matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, ["A", "B", "C", "D"]);
+                matrix1.insertCols(1, 1);
 
                 await expect();
             });
 
             // Vets that writes to delete handles are ignored.
             it("remove rows vs. set cells", async () => {
-                matrix1.insertRows(0,3);
-                matrix1.insertCols(0,2);
+                matrix1.insertRows(0, 3);
+                matrix1.insertCols(0, 2);
                 matrix1.setCells(0, 0, 2, [0, 1, 2, 3]);
 
                 // In order to hit the recycled handle case, ensure that the 'setCells()' below intersects
                 // an empty row, which will cause the next available handle to be allocated.
-                matrix2.insertRows(0,1);
+                matrix2.insertRows(0, 1);
                 await expect();
 
-                matrix1.removeRows(1,1);
+                matrix1.removeRows(1, 1);
                 matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A", "B", "C"]);
                 await expect();
             });
@@ -604,17 +604,17 @@ describe("Matrix", () => {
             // This case is interesting because the removal of [0..1] is split on client2 to straddle the
             // inserted "B".
             it("overlapping insert/set vs. remove/insert/set", async () => {
-                matrix1.insertRows(0,1);    // rowCount: 0, colCount: 0
-                matrix1.insertCols(0,4);    // rowCount: 1, colCount: 0
-                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [0,1,2,3]);
+                matrix1.insertRows(0, 1);    // rowCount: 0, colCount: 0
+                matrix1.insertCols(0, 4);    // rowCount: 1, colCount: 0
+                matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [0, 1, 2, 3]);
                 await expect([
                     [0, 1, 2, 3],
                 ]);
 
-                matrix2.insertCols(1,1);    // rowCount: 1, colCount: 5
+                matrix2.insertCols(1, 1);    // rowCount: 1, colCount: 5
                 matrix2.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["A"]);
-                matrix1.removeCols(0,2);    // rowCount: 1, colCount: 2
-                matrix1.insertCols(0,1);    // rowCount: 1, colCount: 3
+                matrix1.removeCols(0, 2);    // rowCount: 1, colCount: 2
+                matrix1.insertCols(0, 1);    // rowCount: 1, colCount: 3
                 matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["B"]);
                 await expect([
                     ["B", "A", 2, 3],
@@ -828,17 +828,17 @@ describe("Matrix", () => {
         });
 
         it("resubmission omits writes to recycled row/col handles", async () => {
-            matrix1.insertRows(0,2);
-            matrix1.insertCols(0,2);
+            matrix1.insertRows(0, 2);
+            matrix1.insertCols(0, 2);
             matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
                 0, 1,
                 2, 3,
             ]);
-            matrix1.removeRows(1,1);
+            matrix1.removeRows(1, 1);
 
             containerRuntime1.connected = false;
 
-            matrix1.insertRows(0,1);
+            matrix1.insertRows(0, 1);
             matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, [
                 28, 49,
             ]);
@@ -847,7 +847,7 @@ describe("Matrix", () => {
 
             await expect([
                 [28, 49],
-                [ 0,  1],
+                [0,  1],
             ]);
         });
 
@@ -869,8 +869,8 @@ describe("Matrix", () => {
 
             await expect([
                 [61, 57,  7, 62],
-                [ 0,  1,  2,  3],
-                [ 4,  5,  6,  7],
+                [0,  1,  2,  3],
+                [4,  5,  6,  7],
             ]);
 
             matrix1.setCells(/* row: */ 2, /* col: */ 3, /* colCount: */ 1, [65]);
@@ -880,8 +880,8 @@ describe("Matrix", () => {
             containerRuntime1.connected = true;
 
             await expect([
-                [ 0,  1,  2,  3],
-                [ 4,  5,  6, 65],
+                [0,  1,  2,  3],
+                [4,  5,  6, 65],
             ]);
         });
 

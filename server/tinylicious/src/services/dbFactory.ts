@@ -2,21 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { IDbFactory } from "@fluidframework/server-services-core";
 
-import { IDb, IDbFactory } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
-import { InMemoryDb } from "./inMemorydb";
-import { LevelDb } from "./levelDb";
+import { LevelDbFactory } from "./levelDb";
+import { InMemoryDbFactory } from "./inMemorydb";
 
-export class DbFactory implements IDbFactory {
-    private readonly db;
-
-    constructor(config: Provider) {
-        this.db = config.get("db:inMemory") ? new InMemoryDb() : new LevelDb(config.get("db:path"));
-    }
-
-    public async connect(): Promise<IDb> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.db;
-    }
+export async function getDbFactory(config: Provider): Promise<IDbFactory> {
+    return config.get("db:inMemory")
+        ? new InMemoryDbFactory()
+        : new LevelDbFactory(config.get("db:path"));
 }

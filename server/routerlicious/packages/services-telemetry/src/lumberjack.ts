@@ -188,7 +188,7 @@ export class Lumberjack {
     * Caveat: function names do not work properly when using callbacks.
     * For more info, see:
     * https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-    * @returns {string} filename and function separated by a colon
+    * @returns filename and function separated by a colon
     */
     private getLogCallerInfo(): string {
         const defaultPrefix = "LogMessage";

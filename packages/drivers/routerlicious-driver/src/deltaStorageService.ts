@@ -11,9 +11,8 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { RestWrapper } from "@fluidframework/server-services-client";
 import { DocumentStorageService } from "./documentStorageService";
 
@@ -26,7 +25,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
     constructor(
         private readonly tenantId: string,
         private readonly id: string,
-        private readonly storageService: IDeltaStorageService,
+        private readonly deltaStorageService: IDeltaStorageService,
         private readonly documentStorageService: DocumentStorageService) {
     }
 
@@ -37,8 +36,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
         fetchReason?: string,
-    ): IStream<ISequencedDocumentMessage[]>
-    {
+    ): IStream<ISequencedDocumentMessage[]> {
         if (cachedOnly) {
             return emptyMessageStream;
         }
@@ -57,8 +55,9 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
     }
 
     private async getCore(from: number, to: number): Promise<IDeltasFetchResult> {
-        const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
-            (this.documentStorageService, this.logtailSha) : [];
+        const opsFromLogTail = this.logtailSha
+            ? await readAndParse<ISequencedDocumentMessage[]>(this.documentStorageService, this.logtailSha)
+            : [];
 
         this.logtailSha = undefined;
         if (opsFromLogTail.length > 0) {
@@ -70,7 +69,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
             }
         }
 
-        return this.storageService.get(this.tenantId, this.id, from, to);
+        return this.deltaStorageService.get(this.tenantId, this.id, from, to);
     }
 }
 
@@ -81,7 +80,10 @@ export class DeltaStorageService implements IDeltaStorageService {
     constructor(
         private readonly url: string,
         private readonly restWrapper: RestWrapper,
-        private readonly logger: ITelemetryLogger) {
+        private readonly logger: ITelemetryLogger,
+        private readonly getRestWrapper: () => Promise<RestWrapper> = async () => this.restWrapper,
+        private readonly getDeltaStorageUrl: () => string = () => this.url,
+    ) {
     }
 
     public async get(
@@ -89,8 +91,7 @@ export class DeltaStorageService implements IDeltaStorageService {
         id: string,
         from: number, // inclusive
         to: number, // exclusive
-        ): Promise<IDeltasFetchResult>
-    {
+    ): Promise<IDeltasFetchResult> {
         const ops = await PerformanceEvent.timedExecAsync(
             this.logger,
             {
@@ -99,8 +100,10 @@ export class DeltaStorageService implements IDeltaStorageService {
                 to,
             },
             async (event) => {
-                const response = await this.restWrapper.get<ISequencedDocumentMessage[]>(
-                    this.url,
+                const restWrapper = await this.getRestWrapper();
+                const url = this.getDeltaStorageUrl();
+                const response = await restWrapper.get<ISequencedDocumentMessage[]>(
+                    url,
                     { from: from - 1, to });
                 event.end({
                     count: response.length,

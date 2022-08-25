@@ -48,12 +48,21 @@ class SharedTreeAssertionError extends Error {
 }
 
 /**
- * Compares finite numbers to form a strict partial ordering.
+ * A numeric comparator used for sorting in ascending order.
  *
  * Handles +/-0 like Map: -0 is equal to +0.
  */
 export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
 	return a - b;
+}
+
+/**
+ * A numeric comparator used for sorting in descending order.
+ *
+ * Handles +/-0 like Map: -0 is equal to +0.
+ */
+export function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
+	return b - a;
 }
 
 /**
@@ -96,16 +105,21 @@ export function fail(message: string = defaultFailMessage, containsPII = false):
  * Asserts a value is not undefined, and returns the value.
  * Use when violations are logic errors in the program.
  *
+ * @remarks
  * When practical, prefer the pattern `x ?? fail('message')` over `assertNotUndefined(x, 'message')`.
- * Using `?? fail` allows for message formatting without incurring the cost of formatting the message in the non failing case
- * (ex:
- * ```
+ * Using `?? fail` allows for message formatting without incurring the cost of formatting the message
+ * in the non failing case.
+ *
+ * Example:
+ * ```typescript
  * x ?? fail(`x should exist for ${y}`)
  * ```
- * ). Additionally the `?? fail` avoids an extra call/stack frame in the non failing case.
+ *
+ * Additionally the `?? fail` avoids an extra call/stack frame in the non failing case.
  *
  * Another pattern to prefer over `assertNotUndefined(x, 'message')` is `assert(x !== undefined)`.
- * This pattern is preferred because it is more general (same approach works with typeof, instance of, comparison to other values etc.).
+ * This pattern is preferred because it is more general (same approach works with typeof, instance of,
+ * comparison to other values etc.).
  *
  * @param value - Value to assert against is non undefined.
  * @param message - Message to be printed if assertion fails.
@@ -117,7 +131,7 @@ export function assertNotUndefined<T>(value: T | undefined, message = 'value mus
 
 /**
  * Asserts an array contains a single value and returns the value.
- * @param array - array to assert contains a single value.
+ * @param array - Array to assert contains a single value.
  * @param message - Message to be printed if assertion fails.
  */
 export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
@@ -127,9 +141,9 @@ export function assertArrayOfOne<T>(array: readonly T[], message = 'array value 
 
 /**
  * Assign a property and value to a given object.
- * @param object - the object to add the property to
- * @param property - the property key
- * @param value - the value of the property
+ * @param object - The object to add the property to
+ * @param property - The property key
+ * @param value - The value of the property
  * @returns `object` after assigning `value` to the property `property`.
  */
 export function assign<T, K extends keyof never, V>(object: T, property: K, value: V): With<T, K, V> {
@@ -139,8 +153,9 @@ export function assign<T, K extends keyof never, V>(object: T, property: K, valu
 /**
  * Redefine a property to have the given value. This is simply a type-safe wrapper around
  * `Object.defineProperty`, but it is useful for caching public getters on first read.
+ *
  * @example
- * ```
+ * ```typescript
  * // `randomOnce()` will return a random number, but always the same random number.
  * {
  *   get randomOnce(): number {
@@ -148,9 +163,9 @@ export function assign<T, K extends keyof never, V>(object: T, property: K, valu
  *   }
  * }
  * ```
- * @param object - the object containing the property
- * @param propName - the name of the property on the object
- * @param value - the value of the property
+ * @param object - The object containing the property
+ * @param propName - The name of the property on the object
+ * @param value - The value of the property
  */
 export function memoizeGetter<T, K extends keyof T>(object: T, propName: K, value: T[K]): T[K] {
 	Object.defineProperty(object, propName, {
@@ -220,9 +235,9 @@ export function find<T>(sequence: Iterable<T>, find: (t: T) => boolean): T | und
 
 /**
  * Iterate through two iterables and return true if they yield equivalent elements in the same order.
- * @param iterableA - the first iterable to compare
- * @param iterableB - the second iterable to compare
- * @param elementComparator - the function used to check if two `T`s are equivalent.
+ * @param iterableA - The first iterable to compare
+ * @param iterableB - The second iterable to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareIterables<T>(
@@ -235,9 +250,9 @@ export function compareIterables<T>(
 
 /**
  * Iterate through two iterators and return true if they yield equivalent elements in the same order.
- * @param iteratorA - the first iterator to compare
- * @param iteratorB - the second iterator to compare
- * @param elementComparator - the function used to check if two `T`s are equivalent.
+ * @param iteratorA - The first iterator to compare
+ * @param iteratorB - The second iterator to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 function compareIterators<T, TReturn extends T = T>(
@@ -264,9 +279,9 @@ function compareIterators<T, TReturn extends T = T>(
 
 /**
  * Compare two arrays and return true if their elements are equivalent and in the same order.
- * @param arrayA - the first array to compare
- * @param arrayB - the second array to compare
- * @param elementComparator - the function used to check if two `T`s are equivalent.
+ * @param arrayA - The first array to compare
+ * @param arrayB - The second array to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareArrays<T>(
@@ -289,9 +304,9 @@ export function compareArrays<T>(
 
 /**
  * Compare two maps and return true if their contents are equivalent.
- * @param mapA - the first array to compare
- * @param mapB - the second array to compare
- * @param elementComparator - the function used to check if two `T`s are equivalent.
+ * @param mapA - The first array to compare
+ * @param mapB - The second array to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareMaps<K, V>(
@@ -315,15 +330,15 @@ export function compareMaps<K, V>(
 
 /**
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
- * @param map - the map to query/update
- * @param key - the key to lookup in the map
- * @param defaultValue - a function which returns a default value. This is called and used to set an initial value in the map if none exists
+ * @param map - The map to query/update
+ * @param key - The key to lookup in the map
+ * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
-export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: () => V): V {
+export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K) => V): V {
 	let value = map.get(key);
 	if (value === undefined) {
-		value = defaultValue();
+		value = defaultValue(key);
 		map.set(key, value);
 	}
 	return value;
@@ -369,6 +384,8 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
 }
 
 /**
+ * @example
+ * ```typescript
  * function (thing: ObjectWithMaybeFoo) {
  * 	   const x: MyActualType = {
  * 	       bar: 3
@@ -377,7 +394,7 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
  *
  * 	    copyPropertyIfDefined(thing, x, 'foo');
  * }
- * @returns
+ * ```
  */
 
 function breakOnDifference(): { break: boolean } {
@@ -533,3 +550,47 @@ export type ReplaceRecursive<T, TReplace, TWith> = T extends TReplace
 	: {
 			[P in keyof T]: ReplaceRecursive<T[P], TReplace, TWith>;
 	  };
+
+/** A union type of the first `N` positive integers */
+export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A['length']
+	? never
+	: A['length'] | TakeWholeNumbers<N, [never, ...A]>;
+/** Returns a tuple type with exactly `Length` elements of type `T` */
+export type ArrayOfLength<T, Length extends number, A extends T[] = []> = Length extends A['length']
+	? A
+	: ArrayOfLength<T, Length, [T, ...A]>;
+/**
+ * Fails if `array` does not have exactly `length` elements
+ */
+export function hasExactlyLength<T, Len extends TakeWholeNumbers<16>>(
+	array: readonly T[],
+	length: Len
+): array is ArrayOfLength<T, Len> {
+	return array.length === length;
+}
+/**
+ * Fails if `array` does not have at least `length` elements
+ */
+export function hasLength<T, Len extends TakeWholeNumbers<16>>(
+	array: readonly T[],
+	length: Len
+): array is [...ArrayOfLength<T, Len>, ...T[]] {
+	return array.length >= length;
+}
+
+/**
+ * Type for a rest parameter which can accept many values, or a single array.
+ * Since a callee cannot modify an array passed as a rest parameter with the spread operator,
+ * an array passed directly should be readonly for consistency (caller retains ownership).
+ */
+export type RestOrArray<T> = readonly T[] | [readonly T[]];
+
+/**
+ * When value is a one-element array containing another array, unwraps and returns the inner array.
+ * Otherwise, returns the provided array.
+ * Useful for implementing functions with a `RestOrArray` parameter.
+ * T must not be implemented with an array (`Array.isArray(t)` must return false)
+ */
+export function unwrapRestOrArray<T>(value: [any[]] extends [T] ? never : RestOrArray<T>): readonly T[] {
+	return value.length === 1 && Array.isArray(value[0]) ? value[0] : (value as T[]);
+}

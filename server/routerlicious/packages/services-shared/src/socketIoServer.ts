@@ -74,7 +74,8 @@ class SocketIoServer implements core.IWebSocketServer {
 export function create(
     redisConfig: any,
     server: http.Server,
-    socketIoAdapterConfig?: any): core.IWebSocketServer {
+    socketIoAdapterConfig?: any,
+    socketIoConfig?: any): core.IWebSocketServer {
     const options: Redis.RedisOptions = {
         host: redisConfig.host,
         port: redisConfig.port,
@@ -98,7 +99,7 @@ export function create(
         Lumberjack.error("Error with Redis sub connection", undefined, err);
     });
 
-    let adapter: (nsp: Namespace) => Adapter | undefined;
+    let adapter: (nsp: Namespace) => Adapter;
     if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
         const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions =
         {
@@ -120,7 +121,7 @@ export function create(
         // Enable compatibility with socket.io v2 clients
         allowEIO3: true,
         // Indicates whether a connection should use compression
-        perMessageDeflate: true,
+        perMessageDeflate: socketIoConfig?.perMessageDeflate ?? true,
         // Enable long-polling as a fallback
         transports: ["websocket", "polling"],
         cors: {

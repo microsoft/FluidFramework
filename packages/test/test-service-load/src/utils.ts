@@ -14,8 +14,17 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBufferedLogger, ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createFluidTestDriver, generateOdspHostStoragePolicy, OdspTestDriver } from "@fluidframework/test-drivers";
+import {
+    ITelemetryBufferedLogger,
+    ITestDriver,
+    TestDriverTypes,
+    DriverEndpoint,
+} from "@fluidframework/test-driver-definitions";
+import {
+    createFluidTestDriver,
+    generateOdspHostStoragePolicy,
+    OdspTestDriver,
+} from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import { generateConfigurations, generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
@@ -30,10 +39,10 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-        super(undefined /* namespace */, {all:{testVersion: pkgVersion}});
+        super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
     }
 
-    async flush(runInfo?: { url: string, runId?: number }): Promise<void> {
+    async flush(runInfo?: { url: string; runId?: number; }): Promise<void> {
         const baseFlushP = this.baseLogger?.flush();
 
         if (this.error && runInfo !== undefined) {
@@ -60,8 +69,9 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent): void {
         if (typeof event.testCategoryOverride === "string") {
             event.category = event.testCategoryOverride;
+        } else if (typeof event.message === "string" && event.message.includes("FaultInjectionNack")) {
+            event.category = "generic";
         }
-
         this.baseLogger?.send({ ...event, hostName: pkgName });
 
         event.Event_Time = Date.now();
@@ -116,31 +126,35 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     }
 }
 
-export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig, verbose: boolean) {
+export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig,
+    verbose: boolean, testIdn?: string) {
     const randEng = random.engines.mt19937();
     randEng.seed(seed);
+    const optionsOverride =
+        `${testDriver.type}${testDriver.endpointName !== undefined ? `-${testDriver.endpointName}` : ""}`;
     const loaderOptions = random.pick(
         randEng,
-        generateLoaderOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.loader));
+        generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader));
     const containerOptions = random.pick(
         randEng,
-        generateRuntimeOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.container));
+        generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container));
     const configurations = random.pick(
         randEng,
-        generateConfigurations(seed, testConfig?.optionOverrides?.[testDriver.type]?.configurations));
+        generateConfigurations(seed, testConfig?.optionOverrides?.[optionsOverride]?.configurations));
 
+    const logger = ChildLogger.create(await loggerP, undefined,
+    {
+        all: {
+            driverType: testDriver.type,
+            driverEndpointName: testDriver.endpointName,
+        },
+    });
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader: createCodeLoader(containerOptions),
-        logger: ChildLogger.create(await loggerP, undefined,
-            {
-                all: {
-                    driverType: testDriver.type,
-                    driverEndpointName: testDriver.endpointName,
-                },
-            }),
+        logger,
         options: loaderOptions,
         detachedBlobStorage: new MockDetachedBlobStorage(),
         configProvider: {
@@ -159,21 +173,21 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     if ((testConfig.detachedBlobCount ?? 0) > 0) {
         assert(testDriver.type === "odsp", "attachment blobs in detached container not supported on this service");
         const ds = await requestFluidObject<ILoadTest>(container, "/");
-        const dsm = await ds.detached({ testConfig, verbose, randEng });
+        const dsm = await ds.detached({ testConfig, verbose, randEng }, logger);
         await Promise.all([...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)));
     }
 
     // Currently odsp binary snapshot format only works for special file names. This won't affect any other test
     // since we have a unique dateId as prefix. So we can just add the required suffix.
-    const testId = `${Date.now().toString()}-WireFormatV1RWOptimizedSnapshot_45e4`;
+    const testId = testIdn ?? `${Date.now().toString()}-WireFormatV1RWOptimizedSnapshot_45e4`;
+    assert(testId !== "", "testId specified cannot be an empty string");
     const request = testDriver.createCreateNewRequest(testId);
     await container.attach(request);
     assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
     const resolvedUrl = container.resolvedUrl;
     container.close();
 
-    if ((testConfig.detachedBlobCount ?? 0) > 0) {
-        // TODO: #7684 this should be driver-agnostic
+    if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
         const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);
         return url;
     }
@@ -181,7 +195,12 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
 }
 
 export async function createTestDriver(
-    driver: TestDriverTypes, seed: number, runId: number | undefined, supportsBrowserAuth?: true) {
+    driver: TestDriverTypes,
+    endpointName: DriverEndpoint | undefined,
+    seed: number,
+    runId: number | undefined,
+    supportsBrowserAuth?: true,
+    ) {
     const options = generateOdspHostStoragePolicy(seed);
     return createFluidTestDriver(
         driver,
@@ -190,6 +209,10 @@ export async function createTestDriver(
                 directory: "stress",
                 options: options[(runId ?? seed) % options.length],
                 supportsBrowserAuth,
+                odspEndpointName: endpointName,
+            },
+            r11s: {
+                r11sEndpointName: endpointName,
             },
         });
 }

@@ -20,7 +20,7 @@ export abstract class Formatter<TState extends IFormatterState> {
     public abstract visit(
         layout: Layout,
         state: Readonly<TState>,
-    ): { consumed: boolean, state: Readonly<TState> };
+    ): { consumed: boolean; state: Readonly<TState>; };
 
     public abstract end(
         layout: Layout,

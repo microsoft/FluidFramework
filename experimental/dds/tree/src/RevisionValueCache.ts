@@ -21,10 +21,12 @@ export type Revision = number;
  * A cache of `TValue`s corresponding to `Revision`s.
  *
  * A value is kept in cache if it meets any of the following criteria:
- * - The revision is >= `retentionWindowStart`
- * - The value has been used recently, meaning getClosestEntry or cacheValue was called with its revision. Note that being returned
- * 		when a large revision was passed to getClosestEntry does not count.
- * - The value is `retained` meaning it was provided to to constructor in retainedEntries or passed to `cacheRetainedValue`
+ *
+ * - The revision is \>= `retentionWindowStart`
+ * - The value has been used recently, meaning getClosestEntry or cacheValue was called with its revision. Note that
+ *      being returned when a large revision was passed to getClosestEntry does not count.
+ * - The value is `retained` meaning it was provided to to constructor in retainedEntries or passed to
+ *   `cacheRetainedValue`
  */
 export class RevisionValueCache<TValue> {
 	/**
@@ -36,7 +38,7 @@ export class RevisionValueCache<TValue> {
 
 	/**
 	 * Cache of most recently used evictable entries.
-	 * Subset of 'sortedValues` eligible for eviction:
+	 * Subset of `sortedValues` eligible for eviction:
 	 * All entries are also in `sortedValues`, and are removed from `sortedValues` when evicted from this cache.
 	 * Evicts least recently used entries.
 	 */
@@ -53,8 +55,8 @@ export class RevisionValueCache<TValue> {
 		 */
 		evictableSize: number,
 		/**
-		 * The first revision within the retention window. All entries with revisions >= retentionWindowStart will be retained.
-		 * Must be >= 0.
+		 * The first revision within the retention window. All entries with revisions \>= retentionWindowStart will be retained.
+		 * Must be \>= 0.
 		 */
 		private retentionWindowStart: Revision,
 		/**
@@ -117,7 +119,8 @@ export class RevisionValueCache<TValue> {
 	}
 
 	/**
-	 * @returns a [cachedRevision, value] where cachedRevision <= requestedRevision, or undefined if no such revision is cached.
+	 * @returns a [cachedRevision, value] where cachedRevision \<= requestedRevision, or undefined if no such revision
+	 * is cached.
 	 */
 	public getClosestEntry(requestedRevision: Revision): [revision: Revision, value: TValue] | undefined {
 		const fromLRU = this.evictableRevisions.get(requestedRevision);

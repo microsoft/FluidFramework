@@ -13,7 +13,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./state";
 
 export class Bubblebench extends DataObject {
-    public static get Name() { return "@fluid-experimental/bubblebench-ot"; }
+    public static get Name() { return "@fluid-example/bubblebench-ot"; }
     private maybeTree?: SharedJson1 = undefined;
     private maybeAppState?: AppState = undefined;
 

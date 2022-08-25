@@ -5,8 +5,8 @@
 
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/protocol-definitions";
-import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts";
-import { ISnapshotContents } from "./odspUtils";
+import { IOdspSnapshot, IOdspSnapshotCommit, ISnapshotTreeEx } from "./contracts";
+import { ISnapshotContents } from "./odspPublicUtils";
 
 /**
  * Build a tree hierarchy base on a flat tree
@@ -16,9 +16,9 @@ import { ISnapshotContents } from "./odspUtils";
  * @returns the hierarchical tree
  */
 function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
-    const lookup: { [path: string]: api.ISnapshotTree } = {};
+    const lookup: { [path: string]: api.ISnapshotTree; } = {};
     // id is required for root tree as it will be used to determine the version we loaded from.
-    const root: api.ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
+    const root: ISnapshotTreeEx = { id: flatTree.id, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.entries) {
@@ -31,9 +31,10 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
 
         // Add in either the blob or tree
         if (entry.type === "tree") {
-            const newTree: api.ISnapshotTree = {
+            const newTree: ISnapshotTreeEx = {
                 blobs: {},
                 trees: {},
+                commits: {},
                 unreferenced: entry.unreferenced,
             };
             node.trees[decodeURIComponent(entryPathBase)] = newTree;
@@ -50,22 +51,27 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
  * Converts existing IOdspSnapshot to snapshot tree, blob array and ops
  * @param odspSnapshot - snapshot
  */
-export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
+export function convertOdspSnapshotToSnapshotTreeAndBlobs(
     odspSnapshot: IOdspSnapshot,
 ): ISnapshotContents {
     const blobsWithBufferContent = new Map<string, ArrayBuffer>();
     if (odspSnapshot.blobs) {
         odspSnapshot.blobs.forEach((blob) => {
             assert(blob.encoding === "base64" || blob.encoding === undefined,
-                0x0a4 /* `Unexpected blob encoding type: '${blob.encoding}'` */);
+                0x0a4 /* Unexpected blob encoding type */);
             blobsWithBufferContent.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf8"));
         });
     }
+
+    const sequenceNumber = odspSnapshot?.trees[0].sequenceNumber;
+
     const val: ISnapshotContents = {
         blobs: blobsWithBufferContent,
         ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
-        sequenceNumber: odspSnapshot.trees && (odspSnapshot.trees[0]).sequenceNumber,
+        sequenceNumber,
         snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
+        latestSequenceNumber: (odspSnapshot.ops && odspSnapshot.ops.length > 0) ?
+            odspSnapshot.ops[odspSnapshot.ops.length - 1].sequenceNumber : sequenceNumber,
     };
     return val;
 }

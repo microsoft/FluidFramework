@@ -4,7 +4,7 @@
  */
 
 import { assert, expect } from 'chai';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { LoaderHeader } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -14,7 +14,7 @@ import {
 	MockFluidDataStoreRuntime,
 } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common';
-import { EditId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
+import { EditId, NodeId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog, OrderedEditSet } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
@@ -49,6 +49,7 @@ import { InterningTreeCompressor } from '../../TreeCompressor';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder';
 import { sequencedIdNormalizer } from '../../NodeIdUtilities';
 import { convertNodeDataIds } from '../../IdConversion';
+import { generateStableId, nilUuid } from '../../UuidUtilities';
 import { buildLeaf, SimpleTestTree, TestTree } from './TestNode';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
 import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
@@ -69,6 +70,7 @@ import {
 	applyNoop,
 	getIdNormalizerFromSharedTree,
 	waitForSummary,
+	getEditLogInternal,
 } from './TestUtilities';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
@@ -363,6 +365,19 @@ export function runSharedTreeOperationsTests(
 				});
 			});
 
+			it('correctly reports attribution ID', () => {
+				const attributionId = generateStableId();
+				const { tree } = setUpTestSharedTree({ attributionId });
+				expect(tree.attributionId).to.equal(writeFormat === WriteFormat.v0_0_2 ? nilUuid : attributionId);
+			});
+
+			it('correctly attributes node IDs', () => {
+				const attributionId = generateStableId();
+				const { tree } = setUpTestSharedTree({ attributionId });
+				const id = tree.generateNodeId();
+				expect(tree.attributeNodeId(id)).to.equal(writeFormat === WriteFormat.v0_0_2 ? nilUuid : attributionId);
+			});
+
 			runSharedTreeUndoRedoTestSuite({ localMode: true, ...undoRedoOptions });
 		});
 
@@ -384,6 +399,45 @@ export function runSharedTreeOperationsTests(
 					id: 'secondTestSharedTree',
 					localMode: false,
 				};
+			}
+
+			if (writeFormat === WriteFormat.v0_0_2) {
+				it('applies unversioned ops in the 0.0.2 format', () => {
+					const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree(tree1Options);
+					const { sharedTree: sharedTree2, testTree: testTree2 } = createSimpleTestTree(
+						createSecondTreeOptions(containerRuntimeFactory)
+					);
+
+					containerRuntimeFactory.processAllMessages();
+					const originalPushMessage = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+					containerRuntimeFactory.pushMessage = (msg) => {
+						// Drop the version property to replicate ops created before the version property existed
+						msg.contents.version = undefined;
+						originalPushMessage(msg);
+					};
+
+					// Ensure that an edit can be passed and processed between two trees as normal
+					sharedTree2.applyEdit(Change.delete(StableRange.only(testTree2.right)));
+
+					const getTestTreeRoot = (sharedTree: SharedTree) =>
+						new TreeNodeHandle(
+							sharedTree.currentView,
+							sharedTree.convertToNodeId(sharedTree2.convertToStableNodeId(testTree2.identifier))
+						);
+
+					let root1 = getTestTreeRoot(sharedTree1);
+					let root2 = getTestTreeRoot(sharedTree2);
+
+					expect(Array.from(root1.traits[testTree2.right.traitLabel])).to.have.length(1);
+					expect(Array.from(root2.traits[testTree2.right.traitLabel] ?? [])).to.have.length(0);
+
+					containerRuntimeFactory.processAllMessages();
+
+					root1 = getTestTreeRoot(sharedTree1);
+					root2 = getTestTreeRoot(sharedTree2);
+					expect(Array.from(root1.traits[testTree2.right.traitLabel] ?? [])).to.have.length(0);
+					expect(Array.from(root2.traits[testTree2.right.traitLabel] ?? [])).to.have.length(0);
+				});
 			}
 
 			it('should apply remote changes and converge', () => {
@@ -756,6 +810,48 @@ export function runSharedTreeOperationsTests(
 					const blobContents = await blobHandle.get();
 					expect(IsoBuffer.from(blobContents, 'utf8').toString()).to.equal(blobbedPayload);
 				});
+
+				it('can exchange attribution IDs', () => {
+					const attributionId1 = generateStableId();
+					const { tree: sharedTree1, containerRuntimeFactory } = setUpTestSharedTree({
+						...tree1Options,
+						attributionId: attributionId1,
+					});
+					const attributionId2 = generateStableId();
+					const { tree: sharedTree2 } = setUpTestSharedTree({
+						...createSecondTreeOptions(containerRuntimeFactory),
+						attributionId: attributionId2,
+					});
+					containerRuntimeFactory.processAllMessages();
+
+					const nodeId1 = sharedTree1.generateNodeId();
+					const stableNodeId1 = sharedTree1.convertToStableNodeId(nodeId1);
+					sharedTree1.applyEdit(
+						...Change.insertTree(
+							[buildLeaf(nodeId1)],
+							StablePlace.atEndOf(testTrait(sharedTree1.currentView))
+						)
+					);
+
+					containerRuntimeFactory.processAllMessages();
+					expect(sharedTree2.attributeNodeId(sharedTree2.convertToNodeId(stableNodeId1))).to.equal(
+						attributionId1
+					);
+
+					const nodeId2 = sharedTree2.generateNodeId();
+					const stableNodeId2 = sharedTree2.convertToStableNodeId(nodeId1);
+					sharedTree2.applyEdit(
+						...Change.insertTree(
+							[buildLeaf(nodeId2)],
+							StablePlace.atEndOf(testTrait(sharedTree2.currentView))
+						)
+					);
+
+					containerRuntimeFactory.processAllMessages();
+					expect(sharedTree1.attributeNodeId(sharedTree1.convertToNodeId(stableNodeId2))).to.equal(
+						attributionId2
+					);
+				});
 			}
 		});
 
@@ -801,14 +897,13 @@ export function runSharedTreeOperationsTests(
 
 					const serialized = serialize(sharedTree.saveSummary(), testSerializer, testHandle);
 					const treeContent: SharedTreeSummaryBase = JSON.parse(serialized);
-					let parsedTree: SummaryContents;
-					if (writeFormat === WriteFormat.v0_1_1) {
-						parsedTree = new SharedTreeEncoder_0_1_1(true).decodeSummary(treeContent as SharedTreeSummary);
-					} else {
-						parsedTree = new SharedTreeEncoder_0_0_2(true).decodeSummary(
-							treeContent as SharedTreeSummary_0_0_2
-						);
-					}
+					const parsedTree: SummaryContents =
+						writeFormat === WriteFormat.v0_1_1
+							? new SharedTreeEncoder_0_1_1(true).decodeSummary(
+									treeContent as SharedTreeSummary,
+									sharedTree.attributionId
+							  )
+							: new SharedTreeEncoder_0_0_2(true).decodeSummary(treeContent as SharedTreeSummary_0_0_2);
 
 					expect(parsedTree.currentTree).to.not.be.undefined;
 					const testRoot = assertArrayOfOne(
@@ -1005,12 +1100,24 @@ export function runSharedTreeOperationsTests(
 		});
 
 		describe('telemetry', () => {
+			class LoggerThatOnlySeesSharedTreeEvents implements ITelemetryBaseLogger {
+				public constructor(
+					private readonly additionalFilter: (event: ITelemetryBaseEvent) => boolean = (e) => true
+				) {}
+				public events: ITelemetryBaseEvent[] = [];
+				public send(event: ITelemetryBaseEvent) {
+					if (isSharedTreeEvent(event) && this.additionalFilter(event)) {
+						this.events.push(event);
+					}
+				}
+			}
+
 			describe('useFailedSequencedEditTelemetry', () => {
 				it('decorates events with the correct properties', async () => {
 					// Test that a handle can wrap a node and retrieve that node's properties
-					const events: ITelemetryBaseEvent[] = [];
+					const logger = new LoggerThatOnlySeesSharedTreeEvents();
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger,
 						allowInvalid: true,
 					});
 					useFailedSequencedEditTelemetry(sharedTree);
@@ -1025,16 +1132,19 @@ export function runSharedTreeOperationsTests(
 					containerRuntimeFactory.processAllMessages();
 					// Force demand, which will cause a telemetry event for the invalid edit to be emitted
 					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-					expect(events.length).is.greaterThan(0);
-					events.forEach((event) => {
+					expect(logger.events.length).is.greaterThan(0);
+					logger.events.forEach((event) => {
 						expect(isSharedTreeEvent(event)).is.true;
 					});
 				});
 
 				it('is logged for invalid locally generated edits when those edits are sequenced', async () => {
-					const events: ITelemetryBaseEvent[] = [];
+					const logger = new LoggerThatOnlySeesSharedTreeEvents(
+						(event) => !event.eventName.includes('IdCompressor')
+					);
+
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger,
 						allowInvalid: true,
 					});
 					useFailedSequencedEditTelemetry(sharedTree);
@@ -1046,19 +1156,21 @@ export function runSharedTreeOperationsTests(
 							StablePlace.after(testTree.buildLeaf(testTree.generateNodeId()))
 						)
 					);
-					expect(events.length).equals(0);
+					expect(logger.events.length).equals(0);
 					containerRuntimeFactory.processAllMessages();
 					// Force demand, which will cause a telemetry event for the invalid edit to be emitted
 					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-					expect(events.length).equals(1);
-					expect(events[0].category).equals('generic');
-					expect(events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
+					expect(logger.events.length).equals(1);
+					expect(logger.events[0].category).equals('generic');
+					expect(logger.events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
 				});
 
 				it('can be disabled and re-enabled', async () => {
-					const events: ITelemetryBaseEvent[] = [];
+					const logger = new LoggerThatOnlySeesSharedTreeEvents(
+						(event) => !event.eventName.includes('IdCompressor')
+					);
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger,
 						allowInvalid: true,
 					});
 					const { disable } = useFailedSequencedEditTelemetry(sharedTree);
@@ -1069,11 +1181,11 @@ export function runSharedTreeOperationsTests(
 							StablePlace.after(testTree.buildLeaf(testTree.generateNodeId()))
 						)
 					);
-					expect(events.length).equals(0);
+					expect(logger.events.length).equals(0);
 					containerRuntimeFactory.processAllMessages();
 					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-					expect(events.length).equals(1);
-					expect(events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
+					expect(logger.events.length).equals(1);
+					expect(logger.events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
 
 					disable();
 
@@ -1085,7 +1197,7 @@ export function runSharedTreeOperationsTests(
 					);
 					containerRuntimeFactory.processAllMessages();
 					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-					expect(events.length).equals(1);
+					expect(logger.events.length).equals(1);
 
 					useFailedSequencedEditTelemetry(sharedTree);
 
@@ -1097,27 +1209,30 @@ export function runSharedTreeOperationsTests(
 					);
 					containerRuntimeFactory.processAllMessages();
 					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-					expect(events.length).equals(2);
-					expect(events[1].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
+
+					expect(logger.events.length).equals(2);
+					expect(logger.events[1].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
 				});
 
 				it('is not logged for valid edits', async () => {
-					const events: ITelemetryBaseEvent[] = [];
-					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
-					});
+					const logger = new LoggerThatOnlySeesSharedTreeEvents(
+						(event) => !event.eventName.includes('IdCompressor')
+					);
+					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({ logger });
 					useFailedSequencedEditTelemetry(sharedTree);
 
 					sharedTree.applyEdit(...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left)));
 					containerRuntimeFactory.processAllMessages();
 					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-					expect(events.length).equals(0);
+					expect(logger.events.length).equals(0);
 				});
 
 				it('is not logged for remote edits', async () => {
-					const events: ITelemetryBaseEvent[] = [];
+					const logger = new LoggerThatOnlySeesSharedTreeEvents(
+						(event) => !event.eventName.includes('IdCompressor')
+					);
 					const { sharedTree: sharedTree1, containerRuntimeFactory } = createSimpleTestTree({
-						logger: { send: (event) => events.push(event) },
+						logger,
 						allowInvalid: true,
 						localMode: false,
 					});
@@ -1136,7 +1251,7 @@ export function runSharedTreeOperationsTests(
 					);
 					containerRuntimeFactory.processAllMessages();
 					await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-					expect(events.length).equals(0);
+					expect(logger.events.length).equals(0);
 				});
 			});
 		});
@@ -1262,11 +1377,6 @@ export function runSharedTreeOperationsTests(
 				writeFormat,
 				summarizeHistory: false,
 			});
-			testObjectProvider.logger.registerExpectedEvent(
-				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
-				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
-			);
 
 			applyNoop(tree);
 			await testObjectProvider.ensureSynchronized();
@@ -1294,7 +1404,7 @@ export function runSharedTreeOperationsTests(
 			});
 
 			// Verify we loaded a no-history summary.
-			expect(tree3.editsInternal.length).to.equal(1);
+			expect(tree3.edits.length).to.equal(1);
 
 			let unexpectedHistoryChunkCount = 0;
 			tree3.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => unexpectedHistoryChunkCount++);
@@ -1361,10 +1471,12 @@ export function runSharedTreeOperationsTests(
 					containerRuntimeFactory.processAllMessages();
 					const { internedStrings } = tree.saveSummary() as SharedTreeSummary;
 
-					const insertEdit = normalizeEdit(tree, tree.editsInternal.getEditInSessionAtIndex(1));
-					const moveEdit = normalizeEdit(tree, tree.editsInternal.getEditInSessionAtIndex(2));
-					const insertEdit2 = normalizeEdit(secondTree, secondTree.editsInternal.getEditInSessionAtIndex(1));
-					const moveEdit2 = normalizeEdit(secondTree, secondTree.editsInternal.getEditInSessionAtIndex(2));
+					const log = getEditLogInternal(tree);
+					const log2 = getEditLogInternal(secondTree);
+					const insertEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(1));
+					const moveEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(2));
+					const insertEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(1));
+					const moveEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(2));
 					expect(insertEdit).to.deep.equal(insertEdit2);
 					expect(moveEdit).to.deep.equal(moveEdit2);
 					expect(tree.equals(secondTree)).to.be.true;
@@ -1413,7 +1525,7 @@ export function runSharedTreeOperationsTests(
 
 					const uncompressedEdits: EditWithoutId<ChangeInternal>[] = [
 						{
-							changes: tree.edits.getEditInSessionAtIndex(0).changes as ChangeInternal[],
+							changes: getEditLogInternal(tree).getEditInSessionAtIndex(0).changes,
 						},
 					];
 
@@ -1466,5 +1578,67 @@ export function runSharedTreeOperationsTests(
 				});
 			});
 		}
+
+		describe('mergeEditsFrom', () => {
+			const getTestTreeRootHandle = (tree: SharedTree, testTree: TestTree): TreeNodeHandle => {
+				const view = tree.currentView;
+				const handle = new TreeNodeHandle(view, view.root);
+				return handle.traits[testTree.traitLabel][0];
+			};
+
+			it('can be used with simple edits', () => {
+				const { sharedTree, testTree } = createSimpleTestTree();
+				const { sharedTree: sharedTree2, testTree: testTree2 } = createSimpleTestTree();
+				sharedTree.applyEdit(...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(
+					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
+				);
+				const preEditRootHandle = getTestTreeRootHandle(sharedTree2, testTree2);
+				const edits = [0, 1, 2].map((i) => sharedTree.edits.getEditInSessionAtIndex(i));
+				// Since the TestTree setup edit is a `setTrait`, this should wipe `testTree2` state.
+				sharedTree2.mergeEditsFrom(sharedTree, edits);
+				expect(sharedTree2.edits.length).to.equal(4);
+				const rootHandle = getTestTreeRootHandle(sharedTree2, testTree2);
+				expect(preEditRootHandle.identifier).to.not.equal(rootHandle.identifier);
+				expect(rootHandle.traits[testTree2.left.traitLabel].length).to.equal(2);
+			});
+
+			it('can be used with a translation map', () => {
+				const { sharedTree, testTree } = createSimpleTestTree();
+				const { sharedTree: sharedTree2, testTree: testTree2 } = createSimpleTestTree();
+				// For each of the identities in the simple test tree...
+				const nodeIdGetters: ((tree: TestTree) => NodeId)[] = [
+					(tree) => tree.identifier,
+					(tree) => tree.left.identifier,
+					(tree) => tree.right.identifier,
+				];
+				// Make a map translating that identifier from `testTree` to `testTree2`
+				const translationMap = new Map(
+					nodeIdGetters.map((getter) => [
+						sharedTree.convertToStableNodeId(getter(testTree)),
+						sharedTree2.convertToStableNodeId(getter(testTree2)),
+					])
+				);
+				sharedTree.applyEdit(...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(
+					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
+				);
+				const edits = [1, 2].map((i) => sharedTree.edits.getEditInSessionAtIndex(i));
+				sharedTree2.mergeEditsFrom(sharedTree, edits, (id) => translationMap.get(id) ?? id);
+
+				const root = getTestTreeRootHandle(sharedTree, testTree);
+				const root2 = getTestTreeRootHandle(sharedTree2, testTree2);
+
+				const leftTrait = root.traits[testTree.left.traitLabel];
+				const leftTrait2 = root2.traits[testTree2.left.traitLabel];
+
+				// Inserted leaves should be equivalent.
+				expect(leftTrait2.length).to.equal(2);
+				expect(leftTrait2[1]).to.deep.equal(leftTrait[1]);
+				// Right subtree should have been deleted.
+				expect(Object.entries(root2.traits).length).to.equal(1);
+				expect(root2.traits[testTree2.right.traitLabel]).to.equal(undefined);
+			});
+		});
 	});
 }

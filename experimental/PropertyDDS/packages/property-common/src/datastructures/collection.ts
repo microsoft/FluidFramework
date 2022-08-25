@@ -18,7 +18,7 @@ const MSGS = {
 };
 
 export class Collection<T> {
-    protected _items: { [key: string]: T } = {};
+    protected _items: { [key: string]: T; } = {};
     protected _order: (string | number)[] = [];
 
     /**
@@ -81,7 +81,7 @@ export class Collection<T> {
      * @param in_items - List of key-value pairs to be stored in the collection
      * @returns this collection after add
      */
-    bulkAdd(in_items: { [key: string]: T }) {
+    bulkAdd(in_items: { [key: string]: T; }) {
         _.each(in_items, (item, key) => {
             this.add(key, item);
         });
@@ -93,7 +93,7 @@ export class Collection<T> {
      * @param in_items - List of key-value items to be removed
      * @returns this collection after add
      */
-    bulkRemove(in_items: { [key: string]: T }) {
+    bulkRemove(in_items: { [key: string]: T; }) {
         _.each(in_items, (item, key) => {
             this.remove(key);
         });
@@ -144,7 +144,7 @@ export class Collection<T> {
     /**
      * Filter out by function
      * @param in_filterFunction - with arguments key and item
-     * @returns  New filtered collection
+     * @returns A new filtered collection
      */
     filter(in_filterFunction: (key: string, item: T) => boolean): Collection<T> {
         const rtn = new Collection<T>();
@@ -175,7 +175,7 @@ export class Collection<T> {
 
         if (_.isArray(in_filterKey)) {
             filterCb = function(in_key, in_item) {
-                if (in_filterKey.indexOf(in_key) >= 0) {
+                if (in_filterKey.includes(in_key)) {
                     rtn.add(in_key, in_item);
                 }
             };
@@ -309,9 +309,9 @@ export class Collection<T> {
     /**
      * Set an existing key to a value. If key doesn't exist this call will throw
      * an error.
-     * @param in_key - the key we want to modify
-     * @param  in_value - the value we are to set at this key
-     * @returns the value passed in
+     * @param in_key - The key we want to modify
+     * @param in_value - The value we are to set at this key
+     * @returns The value passed in
      */
     set(in_key: string, in_value: T) {
         this._checkKeyExists(in_key);
@@ -324,7 +324,7 @@ export class Collection<T> {
     /**
      * Iterate over this collection and run the callback with passing the key and
      * item in the iteration loop.
-     * @param  in_callback - a function that we will call on each item
+     * @param in_callback - A function that we will call on each item
      * of this collection. If the callback returns false then the iteration will exit early.
      */
     iterate(in_callback) {
@@ -356,7 +356,7 @@ export class Collection<T> {
     /**
      * @returns Return an object containing the items of this collection
      */
-    getItems(): { [key: string]: T } {
+    getItems(): { [key: string]: T; } {
         const result = {};
 
         _.each(this._items, function(item, key) {

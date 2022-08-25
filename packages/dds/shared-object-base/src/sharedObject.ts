@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -18,8 +18,18 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import {
     IGarbageCollectionData,
     ISummaryTreeWithStats,
+    ITelemetryContext,
+    blobCountPropertyName,
+    totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    EventEmitterWithErrorHandling,
+    loggerToMonitoringContext,
+    MonitoringContext,
+    SampledTelemetryHelper,
+    TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
@@ -33,6 +43,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     public get IFluidLoadable() { return this; }
 
+    private readonly opProcessingHelper: SampledTelemetryHelper;
+    private readonly callbacksHelper: SampledTelemetryHelper;
+
     /**
      * The handle referring to this SharedObject
      */
@@ -42,6 +55,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      * Telemetry logger for the shared object
      */
     protected readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     /**
      * Connection state
@@ -79,9 +93,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     constructor(
         public id: string,
         protected runtime: IFluidDataStoreRuntime,
-        public readonly attributes: IChannelAttributes)
-    {
+        public readonly attributes: IChannelAttributes) {
         super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
+
+        assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
         this.handle = new SharedObjectHandle(
             this,
@@ -91,10 +106,59 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.logger = ChildLogger.create(
             runtime.logger,
             undefined,
-            { all: { sharedObjectId: uuid() } },
+            {
+                all: {
+                    sharedObjectId: uuid(),
+                    ddsType: {
+                        value: this.attributes.type,
+                        tag: TelemetryDataTag.CodeArtifact,
+                    },
+                },
+            },
         );
+        this.mc = loggerToMonitoringContext(this.logger);
+
+        [this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
 
         this.attachListeners();
+    }
+
+    /**
+     * This function is only supposed to be called from SharedObjectCore's constructor and
+     * depends on a few things being set already. assert() calls make sure of it.
+     * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
+     * to variables to avoid complaints from TypeScript.
+     */
+    private setUpSampledTelemetryHelpers(): SampledTelemetryHelper[] {
+        assert(this.mc !== undefined && this.logger !== undefined,
+            0x349 /* this.mc and/or this.logger has not been set */);
+        const opProcessingHelper = new SampledTelemetryHelper(
+            {
+                eventName: "ddsOpProcessing",
+                category: "performance",
+            },
+            this.logger,
+            this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 100,
+            true,
+            new Map<string, ITelemetryProperties>([
+                ["local", { localOp: true }],
+                ["remote", { localOp: false }],
+            ]));
+        const callbacksHelper = new SampledTelemetryHelper(
+            {
+                eventName: "ddsEventCallbacks",
+                category: "performance",
+            },
+            this.logger,
+            this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 100,
+            true);
+
+        this.runtime.once("dispose", () => {
+            this.callbacksHelper.dispose();
+            this.opProcessingHelper.dispose();
+        });
+
+        return [opProcessingHelper, callbacksHelper];
     }
 
     /**
@@ -185,7 +249,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).connect}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
      */
     public connect(services: IChannelServices) {
         this.services = services;
@@ -193,21 +257,29 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).isAttached}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).isAttached}
      */
     public isAttached(): boolean {
         return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).getAttachSummary}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
-    public abstract getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+    public abstract getAttachSummary(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
-    public abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    public abstract summarize(
+        fullTree?: boolean,
+        trackState?: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats>;
 
     /**
      * {@inheritDoc (ISharedObject:interface).getGCData}
@@ -355,6 +427,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             applyStashedOp: (content: any): unknown => {
                 return this.applyStashedOp(content);
             },
+            rollback: (content: any, localOpMetadata: unknown) => {
+                this.rollback(content, localOpMetadata);
+            },
         });
 
         // Trigger initial state
@@ -383,7 +458,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             // - nack could get a new msn - but might as well do it in the join?
             this.onDisconnect();
         } else {
-            // Call this for now so that DDSes like ConsensesOrderedCollection that maintain their own pending
+            // Call this for now so that DDSes like ConsensusOrderedCollection that maintain their own pending
             // messages will work.
             this.onConnect();
         }
@@ -398,9 +473,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      */
     private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed(); // This will result in container closure.
-        this.emit("pre-op", message, local, this);
-        this.processCore(message, local, localOpMetadata);
-        this.emit("op", message, local, this);
+        this.emitInternal("pre-op", message, local, this);
+
+        this.opProcessingHelper.measure(
+            () => { this.processCore(message, local, localOpMetadata); },
+            local ? "local" : "remote");
+
+        this.emitInternal("op", message, local, this);
     }
 
     /**
@@ -413,7 +492,52 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.reSubmitCore(content, localOpMetadata);
     }
 
+    /**
+     * Revert an op
+     */
+    protected rollback(content: any, localOpMetadata: unknown) {
+        throw new Error("rollback not supported");
+    }
+
+    /**
+     * Apply changes from an op. Used when rehydrating an attached container
+     * with pending changes. This prepares the SharedObject for seeing an ACK
+     * for the op or resubmitting the op upon reconnection.
+     * @param content - Contents of a stashed op.
+     * @returns localMetadata of the op, to be passed to process() or resubmit()
+     * when the op is ACKed or resubmitted, respectively
+     */
     protected abstract applyStashedOp(content: any): unknown;
+
+    /**
+     * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
+     * specifically to emit events that are part of the public interface of the DDS (i.e. those that can have listeners
+     * attached to them by the consumers of the DDS). It should not be called from outside the class or to emit events
+     * which are only internal to the DDS. Support for calling it from outside the DDS instance might be removed in the
+     * future.
+     *
+     * @internal
+     *
+     * @param event - The event to emit.
+     * @param args - Arguments to pass to the event listeners.
+     * @returns `true` if the event had listeners, `false` otherwise.
+     */
+    public emit(event: EventEmitterEventType, ...args: any[]): boolean {
+        return this.callbacksHelper.measure(() => super.emit(event, ...args));
+    }
+
+    /**
+     * Use to emit events inside {@link SharedObjectCore}, with no telemetry measurement
+     * done on the duration of the callbacks. Simply calls `super.emit()`.
+     * @param event - Event to emit
+     * @param args - Arguments for the event
+     * @returns Whatever `super.emit()` returns.
+     */
+    private emitInternal(
+        event: EventEmitterEventType,
+        ...args: any[]): boolean {
+        return super.emit(event, ...args);
+    }
 }
 
 /**
@@ -453,8 +577,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
-        attributes: IChannelAttributes)
-    {
+        attributes: IChannelAttributes,
+        private readonly telemetryContextPrefix: string,
+    ) {
         super(id, runtime, attributes);
 
         this._serializer = new FluidSerializer(
@@ -464,17 +589,31 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).getAttachSummary}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
      */
-    public getAttachSummary(fullTree: boolean = false, trackState: boolean = false): ISummaryTreeWithStats {
-        return this.summarizeCore(this.serializer);
+    public getAttachSummary(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
+        const result = this.summarizeCore(this.serializer, telemetryContext);
+        this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
+        this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
+        return result;
     }
 
     /**
-     * {@inheritDoc (ISharedObject:interface).summarize}
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummaryTreeWithStats> {
-        return this.summarizeCore(this.serializer);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = false,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummaryTreeWithStats> {
+        const result = this.summarizeCore(this.serializer, telemetryContext);
+        this.incrementTelemetryMetric(blobCountPropertyName, result.stats.blobNodeCount, telemetryContext);
+        this.incrementTelemetryMetric(totalBlobSizePropertyName, result.stats.totalBlobSize, telemetryContext);
+        return result;
     }
 
     /**
@@ -519,5 +658,13 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * Gets a form of the object that can be serialized.
      * @returns A tree representing the snapshot of the shared object.
      */
-    protected abstract summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected abstract summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats;
+
+    private incrementTelemetryMetric(propertyName: string, incrementBy: number, telemetryContext?: ITelemetryContext) {
+        const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, propertyName) ?? 0) as number;
+        telemetryContext?.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
+    }
 }

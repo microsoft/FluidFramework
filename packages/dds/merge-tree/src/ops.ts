@@ -11,6 +11,7 @@ export enum ReferenceType {
     RangeBegin = 0x10,
     RangeEnd = 0x20,
     SlideOnRemove = 0x40,
+    StayOnRemove = 0x80,
     Transient = 0x100,
 }
 
@@ -19,12 +20,14 @@ export interface IMarkerDef {
 }
 
 // Note: Assigned positive integers to avoid clashing with MergeTreeMaintenanceType
-export const enum MergeTreeDeltaType {
-    INSERT = 0,
-    REMOVE = 1,
-    ANNOTATE = 2,
-    GROUP = 3,
-}
+export const MergeTreeDeltaType = {
+    INSERT: 0,
+    REMOVE: 1,
+    ANNOTATE: 2,
+    GROUP: 3,
+} as const;
+
+export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTreeDeltaType];
 
 export interface IMergeTreeDelta {
     /**
@@ -54,7 +57,7 @@ export interface IRelativePosition {
 }
 
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
-    type: MergeTreeDeltaType.INSERT;
+    type: typeof MergeTreeDeltaType.INSERT;
     pos1?: number;
     relativePos1?: IRelativePosition;
     pos2?: number;
@@ -63,7 +66,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 }
 
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
-    type: MergeTreeDeltaType.REMOVE;
+    type: typeof MergeTreeDeltaType.REMOVE;
     pos1?: number;
     relativePos1?: IRelativePosition;
     pos2?: number;
@@ -78,7 +81,7 @@ export interface ICombiningOp {
 }
 
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
-    type: MergeTreeDeltaType.ANNOTATE;
+    type: typeof MergeTreeDeltaType.ANNOTATE;
     pos1?: number;
     relativePos1?: IRelativePosition;
     pos2?: number;
@@ -88,7 +91,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 }
 
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
-    type: MergeTreeDeltaType.GROUP;
+    type: typeof MergeTreeDeltaType.GROUP;
     ops: IMergeTreeDeltaOp[];
 }
 

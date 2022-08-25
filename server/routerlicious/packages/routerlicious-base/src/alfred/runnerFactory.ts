@@ -22,6 +22,7 @@ import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { AlfredRunner } from "./runner";
+import { DeltaService } from "./services";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
     private readonly webSocketServer: ws.Server;
@@ -87,21 +88,27 @@ export class AlfredResources implements core.IResources {
         public restThrottler: core.IThrottler,
         public socketConnectThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
+        public socketSubmitSignalThrottler: core.IThrottler,
         public singleUseTokenCache: core.ICache,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
+        public deltaService: core.IDeltaService,
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
         public documentsCollection: core.ICollection<core.IDocument>,
+        public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
+        public verifyMaxMessageSize?: boolean,
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+        const socketIoConfig = config.get("alfred:socketIo");
         this.webServerFactory = new services.SocketIoWebServerFactory(
             this.redisConfig,
             socketIoAdapterConfig,
-            httpServerConfig);
+            httpServerConfig,
+            socketIoConfig);
     }
 
     public async dispose(): Promise<void> {
@@ -164,27 +171,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const redisClientForJwtCache = new Redis(redisOptions2);
         const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
-        const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
         // Database connection for global db if enabled
         let globalDbMongoManager;
-        let globalDb;
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+        const factory = await services.getDbFactory(config);
         if (globalDbEnabled) {
-            const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
-            const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
-            globalDbMongoManager = new core.MongoManager(globalDbMongoFactory, false);
-            globalDb = await globalDbMongoManager.getDatabase();
+            globalDbMongoManager = new core.MongoManager(factory, false, null, true);
         }
 
         // Database connection for operations db
-        const operationsDbMongoUrl = config.get("mongo:operationsDbEndpoint") as string;
-        const operationsDbMongoFactory = new services.MongoDbFactory(operationsDbMongoUrl, bufferMaxEntries);
-        const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory, false);
+        const operationsDbMongoManager = new core.MongoManager(factory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // Create the index on the documents collection
-        const operationsDb = await operationsDbMongoManager.getDatabase();
-        const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
+        const dbManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
+        const db: core.IDb = await dbManager.getDatabase();
         const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
         await documentsCollection.createIndex(
             {
@@ -209,7 +210,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             operationsDbMongoManager,
             config.get("mongo:collectionNames:reservations"));
 
-        const tenantManager = new services.TenantManager(authEndpoint);
+        const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+        const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
         // Redis connection for throttling.
         const redisConfigForThrottling = config.get("redisForThrottling");
@@ -238,10 +240,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             config.get("alfred:throttling:restCalls:minCooldownIntervalInMs") as number | undefined;
         const throttleMinRequestThrottleIntervalInMs =
             config.get("alfred:throttling:restCalls:minThrottleIntervalInMs") as number | undefined;
-        const throttleStorageManager =
-            new services.RedisThrottleStorageManager(redisClientForThrottling, redisParamsForThrottling);
+        const throttleAndUsageStorageManager =
+            new services.RedisThrottleAndUsageStorageManager(redisClientForThrottling, redisParamsForThrottling);
         const restThrottlerHelper = new services.ThrottlerHelper(
-            throttleStorageManager,
+            throttleAndUsageStorageManager,
             throttleMaxRequestsPerMs,
             throttleMaxRequestBurst,
             throttleMinRequestCooldownIntervalInMs);
@@ -260,7 +262,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const throttleMinSocketConnectionThrottleIntervalInMs =
             config.get("alfred:throttling:socketConnections:minThrottleIntervalInMs") as number | undefined;
         const socketConnectThrottlerHelper = new services.ThrottlerHelper(
-            throttleStorageManager,
+            throttleAndUsageStorageManager,
             throttleMaxSocketConnectionsPerMs,
             throttleMaxSocketConnectionBurst,
             throttleMinSocketConnectionCooldownIntervalInMs,
@@ -280,13 +282,32 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const throttleMinSubmitOpThrottleIntervalInMs =
             config.get("alfred:throttling:submitOps:minThrottleIntervalInMs") as number | undefined;
         const socketSubmitOpThrottlerHelper = new services.ThrottlerHelper(
-            throttleStorageManager,
+            throttleAndUsageStorageManager,
             throttleMaxSubmitOpsPerMs,
             throttleMaxSubmitOpBurst,
             throttleMinSubmitOpCooldownIntervalInMs);
         const socketSubmitOpThrottler = new services.Throttler(
             socketSubmitOpThrottlerHelper,
             throttleMinSubmitOpThrottleIntervalInMs,
+            winston);
+
+        // Socket SubmitSignal Throttler
+        const throttleMaxSubmitSignalsPerMs =
+            config.get("alfred:throttling:submitSignals:maxPerMs") as number | undefined;
+        const throttleMaxSubmitSignalBurst =
+            config.get("alfred:throttling:submitSignals:maxBurst") as number | undefined;
+        const throttleMinSubmitSignalCooldownIntervalInMs =
+            config.get("alfred:throttling:submitSignals:minCooldownIntervalInMs") as number | undefined;
+        const throttleMinSubmitSignalThrottleIntervalInMs =
+            config.get("alfred:throttling:submitSignals:minThrottleIntervalInMs") as number | undefined;
+        const socketSubmitSignalThrottlerHelper = new services.ThrottlerHelper(
+            throttleAndUsageStorageManager,
+            throttleMaxSubmitSignalsPerMs,
+            throttleMaxSubmitSignalBurst,
+            throttleMinSubmitSignalCooldownIntervalInMs);
+        const socketSubmitSignalThrottler = new services.Throttler(
+            socketSubmitSignalThrottlerHelper,
+            throttleMinSubmitSignalThrottleIntervalInMs,
             winston);
 
         const databaseManager = new core.MongoDatabaseManager(
@@ -302,6 +323,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const storage = new services.DocumentStorage(databaseManager, tenantManager, enableWholeSummaryUpload);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
+        // Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
+        // Therefore, default clients will ignore server's 16kb message size limit.
+        const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
         const address = `${await utils.getHostIp()}:4000`;
 
         const nodeFactory = new LocalNodeFactory(
@@ -332,10 +356,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             kafkaOrdererFactory);
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("alfred:tenants") as { id: string, key: string }[];
+        const appTenants = config.get("alfred:tenants") as { id: string; key: string; }[];
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
+
+        const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
 
         return new AlfredResources(
             config,
@@ -348,14 +374,18 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             restThrottler,
             socketConnectThrottler,
             socketSubmitOpThrottler,
+            socketSubmitSignalThrottler,
             redisJwtCache,
             storage,
             appTenants,
             operationsDbMongoManager,
+            deltaService,
             port,
             documentsCollectionName,
             metricClientConfig,
-            documentsCollection);
+            documentsCollection,
+            throttleAndUsageStorageManager,
+            verifyMaxMessageSize);
     }
 }
 
@@ -370,13 +400,16 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.restThrottler,
             resources.socketConnectThrottler,
             resources.socketSubmitOpThrottler,
+            resources.socketSubmitSignalThrottler,
             resources.singleUseTokenCache,
             resources.storage,
             resources.clientManager,
             resources.appTenants,
-            resources.mongoManager,
+            resources.deltaService,
             resources.producer,
             resources.metricClientConfig,
-            resources.documentsCollection);
+            resources.documentsCollection,
+            resources.throttleAndUsageStorageManager,
+            resources.verifyMaxMessageSize);
     }
 }

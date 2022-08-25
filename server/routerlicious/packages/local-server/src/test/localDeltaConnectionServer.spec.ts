@@ -84,7 +84,7 @@ describe("LocalDeltaConnectionServer", () => {
     }
 
     // Function to add a handler that listens for "op" message on the given socket. It returns a promise that
-    // will be resolved with the op's contents.
+    // will be resolved with the op's contents. It will reject if the socket is disconnected.
     async function addMessagehandler(socket: IWebSocket): Promise<any> {
         const messageP = new Deferred<any>();
 
@@ -101,6 +101,10 @@ describe("LocalDeltaConnectionServer", () => {
         socket.on(
             "op",
             (id: string, msgs: ISequencedDocumentMessage[]) => messageHandler(msgs));
+
+        socket.on(
+            "disconnect",
+            () => messageP.reject("socket was disconnected"));
 
         return messageP.promise;
     }
@@ -252,5 +256,34 @@ describe("LocalDeltaConnectionServer", () => {
 
         socket1.disconnect();
         socket2.disconnect();
+    });
+
+    it("disconnects on message over 1mb", async () => {
+        const [socket1, connected1P] = connectNewClient("write", "userId1");
+        const join1P = addJoinHandler(socket1);
+
+        await join1P;
+
+        // Wait for the first client to be connected and joined.
+        const connected1 = await connected1P;
+        assert.equal(connected1.mode, "write", "The first client should be connected in write mode");
+
+        const message1P = addMessagehandler(socket1);
+
+        const content = new Array(1e6).join("0");
+        const message: IDocumentMessage = {
+            clientSequenceNumber: 1,
+            contents: content,
+            metadata: undefined,
+            referenceSequenceNumber: 0,
+            traces: [],
+            type: MessageType.Operation,
+        };
+        socket1.emit("submitOp", connected1.clientId, [message]);
+        try {
+            await message1P;
+        } catch (error) {
+            assert.equal(error, "socket was disconnected");
+        }
     });
 });

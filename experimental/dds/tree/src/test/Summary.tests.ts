@@ -30,6 +30,7 @@ import { sequencedIdNormalizer } from '../NodeIdUtilities';
 import { expectDefined } from './utilities/TestCommon';
 import { TestFluidSerializer } from './utilities/TestSerializer';
 import {
+	getEditLogInternal,
 	getIdNormalizerFromSharedTree,
 	makeNodeIdContext,
 	setUpLocalServerTestSharedTree,
@@ -47,7 +48,7 @@ export function applyTestEdits(sharedTree: SharedTree): void {
 		sharedTree.applyEditInternal({ id: uuid.getNextEditId(), changes: internalChanges });
 	}
 
-	/**
+	/*
 	 * Build a tree that looks like the following:
 	 *
 	 *          ROOT
@@ -398,10 +399,6 @@ export function runSummaryTests(title: string): void {
 	});
 }
 
-export function expectAssert(condition: unknown, message?: string): asserts condition {
-	expect(condition, message);
-}
-
 async function expectSharedTreesEqual(
 	sharedTreeA: SharedTree,
 	sharedTreeB: SharedTree,
@@ -421,12 +418,12 @@ async function expectSharedTreesEqual(
 		const roundTrip = <T>(obj: T): T => JSON.parse(JSON.stringify(obj)) as T;
 
 		const editA = roundTrip(
-			convertEditIds(await sharedTreeA.editsInternal.getEditAtIndex(i), (id) =>
+			convertEditIds(await getEditLogInternal(sharedTreeA).getEditAtIndex(i), (id) =>
 				sharedTreeA.convertToStableNodeId(id)
 			)
 		);
 		const editB = roundTrip(
-			convertEditIds(await sharedTreeB.editsInternal.getEditAtIndex(i), (id) =>
+			convertEditIds(await getEditLogInternal(sharedTreeB).getEditAtIndex(i), (id) =>
 				sharedTreeB.convertToStableNodeId(id)
 			)
 		);
@@ -517,11 +514,9 @@ class DeterministicIdGenerator {
 	}
 
 	public getNextNodeId(): NodeId {
-		if (this.writeFormat === WriteFormat.v0_0_2) {
-			return this.sharedTree.generateNodeId(this.getNextStableId());
-		} else {
-			return this.sharedTree.generateNodeId();
-		}
+		return this.writeFormat === WriteFormat.v0_0_2
+			? this.sharedTree.generateNodeId(this.getNextStableId())
+			: this.sharedTree.generateNodeId();
 	}
 
 	private getNextStableId(): StableId {

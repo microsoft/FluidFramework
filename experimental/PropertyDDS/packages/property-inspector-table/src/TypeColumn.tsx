@@ -83,7 +83,7 @@ export const TypeColumn: React.FunctionComponent<ITypeColumn> = ({ rowData }) =>
   return (
     <Tooltip
       enterDelay={500}
-      placement='top'
+      placement="top"
       classes={{ tooltip: classes.tooltip }}
       title={rowData.typeid}
     >
@@ -105,3 +105,5 @@ export const TypeColumn: React.FunctionComponent<ITypeColumn> = ({ rowData }) =>
     </Tooltip>
   );
 };
+
+export const useChipStyles = useStyles;

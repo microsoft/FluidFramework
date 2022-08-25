@@ -62,6 +62,7 @@ export class TestDocumentStorage implements IDocumentStorage {
         ordererUrl: string,
         historianUrl: string,
         values: [string, ICommittedProposal][],
+        enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
@@ -136,6 +137,7 @@ export class TestDocumentStorage implements IDocumentStorage {
             ordererUrl,
             historianUrl,
             isSessionAlive: true,
+            isSessionActive: true,
         };
 
         const result = await collection.findOrCreate(
@@ -188,7 +190,7 @@ export class TestDocumentStorage implements IDocumentStorage {
         return gitManager.getCommit(sha);
     }
 
-    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string }> {
+    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string; }> {
         throw new Error("Method not implemented.");
     }
 

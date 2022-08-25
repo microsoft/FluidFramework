@@ -31,7 +31,13 @@ export function create(
         authorization: string,
         sha: string,
         useCache: boolean): Promise<IHeader> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getHeader(sha, useCache);
     }
 
@@ -40,7 +46,13 @@ export function create(
         authorization: string,
         sha: string,
         useCache: boolean): Promise<any> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getFullTree(sha, useCache);
     }
 

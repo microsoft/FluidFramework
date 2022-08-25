@@ -20,3 +20,7 @@ export * from "./networkUtils";
 export * from "./rateLimiter";
 export * from "./runWithRetry";
 export * from "./treeConversions";
+export * from "./treeUtils";
+export * from "./messageRecognition";
+export * from "./error";
+export * from "./emptyDocumentDeltaStorageService";

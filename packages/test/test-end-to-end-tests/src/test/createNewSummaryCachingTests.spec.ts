@@ -9,11 +9,14 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+    IContainerRuntimeOptions,
+    ISummaryConfiguration,
+    DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
@@ -35,13 +38,17 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
         []);
 
     const IdleDetectionTime = 100;
-    const summaryConfigOverrides: Partial<ISummaryConfiguration> = {
-        idleTime: IdleDetectionTime,
-        maxTime: IdleDetectionTime * 12,
+    const summaryConfigOverrides: ISummaryConfiguration = {
+        ...DefaultSummaryConfiguration,
+        ...{
+            minIdleTime: IdleDetectionTime,
+            maxIdleTime: IdleDetectionTime,
+            maxTime: IdleDetectionTime * 12,
+            initialSummarizerDelayMs: 10,
+        },
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
         gcOptions: {
@@ -70,7 +77,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 
     it("should fetch from cache when second client loads the container", async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "odsp") {
+        if (provider.driver.type === "odsp") {
             this.skip();
         }
 
@@ -106,7 +113,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 
     it("should fetch from cache when second client loads the container in offline mode", async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "odsp") {
+        if (provider.driver.type === "odsp") {
             this.skip();
         }
         mockLogger = new MockLogger();

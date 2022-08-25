@@ -10,7 +10,6 @@ module.exports = {
     },
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"no-null/no-null": "off",
         "import/no-internal-modules": "off",
         "unicorn/filename-case": "off",
         "@typescript-eslint/no-non-null-assertion": "off",

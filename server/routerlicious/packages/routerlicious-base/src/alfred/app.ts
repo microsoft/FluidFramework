@@ -5,10 +5,10 @@
 
 import path from "path";
 import {
+    IDeltaService,
     IDocumentStorage,
     IProducer,
     ITenantManager,
-    MongoManager,
     IThrottler,
     ICache,
     ICollection,
@@ -19,28 +19,17 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import morgan from "morgan";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
-import { bindCorrelationId } from "@fluidframework/server-services-utils";
+import {
+    alternativeMorganLoggerMiddleware,
+    bindCorrelationId,
+    jsonMorganLoggerMiddleware,
+} from "@fluidframework/server-services-utils";
 import { RestLessServer } from "@fluidframework/server-services";
-import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const split = require("split");
-
-/**
- * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
- */
-const stream = split().on("data", (message) => {
-    if (message !== undefined) {
-        winston.info(message);
-        Lumberjack.info(message);
-    }
-});
 
 export function create(
     config: Provider,
@@ -49,7 +38,7 @@ export function create(
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    operationsDbMongoManager: MongoManager,
+    deltaService: IDeltaService,
     producer: IProducer,
     documentsCollection: ICollection<IDocument>) {
     // Maximum REST request size
@@ -60,10 +49,10 @@ export function create(
 
     // initialize RestLess server translation
     const restLessMiddleware: () => express.RequestHandler = () => {
-        const restLessServer = new RestLessServer();
+        const restLessServer = new RestLessServer({ requestSizeLimit: requestSize });
         return (req, res, next) => {
             restLessServer
-                .translate(req)
+                .translate(req, res)
                 .then(() => next())
                 .catch(next);
         };
@@ -76,26 +65,18 @@ export function create(
     app.use(compression());
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {
-        app.use(morgan((tokens, req, res) => {
-            const messageMetaData = {
-                method: tokens.method(req, res),
-                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
-                url: tokens.url(req, res),
-                driverVersion: tokens.req(req, res, DriverVersionHeaderName),
-                status: tokens.status(req, res),
-                contentLength: tokens.res(req, res, "content-length"),
-                durationInMs: tokens["response-time"](req, res),
-                tenantId: getTenantIdFromRequest(req.params),
-                documentId: getIdFromRequest(req.params),
-                serviceName: "alfred",
-                eventName: "http_requests",
-             };
-             logRequestMetric(messageMetaData);
-             winston.info("request log generated", { messageMetaData });
-             return undefined;
-        }, { stream }));
+        app.use(
+            jsonMorganLoggerMiddleware(
+                "alfred",
+                (tokens, req, res) => {
+                    return {
+                        [HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
+                        [BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+                        [BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+                    };
+                }));
     } else {
-        app.use(morgan(loggerFormat, { stream }));
+        app.use(alternativeMorganLoggerMiddleware(loggerFormat));
     }
 
     app.use(cookieParser());
@@ -110,7 +91,7 @@ export function create(
         tenantManager,
         throttler,
         singleUseTokenCache,
-        operationsDbMongoManager,
+        deltaService,
         storage,
         producer,
         appTenants,

@@ -177,8 +177,10 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                 sharedString.insertText(0, text);
 
                 const segInfo = sharedString.getContainingSegment(3);
+                assert(segInfo.segment);
                 sharedString.insertAtReferencePosition(
-                    sharedString.createPositionReference(segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove),
+                    sharedString.createLocalReferencePosition(
+                        segInfo.segment, segInfo.offset ?? 0, ReferenceType.SlideOnRemove, undefined),
                     new TextSegment(text));
 
                 sharedString.removeRange(0, 5);

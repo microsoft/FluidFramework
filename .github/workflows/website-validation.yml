@@ -1,7 +1,7 @@
 name: Website validation
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
     paths:
       - "docs/**"
 
@@ -15,70 +15,70 @@ jobs:
     runs-on: ubuntu-latest
     name: Build site
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: false
-    - uses: actions/setup-node@v2
-      with:
-        node-version: "14"
-        cache: "npm"
-        cache-dependency-path: docs/package-lock.json
-    - name: Build site artifact
-      run: |
-        npm ci
-        npm run ci:build
-    - name: Upload site artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: fluidframework-site
-        path: docs/public
-        retention-days: 3
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+        with:
+          submodules: false
+      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
+        with:
+          node-version: "14"
+          cache: "npm"
+          cache-dependency-path: docs/package-lock.json
+      - name: Build site artifact
+        run: |
+          npm ci
+          npm run ci:build
+      - name: Upload site artifact
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # pin@v2
+        with:
+          name: fluidframework-site
+          path: docs/public
+          retention-days: 3
 
   broken_link_check:
     runs-on: ubuntu-latest
     name: 🔗 Broken Link Check
     needs: build_site
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: false
-    - uses: actions/setup-node@v2
-      with:
-        node-version: "14"
-        cache: "npm"
-        cache-dependency-path: docs/package-lock.json
-    - name: Create results folder
-      run: mkdir -p ./results
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+        with:
+          submodules: false
+      - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
+        with:
+          node-version: "14"
+          cache: "npm"
+          cache-dependency-path: docs/package-lock.json
+      - name: Create results folder
+        run: mkdir -p ./results
 
-    - name: Download site artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: fluidframework-site
-        path: docs/public
-    - name: Install dependencies
-      run: |
-        npm install pm2 -g
-        npm ci
-    - name: Start server in background
-      run: pm2 start $GITHUB_WORKSPACE/docs/serve.js
-    - name: Check for broken links
-      id: linkcheck
-      continue-on-error: true
-      run: |
-        set -o pipefail
-        npm run linkcheck | tee ./results/linkcheck-output.txt
+      - name: Download site artifact
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # pin@v2
+        with:
+          name: fluidframework-site
+          path: docs/public
+      - name: Install dependencies
+        run: |
+          npm install pm2 -g
+          npm ci
+      - name: Start server in background
+        run: pm2 start $GITHUB_WORKSPACE/docs/serve.js
+      - name: Check for broken links
+        id: linkcheck
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm run linkcheck | tee ./results/linkcheck-output.txt
 
-    - name: Save PR number
-      run: echo ${{ github.event.number }} > ./results/pr
-    - name: Save linkcheck report
-      run: |
-        cat "$GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md" | tee ./results/linkcheck
-        echo -e "\n#### linkcheck output\n\n\`\`\`" | tee -a ./results/linkcheck
-        cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
-        echo -e "\n\`\`\`" | tee -a ./results/linkcheck
-    - name: Upload results artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: website-validation-results
-        path: ./docs/results
-        retention-days: 3
+      - name: Save PR number
+        run: echo ${{ github.event.number }} > ./results/pr
+      - name: Save linkcheck report
+        run: |
+          cat "$GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md" | tee ./results/linkcheck
+          echo -e "\n#### linkcheck output\n\n\`\`\`" | tee -a ./results/linkcheck
+          cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
+          echo -e "\n\`\`\`" | tee -a ./results/linkcheck
+      - name: Upload results artifact
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # pin@v2
+        with:
+          name: website-validation-results
+          path: ./docs/results
+          retention-days: 3

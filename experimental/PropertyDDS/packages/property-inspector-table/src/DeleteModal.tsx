@@ -89,8 +89,8 @@ class DeleteModal extends React.Component<IDeleteModalProps & WithStyles<typeof 
           <div className={this.props.classes!.spacer} />
           <div className={this.props.classes!.horizontalButtonContainer}>
             <Button
-              color='primary'
-              variant='outlined'
+              color="primary"
+              variant="outlined"
               disabled={this.state.deleting}
               className={this.props.classes!.cancelButton}
               onClick={this.props.onClosed}
@@ -98,10 +98,10 @@ class DeleteModal extends React.Component<IDeleteModalProps & WithStyles<typeof 
               Cancel
             </Button>
             <Button
-              id='deletePropertyConfirm'
+              id="deletePropertyConfirm"
               onClick={this.deleteHandler}
-              variant='contained'
-              color='primary'
+              variant="contained"
+              color="primary"
             >
               {this.state.deleting ? "Deleting" : `Yes, delete ${textParameters.modalCallingSource}`}
             </Button>

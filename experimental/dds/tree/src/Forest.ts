@@ -401,7 +401,7 @@ export class Forest {
 				const parent = this.get(node.parentId);
 				const trait = parent.traits.get(node.traitParent);
 				assert(trait !== undefined);
-				assert(trait.indexOf(node.identifier) >= 0, 'node is parented incorrectly');
+				assert(trait.includes(node.identifier), 'node is parented incorrectly');
 			}
 
 			for (const trait of node.traits.values()) {

@@ -37,7 +37,7 @@ export class BatchTracker {
 
             const length = message.sequenceNumber - this.startBatchSequenceNumber + 1;
             if (length >= batchLengthThreshold) {
-                this.logger.sendErrorEvent({
+                this.logger.sendPerformanceEvent({
                     eventName: "LengthTooBig",
                     length,
                     threshold: batchLengthThreshold,
@@ -75,6 +75,6 @@ export class BatchTracker {
 export const BindBatchTracker = (
     batchEventEmitter: EventEmitter,
     logger: ITelemetryLogger,
-    batchLengthThreshold: number = 128,
+    batchLengthThreshold: number = 1000,
     batchCountSamplingRate: number = 1000,
 ) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);

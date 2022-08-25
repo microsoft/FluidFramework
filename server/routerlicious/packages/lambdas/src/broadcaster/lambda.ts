@@ -129,6 +129,15 @@ export class BroadcasterLambda implements IPartitionLambda {
 
             const value = baseMessage as INackMessage | ISequencedOperationMessage | ITicketedSignalMessage;
 
+            if (value.type === SequencedOperationType && value.operation?.traces && value.operation.traces.length > 0) {
+                value.operation.traces.push(
+                    {
+                        action: "start",
+                        service: "broadcaster",
+                        timestamp: Date.now(),
+                });
+            }
+
             if (this.serviceConfiguration.broadcaster.includeEventInMessageBatchName) {
                 topic += event;
             }

@@ -8,7 +8,7 @@ import assert from "assert";
 import { stub } from "sinon";
 import * as fetchModule from "node-fetch";
 
-export const createResponse = async (headers: { [key: string]: string }, response: any | undefined, status: number) =>
+export const createResponse = async (headers: { [key: string]: string; }, response: any | undefined, status: number) =>
     Promise.resolve({
         ok: response !== undefined,
         status,
@@ -18,9 +18,9 @@ export const createResponse = async (headers: { [key: string]: string }, respons
         json: async () => Promise.resolve(response),
     });
 
-export const okResponse = async (headers: { [key: string]: string }, response: any) =>
+export const okResponse = async (headers: { [key: string]: string; }, response: any) =>
     createResponse(headers, response, 200);
-export const notFound = async (headers: { [key: string]: string } = {}) => createResponse(headers, undefined, 404);
+export const notFound = async (headers: { [key: string]: string; } = {}) => createResponse(headers, undefined, 404);
 
 export type FetchCallType = "internal" | "external" | "single";
 
@@ -59,9 +59,30 @@ export async function mockFetchSingle<T>(
 export async function mockFetchOk<T>(
     callback: () => Promise<T>,
     response: object = {},
-    headers: { [key: string]: string} = {},
+    headers: { [key: string]: string; } = {},
 ): Promise<T> {
     return mockFetchSingle(
         callback,
         async () => okResponse(headers, response));
+}
+
+export async function mockFetchError<T>(
+    callback: () => Promise<T>,
+    response: Error,
+    type: FetchCallType = "single",
+): Promise<T> {
+    const fetchStub = stub(fetchModule, "default");
+    fetchStub.callsFake(async () => {
+        if (type === "external") {
+            fetchStub.restore();
+        }
+        throw response;
+    });
+    try {
+        return await callback();
+    } finally {
+        if (type !== "internal") {
+            fetchStub.restore();
+        }
+    }
 }

@@ -123,7 +123,8 @@ export class BasicRestWrapper extends RestWrapper {
         const options = { ...requestConfig };
         options.headers = this.generateHeaders(
             options.headers,
-            (this.getCorrelationId && this.getCorrelationId()) || uuid());
+            this.getCorrelationId?.() ?? uuid(),
+        );
 
         return new Promise<T>((resolve, reject) => {
             this.axios.request<T>(options)
@@ -134,7 +135,7 @@ export class BasicRestWrapper extends RestWrapper {
                         resolve(error?.response?.data);
                     }
 
-                    if (error && error.config) {
+                    if (error?.config) {
                         // eslint-disable-next-line max-len
                         debug(`[${error.config.method}] request to [${error.config.baseURL ?? ""}${error.config.url ?? ""}] failed with [${error.response?.status}] [${safeStringify(error.response?.data, undefined, 2)}]`);
                     } else {

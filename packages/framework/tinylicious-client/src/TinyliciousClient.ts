@@ -34,7 +34,9 @@ import {
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
 /**
- * TinyliciousClient provides the ability to have a Fluid object backed by a Tinylicious service
+ * Provides the ability to have a Fluid object backed by a Tinylicious service.
+ *
+ * See {@link https://fluidframework.com/docs/testing/tinylicious/}
  */
 export class TinyliciousClient {
     private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -62,7 +64,7 @@ export class TinyliciousClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
         const loader = this.createLoader(containerSchema);
 
         // We're not actually using the code proposal (our code loader always loads the same module
@@ -101,7 +103,7 @@ export class TinyliciousClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices; }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");

@@ -37,7 +37,7 @@ export interface IPubSub {
 }
 
 export class PubSub implements IPubSub {
-    private readonly topics = new Map<string, Map<string, { subscriber: ISubscriber, count: number }>>();
+    private readonly topics = new Map<string, Map<string, { subscriber: ISubscriber; count: number; }>>();
 
     public publish(topic: string, event: string, ...args: any[]): void {
         const subscriptions = this.topics.get(topic);
@@ -52,7 +52,7 @@ export class PubSub implements IPubSub {
     // on the total number of times it has been subscribed. But we will only publish to it once.
     public subscribe(topic: string, subscriber: ISubscriber): void {
         if (!this.topics.has(topic)) {
-            this.topics.set(topic, new Map<string, { subscriber: ISubscriber, count: number }>());
+            this.topics.set(topic, new Map<string, { subscriber: ISubscriber; count: number; }>());
         }
 
         const subscriptions = this.topics.get(topic);

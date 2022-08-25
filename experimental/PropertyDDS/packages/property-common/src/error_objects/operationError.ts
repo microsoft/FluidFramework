@@ -7,7 +7,7 @@
  * An operation error maintains additional information compared to a plain {@link #Error}:
  * - The operation name
  * - A status code
- * - Extensible flags. {@see ExtendedError.FLAGS}.
+ * - Extensible flags. See {@link ExtendedError.FLAGS}.
  */
 import _ from "lodash";
 import { FlaggedError } from "./flaggedError";

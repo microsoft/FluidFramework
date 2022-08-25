@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/container-runtime",
-  "version": "0.59.2000",
+  "version": "2.0.0-internal.1.1.0",
   "description": "Fluid container runtime",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -38,8 +38,7 @@
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -d .",
-    "typetests:prepare": "fluid-type-validator -d . -p"
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -63,93 +62,105 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000-0",
-    "@fluidframework/container-runtime-definitions": "^0.59.2000",
-    "@fluidframework/container-utils": "^0.59.2000",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
-    "@fluidframework/datastore": "^0.59.2000",
-    "@fluidframework/driver-definitions": "^0.46.1000-0",
-    "@fluidframework/driver-utils": "^0.59.2000",
-    "@fluidframework/garbage-collector": "^0.59.2000",
-    "@fluidframework/protocol-base": "^0.1036.1000-0",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
-    "@fluidframework/runtime-definitions": "^0.59.2000",
-    "@fluidframework/runtime-utils": "^0.59.2000",
-    "@fluidframework/telemetry-utils": "^0.59.2000",
+    "@fluidframework/common-utils": "^1.0.0",
+    "@fluidframework/container-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-runtime-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/datastore": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/garbage-collector": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-base": "^0.1037.1000",
+    "@fluidframework/protocol-definitions": "^1.0.0",
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "double-ended-queue": "^2.1.0-0",
+    "lz4js": "^0.2.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.61288",
-    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@^0.58.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/mocha-test-setup": "^0.59.2000",
-    "@fluidframework/test-runtime-utils": "^0.59.2000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.3.1000",
+    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/double-ended-queue": "^2.1.0",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
     "@types/sinon": "^7.0.13",
     "@types/uuid": "^8.3.0",
-    "@typescript-eslint/eslint-plugin": "~5.9.0",
-    "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
-    "eslint-plugin-editorconfig": "~3.2.0",
-    "eslint-plugin-eslint-comments": "~3.2.0",
-    "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-no-null": "~1.0.2",
-    "eslint-plugin-react": "~7.28.0",
-    "eslint-plugin-unicorn": "~40.0.0",
-    "mocha": "^8.4.0",
+    "mocha": "^10.0.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "sinon": "^7.4.2",
-    "typescript": "~4.1.3",
+    "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
+    "version": "2.0.0",
     "broken": {
-      "0.58.2002": {
-        "InterfaceDeclaration_IBaseSummarizeResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IGenerateSummaryTreeResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_ISubmitSummaryOpResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IUploadSummaryResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_SubmitSummaryResult": {
-          "forwardCompat": false
-        },
-        "TypeAliasDeclaration_SubmitSummaryResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IGeneratedSummaryStats": {
-          "forwardCompat": false
-        },
-        "ClassDeclaration_ContainerRuntime": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IGarbageCollectionRuntime": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IGCStats": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IRootSummaryTreeWithStats": {
-          "forwardCompat": false
-        }
+      "VariableDeclaration_DefaultSummaryConfiguration": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_ISummaryConfiguration": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryConfigurationHeuristics": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IGeneratedSummaryStats": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IGenerateSummaryTreeResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISubmitSummaryOpResult": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IUploadSummaryResult": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_SubmitSummaryResult": {
+        "backCompat": false
+      },
+      "ClassDeclaration_ContainerRuntime": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IConnectableRuntime": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummarizerRuntime": {
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IPendingFlushMode": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IPendingLocalState": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_IPendingState": {
+        "forwardCompat": false
+      },
+      "RemovedInterfaceDeclaration_IPendingRuntimeState": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_SummarizerStopReason": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }

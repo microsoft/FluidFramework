@@ -4,16 +4,14 @@
  */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { v4 } from 'uuid';
 import { defaultClusterCapacity } from '../id-compressor/IdCompressor';
 import {
 	getPositiveDelta,
 	incrementUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
-	assertIsStableId,
 } from '../id-compressor/NumericUuid';
-import { UuidString } from '../Identifiers';
+import { assertIsStableId, generateStableId } from '../UuidUtilities';
 
 describe('NumericUuid Perf', () => {
 	const stableId = assertIsStableId('4779fbf2-2012-4510-b4f0-28a99a9f8946');
@@ -68,9 +66,9 @@ describe('NumericUuid Perf', () => {
 	});
 	benchmark({
 		type,
-		title: `generate a random v4 uuid string and remove separators`,
+		title: `generate a random v4 uuid string`,
 		benchmarkFn: () => {
-			v4() as UuidString;
+			generateStableId();
 		},
 	});
 });

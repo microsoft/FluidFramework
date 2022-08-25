@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Container } from "@fluidframework/container-loader";
+
 export const defaultTimeoutDurationMs = 250;
 
 export interface TimeoutWithError {
@@ -23,6 +25,12 @@ export async function timeoutAwait<T = void>(
     return Promise.race([promise, timeoutPromise<T>(() => { }, timeoutOptions)]);
 }
 
+export async function ensureContainerConnected(container: Container): Promise<void> {
+    if (!container.connected) {
+        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
+    }
+}
+
 export async function timeoutPromise<T = void>(
     executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
@@ -32,14 +40,14 @@ export async function timeoutPromise<T = void>(
         && Number.isFinite(timeoutOptions.durationMs)
         && timeoutOptions.durationMs > 0
             ? timeoutOptions.durationMs : defaultTimeoutDurationMs;
-    // create the timeout error outside the async task, so it's callstack includes
+    // create the timeout error outside the async task, so its callstack includes
     // the original call site, this makes it easier to debug
     const err = timeoutOptions.reject === false
         ? undefined
         : new Error(`${timeoutOptions.errorMsg ?? "Timed out"}(${timeout}ms)`);
-    return new Promise<T>((resolve,reject)=>{
+    return new Promise<T>((resolve, reject) => {
         const timer = setTimeout(
-            ()=>timeoutOptions.reject === false ? resolve(timeoutOptions.value) : reject(err),
+            () => timeoutOptions.reject === false ? resolve(timeoutOptions.value) : reject(err),
             timeout);
 
         executor(

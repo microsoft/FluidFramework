@@ -5,7 +5,7 @@
 
 /**
  * True if left === right, or both left and right are "empty" where "empty" is
- * defined as { "", undefined, null }.
+ * defined as \{ `""`, `undefined`, `null` \}.
  */
 export function areStringsEquivalent(left: string | undefined | null, right: string | undefined | null) {
     return !left                // If left any of { null, undefined, "" } ...

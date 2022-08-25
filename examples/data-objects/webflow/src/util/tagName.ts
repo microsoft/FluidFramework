@@ -130,122 +130,122 @@ export const enum TagName {
 
 // Note: Similar to the `HTMLElementTagNameMap` defined in lib.dom.d.ts, except that keys are uppercase.
 interface TagMap {
-    [TagName.a]: HTMLAnchorElement,
-    [TagName.abbr]: HTMLElement, // HTMLAbbrElement,
-    [TagName.address]: HTMLElement, // HTMLAddressElement,
-    [TagName.area]: HTMLAreaElement,
-    [TagName.article]: HTMLElement, // HTMLArticleElement,
-    [TagName.aside]: HTMLElement, // HTMLAsideElement,
-    [TagName.audio]: HTMLAudioElement,
-    [TagName.b]: HTMLElement, // HTMLBElement,
-    [TagName.base]: HTMLBaseElement,
-    [TagName.bdi]: HTMLElement, // HTMLBdiElement,
-    [TagName.bdo]: HTMLElement, // HTMLBdoElement,
-    [TagName.blockquote]: HTMLQuoteElement, // HTMLBlockquoteElement,
-    [TagName.body]: HTMLBodyElement,
-    [TagName.br]: HTMLBRElement,
-    [TagName.button]: HTMLButtonElement,
-    [TagName.canvas]: HTMLCanvasElement,
-    [TagName.caption]: HTMLTableCaptionElement,
-    [TagName.cite]: HTMLElement, // HTMLCiteElement,
-    [TagName.code]: HTMLElement, // HTMLCodeElement,
-    [TagName.col]: HTMLTableColElement,
-    [TagName.colgroup]: HTMLTableColElement, // HTMLColGroupElement,
-    [TagName.data]: HTMLDataElement,
-    [TagName.datalist]: HTMLDataListElement,
-    [TagName.dd]: HTMLElement, // HTMLDdElement,
-    [TagName.del]: HTMLModElement, // HTMLDelElement,
-    [TagName.details]: HTMLDetailsElement,
-    [TagName.dfn]: HTMLElement, // HTMLDfnElement,
-    [TagName.dialog]: HTMLDialogElement,
-    [TagName.div]: HTMLDivElement,
-    [TagName.dl]: HTMLDListElement,
-    [TagName.dt]: HTMLElement, // HTMLDtElement,
-    [TagName.em]: HTMLElement, // HTMLEmElement,
-    [TagName.embed]: HTMLEmbedElement,
-    [TagName.fieldset]: HTMLFieldSetElement,
-    [TagName.figcaption]: HTMLElement, // HTMLFigcaptionElement,
-    [TagName.figure]: HTMLElement, // HTMLFigureElement,
-    [TagName.footer]: HTMLElement, // HTMLFooterElement,
-    [TagName.form]: HTMLFormElement,
-    [TagName.h1]: HTMLHeadingElement, // HTMLH1Element,
-    [TagName.h2]: HTMLHeadingElement, // HTMLH2Element,
-    [TagName.h3]: HTMLHeadingElement, // HTMLH3Element,
-    [TagName.h4]: HTMLHeadingElement, // HTMLH4Element,
-    [TagName.h5]: HTMLHeadingElement, // HTMLH5Element,
-    [TagName.h6]: HTMLHeadingElement, // HTMLH6Element,
-    [TagName.head]: HTMLHeadElement,
-    [TagName.header]: HTMLElement, // HTMLHeaderElement,
-    [TagName.hr]: HTMLHRElement,
-    [TagName.html]: HTMLHtmlElement,
-    [TagName.i]: HTMLElement, // HTMLIElement,
-    [TagName.iframe]: HTMLIFrameElement,
-    [TagName.img]: HTMLImageElement,
-    [TagName.input]: HTMLInputElement,
-    [TagName.ins]: HTMLModElement, // HTMLInsElement,
-    [TagName.kbd]: HTMLElement, // HTMLKbdElement,
-    [TagName.keygen]: HTMLElement, // HTMLKeygenElement,
-    [TagName.label]: HTMLLabelElement,
-    [TagName.legend]: HTMLLegendElement,
-    [TagName.li]: HTMLLIElement,
-    [TagName.link]: HTMLLinkElement,
-    [TagName.main]: HTMLElement, // HTMLMainElement,
-    [TagName.map]: HTMLMapElement,
-    [TagName.mark]: HTMLElement, // HTMLMarkElement,
-    [TagName.menu]: HTMLMenuElement,
-    [TagName.menuitem]: HTMLElement, // HTMLMenuItemElement,
-    [TagName.meta]: HTMLMetaElement,
-    [TagName.meter]: HTMLMeterElement,
-    [TagName.nav]: HTMLElement, // HTMLNavElement,
-    [TagName.noscript]: HTMLElement, // HTMLNoscriptElement,
-    [TagName.object]: HTMLObjectElement,
-    [TagName.ol]: HTMLOListElement,
-    [TagName.optgroup]: HTMLOptGroupElement,
-    [TagName.option]: HTMLOptionElement,
-    [TagName.output]: HTMLOutputElement,
-    [TagName.p]: HTMLParagraphElement,
-    [TagName.param]: HTMLParamElement,
-    [TagName.picture]: HTMLPictureElement,
-    [TagName.pre]: HTMLPreElement,
-    [TagName.progress]: HTMLProgressElement,
-    [TagName.q]: HTMLQuoteElement,
-    [TagName.rb]: HTMLElement, // HTMLRbElement,
-    [TagName.rbc]: HTMLElement, // HTMLRbcElement,
-    [TagName.rp]: HTMLElement, // HTMLRpElement,
-    [TagName.rt]: HTMLElement, // HTMLRtElement,
-    [TagName.rtc]: HTMLElement, // HTMLRtcElement,
-    [TagName.ruby]: HTMLElement, // HTMLRubyElement,
-    [TagName.s]: HTMLElement, // HTMLSElement,
-    [TagName.samp]: HTMLElement, // HTMLSampElement,
-    [TagName.script]: HTMLScriptElement,
-    [TagName.section]: HTMLElement, // HTMLSectionElement,
-    [TagName.select]: HTMLSelectElement,
-    [TagName.slot]: HTMLSlotElement,
-    [TagName.small]: HTMLElement, // HTMLSmallElement,
-    [TagName.source]: HTMLSourceElement,
-    [TagName.span]: HTMLSpanElement,
-    [TagName.strong]: HTMLElement, // HTMLStrongElement,
-    [TagName.style]: HTMLStyleElement,
-    [TagName.sub]: HTMLElement, // HTMLSubElement,
-    [TagName.summary]: HTMLElement, // HTMLSummaryElement,
-    [TagName.sup]: HTMLElement, // HTMLSupElement,
-    [TagName.table]: HTMLTableElement,
-    [TagName.tbody]: HTMLTableSectionElement, // HTMLTbodyElement,
-    [TagName.td]: HTMLTableDataCellElement,
-    [TagName.template]: HTMLTemplateElement,
-    [TagName.textarea]: HTMLTextAreaElement,
-    [TagName.tfoot]: HTMLTableSectionElement, // HTMLTfootElement,
-    [TagName.th]: HTMLTableHeaderCellElement,
-    [TagName.thead]: HTMLTableSectionElement, // HTMLTheadElement,
-    [TagName.time]: HTMLTimeElement,
-    [TagName.title]: HTMLTitleElement,
-    [TagName.tr]: HTMLTableRowElement,
-    [TagName.track]: HTMLTrackElement,
-    [TagName.u]: HTMLElement, // HTMLUElement,
-    [TagName.ul]: HTMLUListElement,
-    [TagName.var]: HTMLElement, // HTMLVarElement,
-    [TagName.video]: HTMLVideoElement,
-    [TagName.wbr]: HTMLElement, // HTMLWbrElement,
+    [TagName.a]: HTMLAnchorElement;
+    [TagName.abbr]: HTMLElement; // HTMLAbbrElement,
+    [TagName.address]: HTMLElement; // HTMLAddressElement,
+    [TagName.area]: HTMLAreaElement;
+    [TagName.article]: HTMLElement; // HTMLArticleElement,
+    [TagName.aside]: HTMLElement; // HTMLAsideElement,
+    [TagName.audio]: HTMLAudioElement;
+    [TagName.b]: HTMLElement; // HTMLBElement,
+    [TagName.base]: HTMLBaseElement;
+    [TagName.bdi]: HTMLElement; // HTMLBdiElement,
+    [TagName.bdo]: HTMLElement; // HTMLBdoElement,
+    [TagName.blockquote]: HTMLQuoteElement; // HTMLBlockquoteElement,
+    [TagName.body]: HTMLBodyElement;
+    [TagName.br]: HTMLBRElement;
+    [TagName.button]: HTMLButtonElement;
+    [TagName.canvas]: HTMLCanvasElement;
+    [TagName.caption]: HTMLTableCaptionElement;
+    [TagName.cite]: HTMLElement; // HTMLCiteElement,
+    [TagName.code]: HTMLElement; // HTMLCodeElement,
+    [TagName.col]: HTMLTableColElement;
+    [TagName.colgroup]: HTMLTableColElement; // HTMLColGroupElement,
+    [TagName.data]: HTMLDataElement;
+    [TagName.datalist]: HTMLDataListElement;
+    [TagName.dd]: HTMLElement; // HTMLDdElement,
+    [TagName.del]: HTMLModElement; // HTMLDelElement,
+    [TagName.details]: HTMLDetailsElement;
+    [TagName.dfn]: HTMLElement; // HTMLDfnElement,
+    [TagName.dialog]: HTMLDialogElement;
+    [TagName.div]: HTMLDivElement;
+    [TagName.dl]: HTMLDListElement;
+    [TagName.dt]: HTMLElement; // HTMLDtElement,
+    [TagName.em]: HTMLElement; // HTMLEmElement,
+    [TagName.embed]: HTMLEmbedElement;
+    [TagName.fieldset]: HTMLFieldSetElement;
+    [TagName.figcaption]: HTMLElement; // HTMLFigcaptionElement,
+    [TagName.figure]: HTMLElement; // HTMLFigureElement,
+    [TagName.footer]: HTMLElement; // HTMLFooterElement,
+    [TagName.form]: HTMLFormElement;
+    [TagName.h1]: HTMLHeadingElement; // HTMLH1Element,
+    [TagName.h2]: HTMLHeadingElement; // HTMLH2Element,
+    [TagName.h3]: HTMLHeadingElement; // HTMLH3Element,
+    [TagName.h4]: HTMLHeadingElement; // HTMLH4Element,
+    [TagName.h5]: HTMLHeadingElement; // HTMLH5Element,
+    [TagName.h6]: HTMLHeadingElement; // HTMLH6Element,
+    [TagName.head]: HTMLHeadElement;
+    [TagName.header]: HTMLElement; // HTMLHeaderElement,
+    [TagName.hr]: HTMLHRElement;
+    [TagName.html]: HTMLHtmlElement;
+    [TagName.i]: HTMLElement; // HTMLIElement,
+    [TagName.iframe]: HTMLIFrameElement;
+    [TagName.img]: HTMLImageElement;
+    [TagName.input]: HTMLInputElement;
+    [TagName.ins]: HTMLModElement; // HTMLInsElement,
+    [TagName.kbd]: HTMLElement; // HTMLKbdElement,
+    [TagName.keygen]: HTMLElement; // HTMLKeygenElement,
+    [TagName.label]: HTMLLabelElement;
+    [TagName.legend]: HTMLLegendElement;
+    [TagName.li]: HTMLLIElement;
+    [TagName.link]: HTMLLinkElement;
+    [TagName.main]: HTMLElement; // HTMLMainElement,
+    [TagName.map]: HTMLMapElement;
+    [TagName.mark]: HTMLElement; // HTMLMarkElement,
+    [TagName.menu]: HTMLMenuElement;
+    [TagName.menuitem]: HTMLElement; // HTMLMenuItemElement,
+    [TagName.meta]: HTMLMetaElement;
+    [TagName.meter]: HTMLMeterElement;
+    [TagName.nav]: HTMLElement; // HTMLNavElement,
+    [TagName.noscript]: HTMLElement; // HTMLNoscriptElement,
+    [TagName.object]: HTMLObjectElement;
+    [TagName.ol]: HTMLOListElement;
+    [TagName.optgroup]: HTMLOptGroupElement;
+    [TagName.option]: HTMLOptionElement;
+    [TagName.output]: HTMLOutputElement;
+    [TagName.p]: HTMLParagraphElement;
+    [TagName.param]: HTMLParamElement;
+    [TagName.picture]: HTMLPictureElement;
+    [TagName.pre]: HTMLPreElement;
+    [TagName.progress]: HTMLProgressElement;
+    [TagName.q]: HTMLQuoteElement;
+    [TagName.rb]: HTMLElement; // HTMLRbElement,
+    [TagName.rbc]: HTMLElement; // HTMLRbcElement,
+    [TagName.rp]: HTMLElement; // HTMLRpElement,
+    [TagName.rt]: HTMLElement; // HTMLRtElement,
+    [TagName.rtc]: HTMLElement; // HTMLRtcElement,
+    [TagName.ruby]: HTMLElement; // HTMLRubyElement,
+    [TagName.s]: HTMLElement; // HTMLSElement,
+    [TagName.samp]: HTMLElement; // HTMLSampElement,
+    [TagName.script]: HTMLScriptElement;
+    [TagName.section]: HTMLElement; // HTMLSectionElement,
+    [TagName.select]: HTMLSelectElement;
+    [TagName.slot]: HTMLSlotElement;
+    [TagName.small]: HTMLElement; // HTMLSmallElement,
+    [TagName.source]: HTMLSourceElement;
+    [TagName.span]: HTMLSpanElement;
+    [TagName.strong]: HTMLElement; // HTMLStrongElement,
+    [TagName.style]: HTMLStyleElement;
+    [TagName.sub]: HTMLElement; // HTMLSubElement,
+    [TagName.summary]: HTMLElement; // HTMLSummaryElement,
+    [TagName.sup]: HTMLElement; // HTMLSupElement,
+    [TagName.table]: HTMLTableElement;
+    [TagName.tbody]: HTMLTableSectionElement; // HTMLTbodyElement,
+    [TagName.td]: HTMLTableDataCellElement;
+    [TagName.template]: HTMLTemplateElement;
+    [TagName.textarea]: HTMLTextAreaElement;
+    [TagName.tfoot]: HTMLTableSectionElement; // HTMLTfootElement,
+    [TagName.th]: HTMLTableHeaderCellElement;
+    [TagName.thead]: HTMLTableSectionElement; // HTMLTheadElement,
+    [TagName.time]: HTMLTimeElement;
+    [TagName.title]: HTMLTitleElement;
+    [TagName.tr]: HTMLTableRowElement;
+    [TagName.track]: HTMLTrackElement;
+    [TagName.u]: HTMLElement; // HTMLUElement,
+    [TagName.ul]: HTMLUListElement;
+    [TagName.var]: HTMLElement; // HTMLVarElement,
+    [TagName.video]: HTMLVideoElement;
+    [TagName.wbr]: HTMLElement; // HTMLWbrElement,
 }
 
 /** Type guard that returns true if the given `node` is an `Element`. */
