@@ -178,8 +178,7 @@ describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) =
             }
         });
 
-        //* SKIP!
-        it.skip("should reflect undo / redo of handle updates immediately in the next summary", async () => {
+        it("should reflect undo / redo of handle updates immediately in the next summary", async () => {
             // Create a second data store (dataStore2).
             const dataStore2 = await dataStoreFactory.createInstance(mainDataStore._context.containerRuntime);
 
