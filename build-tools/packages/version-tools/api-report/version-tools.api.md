@@ -13,8 +13,8 @@ export function bumpRange(range: string, bumpType: VersionBumpTypeExtended, prer
 // @public
 export function bumpVersionScheme(version: string | semver.SemVer | undefined, bumpType: VersionBumpTypeExtended, scheme?: VersionScheme): semver.SemVer;
 
-// @public (undocumented)
-export function detectBumpType(v1: semver.SemVer | string | null, v2: semver.SemVer | string | null): semver.ReleaseType | "build" | undefined;
+// @public
+export function detectBumpType(v1: semver.SemVer | string | null, v2: semver.SemVer | string | null): VersionBumpType | undefined;
 
 // @public
 export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme;

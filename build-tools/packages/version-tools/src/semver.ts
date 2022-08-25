@@ -4,7 +4,7 @@
  */
 
 import * as semver from "semver";
-import { VersionBumpTypeExtended } from "./bumpTypes";
+import { VersionBumpTypeExtended, VersionBumpType } from "./bumpTypes";
 import { bumpInternalVersion, getVersionRange } from "./internalVersionScheme";
 import { bumpVersionScheme, detectVersionScheme } from "./schemes";
 
@@ -91,16 +91,17 @@ export function detectConstraintType(range: string): "minor" | "patch" {
 }
 
 /**
- *
+ * Given a first and second version, returns the bump type
  * @param v1 - The first version to compare.
  * @param v2 - The second version to compare.
- * @returns
+ * @returns The bump type, or undefined if it can't be determined.
  */
-// eslint-disable-next-line @rushstack/no-new-null
 export function detectBumpType(
+    // eslint-disable-next-line @rushstack/no-new-null
     v1: semver.SemVer | string | null,
+    // eslint-disable-next-line @rushstack/no-new-null
     v2: semver.SemVer | string | null,
-) {
+): VersionBumpType | undefined {
     const v1Parsed = semver.parse(v1);
     if (v1Parsed === null) {
         throw new Error(`Invalid version: ${v1}`);
@@ -115,5 +116,25 @@ export function detectBumpType(
         return;
     }
 
-    return semver.diff(v1Parsed, v2Parsed) || "build";
+    const bumpType = semver.diff(v1Parsed, v2Parsed);
+    switch (bumpType) {
+        case "major":
+        case "premajor": {
+            return "major";
+        }
+
+        case "minor":
+        case "preminor": {
+            return "minor";
+        }
+
+        case "patch":
+        case "prepatch": {
+            return "patch";
+        }
+
+        default: {
+            return undefined;
+        }
+    }
 }
