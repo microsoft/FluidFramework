@@ -50,8 +50,10 @@ You'll also need to have a Redis, MongoDB, Rabbitmq, and Historian instances run
 
 We install MongoDB and Rabbitmq from the helm stable repository. We also configure MongoDB to use the managed-premium storage class in AKS.
 
-`helm install --set persistence.storageClass=managed-premium,persistence.size=4094Gi,usePassword=false stable/mongodb`
-`helm install --set rbacEnabled=false,rabbitmq.username=prague,rabbitmq.password=[rabbitmq password],persistence.enabled=true,persistence.size=16Gi stable/rabbitmq`
+In the following commands you can omit the optional key+value pairs to use the defaults defined in the Helm Chart. Also, replace the `<helm-release-name>` with the appropriate value.
+
+`helm install --set persistence.storageClass=managed-premium,persistence.size=4094Gi,usePassword=false,image.registry=<optional-registry>,image.repository=<optional-repo-name>,image.tag=<optional-tag> <helm-release-name> bitnami/mongodb`
+`helm install --set rbac.create=false,auth.username=prague,auth.password=[password],persistence.enabled=true,persistence.size=16Gi,image.registry=<optional-registry>,image.repository=<optional-repo-name>,image.tag=<optional-tag> <helm-release-name> bitnami/rabbitmq`
 
 Redis, Kafka and Historian come from the `/server/charts` directory. You'll want to install each of them.
 

@@ -17,3 +17,4 @@ export * from "./typeCheck";
 export * from "./brand";
 export * from "./offsetList";
 export * from "./testChangeRebaser";
+export * from "./stackyIterator";

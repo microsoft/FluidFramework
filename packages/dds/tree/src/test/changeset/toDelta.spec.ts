@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { TreeSchemaIdentifier } from "../..";
 import {
     ProtoNode,
     toDelta as toDeltaImpl,
     Transposed as T,
 } from "../../changeset";
+import { TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKey, Delta } from "../../tree";
 import { brand, brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";
@@ -49,7 +49,7 @@ describe("toDelta", () => {
     it("set root value", () => {
         const changeset: T.MarkList = [{
             type: "Modify",
-            value: { type: "Set", value: 1 },
+            value: { id: 0, value: 1 },
         }];
         const mark: Delta.Modify = {
             type: Delta.MarkType.Modify,
@@ -68,7 +68,7 @@ describe("toDelta", () => {
                     42,
                     {
                         type: "Modify",
-                        value: { type: "Set", value: 1 },
+                        value: { id: 0, value: 1 },
                     },
                 ],
             },
@@ -87,11 +87,7 @@ describe("toDelta", () => {
 
     it("insert root", () => {
         const changeset: T.MarkList = [
-            [{
-                type: "Insert",
-                id: opId,
-                content,
-            }],
+            { type: "Insert", id: opId, content },
         ];
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
@@ -108,11 +104,7 @@ describe("toDelta", () => {
             fields: {
                 foo: [
                     42,
-                    [{
-                        type: "Insert",
-                        id: opId,
-                        content,
-                    }],
+                    { type: "Insert", id: opId, content },
                 ],
             },
         }];
@@ -181,11 +173,11 @@ describe("toDelta", () => {
                         count: 10,
                     },
                     8,
-                    [{
+                    {
                         type: "MoveIn",
                         id: opId,
                         count: 10,
-                    }],
+                    },
                 ],
             },
         }];
@@ -220,11 +212,11 @@ describe("toDelta", () => {
                 ],
                 bar: [
                         8,
-                    [{
+                    {
                         type: "MoveIn",
                         id: opId,
                         count: 10,
-                    }],
+                    },
                 ],
             },
         }];
@@ -266,11 +258,11 @@ describe("toDelta", () => {
                 }],
                 detached: [
                     8,
-                    [{
+                    {
                         type: "MoveIn",
                         id: opId,
                         count: 10,
-                    }],
+                    },
                 ],
             },
         };
@@ -313,15 +305,15 @@ describe("toDelta", () => {
                         count: 10,
                     },
                     3,
-                    [{
+                    {
                         type: "Insert",
                         id: opId,
                         content,
-                    }],
+                    },
                     1,
                     {
                         type: "Modify",
-                        value: { type: "Set", value: 1 },
+                        value: { id: opId, value: 1 },
                     },
                 ],
             },
@@ -352,18 +344,18 @@ describe("toDelta", () => {
     describe("Modifications to inserted content", () => {
         it("values", () => {
             const changeset: T.MarkList = [
-                [{
+                {
                     type: "MInsert",
                     id: opId,
                     content: content[0],
-                    value: { type: "Set", value: 4242 },
+                    value: { id: opId, value: 4242 },
                     fields: {
                         foo: [{
                             type: "Modify",
-                            value: { type: "Set", value: 4343 },
+                            value: { id: opId, value: 4343 },
                         }],
                     },
-                }],
+                },
             ];
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
@@ -382,26 +374,26 @@ describe("toDelta", () => {
 
         it("inserts", () => {
             const changeset: T.MarkList = [
-                [{
+                {
                     type: "MInsert",
                     id: opId,
                     content: content[0],
                     fields: {
                         foo: [
-                            [{
+                            {
                                 type: "Insert",
                                 id: opId,
                                 content: [{ type, value: 44 }],
-                            }],
+                            },
                             1,
-                            [{
+                            {
                                     type: "Insert",
                                     id: opId,
                                     content: [{ type, value: 45 }],
-                            }],
+                            },
                         ],
                     },
-                }],
+                },
             ];
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
@@ -424,22 +416,22 @@ describe("toDelta", () => {
 
         it("modified inserts", () => {
             const changeset: T.MarkList = [
-                [{
+                {
                     type: "MInsert",
                     id: opId,
                     content: content[0],
                     fields: {
                         foo: [
                             1,
-                            [{
+                            {
                                 type: "MInsert",
                                 id: opId,
                                 content: { type, value: 45 },
-                                value: { type: "Set", value: 4545 },
-                            }],
+                                value: { id: opId, value: 4545 },
+                            },
                         ],
                     },
-                }],
+                },
             ];
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
@@ -458,7 +450,7 @@ describe("toDelta", () => {
 
         it("delete", () => {
             const changeset: T.MarkList = [
-                [{
+                {
                     type: "MInsert",
                     id: opId,
                     content: content[0],
@@ -471,7 +463,7 @@ describe("toDelta", () => {
                             },
                         ],
                     },
-                }],
+                },
             ];
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,

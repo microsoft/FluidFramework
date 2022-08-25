@@ -77,14 +77,14 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
     protected async getLogger(): Promise<Logger> {
         if (this._logger === undefined) {
             this._logger = {
-                log: (msg: string | Error) => {
+                info: (msg: string | Error) => {
                     this.log(msg.toString());
                 },
-                logWarning: this.warn.bind(this),
-                logError: (msg: string | Error) => {
+                warning: this.warn.bind(this),
+                error: (msg: string | Error) => {
                     this.error(msg);
                 },
-                logVerbose: (msg: string | Error) => {
+                verbose: (msg: string | Error) => {
                     this.verbose(msg);
                 },
             };
