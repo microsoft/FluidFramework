@@ -6,14 +6,17 @@
 import Benchmark from "benchmark";
 import { assert } from "chai";
 import { Suite } from "mocha";
-import { benchmarkTypes, performanceTestSuiteTag, userCategoriesSplitter } from "./Configuration";
+import { benchmarkTypes, performanceTestSuiteTag, testTypes, userCategoriesSplitter } from "./Configuration";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual
  * output to the command line.
  */
 
-const tags = [performanceTestSuiteTag, ...benchmarkTypes.map((x) => `@${x}`)];
+const tags = [
+    performanceTestSuiteTag,
+    ...benchmarkTypes.map((x) => `@${x}`),
+    ...testTypes.map((x) => `@${x}`)];
 
 /**
  * Strip tags and user-specified category from a test suite's name.

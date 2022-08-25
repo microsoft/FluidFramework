@@ -54,10 +54,17 @@ export enum BenchmarkType {
 	OwnCorrectness,
 }
 
-export const TestTypes = {
-    ExecutionTime: "ExecutionTime",
-    MemoryUsage: "MemoryUsage",
-} as const;
+export enum TestType {
+	/**
+	 * Tests that measure execution time
+	 */
+	ExecutionTime,
+
+	/**
+	 * Tests that measure memory usage
+	 */
+	MemoryUsage,
+}
 
 /**
  * Names of all BenchmarkTypes.
@@ -69,6 +76,17 @@ for (const type of Object.values(BenchmarkType)) {
 		benchmarkTypes.push(type);
 	}
 }
+
+/**
+ * Names of all TestTypes.
+ */
+ export const testTypes: string[] = [];
+
+ for (const type of Object.values(TestType)) {
+     if (typeof type === "string") {
+         testTypes.push(type);
+     }
+ }
 
 /**
  * Arguments to `benchmark`

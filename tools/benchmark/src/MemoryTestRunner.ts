@@ -16,6 +16,7 @@ import {
     HookArguments,
     BenchmarkType,
     userCategoriesSplitter,
+    TestType,
 } from "./Configuration";
 import { getArrayStatistics } from "./ReporterUtilities";
 
@@ -111,6 +112,10 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
  * Optionally, setup and teardown functions for the whole benchmark can be provided via the
  * `before` and `after` options. Each of them will run only once, before/after all the
  * iterations/samples.
+ *
+ * Tests created with this function get tagged with '\@MemoryUsage', so mocha's --grep/--fgrep
+ * options can be used to only run this type of tests by fitering on that value.
+ *
  * @public
  *
  * @alpha The specifics of how this function works and what its output means are still subject
@@ -131,7 +136,9 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
         category: args.category ?? "",
     };
 
-    options.title = `${performanceTestSuiteTag} @${BenchmarkType[options.type]} ${options.title}`;
+    const benchmarkTypeTag = BenchmarkType[options.type];
+    const testTypeTag = TestType[TestType.MemoryUsage];
+    options.title = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${options.title}`;
     if (options.category !== "") {
         options.title = `${options.title} ${userCategoriesSplitter} @${options.category}`;
     }

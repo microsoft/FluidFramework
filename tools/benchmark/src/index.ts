@@ -24,7 +24,6 @@ export {
     MochaExclusiveOptions,
     HookFunction,
     HookArguments,
-    TestTypes,
     isInPerformanceTestingMode,
     validateBenchmarkArguments,
 } from "./Configuration";
