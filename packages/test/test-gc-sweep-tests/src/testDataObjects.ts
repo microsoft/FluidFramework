@@ -30,7 +30,7 @@ import {
     SharedMapHandler,
 } from "./channelHandler";
 
-// The BaseTestDataObject class that exposes useful objects for testing
+// The BaseTestDataObject has functionality that all other data objects should derive
 export class BaseTestDataObject extends DataObject {
     public static get type(): string {
         return "TestDataObject";
