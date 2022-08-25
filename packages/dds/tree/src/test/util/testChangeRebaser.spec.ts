@@ -19,7 +19,7 @@ function commutativeRebaser<TChange>(data: {
     };
 }
 
-const rebaser = commutativeRebaser({
+const counterRebaser = commutativeRebaser({
     compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
     invert: (change: number) => -change,
     rebaseAnchors: (anchor: AnchorSet, over: number) => {},
@@ -27,7 +27,7 @@ const rebaser = commutativeRebaser({
 
 describe("testChangeRebaser", () => {
     it("test counter with safe integers", () => {
-        const output = testChangeRebaser(rebaser, new Set([-1, 2, 3, 0, -2, 4]), (a, b) => a === b);
+        const output = testChangeRebaser(counterRebaser, new Set([-1, 2, 3, 0, -2, 4]), (a, b) => a === b);
         assert.equal(output.diffRebaseOrder, "PASSED");
         assert.equal(output.diffComposeOrder, "PASSED");
         assert.equal(output.nestedComposeRebaseOrder, "PASSED");
@@ -37,9 +37,9 @@ describe("testChangeRebaser", () => {
     });
 
     it("test counter with unsafe integers", () => {
-        const output = testChangeRebaser(rebaser, new Set([Number.MAX_SAFE_INTEGER, -10, 2]), (a, b) => a === b);
+        const output = testChangeRebaser(counterRebaser, new Set([Number.MAX_SAFE_INTEGER, -10, 2]), (a, b) => a === b);
         assert.equal(output.diffRebaseOrder, "PASSED");
-        assert.equal(output.diffComposeOrder, "PASSED");
+        assert.notEqual(output.diffComposeOrder, "PASSED");
         assert.equal(output.nestedComposeRebaseOrder, "PASSED");
         assert.equal(output.doUndoPair, "PASSED");
         assert.equal(output.sandwichRebase, "PASSED");
@@ -48,12 +48,12 @@ describe("testChangeRebaser", () => {
 
     it("test counter of floats with varying number of digits", () => {
         const output = testChangeRebaser(
-            rebaser,
+            counterRebaser,
             new Set([1.0, 1.22, -1.222]),
             (a, b) => a === b,
         );
         assert.equal(output.diffRebaseOrder, "PASSED");
-        assert.equal(output.diffComposeOrder, "PASSED");
+        assert.notEqual(output.diffComposeOrder, "PASSED");
         assert.equal(output.nestedComposeRebaseOrder, "PASSED");
         assert.equal(output.doUndoPair, "PASSED");
         assert.equal(output.sandwichRebase, "PASSED");
@@ -61,31 +61,25 @@ describe("testChangeRebaser", () => {
     });
 
     // This test case contains all the different "edge case" numbers
-    it("test counter with all number types", () => {
+    it("test counter with special number types", () => {
         const output = testChangeRebaser(
-            rebaser,
+            counterRebaser,
             new Set([
-                1.0,
-                1.22,
-                -1.222,
-                -0.0,
-                0,
-                10,
+                Number.NaN,
                 Number.MAX_VALUE,
                 Number.MIN_VALUE,
                 Number.POSITIVE_INFINITY,
                 Number.NEGATIVE_INFINITY,
-                Number.NaN,
                 Number.MIN_SAFE_INTEGER,
                 Number.MAX_SAFE_INTEGER,
             ]),
             (a, b) => a === b,
         );
-        assert.equal(output.diffRebaseOrder, "PASSED");
-        assert.equal(output.diffComposeOrder, "PASSED");
-        assert.equal(output.nestedComposeRebaseOrder, "PASSED");
-        assert.equal(output.doUndoPair, "PASSED");
+        assert.notEqual(output.diffRebaseOrder, "PASSED");
+        assert.notEqual(output.diffComposeOrder, "PASSED");
+        assert.notEqual(output.nestedComposeRebaseOrder, "PASSED");
+        assert.notEqual(output.doUndoPair, "PASSED");
         assert.equal(output.sandwichRebase, "PASSED");
-        assert.equal(output.changeWithInverse, "PASSED");
+        assert.notEqual(output.changeWithInverse, "PASSED");
     });
 });

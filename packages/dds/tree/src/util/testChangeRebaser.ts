@@ -36,27 +36,22 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
         for (const changeB of changes) {
             if (!checkDoUndoPair(changeA, changeB)) {
                 output.doUndoPair = [changeA, changeB];
-                return output;
             }
             if (!checkSandwichRebase(changeA, changeB)) {
                 output.doUndoPair = [changeA, changeB];
-                return output;
             }
 
             for (const changeC of changes) {
                 if (!checkDiffRebaseOrder(changeA, changeB, changeC)) {
                     output.diffRebaseOrder = [changeA, changeB, changeC];
-                    return output;
                 }
 
                 if (!checkDiffComposeOrder(changeA, changeB, changeC)) {
                     output.diffComposeOrder = [changeA, changeB, changeC];
-                    return output;
                 }
 
                 if (!checkNestedComposeRebaseOrder(changeA, changeB, changeC)) {
                     output.nestedComposeRebaseOrder = [changeA, changeB, changeC];
-                    return output;
                 }
             }
         }
@@ -127,11 +122,11 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
 
     // requirement for sandwich rebasing
     function checkSandwichRebase(changeA: TChange, changeB: TChange) {
-        const inv2 = invert(changeB);
+        const invB = invert(changeB);
         const r1 = rebase(changeA, changeB);
-        const r2 = rebase(r1, inv2);
+        const r2 = rebase(r1, invB);
         const r3 = rebase(r2, changeB);
-        return isEquivalent(r3, r2);
+        return isEquivalent(r3, r1);
     }
 
     // requirement for compose of a change with it's inverse.
