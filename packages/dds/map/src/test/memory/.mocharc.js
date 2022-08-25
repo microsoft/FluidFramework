@@ -9,7 +9,7 @@
 
 module.exports = {
     exit: true,
-    fgrep: "@Benchmark",
+    fgrep: ["@Benchmark", "@MemoryUsage"],
     "node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
     recursive: true,
     reporter: "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js",
