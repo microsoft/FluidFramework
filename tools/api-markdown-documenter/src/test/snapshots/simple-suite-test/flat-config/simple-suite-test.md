@@ -102,9 +102,9 @@ export declare abstract class TestAbstractClass
 
 #### Constructors
 
-|  Constructor | Return Type | Description |
-|  --- | --- | --- |
-|  [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test#testabstractclass-_constructor_-constructor) |  | This is a constructor. |
+|  Constructor | Description |
+|  --- | --- |
+|  [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test#testabstractclass-_constructor_-constructor) | This is a constructor. |
 
 #### Properties
 
@@ -228,9 +228,9 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 #### Constructors
 
-|  Constructor | Return Type | Description |
-|  --- | --- | --- |
-|  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-constructor) |  | Test class constructor |
+|  Constructor | Description |
+|  --- | --- |
+|  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-constructor) | Test class constructor |
 
 #### Properties
 
@@ -829,9 +829,9 @@ class TestClass
 
 ###### Constructors
 
-|  Constructor | Return Type | Description |
-|  --- | --- | --- |
-|  [(constructor)(testClassProperty)](docs/simple-suite-test#testnamespace-testclass-_constructor_-constructor) |  | Test class constructor |
+|  Constructor | Description |
+|  --- | --- |
+|  [(constructor)(testClassProperty)](docs/simple-suite-test#testnamespace-testclass-_constructor_-constructor) | Test class constructor |
 
 ###### Properties
 

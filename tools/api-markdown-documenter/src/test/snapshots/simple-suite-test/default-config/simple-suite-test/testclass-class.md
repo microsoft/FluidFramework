@@ -32,9 +32,9 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 ## Constructors
 
-|  Constructor | Return Type | Description |
-|  --- | --- | --- |
-|  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](./simple-suite-test/testclass-class#_constructor_-constructor) |  | Test class constructor |
+|  Constructor | Description |
+|  --- | --- |
+|  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](./simple-suite-test/testclass-class#_constructor_-constructor) | Test class constructor |
 
 ## Properties
 
