@@ -49,6 +49,10 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
         return "internal";
     }
 
+    if (isInternalVersionScheme(rangeOrVersion, true)) {
+        return "internalPrerelease";
+    }
+
     if (semver.valid(rangeOrVersion) !== null) {
         // Must be a version string
         if (isVirtualPatch(rangeOrVersion)) {
