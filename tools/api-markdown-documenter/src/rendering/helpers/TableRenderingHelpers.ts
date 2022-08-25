@@ -219,14 +219,7 @@ export function renderParametersSummaryTable(
 
     function renderModifierCell(apiParameter: Parameter): DocTableCell {
         return apiParameter.isOptional
-            ? new DocTableCell({ configuration: config.tsdocConfiguration }, [
-                  new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                      new DocPlainText({
-                          configuration: config.tsdocConfiguration,
-                          text: "optional",
-                      }),
-                  ]),
-              ])
+            ? renderPlainTextCell("optional", config)
             : renderEmptyTableCell(config);
     }
 
@@ -430,7 +423,9 @@ export function renderApiSummaryCell(
         }
     }
 
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, docNodes);
+    return docNodes.length === 0
+        ? renderEmptyTableCell(config)
+        : new DocTableCell({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 /**
@@ -485,17 +480,9 @@ export function renderModifiersCell(
 ): DocTableCell {
     const modifiers = getModifiers(apiItem);
 
-    if (modifiers.length === 0) {
-        return renderEmptyTableCell(config);
-    }
-
-    const modifiersList = modifiers.join(", ");
-
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
-        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            new DocPlainText({ configuration: config.tsdocConfiguration, text: modifiersList }),
-        ]),
-    ]);
+    return modifiers.length === 0
+        ? renderEmptyTableCell(config)
+        : renderPlainTextCell(modifiers.join(", "), config);
 }
 
 /**
@@ -543,11 +530,7 @@ export function renderParameterTitleCell(
     apiParameter: Parameter,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
-        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            new DocPlainText({ configuration: config.tsdocConfiguration, text: apiParameter.name }),
-        ]),
-    ]);
+    return renderPlainTextCell(apiParameter.name, config);
 }
 
 /**
@@ -597,15 +580,38 @@ export function renderTypeExcerptCell(
     typeExcerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
-        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            renderExcerptWithHyperlinks(typeExcerpt, config),
-        ]),
-    ]);
+    return typeExcerpt.isEmpty
+        ? renderEmptyTableCell(config)
+        : new DocTableCell({ configuration: config.tsdocConfiguration }, [
+              new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                  renderExcerptWithHyperlinks(typeExcerpt, config),
+              ]),
+          ]);
 }
 
 /**
- * Renders and empty table cell.
+ * Renders a table cell with plain text content.
+ *
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderPlainTextCell(
+    text: string,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocTableCell {
+    return text.length === 0
+        ? renderEmptyTableCell(config)
+        : new DocTableCell({ configuration: config.tsdocConfiguration }, [
+              new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                  new DocPlainText({
+                      configuration: config.tsdocConfiguration,
+                      text,
+                  }),
+              ]),
+          ]);
+}
+
+/**
+ * Renders an empty table cell.
  *
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
