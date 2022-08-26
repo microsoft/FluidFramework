@@ -597,11 +597,13 @@ export function renderTypeExcerptCell(
     typeExcerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
-        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            renderExcerptWithHyperlinks(typeExcerpt, config),
-        ]),
-    ]);
+    const renderedExcerpt = renderExcerptWithHyperlinks(typeExcerpt, config);
+
+    return renderedExcerpt === undefined
+        ? renderEmptyTableCell(config)
+        : new DocTableCell({ configuration: config.tsdocConfiguration }, [
+              new DocParagraph({ configuration: config.tsdocConfiguration }, [renderedExcerpt]),
+          ]);
 }
 
 /**

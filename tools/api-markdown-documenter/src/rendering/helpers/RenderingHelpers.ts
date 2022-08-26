@@ -186,8 +186,11 @@ function renderHeritageTypeList(
                 );
             }
 
-            docNodes.push(renderExcerptWithHyperlinks(heritageType.excerpt, config));
-            needsComma = true;
+            const renderedExcerpt = renderExcerptWithHyperlinks(heritageType.excerpt, config);
+            if (renderedExcerpt !== undefined) {
+                docNodes.push(renderedExcerpt);
+                needsComma = true;
+            }
         }
 
         return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
@@ -264,12 +267,20 @@ export function renderTypeParameters(
  *
  * @param excerpt - The TSDoc excerpt to render.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns A `DocParagraph` containing the rendered contents, if the excerpt was non-empty.
+ * Will return `undefined` otherwise.
  */
 export function renderExcerptWithHyperlinks(
     excerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocParagraph {
+): DocParagraph | undefined {
+    if (excerpt.isEmpty) {
+        return undefined;
+    }
+
     const docNodes: DocNode[] = [];
+    console.log(`---Excerpt: "${excerpt.text}".`);
     for (const token of excerpt.spannedTokens) {
         // Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
         // the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
