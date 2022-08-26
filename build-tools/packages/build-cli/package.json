@@ -22,14 +22,16 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
     "build:compile": "npm run build:clean && npm run tsc",
+    "build:docs": "api-extractor run --local",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
     "build:readme": "oclif readme",
+    "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log oclif.manifest.json",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -44,6 +46,7 @@
   "dependencies": {
     "@fluid-tools/version-tools": "^0.4.3000",
     "@fluidframework/build-tools": "^0.4.3000",
+    "@fluidframework/test-version-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0",
     "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
@@ -51,9 +54,13 @@
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
     "chalk": "^2.4.2",
-    "inquirer": "^9.0.0",
+    "date-fns": "^2.29.1",
+    "extended-enum": "^1.0.1",
+    "inquirer": "^8.0.0",
+    "jssm": "^5.79.18",
     "npm-check-updates": "^16.0.0",
     "semver": "^7.3.7",
+    "semver-diff": "^4.0.0",
     "table": "^6.8.0"
   },
   "devDependencies": {
