@@ -259,7 +259,7 @@ async function main() {
     try {
         documents = renderDocuments(config);
     } catch(error) {
-        console.error(`Encountered error while generating API documentation for "${document.apiItem.displayName}":`);
+        console.error(`Encountered error while generating API documentation:`);
         console.error(error);
         throw error;
     }
