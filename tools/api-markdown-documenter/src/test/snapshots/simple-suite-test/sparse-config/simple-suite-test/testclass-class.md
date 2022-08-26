@@ -9,7 +9,6 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 ```
 <b>Extends:</b> [TestAbstractClass](docs/simple-suite-test/testabstractclass-class)
 
-
 <b>Type parameters:</b> 
 
 * <b>TTypeParameterA</b>: A type parameter

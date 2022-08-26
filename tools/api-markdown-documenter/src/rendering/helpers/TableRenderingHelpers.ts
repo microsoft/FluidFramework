@@ -602,7 +602,7 @@ export function renderTypeExcerptCell(
     return renderedExcerpt === undefined
         ? renderEmptyTableCell(config)
         : new DocTableCell({ configuration: config.tsdocConfiguration }, [
-              new DocParagraph({ configuration: config.tsdocConfiguration }, [renderedExcerpt]),
+              new DocParagraph({ configuration: config.tsdocConfiguration }, renderedExcerpt),
           ]);
 }
 

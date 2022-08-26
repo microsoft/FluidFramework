@@ -28,7 +28,6 @@ import { DocLinkTag } from '@microsoft/tsdoc';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocNodeContainer } from '@microsoft/tsdoc';
 import { DocNoteBox } from '@microsoft/api-documenter/lib/nodes/DocNoteBox';
-import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { DocTable } from '@microsoft/api-documenter/lib/nodes/DocTable';
 import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
@@ -393,7 +392,7 @@ function renderExampleSection(example: DocExampleProperties, config: Required<Ma
 function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph | undefined;
+function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocNode[] | undefined;
 
 // @public
 export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, maybeMarkdownEmitter?: MarkdownEmitter): Promise<void>;

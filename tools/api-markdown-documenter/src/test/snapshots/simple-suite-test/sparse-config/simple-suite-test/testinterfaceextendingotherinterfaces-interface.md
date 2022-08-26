@@ -7,12 +7,7 @@ Test interface that extends other interfaces
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number> 
 ```
-<b>Extends:</b> [TestInterface](docs/simple-suite-test/testinterface-interface)
-
-, [TestMappedType](docs/simple-suite-test/testmappedtype-typealias)
-
-, [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)
-
+<b>Extends:</b> [TestInterface](docs/simple-suite-test/testinterface-interface)<!-- -->, [TestMappedType](docs/simple-suite-test/testmappedtype-typealias)<!-- -->, [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)
 
 ## Remarks {#testinterfaceextendingotherinterfaces-remarks}
 

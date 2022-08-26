@@ -11,7 +11,6 @@ interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 ```
 <b>Extends:</b> [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;[TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum)
 
-
 ## Properties
 
 |  Property | Type | Description |

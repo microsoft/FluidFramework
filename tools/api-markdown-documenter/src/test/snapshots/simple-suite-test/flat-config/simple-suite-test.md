@@ -207,7 +207,6 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 ```
 <b>Extends:</b> [TestAbstractClass](docs/simple-suite-test#testabstractclass-class)
 
-
 <b>Type parameters:</b> 
 
 * <b>TTypeParameterA</b>: A type parameter
@@ -714,12 +713,7 @@ Test interface that extends other interfaces
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number> 
 ```
-<b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)
-
-, [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
-
-, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)
-
+<b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)<!-- -->, [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)<!-- -->, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)
 
 #### Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
@@ -1018,7 +1012,6 @@ Test interface
 interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum> 
 ```
 <b>Extends:</b> [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;[TestEnum](docs/simple-suite-test#testnamespace-testenum-enum)
-
 
 ###### Properties
 

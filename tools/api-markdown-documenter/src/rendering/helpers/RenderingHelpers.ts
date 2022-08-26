@@ -188,7 +188,7 @@ function renderHeritageTypeList(
 
             const renderedExcerpt = renderExcerptWithHyperlinks(heritageType.excerpt, config);
             if (renderedExcerpt !== undefined) {
-                docNodes.push(renderedExcerpt);
+                docNodes.push(...renderedExcerpt);
                 needsComma = true;
             }
         }
@@ -268,13 +268,14 @@ export function renderTypeParameters(
  * @param excerpt - The TSDoc excerpt to render.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  *
- * @returns A `DocParagraph` containing the rendered contents, if the excerpt was non-empty.
+ * @returns A list of doc nodes containing the rendered contents, if the excerpt was non-empty.
  * Will return `undefined` otherwise.
+ * This list of nodes is suitable to be placed in a `paragraph` or `section`, etc.
  */
 export function renderExcerptWithHyperlinks(
     excerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocParagraph | undefined {
+): DocNode[] | undefined {
     if (excerpt.isEmpty) {
         return undefined;
     }
@@ -319,7 +320,7 @@ export function renderExcerptWithHyperlinks(
             );
         }
     }
-    return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
+    return docNodes;
 }
 
 /**
