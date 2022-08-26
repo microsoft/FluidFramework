@@ -12,3 +12,5 @@ protected sealedMethod(): string;
 ## Returns {#sealedmethod-returns}
 
 A string!
+
+<b>Return type:</b> string

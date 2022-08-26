@@ -8,3 +8,7 @@ Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test/testabstrac
 /** @override */
 protected virtualMethod(): number;
 ```
+
+## Returns {#virtualmethod-returns}
+
+<b>Return type:</b> number

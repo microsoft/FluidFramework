@@ -14,3 +14,5 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 ## Returns {#testfunctionreturningintersectiontype-returns}
 
 an intersection type
+
+<b>Return type:</b> [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;

@@ -17,3 +17,5 @@ static testClassStaticMethod(foo: number): string;
 ## Returns {#testclassstaticmethod-returns}
 
 - Some string
+
+<b>Return type:</b> string

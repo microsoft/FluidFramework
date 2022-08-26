@@ -7,3 +7,7 @@ A test public abstract method.
 ```typescript
 publicAbstractMethod(): void;
 ```
+
+## Returns {#publicabstractmethod-returns}
+
+<b>Return type:</b> void

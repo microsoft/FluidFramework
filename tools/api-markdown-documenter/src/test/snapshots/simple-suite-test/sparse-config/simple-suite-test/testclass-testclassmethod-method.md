@@ -19,6 +19,10 @@ Here are some remarks about the method
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
 
+## Returns {#testclassmethod-returns}
+
+<b>Return type:</b> TTypeParameterA
+
 ## Throws {#testclassmethod-throws}
 
 Some sort of error in 1 case.

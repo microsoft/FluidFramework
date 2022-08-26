@@ -9,6 +9,7 @@ import {
     ApiInterface,
     ApiItem,
     ApiItemKind,
+    ApiReturnTypeMixin,
     Excerpt,
     ExcerptTokenKind,
     HeritageType,
@@ -282,7 +283,6 @@ export function renderExcerptWithHyperlinks(
     }
 
     const docNodes: DocNode[] = [];
-    console.log(`---Excerpt: "${excerpt.text}".`);
     for (const token of excerpt.spannedTokens) {
         // Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
         // the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
@@ -650,7 +650,7 @@ export function renderParametersSection(
  * Renders a section containing the {@link https://tsdoc.org/pages/tags/returns/ | @returns} documentation of the
  * provided API item, if it has one.
  *
- * @remarks Displayed as a heading, with the documentation contents under it.
+ * @remarks Displayed as a heading, with the documentation contents and the return type under it.
  *
  * @param apiItem - The API item whose `@returns` documentation will be rendered.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
@@ -661,21 +661,46 @@ export function renderReturnsSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
+    const docSections: DocSection[] = [];
+
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
         const returnsBlock = getReturnsBlock(apiItem);
-        if (returnsBlock === undefined) {
-            return undefined;
+        if (returnsBlock !== undefined) {
+            docSections.push(returnsBlock);
         }
-
-        return new DocSection({ configuration: config.tsdocConfiguration }, [
-            renderHeading(
-                { title: "Returns", id: `${getQualifiedApiItemName(apiItem)}-returns` },
-                config,
-            ),
-            returnsBlock,
-        ]);
     }
-    return undefined;
+
+    if (ApiReturnTypeMixin.isBaseClassOf(apiItem) && apiItem.returnTypeExcerpt.text.trim() !== "") {
+        const renderedTypeExcerpt = renderExcerptWithHyperlinks(apiItem.returnTypeExcerpt, config);
+        if (renderedTypeExcerpt !== undefined) {
+            docSections.push(
+                new DocSection({ configuration: config.tsdocConfiguration }, [
+                    new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                        new DocEmphasisSpan(
+                            { configuration: config.tsdocConfiguration, bold: true },
+                            [
+                                new DocPlainText({
+                                    configuration: config.tsdocConfiguration,
+                                    text: "Return type: ",
+                                }),
+                            ],
+                        ),
+                        ...renderedTypeExcerpt,
+                    ]),
+                ]),
+            );
+        }
+    }
+
+    return docSections.length === 0
+        ? undefined
+        : new DocSection({ configuration: config.tsdocConfiguration }, [
+              renderHeading(
+                  { title: "Returns", id: `${getQualifiedApiItemName(apiItem)}-returns` },
+                  config,
+              ),
+              mergeSections(docSections, config.tsdocConfiguration),
+          ]);
 }
 
 /**
