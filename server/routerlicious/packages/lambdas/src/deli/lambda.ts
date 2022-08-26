@@ -352,7 +352,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              * 4a. Server B's deli instance is smart enough to detect that those 100 kafka messages were already
              *  processed (due to the checkpoint created in #2) so it ignores them (the first if statement in handler).
              *
-             * However this is a problem because the opEvent logic is not going to trigger since
+             * The above flow is a problem because the opEvent logic is not going to trigger since
              *  no messages were sequenced by this deli.
              *
              * Deli should be smart and check if it hasn't yet sent an opEvent for messages that
@@ -385,6 +385,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              *
              * Deli is configured to checkpoint 1 message behind the head while there is a client in the session.
              * This will cause the kafka partition to never get a new checkpoint because it's in this bad loop.
+             * Never checkpointing could eventually lead to messages expiring from Kafka (data loss/corruption).
              *
              * We can recover from this loop if we check for idle clients on startup and insert a leave message
              * for that 1 write client (who is now definitely expired). It would end up making deli checkpoint properly.
