@@ -67,7 +67,6 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
         ...BaseCommand.flags,
     };
 
-    // static args = [{ name: "file" }];
 
     public async run(): Promise<void> {
         const context = await this.getContext();
