@@ -812,8 +812,9 @@ export function getDeviceSpec() {
 }
 
 export interface IDebugBusEventSignatures {
+    inactiveObjectMarked: [];
     inactiveObjectUsed: [IUnreferencedEventPropsEx];
-    gcDisposed: [];
+    gcRan: [IGCStats];
 }
 
 export interface IDebugBusEvents extends IEvent {

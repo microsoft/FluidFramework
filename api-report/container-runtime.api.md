@@ -106,7 +106,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
     // (undocumented)
-    readonly debugBus: DebugBus;
+    readonly debugBus: DebugBus | undefined;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -386,6 +386,7 @@ export interface IGCStats {
     nodeCount: number;
     unrefAttachmentBlobCount: number;
     unrefDataStoreCount: number;
+    unreferencedTimestampMsUsed?: number;
     unrefNodeCount: number;
     updatedAttachmentBlobCount: number;
     updatedDataStoreCount: number;

@@ -42,7 +42,7 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
-import { ContainerRuntime, IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
+import { ContainerRuntime, IGCRuntimeOptions, RuntimeHeaders, DebugBus } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
 import {
     getGCVersion,
@@ -105,6 +105,8 @@ export interface IGCStats {
     updatedDataStoreCount: number;
     /** The number of attachment blobs whose reference state updated since last GC run. */
     updatedAttachmentBlobCount: number;
+    /** The unreferencedTimestampMs value used for all nodes marked as unreferenced in this GC run. */
+    unreferencedTimestampMsUsed?: number;
 }
 
 /** The types of GC nodes in the GC reference graph. */
@@ -234,6 +236,7 @@ class UnreferencedStateTracker {
     private sweepTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor(
+        private readonly debugBus: DebugBus | undefined,
         public readonly unreferencedTimestampMs: number,
         /** The time after which node transitions to Inactive state. */
         private readonly inactiveTimeoutMs: number,
@@ -264,6 +267,7 @@ class UnreferencedStateTracker {
         // Also, start a timer for the sweep timeout.
         if (unreferencedDurationMs >= this.inactiveTimeoutMs) {
             this._state = UnreferencedState.Inactive;
+            this.debugBus?.broadcast("inactiveObjectMarked");
             this.clearTimers();
 
             if (this.sweepTimeoutMs !== undefined) {
@@ -281,6 +285,7 @@ class UnreferencedStateTracker {
         if (this.inactiveTimer === undefined) {
             const inactiveTimeoutHandler = () => {
                 this._state = UnreferencedState.Inactive;
+                this.debugBus?.broadcast("inactiveObjectMarked");
                 // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
                 if (this.sweepTimeoutMs !== undefined) {
                     setLongTimeout(
@@ -657,6 +662,7 @@ export class GarbageCollector implements IGarbageCollector {
                     this.unreferencedNodesState.set(
                         nodeId,
                         new UnreferencedStateTracker(
+                            this.debugBus,
                             nodeData.unreferencedTimestampMs,
                             this.inactiveTimeoutMs,
                             this.sweepTimeoutMs,
@@ -770,6 +776,8 @@ export class GarbageCollector implements IGarbageCollector {
             const gcStats = await this.runPostGCSteps(gcData, gcResult, logger, testMode);
             event.end({ ...gcStats });
             this.completedRuns++;
+
+            this.debugBus?.broadcast("gcRan", gcStats);
             return gcStats;
         }, { end: true, cancel: "error" });
     }
@@ -787,16 +795,17 @@ export class GarbageCollector implements IGarbageCollector {
         logger: ITelemetryLogger,
         testMode: boolean,
     ) {
+        const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
+
         // Generate statistics from the current run. This is done before updating the current state because it
         // generates some of its data based on previous state of the system.
-        const gcStats = this.generateStats(gcResult);
+        const gcStats = this.generateStats(gcResult, currentReferenceTimestampMs);
 
         // Update the state since the last GC run. There can be nodes that were referenced between the last and
         // the current run. We need to identify than and update their unreferenced state if needed.
         this.updateStateSinceLastRun(gcData, logger);
 
         // Update the current state and update the runtime of all routes or ids that used as per the GC run.
-        const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
         this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
         this.runtime.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
 
@@ -997,9 +1006,6 @@ export class GarbageCollector implements IGarbageCollector {
             clearTimeout(this.sessionExpiryTimer);
             this.sessionExpiryTimer = undefined;
         }
-        if (this.isSummarizerClient) {
-            this.debugBus?.broadcast<"gcDisposed">("gcDisposed");
-        }
     }
 
     /**
@@ -1050,6 +1056,7 @@ export class GarbageCollector implements IGarbageCollector {
                 this.unreferencedNodesState.set(
                     nodeId,
                     new UnreferencedStateTracker(
+                        this.debugBus,
                         currentReferenceTimestampMs,
                         this.inactiveTimeoutMs,
                         this.sweepTimeoutMs,
@@ -1198,7 +1205,7 @@ export class GarbageCollector implements IGarbageCollector {
      * @param gcResult - The result of a GC run.
      * @returns the GC stats of the GC run.
      */
-    private generateStats(gcResult: IGCResult): IGCStats {
+    private generateStats(gcResult: IGCResult, currentReferenceTimestampMs: number | undefined): IGCStats {
         const gcStats: IGCStats = {
             nodeCount: 0,
             dataStoreCount: 0,
@@ -1209,6 +1216,7 @@ export class GarbageCollector implements IGarbageCollector {
             updatedNodeCount: 0,
             updatedDataStoreCount: 0,
             updatedAttachmentBlobCount: 0,
+            unreferencedTimestampMsUsed: currentReferenceTimestampMs,
         };
 
         const updateNodeStats = (nodeId: string, referenced: boolean) => {
@@ -1360,7 +1368,7 @@ export class GarbageCollector implements IGarbageCollector {
                 pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
             } as const;
             this.mc.logger.sendErrorEvent(event);
-            this.debugBus?.broadcast<"inactiveObjectUsed">("inactiveObjectUsed", { ...event, usageType, state });
+            this.debugBus?.broadcast("inactiveObjectUsed", { ...event, usageType, state });
         }
     }
 
@@ -1385,7 +1393,7 @@ export class GarbageCollector implements IGarbageCollector {
                     fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
                 } as const;
                 logger.sendErrorEvent(event);
-                this.debugBus?.broadcast<"inactiveObjectUsed">("inactiveObjectUsed", { ...event, usageType, state });
+                this.debugBus?.broadcast("inactiveObjectUsed", { ...event, usageType, state });
             }
         }
         this.pendingEventsQueue = [];
