@@ -153,8 +153,7 @@ class MochaMemoryTestReporter {
                         table.newRow();
                     });
                     console.log(`${table.toString()}`);
-                    console.log("------------------------------------------------------");
-                    console.log(`${red("ERRORS:")}`);
+                    console.log("------------------------------------------------------", `\n${red("ERRORS:")}`);
                     failedTests.forEach(([testName, testData]) => {
                         console.log(`\n${red(testName)}`, "\n", testData.error);
                     });
