@@ -2,6 +2,12 @@
 
 Test Enum
 
+## Signature {#testenum-signature}
+
+```typescript
+export declare enum TestEnum 
+```
+
 ## Remarks {#testenum-remarks}
 
 Here are some remarks about the enum
@@ -24,12 +30,6 @@ Another example
 const bar = TestEnum.TestEnumValue2
 ```
 
-## Signature {#testenum-signature}
-
-```typescript
-export declare enum TestEnum 
-```
-
 ## Flags
 
 |  Flag | Description |
@@ -42,34 +42,36 @@ export declare enum TestEnum
 
 Test enum value 1 (string)
 
-### Remarks {#testenumvalue1-remarks}
-
-Here are some remarks about the enum value
-
 ### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
-Test enum value 2 (number)
 
-### Remarks {#testenumvalue2-remarks}
+### Remarks {#testenumvalue1-remarks}
 
 Here are some remarks about the enum value
+
+Test enum value 2 (number)
 
 ### Signature {#testenumvalue2-signature}
 
 ```typescript
 TestEnumValue2 = 3
 ```
-Test enum value 3 (default)
 
-### Remarks {#testenumvalue3-remarks}
+### Remarks {#testenumvalue2-remarks}
 
 Here are some remarks about the enum value
+
+Test enum value 3 (default)
 
 ### Signature {#testenumvalue3-signature}
 
 ```typescript
 TestEnumValue3 = 4
 ```
+
+### Remarks {#testenumvalue3-remarks}
+
+Here are some remarks about the enum value

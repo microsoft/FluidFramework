@@ -7,3 +7,7 @@ Test function that returns an inline type
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
+
+## Returns {#testfunctionreturninguniontype-returns}
+
+A union type

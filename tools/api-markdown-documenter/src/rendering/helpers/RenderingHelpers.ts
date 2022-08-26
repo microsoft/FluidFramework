@@ -16,14 +16,12 @@ import {
     TypeParameter,
 } from "@microsoft/api-extractor-model";
 import {
-    DocBlock,
     DocFencedCode,
     DocLinkTag,
     DocNode,
     DocParagraph,
     DocPlainText,
     DocSection,
-    StandardTags,
 } from "@microsoft/tsdoc";
 
 import { Heading } from "../../Heading";
@@ -35,9 +33,12 @@ import {
     doesItemKindRequireOwnDocument,
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
+    getExampleBlocks,
     getHeadingForApiItem,
     getLinkForApiItem,
     getQualifiedApiItemName,
+    getReturnsBlock,
+    getThrowsBlocks,
     mergeSections,
 } from "../../utilities";
 import { renderParametersSummaryTable } from "./TableRenderingHelpers";
@@ -186,8 +187,11 @@ function renderHeritageTypeList(
                 );
             }
 
-            docNodes.push(renderExcerptWithHyperlinks(heritageType.excerpt, config));
-            needsComma = true;
+            const renderedExcerpt = renderExcerptWithHyperlinks(heritageType.excerpt, config);
+            if (renderedExcerpt !== undefined) {
+                docNodes.push(...renderedExcerpt);
+                needsComma = true;
+            }
         }
 
         return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
@@ -264,12 +268,28 @@ export function renderTypeParameters(
  *
  * @param excerpt - The TSDoc excerpt to render.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns A list of doc nodes containing the rendered contents, if the excerpt was non-empty.
+ * Will return `undefined` otherwise.
+ * This list of nodes is suitable to be placed in a `paragraph` or `section`, etc.
  */
 export function renderExcerptWithHyperlinks(
     excerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocParagraph {
+): DocNode[] | undefined {
+    if (excerpt.isEmpty) {
+        return undefined;
+    }
+
     const docNodes: DocNode[] = [];
+
+    // Workaround for an apparent bug in api-extractor-model.
+    // The closing angle-bracket of a heritage type is bundled with the next token, rather than
+    // with the token it is closing.
+    // We will track opening and closing angle-brackets as we walk the tokens, and manually
+    // tack on closing brackets as needed at the end.
+    let openBracketCount = 0;
+
     for (const token of excerpt.spannedTokens) {
         // Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
         // the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
@@ -306,9 +326,31 @@ export function renderExcerptWithHyperlinks(
                     text: unwrappedTokenText,
                 }),
             );
+
+            if (unwrappedTokenText === "<") {
+                openBracketCount++;
+            } else if (unwrappedTokenText === ">") {
+                openBracketCount--;
+            }
         }
     }
-    return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
+
+    if (openBracketCount < 0) {
+        throw new Error(
+            "Wrote more closing angle-brackets than opening ones. This shouldn't be possible.",
+        );
+    }
+
+    if (openBracketCount > 0) {
+        docNodes.push(
+            new DocPlainText({
+                configuration: config.tsdocConfiguration,
+                text: ">".repeat(openBracketCount),
+            }),
+        );
+    }
+
+    return docNodes;
 }
 
 /**
@@ -421,7 +463,7 @@ export function renderSummarySection(apiItem: ApiItem): DocSection | undefined {
 
 /**
  * Renders a section containing the {@link https://tsdoc.org/pages/tags/remarks/ | @remarks} documentation of the
- * provided API item if it has any.
+ * provided API item, if it has any.
  *
  * @remarks Displayed as a heading, with the documentation contents under it.
  *
@@ -441,6 +483,38 @@ export function renderRemarksSection(
                 config,
             ),
             apiItem.tsdocComment.remarksBlock.content,
+        ]);
+    }
+    return undefined;
+}
+
+/**
+ * Renders a section containing the {@link https://tsdoc.org/pages/tags/throws/ | @throws} documentation of the
+ * provided API item, if it has any.
+ *
+ * @remarks Displayed as a heading, with the documentation contents under it.
+ *
+ * @param apiItem - The API item whose `@throws` documentation will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if the API item had any `@throws` comments, otherwise `undefined`.
+ */
+export function renderThrowsSection(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+        const throwsBlocks = getThrowsBlocks(apiItem);
+        if (throwsBlocks === undefined || throwsBlocks.length === 0) {
+            return undefined;
+        }
+
+        return new DocSection({ configuration: config.tsdocConfiguration }, [
+            renderHeading(
+                { title: "Throws", id: `${getQualifiedApiItemName(apiItem)}-throws` },
+                config,
+            ),
+            ...throwsBlocks,
         ]);
     }
     return undefined;
@@ -495,42 +569,37 @@ export function renderExamplesSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
-        const exampleBlocks: DocBlock[] = apiItem.tsdocComment.customBlocks.filter(
-            (x) => x.blockTag.tagNameWithUpperCase === StandardTags.example.tagNameWithUpperCase,
-        );
+    const exampleBlocks = getExampleBlocks(apiItem);
 
-        if (exampleBlocks.length === 0) {
-            return undefined;
-        }
+    if (exampleBlocks === undefined || exampleBlocks.length === 0) {
+        return undefined;
+    }
 
-        // If there is only 1 example, render it with the default (un-numbered) heading
-        if (exampleBlocks.length === 1) {
-            return renderExampleSection({ apiItem, content: exampleBlocks[0].content }, config);
-        }
+    // If there is only 1 example, render it with the default (un-numbered) heading
+    if (exampleBlocks.length === 1) {
+        return renderExampleSection({ apiItem, content: exampleBlocks[0] }, config);
+    }
 
-        const exampleSections: DocSection[] = [];
-        for (let i = 0; i < exampleBlocks.length; i++) {
-            exampleSections.push(
-                renderExampleSection(
-                    { apiItem, content: exampleBlocks[i].content, exampleNumber: i + 1 },
-                    config,
-                ),
-            );
-        }
-
-        // Merge example sections into a single section to simplify hierarchy
-        const mergedSection = mergeSections(exampleSections, config.tsdocConfiguration);
-
-        return new DocSection({ configuration: config.tsdocConfiguration }, [
-            renderHeading(
-                { title: "Examples", id: `${getQualifiedApiItemName(apiItem)}-examples` },
+    const exampleSections: DocSection[] = [];
+    for (let i = 0; i < exampleBlocks.length; i++) {
+        exampleSections.push(
+            renderExampleSection(
+                { apiItem, content: exampleBlocks[i], exampleNumber: i + 1 },
                 config,
             ),
-            mergedSection,
-        ]);
+        );
     }
-    return undefined;
+
+    // Merge example sections into a single section to simplify hierarchy
+    const mergedSection = mergeSections(exampleSections, config.tsdocConfiguration);
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        renderHeading(
+            { title: "Examples", id: `${getQualifiedApiItemName(apiItem)}-examples` },
+            config,
+        ),
+        mergedSection,
+    ]);
 }
 
 /**
@@ -604,6 +673,38 @@ export function renderParametersSection(
         ),
         renderParametersSummaryTable(apiFunctionLike.parameters, config),
     ]);
+}
+
+/**
+ * Renders a section containing the {@link https://tsdoc.org/pages/tags/returns/ | @returns} documentation of the
+ * provided API item, if it has one.
+ *
+ * @remarks Displayed as a heading, with the documentation contents under it.
+ *
+ * @param apiItem - The API item whose `@returns` documentation will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if the API item had a `@returns` comment, otherwise `undefined`.
+ */
+export function renderReturnsSection(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+        const returnsBlock = getReturnsBlock(apiItem);
+        if (returnsBlock === undefined) {
+            return undefined;
+        }
+
+        return new DocSection({ configuration: config.tsdocConfiguration }, [
+            renderHeading(
+                { title: "Returns", id: `${getQualifiedApiItemName(apiItem)}-returns` },
+                config,
+            ),
+            returnsBlock,
+        ]);
+    }
+    return undefined;
 }
 
 /**

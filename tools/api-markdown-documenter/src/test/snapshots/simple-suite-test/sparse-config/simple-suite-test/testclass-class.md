@@ -2,17 +2,12 @@
 
 Test class
 
-## Remarks {#testclass-remarks}
-
-Here are some remarks about the class
-
 ## Signature {#testclass-signature}
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass 
 ```
 <b>Extends:</b> [TestAbstractClass](docs/simple-suite-test/testabstractclass-class)
-
 
 <b>Type parameters:</b> 
 
@@ -21,6 +16,10 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 * <b>TTypeParameterB</b>: Another type parameter
 
+
+## Remarks {#testclass-remarks}
+
+Here are some remarks about the class
 
 ## Events
 

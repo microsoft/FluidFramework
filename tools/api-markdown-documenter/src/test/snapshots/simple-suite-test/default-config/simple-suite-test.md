@@ -94,6 +94,12 @@ const foo = bar;
 
 Test Enum
 
+#### Signature {#testenum-signature}
+
+```typescript
+export declare enum TestEnum 
+```
+
 #### Remarks {#testenum-remarks}
 
 Here are some remarks about the enum
@@ -116,12 +122,6 @@ Another example
 const bar = TestEnum.TestEnumValue2
 ```
 
-#### Signature {#testenum-signature}
-
-```typescript
-export declare enum TestEnum 
-```
-
 #### Flags
 
 |  Flag | Description |
@@ -136,23 +136,19 @@ export declare enum TestEnum
 
 Test enum value 1 (string)
 
-###### Remarks {#testenumvalue1-remarks}
-
-Here are some remarks about the enum value
-
 ###### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
+###### Remarks {#testenumvalue1-remarks}
+
+Here are some remarks about the enum value
+
 ##### TestEnumValue2 {#testenum-testenumvalue2-enummember}
 
 Test enum value 2 (number)
-
-###### Remarks {#testenumvalue2-remarks}
-
-Here are some remarks about the enum value
 
 ###### Signature {#testenumvalue2-signature}
 
@@ -160,13 +156,13 @@ Here are some remarks about the enum value
 TestEnumValue2 = 3
 ```
 
+###### Remarks {#testenumvalue2-remarks}
+
+Here are some remarks about the enum value
+
 ##### TestEnumValue3 {#testenum-testenumvalue3-enummember}
 
 Test enum value 3 (default)
-
-###### Remarks {#testenumvalue3-remarks}
-
-Here are some remarks about the enum value
 
 ###### Signature {#testenumvalue3-signature}
 
@@ -174,15 +170,15 @@ Here are some remarks about the enum value
 TestEnumValue3 = 4
 ```
 
+###### Remarks {#testenumvalue3-remarks}
+
+Here are some remarks about the enum value
+
 ## Function Details
 
 ### testFunction {#testfunction-function}
 
 Test function
-
-#### Remarks {#testfunction-remarks}
-
-This is a test [link](./simple-suite-test/testinterface-interface) to another API member
 
 #### Signature {#testfunction-signature}
 
@@ -190,12 +186,24 @@ This is a test [link](./simple-suite-test/testinterface-interface) to another AP
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
 
+#### Remarks {#testfunction-remarks}
+
+This is a test [link](./simple-suite-test/testinterface-interface) to another API member
+
 #### Parameters {#testfunction-parameters}
 
 |  Parameter | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  testParameter |  | TTypeParameter | A test parameter |
 |  testOptionalParameter | optional | TTypeParameter |  |
+
+#### Returns {#testfunction-returns}
+
+The provided parameter
+
+#### Throws {#testfunction-throws}
+
+An Error when something bad happens.
 
 ### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
@@ -210,6 +218,10 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
+#### Returns {#testfunctionreturninginlinetype-returns}
+
+An inline type
+
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
 > This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
@@ -223,6 +235,10 @@ Test function that returns an inline type
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
+#### Returns {#testfunctionreturningintersectiontype-returns}
+
+an intersection type
+
 ### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
 Test function that returns an inline type
@@ -233,15 +249,15 @@ Test function that returns an inline type
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
 
+#### Returns {#testfunctionreturninguniontype-returns}
+
+A union type
+
 ## Variable Details
 
 ### testConst {#testconst-variable}
 
 Test Constant
-
-#### Remarks {#testconst-remarks}
-
-Here are some remarks about the variable
 
 #### Signature {#testconst-signature}
 
@@ -249,15 +265,15 @@ Here are some remarks about the variable
 testConst = 42
 ```
 
+#### Remarks {#testconst-remarks}
+
+Here are some remarks about the variable
+
 ## Type Details
 
 ### TestMappedType {#testmappedtype-typealias}
 
 Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
-
-#### Remarks {#testmappedtype-remarks}
-
-Here are some remarks about the mapped type
 
 #### Signature {#testmappedtype-signature}
 
@@ -267,16 +283,20 @@ export declare type TestMappedType = {
 };
 ```
 
+#### Remarks {#testmappedtype-remarks}
+
+Here are some remarks about the mapped type
+
 ### TypeAlias {#typealias-typealias}
 
 Test Type-Alias
-
-#### Remarks {#typealias-remarks}
-
-Here are some remarks about the type alias
 
 #### Signature {#typealias-signature}
 
 ```typescript
 export declare type TypeAlias = string;
 ```
+
+#### Remarks {#typealias-remarks}
+
+Here are some remarks about the type alias
