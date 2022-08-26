@@ -466,8 +466,8 @@ describe("client.applyMsg", () => {
         ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(1, "yz"), ++seq));
         clients.B.applyMsg(ops[1]);
 
-        // its like this connection is paused, as it doesn't see the other clients ops
-        // which it's own ops will be sequenced after
+        // it's like this connection is paused, as it doesn't see the other clients' ops
+        // which its own ops will be sequenced after
         ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(2, "X"), ++seq));
 
         for (const op of ops) {
