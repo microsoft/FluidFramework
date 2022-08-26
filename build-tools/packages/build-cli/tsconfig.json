@@ -6,6 +6,7 @@
     "outDir": "./dist",
     "types": ["node"],
     "noUnusedLocals": false,
+    "resolveJsonModule": true
   },
   "include": ["src/**/*"],
   "exclude": ["src/test/**/*"],

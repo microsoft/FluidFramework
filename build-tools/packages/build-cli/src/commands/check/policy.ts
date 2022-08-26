@@ -9,7 +9,7 @@ import * as childProcess from "child_process";
 // eslint-disable-next-line unicorn/import-style
 import * as path from "path";
 import { Flags } from "@oclif/core";
-import { handlers } from "@fluidframework/build-tools";
+import { handlers, exclusionsFile } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 
 const readStdin: () => Promise<string | undefined> = async () => {
@@ -79,7 +79,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
 
         if (this.processedFlags.exclusions === undefined) {
-            this.error("ERROR: No exclusions file provided.");
+            this.processedFlags.exclusions = '123'
         }
 
         const handlerRegex: RegExp =

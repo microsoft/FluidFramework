@@ -41,3 +41,5 @@ export { handlers as lockfilesHandlers } from "./repoPolicyCheck/handlers/lockfi
 export { handlers as npmPackageContentsHandlers } from "./repoPolicyCheck/handlers/npmPackages";
 export { Handler } from "./repoPolicyCheck/common";
 export { handlers } from "../src/repoPolicyCheck/handlers/index";
+export { default as exclusionsFile } from "../data/exclusions.json"
+export { default as layerInfoFile } from "../data/layerInfo.json"
