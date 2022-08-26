@@ -820,13 +820,7 @@ export class TextCursorNew implements ITreeCursorNew {
     // (undocumented)
     getCurrentFieldLength(): number;
     // (undocumented)
-    protected getField(): readonly JsonableTree[];
-    // (undocumented)
-    protected getNode(): JsonableTree;
-    // (undocumented)
     getPath(): UpPath | undefined;
-    protected index: number;
-    protected readonly indexStack: number[];
     // (undocumented)
     get mode(): CursorLocationType;
     // (undocumented)
