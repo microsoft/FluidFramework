@@ -998,7 +998,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.sessionExpiryTimer = undefined;
         }
         if (this.isSummarizerClient) {
-            this.debugBus.broadcast<"gcDisposed">("gcDisposed");
+            this.debugBus?.broadcast<"gcDisposed">("gcDisposed");
         }
     }
 
@@ -1360,7 +1360,7 @@ export class GarbageCollector implements IGarbageCollector {
                 pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
             } as const;
             this.mc.logger.sendErrorEvent(event);
-            this.debugBus.broadcast<"inactiveObjectUsed">("inactiveObjectUsed", { ...event, usageType, state });
+            this.debugBus?.broadcast<"inactiveObjectUsed">("inactiveObjectUsed", { ...event, usageType, state });
         }
     }
 
@@ -1385,7 +1385,7 @@ export class GarbageCollector implements IGarbageCollector {
                     fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
                 } as const;
                 logger.sendErrorEvent(event);
-                this.debugBus.broadcast<"inactiveObjectUsed">("inactiveObjectUsed", { ...event, usageType, state });
+                this.debugBus?.broadcast<"inactiveObjectUsed">("inactiveObjectUsed", { ...event, usageType, state });
             }
         }
         this.pendingEventsQueue = [];

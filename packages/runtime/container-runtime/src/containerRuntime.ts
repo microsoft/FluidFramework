@@ -1052,7 +1052,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
     private readonly handleContext: ContainerFluidHandleContext;
 
-    public readonly debugBus: DebugBus = new DebugBus(this);
+    public readonly debugBus: DebugBus | undefined = new DebugBus(this);
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly mc: MonitoringContext;
