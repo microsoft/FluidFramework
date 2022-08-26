@@ -58,7 +58,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         this.driverPolicies = {
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
-            // enableInternalCaching: false,
         };
         if (this.driverPolicies.enableInternalCaching) {
             this.blobCache = new InMemoryCache<ArrayBufferLike>();

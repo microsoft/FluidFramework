@@ -105,8 +105,7 @@
     "version": "2.0.0",
     "broken": {
       "InterfaceDeclaration_IRouterliciousDriverPolicies": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": false
       }
     }
   }

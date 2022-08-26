@@ -18,10 +18,14 @@ export class TinyliciousTestDriver implements ITestDriver {
     public readonly type = "tinylicious";
     public get version() { return this.api.version; }
 
-    constructor(private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi) {}
+    constructor(private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi) { }
     createDocumentServiceFactory(): IDocumentServiceFactory {
         return new this.api.RouterliciousDocumentServiceFactory(
-            new InsecureTinyliciousTokenProvider());
+            new InsecureTinyliciousTokenProvider(),
+            {
+                enableInternalCaching: true,
+            },
+        );
     }
     createUrlResolver(): InsecureTinyliciousUrlResolver {
         return new InsecureTinyliciousUrlResolver();
