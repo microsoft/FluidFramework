@@ -85,9 +85,9 @@ parameters:
   type: boolean
   default: false
 
-- name: installBuildToolsFromRepo
-  type: boolean
-  default: false
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
 
 trigger: none
 

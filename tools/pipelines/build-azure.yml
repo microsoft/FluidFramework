@@ -22,10 +22,10 @@ parameters:
     - default
     - skip
     - force
-- name: installBuildToolsFromRepo
-  displayName: Use the Fluid build tools that are in the repo (as opposed to installing the latest release from npm)
-  type: boolean
-  default: true
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 - name: nonScopedPackages
   displayName: Non-scoped packages to publish
   type: object
@@ -75,7 +75,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
-    installBuildToolsFromRepo: ${{ parameters.installBuildToolsFromRepo }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: azure
     tagName: azure
     poolBuild: Large
