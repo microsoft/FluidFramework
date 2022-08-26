@@ -95,6 +95,10 @@ A test `@sealed` method.
 protected sealedMethod(): string;
 ```
 
+#### Returns {#sealedmethod-returns}
+
+A string!
+
 ### virtualMethod {#virtualmethod-method}
 
 A test `@virtual` method.
@@ -105,3 +109,7 @@ A test `@virtual` method.
 /** @virtual */
 protected virtualMethod(): number;
 ```
+
+#### Returns {#virtualmethod-returns}
+
+A number!

@@ -2,15 +2,15 @@
 
 Test interface
 
-## Remarks {#testinterface-remarks}
-
-Here are some remarks about the interface
-
 ## Signature {#testinterface-signature}
 
 ```typescript
 export interface TestInterface 
 ```
+
+## Remarks {#testinterface-remarks}
+
+Here are some remarks about the interface
 
 ## Construct Signatures
 

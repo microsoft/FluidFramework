@@ -2,21 +2,16 @@
 
 Test interface that extends other interfaces
 
-## Remarks {#testinterfaceextendingotherinterfaces-remarks}
-
-Here are some remarks about the interface
-
 ## Signature {#testinterfaceextendingotherinterfaces-signature}
 
 ```typescript
-export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestInterfaceWithTypeParameter<number>, TestMappedType 
+export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number> 
 ```
-<b>Extends:</b> [TestInterface](docs/simple-suite-test/testinterface-interface)
+<b>Extends:</b> [TestInterface](docs/simple-suite-test/testinterface-interface)<!-- -->, [TestMappedType](docs/simple-suite-test/testmappedtype-typealias)<!-- -->, [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)
 
-, [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
+## Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
-, [TestMappedType](docs/simple-suite-test/testmappedtype-typealias)
-
+Here are some remarks about the interface
 
 ## Methods
 

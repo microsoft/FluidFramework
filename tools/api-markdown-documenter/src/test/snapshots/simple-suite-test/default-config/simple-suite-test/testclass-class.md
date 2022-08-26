@@ -4,17 +4,12 @@
 
 Test class
 
-## Remarks {#testclass-remarks}
-
-Here are some remarks about the class
-
 ## Signature {#testclass-signature}
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass 
 ```
 <b>Extends:</b> [TestAbstractClass](./simple-suite-test/testabstractclass-class)
-
 
 <b>Type parameters:</b> 
 
@@ -23,6 +18,10 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 * <b>TTypeParameterB</b>: Another type parameter
 
+
+## Remarks {#testclass-remarks}
+
+Here are some remarks about the class
 
 ## Constructors
 
@@ -70,15 +69,15 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 Test class constructor
 
-#### Remarks {#_constructor_-remarks}
-
-Here are some remarks about the constructor
-
 #### Signature {#_constructor_-signature}
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
+
+#### Remarks {#_constructor_-remarks}
+
+Here are some remarks about the constructor
 
 #### Parameters {#_constructor_-parameters}
 
@@ -95,15 +94,15 @@ constructor(privateProperty: number, protectedProperty: TestEnum, testClassPrope
 
 Test class event property
 
-#### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the property
-
 #### Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
+
+#### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the property
 
 ## Property Details
 
@@ -121,10 +120,6 @@ get abstractPropertyGetter(): TestMappedType;
 
 Test class getter-only property
 
-#### Remarks {#testclassgetterproperty-remarks}
-
-Here are some remarks about the getter-only property
-
 #### Signature {#testclassgetterproperty-signature}
 
 ```typescript
@@ -132,19 +127,23 @@ Here are some remarks about the getter-only property
 get testClassGetterProperty(): number;
 ```
 
+#### Remarks {#testclassgetterproperty-remarks}
+
+Here are some remarks about the getter-only property
+
 ### testClassProperty {#testclassproperty-property}
 
 Test class property
-
-#### Remarks {#testclassproperty-remarks}
-
-Here are some remarks about the property
 
 #### Signature {#testclassproperty-signature}
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
 ```
+
+#### Remarks {#testclassproperty-remarks}
+
+Here are some remarks about the property
 
 ### testClassStaticProperty {#testclassstaticproperty-property}
 
@@ -172,10 +171,6 @@ publicAbstractMethod(): void;
 
 Test class method
 
-#### Remarks {#testclassmethod-remarks}
-
-Here are some remarks about the method
-
 #### Signature {#testclassmethod-signature}
 
 ```typescript
@@ -183,11 +178,21 @@ Here are some remarks about the method
 testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
+#### Remarks {#testclassmethod-remarks}
+
+Here are some remarks about the method
+
 #### Parameters {#testclassmethod-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
+
+#### Throws {#testclassmethod-throws}
+
+Some sort of error in 1 case.
+
+Some other sort of error in another case. For example, a case where some thing happens.
 
 ### testClassStaticMethod {#testclassstaticmethod-method}
 
@@ -204,6 +209,10 @@ static testClassStaticMethod(foo: number): string;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  foo | number | Some number |
+
+#### Returns {#testclassstaticmethod-returns}
+
+- Some string
 
 ### virtualMethod {#virtualmethod-method}
 

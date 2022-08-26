@@ -4,15 +4,15 @@
 
 Test interface
 
-## Remarks {#testinterface-remarks}
-
-Here are some remarks about the interface
-
 ## Signature {#testinterface-signature}
 
 ```typescript
 export interface TestInterface 
 ```
+
+## Remarks {#testinterface-remarks}
+
+Here are some remarks about the interface
 
 ## Construct Signatures
 
@@ -64,15 +64,15 @@ new (): TestInterface;
 
 Test interface event property
 
-#### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the event property
-
 #### Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
+
+#### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the event property
 
 ## Property Details
 
@@ -80,15 +80,15 @@ readonly testClassEventProperty: () => void;
 
 Test interface property
 
-#### Remarks {#testinterfaceproperty-remarks}
-
-Here are some remarks about the property
-
 #### Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: number;
 ```
+
+#### Remarks {#testinterfaceproperty-remarks}
+
+Here are some remarks about the property
 
 ### testOptionalInterfaceProperty {#testoptionalinterfaceproperty-propertysignature}
 
@@ -106,15 +106,15 @@ testOptionalInterfaceProperty?: number;
 
 Test interface method
 
-#### Remarks {#testinterfacemethod-remarks}
-
-Here are some remarks about the method
-
 #### Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;
 ```
+
+#### Remarks {#testinterfacemethod-remarks}
+
+Here are some remarks about the method
 
 ## Call Signature Details
 
@@ -122,29 +122,29 @@ testInterfaceMethod(): void;
 
 Test interface event call signature
 
-#### Remarks {#_call_-remarks}
-
-Here are some remarks about the event call signature
-
 #### Signature {#_call_-signature}
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
+#### Remarks {#_call_-remarks}
+
+Here are some remarks about the event call signature
+
 ### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#_call__1-callsignature}
 
 Another example call signature
-
-#### Remarks {#_call__1-remarks}
-
-Here are some remarks about the event call signature
 
 #### Signature {#_call__1-signature}
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
+
+#### Remarks {#_call__1-remarks}
+
+Here are some remarks about the event call signature
 
 ## See also {#testinterface-see-also}
 

@@ -8,3 +8,7 @@ A test `@sealed` method.
 /** @sealed */
 protected sealedMethod(): string;
 ```
+
+## Returns {#sealedmethod-returns}
+
+A string!
