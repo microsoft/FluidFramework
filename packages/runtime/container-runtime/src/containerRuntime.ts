@@ -2536,7 +2536,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;
 
-        // We should add the batch metadata regardless of the connected state
+        // We should add the "batch: true" metadata regardless of the connected state
         if (this.currentlyBatching() && !this.needsFlush) {
             opMetadataInternal = {
                 ...opMetadata,
