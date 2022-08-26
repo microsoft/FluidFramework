@@ -214,7 +214,7 @@ export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDoc
 export function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
 
 // @public
-export function getModifiers(apiItem: ApiItem): ApiModifier[];
+export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
 
 // @public
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
@@ -248,6 +248,15 @@ export type IDocHeadingParameters = IDocNodeParameters & Heading;
 export interface IDocListParameters extends IDocNodeContainerParameters {
     listKind?: ListKind;
 }
+
+// @public
+export function isOptional(apiItem: ApiItem): boolean;
+
+// @public
+export function isReadonly(apiItem: ApiItem): boolean;
+
+// @public
+export function isStatic(apiItem: ApiItem): boolean;
 
 // @public
 export interface Link {
