@@ -42,6 +42,9 @@ steps:
         pushd "$(Build.SourcesDirectory)/build-tools"
         npm ci
         popd
+        pushd "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
+        npm link
+        popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
@@ -52,6 +55,9 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+
+        # This can be removed once all builds tools are moved to the build-cli library
+        npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
 
 - task: Bash@3
   name: BuildToolsInstallCheck
