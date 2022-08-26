@@ -3,12 +3,49 @@
  * Licensed under the MIT License.
  */
 
-import { Context, getResolvedFluidRoot, GitRepo, Logger } from "@fluidframework/build-tools";
+import { strict as assert } from "assert";
+import {
+    Context,
+    FluidRepo,
+    getResolvedFluidRoot,
+    GitRepo,
+    Logger,
+    MonoRepo,
+} from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
+import {
+    bumpVersionScheme,
+    detectVersionScheme,
+    VersionBumpType,
+    VersionScheme,
+} from "@fluid-tools/version-tools";
 // eslint-disable-next-line import/no-internal-modules
 import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
-import { rootPathFlag } from "./flags";
+import inquirer from "inquirer";
+import type { Machine } from "jssm";
+import {
+    bumpTypeFlag,
+    checkFlags,
+    packageSelectorFlag,
+    releaseGroupFlag,
+    rootPathFlag,
+    skipCheckFlag,
+    versionSchemeFlag,
+} from "./flags";
+import {
+    bumpBranchName,
+    bumpDepsBranchName,
+    bumpReleaseGroup,
+    defaultReleaseForBranch,
+    difference,
+    getPreReleaseDependencies,
+    isReleased,
+    npmCheckUpdates,
+    releaseBranchName,
+} from "./lib";
+import { StateHandler } from "./machines";
+import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "./releaseGroups";
 
 // This is needed to get type safety working in derived classes.
 // https://github.com/oclif/oclif.github.io/pull/142
@@ -53,7 +90,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
         return this.processedFlags as Partial<OutputFlags<typeof BaseCommand.flags>>;
     }
 
-    private _context: Context | undefined;
+    protected _context: Context | undefined;
     private _logger: Logger | undefined;
 
     async init() {
@@ -74,7 +111,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
     /**
      * @returns A default logger that can be passed to core functions enabling them to log using the command logging
      * system */
-    protected async getLogger(): Promise<Logger> {
+    protected get logger(): Logger {
         if (this._logger === undefined) {
             this._logger = {
                 info: (msg: string | Error) => {
@@ -104,7 +141,6 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
             const resolvedRoot = await getResolvedFluidRoot();
             const gitRepo = new GitRepo(resolvedRoot);
             const branch = await gitRepo.getCurrentBranchName();
-            const logger = await this.getLogger();
 
             this.verbose(`Repo: ${resolvedRoot}`);
             this.verbose(`Branch: ${branch}`);
@@ -113,28 +149,11 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
                 gitRepo,
                 "github.com/microsoft/FluidFramework",
                 branch,
-                logger,
+                this.logger,
             );
         }
 
         return this._context;
-    }
-
-    public warn(message: string | Error): string | Error {
-        this.log(chalk.yellow(`WARNING: ${message}`));
-        return message;
-    }
-
-    public verbose(message: string | Error): string | Error {
-        if (this.baseFlags.verbose === true) {
-            if (typeof message === "string") {
-                this.log(chalk.grey(`VERBOSE: ${message}`));
-            } else {
-                this.log(chalk.red(`VERBOSE: ${message}`));
-            }
-        }
-
-        return message;
     }
 
     /** Output a horizontal rule. */
@@ -149,6 +168,31 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
 
     /** Log a message with an indent. */
     public logIndent(input: string, indent = 2) {
-        this.log(`${" ".repeat(indent)}${input}`);
+        this.log(`${this.indent(indent)}${input}`);
+    }
+
+    public indent(indent = 2): string {
+        return " ".repeat(indent);
+    }
+
+    public errorLog(message: string | Error) {
+        this.log(chalk.red(`ERROR: ${message}`));
+    }
+
+    public warning(message: string | Error): string | Error {
+        this.log(chalk.yellow(`WARNING: ${message}`));
+        return message;
+    }
+
+    public verbose(message: string | Error): string | Error {
+        if (this.baseFlags.verbose === true) {
+            if (typeof message === "string") {
+                this.log(chalk.grey(`VERBOSE: ${message}`));
+            } else {
+                this.log(chalk.red(`VERBOSE: ${message}`));
+            }
+        }
+
+        return message;
     }
 }

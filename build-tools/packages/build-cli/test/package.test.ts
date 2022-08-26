@@ -7,7 +7,7 @@
 
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
-import { sortedVersions, VersionDetails } from "../src/lib/package";
+import { sortVersions, VersionDetails } from "../src/lib/package";
 
 const data: VersionDetails[] = [
     { version: "0.1.38773", date: parseJSON("2021-09-28T17:03:10.000Z") },
@@ -22,13 +22,13 @@ describe("VersionDetails sorting", async () => {
     const versions = data;
 
     it("sortedByVersion", async () => {
-        const sortedByVersion = await sortedVersions(versions, "version");
+        const sortedByVersion = await sortVersions(versions, "version");
         assert.equal(sortedByVersion[0].version, "1.0.2");
         assert.equal(sortedByVersion[3].version, "0.59.3001");
     });
 
     it("sortedByDate", async () => {
-        const sortedByDate = await sortedVersions(versions, "date");
+        const sortedByDate = await sortVersions(versions, "date");
         assert.equal(sortedByDate[0].version, "0.59.3001");
         assert.equal(sortedByDate[1].version, "1.0.2");
         assert.equal(sortedByDate[4].version, "0.59.3000");

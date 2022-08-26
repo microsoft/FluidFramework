@@ -59,14 +59,14 @@ export async function bumpPackageDependencies(
                 const verString = dependencies[name];
                 const depIsPrerelease = (semver.minVersion(verString)?.prerelease?.length ?? 0) > 0;
 
-            const depNewRangeOrBumpType = dep.rangeOrBumpType;
-            // eslint-disable-next-line unicorn/prefer-ternary
-            if (isVersionBumpTypeExtended(depNewRangeOrBumpType)) {
-                // bump the current range string
-                newRangeString = bumpRange(verString, depNewRangeOrBumpType, prerelease);
-            } else {
-                newRangeString = depNewRangeOrBumpType;
-            }
+                const depNewRangeOrBumpType = dep.rangeOrBumpType;
+                // eslint-disable-next-line unicorn/prefer-ternary
+                if (isVersionBumpTypeExtended(depNewRangeOrBumpType)) {
+                    // bump the current range string
+                    newRangeString = bumpRange(verString, depNewRangeOrBumpType, prerelease);
+                } else {
+                    newRangeString = depNewRangeOrBumpType;
+                }
 
                 // If we're only bumping prereleases, check if the dep is a pre-release. Otherwise bump all packages
                 // whose range doesn't match the current value.

@@ -193,7 +193,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                     this.error("Install failed.");
                 }
             } else {
-                this.warning(`Skipping installation. Lockfiles might be outdated.`);
+                this.warn(`Skipping installation. Lockfiles might be outdated.`);
             }
 
             const changedVersionsString: string[] = [];
@@ -217,7 +217,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                     `You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
                 );
             } else {
-                this.warning(`Skipping commit. You'll need to manually commit changes.`);
+                this.warn(`Skipping commit. You'll need to manually commit changes.`);
             }
 
             this.finalMessages.push(
@@ -225,7 +225,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                 `${changedVersionMessage}`,
             );
         } else {
-            console.log(chalk.red("No dependencies need to be updated."));
+            this.log(chalk.red("No dependencies need to be updated."));
         }
 
         if (this.finalMessages.length > 0) {
