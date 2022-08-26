@@ -127,10 +127,6 @@ Test function
 function testFunction(testParameter: number): number;
 ```
 
-#### Throws {#testfunction-throws}
-
-An Error
-
 #### Parameters {#testfunction-parameters}
 
 |  Parameter | Type | Description |
@@ -140,6 +136,10 @@ An Error
 #### Returns {#testfunction-returns}
 
 A number
+
+#### Throws {#testfunction-throws}
+
+An Error
 
 ## Variable Details
 

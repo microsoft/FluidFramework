@@ -376,17 +376,17 @@ testClassMethod(input: TTypeParameterA): TTypeParameterA;
 
 Here are some remarks about the method
 
-###### Throws {#testclassmethod-throws}
-
-Some sort of error in 1 case.
-
-Some other sort of error in another case. For example, a case where some thing happens.
-
 ###### Parameters {#testclassmethod-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
+
+###### Throws {#testclassmethod-throws}
+
+Some sort of error in 1 case.
+
+Some other sort of error in another case. For example, a case where some thing happens.
 
 ##### testClassStaticMethod {#testclass-testclassstaticmethod-method}
 
@@ -521,10 +521,6 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 
 This is a test [link](docs/simple-suite-test#testinterface-interface) to another API member
 
-#### Throws {#testfunction-throws}
-
-An Error when something bad happens.
-
 #### Parameters {#testfunction-parameters}
 
 |  Parameter | Modifiers | Type | Description |
@@ -535,6 +531,10 @@ An Error when something bad happens.
 #### Returns {#testfunction-returns}
 
 The provided parameter
+
+#### Throws {#testfunction-throws}
+
+An Error when something bad happens.
 
 ### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
@@ -977,14 +977,6 @@ Test class method
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-<b>Throws</b>
-
-An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
-
-A different kind of error when a thing happens, but not when the first kind of error is thrown instead.
-
-😁
-
 <b>Parameters</b>
 
 |  Parameter | Type | Description |
@@ -994,6 +986,14 @@ A different kind of error when a thing happens, but not when the first kind of e
 <b>Returns</b>
 
 A Promise
+
+<b>Throws</b>
+
+An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
+
+A different kind of error when a thing happens, but not when the first kind of error is thrown instead.
+
+😁
 
 #### Enumeration Details
 
@@ -1048,10 +1048,6 @@ Test function
 function testFunction(testParameter: number): number;
 ```
 
-###### Throws {#testfunction-throws}
-
-An Error
-
 ###### Parameters {#testfunction-parameters}
 
 |  Parameter | Type | Description |
@@ -1061,6 +1057,10 @@ An Error
 ###### Returns {#testfunction-returns}
 
 A number
+
+###### Throws {#testfunction-throws}
+
+An Error
 
 #### Interface Details
 

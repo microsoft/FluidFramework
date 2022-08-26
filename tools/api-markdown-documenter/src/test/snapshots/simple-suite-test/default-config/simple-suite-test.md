@@ -190,10 +190,6 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 
 This is a test [link](./simple-suite-test/testinterface-interface) to another API member
 
-#### Throws {#testfunction-throws}
-
-An Error when something bad happens.
-
 #### Parameters {#testfunction-parameters}
 
 |  Parameter | Modifiers | Type | Description |
@@ -204,6 +200,10 @@ An Error when something bad happens.
 #### Returns {#testfunction-returns}
 
 The provided parameter
+
+#### Throws {#testfunction-throws}
+
+An Error when something bad happens.
 
 ### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 

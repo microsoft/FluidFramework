@@ -28,9 +28,9 @@ import {
  * 1. Summary (if any)
  * 1. Item Signature
  * 1. Remarks (if any)
- * 1. Throws (if any)
  * 1. Examples (if any)
  * 1. `innerSectionBody`
+ * 1. Throws (if any)
  *
  * @param apiItem - The API item being rendered.
  * @param innerSectionBody - A doc section of contents to be written after the standard metadata content types.
@@ -76,12 +76,6 @@ export function renderChildrenSection(
         docSections.push(renderedRemarks);
     }
 
-    // Render @throws content (if any)
-    const renderedThrows = renderThrowsSection(apiItem, config);
-    if (renderedThrows !== undefined) {
-        docSections.push(renderedThrows);
-    }
-
     // Render examples (if any)
     const renderedExamples = renderExamplesSection(apiItem, config);
     if (renderedExamples !== undefined) {
@@ -91,6 +85,12 @@ export function renderChildrenSection(
     if (innerSectionBody !== undefined) {
         // Flatten contents into this section
         docSections.push(innerSectionBody);
+    }
+
+    // Render @throws content (if any)
+    const renderedThrows = renderThrowsSection(apiItem, config);
+    if (renderedThrows !== undefined) {
+        docSections.push(renderedThrows);
     }
 
     // Merge sections to reduce and simplify hierarchy
