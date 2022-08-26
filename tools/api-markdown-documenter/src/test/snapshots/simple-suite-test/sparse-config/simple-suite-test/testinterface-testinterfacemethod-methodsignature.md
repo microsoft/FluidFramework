@@ -11,7 +11,3 @@ testInterfaceMethod(): void;
 ## Remarks {#testinterfacemethod-remarks}
 
 Here are some remarks about the method
-
-## Returns {#testinterfacemethod-returns}
-
-<b>Return type:</b> void

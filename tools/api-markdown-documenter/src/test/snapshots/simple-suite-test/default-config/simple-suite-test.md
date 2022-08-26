@@ -56,7 +56,7 @@ const foo = bar;
 |  Function | Return Type | Description |
 |  --- | --- | --- |
 |  [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) | TTypeParameter | Test function |
-|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) | {     foo: number;     bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
+|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
 |  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
 |  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 

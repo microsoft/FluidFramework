@@ -671,24 +671,31 @@ export function renderReturnsSection(
     }
 
     if (ApiReturnTypeMixin.isBaseClassOf(apiItem) && apiItem.returnTypeExcerpt.text.trim() !== "") {
-        const renderedTypeExcerpt = renderExcerptWithHyperlinks(apiItem.returnTypeExcerpt, config);
-        if (renderedTypeExcerpt !== undefined) {
-            docSections.push(
-                new DocSection({ configuration: config.tsdocConfiguration }, [
-                    new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                        new DocEmphasisSpan(
-                            { configuration: config.tsdocConfiguration, bold: true },
-                            [
-                                new DocPlainText({
-                                    configuration: config.tsdocConfiguration,
-                                    text: "Return type: ",
-                                }),
-                            ],
-                        ),
-                        ...renderedTypeExcerpt,
-                    ]),
-                ]),
+        // Special case to detect when the return type is `void`.
+        // We will skip declaring the return type in this case.
+        if (apiItem.returnTypeExcerpt.text.trim() !== "void") {
+            const renderedTypeExcerpt = renderExcerptWithHyperlinks(
+                apiItem.returnTypeExcerpt,
+                config,
             );
+            if (renderedTypeExcerpt !== undefined) {
+                docSections.push(
+                    new DocSection({ configuration: config.tsdocConfiguration }, [
+                        new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                            new DocEmphasisSpan(
+                                { configuration: config.tsdocConfiguration, bold: true },
+                                [
+                                    new DocPlainText({
+                                        configuration: config.tsdocConfiguration,
+                                        text: "Return type: ",
+                                    }),
+                                ],
+                            ),
+                            ...renderedTypeExcerpt,
+                        ]),
+                    ]),
+                );
+            }
         }
     }
 

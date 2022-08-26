@@ -84,10 +84,6 @@ A test public abstract method.
 abstract publicAbstractMethod(): void;
 ```
 
-#### Returns {#publicabstractmethod-returns}
-
-<b>Return type:</b> void
-
 ### sealedMethod {#sealedmethod-method}
 
 A test `@sealed` method.
