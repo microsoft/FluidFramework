@@ -1,7 +1,6 @@
 {
   "extends": "@fluidframework/build-common/ts-common-config.json",
   "compilerOptions": {
-    "module": "esnext",
     "jsx": "react",
     "resolveJsonModule": true,
     "typeRoots": [
