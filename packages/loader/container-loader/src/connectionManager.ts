@@ -460,7 +460,7 @@ export class ConnectionManager implements IConnectionManager {
         // by all DDSes). This will make it impossible to figure out if ops actually made it through,
         // so DDSes will immediately resubmit all pending ops, and some of them will be duplicates, corrupting document
         if (this.shouldJoinWrite()) {
-            // TODO: take a look into this?
+            // TODO: take a look into this
             requestedMode = "write";
         }
 
