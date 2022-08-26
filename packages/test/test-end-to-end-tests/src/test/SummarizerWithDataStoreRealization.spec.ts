@@ -287,8 +287,8 @@ describeNoCompat("Summary with Search Blobs and DataStore realization during Sum
             // Here are the steps that would cause bug 1633 to repro:
             // Additional information: https://dev.azure.com/fluidframework/internal/_workitems/edit/1633
             // 1) Summary starts
-            // 2) The summarize method from the DataStore2 (TestDataObject2) will be executed but as it has not
-            //    been realized, it has no child nodes and hasn't changed, and a handle will be used.
+            // 2) The summarize method from the DataStore2 (TestDataObject2) will be executed but, as it has not
+            //    been realized, it has no child nodes and hasn't changed, we will use a handle instead.
             // 3) During the summarization from the other DataStore1 (TestDataObject1),
             // due to the mixinSummaryHandler (search) we explicitly realize the DataStore2 and
             // new Summarizer Nodes are added to it.
