@@ -619,29 +619,57 @@ export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
 }
 
 /**
+ * Returns whether or not the provided API item is of a kind that can be marked as optional, and if it is
+ * indeed optional.
+ */
+export function isOptional(apiItem: ApiItem): boolean {
+    if (ApiOptionalMixin.isBaseClassOf(apiItem)) {
+        return apiItem.isOptional;
+    }
+    return false;
+}
+
+/**
+ * Returns whether or not the provided API item is of a kind that can be marked as readonly, and if it is
+ * indeed readonly.
+ */
+export function isReadonly(apiItem: ApiItem): boolean {
+    if (ApiReadonlyMixin.isBaseClassOf(apiItem)) {
+        return apiItem.isReadonly;
+    }
+    return false;
+}
+
+/**
+ * Returns whether or not the provided API item is of a kind that can be marked as static, and if it is
+ * indeed static.
+ */
+export function isStatic(apiItem: ApiItem): boolean {
+    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
+        return apiItem.isStatic;
+    }
+    return false;
+}
+
+/**
  * Gets the {@link ApiModifier}s that apply to the provided API item.
  *
  * @param apiItem - The API item being queried.
+ * @param modifiersToOmit - An optional list of modifier kinds to omit, even if they apply to the provided item.
  */
-export function getModifiers(apiItem: ApiItem): ApiModifier[] {
+export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[] {
     const modifiers: ApiModifier[] = [];
 
-    if (ApiOptionalMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.isOptional) {
-            modifiers.push(ApiModifier.Optional);
-        }
+    if (isOptional(apiItem) && !modifiersToOmit?.includes(ApiModifier.Optional)) {
+        modifiers.push(ApiModifier.Optional);
     }
 
-    if (ApiReadonlyMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.isReadonly) {
-            modifiers.push(ApiModifier.Readonly);
-        }
+    if (isReadonly(apiItem) && !modifiersToOmit?.includes(ApiModifier.Readonly)) {
+        modifiers.push(ApiModifier.Readonly);
     }
 
-    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.isStatic) {
-            modifiers.push(ApiModifier.Static);
-        }
+    if (isStatic(apiItem) && !modifiersToOmit?.includes(ApiModifier.Static)) {
+        modifiers.push(ApiModifier.Static);
     }
 
     return modifiers;
