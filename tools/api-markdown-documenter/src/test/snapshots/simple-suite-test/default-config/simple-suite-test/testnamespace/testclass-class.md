@@ -70,6 +70,10 @@ Test class method
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
+#### Throws {#testclassmethod-throws}
+
+- An Error
+
 #### Parameters {#testclassmethod-parameters}
 
 |  Parameter | Type | Description |

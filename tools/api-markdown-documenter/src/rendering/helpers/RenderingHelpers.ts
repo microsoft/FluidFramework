@@ -16,14 +16,12 @@ import {
     TypeParameter,
 } from "@microsoft/api-extractor-model";
 import {
-    DocBlock,
     DocFencedCode,
     DocLinkTag,
     DocNode,
     DocParagraph,
     DocPlainText,
     DocSection,
-    StandardTags,
 } from "@microsoft/tsdoc";
 
 import { Heading } from "../../Heading";
@@ -35,9 +33,11 @@ import {
     doesItemKindRequireOwnDocument,
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
+    getExampleBlocks,
     getHeadingForApiItem,
     getLinkForApiItem,
     getQualifiedApiItemName,
+    getThrowsBlocks,
     mergeSections,
 } from "../../utilities";
 import { renderParametersSummaryTable } from "./TableRenderingHelpers";
@@ -462,7 +462,7 @@ export function renderSummarySection(apiItem: ApiItem): DocSection | undefined {
 
 /**
  * Renders a section containing the {@link https://tsdoc.org/pages/tags/remarks/ | @remarks} documentation of the
- * provided API item if it has any.
+ * provided API item, if it has any.
  *
  * @remarks Displayed as a heading, with the documentation contents under it.
  *
@@ -482,6 +482,38 @@ export function renderRemarksSection(
                 config,
             ),
             apiItem.tsdocComment.remarksBlock.content,
+        ]);
+    }
+    return undefined;
+}
+
+/**
+ * Renders a section containing the {@link https://tsdoc.org/pages/tags/throws/ | @throws} documentation of the
+ * provided API item, if it has any.
+ *
+ * @remarks Displayed as a heading, with the documentation contents under it.
+ *
+ * @param apiItem - The API item whose `@remarks` documentation will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if the API item had a `@throws` comment, otherwise `undefined`.
+ */
+export function renderThrowsSection(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+        const throwsBlocks = getThrowsBlocks(apiItem);
+        if (throwsBlocks === undefined || throwsBlocks.length === 0) {
+            return undefined;
+        }
+
+        return new DocSection({ configuration: config.tsdocConfiguration }, [
+            renderHeading(
+                { title: "Throws", id: `${getQualifiedApiItemName(apiItem)}-throws` },
+                config,
+            ),
+            ...throwsBlocks,
         ]);
     }
     return undefined;
@@ -536,42 +568,37 @@ export function renderExamplesSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
-        const exampleBlocks: DocBlock[] = apiItem.tsdocComment.customBlocks.filter(
-            (x) => x.blockTag.tagNameWithUpperCase === StandardTags.example.tagNameWithUpperCase,
-        );
+    const exampleBlocks = getExampleBlocks(apiItem);
 
-        if (exampleBlocks.length === 0) {
-            return undefined;
-        }
+    if (exampleBlocks === undefined || exampleBlocks.length === 0) {
+        return undefined;
+    }
 
-        // If there is only 1 example, render it with the default (un-numbered) heading
-        if (exampleBlocks.length === 1) {
-            return renderExampleSection({ apiItem, content: exampleBlocks[0].content }, config);
-        }
+    // If there is only 1 example, render it with the default (un-numbered) heading
+    if (exampleBlocks.length === 1) {
+        return renderExampleSection({ apiItem, content: exampleBlocks[0] }, config);
+    }
 
-        const exampleSections: DocSection[] = [];
-        for (let i = 0; i < exampleBlocks.length; i++) {
-            exampleSections.push(
-                renderExampleSection(
-                    { apiItem, content: exampleBlocks[i].content, exampleNumber: i + 1 },
-                    config,
-                ),
-            );
-        }
-
-        // Merge example sections into a single section to simplify hierarchy
-        const mergedSection = mergeSections(exampleSections, config.tsdocConfiguration);
-
-        return new DocSection({ configuration: config.tsdocConfiguration }, [
-            renderHeading(
-                { title: "Examples", id: `${getQualifiedApiItemName(apiItem)}-examples` },
+    const exampleSections: DocSection[] = [];
+    for (let i = 0; i < exampleBlocks.length; i++) {
+        exampleSections.push(
+            renderExampleSection(
+                { apiItem, content: exampleBlocks[i], exampleNumber: i + 1 },
                 config,
             ),
-            mergedSection,
-        ]);
+        );
     }
-    return undefined;
+
+    // Merge example sections into a single section to simplify hierarchy
+    const mergedSection = mergeSections(exampleSections, config.tsdocConfiguration);
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        renderHeading(
+            { title: "Examples", id: `${getQualifiedApiItemName(apiItem)}-examples` },
+            config,
+        ),
+        mergedSection,
+    ]);
 }
 
 /**

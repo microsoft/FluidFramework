@@ -127,6 +127,10 @@ Test function
 function testFunction(testParameter: number): number;
 ```
 
+#### Throws {#testfunction-throws}
+
+- An Error
+
 #### Parameters {#testfunction-parameters}
 
 |  Parameter | Type | Description |

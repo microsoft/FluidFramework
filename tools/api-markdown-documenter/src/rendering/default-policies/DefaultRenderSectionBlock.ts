@@ -15,6 +15,7 @@ import {
     renderRemarksSection,
     renderSignature,
     renderSummarySection,
+    renderThrowsSection,
 } from "../helpers";
 
 /**
@@ -27,6 +28,7 @@ import {
  * 1. Summary (if any)
  * 1. Item Signature
  * 1. Remarks (if any)
+ * 1. Throws (if any)
  * 1. Examples (if any)
  * 1. `innerSectionBody`
  *
@@ -72,6 +74,12 @@ export function renderChildrenSection(
     const renderedRemarks = renderRemarksSection(apiItem, config);
     if (renderedRemarks !== undefined) {
         docSections.push(renderedRemarks);
+    }
+
+    // Render @throws content (if any)
+    const renderedThrows = renderThrowsSection(apiItem, config);
+    if (renderedThrows !== undefined) {
+        docSections.push(renderedThrows);
     }
 
     // Render examples (if any)

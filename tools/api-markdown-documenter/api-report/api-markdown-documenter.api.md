@@ -187,6 +187,9 @@ export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined;
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
+export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
 export function getFileNameForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
 
 // @public
@@ -215,6 +218,9 @@ export function getModifiers(apiItem: ApiItem): ApiModifier[];
 
 // @public
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
+
+// @public
+export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
 export function getUnscopedPackageName(apiPackage: ApiPackage): string;
@@ -424,6 +430,7 @@ declare namespace RenderingHelpers {
         renderBetaWarning,
         renderSummarySection,
         renderRemarksSection,
+        renderThrowsSection,
         renderDeprecationNoticeSection,
         renderExamplesSection,
         renderExampleSection,
@@ -554,6 +561,9 @@ function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind,
 
 // @public
 function renderTableWithHeading(memberTableProperties: MemberTableProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+
+// @public
+function renderThrowsSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderTypeExcerptCell(typeExcerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;

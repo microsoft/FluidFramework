@@ -13,6 +13,10 @@ testClassMethod(input: TTypeParameterA): TTypeParameterA;
 
 Here are some remarks about the method
 
+## Throws {#testclassmethod-throws}
+
+- An Error
+
 ## Parameters {#testclassmethod-parameters}
 
 |  Parameter | Type | Description |

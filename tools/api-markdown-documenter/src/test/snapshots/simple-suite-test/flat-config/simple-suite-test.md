@@ -368,6 +368,10 @@ testClassMethod(input: TTypeParameterA): TTypeParameterA;
 
 Here are some remarks about the method
 
+###### Throws {#testclassmethod-throws}
+
+- An Error
+
 ###### Parameters {#testclassmethod-parameters}
 
 |  Parameter | Type | Description |
@@ -502,6 +506,10 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 #### Remarks {#testfunction-remarks}
 
 This is a test [link](docs/simple-suite-test#testinterface-interface) to another API member
+
+#### Throws {#testfunction-throws}
+
+- An Error
 
 #### Parameters {#testfunction-parameters}
 
@@ -935,6 +943,10 @@ Test class method
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
+<b>Throws</b>
+
+- An Error
+
 <b>Parameters</b>
 
 |  Parameter | Type | Description |
@@ -993,6 +1005,10 @@ Test function
 ```typescript
 function testFunction(testParameter: number): number;
 ```
+
+###### Throws {#testfunction-throws}
+
+- An Error
 
 ###### Parameters {#testfunction-parameters}
 

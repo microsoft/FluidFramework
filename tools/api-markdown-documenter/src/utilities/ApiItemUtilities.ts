@@ -21,7 +21,7 @@ import {
     ApiReadonlyMixin,
     ApiStaticMixin,
 } from "@microsoft/api-extractor-model";
-import { DocSection } from "@microsoft/tsdoc";
+import { DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
 
@@ -520,7 +520,7 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
-function getCustomBlockSections(apiItem: ApiItem, tagName: string): DocSection[] {
+function getCustomBlockSections(apiItem: ApiItem, tagName: string): DocSection[] | undefined {
     if (!tagName.startsWith("@")) {
         throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
     }
@@ -530,7 +530,29 @@ function getCustomBlockSections(apiItem: ApiItem, tagName: string): DocSection[]
         );
         return defaultValueBlocks.map((block) => block.content);
     }
-    return [];
+    return undefined;
+}
+
+/**
+ * Gets any `@example` comment blocks from the API item if it has them.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@example` comment block sections, if the API item has one. Otherwise, `undefined`.
+ */
+export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
+    return getCustomBlockSections(apiItem, StandardTags.example.tagName);
+}
+
+/**
+ * Gets any `@throws` comment blocks from the API item if it has them.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@throws` comment block sections, if the API item has one. Otherwise, `undefined`.
+ */
+export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
+    return getCustomBlockSections(apiItem, StandardTags.throws.tagName);
 }
 
 /**
@@ -541,12 +563,12 @@ function getCustomBlockSections(apiItem: ApiItem, tagName: string): DocSection[]
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
  */
 export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined {
-    const blocks = getCustomBlockSections(apiItem, "@defaultValue");
-    if (blocks.length === 0) {
+    const blocks = getCustomBlockSections(apiItem, StandardTags.defaultValue.tagName);
+    if (blocks === undefined) {
         return undefined;
     }
 
-    if (blocks !== undefined && blocks.length > 1) {
+    if (blocks.length > 1) {
         logError(
             `API item ${apiItem.displayName} has multiple "@defaultValue" comment blocks. This is not supported.`,
         );
