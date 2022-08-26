@@ -184,11 +184,11 @@ describe("SequenceChangeFamily - Rebase", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     2,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                     4,
-                    [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                    { type: "Insert", id: 3, content: [{ type, value: 3 }] },
                 ],
             },
         };
@@ -205,11 +205,11 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     // Earlier insert is unaffected
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     1, // Overlapping insert has its index reduced
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                     2, // Later insert has its index reduced
-                    [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                    { type: "Insert", id: 3, content: [{ type, value: 3 }] },
                 ],
             },
         };
@@ -355,7 +355,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     2,
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                 ],
             },
         };
@@ -388,7 +388,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     2,
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                 ],
             },
         };
@@ -425,7 +425,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     3,
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                 ],
             },
         };
@@ -452,9 +452,9 @@ describe("SequenceChangeFamily - Rebase", () => {
         const insertA: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     2,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                 ],
             },
         };
@@ -462,7 +462,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     1,
-                    [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                    { type: "Insert", id: 3, content: [{ type, value: 3 }] },
                 ],
             },
         };
@@ -470,9 +470,9 @@ describe("SequenceChangeFamily - Rebase", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     3,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                 ],
             },
         };
@@ -496,7 +496,7 @@ describe("SequenceChangeFamily - Rebase", () => {
                 root: [
                     2,
                     // TODO: test both tiebreak policies
-                    [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                    { type: "Insert", id: 3, content: [{ type, value: 3 }] },
                 ],
             },
         };
@@ -626,9 +626,9 @@ describe("SequenceChangeFamily - Rebase", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     2,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                 ],
             },
         };
@@ -644,9 +644,9 @@ describe("SequenceChangeFamily - Rebase", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     3,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                 ],
             },
         };

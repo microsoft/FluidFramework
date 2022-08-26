@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/version-tools",
-  "version": "0.3.2000",
+  "version": "0.4.3000",
   "description": "Versioning tools for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -22,16 +22,18 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
     "build:commonjs": "npm run build:clean && npm run tsc",
     "build:compile": "npm run build:commonjs",
+    "build:docs": "api-extractor run --local",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
     "build:readme": "oclif readme",
-    "clean": "rimraf dist lib *.tsbuildinfo *.build.log oclif.manifest.json",
+    "ci:build:docs": "api-extractor run",
+    "clean": "rimraf dist oclif.manifest.json lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
