@@ -8,7 +8,7 @@ import * as semver from "semver";
 import { VersionBumpType } from "./bumpTypes";
 
 /**
- * Determines if a version is a virtual patch format or not using a very simplistic algorithm.
+ * Determines if a version is a virtual patch format or not, using a very simplistic algorithm.
  */
 export function isVirtualPatch(version: semver.SemVer | string): boolean {
     // If the major is 0 and the patch is >= 1000 assume it's a virtualPatch version
