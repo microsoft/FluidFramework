@@ -60,6 +60,7 @@ describe("generate:buildVersion", () => {
             "--release",
             "none",
             "--patch",
+            "true",
             "--tags",
             ...test_tags,
         ])
@@ -135,7 +136,7 @@ describe("generate:buildVersion", () => {
             "--fileVersion",
             "0.5.2002",
             "--release",
-            "none",
+            "release",
             "--tags",
             ...test_tags,
         ])
@@ -156,6 +157,7 @@ describe("generate:buildVersion", () => {
             "--release",
             "release",
             "--includeInternalVersions",
+            "true",
             "--tags",
             ...test_tags,
         ])
@@ -197,6 +199,7 @@ describe("generate:buildVersion", () => {
             "--release",
             "none",
             "--testBuild",
+            "true",
             "--tags",
             ...test_tags,
         ])

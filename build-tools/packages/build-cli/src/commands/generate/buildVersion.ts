@@ -27,7 +27,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             env: "VERSION_BUILDNUMBER",
             required: true,
         }),
-        testBuild: Flags.boolean({
+        testBuild: Flags.string({
             description: "Indicates the build is a test build.",
             env: "TEST_BUILD",
         }),
@@ -36,7 +36,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             options: ["release", "none"],
             env: "VERSION_RELEASE",
         }),
-        patch: Flags.boolean({
+        patch: Flags.string({
             description: "Indicates the build is a patch build.",
             env: "VERSION_PATCH",
         }),
@@ -48,7 +48,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             description: "The tag name to use.",
             env: "VERSION_TAGNAME",
         }),
-        includeInternalVersions: Flags.boolean({
+        includeInternalVersions: Flags.string({
             char: "i",
             description: "Include Fluid internal versions.",
             env: "VERSION_INCLUDE_INTERNAL_VERSIONS",
@@ -72,6 +72,10 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
         const context = await this.getContext();
         const flags = this.processedFlags;
         const isRelease = flags.release === "release";
+        const useSimplePatchVersion = flags.patch?.toLowerCase() === "true";
+        const useTestVersion = flags.testBuild?.toLowerCase() === "true";
+        const shouldIncludeInternalVersions = flags.includeInternalVersions?.toLowerCase() === "true";
+
         let fileVersion = "";
 
         if (flags.base === undefined) {
@@ -81,11 +85,11 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             }
         }
 
-        if (flags.testBuild === true && isRelease) {
+        if (flags.testBuild?.toLowerCase() === "true" && isRelease) {
             this.error("Test build shouldn't be released");
         }
 
-        if (flags.patch === false && flags.tag !== undefined) {
+        if (useSimplePatchVersion && flags.tag !== undefined) {
             const tagName = `${flags.tag}_v${fileVersion}`;
             const out = childProcess.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
             if (out.trim() === tagName) {
@@ -98,14 +102,14 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
         }
 
         // Generate and print the version to console
-        const simpleVersion = getSimpleVersion(fileVersion, flags.build, isRelease, flags.patch);
-        const version = flags.testBuild ? `0.0.0-${flags.build}-test` : simpleVersion;
+        const simpleVersion = getSimpleVersion(fileVersion, flags.build, isRelease, useSimplePatchVersion);
+        const version = useTestVersion ? `0.0.0-${flags.build}-test` : simpleVersion;
         this.log(`version=${version}`);
         this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 
         // Output the code version for test builds. This is used in the CI system.
         // See common/build/build-common/gen_version.js
-        if (flags.testBuild) {
+        if (useTestVersion) {
             const codeVersion = `${simpleVersion}-test`;
             this.log(`codeVersion=${codeVersion}`);
             this.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
@@ -117,7 +121,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
                 flags.tag,
                 version,
                 tags,
-                flags.includeInternalVersions,
+                shouldIncludeInternalVersions,
                 await this.getLogger(),
             );
             this.log(`isLatest=${isLatest}`);
