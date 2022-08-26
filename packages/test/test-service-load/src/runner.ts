@@ -18,12 +18,12 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions"
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import { generateConfigurations, generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 function printStatus(runConfig: IRunConfig, message: string) {
     if (runConfig.verbose) {

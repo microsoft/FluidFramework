@@ -30,8 +30,8 @@ export interface IRunConfig {
 }
 
 export interface ILoadTest {
-    run(config: IRunConfig, reset: boolean): Promise<boolean>;
-    detached(config: Omit<IRunConfig, "runId">): Promise<LoadTestDataStoreModel>;
+    run(config: IRunConfig, reset: boolean, logger): Promise<boolean>;
+    detached(config: Omit<IRunConfig, "runId">, logger): Promise<LoadTestDataStoreModel>;
     getRuntime(): Promise<IFluidDataStoreRuntime>;
 }
 
@@ -450,9 +450,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
         }
 
-        const opsRun = this.sendOps(dataModel, config, timeout)
-        const signalsRun = this.sendSignals(config, timeout)
-        const runResult = await Promise.all([opsRun, signalsRun]); //runResult if of type [boolean, void] as we return boolean for Ops alone based on runtime.disposed value
+        const opsRun = this.sendOps(dataModel, config, timeout);
+        const signalsRun = this.sendSignals(config, timeout);
+        // runResult if of type [boolean, void] as we return boolean for Ops alone based on runtime.disposed value
+        const runResult = await Promise.all([opsRun, signalsRun]);
         return runResult[0];
     }
 
@@ -460,7 +461,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         return this.runtime;
     }
 
-    async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig, timeout: NodeJS.Timeout | undefined){
+    async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig, timeout: NodeJS.Timeout | undefined) {
         const cycleMs = config.testConfig.readWriteCycleMs;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
@@ -499,24 +500,24 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         }
     }
 
-    async sendSignals(config: IRunConfig, timeout: NodeJS.Timeout | undefined){
-        const clientSignalsSendCount = (typeof config.testConfig.totalSignalsSendCount === 'undefined') ? 
+    async sendSignals(config: IRunConfig, timeout: NodeJS.Timeout | undefined) {
+        const clientSignalsSendCount = (typeof config.testConfig.totalSignalsSendCount === "undefined") ?
                                         0 : config.testConfig.totalSignalsSendCount / config.testConfig.numClients;
         const cycleMs = config.testConfig.readWriteCycleMs;
-        const signalsPerCycle = (typeof config.testConfig.signalsPerMin === 'undefined') ? 
+        const signalsPerCycle = (typeof config.testConfig.signalsPerMin === "undefined") ?
                                  0 : config.testConfig.signalsPerMin * cycleMs / 60000;
         const signalsGapMs = cycleMs / signalsPerCycle;
-        var submittedSignals = 0;
+        let submittedSignals = 0;
         try {
             while (submittedSignals < clientSignalsSendCount) {
-                // all the clients are sending signals; with signals, there is no particular need to have staggered writers and readers
+                // all the clients are sending signals;
+                // with signals, there is no particular need to have staggered writers and readers
                 this.runtime.submitSignal("generic-signal", true);
                 submittedSignals++;
                 // Random jitter of +- 50% of signalGapMs
-                await delay(signalsGapMs + signalsGapMs * random.real(0, .5, true)(config.randEng));  
+                await delay(signalsGapMs + signalsGapMs * random.real(0, .5, true)(config.randEng));
             }
-        }
-        finally {
+        } finally {
             if (timeout !== undefined) {
                 clearTimeout(timeout);
             }
