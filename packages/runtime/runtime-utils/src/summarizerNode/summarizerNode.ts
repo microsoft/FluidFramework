@@ -169,7 +169,7 @@ export class SummarizerNode implements IRootSummarizerNode {
         const summary = new SummaryNode({
             ...localPathsToUse,
             referenceSequenceNumber: this.wipReferenceSequenceNumber,
-            basePath: parentPath,
+            basePath: parentSkipRecursion ? this._latestSummary?.basePath ?? parentPath : parentPath,
         });
         const fullPathForChildren = summary.fullPathForChildren;
         for (const child of this.children.values()) {

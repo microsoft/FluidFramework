@@ -17,10 +17,12 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
     IContainerRuntimeBase,
     IFluidDataStoreFactory,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
+import { ChannelFactoryRegistry } from "./testFluidObject";
 
 const summarizerClientType = "summarizer";
 
@@ -70,11 +72,13 @@ export async function createSummarizerFromFactory(
     dataStoreFactory: IFluidDataStoreFactory,
     summaryVersion?: string,
     containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
+    registryEntries?: NamedFluidDataStoreRegistryEntries,
 ): Promise<ISummarizer> {
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new containerRuntimeFactoryType(
         dataStoreFactory,
+        registryEntries ??
         [
             [dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
         ],
@@ -96,6 +100,7 @@ export async function createSummarizer(
     container: IContainer,
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
+    registry?: ChannelFactoryRegistry,
 ): Promise<ISummarizer> {
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
@@ -103,6 +108,7 @@ export async function createSummarizer(
             gcOptions,
         },
         loaderProps: { configProvider: mockConfigProvider() },
+        registry,
     };
 
     const loader = provider.makeTestLoader(testContainerConfig);
