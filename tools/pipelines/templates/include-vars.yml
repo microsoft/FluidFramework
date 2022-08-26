@@ -25,7 +25,6 @@ parameters:
 
 variables:
 - group: prague-key-vault
-- group: build-tools-config
 - name: skipComponentGovernanceDetection
   value: true
 - name: testBuild

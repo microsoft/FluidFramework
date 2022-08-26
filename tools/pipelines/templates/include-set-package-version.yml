@@ -12,13 +12,13 @@ parameters:
 - name: includeInternalVersions
   type: boolean
   default: false
-- name: installBuildToolsFromRepo
-  type: boolean
-  default: false
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
 
 # Set version
 steps:
-- ${{ if eq(parameters.installBuildToolsFromRepo, true) }}:
+- ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
     name: PrependPath
     displayName: Prepend build-tools CLI to path
@@ -43,7 +43,7 @@ steps:
         npm ci
         popd
 
-- ${{ if eq(parameters.installBuildToolsFromRepo, false) }}:
+- ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
     name: InstallBuildTools
     displayName: Install Fluid Build Tools (from npm)
@@ -51,7 +51,7 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
-        npm install --global @fluid-tools/build-cli@$(FLUID_BUILD_TOOLS_VERSION)
+        npm install --global "@fluid-tools/build-cli@${{ parameters.feedName }}"
 
 - task: Bash@3
   name: BuildToolsInstallCheck
