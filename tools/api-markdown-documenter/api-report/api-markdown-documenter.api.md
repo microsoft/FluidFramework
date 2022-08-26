@@ -462,6 +462,7 @@ declare namespace RenderingHelpers {
         renderParameterTypeCell,
         renderParameterSummaryCell,
         renderTypeExcerptCell,
+        renderPlainTextCell,
         renderEmptyTableCell,
         MemberTableProperties
     }
@@ -538,6 +539,9 @@ function renderParameterTitleCell(apiParameter: Parameter, config: Required<Mark
 
 // @public
 function renderParameterTypeCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
+
+// @public
+function renderPlainTextCell(text: string, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
 function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
