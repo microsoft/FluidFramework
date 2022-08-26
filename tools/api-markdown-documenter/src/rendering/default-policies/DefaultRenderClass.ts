@@ -15,7 +15,7 @@ import {
 import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { filterByKind, mergeSections } from "../../utilities";
+import { ApiModifier, filterByKind, isStatic, mergeSections } from "../../utilities";
 import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
 /**
@@ -27,11 +27,17 @@ import { renderChildDetailsSection, renderMemberTables } from "../helpers";
  *
  *   - constructors
  *
- *   - event properties
+ *   - (static) event properties
  *
- *   - properties
+ *   - (static) properties
  *
- *   - methods
+ *   - (static) methods
+ *
+ *   - (non-static) event properties
+ *
+ *   - (non-static) properties
+ *
+ *   - (non-static) methods
  *
  *   - call-signatures
  *
@@ -77,6 +83,20 @@ export function renderClassSection(
         );
         const eventProperties = allProperties.filter((apiProperty) => apiProperty.isEventProperty);
 
+        // Further split event/standard properties into static and non-static
+        const staticStandardProperties = standardProperties.filter((apiProperty) =>
+            isStatic(apiProperty),
+        );
+        const nonStaticStandardProperties = standardProperties.filter(
+            (apiProperty) => !isStatic(apiProperty),
+        );
+        const staticEventProperties = eventProperties.filter((apiProperty) =>
+            isStatic(apiProperty),
+        );
+        const nonStaticEventProperties = eventProperties.filter(
+            (apiProperty) => !isStatic(apiProperty),
+        );
+
         const callSignatures = filterByKind(apiClass.members, [ApiItemKind.CallSignature]).map(
             (apiItem) => apiItem as ApiCallSignature,
         );
@@ -85,9 +105,13 @@ export function renderClassSection(
             (apiItem) => apiItem as ApiIndexSignature,
         );
 
-        const methods = filterByKind(apiClass.members, [ApiItemKind.Method]).map(
+        const allMethods = filterByKind(apiClass.members, [ApiItemKind.Method]).map(
             (apiItem) => apiItem as ApiMethod,
         );
+
+        // Split methods into static and non-static methods
+        const staticMethods = allMethods.filter((apiMethod) => isStatic(apiMethod));
+        const nonStaticMethods = allMethods.filter((apiMethod) => !isStatic(apiMethod));
 
         // Render summary tables
         const renderedMemberTables = renderMemberTables(
@@ -98,19 +122,52 @@ export function renderClassSection(
                     items: constructors,
                 },
                 {
+                    headingTitle: "Static Events",
+                    itemKind: ApiItemKind.Property,
+                    items: staticEventProperties,
+                    options: {
+                        modifiersToOmit: [ApiModifier.Static],
+                    },
+                },
+                {
+                    headingTitle: "Static Properties",
+                    itemKind: ApiItemKind.Property,
+                    items: staticStandardProperties,
+                    options: {
+                        modifiersToOmit: [ApiModifier.Static],
+                    },
+                },
+                {
+                    headingTitle: "Static Methods",
+                    itemKind: ApiItemKind.Method,
+                    items: staticMethods,
+                    options: {
+                        modifiersToOmit: [ApiModifier.Static],
+                    },
+                },
+                {
                     headingTitle: "Events",
                     itemKind: ApiItemKind.Property,
-                    items: eventProperties,
+                    items: nonStaticEventProperties,
+                    options: {
+                        modifiersToOmit: [ApiModifier.Static],
+                    },
                 },
                 {
                     headingTitle: "Properties",
                     itemKind: ApiItemKind.Property,
-                    items: standardProperties,
+                    items: nonStaticStandardProperties,
+                    options: {
+                        modifiersToOmit: [ApiModifier.Static],
+                    },
                 },
                 {
                     headingTitle: "Methods",
                     itemKind: ApiItemKind.Method,
-                    items: methods,
+                    items: nonStaticMethods,
+                    options: {
+                        modifiersToOmit: [ApiModifier.Static],
+                    },
                 },
                 {
                     headingTitle: "Call Signatures",
@@ -151,7 +208,7 @@ export function renderClassSection(
                 {
                     headingTitle: "Method Details",
                     itemKind: ApiItemKind.MethodSignature,
-                    items: methods,
+                    items: allMethods,
                 },
                 {
                     headingTitle: "Call Signature Details",

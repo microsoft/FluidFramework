@@ -490,6 +490,18 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  --- | --- |
 |  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-constructor) | Test class constructor |
 
+#### Static Properties
+
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  [testClassStaticProperty](docs/simple-suite-test#testclass-testclassstaticproperty-property) | (foo: number) =&gt; string | Test static class property |
+
+#### Static Methods
+
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testClassStaticMethod(foo)](docs/simple-suite-test#testclass-testclassstaticmethod-method) | string | Test class static method |
+
 #### Events
 
 |  Property | Modifiers | Type | Description |
@@ -503,7 +515,6 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
 |  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | readonly, virtual | number | Test class getter-only property |
 |  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | readonly | TTypeParameterB | Test class property |
-|  [testClassStaticProperty](docs/simple-suite-test#testclass-testclassstaticproperty-property) | static | (foo: number) =&gt; string | Test static class property |
 
 #### Methods
 
@@ -511,7 +522,6 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) | \-\-\- | void | A test public abstract method. |
 |  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | sealed | TTypeParameterA | Test class method |
-|  [testClassStaticMethod(foo)](docs/simple-suite-test#testclass-testclassstaticmethod-method) | static | string | Test class static method |
 |  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) | \-\-\- | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
 
 #### Constructor Details

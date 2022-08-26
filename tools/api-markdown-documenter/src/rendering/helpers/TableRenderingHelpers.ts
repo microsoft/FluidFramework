@@ -21,6 +21,7 @@ import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfigu
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
 import {
     ApiFunctionLike,
+    ApiModifier,
     getDefaultValueBlock,
     getLinkForApiItem,
     getModifiers,
@@ -46,6 +47,23 @@ export interface MemberTableProperties {
      * The items to be rendered as rows in the table.
      */
     items: readonly ApiItem[];
+
+    /**
+     * Rendering options for the table.
+     */
+    options?: TableRenderingOptions;
+}
+
+/**
+ * Content / formatting options for table rendering.
+ */
+export interface TableRenderingOptions {
+    /**
+     * A list of modifiers to omit from table rendering.
+     *
+     * @defaultValue No modifier kinds will be excluded.
+     */
+    modifiersToOmit?: ApiModifier[];
 }
 
 /**
@@ -87,6 +105,7 @@ export function renderTableWithHeading(
         memberTableProperties.items,
         memberTableProperties.itemKind,
         config,
+        memberTableProperties.options,
     );
 
     return renderedTable === undefined
@@ -106,11 +125,13 @@ export function renderTableWithHeading(
  * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
  * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param options - Table content / formatting options.
  */
 export function renderSummaryTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
+    options?: TableRenderingOptions,
 ): DocTable | undefined {
     if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
         throw new Error(`Table rendering does not support provided API item kind: "${itemKind}".`);
@@ -130,6 +151,7 @@ export function renderSummaryTable(
                 apiItems.map((apiItem) => apiItem as ApiFunctionLike),
                 itemKind,
                 config,
+                options,
             );
 
         case ApiItemKind.Property:
@@ -137,6 +159,7 @@ export function renderSummaryTable(
             return renderPropertiesTable(
                 apiItems.map((apiItem) => apiItem as ApiPropertyItem),
                 config,
+                options,
             );
 
         case ApiItemKind.Package:
@@ -146,7 +169,7 @@ export function renderSummaryTable(
             );
 
         default:
-            return renderDefaultSummaryTable(apiItems, itemKind, config);
+            return renderDefaultSummaryTable(apiItems, itemKind, config, options);
     }
 }
 
@@ -156,18 +179,22 @@ export function renderSummaryTable(
  * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
  * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param options - Table content / formatting options.
  */
 export function renderDefaultSummaryTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
+    options?: TableRenderingOptions,
 ): DocTable | undefined {
     if (apiItems.length === 0) {
         return undefined;
     }
 
     // Only display "Modifiers" column if there are any modifiers to display.
-    const hasModifiers = apiItems.some((apiItem) => getModifiers(apiItem).length !== 0);
+    const hasModifiers = apiItems.some(
+        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
+    );
 
     const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
     if (hasModifiers) {
@@ -179,7 +206,7 @@ export function renderDefaultSummaryTable(
     for (const apiItem of apiItems) {
         const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
         if (hasModifiers) {
-            rowCells.push(renderModifiersCell(apiItem, config));
+            rowCells.push(renderModifiersCell(apiItem, config, options?.modifiersToOmit));
         }
         rowCells.push(renderApiSummaryCell(apiItem, config));
 
@@ -251,18 +278,22 @@ export function renderParametersSummaryTable(
  * @param apiItems - The function-like items to be rendered.
  * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param options - Table content / formatting options.
  */
 export function renderFunctionLikeSummaryTable(
     apiItems: readonly ApiFunctionLike[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
+    options?: TableRenderingOptions,
 ): DocTable | undefined {
     if (apiItems.length === 0) {
         return undefined;
     }
 
     // Only display "Modifiers" column if there are any modifiers to display.
-    const hasModifiers = apiItems.some((apiItem) => getModifiers(apiItem).length !== 0);
+    const hasModifiers = apiItems.some(
+        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
+    );
     const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
 
     const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
@@ -278,7 +309,7 @@ export function renderFunctionLikeSummaryTable(
     for (const apiItem of apiItems) {
         const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
         if (hasModifiers) {
-            rowCells.push(renderModifiersCell(apiItem, config));
+            rowCells.push(renderModifiersCell(apiItem, config, options?.modifiersToOmit));
         }
         if (hasReturnTypes) {
             rowCells.push(renderReturnTypeCell(apiItem, config));
@@ -304,17 +335,21 @@ export function renderFunctionLikeSummaryTable(
  * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
  * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param options - Table content / formatting options.
  */
 export function renderPropertiesTable(
     apiProperties: readonly ApiPropertyItem[],
     config: Required<MarkdownDocumenterConfiguration>,
+    options?: TableRenderingOptions,
 ): DocTable | undefined {
     if (apiProperties.length === 0) {
         return undefined;
     }
 
     // Only display "Modifiers" column if there are any modifiers to display.
-    const hasModifiers = apiProperties.some((apiItem) => getModifiers(apiItem).length !== 0);
+    const hasModifiers = apiProperties.some(
+        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
+    );
     const hasDefaultValues = apiProperties.some(
         (apiItem) => getDefaultValueBlock(apiItem) !== undefined,
     );
@@ -333,7 +368,7 @@ export function renderPropertiesTable(
     for (const apiProperty of apiProperties) {
         const rowCells: DocTableCell[] = [renderApiTitleCell(apiProperty, config)];
         if (hasModifiers) {
-            rowCells.push(renderModifiersCell(apiProperty, config));
+            rowCells.push(renderModifiersCell(apiProperty, config, options?.modifiersToOmit));
         }
         if (hasDefaultValues) {
             rowCells.push(renderDefaultValueCell(apiProperty, config));
@@ -473,12 +508,14 @@ export function renderApiTitleCell(
  *
  * @param apiItem - The API item whose modifiers will be rendered in the cell.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param modifiersToOmit - List of modifiers to omit from the rendered cell, even if they apply to the item.
  */
 export function renderModifiersCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
+    modifiersToOmit?: ApiModifier[],
 ): DocTableCell {
-    const modifiers = getModifiers(apiItem);
+    const modifiers = getModifiers(apiItem, modifiersToOmit);
 
     return modifiers.length === 0
         ? renderEmptyTableCell(config)

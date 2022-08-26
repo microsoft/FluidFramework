@@ -619,27 +619,34 @@ export function isStatic(apiItem: ApiItem): boolean {
  * Gets the {@link ApiModifier}s that apply to the provided API item.
  *
  * @param apiItem - The API item being queried.
+ * @param modifiersToOmit - An optional list of modifier kinds to omit, even if they apply to the provided item.
  */
-export function getModifiers(apiItem: ApiItem): ApiModifier[] {
+export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[] {
     const modifiers: ApiModifier[] = [];
 
-    if (isOptional(apiItem)) {
+    if (isOptional(apiItem) && !modifiersToOmit?.includes(ApiModifier.Optional)) {
         modifiers.push(ApiModifier.Optional);
     }
 
-    if (isReadonly(apiItem)) {
+    if (isReadonly(apiItem) && !modifiersToOmit?.includes(ApiModifier.Readonly)) {
         modifiers.push(ApiModifier.Readonly);
     }
 
-    if (isStatic(apiItem)) {
+    if (isStatic(apiItem) && !modifiersToOmit?.includes(ApiModifier.Static)) {
         modifiers.push(ApiModifier.Static);
     }
 
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-        if (apiItem.tsdocComment.modifierTagSet.isVirtual()) {
+        if (
+            apiItem.tsdocComment.modifierTagSet.isVirtual() &&
+            !modifiersToOmit?.includes(ApiModifier.Virtual)
+        ) {
             modifiers.push(ApiModifier.Virtual);
         }
-        if (apiItem.tsdocComment.modifierTagSet.isSealed()) {
+        if (
+            apiItem.tsdocComment.modifierTagSet.isSealed() &&
+            !modifiersToOmit?.includes(ApiModifier.Sealed)
+        ) {
             modifiers.push(ApiModifier.Sealed);
         }
     }
