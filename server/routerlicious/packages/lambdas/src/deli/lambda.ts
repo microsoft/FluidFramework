@@ -383,11 +383,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              * 2. Deli is closed due to a rebalance 2 minutes later
              * 3. Suppose that deli keeps rebalancing every 2 minutes indefinitely
              *
-             * Deli is configured to checkpoint 1 message behind the head while there is an client in the session
-             * This will cause the kafka partition to never get a new checkpoint because it's in a bad loop.
+             * Deli is configured to checkpoint 1 message behind the head while there is an client in the session.
+             * This will cause the kafka partition to never get a new checkpoint because it's in this bad loop.
              *
-             * However if we check for idle clients on startup and insert a leave message
-             * for the 1 client (who is now definitely expired), it would end up making deli checkpoint properly
+             * We can recover from this loop if we check for idle clients on startup and insert a leave message
+             * for that 1 write client (who is now definitely expired). It would end up making deli checkpoint properly
              */
             this.checkIdleWriteClients(Date.now());
         }
