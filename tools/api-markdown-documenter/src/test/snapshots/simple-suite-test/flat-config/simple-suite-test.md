@@ -1073,7 +1073,7 @@ Test interface
 ```typescript
 interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum> 
 ```
-<b>Extends:</b> [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;[TestEnum](docs/simple-suite-test#testnamespace-testenum-enum)<!-- -->&gt;
+<b>Extends:</b> [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;[TestEnum](docs/simple-suite-test#testnamespace-testenum-enum)
 
 ###### Properties
 
