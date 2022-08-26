@@ -344,7 +344,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              * Deli's opEvent system is supposed to tell us when it's time to post ops for the session.
              * It sends an "opEvent" event based heuristics like idle / max time / max ops.
              * There's an edge case though. Suppose the following:
-             * 1. Server A created a deli for the session, consumes 100 kafka messages, and sequences 100 ops
+             * 1. Server A created a deli for the session, consumes 100 kafka messages, and sequences 100 ops.
              * 2. Within 5 seconds of sequencing those ops,
              *  Server A's deli saves a checkpoint (it remembers it sequenced those 100 ops)
              * 3. Within a second of that checkpoint, the Kafka partition is rebalanced.
@@ -361,7 +361,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             if (this.sequenceNumber > this.durableSequenceNumber) {
                 /**
                  * This makes it so the next time deli checks for a "maxTime" opEvent,
-                 * it will fire the event since sequencedMessagesSinceLastOpEvent \> 0
+                 * it will fire the event since sequencedMessagesSinceLastOpEvent \> 0.
                  */
                 this.opEvent.sequencedMessagesSinceLastOpEvent = this.sequenceNumber - this.durableSequenceNumber;
             }
@@ -380,14 +380,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              * Suppose the following:
              * 1. Deli starts up and there is 1 write client and it
              * consumes 1 message it has already previouly consumed.
-             * 2. Deli is closed due to a rebalance 2 minutes later
-             * 3. Suppose that deli keeps rebalancing every 2 minutes indefinitely
+             * 2. Deli is closed due to a rebalance 2 minutes later.
+             * 3. Suppose that deli keeps rebalancing every 2 minutes indefinitely.
              *
-             * Deli is configured to checkpoint 1 message behind the head while there is an client in the session.
+             * Deli is configured to checkpoint 1 message behind the head while there is a client in the session.
              * This will cause the kafka partition to never get a new checkpoint because it's in this bad loop.
              *
              * We can recover from this loop if we check for idle clients on startup and insert a leave message
-             * for that 1 write client (who is now definitely expired). It would end up making deli checkpoint properly
+             * for that 1 write client (who is now definitely expired). It would end up making deli checkpoint properly.
              */
             this.checkIdleWriteClients(Date.now());
         }
