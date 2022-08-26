@@ -712,13 +712,13 @@ Test interface that extends other interfaces
 #### Signature {#testinterfaceextendingotherinterfaces-signature}
 
 ```typescript
-export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestInterfaceWithTypeParameter<number>, TestMappedType 
+export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number> 
 ```
 <b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)
 
-, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
-
 , [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
+
+, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)
 
 
 #### Remarks {#testinterfaceextendingotherinterfaces-remarks}
@@ -1015,8 +1015,10 @@ Test interface
 ###### Signature {#testinterface-signature}
 
 ```typescript
-interface TestInterface 
+interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum> 
 ```
+<b>Extends:</b> [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;[TestEnum](docs/simple-suite-test#testnamespace-testenum-enum)
+
 
 ###### Properties
 
