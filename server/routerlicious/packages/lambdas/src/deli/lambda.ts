@@ -356,7 +356,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              *  no messages were sequenced by this deli.
              *
              * Deli should be smart and check if it hasn't yet sent an opEvent for messages that
-             * were not durably sequenced.
+             * were not durably stored.
              */
             if (this.sequenceNumber > this.durableSequenceNumber) {
                 /**
@@ -377,7 +377,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             /**
              * Instruct deli to check for idle clients on startup. Why do we want to do this?
              *
-             * Suppose the following example:
+             * Suppose the following:
              * 1. Deli starts up and there is 1 write client and it
              * consumes 1 message it has already previouly consumed.
              * 2. Deli is closed due to a rebalance 2 minutes later
