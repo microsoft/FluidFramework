@@ -22,38 +22,67 @@ export interface ITreeCursor {
     readonly pending: boolean;
 
     /**
+     * Enters the first field (setting mode to `Fields`)
+     * so fields can be iterated with `nextField` and `skipPendingFields`.
+     *
+     * If there are no fields, mode is returned to `Nodes` and false is returned.
+     *
+     * Allowed when `mode` is `Nodes` and not `pending`.
+     */
+    firstField(): boolean;
+
+     /**
      * Moves the "current field" forward one in an arbitrary field traversal order.
      *
      * If there is no remaining field to iterate to,
      * returns false and navigates up to the parent setting the mode to `Nodes`.
      *
-     * Order of fields only applies to this function,
-     * and is only guaranteed to be consistent thorough a single iteration.
-     *
-     * If mode is `Nodes` enters the first field.
+     * Order of fields is only guaranteed to be consistent thorough a single iteration.
      *
      * If skipPending, skip past fields which are currently pending.
      * This can be used to skip to the end of a large number of consecutive pending fields.
      *
-     * NOT allowed if mode is `Nodes` and also `pending`.
-     *
-     * TODO: consider splitting out a `firstField` method, or using a foreEachField method instead.
+     * Allowed when `mode` is `Fields`.
      */
-    nextField(skipPending: boolean): boolean;
+    nextField(): boolean;
+
+     /**
+     * Moves the "current field" forward until `pending` is `false`.
+     *
+     * If there are no remaining field to iterate to,
+     * returns false and navigates up to the parent setting the mode to `Nodes`.
+     *
+     * Order of fields is only guaranteed to be consistent thorough a single iteration.
+     *
+     * Allowed when `mode` is `Fields`.
+     */
+    skipPendingFields(): boolean;
 
     /**
      * Moves `offset` nodes in the field.
      * If seeking to exactly past either end,
-     * returns false and navigates up to the parent field (setting `inFields` to `true`).
+     * returns false and navigates up to the parent field (setting mode to `Fields`).
      *
-     * If mode is `Fields`, offset is from the corresponding end of the field.
-     * For example, `-1` would seek to the last node and `1` would seek to the first.
-     *
-     * NOT allowed if mode is `Fields` and also `pending`.
-     *
-     * TODO: consider splitting out a `firstNode` method, or using a foreEachNode method instead.
+     * Allowed if mode is `Nodes`.
      */
-    seek(offset: number): boolean;
+    seekNodes(offset: number): boolean;
+
+    /**
+     * Moves to the first node of the selected field, setting mode to `Fields`.
+     *
+     * If field is empty, returns false instead.
+     *
+     * Allowed when `mode` is `Fields`, and not `pending`.
+     */
+    firstNode(): boolean;
+
+    /**
+     * The same as `seekNodes(1)`, but might be faster.
+     */
+    nextNode(): boolean;
+
+    forEachNode(f: (c: ITreeCursor) => void): void;
+    forEachField(f: (c: ITreeCursor) => void): void;
 
     // ********** APIs for when mode = Fields, and not pending ********** //
 
@@ -187,10 +216,7 @@ export interface ITreeCursorSynchronous extends ITreeCursor{
  */
 export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) => T): T[] {
     const output: T[] = [];
-    assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
-    while (cursor.seek(1)) {
-        output.push(f(cursor));
-    }
+    reduceField(cursor, undefined, (c) => { output.push(f(c)); });
     return output;
 }
 
@@ -198,8 +224,10 @@ export function reduceField<T>(
     cursor: ITreeCursor, initial: T, f: (cursor: ITreeCursor, initial: T) => T): T {
     assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
     let output: T = initial;
-    while (cursor.seek(1)) {
+    let inField = cursor.firstNode();
+    while (inField) {
         output = f(cursor, output);
+        inField = cursor.nextField();
     }
     return output;
 }

@@ -353,16 +353,24 @@ export interface ITreeCursorNew {
     readonly currentIndexInField: number;
     enterChildNode(index: number): void;
     enterField(key: FieldKey): void;
+    firstField(): boolean;
+    firstNode(): boolean;
+    // (undocumented)
+    forEachField(f: (c: ITreeCursorNew) => void): void;
+    // (undocumented)
+    forEachNode(f: (c: ITreeCursorNew) => void): void;
     getCurrentFieldKey(): FieldKey;
     // (undocumented)
     getCurrentFieldLength(): number;
     // (undocumented)
     getPath(): UpPath | undefined;
     readonly mode: CursorLocationType;
-    nextField(skipPending: boolean): boolean;
+    nextField(): boolean;
+    nextNode(): boolean;
     // (undocumented)
     readonly pending: boolean;
-    seek(offset: number): boolean;
+    seekNodes(offset: number): boolean;
+    skipPendingFields(): boolean;
     readonly type: TreeType;
     upToField(): void;
     upToNode(): void;
@@ -800,6 +808,14 @@ export class TextCursorNew implements ITreeCursorNew {
     // (undocumented)
     enterField(key: FieldKey): void;
     // (undocumented)
+    firstField(): boolean;
+    // (undocumented)
+    firstNode(): boolean;
+    // (undocumented)
+    forEachField(f: (c: TextCursorNew) => void): void;
+    // (undocumented)
+    forEachNode(f: (c: TextCursorNew) => void): void;
+    // (undocumented)
     getCurrentFieldKey(): FieldKey;
     // (undocumented)
     getCurrentFieldLength(): number;
@@ -814,11 +830,15 @@ export class TextCursorNew implements ITreeCursorNew {
     // (undocumented)
     get mode(): CursorLocationType;
     // (undocumented)
-    nextField(skipPending: boolean): boolean;
+    nextField(): boolean;
+    // (undocumented)
+    nextNode(): boolean;
     // (undocumented)
     get pending(): boolean;
     // (undocumented)
-    seek(offset: number): boolean;
+    seekNodes(offset: number): boolean;
+    // (undocumented)
+    skipPendingFields(): boolean;
     // (undocumented)
     get type(): TreeType;
     // (undocumented)

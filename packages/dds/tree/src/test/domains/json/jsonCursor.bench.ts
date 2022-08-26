@@ -7,14 +7,13 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
-    ITreeCursorNew, jsonableTreeFromCursor, jsonableTreeFromCursorNew, singleTextCursorNew, jsonTypeSchema,
+    ITreeCursorNew, jsonableTreeFromCursor, singleTextCursorNew, jsonTypeSchema, CursorLocationType,
 } from "../../..";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
-import { reduceFieldNew } from "../../../forest";
 import { generateCanada } from "./json";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -56,20 +55,20 @@ function bench(name: string, getJson: () => any) {
     };
     const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
 
-    benchmark({
-        type: BenchmarkType.Measurement,
-        title: `Direct: '${name}'`,
-        before: () => {
-            const cloned = clone(json);
-            assert.deepEqual(cloned, json,
-                "clone() must return an equivalent tree.");
-            assert.notEqual(cloned, json,
-                "clone() must not return the same tree instance.");
-        },
-        benchmarkFn: () => {
-            clone(json);
-        },
-    });
+    // benchmark({
+    //     type: BenchmarkType.Measurement,
+    //     title: `Direct: '${name}'`,
+    //     before: () => {
+    //         const cloned = clone(json);
+    //         assert.deepEqual(cloned, json,
+    //             "clone() must return an equivalent tree.");
+    //         assert.notEqual(cloned, json,
+    //             "clone() must not return the same tree instance.");
+    //     },
+    //     benchmarkFn: () => {
+    //         clone(json);
+    //     },
+    // });
 
     const cursorFactories: [string, () => ITreeCursorNew][] = [
         ["TextCursor", () => singleTextCursorNew(encodedTree)],
@@ -77,8 +76,9 @@ function bench(name: string, getJson: () => any) {
 
     const consumers: [string, (cursor: ITreeCursorNew) => void][] = [
         // ["cursorToJsonObject", cursorToJsonObjectNew],
-        ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+        // ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
         ["sum", sum],
+        ["sum-map", sumMap],
     ];
 
     for (const [consumerName, consumer] of consumers) {
@@ -97,6 +97,8 @@ function bench(name: string, getJson: () => any) {
                 benchmarkFn: () => {
                     consumer(cursor);
                 },
+                // maxBenchmarkDurationSeconds: 30,
+                // minSampleDurationSeconds: 2,
             });
         }
     }
@@ -108,9 +110,25 @@ function sum(cursor: ITreeCursorNew): number {
     if (typeof value === "number") {
         total += value;
     }
-    while (cursor.nextField(false)) {
-        total += reduceFieldNew(cursor, total, sum);
+    let moreFields = cursor.firstField();
+    while (moreFields) {
+        let inField = cursor.firstNode();
+        while (inField) {
+            total += sum(cursor);
+            inField = cursor.nextField();
+        }
+        moreFields = cursor.nextField();
     }
+    return total;
+}
+
+function sumMap(cursor: ITreeCursorNew): number {
+    let total = 0;
+    const value = cursor.value;
+    if (typeof value === "number") {
+        total += value;
+    }
+    cursor.forEachField((c) => { c.forEachNode((c2) => { total += sumMap(c2); }); });
     return total;
 }
 

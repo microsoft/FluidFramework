@@ -100,7 +100,7 @@ export class TextCursor implements ITreeCursor {
     }
 
     private getStackedNodeIndex(height: number): number {
-        assert(height % 2 === 0, "must be node height");
+        // assert(height % 2 === 0, "must be node height");
         return this.indexStack[height];
     }
 
@@ -117,7 +117,7 @@ export class TextCursor implements ITreeCursor {
     public enterChildNode(index: number): void {
         // assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         const siblings = this.getField();
-        assert(index in siblings, "child must exist at index");
+        // assert(index in siblings, "child must exist at index");
         this.siblingStack.push(this.siblings);
         this.indexStack.push(this.index);
         this.index = index;
@@ -175,23 +175,11 @@ export class TextCursor implements ITreeCursor {
         return false;
     }
 
-    public nextField(skipPending: boolean): boolean {
-        if (this.mode === CursorLocationType.Nodes) {
-            // Implicitly enter first field
-            assert(this.index !== -1, "index should not be -1 in Nodes mode");
-            const fields = keys(this.getNode());
-            if (fields.length === 0) {
-                // No fields, so implicitly exit fields.
-                return false;
-            }
+    public skipPendingFields(): boolean {
+        return true;
+    }
 
-            this.siblingStack.push(this.siblings);
-            this.siblings = fields;
-            this.indexStack.push(this.index);
-            this.index = 0;
-            return true;
-        }
-
+    public nextField(): boolean {
         // Already in "Fields" mode, so go to next field.
         if (this.index === -1) {
             // Navigated down to this field using a key, not iteration.
@@ -213,36 +201,91 @@ export class TextCursor implements ITreeCursor {
             // this.index = 0;
         }
 
-        assert(Array.isArray(this.siblings), "siblings should be an array");
+        // assert(Array.isArray(this.siblings), "siblings should be an array");
         this.index += 1;
-        if (this.index === this.siblings.length) {
+        if (this.index === (this.siblings as []).length) {
             this.upToNode();
             return false;
         }
         return true;
     }
 
-    public seek(offset: number): boolean {
-        if (this.mode === CursorLocationType.Fields) {
-            // Implicitly enter node
-            assert(offset !== 0, "cannot implicitly enter node with 0 offset");
-            const len = this.getCurrentFieldLength();
-            const dst = offset < 0 ? len - offset : offset - 1;
-            if (dst >= 0 && dst < len) {
-                this.enterChildNode(dst);
-                return true;
-            } else {
-                return false;
-            }
+    public firstField(): boolean {
+        const fields = keys(this.getNode());
+        if (fields.length === 0) {
+            return false;
         }
 
-        assert(this.index !== -1, "index should be a number");
+        this.siblingStack.push(this.siblings);
+        this.indexStack.push(this.index);
+        this.index = 0;
+        this.siblings = fields;
+        return true;
+    }
+
+    public seekNodes(offset: number): boolean {
+        // assert(this.mode === CursorLocationType.Nodes, "can only seekNodes when in Nodes");
+        // assert(this.index !== -1, "index should be a number");
         this.index += offset;
         if (this.index in this.siblings) {
             return true;
         }
             this.upToField();
             return false;
+    }
+
+    public firstNode(): boolean {
+        const siblings = this.getField();
+        if (siblings.length === 0) {
+            return false;
+        }
+        this.siblingStack.push(this.siblings);
+        this.indexStack.push(this.index);
+        this.index = 0;
+        this.siblings = siblings;
+        return true;
+    }
+
+    public nextNode(): boolean {
+        // assert(this.mode === CursorLocationType.Nodes, "can only nextNode when in Nodes");
+        // assert(this.index !== -1, "index should be a number");
+        this.index++;
+        if (this.index < (this.siblings as []).length) {
+            return true;
+        }
+        this.upToField();
+        return false;
+    }
+
+    public forEachNode(f: (c: TextCursor) => void): void {
+        const siblings = this.getField();
+        const len = siblings.length;
+        if (len === 0) {
+            return;
+        }
+        this.siblingStack.push(this.siblings);
+        this.indexStack.push(this.index);
+        this.siblings = siblings;
+        for (this.index = 0; this.index < len; this.index++) {
+            f(this);
+        }
+        this.upToField();
+    }
+
+    public forEachField(f: (c: TextCursor) => void): void {
+        const fields = keys(this.getNode());
+        const len = fields.length;
+        if (len === 0) {
+            return;
+        }
+
+        this.siblingStack.push(this.siblings);
+        this.siblings = fields;
+        this.indexStack.push(this.index);
+        for (this.index = 0; this.index < len; this.index++) {
+            f(this);
+        }
+        this.upToNode();
     }
 
     public upToNode(): void {
@@ -271,7 +314,7 @@ export class TextCursor implements ITreeCursor {
     }
 
     get value(): Value {
-        return this.getNode().value;
+        return (this.siblings as JsonableTree[])[this.index].value;
     }
 
     get type(): TreeType {
@@ -301,7 +344,7 @@ function getFieldKey(index: number, siblings: SiblingsOrKey): FieldKey {
         assert(Array.isArray(siblings), "index must be provided only for arrays");
         return siblings[index] as FieldKey;
     }
-    assert(!Array.isArray(siblings), "index must not provided for non-arrays");
+    // assert(!Array.isArray(siblings), "index must not provided for non-arrays");
     return siblings as FieldKey;
 }
 
@@ -311,10 +354,12 @@ function getFieldKey(index: number, siblings: SiblingsOrKey): FieldKey {
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
     assert(cursor.mode === CursorLocationType.Nodes, "must start at node");
     let fields: FieldMap<JsonableTree> | undefined;
-    while (cursor.nextField(false)) {
+    let inField = cursor.firstNode();
+    while (inField) {
         fields ??= {};
         const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
         fields[cursor.getCurrentFieldKey() as string] = field;
+        inField = cursor.nextNode();
     }
 
     const node: JsonableTree = {
