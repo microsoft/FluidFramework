@@ -11,10 +11,8 @@ import {
     createSummarizer,
     summarizeNow,
     waitForContainerConnection,
-    mockConfigProvider,
-    ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { gcBlobPrefix, gcTreeKey, ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedMap } from "@fluidframework/map";
@@ -37,13 +35,12 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         provider = getTestObjectProvider({ syncSummarizer: true });
-    });
-
-    it("DDS changes do not create new GC blobs", async () => {
         mainContainer = await provider.makeTestContainer(defaultGCConfig);
         mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
         await waitForContainerConnection(mainContainer);
+    });
 
+    it("DDS changes do not create new GC blobs", async () => {
         const dds = SharedMap.create(mainDataStore._runtime);
         mainDataStore._root.set("dds", dds.handle);
 
@@ -63,44 +60,30 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
     });
 
     it("Back routes added by GC are removed when passed from data stores to DDSes", async () => {
-        const settings = {};
-        const configProvider = mockConfigProvider(settings);
-        const newConfig: ITestContainerConfig = {
-            runtimeOptions: defaultGCConfig.runtimeOptions,
-            loaderProps: { configProvider },
-        };
-        settings["Fluid.GarbageCollection.TrackGCState"] = "false";
-        mainContainer = await provider.makeTestContainer(newConfig);
-        mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
-        await waitForContainerConnection(mainContainer);
-
         const dds = SharedMap.create(mainDataStore._runtime);
         mainDataStore._root.set("dds", dds.handle);
 
-        const summarizer1 = await createSummarizer(provider, mainContainer, undefined, undefined, configProvider);
+        const summarizer1 = await createSummarizer(provider, mainContainer);
         let summaryResult = await waitForSummary(summarizer1);
 
-        // Change ds1 but not the root dds
+        // Change ds1 but not the root dds so that the root dds routes are pulled by default
         dds.set("change", "change1");
 
+        // Create a new dataStore so that the GC blob is regenerated
+        const dataStore = await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+        await dataStore.trySetAlias("ARootDataStore");
+
         summarizer1.close();
-        const summarizer2 = await createSummarizer(
-            provider,
-            mainContainer,
-            summaryResult.summaryVersion,
-            undefined,
-            configProvider,
-        );
+        const summarizer2 = await createSummarizer(provider, mainContainer, summaryResult.summaryVersion);
 
         // Get GC State
         summaryResult = await waitForSummary(summarizer2);
         const gcTree = summaryResult.summaryTree.tree[gcTreeKey];
-        assert(gcTree !== undefined, "Expected a gc blob!");
-        assert(gcTree.type === SummaryType.Tree, "Expected a Tree!");
+        assert(gcTree?.type === SummaryType.Tree, "Expected a Tree!");
         const gcBlob = gcTree.tree[`${gcBlobPrefix}_root`] as ISummaryBlob;
         const gcState = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
 
-        // Validate GC State
+        // Validate GC State that for each GC node, no route is duplicated
         for (const [_, gcData] of Object.entries(gcState.gcNodes)) {
             const seenRoutes = new Set<string>();
             gcData.outboundRoutes.forEach((route) => {
