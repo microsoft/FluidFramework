@@ -20,8 +20,8 @@ export declare abstract class TestAbstractClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](./simple-suite-test/testabstractclass-class#abstractpropertygetter-property) | readonly | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property) | readonly | [TestEnum](./simple-suite-test#testenum-enum) | A test protected property. |
+|  [abstractPropertyGetter](./simple-suite-test/testabstractclass-class#abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property) | <code>readonly</code> | [TestEnum](./simple-suite-test#testenum-enum) | A test protected property. |
 
 ## Methods
 
@@ -84,6 +84,10 @@ A test public abstract method.
 abstract publicAbstractMethod(): void;
 ```
 
+#### Returns {#publicabstractmethod-returns}
+
+<b>Return type:</b> void
+
 ### sealedMethod {#sealedmethod-method}
 
 A test `@sealed` method.
@@ -99,6 +103,8 @@ protected sealedMethod(): string;
 
 A string!
 
+<b>Return type:</b> string
+
 ### virtualMethod {#virtualmethod-method}
 
 A test `@virtual` method.
@@ -113,3 +119,5 @@ protected virtualMethod(): number;
 #### Returns {#virtualmethod-returns}
 
 A number!
+
+<b>Return type:</b> number

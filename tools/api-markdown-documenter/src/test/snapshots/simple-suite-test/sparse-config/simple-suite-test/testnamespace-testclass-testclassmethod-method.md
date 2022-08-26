@@ -18,6 +18,8 @@ testClassMethod(testParameter: string): Promise<string>;
 
 A Promise
 
+<b>Return type:</b> Promise&lt;string&gt;
+
 ## Throws {#testclassmethod-throws}
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.

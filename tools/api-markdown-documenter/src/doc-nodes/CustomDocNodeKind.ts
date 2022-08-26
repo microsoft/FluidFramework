@@ -62,6 +62,7 @@ export class CustomDocNodes {
                 CustomDocNodeKind.List,
                 CustomDocNodeKind.NoteBox,
                 CustomDocNodeKind.Table,
+                DocNodeKind.CodeSpan,
                 DocNodeKind.Section,
             ]);
 

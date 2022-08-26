@@ -21,3 +21,5 @@ Here are some remarks about the method
 ## Returns {#testmethod-returns}
 
 A number
+
+<b>Return type:</b> number
