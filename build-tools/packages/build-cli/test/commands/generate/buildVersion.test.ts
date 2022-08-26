@@ -240,8 +240,6 @@ describe("generate:buildVersion", () => {
             expect(ctx.stdout).to.contain("isLatest=false");
         });
 
-    const t9sTags = [];
-
     test.env({
         VERSION_BUILDNUMBER: "88879",
         VERSION_TAGNAME: "tinylicious",
