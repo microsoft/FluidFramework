@@ -79,7 +79,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
 
         if (this.processedFlags.exclusions === undefined) {
-            this.processedFlags.exclusions = '123'
+            this.processedFlags.exclusions = exclusionsFile
         }
 
         const handlerRegex: RegExp =
