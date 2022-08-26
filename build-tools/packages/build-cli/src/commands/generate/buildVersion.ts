@@ -53,11 +53,21 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             description: "Include Fluid internal versions.",
             env: "VERSION_INCLUDE_INTERNAL_VERSIONS",
         }),
-        test: Flags.boolean({}),
+        fileVersion: Flags.string({
+            description:
+                "Will be used as the version instead of reading from package.json/lerna.json. Used for testing.",
+            hidden: true,
+        }),
+        tags: Flags.string({
+            description:
+                "The git tags to consider when determining whether a version is latest. Used for testing.",
+            hidden: true,
+            multiple: true,
+        }),
         ...BaseCommand.flags,
     };
 
-    static args = [{ name: "file" }];
+    // static args = [{ name: "file" }];
 
     public async run(): Promise<void> {
         const context = await this.getContext();
@@ -65,15 +75,15 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
         const isRelease = flags.release === "release";
         let fileVersion = "";
 
-        if (flags.testBuild === true && isRelease) {
-            this.error("Test build shouldn't be released");
-        }
-
         if (flags.base === undefined) {
-            fileVersion = this.getFileVersion();
+            fileVersion = flags.fileVersion ?? this.getFileVersion();
             if (!fileVersion) {
                 this.error("Missing version in lerna.json/package.json");
             }
+        }
+
+        if (flags.testBuild === true && isRelease) {
+            this.error("Test build shouldn't be released");
         }
 
         if (flags.patch === false && flags.tag !== undefined) {
@@ -102,9 +112,15 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             this.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
         }
 
-        const tags = await context.gitRepo.getAllTags();
+        const tags = flags.tags ?? (await context.gitRepo.getAllTags());
         if (flags.tag !== undefined) {
-            const isLatest = getIsLatest(flags.tag, version, tags, flags.includeInternalVersions);
+            const isLatest = getIsLatest(
+                flags.tag,
+                version,
+                tags,
+                flags.includeInternalVersions,
+                await this.getLogger(),
+            );
             this.log(`isLatest=${isLatest}`);
             if (isRelease && isLatest === true) {
                 this.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
