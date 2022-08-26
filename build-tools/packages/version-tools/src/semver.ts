@@ -113,7 +113,7 @@ export function detectBumpType(
     }
 
     if (semver.compareBuild(v1Parsed, v2Parsed) >= 0) {
-        return undefined;
+        throw new Error(`v1: ${v1} is greater than v2: ${v2}`);
     }
 
     const bumpType = semver.diff(v1Parsed, v2Parsed);

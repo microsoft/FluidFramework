@@ -7,12 +7,15 @@ import { strict as assert } from "assert";
 import * as semver from "semver";
 import { VersionBumpType } from "./bumpTypes";
 
+/** The virtualPatch format uses this value to encode and decode versions in that scheme. */
+const VIRTUAL_PATCH_FORMAT_MULTIPLIER = 1000;
+
 /**
  * Determines if a version is a virtual patch format or not, using a very simplistic algorithm.
  */
 export function isVirtualPatch(version: semver.SemVer | string): boolean {
     // If the major is 0 and the patch is >= 1000 assume it's a virtualPatch version
-    if (semver.major(version) === 0 && semver.patch(version) >= 1000) {
+    if (semver.major(version) === 0 && semver.patch(version) >= VIRTUAL_PATCH_FORMAT_MULTIPLIER) {
         return true;
     }
     return false;
@@ -40,13 +43,14 @@ export function bumpVirtualPatchVersion(
             virtualVersion.minor += 1;
             // the "minor" component starts at 1000 to work around issues padding to
             // 4 digits using 0s with semvers
-            virtualVersion.patch = 1000;
+            virtualVersion.patch = VIRTUAL_PATCH_FORMAT_MULTIPLIER;
             break;
         }
         case "minor": {
-            virtualVersion.patch += 1000;
+            virtualVersion.patch += VIRTUAL_PATCH_FORMAT_MULTIPLIER;
             // adjust down to the nearest thousand
-            virtualVersion.patch = virtualVersion.patch - (virtualVersion.patch % 1000);
+            virtualVersion.patch =
+                virtualVersion.patch - (virtualVersion.patch % VIRTUAL_PATCH_FORMAT_MULTIPLIER);
             break;
         }
         case "patch": {
@@ -77,8 +81,10 @@ export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | stri
     }
 
     const major = parsedVersion.minor;
-    const minor = (parsedVersion.patch - (parsedVersion.patch % 1000)) / 1000;
-    const patch = parsedVersion.patch % 1000;
+    const minor =
+        (parsedVersion.patch - (parsedVersion.patch % VIRTUAL_PATCH_FORMAT_MULTIPLIER)) /
+        VIRTUAL_PATCH_FORMAT_MULTIPLIER;
+    const patch = parsedVersion.patch % VIRTUAL_PATCH_FORMAT_MULTIPLIER;
 
     const convertedVersionString = `${major}.${minor}.${patch}`;
     const newSemVer = semver.parse(convertedVersionString);
@@ -109,9 +115,10 @@ export function toVirtualPatchScheme(version: semver.SemVer | string): semver.Se
 
     const major = 0;
     const minor = parsedVersion.major;
-    // (parsedVersion.patch - (parsedVersion.patch % 1000)) / 1000;
     const patchBase = parsedVersion.minor === 0 ? 1 : parsedVersion.minor;
-    const patch = patchBase * 1000 + (parsedVersion.patch % 1000);
+    const patch =
+        patchBase * VIRTUAL_PATCH_FORMAT_MULTIPLIER +
+        (parsedVersion.patch % VIRTUAL_PATCH_FORMAT_MULTIPLIER);
 
     const convertedVersionString = `${major}.${minor}.${patch}`;
     const newSemVer = semver.parse(convertedVersionString);
