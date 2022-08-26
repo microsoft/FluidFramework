@@ -135,7 +135,6 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
     public async instantiateDataStore(
         context: IFluidDataStoreContext,
-        existing: boolean,
     ): Promise<FluidDataStoreRuntime> {
         const dataTypes = new Map<string, IChannelFactory>();
 

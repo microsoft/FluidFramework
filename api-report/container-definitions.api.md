@@ -157,8 +157,6 @@ export interface IContainerContext extends IDisposable {
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
-    readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
@@ -486,7 +484,7 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 
 // @public
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }
 
 // @public

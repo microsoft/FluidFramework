@@ -667,7 +667,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             tryFetchBlob<[string, string][]>(aliasBlobName),
         ]);
 
-        const loadExisting = existing === true || context.existing === true;
+        const loadExisting = existing === true;
 
         // read snapshot blobs needed for BlobManager to load
         const blobManagerSnapshot = await BlobManager.load(

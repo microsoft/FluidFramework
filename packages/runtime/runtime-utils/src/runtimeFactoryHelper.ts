@@ -15,11 +15,9 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 
     public async instantiateRuntime(
         context: IContainerContext,
-        existing?: boolean,
+        existing: boolean,
     ): Promise<IRuntime> {
-        const fromExisting = existing === undefined
-            ? context.existing === true
-            : existing;
+        const fromExisting = existing;
         const runtime = await this.preInitialize(context, fromExisting);
 
         if (fromExisting) {
