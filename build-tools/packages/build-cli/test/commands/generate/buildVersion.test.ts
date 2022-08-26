@@ -37,7 +37,8 @@ describe("generate:buildVersion", () => {
 
     test.env({
         VERSION_BUILDNUMBER: "88802",
-    }).stdout()
+    })
+        .stdout()
         .command([
             "generate:buildVersion",
             "--fileVersion",
@@ -75,7 +76,8 @@ describe("generate:buildVersion", () => {
 
     test.env({
         VERSION_PATCH: "true",
-    }).stdout()
+    })
+        .stdout()
         .command([
             "generate:buildVersion",
             "--build",
@@ -114,7 +116,8 @@ describe("generate:buildVersion", () => {
 
     test.env({
         VERSION_RELEASE: "release",
-    }).stdout()
+    })
+        .stdout()
         .command([
             "generate:buildVersion",
             "--build",
@@ -133,7 +136,8 @@ describe("generate:buildVersion", () => {
 
     test.env({
         VERSION_TAGNAME: "build-tools",
-    }).stdout()
+    })
+        .stdout()
         .command([
             "generate:buildVersion",
             "--build",
@@ -173,7 +177,8 @@ describe("generate:buildVersion", () => {
 
     test.env({
         VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
-    }).stdout()
+    })
+        .stdout()
         .command([
             "generate:buildVersion",
             "--build",
@@ -215,7 +220,8 @@ describe("generate:buildVersion", () => {
 
     test.env({
         TEST_BUILD: "true",
-    }).stdout()
+    })
+        .stdout()
         .command([
             "generate:buildVersion",
             "--build",

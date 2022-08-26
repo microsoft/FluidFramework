@@ -67,14 +67,14 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
         ...BaseCommand.flags,
     };
 
-
     public async run(): Promise<void> {
         const context = await this.getContext();
         const flags = this.processedFlags;
         const isRelease = flags.release === "release";
         const useSimplePatchVersion = flags.patch?.toLowerCase() === "true";
         const useTestVersion = flags.testBuild?.toLowerCase() === "true";
-        const shouldIncludeInternalVersions = flags.includeInternalVersions?.toLowerCase() === "true";
+        const shouldIncludeInternalVersions =
+            flags.includeInternalVersions?.toLowerCase() === "true";
 
         let fileVersion = "";
 
@@ -102,7 +102,12 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
         }
 
         // Generate and print the version to console
-        const simpleVersion = getSimpleVersion(fileVersion, flags.build, isRelease, useSimplePatchVersion);
+        const simpleVersion = getSimpleVersion(
+            fileVersion,
+            flags.build,
+            isRelease,
+            useSimplePatchVersion,
+        );
         const version = useTestVersion ? `0.0.0-${flags.build}-test` : simpleVersion;
         this.log(`version=${version}`);
         this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
