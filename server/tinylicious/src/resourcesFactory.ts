@@ -74,7 +74,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
                 // See AB#1627
                 scribe: {
                     ...DefaultServiceConfiguration.scribe,
-                    generateServiceSummary: false,
+                    generateServiceSummary: true,
                 },
             },
             pubsub);

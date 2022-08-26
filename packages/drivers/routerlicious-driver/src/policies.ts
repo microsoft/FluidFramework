@@ -42,4 +42,10 @@ export interface IRouterliciousDriverPolicies {
      * Default: true
      */
     enableRestLess: boolean;
+    /**
+     * Enable using internal cache for summaries and blobs.
+     * Reduces Summarizer boot time and reduces server load in E2E tests.
+     * Default: true
+     */
+    enableInternalCaching: boolean;
 }
