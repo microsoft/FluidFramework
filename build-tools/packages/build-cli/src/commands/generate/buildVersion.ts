@@ -89,7 +89,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             this.error("Test build shouldn't be released");
         }
 
-        if (useSimplePatchVersion && flags.tag !== undefined) {
+        if (!useSimplePatchVersion && flags.tag !== undefined) {
             const tagName = `${flags.tag}_v${fileVersion}`;
             const out = childProcess.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
             if (out.trim() === tagName) {
