@@ -319,14 +319,7 @@ export function renderExcerptWithHyperlinks(
     }
 
     const docNodes: DocNode[] = [];
-
-    // Workaround for an apparent bug in api-extractor-model.
-    // The closing angle-bracket of a heritage type is bundled with the next token, rather than
-    // with the token it is closing.
-    // We will track opening and closing angle-brackets as we walk the tokens, and manually
-    // tack on closing brackets as needed at the end.
-    let openBracketCount = 0;
-
+    console.log(`---Excerpt: "${excerpt.text}".`);
     for (const token of excerpt.spannedTokens) {
         // Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
         // the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
@@ -363,30 +356,8 @@ export function renderExcerptWithHyperlinks(
                     text: unwrappedTokenText,
                 }),
             );
-
-            if (unwrappedTokenText === "<") {
-                openBracketCount++;
-            } else if (unwrappedTokenText === ">") {
-                openBracketCount--;
-            }
         }
     }
-
-    if (openBracketCount < 0) {
-        throw new Error(
-            "Wrote more closing angle-brackets than opening ones. This shouldn't be possible.",
-        );
-    }
-
-    if (openBracketCount > 0) {
-        docNodes.push(
-            new DocPlainText({
-                configuration: config.tsdocConfiguration,
-                text: ">".repeat(openBracketCount),
-            }),
-        );
-    }
-
     return docNodes;
 }
 
