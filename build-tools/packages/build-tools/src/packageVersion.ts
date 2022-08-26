@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/build-tools";
-export const pkgVersion = "0.4.2001";
+export const pkgVersion = "0.4.2002";
