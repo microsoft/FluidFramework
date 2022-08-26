@@ -1013,13 +1013,6 @@ export class MergeTree {
                     if (seq <= refSeq || segment.clientId === clientId) {
                         return segment.cachedLength;
                     } else {
-                        // the segment was inserted and removed before the
-                        // this context, so it will never exist for this
-                        // context
-                        if (removalInfo !== undefined
-                            && removalInfo.removedSeq !== UnassignedSequenceNumber) {
-                            return undefined;
-                        }
                         // Segment invisible to client at reference sequence number/branch id/client id of op
                         return 0;
                     }

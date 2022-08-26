@@ -208,11 +208,19 @@ export class TestClientLogger {
         let acked: string = "";
         let local: string = "";
         const nodes = [...client.mergeTree.root.children];
+        let parent = nodes[0]?.parent;
         while (nodes.length > 0) {
             const node = nodes.shift();
             if (node) {
                 if (node.isLeaf()) {
                     if (TextSegment.is(node)) {
+                        if (node.parent !== parent) {
+                            if (acked.length > 0) {
+                                acked += " ";
+                                local += " ";
+                            }
+                            parent = node.parent;
+                        }
                         if (node.removedSeq) {
                             if (node.removedSeq === UnassignedSequenceNumber) {
                                 acked += "_".repeat(node.text.length);
