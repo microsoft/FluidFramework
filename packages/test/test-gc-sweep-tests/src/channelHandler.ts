@@ -14,24 +14,34 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { IRandom } from "@fluid-internal/stochastic-test-utils";
 
+// All the necessary information for a handle that has been removed
 export interface IRemovedHandle {
     handle: IFluidHandle;
     key: string;
 }
 
+// All the necessary information for a handle that has been added
+// A IRemovedHandle is added if the added handle replaces another handle
 export interface IAddedHandle {
     addedHandleKey: string;
     removedHandle?: IRemovedHandle;
 }
 
+// An object responsible for creating ops for a channel
 export interface IOpManager {
     channel: IChannel;
 }
 
+// A manager responsible for creating non-handle ops for a channel
 export interface IRandomOpManager extends IOpManager {
     executeRandomNonHandleOp(random: IRandom): Promise<void>;
 }
 
+/**
+ * A manager responsible for adding and removing handles for a specific channel
+ *
+ * Note: not all channels can store handles.
+ */
 export interface IHandleOpManager extends IOpManager {
     type: string;
     addHandle(handle: IFluidHandle, random: IRandom): Promise<IAddedHandle>;
@@ -42,20 +52,10 @@ export interface IHandleOpManager extends IOpManager {
 /**
  * TODO: handlers to add - SharedDirectoryHandler, SharedMatrixHandler and SharedStringHandler
  * all these DDSes can serialize and deserialize handles.
+ *
+ * The OpManagers were written to isolate the logic out of the TestDataObject that was responsible for
+ * creating and receiving ops from how each individual channel worked.
  */
-export class RandomManager {
-    private _random: IRandom | undefined;
-
-    public get random(): IRandom {
-        assert(this._random !== undefined, "Random needs to be set first before we do any op handling");
-        return this._random;
-    }
-
-    public set random(random: IRandom) {
-        this._random = random;
-    }
-}
-
 export class ConsensusQueueHandler implements IHandleOpManager {
     constructor(
         public readonly channel: ConsensusQueue<IFluidHandle>,

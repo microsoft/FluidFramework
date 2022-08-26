@@ -30,7 +30,7 @@ import {
     SharedMapHandler,
 } from "./channelHandler";
 
-// data store that exposes container runtime for testing.
+// The BaseTestDataObject has functionality that all other data objects should derive
 export class BaseTestDataObject extends DataObject {
     public static get type(): string {
         return "TestDataObject";
@@ -53,9 +53,18 @@ export class BaseTestDataObject extends DataObject {
     }
 }
 
+// May want to rename all of these channels to DDSes
+// The key for retrieving all the channel handles in DataObjectManyDDSes
 const channelHandlesKey = "channelHandles";
+// The key for retrieving all the channel ids in DataObjectManyDDSes
 const channelIdsKey = "channelIds";
 
+/**
+ * The DataObject that should have all DDSes, currently missing as they are not yet implemented
+ * - SharedDirectoryHandler
+ * - SharedMatrixHandler
+ * - SharedStringHandler
+ */
 export class DataObjectManyDDSes extends BaseTestDataObject {
     public static get type(): string {
         return "TestDataObjectWithEveryDDS";
@@ -64,6 +73,7 @@ export class DataObjectManyDDSes extends BaseTestDataObject {
     private readonly handleManager: HandleManager = new HandleManager();
     private readonly randomOpHandlers: IRandomOpManager[] = [];
 
+    // adds a handle to a random channel and returns the added data
     public async addHandleOpForChannel(
         ddsId: string,
         handle: IFluidHandle,
@@ -72,20 +82,24 @@ export class DataObjectManyDDSes extends BaseTestDataObject {
         return this.handleManager.executeAddHandleOp(ddsId, handle, random);
     }
 
+    // removes a random handle from the specified DDS
     public async removeHandleForChannel(ddsId: string, random: IRandom): Promise<IRemovedHandle> {
         return this.handleManager.executeRandomRemoveHandleOp(ddsId, random);
     }
 
+    // returns all the channelIds this DataObject has
     public getChannelIds(): string[] {
         const channelIds = this.root.get<string[]>(channelIdsKey);
         assert(channelIds !== undefined, `Channel handles should exist on the DDS!`);
         return channelIds;
     }
 
+    // returns all the channelIds that can store handles
     public getHandleChannelIds(): string[] {
         return Array.from(this.handleManager.handleOpManagers.keys());
     }
 
+    // Adds a channelType - will overwrite if one exists
     private addChannelType(channel: IChannel) {
         this.root.set(channel.constructor.name, channel.handle);
         this.root.set(channel.id, channel.handle);
@@ -99,6 +113,7 @@ export class DataObjectManyDDSes extends BaseTestDataObject {
         this.root.set(channelIdsKey, ids);
     }
 
+    // Add all the different channels we support
     protected async initializingFirstTime(props?: any): Promise<void> {
         this.addChannelType(ConsensusQueue.create(this.runtime));
         this.addChannelType(ConsensusRegisterCollection.create(this.runtime));
@@ -111,6 +126,7 @@ export class DataObjectManyDDSes extends BaseTestDataObject {
         this.addChannelType(SharedString.create(this.runtime));
     }
 
+    // Gets the specified channel
     private async assertedGet<T>(key: string): Promise<T> {
         const handle = this.root.get<IFluidHandle<T>>(key);
         assert(handle !== undefined, `Expected ${key}!`);
@@ -119,6 +135,7 @@ export class DataObjectManyDDSes extends BaseTestDataObject {
         return channel;
     }
 
+    // Create IHandleManagers for DDSes that can add handles, and IRandomOpHandlers that can create non-handle ops
     protected async hasInitialized(): Promise<void> {
         const consensusQueueHandler = new ConsensusQueueHandler(
             await this.assertedGet<ConsensusQueue>("ConsensusQueue"),
@@ -146,6 +163,9 @@ export class DataObjectManyDDSes extends BaseTestDataObject {
     }
 }
 
+/**
+ * HandleManager is responsible for adding handles and removing handles for a particular set of DDSes
+ */
 export class HandleManager {
     public readonly handleOpManagers: Map<string, IHandleOpManager> = new Map();
 
@@ -177,6 +197,7 @@ export class HandleManager {
     }
 }
 
+// Factories for all the channels we support
 const allFactories: IChannelFactory[] = [
     ConsensusQueue.getFactory(),
     ConsensusRegisterCollection.getFactory(),
@@ -189,14 +210,8 @@ const allFactories: IChannelFactory[] = [
     SharedString.getFactory(),
 ];
 
-export const baseTestDataObjectFactory = new DataObjectFactory(
-    BaseTestDataObject.type,
-    BaseTestDataObject,
-    allFactories,
-    {},
-);
-
-export const testDataObjectWithEveryDDSFactory = new DataObjectFactory(
+// The DataObjectFactory for DataObjectManyDDSes
+export const dataObjectWithManyDDSesFactory = new DataObjectFactory(
     DataObjectManyDDSes.type,
     DataObjectManyDDSes,
     allFactories,
