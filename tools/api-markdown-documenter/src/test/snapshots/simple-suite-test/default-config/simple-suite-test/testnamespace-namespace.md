@@ -137,6 +137,10 @@ An Error
 |  --- | --- | --- |
 |  testParameter | number |  |
 
+#### Returns {#testfunction-returns}
+
+A number
+
 ## Variable Details
 
 ### TestConst {#testconst-variable}

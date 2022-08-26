@@ -201,6 +201,10 @@ An Error when something bad happens.
 |  testParameter |  | TTypeParameter | A test parameter |
 |  testOptionalParameter | optional | TTypeParameter |  |
 
+#### Returns {#testfunction-returns}
+
+The provided parameter
+
 ### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
 Test function that returns an inline type
@@ -213,6 +217,10 @@ export declare function testFunctionReturningInlineType(): {
     bar: TestEnum;
 };
 ```
+
+#### Returns {#testfunctionreturninginlinetype-returns}
+
+An inline type
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
@@ -227,6 +235,10 @@ Test function that returns an inline type
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
+#### Returns {#testfunctionreturningintersectiontype-returns}
+
+an intersection type
+
 ### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
 Test function that returns an inline type
@@ -236,6 +248,10 @@ Test function that returns an inline type
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
+
+#### Returns {#testfunctionreturninguniontype-returns}
+
+A union type
 
 ## Variable Details
 

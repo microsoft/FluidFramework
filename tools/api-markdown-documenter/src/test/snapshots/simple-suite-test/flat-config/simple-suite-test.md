@@ -185,6 +185,10 @@ A test `@sealed` method.
 protected sealedMethod(): string;
 ```
 
+###### Returns {#sealedmethod-returns}
+
+A string!
+
 ##### virtualMethod {#testabstractclass-virtualmethod-method}
 
 A test `@virtual` method.
@@ -195,6 +199,10 @@ A test `@virtual` method.
 /** @virtual */
 protected virtualMethod(): number;
 ```
+
+###### Returns {#virtualmethod-returns}
+
+A number!
 
 ### TestClass {#testclass-class}
 
@@ -396,6 +404,10 @@ static testClassStaticMethod(foo: number): string;
 |  --- | --- | --- |
 |  foo | number | Some number |
 
+###### Returns {#testclassstaticmethod-returns}
+
+- Some string
+
 ##### virtualMethod {#testclass-virtualmethod-method}
 
 Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->.
@@ -520,6 +532,10 @@ An Error when something bad happens.
 |  testParameter |  | TTypeParameter | A test parameter |
 |  testOptionalParameter | optional | TTypeParameter |  |
 
+#### Returns {#testfunction-returns}
+
+The provided parameter
+
 ### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
 Test function that returns an inline type
@@ -532,6 +548,10 @@ export declare function testFunctionReturningInlineType(): {
     bar: TestEnum;
 };
 ```
+
+#### Returns {#testfunctionreturninginlinetype-returns}
+
+An inline type
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
@@ -546,6 +566,10 @@ Test function that returns an inline type
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
+#### Returns {#testfunctionreturningintersectiontype-returns}
+
+an intersection type
+
 ### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
 Test function that returns an inline type
@@ -555,6 +579,10 @@ Test function that returns an inline type
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
+
+#### Returns {#testfunctionreturninguniontype-returns}
+
+A union type
 
 ## Interface Details
 
@@ -756,6 +784,10 @@ Here are some remarks about the method
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | string | A string |
+
+###### Returns {#testmethod-returns}
+
+A number
 
 ### TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
 
@@ -959,6 +991,10 @@ A different kind of error when a thing happens, but not when the first kind of e
 |  --- | --- | --- |
 |  testParameter | string | A string |
 
+<b>Returns</b>
+
+A Promise
+
 #### Enumeration Details
 
 ##### TestEnum {#testnamespace-testenum-enum}
@@ -1021,6 +1057,10 @@ An Error
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | number |  |
+
+###### Returns {#testfunction-returns}
+
+A number
 
 #### Interface Details
 

@@ -17,3 +17,7 @@ An Error
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | number |  |
+
+## Returns {#testfunction-returns}
+
+A number

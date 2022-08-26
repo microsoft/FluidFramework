@@ -37,6 +37,7 @@ import {
     getHeadingForApiItem,
     getLinkForApiItem,
     getQualifiedApiItemName,
+    getReturnsBlock,
     getThrowsBlocks,
     mergeSections,
 } from "../../utilities";
@@ -493,10 +494,10 @@ export function renderRemarksSection(
  *
  * @remarks Displayed as a heading, with the documentation contents under it.
  *
- * @param apiItem - The API item whose `@remarks` documentation will be rendered.
+ * @param apiItem - The API item whose `@throws` documentation will be rendered.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  *
- * @returns The doc section if the API item had a `@throws` comment, otherwise `undefined`.
+ * @returns The doc section if the API item had any `@throws` comments, otherwise `undefined`.
  */
 export function renderThrowsSection(
     apiItem: ApiItem,
@@ -672,6 +673,38 @@ export function renderParametersSection(
         ),
         renderParametersSummaryTable(apiFunctionLike.parameters, config),
     ]);
+}
+
+/**
+ * Renders a section containing the {@link https://tsdoc.org/pages/tags/returns/ | @returns} documentation of the
+ * provided API item, if it has one.
+ *
+ * @remarks Displayed as a heading, with the documentation contents under it.
+ *
+ * @param apiItem - The API item whose `@returns` documentation will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if the API item had a `@returns` comment, otherwise `undefined`.
+ */
+export function renderReturnsSection(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+        const returnsBlock = getReturnsBlock(apiItem);
+        if (returnsBlock === undefined) {
+            return undefined;
+        }
+
+        return new DocSection({ configuration: config.tsdocConfiguration }, [
+            renderHeading(
+                { title: "Returns", id: `${getQualifiedApiItemName(apiItem)}-returns` },
+                config,
+            ),
+            returnsBlock,
+        ]);
+    }
+    return undefined;
 }
 
 /**

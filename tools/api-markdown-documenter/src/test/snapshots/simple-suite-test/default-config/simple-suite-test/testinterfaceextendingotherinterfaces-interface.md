@@ -42,3 +42,7 @@ Here are some remarks about the method
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | string | A string |
+
+#### Returns {#testmethod-returns}
+
+A number

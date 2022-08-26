@@ -8,3 +8,7 @@ A test `@virtual` method.
 /** @virtual */
 protected virtualMethod(): number;
 ```
+
+## Returns {#virtualmethod-returns}
+
+A number!

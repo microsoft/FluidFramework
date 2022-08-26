@@ -5,8 +5,8 @@
 import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { ApiFunctionLike } from "../../utilities";
-import { renderParametersSection } from "../helpers";
+import { ApiFunctionLike, mergeSections } from "../../utilities";
+import { renderParametersSection, renderReturnsSection } from "../helpers";
 
 /**
  * Default policy for rendering doc sections for function-like API items
@@ -16,8 +16,22 @@ export function renderFunctionLikeSection(
     apiFunctionLike: ApiFunctionLike,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
+    const docSections: DocSection[] = [];
+
     // Render parameter table (if any parameters)
     const renderedParameterTable = renderParametersSection(apiFunctionLike, config);
+    if (renderedParameterTable !== undefined) {
+        docSections.push(renderedParameterTable);
+    }
 
-    return config.renderChildrenSection(apiFunctionLike, renderedParameterTable, config);
+    // Render `@returns` block (if any)
+    const renderedReturnsSection = renderReturnsSection(apiFunctionLike, config);
+    if (renderedReturnsSection !== undefined) {
+        docSections.push(renderedReturnsSection);
+    }
+
+    // Merge sections to reduce and simplify hierarchy
+    const innerSectionBody = mergeSections(docSections, config.tsdocConfiguration);
+
+    return config.renderChildrenSection(apiFunctionLike, innerSectionBody, config);
 }

@@ -220,6 +220,9 @@ export function getModifiers(apiItem: ApiItem): ApiModifier[];
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
+export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
+
+// @public
 export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
@@ -435,6 +438,7 @@ declare namespace RenderingHelpers {
         renderExamplesSection,
         renderExampleSection,
         renderParametersSection,
+        renderReturnsSection,
         renderChildDetailsSection,
         renderChildrenUnderHeading,
         renderLink,
@@ -543,6 +547,9 @@ function renderPropertyTypeCell(apiProperty: ApiPropertyItem, config: Required<M
 
 // @public
 function renderRemarksSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+
+// @public
+function renderReturnsSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;

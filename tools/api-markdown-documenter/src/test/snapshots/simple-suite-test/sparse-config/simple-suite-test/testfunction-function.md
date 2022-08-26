@@ -22,3 +22,7 @@ An Error when something bad happens.
 |  --- | --- | --- | --- |
 |  testParameter |  | TTypeParameter | A test parameter |
 |  testOptionalParameter | optional | TTypeParameter |  |
+
+## Returns {#testfunction-returns}
+
+The provided parameter

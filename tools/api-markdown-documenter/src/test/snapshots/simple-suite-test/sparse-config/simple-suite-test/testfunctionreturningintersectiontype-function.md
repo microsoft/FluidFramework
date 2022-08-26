@@ -10,3 +10,7 @@ Test function that returns an inline type
 ```typescript
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
+
+## Returns {#testfunctionreturningintersectiontype-returns}
+
+an intersection type

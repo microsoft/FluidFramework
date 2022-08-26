@@ -200,6 +200,10 @@ static testClassStaticMethod(foo: number): string;
 |  --- | --- | --- |
 |  foo | number | Some number |
 
+#### Returns {#testclassstaticmethod-returns}
+
+- Some string
+
 ### virtualMethod {#virtualmethod-method}
 
 Overrides [TestAbstractClass.virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method)<!-- -->.
