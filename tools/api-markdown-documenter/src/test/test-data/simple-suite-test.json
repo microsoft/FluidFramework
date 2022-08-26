@@ -637,7 +637,7 @@
             {
               "kind": "Method",
               "canonicalReference": "simple-suite-test!TestClass#testClassMethod:member(1)",
-              "docComment": "/**\n * Test class method\n *\n * @remarks\n *\n * Here are some remarks about the method\n *\n * @throws\n *\n * - An Error\n *\n * @sealed\n */\n",
+              "docComment": "/**\n * Test class method\n *\n * @remarks\n *\n * Here are some remarks about the method\n *\n * @throws\n *\n * Some sort of error in 1 case.\n *\n * @throws\n *\n * Some other sort of error in another case. For example, a case where some thing happens.\n *\n * @sealed\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -947,7 +947,7 @@
         {
           "kind": "Function",
           "canonicalReference": "simple-suite-test!testFunction:function(1)",
-          "docComment": "/**\n * Test function\n *\n * @remarks\n *\n * This is a test {@link TestInterface | link} to another API member\n *\n * @param testParameter - A test parameter\n *\n * @param testParameter - An optional parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns The provided parameter\n *\n * @throws\n *\n * - An Error\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test function\n *\n * @remarks\n *\n * This is a test {@link TestInterface | link} to another API member\n *\n * @param testParameter - A test parameter\n *\n * @param testParameter - An optional parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns The provided parameter\n *\n * @throws\n *\n * An Error when something bad happens.\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1653,7 +1653,7 @@
                 {
                   "kind": "Method",
                   "canonicalReference": "simple-suite-test!TestNamespace.TestClass#testClassMethod:member(1)",
-                  "docComment": "/**\n * Test class method\n *\n * @param testParameter - A string\n *\n * @returns A Promise\n *\n * @throws\n *\n * - An Error\n */\n",
+                  "docComment": "/**\n * Test class method\n *\n * @param testParameter - A string\n *\n * @returns A Promise\n *\n * @throws\n *\n * An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.\n *\n * @throws\n *\n * A different kind of error when a thing happens, but not when the first kind of error is thrown instead.\n *\n * 😁\n */\n",
                   "excerptTokens": [
                     {
                       "kind": "Content",
@@ -1821,7 +1821,7 @@
             {
               "kind": "Function",
               "canonicalReference": "simple-suite-test!TestNamespace.testFunction:function(1)",
-              "docComment": "/**\n * Test function\n *\n * @param Foo - A number\n *\n * @returns A number\n *\n * @throws\n *\n * - An Error\n *\n * @public\n */\n",
+              "docComment": "/**\n * Test function\n *\n * @param Foo - A number\n *\n * @returns A number\n *\n * @throws\n *\n * An Error\n *\n * @public\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",

@@ -14,7 +14,7 @@ This is a test [link](docs/simple-suite-test/testinterface-interface) to another
 
 ## Throws {#testfunction-throws}
 
-- An Error
+An Error when something bad happens.
 
 ## Parameters {#testfunction-parameters}
 

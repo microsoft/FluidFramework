@@ -192,7 +192,7 @@ This is a test [link](./simple-suite-test/testinterface-interface) to another AP
 
 #### Throws {#testfunction-throws}
 
-- An Error
+An Error when something bad happens.
 
 #### Parameters {#testfunction-parameters}
 

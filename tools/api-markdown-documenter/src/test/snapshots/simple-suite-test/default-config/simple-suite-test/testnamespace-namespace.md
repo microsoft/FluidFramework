@@ -129,7 +129,7 @@ function testFunction(testParameter: number): number;
 
 #### Throws {#testfunction-throws}
 
-- An Error
+An Error
 
 #### Parameters {#testfunction-parameters}
 

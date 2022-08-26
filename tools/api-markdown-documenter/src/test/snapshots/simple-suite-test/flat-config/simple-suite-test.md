@@ -370,7 +370,9 @@ Here are some remarks about the method
 
 ###### Throws {#testclassmethod-throws}
 
-- An Error
+Some sort of error in 1 case.
+
+Some other sort of error in another case. For example, a case where some thing happens.
 
 ###### Parameters {#testclassmethod-parameters}
 
@@ -509,7 +511,7 @@ This is a test [link](docs/simple-suite-test#testinterface-interface) to another
 
 #### Throws {#testfunction-throws}
 
-- An Error
+An Error when something bad happens.
 
 #### Parameters {#testfunction-parameters}
 
@@ -945,7 +947,11 @@ testClassMethod(testParameter: string): Promise<string>;
 
 <b>Throws</b>
 
-- An Error
+An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
+
+A different kind of error when a thing happens, but not when the first kind of error is thrown instead.
+
+😁
 
 <b>Parameters</b>
 
@@ -1008,7 +1014,7 @@ function testFunction(testParameter: number): number;
 
 ###### Throws {#testfunction-throws}
 
-- An Error
+An Error
 
 ###### Parameters {#testfunction-parameters}
 
