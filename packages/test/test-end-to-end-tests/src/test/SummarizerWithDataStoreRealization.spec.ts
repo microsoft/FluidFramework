@@ -297,6 +297,10 @@ describeNoCompat("Summary with Search Blobs and DataStore realization during Sum
             //  would get an error
             // "Cannot locate node with path '.app/.channels/guid1/root' under '<handle>'."
             //  instead of .app/.channels/guid1/.channels/root
+            // Note: It's worth adding that the corruption caused in this particular case is that the data store's
+            // summarizer node does not update the handle paths with ".channels" for its children when it is
+            // summarized. This happens later when the data store is realized but its too late because
+            // the work-in-progress path (wipLocalPath) has already beed updated.
 
             const summaryVersion = await waitForSummary(summarizerClient);
             assert(summaryVersion, "Summary version should be defined");
