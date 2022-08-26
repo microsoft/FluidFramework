@@ -64,7 +64,7 @@ parameters:
 
 - name: buildToolsVersionToInstall
   type: string
-  default: repo
+  default: latest
 
 trigger: none
 

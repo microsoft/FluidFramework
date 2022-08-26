@@ -14,7 +14,7 @@ parameters:
   default: false
 - name: buildToolsVersionToInstall
   type: string
-  default: repo
+  default: latest
 
 # Set version
 steps:

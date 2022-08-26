@@ -34,7 +34,7 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: repo
+  default: latest
 
 trigger:
   branches:
