@@ -47,36 +47,29 @@ describe("semver", () => {
         });
 
         it("premajor", () => {
-            assert.equal(detectBumpType("0.0.1-foo", "1.0.0"), "premajor");
+            assert.equal(detectBumpType("0.0.1-foo", "1.0.0"), "major");
         });
 
         it("preminor", () => {
-            assert.equal(detectBumpType("0.0.1-foo", "0.1.0"), "preminor");
+            assert.equal(detectBumpType("0.0.1-foo", "0.1.0"), "minor");
         });
 
         it("prepatch", () => {
-            assert.equal(detectBumpType("1.1.1-foo", "1.1.2"), "prepatch");
+            assert.equal(detectBumpType("1.1.1-foo", "1.1.2"), "patch");
         });
 
         it("prerelease", () => {
-            assert.equal(detectBumpType("0.0.1-foo", "0.0.1-foo.bar"), "prerelease");
+            assert.isUndefined(detectBumpType("0.0.1-foo", "0.0.1-foo.bar"));
         });
 
-        it("undefined", () => {
-            assert.equal(detectBumpType("0.0.1", "0.0.1"), undefined);
-            assert.equal(detectBumpType("0.0.2", "0.0.1"), undefined);
-            assert.equal(detectBumpType("0.0.1+0", "0.0.1"), undefined);
-            assert.equal(detectBumpType("0.0.1+2", "0.0.1+2"), undefined);
-            assert.equal(detectBumpType("0.0.1+3", "0.0.1+2"), undefined);
-            assert.equal(detectBumpType("0.0.1+2.0", "0.0.1+2"), undefined);
-            assert.equal(detectBumpType("0.0.1+2.a", "0.0.1+2.0"), undefined);
-        });
-
-        it("build", () => {
-            assert.equal(detectBumpType("0.0.1", "0.0.1+foo.bar"), "build");
-            assert.equal(detectBumpType("0.0.1+1", "0.0.1+2"), "build");
-            assert.equal(detectBumpType("0.0.1+2", "0.0.1+2.0"), "build");
-            assert.equal(detectBumpType("0.0.1+2.0", "0.0.1+2.a"), "build");
+        it("v1 >= v2 throws", () => {
+            assert.throws(() => detectBumpType("0.0.1", "0.0.1"));
+            assert.throws(() => detectBumpType("0.0.2", "0.0.1"));
+            assert.throws(() => detectBumpType("0.0.1+0", "0.0.1"));
+            assert.throws(() => detectBumpType("0.0.1+2", "0.0.1+2"));
+            assert.throws(() => detectBumpType("0.0.1+3", "0.0.1+2"));
+            assert.throws(() => detectBumpType("0.0.1+2.0", "0.0.1+2"));
+            assert.throws(() => detectBumpType("0.0.1+2.a", "0.0.1+2.0"));
         });
     });
 
