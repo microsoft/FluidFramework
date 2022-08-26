@@ -1,7 +1,6 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-
 name: $(Build.BuildId)
 
 trigger:
@@ -46,8 +45,6 @@ parameters:
   type: string
   default: client
 
-trigger: none
-
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -56,7 +53,6 @@ variables:
     value: 1
   - name: buildDirectory
     value: "."
-
 
 stages:
   # Install / Build / Test Stage
