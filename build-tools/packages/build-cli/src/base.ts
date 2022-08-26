@@ -3,49 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import {
-    Context,
-    FluidRepo,
-    getResolvedFluidRoot,
-    GitRepo,
-    Logger,
-    MonoRepo,
-} from "@fluidframework/build-tools";
+import { Context, getResolvedFluidRoot, GitRepo, Logger } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
-import {
-    bumpVersionScheme,
-    detectVersionScheme,
-    VersionBumpType,
-    VersionScheme,
-} from "@fluid-tools/version-tools";
 // eslint-disable-next-line import/no-internal-modules
 import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
-import inquirer from "inquirer";
-import type { Machine } from "jssm";
-import {
-    bumpTypeFlag,
-    checkFlags,
-    packageSelectorFlag,
-    releaseGroupFlag,
-    rootPathFlag,
-    skipCheckFlag,
-    versionSchemeFlag,
-} from "./flags";
-import {
-    bumpBranchName,
-    bumpDepsBranchName,
-    bumpReleaseGroup,
-    defaultReleaseForBranch,
-    difference,
-    getPreReleaseDependencies,
-    isReleased,
-    npmCheckUpdates,
-    releaseBranchName,
-} from "./lib";
-import { StateHandler } from "./machines";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "./releaseGroups";
+import { rootPathFlag } from "./flags";
 
 // This is needed to get type safety working in derived classes.
 // https://github.com/oclif/oclif.github.io/pull/142
