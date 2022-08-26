@@ -2,6 +2,12 @@
 
 Test Namespace
 
+## Signature {#testnamespace-signature}
+
+```typescript
+export declare namespace TestNamespace 
+```
+
 ## Remarks {#testnamespace-remarks}
 
 Here are some remarks about the namespace
@@ -22,12 +28,6 @@ Example 2
 
 ```javascript
 const bar = foo
-```
-
-## Signature {#testnamespace-signature}
-
-```typescript
-export declare namespace TestNamespace 
 ```
 
 ## Classes

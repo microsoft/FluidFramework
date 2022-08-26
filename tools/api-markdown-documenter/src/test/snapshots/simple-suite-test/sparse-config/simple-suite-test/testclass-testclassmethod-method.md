@@ -2,16 +2,16 @@
 
 Test class method
 
-## Remarks {#testclassmethod-remarks}
-
-Here are some remarks about the method
-
 ## Signature {#testclassmethod-signature}
 
 ```typescript
 /** @sealed */
 testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
+
+## Remarks {#testclassmethod-remarks}
+
+Here are some remarks about the method
 
 ## Parameters {#testclassmethod-parameters}
 

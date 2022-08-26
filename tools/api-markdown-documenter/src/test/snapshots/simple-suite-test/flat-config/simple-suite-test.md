@@ -200,10 +200,6 @@ protected virtualMethod(): number;
 
 Test class
 
-#### Remarks {#testclass-remarks}
-
-Here are some remarks about the class
-
 #### Signature {#testclass-signature}
 
 ```typescript
@@ -219,6 +215,10 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 * <b>TTypeParameterB</b>: Another type parameter
 
+
+#### Remarks {#testclass-remarks}
+
+Here are some remarks about the class
 
 #### Events
 
@@ -256,15 +256,15 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 Test class event property
 
-###### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the property
-
 ###### Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
+
+###### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the property
 
 #### Constructor Details
 
@@ -272,15 +272,15 @@ readonly testClassEventProperty: () => void;
 
 Test class constructor
 
-###### Remarks {#_constructor_-remarks}
-
-Here are some remarks about the constructor
-
 ###### Signature {#_constructor_-signature}
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
+
+###### Remarks {#_constructor_-remarks}
+
+Here are some remarks about the constructor
 
 ###### Parameters {#_constructor_-parameters}
 
@@ -307,10 +307,6 @@ get abstractPropertyGetter(): TestMappedType;
 
 Test class getter-only property
 
-###### Remarks {#testclassgetterproperty-remarks}
-
-Here are some remarks about the getter-only property
-
 ###### Signature {#testclassgetterproperty-signature}
 
 ```typescript
@@ -318,19 +314,23 @@ Here are some remarks about the getter-only property
 get testClassGetterProperty(): number;
 ```
 
+###### Remarks {#testclassgetterproperty-remarks}
+
+Here are some remarks about the getter-only property
+
 ##### testClassProperty {#testclass-testclassproperty-property}
 
 Test class property
-
-###### Remarks {#testclassproperty-remarks}
-
-Here are some remarks about the property
 
 ###### Signature {#testclassproperty-signature}
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
 ```
+
+###### Remarks {#testclassproperty-remarks}
+
+Here are some remarks about the property
 
 ##### testClassStaticProperty {#testclass-testclassstaticproperty-property}
 
@@ -358,16 +358,16 @@ publicAbstractMethod(): void;
 
 Test class method
 
-###### Remarks {#testclassmethod-remarks}
-
-Here are some remarks about the method
-
 ###### Signature {#testclassmethod-signature}
 
 ```typescript
 /** @sealed */
 testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
+
+###### Remarks {#testclassmethod-remarks}
+
+Here are some remarks about the method
 
 ###### Parameters {#testclassmethod-parameters}
 
@@ -408,6 +408,12 @@ protected virtualMethod(): number;
 
 Test Enum
 
+#### Signature {#testenum-signature}
+
+```typescript
+export declare enum TestEnum 
+```
+
 #### Remarks {#testenum-remarks}
 
 Here are some remarks about the enum
@@ -430,12 +436,6 @@ Another example
 const bar = TestEnum.TestEnumValue2
 ```
 
-#### Signature {#testenum-signature}
-
-```typescript
-export declare enum TestEnum 
-```
-
 #### Flags
 
 |  Flag | Description |
@@ -450,23 +450,19 @@ export declare enum TestEnum
 
 Test enum value 1 (string)
 
-###### Remarks {#testenumvalue1-remarks}
-
-Here are some remarks about the enum value
-
 ###### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
+###### Remarks {#testenumvalue1-remarks}
+
+Here are some remarks about the enum value
+
 ##### TestEnumValue2 {#testenum-testenumvalue2-enummember}
 
 Test enum value 2 (number)
-
-###### Remarks {#testenumvalue2-remarks}
-
-Here are some remarks about the enum value
 
 ###### Signature {#testenumvalue2-signature}
 
@@ -474,13 +470,13 @@ Here are some remarks about the enum value
 TestEnumValue2 = 3
 ```
 
+###### Remarks {#testenumvalue2-remarks}
+
+Here are some remarks about the enum value
+
 ##### TestEnumValue3 {#testenum-testenumvalue3-enummember}
 
 Test enum value 3 (default)
-
-###### Remarks {#testenumvalue3-remarks}
-
-Here are some remarks about the enum value
 
 ###### Signature {#testenumvalue3-signature}
 
@@ -488,21 +484,25 @@ Here are some remarks about the enum value
 TestEnumValue3 = 4
 ```
 
+###### Remarks {#testenumvalue3-remarks}
+
+Here are some remarks about the enum value
+
 ## Function Details
 
 ### testFunction {#testfunction-function}
 
 Test function
 
-#### Remarks {#testfunction-remarks}
-
-This is a test [link](docs/simple-suite-test#testinterface-interface) to another API member
-
 #### Signature {#testfunction-signature}
 
 ```typescript
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
+
+#### Remarks {#testfunction-remarks}
+
+This is a test [link](docs/simple-suite-test#testinterface-interface) to another API member
 
 #### Parameters {#testfunction-parameters}
 
@@ -563,15 +563,15 @@ export interface TestEmptyInterface
 
 Test interface
 
-#### Remarks {#testinterface-remarks}
-
-Here are some remarks about the interface
-
 #### Signature {#testinterface-signature}
 
 ```typescript
 export interface TestInterface 
 ```
+
+#### Remarks {#testinterface-remarks}
+
+Here are some remarks about the interface
 
 #### Events
 
@@ -611,15 +611,15 @@ export interface TestInterface
 
 Test interface event property
 
-###### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the event property
-
 ###### Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
+
+###### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the event property
 
 #### Construct Signature Details
 
@@ -639,15 +639,15 @@ new (): TestInterface;
 
 Test interface property
 
-###### Remarks {#testinterfaceproperty-remarks}
-
-Here are some remarks about the property
-
 ###### Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: number;
 ```
+
+###### Remarks {#testinterfaceproperty-remarks}
+
+Here are some remarks about the property
 
 ##### testOptionalInterfaceProperty {#testinterface-testoptionalinterfaceproperty-propertysignature}
 
@@ -665,15 +665,15 @@ testOptionalInterfaceProperty?: number;
 
 Test interface method
 
-###### Remarks {#testinterfacemethod-remarks}
-
-Here are some remarks about the method
-
 ###### Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;
 ```
+
+###### Remarks {#testinterfacemethod-remarks}
+
+Here are some remarks about the method
 
 #### Call Signature Details
 
@@ -681,23 +681,19 @@ testInterfaceMethod(): void;
 
 Test interface event call signature
 
-###### Remarks {#_call_-remarks}
-
-Here are some remarks about the event call signature
-
 ###### Signature {#_call_-signature}
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
+###### Remarks {#_call_-remarks}
+
+Here are some remarks about the event call signature
+
 ##### (call) {#testinterface-_call__1-callsignature}
 
 Another example call signature
-
-###### Remarks {#_call__1-remarks}
-
-Here are some remarks about the event call signature
 
 ###### Signature {#_call__1-signature}
 
@@ -705,13 +701,13 @@ Here are some remarks about the event call signature
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
+###### Remarks {#_call__1-remarks}
+
+Here are some remarks about the event call signature
+
 ### TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-interface}
 
 Test interface that extends other interfaces
-
-#### Remarks {#testinterfaceextendingotherinterfaces-remarks}
-
-Here are some remarks about the interface
 
 #### Signature {#testinterfaceextendingotherinterfaces-signature}
 
@@ -725,6 +721,10 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 , [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
 
 
+#### Remarks {#testinterfaceextendingotherinterfaces-remarks}
+
+Here are some remarks about the interface
+
 #### Methods
 
 |  Method | Return Type | Description |
@@ -737,15 +737,15 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 Test interface method accepting a string and returning a number.
 
-###### Remarks {#testmethod-remarks}
-
-Here are some remarks about the method
-
 ###### Signature {#testmethod-signature}
 
 ```typescript
 testMethod(input: string): number;
 ```
+
+###### Remarks {#testmethod-remarks}
+
+Here are some remarks about the method
 
 ###### Parameters {#testmethod-parameters}
 
@@ -757,10 +757,6 @@ testMethod(input: string): number;
 
 Test interface with generic type parameter
 
-#### Remarks {#testinterfacewithtypeparameter-remarks}
-
-Here are some remarks about the interface
-
 #### Signature {#testinterfacewithtypeparameter-signature}
 
 ```typescript
@@ -770,6 +766,10 @@ export interface TestInterfaceWithTypeParameter<T>
 
 * <b>T</b>: A type parameter
 
+
+#### Remarks {#testinterfacewithtypeparameter-remarks}
+
+Here are some remarks about the interface
 
 #### Properties
 
@@ -783,21 +783,27 @@ export interface TestInterfaceWithTypeParameter<T>
 
 A test interface property using generic type parameter
 
-###### Remarks {#testproperty-remarks}
-
-Here are some remarks about the property
-
 ###### Signature {#testproperty-signature}
 
 ```typescript
 testProperty: T;
 ```
 
+###### Remarks {#testproperty-remarks}
+
+Here are some remarks about the property
+
 ## Namespace Details
 
 ### TestNamespace {#testnamespace-namespace}
 
 Test Namespace
+
+#### Signature {#testnamespace-signature}
+
+```typescript
+export declare namespace TestNamespace 
+```
 
 #### Remarks {#testnamespace-remarks}
 
@@ -819,12 +825,6 @@ Example 2
 
 ```javascript
 const bar = foo
-```
-
-#### Signature {#testnamespace-signature}
-
-```typescript
-export declare namespace TestNamespace 
 ```
 
 #### Classes
@@ -1096,25 +1096,21 @@ type TestTypeAlias = boolean;
 
 Test Constant
 
-#### Remarks {#testconst-remarks}
-
-Here are some remarks about the variable
-
 #### Signature {#testconst-signature}
 
 ```typescript
 testConst = 42
 ```
 
+#### Remarks {#testconst-remarks}
+
+Here are some remarks about the variable
+
 ## Type Details
 
 ### TestMappedType {#testmappedtype-typealias}
 
 Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum)
-
-#### Remarks {#testmappedtype-remarks}
-
-Here are some remarks about the mapped type
 
 #### Signature {#testmappedtype-signature}
 
@@ -1124,16 +1120,20 @@ export declare type TestMappedType = {
 };
 ```
 
+#### Remarks {#testmappedtype-remarks}
+
+Here are some remarks about the mapped type
+
 ### TypeAlias {#typealias-typealias}
 
 Test Type-Alias
-
-#### Remarks {#typealias-remarks}
-
-Here are some remarks about the type alias
 
 #### Signature {#typealias-signature}
 
 ```typescript
 export declare type TypeAlias = string;
 ```
+
+#### Remarks {#typealias-remarks}
+
+Here are some remarks about the type alias

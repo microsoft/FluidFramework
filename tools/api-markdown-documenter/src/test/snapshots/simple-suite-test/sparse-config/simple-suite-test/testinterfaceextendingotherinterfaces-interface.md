@@ -2,10 +2,6 @@
 
 Test interface that extends other interfaces
 
-## Remarks {#testinterfaceextendingotherinterfaces-remarks}
-
-Here are some remarks about the interface
-
 ## Signature {#testinterfaceextendingotherinterfaces-signature}
 
 ```typescript
@@ -17,6 +13,10 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 , [TestMappedType](docs/simple-suite-test/testmappedtype-typealias)
 
+
+## Remarks {#testinterfaceextendingotherinterfaces-remarks}
+
+Here are some remarks about the interface
 
 ## Methods
 
