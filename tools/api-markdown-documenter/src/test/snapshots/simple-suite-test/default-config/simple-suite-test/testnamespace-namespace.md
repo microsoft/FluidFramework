@@ -66,7 +66,7 @@ const bar = foo
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | readonly | Test Constant |
+|  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | <code>readonly</code> | Test Constant |
 
 ## Namespaces
 
@@ -148,6 +148,8 @@ function testFunction(testParameter: number): number;
 #### Returns {#testfunction-returns}
 
 A number
+
+<b>Return type:</b> number
 
 #### Throws {#testfunction-throws}
 

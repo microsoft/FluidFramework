@@ -18,6 +18,8 @@ function testFunction(testParameter: number): number;
 
 A number
 
+<b>Return type:</b> number
+
 ## Throws {#testfunction-throws}
 
 An Error

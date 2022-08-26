@@ -80,7 +80,7 @@ const foo = bar;
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [testConst](./simple-suite-test#testconst-variable) | readonly | Test Constant |
+|  [testConst](./simple-suite-test#testconst-variable) | <code>readonly</code> | Test Constant |
 
 ## Namespaces
 
@@ -233,6 +233,8 @@ This is a test [link](./simple-suite-test/testinterface-interface) to another AP
 
 The provided parameter
 
+<b>Return type:</b> TTypeParameter
+
 #### Throws {#testfunction-throws}
 
 An Error when something bad happens.
@@ -254,6 +256,8 @@ export declare function testFunctionReturningInlineType(): {
 
 An inline type
 
+<b>Return type:</b> { foo: number; bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; }
+
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
 > This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
@@ -271,6 +275,8 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
+<b>Return type:</b> [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
+
 ### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
 Test function that returns an inline type
@@ -284,6 +290,8 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 #### Returns {#testfunctionreturninguniontype-returns}
 
 A union type
+
+<b>Return type:</b> string \| [TestInterface](./simple-suite-test/testinterface-interface)
 
 ## Variable Details
 

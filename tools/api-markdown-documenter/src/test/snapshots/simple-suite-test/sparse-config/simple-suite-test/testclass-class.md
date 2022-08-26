@@ -43,22 +43,22 @@ Here are some remarks about the class
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
+|  [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) | <code>readonly</code> | () =&gt; void | Test class event property |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](docs/simple-suite-test/testclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassGetterProperty](docs/simple-suite-test/testclass-testclassgetterproperty-property) | readonly, virtual | number | Test class getter-only property |
-|  [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) | readonly | TTypeParameterB | Test class property |
+|  [abstractPropertyGetter](docs/simple-suite-test/testclass-abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
+|  [testClassGetterProperty](docs/simple-suite-test/testclass-testclassgetterproperty-property) | <code>readonly</code><code>virtual</code> | number | Test class getter-only property |
+|  [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) | <code>readonly</code> | TTypeParameterB | Test class property |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test/testclass-publicabstractmethod-method) | 📝 | void | A test public abstract method. |
-|  [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) | sealed | TTypeParameterA | Test class method |
+|  [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) | <code>sealed</code> | TTypeParameterA | Test class method |
 |  [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) | 📝 | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method)<!-- -->. |
 
 ## See also {#testclass-see-also}

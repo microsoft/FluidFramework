@@ -20,7 +20,7 @@ class TestClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) | readonly | string | Test interface property |
+|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) | <code>readonly</code> | string | Test interface property |
 
 ## Methods
 
@@ -79,6 +79,8 @@ testClassMethod(testParameter: string): Promise<string>;
 #### Returns {#testclassmethod-returns}
 
 A Promise
+
+<b>Return type:</b> Promise&lt;string&gt;
 
 #### Throws {#testclassmethod-throws}
 

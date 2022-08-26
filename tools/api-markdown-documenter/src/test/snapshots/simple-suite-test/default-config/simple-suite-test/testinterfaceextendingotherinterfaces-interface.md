@@ -47,6 +47,8 @@ Here are some remarks about the method
 
 A number
 
+<b>Return type:</b> number
+
 ## See also {#testinterfaceextendingotherinterfaces-see-also}
 
 - [TestInterface](./simple-suite-test/testinterface-interface)

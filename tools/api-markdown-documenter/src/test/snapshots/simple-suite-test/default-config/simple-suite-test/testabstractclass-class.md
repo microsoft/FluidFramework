@@ -20,16 +20,16 @@ export declare abstract class TestAbstractClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](./simple-suite-test/testabstractclass-class#abstractpropertygetter-property) | readonly | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property) | readonly | [TestEnum](./simple-suite-test#testenum-enum) | A test protected property. |
+|  [abstractPropertyGetter](./simple-suite-test/testabstractclass-class#abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property) | <code>readonly</code> | [TestEnum](./simple-suite-test#testenum-enum) | A test protected property. |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](./simple-suite-test/testabstractclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
-|  [sealedMethod()](./simple-suite-test/testabstractclass-class#sealedmethod-method) | sealed | string | A test <code>@sealed</code> method. |
-|  [virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method) | virtual | number | A test <code>@virtual</code> method. |
+|  [sealedMethod()](./simple-suite-test/testabstractclass-class#sealedmethod-method) | <code>sealed</code> | string | A test <code>@sealed</code> method. |
+|  [virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method) | <code>virtual</code> | number | A test <code>@virtual</code> method. |
 
 ## Constructor Details
 
@@ -99,6 +99,8 @@ protected sealedMethod(): string;
 
 A string!
 
+<b>Return type:</b> string
+
 ### virtualMethod {#virtualmethod-method}
 
 A test `@virtual` method.
@@ -113,3 +115,5 @@ protected virtualMethod(): number;
 #### Returns {#virtualmethod-returns}
 
 A number!
+
+<b>Return type:</b> number

@@ -7,3 +7,7 @@ Test construct signature.
 ```typescript
 new (): TestInterface;
 ```
+
+## Returns {#_new_-returns}
+
+<b>Return type:</b> [TestInterface](docs/simple-suite-test/testinterface-interface)

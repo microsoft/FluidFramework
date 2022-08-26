@@ -18,13 +18,13 @@ export declare abstract class TestAbstractClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](docs/simple-suite-test/testabstractclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
-|  [protectedProperty](docs/simple-suite-test/testabstractclass-protectedproperty-property) | readonly | [TestEnum](docs/simple-suite-test/testenum-enum) | A test protected property. |
+|  [abstractPropertyGetter](docs/simple-suite-test/testabstractclass-abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
+|  [protectedProperty](docs/simple-suite-test/testabstractclass-protectedproperty-property) | <code>readonly</code> | [TestEnum](docs/simple-suite-test/testenum-enum) | A test protected property. |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test/testabstractclass-publicabstractmethod-method) | 📝 | void | A test public abstract method. |
-|  [sealedMethod()](docs/simple-suite-test/testabstractclass-sealedmethod-method) | sealed | string | A test <code>@sealed</code> method. |
-|  [virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method) | virtual | number | A test <code>@virtual</code> method. |
+|  [sealedMethod()](docs/simple-suite-test/testabstractclass-sealedmethod-method) | <code>sealed</code> | string | A test <code>@sealed</code> method. |
+|  [virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method) | <code>virtual</code> | number | A test <code>@virtual</code> method. |

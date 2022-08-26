@@ -23,6 +23,8 @@ This is a test [link](docs/simple-suite-test/testinterface-interface) to another
 
 The provided parameter
 
+<b>Return type:</b> TTypeParameter
+
 ## Throws {#testfunction-throws}
 
 An Error when something bad happens.

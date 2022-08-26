@@ -22,14 +22,14 @@ Here are some remarks about the interface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
+|  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) | <code>readonly</code> | () =&gt; void | Test interface event property |
 
 ## Properties
 
 |  Property | Modifiers | Default Value | Type | Description |
 |  --- | --- | --- | --- | --- |
 |  [testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature) | 📝 | 📝 | number | Test interface property |
-|  [testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature) | optional | 0 | number | Test optional property |
+|  [testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature) | <code>optional</code> | 0 | number | Test optional property |
 
 ## Methods
 

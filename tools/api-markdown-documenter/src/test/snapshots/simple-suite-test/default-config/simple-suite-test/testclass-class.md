@@ -45,22 +45,22 @@ Here are some remarks about the class
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
+|  [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property) | <code>readonly</code> | () =&gt; void | Test class event property |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](./simple-suite-test/testclass-class#abstractpropertygetter-property) | readonly | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | readonly, virtual | number | Test class getter-only property |
-|  [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) | readonly | TTypeParameterB | Test class property |
+|  [abstractPropertyGetter](./simple-suite-test/testclass-class#abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | <code>readonly</code><code>virtual</code> | number | Test class getter-only property |
+|  [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) | <code>readonly</code> | TTypeParameterB | Test class property |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](./simple-suite-test/testclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
-|  [testClassMethod(input)](./simple-suite-test/testclass-class#testclassmethod-method) | sealed | TTypeParameterA | Test class method |
+|  [testClassMethod(input)](./simple-suite-test/testclass-class#testclassmethod-method) | <code>sealed</code> | TTypeParameterA | Test class method |
 |  [virtualMethod()](./simple-suite-test/testclass-class#virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method)<!-- -->. |
 
 ## Constructor Details
@@ -188,6 +188,10 @@ Here are some remarks about the method
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
 
+#### Returns {#testclassmethod-returns}
+
+<b>Return type:</b> TTypeParameterA
+
 #### Throws {#testclassmethod-throws}
 
 Some sort of error in 1 case.
@@ -214,6 +218,8 @@ static testClassStaticMethod(foo: number): string;
 
 - Some string
 
+<b>Return type:</b> string
+
 ### virtualMethod {#virtualmethod-method}
 
 Overrides [TestAbstractClass.virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method)<!-- -->.
@@ -224,6 +230,10 @@ Overrides [TestAbstractClass.virtualMethod()](./simple-suite-test/testabstractcl
 /** @override */
 protected virtualMethod(): number;
 ```
+
+#### Returns {#virtualmethod-returns}
+
+<b>Return type:</b> number
 
 ## See also {#testclass-see-also}
 

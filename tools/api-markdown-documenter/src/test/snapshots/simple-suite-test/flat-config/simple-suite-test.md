@@ -80,7 +80,7 @@ const foo = bar;
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [testConst](docs/simple-suite-test#testconst-variable) | readonly | Test Constant |
+|  [testConst](docs/simple-suite-test#testconst-variable) | <code>readonly</code> | Test Constant |
 
 ## Namespaces
 
@@ -124,14 +124,14 @@ Here are some remarks about the interface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
+|  [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) | <code>readonly</code> | () =&gt; void | Test interface event property |
 
 #### Properties
 
 |  Property | Modifiers | Default Value | Type | Description |
 |  --- | --- | --- | --- | --- |
 |  [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) | \-\-\- | \-\-\- | number | Test interface property |
-|  [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | optional | 0 | number | Test optional property |
+|  [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | <code>optional</code> | 0 | number | Test optional property |
 
 #### Methods
 
@@ -157,6 +157,10 @@ Test construct signature.
 ```typescript
 new (): TestInterface;
 ```
+
+###### Returns {#_new_-returns}
+
+<b>Return type:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)
 
 #### Event Details
 
@@ -303,6 +307,8 @@ Here are some remarks about the method
 
 A number
 
+<b>Return type:</b> number
+
 #### See also {#testinterfaceextendingotherinterfaces-see-also}
 
 - [TestInterface](docs/simple-suite-test#testinterface-interface)
@@ -373,16 +379,16 @@ export declare abstract class TestAbstractClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](docs/simple-suite-test#testabstractclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property) | readonly | [TestEnum](docs/simple-suite-test#testenum-enum) | A test protected property. |
+|  [abstractPropertyGetter](docs/simple-suite-test#testabstractclass-abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property) | <code>readonly</code> | [TestEnum](docs/simple-suite-test#testenum-enum) | A test protected property. |
 
 #### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test#testabstractclass-publicabstractmethod-method) | \-\-\- | void | A test public abstract method. |
-|  [sealedMethod()](docs/simple-suite-test#testabstractclass-sealedmethod-method) | sealed | string | A test <code>@sealed</code> method. |
-|  [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method) | virtual | number | A test <code>@virtual</code> method. |
+|  [sealedMethod()](docs/simple-suite-test#testabstractclass-sealedmethod-method) | <code>sealed</code> | string | A test <code>@sealed</code> method. |
+|  [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method) | <code>virtual</code> | number | A test <code>@virtual</code> method. |
 
 #### Constructor Details
 
@@ -452,6 +458,8 @@ protected sealedMethod(): string;
 
 A string!
 
+<b>Return type:</b> string
+
 ##### virtualMethod {#testabstractclass-virtualmethod-method}
 
 A test `@virtual` method.
@@ -466,6 +474,8 @@ protected virtualMethod(): number;
 ###### Returns {#virtualmethod-returns}
 
 A number!
+
+<b>Return type:</b> number
 
 ### TestClass {#testclass-class}
 
@@ -512,22 +522,22 @@ Here are some remarks about the class
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
+|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) | <code>readonly</code> | () =&gt; void | Test class event property |
 
 #### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | readonly, virtual | number | Test class getter-only property |
-|  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | readonly | TTypeParameterB | Test class property |
+|  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | <code>readonly</code><code>virtual</code> | number | Test class getter-only property |
+|  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | <code>readonly</code> | TTypeParameterB | Test class property |
 
 #### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) | \-\-\- | void | A test public abstract method. |
-|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | sealed | TTypeParameterA | Test class method |
+|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | <code>sealed</code> | TTypeParameterA | Test class method |
 |  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) | \-\-\- | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
 
 #### Constructor Details
@@ -655,6 +665,10 @@ Here are some remarks about the method
 |  --- | --- | --- |
 |  input | TTypeParameterA | \-\-\- |
 
+###### Returns {#testclassmethod-returns}
+
+<b>Return type:</b> TTypeParameterA
+
 ###### Throws {#testclassmethod-throws}
 
 Some sort of error in 1 case.
@@ -681,6 +695,8 @@ static testClassStaticMethod(foo: number): string;
 
 - Some string
 
+<b>Return type:</b> string
+
 ##### virtualMethod {#testclass-virtualmethod-method}
 
 Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->.
@@ -691,6 +707,10 @@ Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstrac
 /** @override */
 protected virtualMethod(): number;
 ```
+
+###### Returns {#virtualmethod-returns}
+
+<b>Return type:</b> number
 
 #### See also {#testclass-see-also}
 
@@ -841,6 +861,8 @@ This is a test [link](docs/simple-suite-test#testinterface-interface) to another
 
 The provided parameter
 
+<b>Return type:</b> TTypeParameter
+
 #### Throws {#testfunction-throws}
 
 An Error when something bad happens.
@@ -862,6 +884,8 @@ export declare function testFunctionReturningInlineType(): {
 
 An inline type
 
+<b>Return type:</b> { foo: number; bar: [TestEnum](docs/simple-suite-test#testenum-enum)<!-- -->; }
+
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
 > This is a test deprecation notice. Here is a [link](docs/simple-suite-test#testfunctionreturninguniontype-function) to something else!
@@ -879,6 +903,8 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
+<b>Return type:</b> [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
+
 ### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
 Test function that returns an inline type
@@ -892,6 +918,8 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 #### Returns {#testfunctionreturninguniontype-returns}
 
 A union type
+
+<b>Return type:</b> string \| [TestInterface](docs/simple-suite-test#testinterface-interface)
 
 ## Variable Details
 
@@ -977,7 +1005,7 @@ const bar = foo
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | readonly | Test Constant |
+|  [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | <code>readonly</code> | Test Constant |
 
 #### Namespaces
 
@@ -1056,7 +1084,7 @@ class TestClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassProperty](docs/simple-suite-test#testnamespace-testclass-testclassproperty-property) | readonly | string | Test interface property |
+|  [testClassProperty](docs/simple-suite-test#testnamespace-testclass-testclassproperty-property) | <code>readonly</code> | string | Test interface property |
 
 ###### Methods
 
@@ -1115,6 +1143,8 @@ testClassMethod(testParameter: string): Promise<string>;
 <b>Returns</b>
 
 A Promise
+
+<b>Return type:</b> Promise&lt;string&gt;
 
 <b>Throws</b>
 
@@ -1198,6 +1228,8 @@ function testFunction(testParameter: number): number;
 ###### Returns {#testfunction-returns}
 
 A number
+
+<b>Return type:</b> number
 
 ###### Throws {#testfunction-throws}
 

@@ -14,3 +14,5 @@ export declare function testFunctionReturningInlineType(): {
 ## Returns {#testfunctionreturninginlinetype-returns}
 
 An inline type
+
+<b>Return type:</b> { foo: number; bar: [TestEnum](docs/simple-suite-test/testenum-enum)<!-- -->; }
