@@ -185,6 +185,10 @@ A test `@sealed` method.
 protected sealedMethod(): string;
 ```
 
+###### Returns {#sealedmethod-returns}
+
+A string!
+
 ##### virtualMethod {#testabstractclass-virtualmethod-method}
 
 A test `@virtual` method.
@@ -196,13 +200,13 @@ A test `@virtual` method.
 protected virtualMethod(): number;
 ```
 
+###### Returns {#virtualmethod-returns}
+
+A number!
+
 ### TestClass {#testclass-class}
 
 Test class
-
-#### Remarks {#testclass-remarks}
-
-Here are some remarks about the class
 
 #### Signature {#testclass-signature}
 
@@ -211,7 +215,6 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 ```
 <b>Extends:</b> [TestAbstractClass](docs/simple-suite-test#testabstractclass-class)
 
-
 <b>Type parameters:</b> 
 
 * <b>TTypeParameterA</b>: A type parameter
@@ -219,6 +222,10 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 * <b>TTypeParameterB</b>: Another type parameter
 
+
+#### Remarks {#testclass-remarks}
+
+Here are some remarks about the class
 
 #### Events
 
@@ -256,15 +263,15 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 Test class event property
 
-###### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the property
-
 ###### Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
+
+###### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the property
 
 #### Constructor Details
 
@@ -272,15 +279,15 @@ readonly testClassEventProperty: () => void;
 
 Test class constructor
 
-###### Remarks {#_constructor_-remarks}
-
-Here are some remarks about the constructor
-
 ###### Signature {#_constructor_-signature}
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
+
+###### Remarks {#_constructor_-remarks}
+
+Here are some remarks about the constructor
 
 ###### Parameters {#_constructor_-parameters}
 
@@ -307,10 +314,6 @@ get abstractPropertyGetter(): TestMappedType;
 
 Test class getter-only property
 
-###### Remarks {#testclassgetterproperty-remarks}
-
-Here are some remarks about the getter-only property
-
 ###### Signature {#testclassgetterproperty-signature}
 
 ```typescript
@@ -318,19 +321,23 @@ Here are some remarks about the getter-only property
 get testClassGetterProperty(): number;
 ```
 
+###### Remarks {#testclassgetterproperty-remarks}
+
+Here are some remarks about the getter-only property
+
 ##### testClassProperty {#testclass-testclassproperty-property}
 
 Test class property
-
-###### Remarks {#testclassproperty-remarks}
-
-Here are some remarks about the property
 
 ###### Signature {#testclassproperty-signature}
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
 ```
+
+###### Remarks {#testclassproperty-remarks}
+
+Here are some remarks about the property
 
 ##### testClassStaticProperty {#testclass-testclassstaticproperty-property}
 
@@ -358,10 +365,6 @@ publicAbstractMethod(): void;
 
 Test class method
 
-###### Remarks {#testclassmethod-remarks}
-
-Here are some remarks about the method
-
 ###### Signature {#testclassmethod-signature}
 
 ```typescript
@@ -369,11 +372,21 @@ Here are some remarks about the method
 testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
+###### Remarks {#testclassmethod-remarks}
+
+Here are some remarks about the method
+
 ###### Parameters {#testclassmethod-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
+
+###### Throws {#testclassmethod-throws}
+
+Some sort of error in 1 case.
+
+Some other sort of error in another case. For example, a case where some thing happens.
 
 ##### testClassStaticMethod {#testclass-testclassstaticmethod-method}
 
@@ -391,6 +404,10 @@ static testClassStaticMethod(foo: number): string;
 |  --- | --- | --- |
 |  foo | number | Some number |
 
+###### Returns {#testclassstaticmethod-returns}
+
+- Some string
+
 ##### virtualMethod {#testclass-virtualmethod-method}
 
 Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->.
@@ -407,6 +424,12 @@ protected virtualMethod(): number;
 ### TestEnum {#testenum-enum}
 
 Test Enum
+
+#### Signature {#testenum-signature}
+
+```typescript
+export declare enum TestEnum 
+```
 
 #### Remarks {#testenum-remarks}
 
@@ -430,12 +453,6 @@ Another example
 const bar = TestEnum.TestEnumValue2
 ```
 
-#### Signature {#testenum-signature}
-
-```typescript
-export declare enum TestEnum 
-```
-
 #### Flags
 
 |  Flag | Description |
@@ -450,23 +467,19 @@ export declare enum TestEnum
 
 Test enum value 1 (string)
 
-###### Remarks {#testenumvalue1-remarks}
-
-Here are some remarks about the enum value
-
 ###### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
+###### Remarks {#testenumvalue1-remarks}
+
+Here are some remarks about the enum value
+
 ##### TestEnumValue2 {#testenum-testenumvalue2-enummember}
 
 Test enum value 2 (number)
-
-###### Remarks {#testenumvalue2-remarks}
-
-Here are some remarks about the enum value
 
 ###### Signature {#testenumvalue2-signature}
 
@@ -474,13 +487,13 @@ Here are some remarks about the enum value
 TestEnumValue2 = 3
 ```
 
+###### Remarks {#testenumvalue2-remarks}
+
+Here are some remarks about the enum value
+
 ##### TestEnumValue3 {#testenum-testenumvalue3-enummember}
 
 Test enum value 3 (default)
-
-###### Remarks {#testenumvalue3-remarks}
-
-Here are some remarks about the enum value
 
 ###### Signature {#testenumvalue3-signature}
 
@@ -488,15 +501,15 @@ Here are some remarks about the enum value
 TestEnumValue3 = 4
 ```
 
+###### Remarks {#testenumvalue3-remarks}
+
+Here are some remarks about the enum value
+
 ## Function Details
 
 ### testFunction {#testfunction-function}
 
 Test function
-
-#### Remarks {#testfunction-remarks}
-
-This is a test [link](docs/simple-suite-test#testinterface-interface) to another API member
 
 #### Signature {#testfunction-signature}
 
@@ -504,12 +517,24 @@ This is a test [link](docs/simple-suite-test#testinterface-interface) to another
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
 
+#### Remarks {#testfunction-remarks}
+
+This is a test [link](docs/simple-suite-test#testinterface-interface) to another API member
+
 #### Parameters {#testfunction-parameters}
 
 |  Parameter | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  testParameter |  | TTypeParameter | A test parameter |
 |  testOptionalParameter | optional | TTypeParameter |  |
+
+#### Returns {#testfunction-returns}
+
+The provided parameter
+
+#### Throws {#testfunction-throws}
+
+An Error when something bad happens.
 
 ### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
@@ -524,6 +549,10 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
+#### Returns {#testfunctionreturninginlinetype-returns}
+
+An inline type
+
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
 > This is a test deprecation notice. Here is a [link](docs/simple-suite-test#testfunctionreturninguniontype-function) to something else!
@@ -537,6 +566,10 @@ Test function that returns an inline type
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
+#### Returns {#testfunctionreturningintersectiontype-returns}
+
+an intersection type
+
 ### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
 Test function that returns an inline type
@@ -546,6 +579,10 @@ Test function that returns an inline type
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
+
+#### Returns {#testfunctionreturninguniontype-returns}
+
+A union type
 
 ## Interface Details
 
@@ -563,15 +600,15 @@ export interface TestEmptyInterface
 
 Test interface
 
-#### Remarks {#testinterface-remarks}
-
-Here are some remarks about the interface
-
 #### Signature {#testinterface-signature}
 
 ```typescript
 export interface TestInterface 
 ```
+
+#### Remarks {#testinterface-remarks}
+
+Here are some remarks about the interface
 
 #### Events
 
@@ -611,15 +648,15 @@ export interface TestInterface
 
 Test interface event property
 
-###### Remarks {#testclasseventproperty-remarks}
-
-Here are some remarks about the event property
-
 ###### Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
+
+###### Remarks {#testclasseventproperty-remarks}
+
+Here are some remarks about the event property
 
 #### Construct Signature Details
 
@@ -639,15 +676,15 @@ new (): TestInterface;
 
 Test interface property
 
-###### Remarks {#testinterfaceproperty-remarks}
-
-Here are some remarks about the property
-
 ###### Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: number;
 ```
+
+###### Remarks {#testinterfaceproperty-remarks}
+
+Here are some remarks about the property
 
 ##### testOptionalInterfaceProperty {#testinterface-testoptionalinterfaceproperty-propertysignature}
 
@@ -665,15 +702,15 @@ testOptionalInterfaceProperty?: number;
 
 Test interface method
 
-###### Remarks {#testinterfacemethod-remarks}
-
-Here are some remarks about the method
-
 ###### Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;
 ```
+
+###### Remarks {#testinterfacemethod-remarks}
+
+Here are some remarks about the method
 
 #### Call Signature Details
 
@@ -681,23 +718,19 @@ testInterfaceMethod(): void;
 
 Test interface event call signature
 
-###### Remarks {#_call_-remarks}
-
-Here are some remarks about the event call signature
-
 ###### Signature {#_call_-signature}
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
+###### Remarks {#_call_-remarks}
+
+Here are some remarks about the event call signature
+
 ##### (call) {#testinterface-_call__1-callsignature}
 
 Another example call signature
-
-###### Remarks {#_call__1-remarks}
-
-Here are some remarks about the event call signature
 
 ###### Signature {#_call__1-signature}
 
@@ -705,25 +738,24 @@ Here are some remarks about the event call signature
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
+###### Remarks {#_call__1-remarks}
+
+Here are some remarks about the event call signature
+
 ### TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-interface}
 
 Test interface that extends other interfaces
 
-#### Remarks {#testinterfaceextendingotherinterfaces-remarks}
-
-Here are some remarks about the interface
-
 #### Signature {#testinterfaceextendingotherinterfaces-signature}
 
 ```typescript
-export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestInterfaceWithTypeParameter<number>, TestMappedType 
+export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number> 
 ```
-<b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)
+<b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)<!-- -->, [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)<!-- -->, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)
 
-, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
+#### Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
-, [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
-
+Here are some remarks about the interface
 
 #### Methods
 
@@ -737,15 +769,15 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 Test interface method accepting a string and returning a number.
 
-###### Remarks {#testmethod-remarks}
-
-Here are some remarks about the method
-
 ###### Signature {#testmethod-signature}
 
 ```typescript
 testMethod(input: string): number;
 ```
+
+###### Remarks {#testmethod-remarks}
+
+Here are some remarks about the method
 
 ###### Parameters {#testmethod-parameters}
 
@@ -753,13 +785,13 @@ testMethod(input: string): number;
 |  --- | --- | --- |
 |  input | string | A string |
 
+###### Returns {#testmethod-returns}
+
+A number
+
 ### TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
 
 Test interface with generic type parameter
-
-#### Remarks {#testinterfacewithtypeparameter-remarks}
-
-Here are some remarks about the interface
 
 #### Signature {#testinterfacewithtypeparameter-signature}
 
@@ -770,6 +802,10 @@ export interface TestInterfaceWithTypeParameter<T>
 
 * <b>T</b>: A type parameter
 
+
+#### Remarks {#testinterfacewithtypeparameter-remarks}
+
+Here are some remarks about the interface
 
 #### Properties
 
@@ -783,21 +819,27 @@ export interface TestInterfaceWithTypeParameter<T>
 
 A test interface property using generic type parameter
 
-###### Remarks {#testproperty-remarks}
-
-Here are some remarks about the property
-
 ###### Signature {#testproperty-signature}
 
 ```typescript
 testProperty: T;
 ```
 
+###### Remarks {#testproperty-remarks}
+
+Here are some remarks about the property
+
 ## Namespace Details
 
 ### TestNamespace {#testnamespace-namespace}
 
 Test Namespace
+
+#### Signature {#testnamespace-signature}
+
+```typescript
+export declare namespace TestNamespace 
+```
 
 #### Remarks {#testnamespace-remarks}
 
@@ -819,12 +861,6 @@ Example 2
 
 ```javascript
 const bar = foo
-```
-
-#### Signature {#testnamespace-signature}
-
-```typescript
-export declare namespace TestNamespace 
 ```
 
 #### Classes
@@ -947,6 +983,18 @@ testClassMethod(testParameter: string): Promise<string>;
 |  --- | --- | --- |
 |  testParameter | string | A string |
 
+<b>Returns</b>
+
+A Promise
+
+<b>Throws</b>
+
+An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
+
+A different kind of error when a thing happens, but not when the first kind of error is thrown instead.
+
+😁
+
 #### Enumeration Details
 
 ##### TestEnum {#testnamespace-testenum-enum}
@@ -1006,6 +1054,14 @@ function testFunction(testParameter: number): number;
 |  --- | --- | --- |
 |  testParameter | number |  |
 
+###### Returns {#testfunction-returns}
+
+A number
+
+###### Throws {#testfunction-throws}
+
+An Error
+
 #### Interface Details
 
 ##### TestInterface {#testnamespace-testinterface-interface}
@@ -1015,8 +1071,9 @@ Test interface
 ###### Signature {#testinterface-signature}
 
 ```typescript
-interface TestInterface 
+interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum> 
 ```
+<b>Extends:</b> [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;[TestEnum](docs/simple-suite-test#testnamespace-testenum-enum)<!-- -->&gt;
 
 ###### Properties
 
@@ -1096,25 +1153,21 @@ type TestTypeAlias = boolean;
 
 Test Constant
 
-#### Remarks {#testconst-remarks}
-
-Here are some remarks about the variable
-
 #### Signature {#testconst-signature}
 
 ```typescript
 testConst = 42
 ```
 
+#### Remarks {#testconst-remarks}
+
+Here are some remarks about the variable
+
 ## Type Details
 
 ### TestMappedType {#testmappedtype-typealias}
 
 Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum)
-
-#### Remarks {#testmappedtype-remarks}
-
-Here are some remarks about the mapped type
 
 #### Signature {#testmappedtype-signature}
 
@@ -1124,16 +1177,20 @@ export declare type TestMappedType = {
 };
 ```
 
+#### Remarks {#testmappedtype-remarks}
+
+Here are some remarks about the mapped type
+
 ### TypeAlias {#typealias-typealias}
 
 Test Type-Alias
-
-#### Remarks {#typealias-remarks}
-
-Here are some remarks about the type alias
 
 #### Signature {#typealias-signature}
 
 ```typescript
 export declare type TypeAlias = string;
 ```
+
+#### Remarks {#typealias-remarks}
+
+Here are some remarks about the type alias

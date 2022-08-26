@@ -10,3 +10,7 @@ export declare function testFunctionReturningInlineType(): {
     bar: TestEnum;
 };
 ```
+
+## Returns {#testfunctionreturninginlinetype-returns}
+
+An inline type

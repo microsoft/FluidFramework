@@ -21,7 +21,7 @@ import {
     ApiReadonlyMixin,
     ApiStaticMixin,
 } from "@microsoft/api-extractor-model";
-import { DocSection } from "@microsoft/tsdoc";
+import { DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
 
@@ -513,6 +513,8 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
 
 /**
  * Gets any custom-tag comment blocks on the API item matching the provided tag name, if any.
+ * Intended for use with tag types for which only multiple instances are allowed in a TSDoc comment (e.g.
+ * {@link https://tsdoc.org/pages/tags/throws/ | @throws}).
  *
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
@@ -520,7 +522,10 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
-function getCustomBlockSections(apiItem: ApiItem, tagName: string): DocSection[] {
+function getCustomBlockSectionsForMultiInstanceTags(
+    apiItem: ApiItem,
+    tagName: string,
+): DocSection[] | undefined {
     if (!tagName.startsWith("@")) {
         throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
     }
@@ -530,29 +535,87 @@ function getCustomBlockSections(apiItem: ApiItem, tagName: string): DocSection[]
         );
         return defaultValueBlocks.map((block) => block.content);
     }
-    return [];
+    return undefined;
 }
 
 /**
- * Gets the `@defaultValue` comment block from the API item if it has one.
+ * Gets the custom-tag comment block on the API item matching the provided tag name, if one is found.
+ * Intended for use with tag types for which only 1 instance is allowed in a TSDoc comment (e.g.
+ * {@link https://tsdoc.org/pages/tags/returns/ | @returns}).
+ *
+ * @remarks If multiple `@returns` comments are detected, this will log an error and return the first one it
+ * encountered.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ * @param tagName - The TSDoc tag name being queried for.
+ * Must start with "@". See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ *
+ * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
+ */
+function getCustomBlockSectionForSingleInstanceTag(
+    apiItem: ApiItem,
+    tagName: string,
+): DocSection | undefined {
+    const blocks = getCustomBlockSectionsForMultiInstanceTags(apiItem, tagName);
+    if (blocks === undefined) {
+        return undefined;
+    }
+
+    if (blocks.length > 1) {
+        logError(
+            `API item ${apiItem.displayName} has multiple "${tagName}" comment blocks. This is not supported.`,
+        );
+    }
+
+    return blocks[0];
+}
+
+/**
+ * Gets any {@link https://tsdoc.org/pages/tags/example/ | @example} comment blocks from the API item if it has them.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@example` comment block sections, if the API item has one. Otherwise, `undefined`.
+ */
+export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
+    return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.example.tagName);
+}
+
+/**
+ * Gets any {@link https://tsdoc.org/pages/tags/throws/ | @throws} comment blocks from the API item if it has them.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@throws` comment block sections, if the API item has one. Otherwise, `undefined`.
+ */
+export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
+    return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.throws.tagName);
+}
+
+/**
+ * Gets the {@link https://tsdoc.org/pages/tags/defaultvalue/ | @defaultValue} comment block from the API item,
+ * if it has one.
  *
  * @param apiItem - The API item whose documentation is being queried.
  *
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
  */
 export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined {
-    const blocks = getCustomBlockSections(apiItem, "@defaultValue");
-    if (blocks.length === 0) {
-        return undefined;
-    }
+    return getCustomBlockSectionForSingleInstanceTag(apiItem, StandardTags.defaultValue.tagName);
+}
 
-    if (blocks !== undefined && blocks.length > 1) {
-        logError(
-            `API item ${apiItem.displayName} has multiple "@defaultValue" comment blocks. This is not supported.`,
-        );
+/**
+ * Gets the {@link https://tsdoc.org/pages/tags/returns/ | @returns} comment block from the API item if it has one.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@returns` comment block section, if the API item has one. Otherwise, `undefined`.
+ */
+export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.returnsBlock !== undefined) {
+        return apiItem.tsdocComment.returnsBlock.content;
     }
-
-    return blocks[0];
+    return undefined;
 }
 
 /**

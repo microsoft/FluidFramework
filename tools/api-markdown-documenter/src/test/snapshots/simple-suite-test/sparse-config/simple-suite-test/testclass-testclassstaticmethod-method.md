@@ -13,3 +13,7 @@ static testClassStaticMethod(foo: number): string;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  foo | number | Some number |
+
+## Returns {#testclassstaticmethod-returns}
+
+- Some string

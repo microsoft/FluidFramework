@@ -28,7 +28,6 @@ import { DocLinkTag } from '@microsoft/tsdoc';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocNodeContainer } from '@microsoft/tsdoc';
 import { DocNoteBox } from '@microsoft/api-documenter/lib/nodes/DocNoteBox';
-import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { DocTable } from '@microsoft/api-documenter/lib/nodes/DocTable';
 import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
@@ -188,6 +187,9 @@ export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined;
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
+export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
 export function getFileNameForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
 
 // @public
@@ -216,6 +218,12 @@ export function getModifiers(apiItem: ApiItem): ApiModifier[];
 
 // @public
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
+
+// @public
+export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
+
+// @public
+export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
 export function getUnscopedPackageName(apiPackage: ApiPackage): string;
@@ -393,7 +401,7 @@ function renderExampleSection(example: DocExampleProperties, config: Required<Ma
 function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph;
+function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocNode[] | undefined;
 
 // @public
 export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, maybeMarkdownEmitter?: MarkdownEmitter): Promise<void>;
@@ -425,10 +433,12 @@ declare namespace RenderingHelpers {
         renderBetaWarning,
         renderSummarySection,
         renderRemarksSection,
+        renderThrowsSection,
         renderDeprecationNoticeSection,
         renderExamplesSection,
         renderExampleSection,
         renderParametersSection,
+        renderReturnsSection,
         renderChildDetailsSection,
         renderChildrenUnderHeading,
         renderLink,
@@ -539,6 +549,9 @@ function renderPropertyTypeCell(apiProperty: ApiPropertyItem, config: Required<M
 function renderRemarksSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
+function renderReturnsSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+
+// @public
 function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
@@ -555,6 +568,9 @@ function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind,
 
 // @public
 function renderTableWithHeading(memberTableProperties: MemberTableProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+
+// @public
+function renderThrowsSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderTypeExcerptCell(typeExcerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;

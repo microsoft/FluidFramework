@@ -15,20 +15,22 @@ import {
     renderRemarksSection,
     renderSignature,
     renderSummarySection,
+    renderThrowsSection,
 } from "../helpers";
 
 /**
  * Default rendering format for API item sections.
  * Wraps the item-kind-specific details in the following manner:
  *
- * 1. Heading (if not the document-root item)
+ * 1. Heading (if not the document-root item, in which case headings are handled specially by document-level rendering)
  * 1. Beta warning (if item annotated with `@beta`)
  * 1. Deprecation notice (if any)
  * 1. Summary (if any)
+ * 1. Item Signature
  * 1. Remarks (if any)
  * 1. Examples (if any)
- * 1. Item Signature
  * 1. `innerSectionBody`
+ * 1. Throws (if any)
  *
  * @param apiItem - The API item being rendered.
  * @param innerSectionBody - A doc section of contents to be written after the standard metadata content types.
@@ -62,6 +64,12 @@ export function renderChildrenSection(
         docSections.push(renderedSummary);
     }
 
+    // Render signature
+    const renderedSignature = renderSignature(apiItem, config);
+    if (renderedSignature !== undefined) {
+        docSections.push(renderedSignature);
+    }
+
     // Render @remarks content (if any)
     const renderedRemarks = renderRemarksSection(apiItem, config);
     if (renderedRemarks !== undefined) {
@@ -74,15 +82,15 @@ export function renderChildrenSection(
         docSections.push(renderedExamples);
     }
 
-    // Render signature
-    const renderedSignature = renderSignature(apiItem, config);
-    if (renderedSignature !== undefined) {
-        docSections.push(renderedSignature);
-    }
-
     if (innerSectionBody !== undefined) {
         // Flatten contents into this section
         docSections.push(innerSectionBody);
+    }
+
+    // Render @throws content (if any)
+    const renderedThrows = renderThrowsSection(apiItem, config);
+    if (renderedThrows !== undefined) {
+        docSections.push(renderedThrows);
     }
 
     // Merge sections to reduce and simplify hierarchy

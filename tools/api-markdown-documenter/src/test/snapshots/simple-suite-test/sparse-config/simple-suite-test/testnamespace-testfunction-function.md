@@ -13,3 +13,11 @@ function testFunction(testParameter: number): number;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | number |  |
+
+## Returns {#testfunction-returns}
+
+A number
+
+## Throws {#testfunction-throws}
+
+An Error
