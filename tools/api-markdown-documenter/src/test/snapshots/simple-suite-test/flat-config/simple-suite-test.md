@@ -56,7 +56,7 @@ const foo = bar;
 |  Function | Return Type | Description |
 |  --- | --- | --- |
 |  [testFunction(testParameter, testOptionalParameter)](docs/simple-suite-test#testfunction-function) | TTypeParameter | Test function |
-|  [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-function) | {     foo: number;     bar: [TestEnum](docs/simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
+|  [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-function) | { foo: number; bar: [TestEnum](docs/simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
 |  [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
 |  [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-function) | string \| [TestInterface](docs/simple-suite-test#testinterface-interface) | Test function that returns an inline type |
 
@@ -173,10 +173,6 @@ A test public abstract method.
 ```typescript
 abstract publicAbstractMethod(): void;
 ```
-
-###### Returns {#publicabstractmethod-returns}
-
-<b>Return type:</b> void
 
 ##### sealedMethod {#testabstractclass-sealedmethod-method}
 
@@ -368,10 +364,6 @@ A test public abstract method.
 ```typescript
 publicAbstractMethod(): void;
 ```
-
-###### Returns {#publicabstractmethod-returns}
-
-<b>Return type:</b> void
 
 ##### testClassMethod {#testclass-testclassmethod-method}
 
@@ -746,10 +738,6 @@ testInterfaceMethod(): void;
 
 Here are some remarks about the method
 
-###### Returns {#testinterfacemethod-returns}
-
-<b>Return type:</b> void
-
 #### Call Signature Details
 
 ##### (call) {#testinterface-_call_-callsignature}
@@ -973,7 +961,7 @@ class TestClass
 
 |  Method | Return Type | Description |
 |  --- | --- | --- |
-|  [testClassMethod(testParameter)](docs/simple-suite-test#testnamespace-testclass-testclassmethod-method) | Promise<!-- -->&lt;string&gt; | Test class method |
+|  [testClassMethod(testParameter)](docs/simple-suite-test#testnamespace-testclass-testclassmethod-method) | Promise&lt;string&gt; | Test class method |
 
 ###### Constructor Details
 
@@ -1154,10 +1142,6 @@ Test interface method
 ```typescript
 testInterfaceMethod(): void;
 ```
-
-<b>Returns</b>
-
-<b>Return type:</b> void
 
 #### Namespace Details
 

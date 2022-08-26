@@ -46,7 +46,3 @@ Test interface method
 ```typescript
 testInterfaceMethod(): void;
 ```
-
-#### Returns {#testinterfacemethod-returns}
-
-<b>Return type:</b> void

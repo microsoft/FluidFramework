@@ -157,10 +157,6 @@ A test public abstract method.
 publicAbstractMethod(): void;
 ```
 
-#### Returns {#publicabstractmethod-returns}
-
-<b>Return type:</b> void
-
 ### testClassMethod {#testclassmethod-method}
 
 Test class method
