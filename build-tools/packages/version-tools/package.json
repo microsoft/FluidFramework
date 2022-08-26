@@ -46,7 +46,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@oclif/core": "^1.9.5",
+    "@oclif/core": "~1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
