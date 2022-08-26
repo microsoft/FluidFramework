@@ -19,6 +19,7 @@ import {
     IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
 
@@ -96,13 +97,14 @@ export async function createSummarizer(
     container: IContainer,
     summaryVersion?: string,
     gcOptions?: IGCRuntimeOptions,
+    configProvider: IConfigProviderBase = mockConfigProvider(),
 ): Promise<ISummarizer> {
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
             summaryOptions: defaultSummaryOptions,
             gcOptions,
         },
-        loaderProps: { configProvider: mockConfigProvider() },
+        loaderProps: { configProvider },
     };
 
     const loader = provider.makeTestLoader(testContainerConfig);
