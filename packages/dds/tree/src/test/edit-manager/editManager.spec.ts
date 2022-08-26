@@ -563,7 +563,6 @@ describe("EditManager", () => {
      * Despite that, it's good to keep the other tests cases for the following reasons:
      * - They give a clearer account of what the API usage is like.
      * - They are easier to debug.
-     * - They are less reliant on the `EditManager` implementation in their construction of test input.
      * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
      *   but this one doesn't, then there might be something wrong with this test).
      */
@@ -669,7 +668,7 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
         {
             const client = clientData[step.client];
             if (step.type === "Mint") {
-                const cs = TestChangeRebaser.mintChangeset(getTipContext(client.manager), ++changeCounter);
+                const cs = TestChangeRebaser.mintChangeset(client.intentions, ++changeCounter);
                 const delta = client.manager.addLocalChange(cs);
                 assert.deepEqual(delta, asDelta(cs.intentions));
                 client.localChanges.push({ change: cs, ref: client.ref });
@@ -739,15 +738,4 @@ function checkChangeList(manager: TestEditManager, intentions: number[]): void {
 
 function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChangeset>[] {
     return manager.getTrunk().map((c) => c.changeset).concat(manager.getLocalChanges());
-}
-
-function getTipContext(manager: TestEditManager): number[] {
-    const changes = getAllChanges(manager);
-    for (let i = changes.length - 1; i >= 0; --i) {
-        const change = changes[i];
-        if (isNonEmptyChange(change)) {
-            return [...change.outputContext];
-        }
-    }
-    return [];
 }
