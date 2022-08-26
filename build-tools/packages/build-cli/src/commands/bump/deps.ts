@@ -11,8 +11,8 @@ import { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import * as semver from "semver";
 import { BaseCommand } from "../../base";
-import { bumpTypeFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
-import { bumpPackageDependencies, PackageWithRangeSpec } from "../../lib";
+import { bumpTypeExtendedFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
+import { bumpDepsBranchName, bumpPackageDependencies, PackageWithRangeSpec } from "../../lib";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -41,7 +41,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             char: "n",
             exclusive: ["bumpType"],
         }),
-        bumpType: bumpTypeFlag({
+        bumpType: bumpTypeExtendedFlag({
             char: "t",
             description: "Bump the current version of the dependency according to this bump type.",
             exclusive: ["version"],
@@ -185,6 +185,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                 packageNewVersionMap,
                 flags.prerelease,
                 flags.onlyBumpPrerelease,
+                /* updateWithinSameReleaseGroup */ false,
                 changedPackages,
             );
         }
@@ -207,7 +208,11 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             const changedVersionMessage = changedVersionsString.join("\n");
             if (shouldCommit) {
                 const commitMessage = `Bump dependencies\n\n${changedVersionMessage}`;
-                const bumpBranch = `dep_${Date.now()}`;
+                const bumpBranch = bumpDepsBranchName(
+                    args.package_or_release_group,
+                    flags.bumpType!,
+                    flags.releaseGroup,
+                );
                 this.log(`Creating branch ${bumpBranch}`);
                 await context.createBranch(bumpBranch);
                 await context.gitRepo.commit(commitMessage, "Error committing");
@@ -223,7 +228,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                 `${changedVersionMessage}`,
             );
         } else {
-            console.log(chalk.red("No dependencies need to be updated."));
+            this.log(chalk.red("No dependencies need to be updated."));
         }
 
         if (this.finalMessages.length > 0) {

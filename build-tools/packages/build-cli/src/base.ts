@@ -5,13 +5,8 @@
 
 import { Context, getResolvedFluidRoot, GitRepo, Logger } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
-import {
-    FlagInput,
-    OutputFlags,
-    ParserOutput,
-    PrettyPrintableError,
-    // eslint-disable-next-line import/no-internal-modules
-} from "@oclif/core/lib/interfaces";
+// eslint-disable-next-line import/no-internal-modules
+import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import { rootPathFlag } from "./flags";
 
@@ -58,7 +53,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
         return this.processedFlags as Partial<OutputFlags<typeof BaseCommand.flags>>;
     }
 
-    private _context: Context | undefined;
+    protected _context: Context | undefined;
     private _logger: Logger | undefined;
 
     async init() {
@@ -79,7 +74,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
     /**
      * @returns A default logger that can be passed to core functions enabling them to log using the command logging
      * system */
-    protected async getLogger(): Promise<Logger> {
+    protected get logger(): Logger {
         if (this._logger === undefined) {
             this._logger = {
                 info: (msg: string | Error) => {
@@ -109,7 +104,6 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
             const resolvedRoot = await getResolvedFluidRoot();
             const gitRepo = new GitRepo(resolvedRoot);
             const branch = await gitRepo.getCurrentBranchName();
-            const logger = await this.getLogger();
 
             this.verbose(`Repo: ${resolvedRoot}`);
             this.verbose(`Branch: ${branch}`);
@@ -118,14 +112,37 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
                 gitRepo,
                 "github.com/microsoft/FluidFramework",
                 branch,
-                logger,
+                this.logger,
             );
         }
 
         return this._context;
     }
 
-    public warn(message: string | Error): string | Error {
+    /** Output a horizontal rule. */
+    public logHr() {
+        this.log("=".repeat(72));
+    }
+
+    public logError(message: string | Error) {
+        this.log(chalk.red(`ERROR: ${message}`));
+        this.exit();
+    }
+
+    /** Log a message with an indent. */
+    public logIndent(input: string, indent = 2) {
+        this.log(`${this.indent(indent)}${input}`);
+    }
+
+    public indent(indent = 2): string {
+        return " ".repeat(indent);
+    }
+
+    public errorLog(message: string | Error) {
+        this.log(chalk.red(`ERROR: ${message}`));
+    }
+
+    public warning(message: string | Error): string | Error {
         this.log(chalk.yellow(`WARNING: ${message}`));
         return message;
     }
@@ -140,20 +157,5 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
         }
 
         return message;
-    }
-
-    /** Output a horizontal rule. */
-    public logHr() {
-        this.log("=".repeat(72));
-    }
-
-    /** Logs an error without exiting the process. */
-    public errorLog(message: string | Error) {
-        this.log(chalk.red(`ERROR: ${message}`));
-    }
-
-    /** Log a message with an indent. */
-    public logIndent(input: string, indent = 2): void {
-        this.log(`${" ".repeat(indent)}${input}`);
     }
 }

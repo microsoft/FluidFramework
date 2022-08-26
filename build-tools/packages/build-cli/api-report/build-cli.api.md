@@ -4,9 +4,102 @@
 
 ```ts
 
+import { Context } from '@fluidframework/build-tools';
+import { Logger } from '@fluidframework/build-tools';
+import { MonoRepo } from '@fluidframework/build-tools';
+import { MonoRepoKind } from '@fluidframework/build-tools';
+import { Package } from '@fluidframework/build-tools';
 import { run } from '@oclif/core';
+import { VersionBag } from '@fluidframework/build-tools';
+import { VersionBumpType } from '@fluid-tools/version-tools';
+import { VersionBumpTypeExtended } from '@fluid-tools/version-tools';
+import { VersionChangeType } from '@fluid-tools/version-tools';
+import { VersionScheme } from '@fluid-tools/version-tools';
+
+// @public
+export function bumpBranchName(releaseGroup: ReleaseGroup | ReleasePackage, bumpType: VersionBumpTypeExtended, version: string): string;
+
+// @public (undocumented)
+export function bumpDepsBranchName(bumpedDep: ReleaseGroup, bumpType: VersionBumpTypeExtended | string, releaseGroup?: ReleaseGroup): string;
+
+// @public
+export function bumpPackageDependencies(pkg: Package, bumpPackageMap: Map<string, PackageWithRangeSpec>, prerelease: boolean, onlyBumpPrerelease: boolean, updateWithinSameReleaseGroup?: boolean, changedVersions?: VersionBag): Promise<boolean>;
+
+// @public
+export function bumpReleaseGroup(context: Context, bumpType: VersionChangeType, releaseGroupOrPackage: MonoRepo | Package, scheme: VersionScheme): Promise<string>;
+
+// @public
+export function createBumpBranch(context: Context, releaseGroup: ReleaseGroup | ReleasePackage, bumpType: VersionBumpType): Promise<string>;
+
+// @public (undocumented)
+export function defaultReleaseForBranch(branchName: string): VersionBumpType | undefined;
+
+// @public (undocumented)
+export function difference<T>(setA: Set<T>, setB: Set<T>): Set<T>;
+
+// @public (undocumented)
+export function getAllVersions(context: Context, releaseGroup: ReleaseGroup | ReleasePackage, allowPrereleases?: boolean): Promise<VersionDetails[] | undefined>;
+
+// @public
+export function getPreReleaseDependencies(context: Context, releaseGroup: ReleaseGroup | ReleasePackage): Promise<PreReleaseDependencies>;
+
+// @public (undocumented)
+export function getTagName(context: Context, releaseGroup: MonoRepo | Package | string, version?: string): Promise<string>;
+
+// @public (undocumented)
+export function getTagsForReleaseGroup(context: Context, releaseGroup: ReleaseGroup | ReleasePackage): Promise<string[]>;
+
+// @public (undocumented)
+export function getVersionFromTag(tag: string): string | undefined;
+
+// @public
+export function isReleased(context: Context, releaseGroup: MonoRepo | Package | string, version?: string, log?: Logger): Promise<boolean>;
+
+// @public
+export function npmCheckUpdates(context: Context, releaseGroup: ReleaseGroup | ReleasePackage, depsToUpdate: ReleasePackage[] | RegExp[], bumpType: "patch" | "minor" | "current", prerelease?: boolean, writeChanges?: boolean, log?: Logger | undefined): Promise<{
+    updatedPackages: Package[];
+    updatedDependencies: Package[];
+}>;
+
+// @public
+export interface PackageWithRangeSpec {
+    // (undocumented)
+    pkg: Package;
+    // (undocumented)
+    rangeOrBumpType: string;
+}
+
+// @public (undocumented)
+export interface PreReleaseDependencies {
+    // (undocumented)
+    isEmpty: boolean;
+    // (undocumented)
+    packages: Map<ReleasePackage, string>;
+    // (undocumented)
+    releaseGroups: Map<ReleaseGroup, string>;
+}
+
+// @public (undocumented)
+export function releaseBranchName(releaseGroup: ReleaseGroup, version: string): string;
+
+// @public (undocumented)
+export type ReleaseGroup = MonoRepoKind;
+
+// @public (undocumented)
+export type ReleasePackage = string;
 
 export { run }
+
+// @public (undocumented)
+export function sortVersions(versions: VersionDetails[], sortKey: "version" | "date"): Promise<VersionDetails[]>;
+
+// @public (undocumented)
+export interface VersionDetails {
+    // (undocumented)
+    date?: Date;
+    // (undocumented)
+    version: string;
+}
 
 // (No @packageDocumentation comment for this package)
 

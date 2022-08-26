@@ -127,7 +127,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
                 version,
                 tags,
                 shouldIncludeInternalVersions,
-                await this.getLogger(),
+                this.logger,
             );
             this.log(`isLatest=${isLatest}`);
             if (isRelease && isLatest === true) {
