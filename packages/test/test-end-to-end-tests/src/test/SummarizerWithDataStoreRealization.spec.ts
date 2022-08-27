@@ -5,13 +5,11 @@
 
 import { strict as assert } from "assert";
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
-    IAckedSummary,
     IContainerRuntimeOptions,
     ISummarizer,
 } from "@fluidframework/container-runtime";
@@ -21,17 +19,12 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider,
-    wrapDocumentServiceFactory,
     waitForContainerConnection,
     summarizeNow,
     createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { SharedCounter } from "@fluidframework/counter";
 import { pkgVersion } from "../packageVersion";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -47,7 +40,6 @@ type ProviderPropertyKeys<T extends Object, TProp extends keyof T = keyof T> = s
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type Provider<T extends Object = Object> = Partial<Pick<T, ProviderPropertyKeys<T>>>;
-
 interface ProvideSearchContent {
     SearchContent: SearchContent;
   }
@@ -63,16 +55,9 @@ const runtimeOptions: IContainerRuntimeOptions = {
     },
     gcOptions: { gcAllowed: false },
 };
-
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
-class TestDataObject2 extends DataObject implements SearchContent {
-    public async getSearchContent(): Promise<string | undefined> {
-        return Promise.resolve("TestDataObject2 Search Blob");
-    }
-    public get SearchContent() {
-        return this;
-    }
+class TestDataObject2 extends DataObject {
     public get _root() {
         return this.root;
     }
@@ -107,9 +92,11 @@ class TestDataObject1 extends DataObject implements SearchContent {
 
         return Promise.resolve("TestDataObject1 Search Blob");
     }
+
     public get SearchContent() {
         return this;
     }
+
     public get _root() {
         return this.root;
     }
@@ -119,17 +106,11 @@ class TestDataObject1 extends DataObject implements SearchContent {
     }
 
     private readonly matrixKey = "SharedMatrix";
-    private readonly counterKey = "Counter";
     public matrix!: SharedMatrix;
-    public undoRedoStackManager!: UndoRedoStackManager;
-    public counter!: SharedCounter;
 
     protected async initializingFirstTime() {
         const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
         this.root.set(this.matrixKey, sharedMatrix.handle);
-
-       const counter = SharedCounter.create(this.runtime, this.counterKey);
-       this.root.set(this.counterKey, counter.handle);
 
        const dsFactory2 = await requestFluidObject<TestDataObject2>(
        await this._context.containerRuntime.createDataStore(TestDataObjectType2), "");
@@ -141,20 +122,14 @@ class TestDataObject1 extends DataObject implements SearchContent {
         assert(matrixHandle !== undefined, "SharedMatrix not found");
         this.matrix = await matrixHandle.get();
 
-        this.undoRedoStackManager = new UndoRedoStackManager();
         this.matrix.insertRows(0, 3);
         this.matrix.insertCols(0, 3);
-        this.matrix.openUndo(this.undoRedoStackManager);
-
-        const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(this.counterKey);
-        assert(counterHandle);
-        this.counter = await counterHandle.get();
     }
 }
 const dataStoreFactory1 = new DataObjectFactory(
     TestDataObjectType1,
     TestDataObject1,
-    [SharedMap.getFactory(), SharedMatrix.getFactory(), SharedCounter.getFactory()],
+    [SharedMap.getFactory(), SharedMatrix.getFactory()],
     [],
     [],
     createDataStoreRuntime(),
@@ -162,7 +137,7 @@ const dataStoreFactory1 = new DataObjectFactory(
 const dataStoreFactory2 = new DataObjectFactory(
     TestDataObjectType2,
     TestDataObject2,
-    [SharedMap.getFactory(), SharedMatrix.getFactory(), SharedCounter.getFactory()],
+    [SharedMap.getFactory(), SharedMatrix.getFactory()],
     [],
     [],
     createDataStoreRuntime(),
@@ -175,8 +150,9 @@ const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
     [dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
     ],
 );
-
-const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+const containerRuntimeFactoryWithDefaultDataStore =
+    getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
+const runtimeFactory = new containerRuntimeFactoryWithDefaultDataStore(
     dataStoreFactory1,
     registryStoreEntries,
     undefined,
@@ -194,7 +170,7 @@ async function createSummarizer(
         container,
         dataStoreFactory1,
         summaryVersion,
-        getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore,
+        containerRuntimeFactoryWithDefaultDataStore,
         registryStoreEntries,
     );
 }
@@ -227,32 +203,12 @@ function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDat
 describeNoCompat("Summary with Search Blobs and DataStore realization during Summarization",
  (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    // Stores the latest acked summary for the document.
-    let latestAckedSummary: IAckedSummary | undefined;
-
     let mainContainer: IContainer;
     let mainDataStore: TestDataObject1;
 
     const createContainer = async (): Promise<IContainer> => {
         return provider.createContainer(runtimeFactory);
     };
-
-    /**
-     * Callback that will be called by the document storage service whenever a summary is uploaded by the client.
-     * Update the summary context to include the summary proposal and ack handle as per the latest ack for the
-     * document.
-     */
-    function uploadSummaryCb(summaryTree: ISummaryTree, context: ISummaryContext): ISummaryContext {
-        const newSummaryContext = { ...context };
-        // If we received an ack for this document, update the summary context with its information. The
-        // server rejects the summary if it doesn't have the proposal and ack handle of the previous
-        // summary.
-        if (latestAckedSummary !== undefined) {
-            newSummaryContext.ackHandle = latestAckedSummary.summaryAck.contents.handle;
-            newSummaryContext.proposalHandle = latestAckedSummary.summaryOp.contents.handle;
-        }
-        return newSummaryContext;
-    }
 
     async function waitForSummary(summarizer: ISummarizer): Promise<string> {
         // Wait for all pending ops to be processed by all clients.
@@ -264,13 +220,6 @@ describeNoCompat("Summary with Search Blobs and DataStore realization during Sum
     describe("Realize DataStore during Search and make sure pendingSummaries does not get corrupted", () => {
         beforeEach(async () => {
             provider = getTestObjectProvider({ syncSummarizer: true });
-            // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
-            // time the summarizer client uploads a summary.
-            (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-                provider.documentServiceFactory,
-                uploadSummaryCb,
-            );
-
             mainContainer = await createContainer();
             // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
             // re-sent. Do it here so that the extra events don't mess with rest of the test.
@@ -297,10 +246,10 @@ describeNoCompat("Summary with Search Blobs and DataStore realization during Sum
             //  would get an error
             // "Cannot locate node with path '.app/.channels/guid1/root' under '<handle>'."
             //  instead of .app/.channels/guid1/.channels/root
-            // Note: It's worth adding that the corruption caused in this particular case is that the data store's
+            // Note: In this scenario, the corruption is caused due to the fact that the datastore's
             // summarizer node does not update the handle paths with ".channels" for its children when it is
             // summarized. This happens later when the data store is realized but its too late because
-            // the work-in-progress path (wipLocalPath) has already beed updated.
+            // the work-in-progress path (wipLocalPath) has already been updated.
 
             const summaryVersion = await waitForSummary(summarizerClient);
             assert(summaryVersion, "Summary version should be defined");
@@ -324,10 +273,6 @@ describeNoCompat("Summary with Search Blobs and DataStore realization during Sum
             mainDataStore.matrix.setCell(0, 0, "value2");
             const summaryVersion3 = await waitForSummary(summarizerClient2);
             assert(summaryVersion3, "Summary version should be defined");
-        });
-
-        afterEach(() => {
-            latestAckedSummary = undefined;
         });
     });
 });
