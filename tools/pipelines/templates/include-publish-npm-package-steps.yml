@@ -85,19 +85,20 @@ steps:
       if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
         packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
         sorted=true
+        echo "sorted"
       else
         packages=*.tgz
         sorted=false
+        echo "not sorted"
       fi
+      echo $sorted
       for packageName in $packages
       do
         echo $packageName
         if [[ $sorted ]]; then
           f=$(find -name "${packageName}-[0-9]*.tgz")
-          echo "sorted"
         else
           f=$packageName
-          echo "not sorted"
         fi
         echo $f
         if [[ $f != "" ]]; then
