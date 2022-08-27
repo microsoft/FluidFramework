@@ -94,6 +94,7 @@ steps:
         echo $packageName
         if [[ $sorted ]]; then
           f=$(find -name "${packageName}-[0-9]*.tgz")
+          echo "sorted"
         else
           f=$packageName
           echo "not sorted"
