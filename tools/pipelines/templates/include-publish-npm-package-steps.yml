@@ -82,10 +82,20 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       t1=0
-      sortedPackages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
-      for packageName in $sortedPackages
+      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
+        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
+        sorted=true
+      else
+        packages=*.tgz
+        sorted=false
+      fi
+      for packageName in $packages
       do
-          f=$(find -name "${packageName}-[0-9]*.tgz")
+          if [[ $sorted ]]; then
+            f=$(find -name "${packageName}-[0-9]*.tgz")
+          else
+            f=$packageName
+          fi
           if [[ $f != "" ]]; then
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
