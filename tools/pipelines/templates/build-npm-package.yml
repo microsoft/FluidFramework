@@ -81,6 +81,14 @@ parameters:
 - name: tagName
   type: string
 
+- name: includeInternalVersions
+  type: boolean
+  default: false
+
+- name: buildToolsVersionToInstall
+  type: string
+  default: latest
+
 trigger: none
 
 variables:
