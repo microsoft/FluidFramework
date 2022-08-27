@@ -85,22 +85,17 @@ steps:
       if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
         packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
         sorted=true
-        echo "sorted"
       else
         packages=*.tgz
         sorted=false
-        echo "not sorted"
       fi
-      echo $sorted
       for packageName in $packages
       do
-        echo $packageName
         if [[ $sorted == true ]]; then
           f=$(find -name "${packageName}-[0-9]*.tgz")
         else
           f=$packageName
         fi
-        echo $f
         if [[ $f != "" ]]; then
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
