@@ -95,7 +95,7 @@ steps:
       for packageName in $packages
       do
         echo $packageName
-        if [[ $sorted ]]; then
+        if [[ $sorted == true ]]; then
           f=$(find -name "${packageName}-[0-9]*.tgz")
         else
           f=$packageName
