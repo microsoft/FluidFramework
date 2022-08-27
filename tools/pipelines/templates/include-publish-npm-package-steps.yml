@@ -87,7 +87,6 @@ steps:
         sorted=true
       else
         packages=*.tgz
-        echo $packages
         sorted=false
       fi
       for packageName in $packages
@@ -97,6 +96,7 @@ steps:
           f=$(find -name "${packageName}-[0-9]*.tgz")
         else
           f=$packageName
+          echo "not sorted"
         fi
         echo $f
         if [[ $f != "" ]]; then
