@@ -87,6 +87,7 @@ steps:
         sorted=true
       else
         packages=*.tgz
+        echo $packages
         sorted=false
       fi
       for packageName in $packages
@@ -96,6 +97,7 @@ steps:
           else
             f=$packageName
           fi
+          echo $f
           if [[ $f != "" ]]; then
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
