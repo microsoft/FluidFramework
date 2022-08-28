@@ -252,6 +252,17 @@ class UnreferencedStateTracker {
         }
     }
 
+    //* TODO: Hold the data store's ID and include it in the inactiveObjectMarked event
+    private setInactiveState(): boolean {
+        const changing = this._state !== UnreferencedState.Inactive;
+        this._state = UnreferencedState.Inactive;
+
+        if (changing) {
+            this.debugBus?.broadcast("inactiveObjectMarked");
+        }
+        return changing;
+    }
+
     /* Updates the unreferenced state based on the provided timestamp. */
     public updateTracking(currentReferenceTimestampMs: number) {
         const unreferencedDurationMs = currentReferenceTimestampMs - this.unreferencedTimestampMs;
@@ -266,8 +277,7 @@ class UnreferencedStateTracker {
         // If the node has been unreferenced for inactive timeoutMs amount of time, update the state to inactive.
         // Also, start a timer for the sweep timeout.
         if (unreferencedDurationMs >= this.inactiveTimeoutMs) {
-            this._state = UnreferencedState.Inactive;
-            this.debugBus?.broadcast("inactiveObjectMarked");
+            this.setInactiveState();
             this.clearTimers();
 
             if (this.sweepTimeoutMs !== undefined) {
@@ -284,8 +294,7 @@ class UnreferencedStateTracker {
         const remainingDurationMs = this.inactiveTimeoutMs - unreferencedDurationMs;
         if (this.inactiveTimer === undefined) {
             const inactiveTimeoutHandler = () => {
-                this._state = UnreferencedState.Inactive;
-                this.debugBus?.broadcast("inactiveObjectMarked");
+                this.setInactiveState();
                 // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
                 if (this.sweepTimeoutMs !== undefined) {
                     setLongTimeout(
