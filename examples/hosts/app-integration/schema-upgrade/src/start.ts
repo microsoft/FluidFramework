@@ -8,7 +8,7 @@ import ReactDOM from "react-dom";
 
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 import { DemoCodeLoader } from "./demoCodeLoader";
-import { ModelLoader } from "./modelLoading";
+import { ModelLoader } from "./modelLoader";
 import { externalDataSource } from "./externalData";
 import { IMigratableModel, IVersionedModel } from "./migrationInterfaces";
 import { Migrator } from "./migrator";

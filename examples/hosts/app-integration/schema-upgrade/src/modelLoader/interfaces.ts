@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IContainer } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+
 export interface IModelLoader<ModelType> {
     /**
      * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
@@ -26,3 +29,8 @@ export interface IModelLoader<ModelType> {
      */
     loadExisting(id: string): Promise<ModelType>;
 }
+
+/**
+ * The callback signature that the container author will provide.  It must return a promise for the container's model.
+ */
+ export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;

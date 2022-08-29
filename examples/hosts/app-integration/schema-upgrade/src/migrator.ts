@@ -12,7 +12,7 @@ import {
     IMigratorEvents,
     MigrationState,
 } from "./migrationInterfaces";
-import { IModelLoader } from "./modelLoading";
+import { IModelLoader } from "./modelLoader";
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
     private _currentModel: IMigratableModel;

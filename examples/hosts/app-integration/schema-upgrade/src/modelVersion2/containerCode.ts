@@ -11,7 +11,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { MigrationToolInstantiationFactory, IMigrationTool } from "../migrationTool";
 import { IInventoryList, IInventoryListContainer } from "../modelInterfaces";
-import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoading";
+import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoader";
 import { InventoryListContainer } from "./containerModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
