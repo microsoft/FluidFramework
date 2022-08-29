@@ -26,7 +26,7 @@ You'll use one or more shared objects in your container to model your collaborat
 three data structures that cover a broad range of scenarios:
 
 1. [SharedMap]({{< relref "/docs/data-structures/map.md" >}}), a map-like data structure for storing key/value pair data.
-2. [SharedDirectory]({{< relref "shareddirectory.md" >}}), a map-like data structure with ability to organize keys into subdirectories.
+2. [SharedDirectory]({{< relref "/docs/apis/fluid-framework/shareddirectory.md" >}}), a map-like data structure with ability to organize keys into subdirectories.
 3. [SharedString]({{< relref "string.md" >}}), a data structure for string data.
 
 ## Package scopes
@@ -54,8 +54,8 @@ You can [read more about the scopes and their intent][scopes] in the Fluid Frame
 
 <!-- Classes and interfaces -->
 
-[FluidContainer]: {{< relref "fluidcontainer.md" >}}
-[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
+[FluidContainer]: {{< relref "/docs/apis/fluid-framework/fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-framework/ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}

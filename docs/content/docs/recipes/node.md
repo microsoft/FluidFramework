@@ -206,8 +206,8 @@ When you make changes to the code the project will automatically rebuild and the
 
 <!-- Classes and interfaces -->
 
-[FluidContainer]: {{< relref "fluidcontainer.md" >}}
-[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
+[FluidContainer]: {{< relref "/docs/apis/fluid-framework/fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-framework/ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
