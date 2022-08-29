@@ -15,18 +15,10 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
-// Warning: (ae-internal-missing-underscore) The name "AugmentedIntervalNode" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export interface AugmentedIntervalNode {
-    // (undocumented)
-    minmax: IInterval;
-}
-
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    // @internal @deprecated (undocumented)
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
+    // (undocumented)
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
@@ -159,7 +151,7 @@ export class Client {
         segment: ISegment | undefined;
         offset: number | undefined;
     };
-    // @internal @deprecated (undocumented)
+    // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
@@ -185,8 +177,6 @@ export class Client {
     maxWindowTime: number;
     // (undocumented)
     measureOps: boolean;
-    // @internal @deprecated (undocumented)
-    protected readonly mergeTree: MergeTree;
     // (undocumented)
     get mergeTreeDeltaCallback(): MergeTreeDeltaCallback | undefined;
     set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback | undefined);
@@ -199,7 +189,7 @@ export class Client {
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
+    removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     rollback?(op: any, localOpMetadata: unknown): void;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
@@ -216,25 +206,12 @@ export class Client {
     // (undocumented)
     updateSeqNumbers(min: number, seq: number): void;
     // (undocumented)
+    protected walkAllSegments<TClientData>(action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
+    // (undocumented)
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
-
-// Warning: (ae-internal-missing-underscore) The name "ClientSeq" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export interface ClientSeq {
-    // (undocumented)
-    clientId: string;
-    // (undocumented)
-    refSeq: number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "clientSeqComparer" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export const clientSeqComparer: Comparer<ClientSeq>;
 
 // @public (undocumented)
 export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefined;
@@ -260,16 +237,6 @@ export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue
 
 // @public (undocumented)
 export const compareNumbers: (a: number, b: number) => number;
-
-// Warning: (ae-internal-missing-underscore) The name "Comparer" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export interface Comparer<T> {
-    // (undocumented)
-    compare(a: T, b: T): number;
-    // (undocumented)
-    min: T;
-}
 
 // @public (undocumented)
 export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number;
@@ -307,6 +274,9 @@ export function createMap<T>(): MapLike<T>;
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
 
 // @public (undocumented)
+export function debugMarkerToString(marker: Marker): string;
+
+// @public (undocumented)
 export const DetachedReferencePosition = -1;
 
 // Warning: (ae-internal-missing-underscore) The name "Dictionary" should be prefixed with an underscore because the declaration is marked as @internal
@@ -328,23 +298,6 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
-
-// Warning: (ae-internal-missing-underscore) The name "Heap" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export class Heap<T> {
-    constructor(a: T[], comp: Comparer<T>);
-    // (undocumented)
-    add(x: T): void;
-    // (undocumented)
-    comp: Comparer<T>;
-    // (undocumented)
-    count(): number;
-    // (undocumented)
-    get(): T;
-    // (undocumented)
-    peek(): T;
-}
 
 // @public (undocumented)
 export interface ICombiningOp {
@@ -376,46 +329,22 @@ export interface IConsensusValue {
 
 // @public (undocumented)
 export interface IHierBlock extends IMergeBlock {
-    // @internal @deprecated (undocumented)
-    addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
     // (undocumented)
     hierToString(indentCount: number): string;
     // (undocumented)
     leftmostTiles: MapLike<ReferencePosition>;
-    // @internal @deprecated (undocumented)
+    // (undocumented)
     rangeStacks: RangeStackMap;
     // (undocumented)
     rightmostTiles: MapLike<ReferencePosition>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "IIntegerRange" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
+// @public
 export interface IIntegerRange {
     // (undocumented)
     end: number;
     // (undocumented)
     start: number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "IInterval" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export interface IInterval {
-    // (undocumented)
-    clone(): IInterval;
-    // (undocumented)
-    compare(b: IInterval): number;
-    // (undocumented)
-    compareEnd(b: IInterval): number;
-    // (undocumented)
-    compareStart(b: IInterval): number;
-    // (undocumented)
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
-    // (undocumented)
-    overlaps(b: IInterval): boolean;
-    // (undocumented)
-    union(b: IInterval): IInterval;
 }
 
 // @public (undocumented)
@@ -586,11 +515,6 @@ export interface IMergeTreeSegmentDelta {
 export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
-    // @deprecated (undocumented)
-    getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number): {
-        parallelText: string[];
-        parallelMarkers: Marker[];
-    };
 }
 
 // @public (undocumented)
@@ -664,51 +588,8 @@ export interface InsertContext {
     structureChange?: boolean;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "integerRangeToString" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export const integerRangeToString: (range: IIntegerRange) => string;
-
 // @public (undocumented)
 export function internedSpaces(n: number): string;
-
-// Warning: (ae-internal-missing-underscore) The name "IntervalConflictResolver" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
-
-// Warning: (ae-internal-missing-underscore) The name "IntervalNode" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
-
-// Warning: (ae-internal-missing-underscore) The name "IntervalTree" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>, IRBMatcher<T, AugmentedIntervalNode> {
-    // (undocumented)
-    continueSubtree(node: IntervalNode<T> | undefined, key: T): boolean;
-    // (undocumented)
-    intervals: RedBlackTree<T, AugmentedIntervalNode>;
-    // (undocumented)
-    map(fn: (x: T) => void): void;
-    // (undocumented)
-    mapBackward(fn: (x: T) => void): void;
-    // (undocumented)
-    mapUntil(fn: (X: T) => boolean): void;
-    // (undocumented)
-    match(x: T): RBNode<T, AugmentedIntervalNode>[];
-    // (undocumented)
-    matchNode(node: IntervalNode<T> | undefined, key: T): boolean;
-    // (undocumented)
-    put(x: T, conflict?: IntervalConflictResolver<T>): void;
-    // (undocumented)
-    remove(x: T): void;
-    // (undocumented)
-    removeExisting(x: T): void;
-    // (undocumented)
-    update(node: IntervalNode<T>): void;
-}
 
 // Warning: (ae-internal-missing-underscore) The name "IRBAugmentation" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -744,8 +625,7 @@ export interface IRemovalInfo {
 
 // @public
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
-    // @internal @deprecated
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
@@ -795,55 +675,6 @@ export interface KeyComparer<TKey> {
     (a: TKey, b: TKey): number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "List" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export class List<T> {
-    // (undocumented)
-    [Symbol.iterator](): IterableIterator<T>;
-    constructor(isHead: boolean, data: T | undefined);
-    // (undocumented)
-    clear(): void;
-    // (undocumented)
-    count(): number;
-    // (undocumented)
-    data: T | undefined;
-    // (undocumented)
-    dequeue(): T | undefined;
-    // (undocumented)
-    empty(): boolean;
-    // (undocumented)
-    enqueue(data: T): List<T>;
-    // (undocumented)
-    first(): T | undefined;
-    // (undocumented)
-    isHead: boolean;
-    // (undocumented)
-    last(): T | undefined;
-    // (undocumented)
-    next: List<T>;
-    // (undocumented)
-    pop?(): T | undefined;
-    // (undocumented)
-    prev: List<T>;
-    // (undocumented)
-    some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[];
-    // (undocumented)
-    unshift(data: T): void;
-    // (undocumented)
-    walk(fn: (data: T, l: List<T>) => void): void;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "ListMakeHead" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export function ListMakeHead<U>(): List<U>;
-
-// Warning: (ae-internal-missing-underscore) The name "ListRemoveEntry" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
-
 // @public (undocumented)
 export const LocalClientId = -1;
 
@@ -889,16 +720,6 @@ export class LocalReferenceCollection {
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "LRUSegment" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export interface LRUSegment {
-    // (undocumented)
-    maxSeq: number;
-    // (undocumented)
-    segment?: ISegment;
 }
 
 // @public (undocumented)
@@ -984,95 +805,6 @@ export class MergeNode implements IMergeNodeCommon {
     parent?: IMergeBlock;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "MergeTree" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export class MergeTree {
-    constructor(options?: PropertySet | undefined);
-    ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs): void;
-    // (undocumented)
-    addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void): void;
-    annotateRange(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs, rollback?: PropertiesRollback): void;
-    // (undocumented)
-    blockClone(block: IMergeBlock, segments?: ISegment[]): MergeBlock;
-    // (undocumented)
-    clone(): void;
-    // (undocumented)
-    readonly collabWindow: CollaborationWindow;
-    // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // (undocumented)
-    findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
-    // (undocumented)
-    getCollabWindow(): CollaborationWindow;
-    // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number, localSeq?: number): {
-        segment: T | undefined;
-        offset: number | undefined;
-    };
-    // (undocumented)
-    getLength(refSeq: number, clientId: number): number;
-    // (undocumented)
-    getMarkerFromId(id: string): ISegment | undefined;
-    // (undocumented)
-    getPosition(node: MergeNode, refSeq: number, clientId: number, localSeq?: number): number;
-    _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined;
-    // @deprecated (undocumented)
-    getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
-    // (undocumented)
-    getStats(): MergeTreeStats;
-    // @deprecated (undocumented)
-    incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>): void;
-    // (undocumented)
-    insertAtReferencePosition(referencePosition: ReferencePosition, insertSegment: ISegment, opArgs: IMergeTreeDeltaOpArgs): void;
-    // (undocumented)
-    insertSegments(pos: number, segments: ISegment[], refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs | undefined): void;
-    get length(): number;
-    localNetLength(segment: ISegment, refSeq?: number, localSeq?: number): number;
-    // (undocumented)
-    map<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum: TClientData): void;
-    // (undocumented)
-    mapIdToSegment(id: string, segment: ISegment): void;
-    // (undocumented)
-    mapRange<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum: TClientData, start?: number, end?: number, splitRange?: boolean): void;
-    // (undocumented)
-    markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite: boolean | undefined, opArgs: IMergeTreeDeltaOpArgs): void;
-    // (undocumented)
-    mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
-    // (undocumented)
-    mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
-    // (undocumented)
-    options?: PropertySet | undefined;
-    // (undocumented)
-    static readonly options: {
-        incrementalUpdate: boolean;
-        insertAfterRemovedSegs: boolean;
-        zamboniSegments: boolean;
-    };
-    // @deprecated (undocumented)
-    pendingSegments: List<SegmentGroup> | undefined;
-    posFromRelativePos(relativePos: IRelativePosition, refseq?: number, clientId?: number): number;
-    // (undocumented)
-    referencePositionToLocalPosition(refPos: ReferencePosition, refSeq?: number, clientId?: number): number;
-    // (undocumented)
-    reloadFromSegments(segments: ISegment[]): void;
-    // (undocumented)
-    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: number): number | undefined;
-    rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup): void;
-    // (undocumented)
-    root: IMergeBlock;
-    // (undocumented)
-    setMinSeq(minSeq: number): void;
-    // (undocumented)
-    startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
-    // (undocumented)
-    walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
-}
-
 // @public (undocumented)
 export type MergeTreeDeltaCallback = (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
 
@@ -1129,20 +861,6 @@ export interface MergeTreeStats {
     removedLeafCount: number;
     // (undocumented)
     windowTime?: number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "MergeTreeTextHelper" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export class MergeTreeTextHelper implements IMergeTreeTextHelper {
-    constructor(mergeTree: MergeTree);
-    // (undocumented)
-    getText(refSeq: number, clientId: number, placeholder?: string, start?: number, end?: number): string;
-    // (undocumented)
-    getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number): {
-        parallelText: string[];
-        parallelMarkers: Marker[];
-    };
 }
 
 // @public (undocumented)
@@ -1209,18 +927,6 @@ export interface PropertyAction<TKey, TData> {
 // @public (undocumented)
 export type PropertySet = MapLike<any>;
 
-// Warning: (ae-internal-missing-underscore) The name "ProxString" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export interface ProxString<T> {
-    // (undocumented)
-    invDistance: number;
-    // (undocumented)
-    text: string;
-    // (undocumented)
-    val: T;
-}
-
 // Warning: (ae-internal-missing-underscore) The name "QProperty" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
@@ -1231,9 +937,7 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "RangeStackMap" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
+// @public (undocumented)
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 // Warning: (ae-internal-missing-underscore) The name "RBColor" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1435,7 +1139,7 @@ export interface SegmentGroup {
 // @public (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
-    // (undocumented)
+    // @deprecated (undocumented)
     clear(): void;
     // (undocumented)
     copyTo(segment: ISegment): void;
@@ -1451,28 +1155,6 @@ export class SegmentGroupCollection {
     get size(): number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "SnapshotLegacy" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export class SnapshotLegacy {
-    constructor(mergeTree: MergeTree, logger: ITelemetryLogger, filename?: string | undefined, onCompletion?: (() => void) | undefined);
-    // (undocumented)
-    static readonly body = "body";
-    emit(catchUpMsgs: ISequencedDocumentMessage[], serializer: IFluidSerializer, bind: IFluidHandle): ISummaryTreeWithStats;
-    // (undocumented)
-    extractSync(): IJSONSegment[];
-    // (undocumented)
-    filename?: string | undefined;
-    // (undocumented)
-    static readonly header = "header";
-    // (undocumented)
-    mergeTree: MergeTree;
-    // (undocumented)
-    onCompletion?: (() => void) | undefined;
-    // (undocumented)
-    static readonly sizeOfFirstChunk: number;
-}
-
 // Warning: (ae-internal-missing-underscore) The name "SortedDictionary" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
@@ -1486,9 +1168,7 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 }
 
 // @public
-export class SortedSegmentSet<T extends ISegment | {
-    readonly segment: ISegment;
-} = ISegment> {
+export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T): void;
     // (undocumented)
@@ -1501,9 +1181,12 @@ export class SortedSegmentSet<T extends ISegment | {
     get size(): number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "Stack" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
+// @public (undocumented)
+export type SortedSegmentSetItem = ISegment | {
+    readonly segment: ISegment;
+};
+
+// @public (undocumented)
 export class Stack<T> {
     // (undocumented)
     empty(): boolean;
@@ -1588,52 +1271,6 @@ export class TrackingGroupCollection {
 
 // @public (undocumented)
 export const TreeMaintenanceSequenceNumber = -2;
-
-// Warning: (ae-internal-missing-underscore) The name "TST" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export class TST<T> {
-    // (undocumented)
-    get(key: string): T | undefined;
-    // (undocumented)
-    keysWithPrefix(text: string): string[];
-    // (undocumented)
-    map(fn: (key: string, val: T) => void): void;
-    // (undocumented)
-    neighbors(text: string, distance?: number): ProxString<T>[];
-    // (undocumented)
-    pairsWithPrefix(text: string): TSTResult<T>[];
-    // (undocumented)
-    put(key: string, val: T): void;
-    // (undocumented)
-    size(): number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "TSTNode" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export interface TSTNode<T> {
-    // (undocumented)
-    c: string;
-    // (undocumented)
-    left?: TSTNode<T>;
-    // (undocumented)
-    mid?: TSTNode<T>;
-    // (undocumented)
-    right?: TSTNode<T>;
-    // (undocumented)
-    val?: T;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "TSTResult" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export interface TSTResult<T> {
-    // (undocumented)
-    key: string;
-    // (undocumented)
-    val: T;
-}
 
 // @public (undocumented)
 export const UnassignedSequenceNumber = -1;

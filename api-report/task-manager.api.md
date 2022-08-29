@@ -4,60 +4,25 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
-
-// @public
-export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
-    // (undocumented)
-    attachState: AttachState;
-    // (undocumented)
-    clientId: string | undefined;
-    // (undocumented)
-    connected: boolean;
-    // (undocumented)
-    getQuorum(): IQuorumClients;
-}
-
-// @public (undocumented)
-export interface IOldestClientObservableEvents extends IEvent {
-    // (undocumented)
-    (event: "connected", listener: () => void): any;
-    // (undocumented)
-    (event: "disconnected", listener: () => void): any;
-}
-
-// @public (undocumented)
-export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
-    // (undocumented)
-    isOldest(): boolean;
-}
-
-// @public (undocumented)
-export interface IOldestClientObserverEvents extends IEvent {
-    // (undocumented)
-    (event: "becameOldest" | "lostOldest", listener: () => void): any;
-}
 
 // @public
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     abandon(taskId: string): void;
-    haveTaskLock(taskId: string): boolean;
-    lockTask(taskId: string): Promise<void>;
+    assigned(taskId: string): boolean;
     queued(taskId: string): boolean;
+    subscribed(taskId: string): boolean;
+    subscribeToTask(taskId: string): void;
+    volunteerForTask(taskId: string): Promise<boolean>;
 }
 
 // @public (undocumented)
@@ -66,31 +31,24 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 }
 
 // @public
-export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserverEvents> implements IOldestClientObserver {
-    constructor(observable: IOldestClientObservable);
-    // (undocumented)
-    isOldest(): boolean;
-    }
-
-// @public
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     abandon(taskId: string): void;
     // (undocumented)
     applyStashedOp(): void;
+    // (undocumented)
+    assigned(taskId: string): boolean;
     static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
     static getFactory(): IChannelFactory;
     // (undocumented)
     _getTaskQueues(): Map<string, string[]>;
-    // (undocumented)
-    haveTaskLock(taskId: string): boolean;
     // @internal (undocumented)
     protected initializeLocalCore(): void;
     // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    lockTask(taskId: string): Promise<void>;
+    // @internal (undocumented)
+    protected onConnect(): void;
     // @internal (undocumented)
     protected onDisconnect(): void;
     // @internal
@@ -99,10 +57,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     queued(taskId: string): boolean;
     // @internal
     protected reSubmitCore(): void;
+    // (undocumented)
+    subscribed(taskId: string): boolean;
+    // (undocumented)
+    subscribeToTask(taskId: string): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    }
-
+    // (undocumented)
+    volunteerForTask(taskId: string): Promise<boolean>;
+}
 
 // (No @packageDocumentation comment for this package)
 
