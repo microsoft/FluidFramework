@@ -47,25 +47,23 @@ describe("interval rebasing", () => {
     });
 
     it("does not crash for an interval that lies on segment that has been removed locally", () => {
-        clients[0].sharedString.insertText(0, "6fB26FcY");
+        clients[0].sharedString.insertText(0, "A");
         clients[1].containerRuntime.connected = false;
-        clients[1].sharedString.insertText(0, "1jgvmr1qV");
-        clients[0].sharedString.removeRange(5, 7);
+        clients[1].sharedString.insertText(0, "01234");
         containerRuntimeFactory.processAllMessages();
         assertConsistent(clients);
         clients[1].containerRuntime.connected = true;
-        clients[0].sharedString.insertText(0, "oZPByBiGfC8AVVep");
+        clients[0].sharedString.insertText(0, "012345678901234");
         clients[0].containerRuntime.connected = false;
         containerRuntimeFactory.processAllMessages();
         assertConsistent(clients);
         const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
-        collection_0.add(17, 20, IntervalType.SlideOnRemove, { intervalId: "id" });
-        clients[2].sharedString.removeRange(14, 15);
-        clients[2].sharedString.removeRange(13, 15);
-        clients[0].sharedString.removeRange(14, 21);
+        collection_0.add(12, 15, IntervalType.SlideOnRemove, { intervalId: "id" });
+        clients[2].sharedString.removeRange(5, 7);
+        clients[0].sharedString.removeRange(3, 5);
         containerRuntimeFactory.processAllMessages();
         assertConsistent(clients);
-        clients[0].sharedString.insertText(13, "mlrc");
+        clients[0].sharedString.insertText(13, "0123");
         clients[0].containerRuntime.connected = true;
         containerRuntimeFactory.processAllMessages();
         assertConsistent(clients);
