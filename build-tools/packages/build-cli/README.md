@@ -103,9 +103,9 @@ USAGE
 <!-- commands -->
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
-* [`flub collect bundleanalyses`](#flub-collect-bundleanalyses)
+* [`flub collect bundleStats`](#flub-collect-bundlestats)
 * [`flub commands`](#flub-commands)
-* [`flub generate bundleanalyses`](#flub-generate-bundleanalyses)
+* [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
@@ -179,13 +179,13 @@ DESCRIPTION
   Checks that the dependencies between Fluid Framework packages are properly layered.
 ```
 
-## `flub collect bundleanalyses`
+## `flub collect bundleStats`
 
 Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption
 
 ```
 USAGE
-  $ flub collect bundleanalyses [--lernaOutput <value>] [--smallestAssetSize <value>] [-v]
+  $ flub collect bundleStats [--lernaOutput <value>] [--smallestAssetSize <value>] [-v]
 
 FLAGS
   -v, --verbose                Verbose logging.
@@ -230,13 +230,13 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.0/src/commands/commands.ts)_
 
-## `flub generate bundleanalyses`
+## `flub generate bundleStats`
 
-Run to report the bundle analysis. Do not run Danger directly at the root of the
+Run to report the bundle analysis. Do not run Danger directly at the root of the repo as this better isolates its usage and dependencies
 
 ```
 USAGE
-  $ flub generate bundleanalyses [--dirname <value>] [-v]
+  $ flub generate bundleStats [--dirname <value>] [-v]
 
 FLAGS
   -v, --verbose      Verbose logging.
@@ -245,9 +245,8 @@ FLAGS
                      Directory
 
 DESCRIPTION
-  Run to report the bundle analysis. Do not run Danger directly at the root of the
-
-  repo as this better isolates its usage and dependencies
+  Run to report the bundle analysis. Do not run Danger directly at the root of the repo as this better isolates its
+  usage and dependencies
 ```
 
 ## `flub generate packageJson`

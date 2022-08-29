@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 import path from "path";
+import { execSync } from "child_process";
 import { existsSync, copySync, readJSONSync } from "fs-extra";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
 
-export default class CollectBundleanalyses extends BaseCommand<typeof CollectBundleanalyses.flags> {
+export default class CollectBundlestats extends BaseCommand<typeof CollectBundlestats.flags> {
     static description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
     static flags = {
         lernaOutput: Flags.string({
@@ -26,8 +27,9 @@ export default class CollectBundleanalyses extends BaseCommand<typeof CollectBun
 
     public async run(): Promise<void> {
         const flags = this.processedFlags;
+        const lernaOutput = JSON.parse(execSync("npx lerna list --all --json").toString());
 
-        if (!Array.isArray(flags.lernaOutput)) {
+        if (!Array.isArray(lernaOutput)) {
             this.error("failed to get package information");
         }
 
@@ -37,7 +39,7 @@ export default class CollectBundleanalyses extends BaseCommand<typeof CollectBun
         const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
 
         // eslint-disable-next-line unicorn/no-array-for-each
-        flags.lernaOutput.forEach((pkg: { name: string; location: string }) => {
+        lernaOutput.forEach((pkg: { name: string; location: string }) => {
             if (pkg.location === undefined) {
                 this.exit(-1);
                 this.error("missing location in lerna package entry");
@@ -50,9 +52,7 @@ export default class CollectBundleanalyses extends BaseCommand<typeof CollectBun
                 // Check if we successfully generated any assets
                 const reportPath = path.join(packageAnalysisPath, "report.json");
                 if (!existsSync(reportPath)) {
-                    this.error(
-                        `${reportPath} is missing, cannot verify bundel analysis correctness`,
-                    );
+                    this.error(`${reportPath} is missing; bundle analysis may not be accurate.`);
                 }
 
                 const report = readJSONSync(reportPath);
@@ -62,7 +62,7 @@ export default class CollectBundleanalyses extends BaseCommand<typeof CollectBun
 
                 for (const asset of report.assets) {
                     if (asset.chunkNames?.length !== undefined) {
-                        // Assets without chunkNAmes are not code files
+                        // Assets without chunkNames are not code files
                         continue;
                     }
 
@@ -80,7 +80,7 @@ export default class CollectBundleanalyses extends BaseCommand<typeof CollectBun
 
         if (hasSmallAssetError) {
             this.error(
-                `Found assets are too small (<${flags.smallestAssetSize} bytes). Webpack bundle analysis is probably not correct.`,
+                `Found assets that are too small (<${flags.smallestAssetSize} bytes). Webpack bundle analysis may not be accurate.`,
             );
         }
     }
