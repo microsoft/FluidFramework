@@ -691,6 +691,9 @@ export class Client {
      *
      * If a reference was initially given `StayOnRemove` semantics, with intent to later change to `SlideOnRemove`,
      * that isn't equivalent, and so local bookkeeping needs to be updated.
+     *
+     * If the position has slid off and there is no nearest position (i.e. the
+     * tree is empty), returns `DetachedReferencePosition`
      */
     public rebasePosition(
         pos: number,
@@ -718,7 +721,7 @@ export class Client {
 
         // case happens when rebasing op, but concurrently entire string has been deleted
         if (segoff.segment === undefined || segoff.offset === undefined) {
-            return -1;
+            return DetachedReferencePosition;
         }
 
         assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);

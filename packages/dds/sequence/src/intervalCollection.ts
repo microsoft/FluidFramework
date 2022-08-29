@@ -32,6 +32,7 @@ import {
     UnassignedSequenceNumber,
     maxReferencePosition,
     createDetachedLocalReferencePosition,
+    DetachedReferencePosition,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
@@ -996,6 +997,8 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
             "add",
             {
                 process: (collection, params, local, op) => {
+                    // if params is undefined, the interval was deleted during
+                    // rebasing
                     if (!params) {
                         return;
                     }
@@ -1020,6 +1023,8 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
             "change",
             {
                 process: (collection, params, local, op) => {
+                    // if params is undefined, the interval was deleted during
+                    // rebasing
                     if (!params) {
                         return;
                     }
@@ -1437,7 +1442,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         });
     }
 
-    /** @internal */
+    /**
+     * @internal
+     *
+     * Returns new interval after rebasing. If undefined, the interval was
+     * deleted as a result of rebasing. This can occur if the interval applies
+     * to a range that no longer exists, and the interval was unable to slide.
+     */
     public rebaseLocalInterval(
         opName: string,
         serializedInterval: ISerializedInterval,
@@ -1473,19 +1484,24 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             this.addPendingChange(intervalId, rebased);
         }
 
+        // if the interval slid off the string, rebase the op to be a noop and
+        // delete the interval
+        if (startRebased === DetachedReferencePosition || endRebased === DetachedReferencePosition) {
+            if (localInterval) {
+                this.localCollection.removeExistingInterval(localInterval);
+            }
+            return undefined;
+        }
+
         if (!localInterval) {
             return rebased;
         }
 
-        // TODO: message
-        assert(localInterval instanceof SequenceInterval, "");
-
-        // if the interval slid off the string, rebase the op to be a nop and
-        // delete the interval
-        if (startRebased === -1 || endRebased === -1) {
-            this.localCollection.removeExistingInterval(localInterval);
-            return undefined;
-        }
+        // we know we must be using `SequenceInterval` because `this.client` exists
+        assert(
+            localInterval instanceof SequenceInterval,
+            "localInterval must be `SequenceInterval` when used with client",
+        );
 
         const startSegment = this.getSlideToSegment(localInterval.start);
         const endSegment = this.getSlideToSegment(localInterval.end);

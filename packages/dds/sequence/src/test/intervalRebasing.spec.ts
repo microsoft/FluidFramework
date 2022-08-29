@@ -16,8 +16,8 @@ import { assertConsistent, Client } from "./intervalUtils";
 
 function constructClients(
     containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+    numClients = 3,
 ): [Client, Client, Client] {
-    const numClients = 3;
     return Array.from({ length: numClients }, (_, index) => {
         const dataStoreRuntime = new MockFluidDataStoreRuntime();
         const sharedString = new SharedString(
@@ -38,10 +38,15 @@ function constructClients(
 }
 
 describe("interval rebasing", () => {
-    it("does not crash for an interval that lies on segment that has been removed locally", () => {
-        const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-        const clients = constructClients(containerRuntimeFactory);
+    let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+    let clients: [Client, Client, Client];
 
+    beforeEach(() => {
+        containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+        clients = constructClients(containerRuntimeFactory);
+    });
+
+    it("does not crash for an interval that lies on segment that has been removed locally", () => {
         clients[0].sharedString.insertText(0, "6fB26FcY");
         clients[1].containerRuntime.connected = false;
         clients[1].sharedString.insertText(0, "1jgvmr1qV");
@@ -67,9 +72,6 @@ describe("interval rebasing", () => {
     });
 
     it("does not crash when entire string on which interval lies is concurrently removed", () => {
-        const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-        const clients = constructClients(containerRuntimeFactory);
-
         clients[1].sharedString.insertText(0, "J");
         clients[0].sharedString.insertText(0, "a");
         clients[0].containerRuntime.connected = false;
@@ -88,9 +90,6 @@ describe("interval rebasing", () => {
     });
 
     it("does not crash when interval slides off end of string", () => {
-        const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-        const clients = constructClients(containerRuntimeFactory);
-
         clients[0].sharedString.insertText(0, "012Z45");
         clients[2].sharedString.insertText(0, "X");
         containerRuntimeFactory.processAllMessages();
