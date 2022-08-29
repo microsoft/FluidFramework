@@ -33,7 +33,7 @@ interface ContainerRecord {
 export class LoaderContainerTracker implements IOpProcessingController {
     private readonly containers = new Map<IContainer, ContainerRecord>();
     private lastProposalSeqNum: number = 0;
-    private readonly defaultTimeoutDurationMs: number = 2000;
+    private readonly defaultTimeoutDurationMs: number = 1500;
 
     constructor(private readonly syncSummarizerClients: boolean = false) {}
 
@@ -161,9 +161,68 @@ export class LoaderContainerTracker implements IOpProcessingController {
      *      - Trailing NoOp is tracked and don't count as pending ops.
      */
     public async ensureSynchronized(...containers: IContainer[]) {
+        const resumed = this.resumeProcessing(...containers);
+
+        let waitingSequenceNumberSynchronized = false;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const containersToApply = this.getContainers(containers);
+            if (containersToApply.length === 0) { break; }
+
+            // Ignore readonly dirty containers, because it can't sent up and nothing can be done about it being dirty
+            const dirtyContainers = containersToApply.filter((c) => {
+                const { deltaManager, isDirty } = c;
+                return deltaManager.readOnlyInfo.readonly !== true && isDirty;
+            });
+            if (dirtyContainers.length === 0) {
+                // Wait for all the leave messages
+                const pendingClients = this.getPendingClients(containersToApply);
+                if (pendingClients.length === 0) {
+                    if (this.isSequenceNumberSynchronized(containersToApply)) {
+                        // done, we are in sync
+                        break;
+                    }
+                    if (!waitingSequenceNumberSynchronized) {
+                        // Only write it out once
+                        waitingSequenceNumberSynchronized = true;
+                        debugWait("Waiting for sequence number synchronized");
+                        await this.waitForAnyInboundOps(containersToApply);
+                    }
+                } else {
+                    waitingSequenceNumberSynchronized = false;
+                    await this.waitForPendingClients(pendingClients);
+                }
+            } else {
+                // Wait for all the containers to be saved
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
+                waitingSequenceNumberSynchronized = false;
+                await Promise.all(dirtyContainers.map(async (c) => Promise.race(
+                    [new Promise((resolve) => c.once("saved", resolve)),
+                    new Promise((resolve) => c.once("closed", resolve))],
+                )));
+            }
+
+            // yield a turn to allow side effect of the ops we just processed execute before we check again
+            await new Promise<void>((resolve) => { setTimeout(resolve, 0); });
+        }
+
+        // Pause all container that was resumed
+        // don't call pause if resumed is empty and pause everything, which is not what we want
+        if (resumed.length !== 0) {
+            await this.pauseProcessing(...resumed);
+        }
+
+        debugWait("Synchronized");
+    }
+
+    /**
+     * Make sure all the tracked containers are synchronized with a time limit
+     */
+    public async ensureSynchronizedWithTimeout(timeoutDuration = this.defaultTimeoutDurationMs,
+    ...containers: IContainer[]) {
         const start = Date.now();
         const resumed = this.resumeProcessing(...containers);
-        const timeoutDuration = this.defaultTimeoutDurationMs;
 
         let waitingSequenceNumberSynchronized = false;
         // eslint-disable-next-line no-constant-condition
