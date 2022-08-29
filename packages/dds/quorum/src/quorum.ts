@@ -315,7 +315,8 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
 
         const accepted = currentValue?.accepted;
 
-        // We expect signoffs from all connected clients at the time the set was sequenced.
+        // We expect signoffs from all connected clients at the time the set was sequenced (including the client who
+        // sent the set).
         const expectedSignoffs = this.getSignoffClients();
 
         const newQuorumValue: QuorumValue<T> = {
