@@ -22,18 +22,6 @@
  *
  * Other DDSes and related libraries are published separately.
  *
- * @remarks This package is implemented by re-exporting contents from the following library packages:
- *
- * - `@fluidframwork/container-definitions`
- *
- * - `@fluidframwork/container-loader`
- *
- * - `@fluidframwork/fluid-static`
- *
- * - `@fluidframwork/map`
- *
- * - `@fluidframwork/sequence`
- *
  * @packageDocumentation
  */
 
