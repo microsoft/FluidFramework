@@ -121,7 +121,9 @@ describe("Runtime", () => {
                     });
 
                     it("Can't call flush() inside orderSequentially's callback", () => {
-                        assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
+                        assert.throws(() => containerRuntime.orderSequentially(() => {
+                            (containerRuntime as any).flush();
+                        }));
 
                         const error = getFirstContainerError();
                         assert.ok(error instanceof GenericError);
@@ -132,7 +134,9 @@ describe("Runtime", () => {
                         assert.throws(
                             () => containerRuntime.orderSequentially(
                                 () => containerRuntime.orderSequentially(
-                                    () => containerRuntime.flush())));
+                                    () => {
+                                        (containerRuntime as any).flush();
+                                    })));
 
                         const error = getFirstContainerError();
                         assert.ok(error instanceof GenericError);
@@ -142,7 +146,9 @@ describe("Runtime", () => {
                     it("Can't call flush() inside orderSequentially's callback when nested ignoring exceptions", () => {
                         containerRuntime.orderSequentially(() => {
                             try {
-                                containerRuntime.orderSequentially(() => containerRuntime.flush());
+                                containerRuntime.orderSequentially(() => {
+                                    (containerRuntime as any).flush();
+                                });
                             } catch (e) {
                                 // ignore
                             }

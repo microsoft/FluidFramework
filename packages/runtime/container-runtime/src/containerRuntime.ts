@@ -811,6 +811,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _orderSequentiallyCalls: number = 0;
     private readonly _flushMode: FlushMode;
     private needsFlush = false;
+    private flushMicroTaskExists = false;
 
     private _connected: boolean;
 
@@ -1770,9 +1771,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Flush the pending ops manually.
      * This method is expected to be called at the end of a batch.
-     * @param isImmediateBatch - is this "flush" being called at the end of a "FlushMode.Immediate" batch?
      */
-    public flush(isImmediateBatch: boolean = false): void {
+    private flush(): void {
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
@@ -1780,15 +1780,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        // ! TODO: This condition should be removed once "flush" becomes private
-        // See https://dev.azure.com/fluidframework/internal/_workitems/edit/1076
-        if (this.flushMode !== FlushMode.Immediate || isImmediateBatch) {
-            // Let the PendingStateManager know that there was an attempt to flush messages.
-            // Note that this should happen before the `this.needsFlush` check below because in the scenario where we
-            // are not connected, `this.needsFlush` will be false but the PendingStateManager might have pending
-            // messages and hence needs to track this.
-            this.pendingStateManager.onFlush();
-        }
+        // Let the PendingStateManager know that there was an attempt to flush messages.
+        // Note that this should happen before the `this.needsFlush` check below because in the scenario where we
+        // are not connected, `this.needsFlush` will be false but the PendingStateManager might have pending
+        // messages and hence needs to track this.
+        this.pendingStateManager.onFlush();
 
         // If flush has already been called then exit early
         if (!this.needsFlush) {
@@ -1828,7 +1824,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.flushMode === FlushMode.Immediate && this._orderSequentiallyCalls === 0) {
-            this.flush(true);
+            this.flush();
         }
     }
 
@@ -2540,25 +2536,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;
 
+        // We should add the "batch: true" metadata regardless of the connected state
+        if (this.currentlyBatching() && !this.needsFlush) {
+            opMetadataInternal = {
+                ...opMetadata,
+                batch: true,
+            };
+            this.needsFlush = true;
+        }
+
         if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in TurnBased flush mode we will trigger a flush at the next turn break
-            if (this.currentlyBatching() && !this.needsFlush) {
-                opMetadataInternal = {
-                    ...opMetadata,
-                    batch: true,
-                };
-                this.needsFlush = true;
-
+            if (this.flushMode === FlushMode.TurnBased && !this.flushMicroTaskExists) {
+                this.flushMicroTaskExists = true;
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                if (this.flushMode === FlushMode.TurnBased) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flush();
-                    });
-                }
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flushMicroTaskExists = false;
+                    this.flush();
+                });
             }
 
             clientSequenceNumber = this.submitMaybeChunkedMessages(
