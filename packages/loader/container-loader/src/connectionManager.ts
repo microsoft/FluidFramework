@@ -392,7 +392,7 @@ export class ConnectionManager implements IConnectionManager {
             if (this._reconnectMode === ReconnectMode.Never) {
                 throw new UsageError("API is not supported for non-connecting or closed container");
             }
-            // let reconnect = false;
+            let reconnect = false;
             if (this.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
                 // See comment in the "readonly" event handler to deltaManager set up by
@@ -404,16 +404,13 @@ export class ConnectionManager implements IConnectionManager {
                     this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
                 }
 
-                this.disconnectFromDeltaStream("Force readonly");
-            } else if (this.connection === undefined) {
-                // reconnect since we were previously in readonly mode
-                this.triggerConnect("read");
+                reconnect = this.disconnectFromDeltaStream("Force readonly");
             }
             this.props.readonlyChangeHandler(this.readonly);
-            // if (reconnect) {
-            //     // reconnect if we disconnected from before.
-            //     this.triggerConnect("read");
-            // }
+            if (reconnect) {
+                // reconnect if we disconnected from before.
+                this.triggerConnect("read");
+            }
         }
     }
 
@@ -422,12 +419,6 @@ export class ConnectionManager implements IConnectionManager {
         this._readonlyPermissions = readonly;
         if (oldValue !== this.readonly) {
             this.props.readonlyChangeHandler(this.readonly);
-            if (this.readonly === true) {
-                this.disconnectFromDeltaStream("readonly from permissions");
-            } else if (this.connection === undefined) {
-                // reconnect since we were previously in readonly mode
-                this.triggerConnect("read");
-            }
         }
     }
 
