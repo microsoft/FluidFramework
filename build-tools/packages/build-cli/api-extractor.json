@@ -9,7 +9,7 @@
     "extractorMessageReporting": {
       "ae-unresolved-link": {
         "logLevel": "warning",
-        "addToApiReportFile": false
+        "addToApiReportFile": true
       }
     }
   }
