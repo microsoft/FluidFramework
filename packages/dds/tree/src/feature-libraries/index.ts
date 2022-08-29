@@ -10,7 +10,24 @@ export * from "./schemaIndex";
 export * from "./treeTextCursor";
 export * from "./sequence-change-family";
 export * from "./defaultSchema";
-export { isNeverField, ChangeHandler, FieldKind, Multiplicity, FullSchemaPolicy } from "./modular-schema";
+export {
+    isNeverField,
+    FieldChangeHandler,
+    FieldChangeRebaser,
+    FieldChangeEncoder,
+    NodeChangeset,
+    FieldChangeMap,
+    FieldChangeset,
+    ToDelta,
+    NodeChangeComposer,
+    NodeChangeInverter,
+    NodeChangeRebaser,
+    NodeChangeEncoder,
+    NodeChangeDecoder,
+    FieldKind,
+    Multiplicity,
+    FullSchemaPolicy,
+} from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as FieldKinds from "./defaultFieldKinds";

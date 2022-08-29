@@ -4,6 +4,7 @@
  */
 
 export * from "./fieldKind";
+export * from "./fieldChangeHandler";
 export {
 	isNeverField, isNeverTree, allowsRepoSuperset, allowsTreeSchemaIdentifierSuperset, allowsFieldSuperset,
 	allowsTreeSuperset,
