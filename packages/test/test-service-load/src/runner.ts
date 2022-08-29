@@ -9,7 +9,7 @@ import {
     TestDriverTypes,
     DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { Loader, ConnectionState } from "@fluidframework/container-loader";
 import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -141,14 +141,15 @@ async function runnerProcess(
     let metricsCleanup: () => void = () => {};
 
     try {
+        const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
         const loaderOptions = generateLoaderOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.loader);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader);
 
         const containerOptions = generateRuntimeOptions(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.container);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container);
 
         const configurations = generateConfigurations(
-            seed, runConfig.testConfig?.optionOverrides?.[driver]?.configurations);
+            seed, runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations);
         const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
@@ -198,9 +199,7 @@ async function runnerProcess(
             });
 
             const container: IContainer = await loader.resolve({ url, headers });
-            // TODO: Remove null check after next release #8523
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            container.resume!();
+            container.connect();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
             if (enableOpsMetrics) {
@@ -227,7 +226,7 @@ async function runnerProcess(
 
             try {
                 printStatus(runConfig, `running`);
-                done = await test.run(runConfig, reset);
+                done = await test.run(runConfig, reset, logger);
                 reset = false;
                 printStatus(runConfig, done ? `finished` : "closed");
             } catch (error) {
@@ -261,8 +260,7 @@ function scheduleFaultInjection(
         const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs)(runConfig.randEng);
         printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`);
         setTimeout(() => {
-            // TODO: Remove null check after next release #8523
-            if (container.connected !== undefined && container.connected && container.resolvedUrl !== undefined) {
+            if (container.connectionState === ConnectionState.Connected && container.resolvedUrl !== undefined) {
                 const deltaConn =
                     ds.documentServices.get(container.resolvedUrl)?.documentDeltaConnection;
                 if (deltaConn !== undefined) {
@@ -308,8 +306,7 @@ function scheduleContainerClose(
     new Promise<void>((resolve) => {
         // wait for the container to connect write
         container.once("closed", () => resolve);
-        // TODO: Remove null check after next release #8523
-        if (container.connected !== undefined && !container.connected && !container.closed) {
+        if (container.connectionState !== ConnectionState.Connected && !container.closed) {
             container.once("connected", () => {
                 resolve();
                 container.off("closed", () => resolve);

@@ -21,7 +21,10 @@ export class LeaderElection {
     public setupLeaderElection() {
         this.dataStoreRuntime.on("signal", (signal: ISignalMessage) => this.handleSignal(signal));
         this.lastPinged = Date.now();
-        let interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
+        let interval;
+        if (this.dataStoreRuntime.connected && !this.dataStoreRuntime.disposed) {
+            interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
+        }
 
         this.dataStoreRuntime.once("dispose", () => {
             clearInterval(interval);
@@ -32,6 +35,7 @@ export class LeaderElection {
         });
 
         this.dataStoreRuntime.on("connected", () => {
+            clearInterval(interval);
             interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
         });
     }

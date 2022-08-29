@@ -4,7 +4,9 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
+    FetchSource,
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     ISummaryContext,
@@ -14,11 +16,9 @@ import {
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDetachedBlobStorage } from "./loader";
-import { ISnapshotTreeWithBlobContents } from "./utils";
 
 /**
  * This class wraps the actual storage and make sure no wrong apis are called according to
@@ -54,8 +54,8 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         return this.storageGetter().repositoryUrl;
     }
 
-    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        return this.storageGetter().getSnapshotTree(version);
+    public async getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null> {
+        return this.storageGetter().getSnapshotTree(version, scenarioName);
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -66,12 +66,13 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         return this.storageGetter().readBlob(id);
     }
 
-    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-        return this.storageGetter().getVersions(versionId, count);
-    }
-
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.storageGetter().write(tree, parents, message, ref);
+    public async getVersions(
+        versionId: string | null,
+        count: number,
+        scenarioName?: string,
+        fetchSource?: FetchSource,
+    ): Promise<IVersion[]> {
+        return this.storageGetter().getVersions(versionId, count, scenarioName, fetchSource);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {

@@ -17,7 +17,6 @@ import {
     MergeTreeDeltaType,
     IMergeTreeMaintenanceCallbackArgs,
     MergeTreeMaintenanceType,
-    LocalReference,
     ReferenceType,
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -177,7 +176,7 @@ export class PermutationVector extends Client {
 
         return {
             op: this.insertAtReferencePositionLocal(
-                    new LocalReference(this, segment, /* offset: */ 0, ReferenceType.Transient),
+                    this.createLocalReferencePosition(segment, 0, ReferenceType.Transient, undefined),
                     inserted),
             inserted,
         };

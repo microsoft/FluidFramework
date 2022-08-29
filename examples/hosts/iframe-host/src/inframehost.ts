@@ -12,6 +12,7 @@ import {
     IContainer,
     ICodeDetailsLoader,
     IFluidCodeDetails,
+    ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
@@ -39,15 +40,15 @@ export interface IFrameInnerApi {
     setMessagePort(innerPort: MessagePort): Promise<void>;
     /**
      * Load a container
-     * @param documentId - id for the container
-     * @param createNew - if a new container should be created
+     * @param documentId - ID for the container
+     * @param createNew - If a new container should be created
      * @returns An identifier for the container that can be used with this API
      */
     loadContainer(documentId: string, createNew: boolean): Promise<string>;
     /**
      * Attach the container with the given id inside the IFrame
-     * @param containerId - the containerid on which to call attach
-     * @param request - the request to pass to the attach call
+     * @param containerId - The containerid on which to call attach
+     * @param request - The request to pass to the attach call
      */
     attachContainer(containerId: string, request: IRequest): Promise<void>;
 }
@@ -86,6 +87,8 @@ class ProxyRuntime implements IRuntime {
         throw new Error("Method not implemented.");
     }
     setAttachState(state: AttachState.Attaching | AttachState.Attached) {
+    }
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void {
     }
     getPendingLocalState() {
         throw new Error("Method not implemented.");

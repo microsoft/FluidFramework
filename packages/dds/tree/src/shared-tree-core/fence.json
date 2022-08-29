@@ -1,0 +1,10 @@
+{
+    "tags": [ "shared-tree-core" ],
+    "exports": ["index"],
+    "imports": [
+        "change-family",
+        "edit-manager",
+        "tree",
+        "util"
+    ]
+}

@@ -5,12 +5,22 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        require.resolve("@fluidframework/eslint-config-fluid")
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
         "@typescript-eslint/strict-boolean-expressions": "off",
-    }
+    },
+    "overrides": [
+        {
+            // The assertion shortcode map file is auto-generated, so disable some rules.
+            "files": ["src/assertionShortCodesMap.ts"],
+            "rules": {
+                "@typescript-eslint/comma-dangle": "off",
+            }
+        }
+    ],
+
 }

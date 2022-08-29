@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IGCResult } from "./interfaces";
 
 /**
@@ -11,14 +10,9 @@ import { IGCResult } from "./interfaces";
  * @param referenceGraph - The reference graph to run GC on. It's a list of nodes where each node has an id and set of
  * routes to other nodes in the graph.
  * @param rootIds - The ids of root nodes that are considered referenced.
- * @param logger - Used to log telemetry.
  * @returns the ids of referenced nodes and the ids of deleted nodes in the referenced graph.
  */
-export function runGarbageCollection(
-    referenceGraph: { [id: string]: string[]; },
-    rootIds: string[],
-    logger: ITelemetryLogger,
-): IGCResult {
+export function runGarbageCollection(referenceGraph: { [id: string]: string[]; }, rootIds: string[]): IGCResult {
     // This set keeps track of nodes that we have visited. It is used to detect cycles in the graph.
     const visited: Set<string> = new Set();
 
@@ -37,19 +31,6 @@ export function runGarbageCollection(
         const routes = referenceGraph[id];
         if (routes !== undefined) {
             referencedIds.push(...routes);
-        } else {
-            // Log a telemetry event if there is a node missing for a referenced id. This should not happen but for now
-            // we don't assert. We can monitor telemetry for a while to figure out next steps.
-
-            /*
-             * This telemetry is currently too noisy. Start sending it GC is enabled end-to-end. See here for details -
-             * https://github.com/microsoft/FluidFramework/issues/4939
-             *
-             * logger.sendTelemetryEvent({
-             *    eventName: "MissingGCNode",
-             *    missingNodeId: id,
-             * });
-            */
         }
     }
 

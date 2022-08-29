@@ -23,6 +23,7 @@ declare function get_old_TypeAliasDeclaration_AliasResult():
 declare function use_current_TypeAliasDeclaration_AliasResult(
     use: TypeOnly<current.AliasResult>);
 use_current_TypeAliasDeclaration_AliasResult(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_AliasResult());
 
 /*
@@ -36,6 +37,30 @@ declare function use_old_TypeAliasDeclaration_AliasResult(
     use: TypeOnly<old.AliasResult>);
 use_old_TypeAliasDeclaration_AliasResult(
     get_current_TypeAliasDeclaration_AliasResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_blobCountPropertyName": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_blobCountPropertyName():
+    TypeOnly<typeof old.blobCountPropertyName>;
+declare function use_current_VariableDeclaration_blobCountPropertyName(
+    use: TypeOnly<typeof current.blobCountPropertyName>);
+use_current_VariableDeclaration_blobCountPropertyName(
+    get_old_VariableDeclaration_blobCountPropertyName());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_blobCountPropertyName": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_blobCountPropertyName():
+    TypeOnly<typeof current.blobCountPropertyName>;
+declare function use_old_VariableDeclaration_blobCountPropertyName(
+    use: TypeOnly<typeof old.blobCountPropertyName>);
+use_old_VariableDeclaration_blobCountPropertyName(
+    get_current_VariableDeclaration_blobCountPropertyName());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -335,6 +360,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<current.IFluidDataStoreChannel>);
 use_current_InterfaceDeclaration_IFluidDataStoreChannel(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -347,6 +373,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<old.IFluidDataStoreChannel>);
 use_old_InterfaceDeclaration_IFluidDataStoreChannel(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -359,6 +386,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<current.IFluidDataStoreContext>);
 use_current_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -371,6 +399,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>);
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -383,6 +412,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextDetached():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<current.IFluidDataStoreContextDetached>);
 use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -395,6 +425,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>);
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -952,6 +983,30 @@ use_old_InterfaceDeclaration_ISummaryTreeWithStats(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITelemetryContext": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITelemetryContext():
+    TypeOnly<old.ITelemetryContext>;
+declare function use_current_InterfaceDeclaration_ITelemetryContext(
+    use: TypeOnly<current.ITelemetryContext>);
+use_current_InterfaceDeclaration_ITelemetryContext(
+    get_old_InterfaceDeclaration_ITelemetryContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITelemetryContext": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITelemetryContext():
+    TypeOnly<current.ITelemetryContext>;
+declare function use_old_InterfaceDeclaration_ITelemetryContext(
+    use: TypeOnly<old.ITelemetryContext>);
+use_old_InterfaceDeclaration_ITelemetryContext(
+    get_current_InterfaceDeclaration_ITelemetryContext());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries():
@@ -1020,6 +1075,30 @@ declare function use_old_TypeAliasDeclaration_SummarizeInternalFn(
     use: TypeOnly<old.SummarizeInternalFn>);
 use_old_TypeAliasDeclaration_SummarizeInternalFn(
     get_current_TypeAliasDeclaration_SummarizeInternalFn());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_totalBlobSizePropertyName": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_totalBlobSizePropertyName():
+    TypeOnly<typeof old.totalBlobSizePropertyName>;
+declare function use_current_VariableDeclaration_totalBlobSizePropertyName(
+    use: TypeOnly<typeof current.totalBlobSizePropertyName>);
+use_current_VariableDeclaration_totalBlobSizePropertyName(
+    get_old_VariableDeclaration_totalBlobSizePropertyName());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_totalBlobSizePropertyName": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_totalBlobSizePropertyName():
+    TypeOnly<typeof current.totalBlobSizePropertyName>;
+declare function use_old_VariableDeclaration_totalBlobSizePropertyName(
+    use: TypeOnly<typeof old.totalBlobSizePropertyName>);
+use_old_VariableDeclaration_totalBlobSizePropertyName(
+    get_current_VariableDeclaration_totalBlobSizePropertyName());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -7,9 +7,15 @@ export * from "./base";
 export * from "./client";
 export * from "./collections";
 export * from "./constants";
-export * from "./localReference";
-export * from "./mergeTree";
+export {
+    createDetachedLocalReferencePosition,
+    LocalReferencePosition,
+    LocalReferenceCollection,
+ } from "./localReference";
+ export * from "./mergeTree";
+export * from "./mergeTreeNodes";
 export * from "./mergeTreeDeltaCallback";
+export * from "./MergeTreeTextHelper";
 export * from "./mergeTreeTracking";
 export * from "./opBuilder";
 export * from "./ops";

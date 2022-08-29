@@ -51,7 +51,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     //`Util.ts
 
     import { IFluidContainer } from "fluid-framework";
-    import { AzureClient, AzureClientProps, LOCAL_MODE_TENANT_ID } from "@fluidframework/azure-client";
+    import { AzureClient, AzureClientProps } from "@fluidframework/azure-client";
     import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
     ```
 
@@ -88,10 +88,9 @@ const containerSchema = {
 const connectionConfig : AzureClientProps =
 {
     connection: {
-        tenantId: LOCAL_MODE_TENANT_ID,
+        type: "local",
         tokenProvider: new InsecureTokenProvider("foobar", { id: "user" }),
-        orderer: "http://localhost:7070",
-        storage: "http://localhost:7070"
+        endpoint: "http://localhost:7070"
     }
 };
 ```
@@ -268,6 +267,12 @@ Now follow the [instructions to upload the application to a Teams Tab](https://d
 {{< callout warning >}}
 
 Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate a different URL. This means that anytime a new `ngrok` tunnel is created, the older container will no longer be accessible. For production scenarios, please visit [the section below](#using-azureclient-with-azure-fluid-relay)
+
+{{< /callout >}}
+
+{{< callout note >}}
+
+You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
 
 {{< /callout >}}
 

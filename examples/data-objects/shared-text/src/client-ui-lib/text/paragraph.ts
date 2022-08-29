@@ -11,6 +11,7 @@ eslint-disable
 */
 
 import * as MergeTree from "@fluidframework/merge-tree";
+import { refHasRangeLabel, refHasTileLabel } from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
 import { CharacterCodes } from "./characterCodes";
 
@@ -288,7 +289,7 @@ function getPrecedingTile(
     }
 }
 
-export const isListTile = (tile: IParagraphMarker) => tile.hasTileLabel("list");
+export const isListTile = (tile: IParagraphMarker) => refHasTileLabel(tile, "list");
 
 export interface ISymbol {
     font?: string;
@@ -399,12 +400,9 @@ export function getListCacheInfo(
                     tile.listCache = { itemCounts };
                 } else {
                     // Doesn't race because re-render is deferred
-                    let series: number[];
-                    if (tile.properties!.listKind === 0) {
-                        series = [0, 0, 2, 6, 3, 7, 2, 6, 3, 7];
-                    } else {
-                        series = [0, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6];
-                    }
+                    const series: number[] = tile.properties!.listKind === 0
+                        ? [0, 0, 2, 6, 3, 7, 2, 6, 3, 7]
+                        : [0, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6];
                     sharedString.annotateRange(tilePos, tilePos + 1, { series });
                     convertToListHead(tile);
                 }
@@ -509,7 +507,7 @@ export function textTokenToItems(
 
 // eslint-disable-next-line no-bitwise
 export const isEndBox = (marker: MergeTree.Marker) => (marker.refType & MergeTree.ReferenceType.NestEnd) &&
-    marker.hasRangeLabel("box");
+    refHasRangeLabel(marker, "box");
 
 export const referenceProperty = "ref";
 
@@ -523,7 +521,7 @@ export function segmentToItems(
     } else if (MergeTree.Marker.is(segment)) {
         if (isReference(segment)) {
             context.paragraphLexer.mark(segment);
-        } else if (segment.hasTileLabel("pg") || isEndBox(segment)) {
+        } else if (refHasTileLabel(segment, "pg") || isEndBox(segment)) {
             context.nextPGPos = segpos;
             return false;
         }

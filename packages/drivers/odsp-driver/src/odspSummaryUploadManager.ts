@@ -39,6 +39,7 @@ export class OdspSummaryUploadManager {
         logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
         private readonly forceAccessTokenViaAuthorizationHeader: boolean,
+        private readonly relayServiceTenantAndSessionId: () => string,
     ) {
         this.mc = loggerToMonitoringContext(logger);
     }
@@ -69,9 +70,7 @@ export class OdspSummaryUploadManager {
         referenceSequenceNumber: number,
         tree: api.ISummaryTree,
     ): Promise<IWriteSummaryResponse> {
-        const enableContainerTypeSummaryUpload = this.mc.config.getBoolean("Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload");
-        const containsProtocolTree = enableContainerTypeSummaryUpload &&
-            Object.keys(tree.tree).includes(".protocol");
+        const containsProtocolTree = Object.keys(tree.tree).includes(".protocol");
         const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
             tree,
@@ -95,9 +94,8 @@ export class OdspSummaryUploadManager {
                 this.forceAccessTokenViaAuthorizationHeader,
             );
             headers["Content-Type"] = "application/json";
-            if (parentHandle) {
-                headers["If-Match"] = `fluid:containerid=${parentHandle}`;
-            }
+            headers["If-Match"] = `fluid:sessionid=${
+                this.relayServiceTenantAndSessionId()}${parentHandle ? `;containerid=${parentHandle}` : ""}`;
 
             const postBody = JSON.stringify(snapshot);
 
@@ -112,7 +110,6 @@ export class OdspSummaryUploadManager {
                     size: postBody.length,
                     referenceSequenceNumber,
                     type: snapshot.type,
-                    enableContainerTypeSummaryUpload,
                 },
                 async () => {
                     const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(

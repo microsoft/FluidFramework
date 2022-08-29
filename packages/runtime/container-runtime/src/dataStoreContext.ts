@@ -13,7 +13,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    BindState,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -58,6 +57,7 @@ import {
     ISummarizeResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -231,7 +231,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
-    public readonly bindToContext: () => void;
+    // back-compat (for tests) - can be removed in 2.0.0-alpha.2.0.0, or earlier if compat tests drop n/n-2 coverage
+    // @ts-expect-error - This shouldn't be referenced in the current version, but needs to be here for back-compat
+    private readonly bindToContext: () => void;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
     protected pending: ISequencedDocumentMessage[] | undefined = [];
@@ -259,7 +261,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     constructor(
         props: IFluidDataStoreContextProps,
         private readonly existing: boolean,
-        private bindState: BindState,
         public readonly isLocalDataStore: boolean,
         private readonly makeLocallyVisibleFn: () => void,
     ) {
@@ -275,21 +276,19 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // URIs use slashes as delimiters. Handles use URIs.
         // Thus having slashes in types almost guarantees trouble down the road!
-        assert(this.id.indexOf("/") === -1, 0x13a /* `Data store ID contains slash: ${id}` */);
+        assert(!this.id.includes("/"), 0x13a /* Data store ID contains slash */);
 
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && this.existing ?
             this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = () => {
-            assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
-            this.bindState = BindState.Binding;
             assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
             this.makeLocallyVisible();
-            this.bindState = BindState.Bound;
         };
 
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
+            this.summarizeInternal(fullTree, trackState, telemetryContext);
 
         this.summarizerNode = props.createSummarizerNodeFn(
             thisSummarizeInternal,
@@ -317,7 +316,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.CodeArtifact } });
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
@@ -326,7 +325,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
                 const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
-                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData" } });
+                errorWrapped.addTelemetryProperties({
+                    fluidDataStoreId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.CodeArtifact,
+                    },
+                });
                 this.channelDeferred?.reject(errorWrapped);
                 this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
             });
@@ -383,8 +387,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.
-     * @param clientId - ID of the client. It's old ID when in disconnected state and
-     * it's new client ID when we are connecting or connected.
+     * @param clientId - ID of the client. Its old ID when in disconnected state and
+     * its new client ID when we are connecting or connected.
      */
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
@@ -445,16 +449,25 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree, trackState);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeInternalResult> {
         await this.realize();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const summarizeResult = await this.channel!.summarize(fullTree, trackState);
+        const summarizeResult = await this.channel!.summarize(fullTree, trackState, telemetryContext);
         let pathPartsForChildren: string[] | undefined;
 
         if (!this.disableIsolatedChannels) {
@@ -679,7 +692,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData" } },
+                { eventName: "BindRuntimeError", fluidDataStoreId: {
+                    value: this.id,
+                    tag: TelemetryDataTag.CodeArtifact,
+                } },
                 error);
         }
     }
@@ -693,7 +709,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public abstract generateAttachMessage(): IAttachMessage;
 
-    protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
+    public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     /**
      * @deprecated - Sets the datastore as root, for aliasing purposes: #7948
@@ -715,6 +731,17 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
         const innerContents = contents as FluidDataStoreMessage;
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+    }
+
+    public rollback(contents: any, localOpMetadata: unknown) {
+        if (!this.channel) {
+            throw new Error("Channel must exist when rolling back ops");
+        }
+        if (!this.channel.rollback) {
+            throw new Error("Channel doesn't support rollback");
+        }
+        const innerContents = contents as FluidDataStoreMessage;
+        this.channel.rollback(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     public async applyStashedOp(contents: any): Promise<unknown> {
@@ -761,7 +788,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         super(
             props,
             true /* existing */,
-            BindState.Bound,
             false /* isLocalDataStore */,
             () => {
                 throw new Error("Already attached");
@@ -787,11 +813,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
         const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
         if (tree) {
-            const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
-            tree = loadedSummary.baseSummary;
-            // Prepend outstanding ops to pending queue of ops to process.
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending = loadedSummary.outstandingOps.concat(this.pending!);
+            tree = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
         }
 
         if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
@@ -836,7 +858,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         };
     });
 
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         return this.initialSnapshotDetailsP;
     }
 
@@ -870,7 +892,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         super(
             props,
             props.snapshotTree !== undefined ? true : false /* existing */,
-            props.snapshotTree ? BindState.Bound : BindState.NotBound,
             true /* isLocalDataStore */,
             props.makeLocallyVisibleFn,
         );
@@ -925,7 +946,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         return message;
     }
 
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         let snapshot = this.snapshotTree;
         let attributes: ReadFluidDataStoreAttributes;
         let isRootDataStore = false;
@@ -1018,17 +1039,11 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreChannel);
 
         if (await this.isRoot()) {
-            // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
-            // For older versions, we still have to call bindToContext.
-            if (dataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
-                dataStoreChannel.makeVisibleAndAttachGraph();
-            } else {
-                dataStoreChannel.bindToContext();
-            }
+            dataStoreChannel.makeVisibleAndAttachGraph();
         }
     }
 
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (this.detachedRuntimeCreation) {
             throw new Error("Detached Fluid Data Store context can't be realized! Please attach runtime first!");
         }

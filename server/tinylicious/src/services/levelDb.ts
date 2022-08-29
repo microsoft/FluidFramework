@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
-import level from "level";
+import { Level } from "level";
 import sublevel from "level-sublevel";
 import { Collection, ICollectionProperty } from "./levelDbCollection";
 
@@ -16,7 +16,7 @@ export class LevelDb extends EventEmitter implements IDb {
 
     constructor(private readonly path: string) {
         super();
-        this.db = sublevel(level(this.path, {
+        this.db = sublevel(new Level(this.path, {
             valueEncoding: "json",
         }));
     }
@@ -29,6 +29,10 @@ export class LevelDb extends EventEmitter implements IDb {
     public collection<T>(name: string): ICollection<T> {
         const collectionDb = this.db.sublevel(name);
         return new Collection(collectionDb, this.getProperty(name));
+    }
+
+    public async dropCollection(name: string): Promise<boolean> {
+        throw new Error("Method Not Implemented");
     }
 
     // LevelDB is a pure key value storage so we need to know the fields prior to generate insertion key.

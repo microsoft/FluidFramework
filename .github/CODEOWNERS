@@ -13,6 +13,8 @@
 /.md-magic-templates/                                                     @microsoft/fluid-cr-docs
 /.vscode/                                                                 @microsoft/fluid-cr-infra
 
+/azure/                                                                   @microsoft/fluid-cr-framework
+
 /common/build/                                                            @microsoft/fluid-cr-infra
 /common/lib/                                                              @microsoft/fluid-cr-core
 /docs/                                                                    @microsoft/fluid-cr-docs
@@ -22,7 +24,6 @@
 /experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
 /experimental/dds/tree-graphql/                                           @microsoft/fluid-cr-tree
-/experimental/dds/xtree/                                                  @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
 /packages/drivers/                                                        @microsoft/fluid-cr-drivers
 /packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
@@ -36,6 +37,7 @@
 /packages/utils/telemetry-utils/                                          @microsoft/fluid-cr-telemetry
 /server/                                                                  @microsoft/fluid-cr-server
 /tools/                                                                   @microsoft/fluid-cr-infra
+/tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-framework
 
 # PUBLIC API REPORTS
 # All packages are assumed to have public APIs unless defined otherwise in the sections below.

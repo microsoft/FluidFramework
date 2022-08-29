@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* globals targets */
 /* eslint-disable no-unused-expressions */
 /* eslint-disable consistent-return */
 /**

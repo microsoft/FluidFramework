@@ -4,10 +4,10 @@
  */
 
 import {
+    IDeltaService,
     IDocumentStorage,
     IProducer,
     ITenantManager,
-    MongoManager,
     IThrottler,
     ICache,
     ICollection,
@@ -28,7 +28,7 @@ export function create(
     tenantManager: ITenantManager,
     throttler: IThrottler,
     singleUseTokenCache: ICache,
-    operationsDbMongoManager: MongoManager,
+    deltaService: IDeltaService,
     storage: IDocumentStorage,
     producer: IProducer,
     appTenants: IAlfredTenant[],
@@ -40,7 +40,7 @@ export function create(
             throttler,
             singleUseTokenCache,
             storage,
-            operationsDbMongoManager,
+            deltaService,
             producer,
             appTenants,
             documentsCollection,

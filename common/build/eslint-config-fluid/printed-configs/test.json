@@ -22,8 +22,10 @@
         "import",
         "unicorn",
         "react",
+        "unused-imports",
         "tsdoc",
         "promise",
+        "jsdoc",
         "@typescript-eslint",
         "@rushstack/security",
         "@rushstack"
@@ -184,7 +186,7 @@
             "error"
         ],
         "@typescript-eslint/no-namespace": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-non-null-asserted-optional-chain": [
             "error"
@@ -266,7 +268,13 @@
         "@typescript-eslint/prefer-function-type": [
             "error"
         ],
+        "@typescript-eslint/prefer-includes": [
+            "error"
+        ],
         "@typescript-eslint/prefer-namespace-keyword": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-nullish-coalescing": [
             "error"
         ],
         "@typescript-eslint/prefer-optional-chain": [
@@ -474,6 +482,39 @@
             "error"
         ],
         "import/order": [
+            "error"
+        ],
+        "jsdoc/check-access": [
+            "error"
+        ],
+        "jsdoc/check-examples": [
+            "off"
+        ],
+        "jsdoc/check-indentation": [
+            "error"
+        ],
+        "jsdoc/check-line-alignment": [
+            "error"
+        ],
+        "jsdoc/check-tag-names": [
+            "off"
+        ],
+        "jsdoc/empty-tags": [
+            "error"
+        ],
+        "jsdoc/no-bad-blocks": [
+            "error"
+        ],
+        "jsdoc/require-asterisk-prefix": [
+            "error"
+        ],
+        "jsdoc/require-hyphen-before-param-description": [
+            "error"
+        ],
+        "jsdoc/require-param-description": [
+            "error"
+        ],
+        "jsdoc/require-returns-description": [
             "error"
         ],
         "jsx-quotes": [
@@ -896,11 +937,23 @@
         "unicorn/no-unsafe-regex": [
             "error"
         ],
+        "unicorn/prefer-switch": [
+            "error"
+        ],
+        "unicorn/prefer-ternary": [
+            "error"
+        ],
+        "unicorn/prefer-type-error": [
+            "error"
+        ],
+        "unused-imports/no-unused-imports": [
+            "error"
+        ],
         "use-isnan": [
             "error"
         ],
         "valid-typeof": [
-            "off"
+            "error"
         ],
         "yoda": [
             "off"
@@ -934,6 +987,23 @@
                     ".js",
                     ".jsx"
                 ]
+            }
+        },
+        "jsdoc": {
+            "mode": "typescript",
+            "tagNamePreference": {
+                "arg": {
+                    "message": "Please use @param instead of @arg.",
+                    "replacement": "param"
+                },
+                "argument": {
+                    "message": "Please use @param instead of @argument.",
+                    "replacement": "param"
+                },
+                "return": {
+                    "message": "Please use @returns instead of @return.",
+                    "replacement": "returns"
+                }
             }
         }
     }

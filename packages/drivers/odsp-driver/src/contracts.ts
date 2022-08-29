@@ -5,7 +5,21 @@
 
 import * as api from "@fluidframework/protocol-definitions";
 import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
-import { ISnapshotContents } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
+
+/** https://portal.microsofticm.com/imp/v3/incidents/details/308931013/home
+ * The commits property was removed from protocol-definitions but in order to support back compat, we will
+ * temporarily add back in this local structure in order to upload the snapshot to support rolling back to 0.58.
+ * Notice this entire interface will be removed once the backward compatibility is not required anymore.
+*/
+export interface ISnapshotTreeEx {
+    id?: string;
+    blobs: { [path: string]: string; };
+    commits: { [path: string]: string; };
+    trees: { [path: string]: ISnapshotTreeEx; };
+    // Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
+    unreferenced?: true;
+}
 
 /**
  * Socket storage discovery api response
@@ -202,6 +216,8 @@ export interface ICreateFileResponse {
     itemId: string;
     itemUrl: string;
     sequenceNumber: number;
+    // sharing object contains shareId, sharingLink data or error in the response
+    sharing?: any;
     sharingLink?: string;
     sharingLinkErrorReason?: string;
 }

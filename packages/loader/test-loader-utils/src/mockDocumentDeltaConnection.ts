@@ -22,12 +22,6 @@ import { IAnyDriverError } from "@fluidframework/driver-utils";
 const DefaultServiceConfiguration: IClientConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
 };
 
 /**
@@ -48,7 +42,7 @@ export class MockDocumentDeltaConnection
         ver: "1.0",
     };
 
-    public readonly mode: ConnectionMode = "write";
+    public mode: ConnectionMode = "write";
     public readonly existing: boolean = true;
     public readonly maxMessageSize: number = 16 * 1024;
     public readonly version: string = "";

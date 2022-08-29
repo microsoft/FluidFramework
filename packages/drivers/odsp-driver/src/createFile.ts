@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import { assert, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getDocAttributesFromProtocolSummary, NonRetryableError } from "@fluidframework/driver-utils";
 import { getGitType } from "@fluidframework/protocol-base";
@@ -14,6 +15,9 @@ import {
     InstrumentedStorageTokenFetcher,
     IOdspResolvedUrl,
     OdspErrorType,
+    ShareLinkInfoType,
+    ISharingLinkKind,
+    ShareLinkTypes,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -25,12 +29,14 @@ import {
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
+    buildOdspShareLinkReqParams,
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     INewFileInfo,
     getOrigin,
-    ISnapshotContents,
+    maxUmpPostBodySize,
 } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
@@ -38,6 +44,7 @@ import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { ClpCompliantAppHeader } from "./contractsPublic";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -57,6 +64,9 @@ export async function createNewFluidFile(
     fileEntry: IFileEntry,
     createNewCaching: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
+    isClpCompliantApp?: boolean,
+    enableSingleRequestForShareLinkWithCreate?: boolean,
+    enableShareLinkWithCreate?: boolean,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
@@ -67,8 +77,7 @@ export async function createNewFluidFile(
 
     let itemId: string;
     let summaryHandle: string = "";
-    let sharingLink: string | undefined;
-    let sharingLinkErrorReason: string | undefined;
+    let shareLinkInfo: ShareLinkInfoType | undefined;
     if (createNewSummary === undefined) {
         itemId = await createNewEmptyFluidFile(
             getStorageToken, newFileInfo, logger, epochTracker, forceAccessTokenViaAuthorizationHeader);
@@ -83,25 +92,24 @@ export async function createNewFluidFile(
         );
         itemId = content.itemId;
         summaryHandle = content.id;
-        sharingLink = content.sharingLink;
-        sharingLinkErrorReason = content.sharingLinkErrorReason;
+
+        shareLinkInfo = extractShareLinkData(
+            newFileInfo.createLinkType,
+            content,
+            enableSingleRequestForShareLinkWithCreate,
+            enableShareLinkWithCreate);
     }
 
-    const odspUrl = createOdspUrl({ ... newFileInfo, itemId, dataStorePath: "/" });
+    const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
     const resolver = new OdspDriverUrlResolver();
-    const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
+    const odspResolvedUrl = await resolver.resolve({
+        url: odspUrl,
+        headers: { [ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp },
+    });
     fileEntry.docId = odspResolvedUrl.hashedDocumentId;
     fileEntry.resolvedUrl = odspResolvedUrl;
 
-    if (sharingLink || sharingLinkErrorReason) {
-        odspResolvedUrl.shareLinkInfo = {
-            createLink: {
-                type: newFileInfo.createLinkType,
-                link: sharingLink,
-                error: sharingLinkErrorReason,
-            },
-        };
-    }
+    odspResolvedUrl.shareLinkInfo = shareLinkInfo;
 
     if (createNewSummary !== undefined && createNewCaching) {
         assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
@@ -111,6 +119,61 @@ export async function createNewFluidFile(
         await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
     }
     return odspResolvedUrl;
+}
+
+/**
+ * If user requested creation of a sharing link along with the creation of the file by providing either
+ * createLinkType (now deprecated) or createLinkScope in the request parameters, extract and save
+ * sharing link information from the response if it is available.
+ * In case there was an error in creation of the sharing link, error is provided back in the response,
+ * and does not impact the creation of file in ODSP.
+ * @param requestedSharingLinkKind - Kind of sharing link requested to be created along with the creation of file.
+ * @param response - Response object received from the /snapshot api call
+ * @returns Sharing link information received in the response from a successful creation of a file.
+ */
+function extractShareLinkData(
+    requestedSharingLinkKind: ShareLinkTypes | ISharingLinkKind | undefined,
+    response: ICreateFileResponse,
+    enableSingleRequestForShareLinkWithCreate?: boolean,
+    enableShareLinkWithCreate?: boolean,
+): ShareLinkInfoType | undefined {
+    if (!requestedSharingLinkKind) {
+        return;
+    }
+    let shareLinkInfo: ShareLinkInfoType | undefined;
+    if (enableSingleRequestForShareLinkWithCreate) {
+        const { sharing } = response;
+        if (!sharing) {
+            return;
+        }
+        shareLinkInfo = {
+            createLink: {
+                type: requestedSharingLinkKind,
+                link: sharing.sharingLink ? {
+                    scope: sharing.sharingLink.scope,
+                    role: sharing.sharingLink.type,
+                    webUrl: sharing.sharingLink.webUrl,
+                    ...sharing.sharingLink,
+                } : undefined,
+                error: sharing.error,
+                shareId: sharing.shareId,
+            },
+        };
+    } else if (enableShareLinkWithCreate) {
+        const { sharing, sharingLink, sharingLinkErrorReason } = response;
+        if (!sharingLink && !sharingLinkErrorReason) {
+            return;
+        }
+        shareLinkInfo = {
+            createLink: {
+                type: requestedSharingLinkKind,
+                link: sharingLink,
+                error: sharingLinkErrorReason,
+                shareId: sharing?.shareId,
+            },
+        };
+    }
+    return shareLinkInfo;
 }
 
 export async function createNewEmptyFluidFile(
@@ -185,8 +248,12 @@ export async function createNewFluidFileFromSummary(
         `${filePath}/${encodedFilename}`;
 
     const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
-    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${newFileInfo.createLinkType ?
-        `?createLinkType=${newFileInfo.createLinkType}` : ""}`;
+
+    // Build share link parameter based on the createLinkType provided so that the
+    // snapshot api can create and return the share link along with creation of file in the response.
+    const createShareLinkParam = buildOdspShareLinkReqParams(newFileInfo.createLinkType);
+    const initialUrl =
+        `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}` : ""}`;
 
     return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");
@@ -195,19 +262,48 @@ export async function createNewFluidFileFromSummary(
             logger,
             { eventName: "createNewFile" },
             async (event) => {
-                const { url, headers } = getUrlAndHeadersWithAuth(
-                    initialUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
-                headers["Content-Type"] = "application/json";
+                const snapshotBody = JSON.stringify(containerSnapshot);
+                let url: string;
+                let headers: { [index: string]: string; };
+                let addInBody = false;
+                const formBoundary = uuid();
+                let postBody = `--${formBoundary}\r\n`;
+                postBody += `Authorization: Bearer ${storageToken}\r\n`;
+                postBody += `X-HTTP-Method-Override: POST\r\n`;
+                postBody += `Content-Type: application/json\r\n`;
+                postBody += `_post: 1\r\n`;
+                postBody += `\r\n${snapshotBody}\r\n`;
+                postBody += `\r\n--${formBoundary}--`;
+
+                if (postBody.length <= maxUmpPostBodySize) {
+                    const urlObj = new URL(initialUrl);
+                    urlObj.searchParams.set("ump", "1");
+                    url = urlObj.href;
+                    headers = {
+                        "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+                    };
+                    addInBody = true;
+                } else {
+                    const parts = getUrlAndHeadersWithAuth(
+                        initialUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
+                    url = parts.url;
+                    headers = {
+                        ...parts.headers,
+                        "Content-Type": "application/json",
+                    };
+                    postBody = snapshotBody;
+                }
 
                 const fetchResponse = await runWithRetry(
                     async () => epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
                         url,
                         {
-                            body: JSON.stringify(containerSnapshot),
+                            body: postBody,
                             headers,
                             method: "POST",
                         },
                         "createFile",
+                        addInBody,
                     ),
                     "createFile",
                     logger,

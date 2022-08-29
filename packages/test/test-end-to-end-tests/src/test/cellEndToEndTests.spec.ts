@@ -14,7 +14,11 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { Container } from "@fluidframework/container-loader";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -226,5 +230,77 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
 
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell2))), cellValue, 2);
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell3))), cellValue, 3);
+    });
+
+    it("attaches if referring SharedCell becomes attached or is already attached", async () => {
+        const detachedCell1: ISharedCell = SharedCell.create(dataObject1.runtime);
+        const detachedCell2: ISharedCell = SharedCell.create(dataObject1.runtime);
+
+        // When an unattached cell refers to another unattached cell, both remain unattached
+        detachedCell1.set(detachedCell2.handle);
+        assert.equal(sharedCell1.isAttached(), true, "sharedCell1 should be attached");
+        assert.equal(detachedCell1.isAttached(), false, "detachedCell1 should not be attached");
+        assert.equal(detachedCell2.isAttached(), false, "detachedCell2 should not be attached");
+
+        // When referring cell becomes attached, the referred cell becomes attached
+        // and the attachment transitively passes to a second referred cell
+        sharedCell1.set(detachedCell1.handle);
+        assert.equal(sharedCell1.isAttached(), true, "sharedCell1 should be attached");
+        assert.equal(detachedCell1.isAttached(), true, "detachedCell1 should be attached");
+        assert.equal(detachedCell2.isAttached(), true, "detachedCell2 should be attached");
+    });
+});
+
+describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
+
+    let container: Container;
+    let dataObject: ITestFluidObject;
+    let sharedCell: SharedCell;
+    let containerRuntime: ContainerRuntime;
+
+    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+        getRawConfig: (name: string): ConfigTypes => settings[name],
+    }));
+
+    beforeEach(async () => {
+        const configWithFeatureGates = {
+            ...testContainerConfig,
+            loaderProps: { configProvider: configProvider({
+                "Fluid.ContainerRuntime.EnableRollback": true,
+            }) },
+        };
+        container = await provider.makeTestContainer(configWithFeatureGates) as Container;
+        dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+        sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
+        containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+    });
+
+    itExpects("Closes container when rollback fails",
+    [
+        {
+            eventName: "fluid:telemetry:Container:ContainerClose",
+            error: "RollbackError: rollback not supported",
+            errorType: ContainerErrorType.dataProcessingError,
+        },
+    ],
+    async () => {
+        const errorMessage = "callback failure";
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedCell.set(0);
+                throw new Error(errorMessage);
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
+        assert.equal(containerRuntime.disposed, true);
     });
 });

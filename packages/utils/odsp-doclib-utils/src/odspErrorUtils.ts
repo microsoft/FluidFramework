@@ -14,7 +14,7 @@ import {
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspErrorType, OdspError, IOdspErrorAugmentations } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
@@ -31,6 +31,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
         headerName: string;
         logName: string;
     }
+
     // We rename headers so that otel doesn't scrub them away. Otel doesn't allow
     // certain characters in headers including '-'
     const headersToLog: LoggingHeader[] = [
@@ -39,6 +40,8 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
         { headerName: "client-request-id", logName: "clientRequestId" },
         { headerName: "x-msedge-ref", logName: "xMsedgeRef" },
         { headerName: "X-Fluid-Retries", logName: "serverRetries" },
+        { headerName: "content-encoding", logName: "contentEncoding" },
+        { headerName: "content-type", logName: "contentType" },
     ];
     const additionalProps: ITelemetryProperties = {
         sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
@@ -50,11 +53,34 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
             additionalProps[header.logName] = headerValue;
         }
     });
-    return additionalProps;
-}
 
-export interface IFacetCodes {
-    facetCodes?: string[];
+    // x-fluid-telemetry contains a key value pair in the following format:
+    // x-fluid-telemetry:key1=value1,key2,key3=value3,
+    // Ex. x-fluid-telemetry:Origin=c
+    const fluidTelemetry = headers.get("x-fluid-telemetry");
+    if (fluidTelemetry !== undefined && fluidTelemetry !== null) {
+        additionalProps.xFluidTelemetry = fluidTelemetry;
+        const keyValueMap = fluidTelemetry.split(",").map((keyValuePair) => keyValuePair.split("="));
+        for (const [key, value] of keyValueMap) {
+            if ("Origin" === key.trim()) {
+                let fieldValue: string;
+                switch (value?.trim()) {
+                    case "c":
+                        fieldValue = "cache";
+                    break;
+                    case "g":
+                        fieldValue = "graph";
+                    break;
+                    default:
+                        fieldValue = value?.trim();
+                }
+                const logName = "responseOrigin";
+                additionalProps[logName] = fieldValue;
+                break;
+           }
+       }
+    }
+    return additionalProps;
 }
 
 /** Empirically-based model of error response inner error from ODSP */
@@ -110,15 +136,15 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
     props: ITelemetryProperties = {},
-): IFluidErrorBase & OdspError & IFacetCodes {
-    let error: IFluidErrorBase & OdspError & IFacetCodes;
+): IFluidErrorBase & OdspError {
+    let error: IFluidErrorBase & OdspError;
     const parseResult = tryParseErrorResponse(responseText);
     let facetCodes: string[] | undefined;
     let innerMostErrorCode: string | undefined;
     if (parseResult.success) {
-        // Log the whole response if it looks like the error format we expect
-        props.response = responseText;
         const errorResponse = parseResult.errorResponse;
+        // logging the error response message
+        props.responseMessage = errorResponse.error.message;
         facetCodes = parseFacetCodes(errorResponse);
         if (facetCodes !== undefined) {
             innerMostErrorCode = facetCodes[0];
@@ -126,6 +152,7 @@ export function createOdspNetworkError(
         }
     }
 
+    let redirectLocation: string | undefined;
     const driverProps = { driverVersion, statusCode, ...props };
 
     switch (statusCode) {
@@ -151,13 +178,7 @@ export function createOdspNetworkError(
                 // it returns 404 error instead of 308. Error thrown by server will contain the new redirect location.
                 // For reference we can look here: \packages\drivers\odsp-driver\src\fetchSnapshot.ts
                 const responseError = parseResult?.errorResponse?.error;
-                const redirectLocation = responseError?.["@error.redirectLocation"];
-                if (redirectLocation !== undefined) {
-                    const propsWithRedirectLocation = { ...driverProps, redirectLocation };
-                    error = new NonRetryableError(
-                        errorMessage, OdspErrorType.locationRedirection, propsWithRedirectLocation);
-                    break;
-                }
+                redirectLocation = responseError?.["@error.redirectLocation"];
             }
             error = new NonRetryableError(
                 errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, driverProps);
@@ -212,19 +233,24 @@ export function createOdspNetworkError(
                 errorMessage, { canRetry: true, retryAfterMs }, driverProps);
             break;
     }
-    enrichOdspError(error, response, facetCodes);
+    enrichOdspError(error, response, facetCodes, undefined, redirectLocation);
     return error;
 }
 
 export function enrichOdspError(
-    error: IFluidErrorBase & OdspError & IFacetCodes,
+    error: IFluidErrorBase & OdspError,
     response?: Response,
     facetCodes?: string[],
     props: ITelemetryProperties = {},
+    redirectLocation?: string,
 ) {
     error.online = OnlineStatus[isOnline()];
     if (facetCodes !== undefined) {
         error.facetCodes = facetCodes;
+    }
+
+    if (redirectLocation !== undefined) {
+        error.redirectLocation = redirectLocation;
     }
 
     if (response) {
@@ -234,7 +260,7 @@ export function enrichOdspError(
             for (const key of Object.keys(headers)) {
                 props[key] = headers[key];
             }
-            (error as IOdspError).serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
+            error.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
     error.addTelemetryProperties(props);
@@ -274,4 +300,8 @@ function numberFromHeader(header: string | null): number | undefined {
         return undefined;
     }
     return n;
+}
+
+export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
+    return Array.isArray(x?.facetCodes);
 }

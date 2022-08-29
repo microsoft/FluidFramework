@@ -9,8 +9,9 @@ const oAuthBearerScheme = "Bearer";
  * Checks if response headers contains `www-authenticate` header and extracts tenant id that should be
  * used to identify authority which must be used to issue access token for protected resource.
  * Tenant id is represented by "realm" property. More details can be found here:
- * https://tools.ietf.org/html/rfc2617#page-8
+ * {@link https://tools.ietf.org/html/rfc2617#page-8}
  *
+ * @example
  * Header sample:
  *
  * ```

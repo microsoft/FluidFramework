@@ -8,9 +8,10 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
-import { BaseSegment, Marker, MergeTree } from "../mergeTree";
+import { BaseSegment, Marker } from "../mergeTreeNodes";
 import { ICombiningOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
+import { MergeTree } from "../mergeTree";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;

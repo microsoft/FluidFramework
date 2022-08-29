@@ -6,7 +6,7 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp, LocalReference, PropertySet } from "@fluidframework/merge-tree";
+import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     positionToRowCol,
@@ -162,8 +162,8 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents; }>
         this.forwardEvent(this.matrix, "op", "sequenceDelta");
     }
 
-    private readonly localRefToRowCol = (localRef: LocalReference) => {
-        const position = localRef.toPosition();
+    private readonly localRefToRowCol = (localRef: ReferencePosition) => {
+        const position = this.matrix.localReferencePositionToPosition(localRef);
         return positionToRowCol(position);
     };
 }

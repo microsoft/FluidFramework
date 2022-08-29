@@ -8,12 +8,12 @@ import fs from "fs";
 import {
     IMergeBlock,
     Marker,
-    MergeTree,
-} from "../mergeTree";
+} from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { TextSegment } from "../textSegment";
 import { ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
+import { MergeTree } from "../mergeTree";
 import { loadText } from "./text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {

@@ -10,7 +10,6 @@ import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions';
-import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -37,9 +36,9 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     // (undocumented)
     readonly connected: boolean;
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
-    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // @deprecated
     flush(): void;
     // (undocumented)
     readonly flushMode: FlushMode;
@@ -69,19 +68,10 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 }
 
 // @public @deprecated (undocumented)
-export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-    // (undocumented)
-    fluidDataStoreChannel?: {
-        bindToContext?(): void;
-    };
-}
-
-// @public @deprecated (undocumented)
 export interface IProvideContainerRuntime {
     // @deprecated (undocumented)
     IContainerRuntime: IContainerRuntime;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ISegment } from "../mergeTree";
+import { ISegment } from "../mergeTreeNodes";
 import { TextSegment } from "../textSegment";
 
 describe("segmentGroupCollection", () => {

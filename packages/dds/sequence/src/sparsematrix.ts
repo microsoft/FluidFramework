@@ -279,10 +279,10 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         Jsonable<string | number | boolean | IFluidHandle> {
         const pos = rowColToPosition(row, col);
         const { segment, offset } = this.getContainingSegment(pos);
-        if (RunSegment.is(segment)) {
+        if (segment && RunSegment.is(segment)) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return segment.items[offset];
-        } else if (PaddingSegment.is(segment)) {
+        } else if (segment && PaddingSegment.is(segment)) {
             return undefined;
         }
 

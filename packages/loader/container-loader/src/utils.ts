@@ -12,6 +12,7 @@ import {
     unreachableCase,
 } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -35,7 +36,7 @@ export interface IParsedUrl {
 export function parseUrl(url: string): IParsedUrl | undefined {
     const parsed = parse(url, true);
     if (typeof parsed.pathname !== "string") {
-        throw new Error("Failed to parse pathname");
+        throw new LoggingError("Failed to parse pathname");
     }
     const query = parsed.search ?? "";
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
@@ -86,7 +87,7 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
                 break;
             }
             case SummaryType.Handle:
-                throw new Error("No handles should be there in summary in detached container!!");
+                throw new LoggingError("No handles should be there in summary in detached container!!");
                 break;
             default: {
                 unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);

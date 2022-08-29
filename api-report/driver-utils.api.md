@@ -5,11 +5,14 @@
 ```ts
 
 import { DriverErrorType } from '@fluidframework/driver-definitions';
+import { FetchSource } from '@fluidframework/driver-definitions';
 import { IAuthorizationError } from '@fluidframework/driver-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
+import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -17,6 +20,7 @@ import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definiti
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
+import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -89,8 +93,6 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     protected virtualBlobs: Map<string, ArrayBufferLike>;
     // (undocumented)
     static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean, packingLevel?: number): BlobAggregationStorage;
-    // (undocumented)
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public
@@ -148,9 +150,9 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     // (undocumented)
     protected readonly internalStorageService: IDocumentStorageService;
     set policies(policies: IDocumentStorageServicePolicies | undefined);
@@ -162,14 +164,18 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-    // (undocumented)
-    write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public
 export type DriverErrorTelemetryProps = ITelemetryProperties & {
     driverVersion: string | undefined;
 };
+
+// @public
+export class EmptyDocumentDeltaStorageService implements IDocumentDeltaStorageService {
+    // (undocumented)
+    fetchMessages(from: number, _to: number | undefined, _abortSignal?: AbortSignal, _cachedOnly?: boolean, _fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
+}
 
 // @public (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
@@ -222,14 +228,34 @@ export interface IProgress {
 }
 
 // @public (undocumented)
+export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+
+// @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
 
+// @public (undocumented)
+export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+
 // @public
 export interface ISummaryTreeAssemblerProps {
     unreferenced?: true;
+}
+
+// @public (undocumented)
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
+
+// @public (undocumented)
+export class LocationRedirectionError extends LoggingError implements ILocationRedirectionError, IFluidErrorBase {
+    constructor(message: string, redirectUrl: IResolvedUrl, props: DriverErrorTelemetryProps);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.locationRedirection;
+    // (undocumented)
+    readonly redirectUrl: IResolvedUrl;
 }
 
 // @public (undocumented)
@@ -345,8 +371,8 @@ export class RateLimiter {
 // @public
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
-// @public (undocumented)
-export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
+// @public
+export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
 
 // @public (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
@@ -401,6 +427,13 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
     readonly errorType = DriverErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
+}
+
+// @public
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    constructor(message: string);
+    // (undocumented)
+    readonly errorType = "usageError";
 }
 
 // @public

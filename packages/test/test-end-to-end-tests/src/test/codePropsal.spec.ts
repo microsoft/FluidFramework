@@ -21,7 +21,7 @@ import {
     SupportedExportInterfaces,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
@@ -36,27 +36,6 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
         && typeof maybe?.schema === "number"
         && isFluidPackage(maybe);
 }
-
-const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
-    const maybeValue = map.get<T>(key);
-    if (maybeValue !== undefined) {
-        return maybeValue;
-    }
-
-    return new Promise((resolve) => {
-        const handler = (changed: IValueChanged) => {
-            if (changed.key === key) {
-                map.off("valueChanged", handler);
-                const value = map.get<T>(changed.key);
-                if (value === undefined) {
-                    throw new Error("Unexpected valueChanged result");
-                }
-                resolve(value);
-            }
-        };
-        map.on("valueChanged", handler);
-    });
-};
 
 // REVIEW: enable compat testing?
 describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
@@ -219,12 +198,8 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
                 maps.push(map);
             }
         }
-        const waiters: Promise<void>[] = [];
-        for (const map of maps) {
-            waiters.push(...keys.map(async (k) => mapWait(map, k)));
-        }
 
-        await Promise.all([provider.ensureSynchronized(), ...waiters]);
+        await provider.ensureSynchronized();
 
         for (const map of maps) {
             for (const key of keys) {

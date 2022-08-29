@@ -21,7 +21,7 @@ import {
     MockEmptyDeltaConnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
+import { getTextAndMarkers, SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
 describe("SharedString", () => {
@@ -128,14 +128,14 @@ describe("SharedString", () => {
 
             for (let i = 0; i < text.length; i++) {
                 assert.strictEqual(
-                    sharedString.getPropertiesAtPosition(i).color, undefined, "Null values allowed in properties");
+                    sharedString.getPropertiesAtPosition(i)?.color, undefined, "Null values allowed in properties");
             }
             const updatedProps = { style: null };
             sharedString.annotateRange(6, text.length, updatedProps);
 
             for (let i = 6; i < text.length; i++) {
                 assert.strictEqual(
-                    sharedString.getPropertiesAtPosition(i).style,
+                    sharedString.getPropertiesAtPosition(i)?.style,
                     undefined,
                     "Null values allowed in properties");
             }
@@ -156,8 +156,8 @@ describe("SharedString", () => {
             // Verify that the simple marker can be retrieved via id.
             const simpleMarker = sharedString.getMarkerFromId("markerId");
             assert.equal(simpleMarker.type, "Marker", "Could not get simple marker");
-            assert.equal(simpleMarker.properties.markerId, "markerId", "markerId is incorrect");
-            assert.equal(simpleMarker.properties.markerSimpleType, "markerKeyValue", "markerSimpleType is incorrrect");
+            assert.equal(simpleMarker.properties?.markerId, "markerId", "markerId is incorrect");
+            assert.equal(simpleMarker.properties?.markerSimpleType, "markerKeyValue", "markerSimpleType is incorrrect");
 
             // Insert a tile marker.
             sharedString.insertMarker(
@@ -169,10 +169,10 @@ describe("SharedString", () => {
                 });
 
             // Verify that the tile marker can be retrieved via label.
-            const { parallelMarkers } = sharedString.getTextAndMarkers("tileLabel");
+            const { parallelMarkers } = getTextAndMarkers(sharedString, "tileLabel");
             const parallelMarker = parallelMarkers[0];
             assert.equal(parallelMarker.type, "Marker", "Could not get tile marker");
-            assert.equal(parallelMarker.properties.markerId, "tileMarkerId", "tile markerId is incorrect");
+            assert.equal(parallelMarker.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
         });
 
         it("can annotate marker", () => {
@@ -190,7 +190,7 @@ describe("SharedString", () => {
             const props = { color: "blue" };
             const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
             sharedString.annotateMarker(simpleMarker, props);
-            assert.equal(simpleMarker.properties.color, "blue", "Could not annotate marker");
+            assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
         });
 
         it("replace zero range", async () => {
@@ -442,9 +442,9 @@ describe("SharedString", () => {
             verifyMarker(simpleMarker2);
 
             // Verify that the marker can be retrieved via label from both the shared strings.
-            const textAndMarker1 = sharedString.getTextAndMarkers(label);
+            const textAndMarker1 = getTextAndMarkers(sharedString, label);
             verifyMarker(textAndMarker1.parallelMarkers[0]);
-            const textAndMarker2 = sharedString2.getTextAndMarkers(label);
+            const textAndMarker2 = getTextAndMarkers(sharedString2, label);
             verifyMarker(textAndMarker2.parallelMarkers[0]);
         });
 
@@ -469,10 +469,10 @@ describe("SharedString", () => {
 
             // Verify that the marker was annotated in both the shared strings.
             const simpleMarker1 = sharedString.getMarkerFromId("markerId") as Marker;
-            assert.equal(simpleMarker1.properties.color, "blue", "Could not annotate marker");
+            assert.equal(simpleMarker1.properties?.color, "blue", "Could not annotate marker");
 
             const simpleMarker2 = sharedString.getMarkerFromId("markerId") as Marker;
-            assert.equal(simpleMarker2.properties.color, "blue", "Could not annotate marker in remote string");
+            assert.equal(simpleMarker2.properties?.color, "blue", "Could not annotate marker in remote string");
         });
     });
 

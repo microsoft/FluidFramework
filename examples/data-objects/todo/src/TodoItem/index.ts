@@ -4,3 +4,4 @@
  */
 
 export * from "./TodoItem";
+export * from "./TodoItemView";

@@ -14,8 +14,7 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { UnassignedSequenceNumber } from "./constants";
 import {
     ISegment,
-    MergeTree,
-} from "./mergeTree";
+} from "./mergeTreeNodes";
 import {
     matchProperties,
     PropertySet,
@@ -29,6 +28,7 @@ import {
     serializeAsMaxSupportedVersion,
 } from "./snapshotChunks";
 import { SnapshotLegacy } from "./snapshotlegacy";
+import { MergeTree } from "./mergeTree";
 
 export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -200,7 +200,7 @@ export class SnapshotV1 {
                     prev = segment;
                 }
             } else {
-                // This segment needs to preserve it's metadata as it may be referenced by future ops.  It's ineligible
+                // This segment needs to preserve its metadata as it may be referenced by future ops.  It's ineligible
                 // for coalescing, so emit the 'prev' segment now (if any).
                 pushSeg(prev);
                 prev = undefined;

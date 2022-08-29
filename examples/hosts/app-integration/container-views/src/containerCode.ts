@@ -49,6 +49,7 @@ export class DiceRollerContainerRuntimeFactory extends BaseContainerRuntimeFacto
      * Create the single DiceRoller model for the container on first initialization.
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(DiceRollerInstantiationFactory.type, dataStoreId);
+        const dataStore = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+        await dataStore.trySetAlias(dataStoreId);
     }
 }

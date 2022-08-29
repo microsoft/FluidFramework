@@ -12,11 +12,26 @@
             "faultInjectionMaxMs": 150000,
             "optionOverrides":{
                 "odsp":{
-                    "loader":{
-                        "summarizeProtocolTree": [false]
+                    "configurations":{
+                        "Fluid.Container.summarizeProtocolTree": [true, false]
+                    }
+                },
+                "odsp-odsp-df":{
+                    "configurations":{
+                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
+                        "Fluid.Container.summarizeProtocolTree": [true, false]
                     }
                 }
             }
+        },
+        "ci_frs": {
+            "opRatePerMin": 10,
+            "progressIntervalMs": 15000,
+            "numClients": 100,
+            "totalSendCount": 10000,
+            "readWriteCycleMs": 30000,
+            "faultInjectionMinMs": 0,
+            "faultInjectionMaxMs": 150000
         },
         "full": {
             "opRatePerMin": 1920,
@@ -37,8 +52,8 @@
             "faultInjectionMaxMs": 50000,
             "optionOverrides":{
                 "odsp":{
-                    "loader":{
-                        "summarizeProtocolTree": [false]
+                    "configurations":{
+                        "Fluid.Container.summarizeProtocolTree": [true, false]
                     }
                 }
             }
@@ -96,24 +111,7 @@
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [1]
-                    }
-                }
-            }
-        },
-        "odspContainerTypeSummaryUpload": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 5000,
-            "numClients": 4,
-            "totalSendCount": 150,
-            "readWriteCycleMs": 10000,
-            "optionOverrides":{
-                "odsp":{
-                    "configurations":{
-                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true]
-                    },
-                    "loader":{
-                        "summarizeProtocolTree": [true]
+                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [2]
                     }
                 }
             }

@@ -671,7 +671,6 @@ declare function get_old_ClassDeclaration_MockLogger():
 declare function use_current_ClassDeclaration_MockLogger(
     use: TypeOnly<current.MockLogger>);
 use_current_ClassDeclaration_MockLogger(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockLogger());
 
 /*
@@ -757,30 +756,6 @@ declare function use_old_FunctionDeclaration_normalizeError(
     use: TypeOnly<typeof old.normalizeError>);
 use_old_FunctionDeclaration_normalizeError(
     get_current_FunctionDeclaration_normalizeError());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_originatedAsExternalError": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_originatedAsExternalError():
-    TypeOnly<typeof old.originatedAsExternalError>;
-declare function use_current_FunctionDeclaration_originatedAsExternalError(
-    use: TypeOnly<typeof current.originatedAsExternalError>);
-use_current_FunctionDeclaration_originatedAsExternalError(
-    get_old_FunctionDeclaration_originatedAsExternalError());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_originatedAsExternalError": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_originatedAsExternalError():
-    TypeOnly<typeof current.originatedAsExternalError>;
-declare function use_old_FunctionDeclaration_originatedAsExternalError(
-    use: TypeOnly<typeof old.originatedAsExternalError>);
-use_old_FunctionDeclaration_originatedAsExternalError(
-    get_current_FunctionDeclaration_originatedAsExternalError());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -912,6 +887,7 @@ declare function get_old_EnumDeclaration_TelemetryDataTag():
 declare function use_current_EnumDeclaration_TelemetryDataTag(
     use: TypeOnly<current.TelemetryDataTag>);
 use_current_EnumDeclaration_TelemetryDataTag(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_TelemetryDataTag());
 
 /*

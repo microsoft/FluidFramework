@@ -70,7 +70,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
      * @param attributes - The attributes for the object.
      */
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_sharedSummaryBlock_");
     }
 
     /**

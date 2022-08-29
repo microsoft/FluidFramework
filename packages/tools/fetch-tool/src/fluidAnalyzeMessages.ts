@@ -92,15 +92,15 @@ function dumpStats(
     const fieldsLength = fieldSizes[0] + fieldSizes[1] + 1;
     let headers = props.headers;
 
-    let recordsToShow = props.lines ? props.lines : 10;
-    if (map.size !== recordsToShow && !props.removeTotals && recordsToShow > 1) {
+    let recordsToShow = props.lines ?? 10;
+    if (map.size !== recordsToShow && props.removeTotals === undefined && recordsToShow > 1) {
         recordsToShow--;
     }
 
     let sorted: [string, [number, number]][];
-    const sortIndex = props.orderByFirstColumn ? 0 : 1;
+    const sortIndex = props.orderByFirstColumn === true ? 0 : 1;
     let add: string;
-    if (props.reverseSort) {
+    if (props.reverseSort !== undefined) {
         sorted = [...map.entries()].sort((a, b) => a[1][sortIndex] - b[1][sortIndex]);
         add = "↑";
     } else {
@@ -109,7 +109,7 @@ function dumpStats(
     }
     headers[sortIndex] = `${headers[sortIndex]} ${add}`;
 
-    if (props.reverseColumnsInUI) {
+    if (props.reverseColumnsInUI !== undefined) {
         headers = [headers[1], headers[0]];
         const sorted2: [string, [number, number]][] = [];
         for (const [name, [count, size]] of sorted) {
@@ -147,7 +147,7 @@ function dumpStats(
         }
     }
 
-    if (!props.removeTotals) {
+    if (props.removeTotals === undefined) {
         if (allOtherCount || allOtherSize) {
             // eslint-disable-next-line max-len
             console.log(`${`All Others (${sorted.length - recordsToShow})`.padEnd(nameLength)} │ ${formatNumber(allOtherCount).padStart(fieldSizes[0])} ${formatNumber(allOtherSize).padStart(fieldSizes[1])}`);
@@ -535,7 +535,7 @@ function processOp(
                 {
                     let envelope = runtimeMessage.contents as IEnvelope;
                     // TODO: Legacy?
-                    if (envelope && typeof envelope === "string") {
+                    if (envelope !== undefined && typeof envelope === "string") {
                         envelope = JSON.parse(envelope);
                     }
                     const innerContent = envelope.contents as {
@@ -581,7 +581,7 @@ function processOp(
                                 subType = innerContent2.value.type;
                             } else if (objectType === "mergeTree" && subType !== undefined) {
                                 const types = ["insert", "remove", "annotate", "group"];
-                                if (types[subType]) {
+                                if (types[subType] !== undefined) {
                                     subType = types[subType];
                                 }
                             }
@@ -630,7 +630,7 @@ function processDataStoreAttachOp(
             for (const entry2 of entry.value.entries) {
                 if (entry2.path === ".attributes" && entry2.type === TreeEntry.Blob) {
                     const attrib = JSON.parse(entry2.value.contents);
-                    let objectType = attrib.type;
+                    let objectType: string = attrib.type;
                     if (objectType.startsWith(objectTypePrefix)) {
                         objectType = objectType.substring(objectTypePrefix.length);
                     }
@@ -707,7 +707,7 @@ function processQuorumMessages(
         session = sessionsInProgress.get(clientId);
         sessionsInProgress.delete(clientId);
         assert(!!session, 0x1b7 /* "Bad session state for processing quorum messages" */);
-        if (session) {
+        if (session !== undefined) {
             if (!skipMessage) {
                 session.reportOp(message.timestamp);
             }

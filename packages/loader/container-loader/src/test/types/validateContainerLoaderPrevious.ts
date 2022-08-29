@@ -23,6 +23,7 @@ declare function get_old_EnumDeclaration_ConnectionState():
 declare function use_current_EnumDeclaration_ConnectionState(
     use: TypeOnly<current.ConnectionState>);
 use_current_EnumDeclaration_ConnectionState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_ConnectionState());
 
 /*
@@ -47,6 +48,7 @@ declare function get_old_ClassDeclaration_Container():
 declare function use_current_ClassDeclaration_Container(
     use: TypeOnly<current.Container>);
 use_current_ClassDeclaration_Container(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Container());
 
 /*
@@ -252,6 +254,30 @@ declare function use_old_InterfaceDeclaration_ILoaderServices(
     use: TypeOnly<old.ILoaderServices>);
 use_old_InterfaceDeclaration_ILoaderServices(
     get_current_InterfaceDeclaration_ILoaderServices());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPendingContainerState": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IPendingContainerState():
+    TypeOnly<old.IPendingContainerState>;
+declare function use_current_InterfaceDeclaration_IPendingContainerState(
+    use: TypeOnly<current.IPendingContainerState>);
+use_current_InterfaceDeclaration_IPendingContainerState(
+    get_old_InterfaceDeclaration_IPendingContainerState());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPendingContainerState": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IPendingContainerState():
+    TypeOnly<current.IPendingContainerState>;
+declare function use_old_InterfaceDeclaration_IPendingContainerState(
+    use: TypeOnly<old.IPendingContainerState>);
+use_old_InterfaceDeclaration_IPendingContainerState(
+    get_current_InterfaceDeclaration_IPendingContainerState());
 
 /*
 * Validate forward compat by using old type in place of current type

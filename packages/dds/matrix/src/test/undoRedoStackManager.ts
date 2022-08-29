@@ -73,7 +73,7 @@ class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
 }
 
 /**
- * Manages the Undo and Redo stacks, and operations withing those stacks.
+ * Manages the Undo and Redo stacks, and operations within those stacks.
  * Allows adding items to the current operation on the stack, closing the current operation,
  * and issuing and undo or a redo.
  */

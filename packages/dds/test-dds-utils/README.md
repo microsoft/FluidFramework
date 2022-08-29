@@ -3,7 +3,7 @@
 Utilities for writing unit tests for DDS in Fluid Framework.
 
 ## Garbage Collection (GC) unit tests
-[gcTestRunner](./src/gcTestRunner.ts) provides a set of tests for validating that the DDSs return correct GC nodes.
+[gcTestRunner](./src/gcTestRunner.ts) provides a set of tests for validating that the DDSes return correct GC nodes.
 
 To write GC tests for a DDS, call `runGCTests` with a class that implements the following interface:
 ```typescript

@@ -99,7 +99,6 @@ export interface IDocumentMessage {
  * Document Message with optional system level data field.
  */
 export interface IDocumentSystemMessage extends IDocumentMessage {
-
     data: string;
 }
 
@@ -177,7 +176,8 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 }
 
 export interface ISignalMessage {
-
+    // TODO: Update this to use undefined instead of null.
+    // eslint-disable-next-line @rushstack/no-new-null
     clientId: string | null;
 
     content: any;
@@ -287,7 +287,6 @@ export interface ISummaryNack {
  * Represents a message containing tasks.
  */
 export interface IHelpMessage {
-
     tasks: string[];
 
     // Temporary version field for back-compat.
@@ -298,7 +297,6 @@ export interface IHelpMessage {
  * Represents a message in task queue to be processed.
  */
 export interface IQueueMessage {
-
     message: IHelpMessage;
 
     tenantId: string;

@@ -15,6 +15,7 @@ import {
     ITestContainerConfig,
     ITestObjectProvider,
     DataObjectFactoryType,
+    ensureContainerConnected,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
@@ -24,10 +25,7 @@ const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
     runtimeOptions: {
-        summaryOptions: {
-            // currently these tests will break if we load from a summary that was too recent
-            disableSummaries: true,
-        },
+        enableOfflineLoad: true,
     },
 };
 
@@ -36,11 +34,14 @@ const testValue = "test value";
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
 
-async function ensureContainerConnected(container: Container): Promise<void> {
-    if (!container.connected) {
-        return new Promise((resolve) => container.once("connected", () => resolve()));
-    }
-}
+const getPendingStateWithoutClose = (container: IContainer): string => {
+    const containerClose = container.close;
+    container.close = (message) => assert(message === undefined);
+    const pendingState = container.closeAndGetPendingLocalState();
+    assert(typeof pendingState === "string");
+    container.close = containerClose;
+    return pendingState;
+};
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
 const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
@@ -59,17 +60,9 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 
     let pendingState: string;
     if (send) {
-        const pendingRuntimeState = (container as any).context.runtime.getPendingLocalState();
+        pendingState = getPendingStateWithoutClose(container);
         await args.ensureSynchronized();
-        const p = container.closeAndGetPendingLocalState();
-        assert.strictEqual(JSON.parse(p).pendingRuntimeState, undefined);
-        // if we sent the ops successfully the pending state should have a clientId. if not they will be resent anyway
-        assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
-        assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
-        pendingState = JSON.stringify({
-            url: container.resolvedUrl.url,
-            pendingRuntimeState,
-        });
+        container.close();
     } else {
         pendingState = container.closeAndGetPendingLocalState();
     }

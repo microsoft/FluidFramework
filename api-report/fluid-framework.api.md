@@ -5,8 +5,11 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
+import { ConnectionState } from '@fluidframework/container-loader';
 
 export { AttachState }
+
+export { ConnectionState }
 
 
 export * from "@fluidframework/fluid-static";

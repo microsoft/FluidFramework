@@ -12,6 +12,33 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 /**
+ * Trims the leading and trailing slashes from the given string.
+ * @param str - A string that may contain leading and / or trailing slashes.
+ * @returns A new string without leading and trailing slashes.
+ */
+export function trimLeadingAndTrailingSlashes(str: string) {
+    return str.replace(/^\/+|\/+$/g, "");
+}
+
+/**
+ * Trims the leading slashes from the given string.
+ * @param str - A string that may contain leading slashes.
+ * @returns A new string without leading slashes.
+ */
+export function trimLeadingSlashes(str: string) {
+    return str.replace(/^\/+/g, "");
+}
+
+/**
+ * Trims the trailing slashes from the given string.
+ * @param str - A string that may contain trailing slashes.
+ * @returns A new string without trailing slashes.
+ */
+export function trimTrailingSlashes(str: string) {
+    return str.replace(/\/+$/g, "");
+}
+
+/**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
  * @returns a clone of the given GC data.
@@ -201,19 +228,13 @@ export class GCDataBuilder implements IGarbageCollectionData {
      */
     public prefixAndAddNodes(prefixId: string, gcNodes: { [ id: string ]: string[]; }) {
         for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
-            let normalizedId = id;
-            // Remove any starting slashes from the id.
-            while (normalizedId.startsWith("/")) {
-                normalizedId = normalizedId.substr(1);
-            }
-
+            // Remove any leading slashes from the id.
+            let normalizedId = trimLeadingSlashes(id);
             // Prefix the given id to the normalized id.
             normalizedId = `/${prefixId}/${normalizedId}`;
-
-            // Remove any trailing slashes from the normalized id.
-            while (normalizedId.endsWith("/")) {
-                normalizedId = normalizedId.substr(0, normalizedId.length - 1);
-            }
+            // Remove any trailing slashes from the normalized id. Note that the trailing slashes are removed after
+            // adding the prefix for handling the special case where id is "/".
+            normalizedId = trimTrailingSlashes(normalizedId);
 
             // Add the outbound routes against the normalized and prefixed id without duplicates.
             this.gcNodesSet[normalizedId] = new Set(outboundRoutes);

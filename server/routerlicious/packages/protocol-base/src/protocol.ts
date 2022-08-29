@@ -4,17 +4,19 @@
  */
 
 import {
+    IDocumentAttributes,
     IClientJoin,
     ICommittedProposal,
     IProcessMessageResult,
     IProposal,
+    IQuorum,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { Quorum } from "./quorum";
+import { IQuorumSnapshot, Quorum } from "./quorum";
 
 export interface IScribeProtocolState {
     sequenceNumber: number;
@@ -41,11 +43,34 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
     }
 }
 
+export interface ILocalSequencedClient extends ISequencedClient {
+    /**
+     * True if the client should have left the quorum, false otherwise
+     */
+    shouldHaveLeft?: boolean;
+}
+
+export interface IProtocolHandler {
+    readonly quorum: IQuorum;
+    readonly attributes: IDocumentAttributes;
+
+    setConnectionState(connected: boolean, clientId: string | undefined);
+    snapshot(): IQuorumSnapshot;
+
+    close(): void;
+    processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
+    getProtocolState(): IScribeProtocolState;
+}
+
 /**
  * Handles protocol specific ops.
  */
-export class ProtocolOpHandler {
-    public readonly quorum: Quorum;
+export class ProtocolOpHandler implements IProtocolHandler {
+    private readonly _quorum: Quorum;
+    public get quorum(): Quorum {
+        return this._quorum;
+    }
+
     public readonly term: number;
 
     constructor(
@@ -58,7 +83,7 @@ export class ProtocolOpHandler {
         sendProposal: (key: string, value: any) => number,
     ) {
         this.term = term ?? 1;
-        this.quorum = new Quorum(
+        this._quorum = new Quorum(
             members,
             proposals,
             values,
@@ -66,8 +91,24 @@ export class ProtocolOpHandler {
         );
     }
 
+    public get attributes(): IDocumentAttributes {
+        return {
+            minimumSequenceNumber: this.minimumSequenceNumber,
+            sequenceNumber: this.sequenceNumber,
+            term: this.term,
+        };
+    }
+
+    setConnectionState(connected: boolean, clientId: string | undefined) {
+        this._quorum.setConnectionState(connected, clientId);
+    }
+
+    snapshot(): IQuorumSnapshot {
+        return this._quorum.snapshot();
+    }
+
     public close() {
-        this.quorum.close();
+        this._quorum.close();
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
@@ -92,18 +133,18 @@ export class ProtocolOpHandler {
                     client: join.detail,
                     sequenceNumber: systemJoinMessage.sequenceNumber,
                 };
-                this.quorum.addMember(join.clientId, member);
+                this._quorum.addMember(join.clientId, member);
                 break;
 
             case MessageType.ClientLeave:
                 const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
                 const clientId = JSON.parse(systemLeaveMessage.data) as string;
-                this.quorum.removeMember(clientId);
+                this._quorum.removeMember(clientId);
                 break;
 
             case MessageType.Propose:
                 const proposal = message.contents as IProposal;
-                this.quorum.addProposal(
+                this._quorum.addProposal(
                     proposal.key,
                     proposal.value,
                     message.sequenceNumber,
@@ -122,7 +163,7 @@ export class ProtocolOpHandler {
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        this.quorum.updateMinimumSequenceNumber(message);
+        this._quorum.updateMinimumSequenceNumber(message);
 
         return { immediateNoOp };
     }
@@ -136,7 +177,7 @@ export class ProtocolOpHandler {
         return {
             sequenceNumber: this.sequenceNumber,
             minimumSequenceNumber: this.minimumSequenceNumber,
-            ...this.quorum.snapshot(),
+            ...this._quorum.snapshot(),
         };
     }
 }

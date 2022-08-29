@@ -56,13 +56,13 @@ export interface IConnectionManager {
 
     readonly readOnlyInfo: ReadOnlyInfo;
 
-    // Various connectivity propetries for telemetry describing type of current connection
+    // Various connectivity properties for telemetry describing type of current connection
     // Things like connection mode, service info, etc.
     // Called when connection state changes (connect / disconnect)
     readonly connectionProps: ITelemetryProperties;
 
     // Verbose information about connection logged to telemetry in case of issues with
-    // maintaining healphy connection, including op gaps, not receiving join op in time, etc.
+    // maintaining healthy connection, including op gaps, not receiving join op in time, etc.
     // Contains details information, like sequence numbers at connection time, initial ops info, etc.
     readonly connectionVerboseProps: ITelemetryProperties;
 
@@ -73,7 +73,7 @@ export interface IConnectionManager {
     prepareMessageToSend(message: Omit<IDocumentMessage, "clientSequenceNumber">): IDocumentMessage | undefined;
 
     /**
-     * Called before incomming message is processed. Incomming messages can be comming from connection,
+     * Called before incoming message is processed. Incoming messages can be combing from connection,
      * but also could come from storage.
      * This call allows connection manager to adjust knowledge about acked ops sent on previous connection.
      * Can be called at any time, including when there is no active connection.
@@ -101,15 +101,17 @@ export interface IConnectionManager {
      * Disposed connection manager
      */
     dispose(error?: ICriticalContainerError): void;
+
+    get connectionMode(): ConnectionMode;
 }
 
 /**
  * This interface represents a set of callbacks provided by DeltaManager to IConnectionManager on its creation
- * IConnectionManager instance will use them to communicate to DeltaManager abour various events.
+ * IConnectionManager instance will use them to communicate to DeltaManager about various events.
  */
 export interface IConnectionManagerFactoryArgs {
     /**
-     * Called by connection manager for each incomming op. Some ops maybe delivered before
+     * Called by connection manager for each incoming op. Some ops maybe delivered before
      * connectHandler is called (initial ops on socket connection)
      */
     readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void;
@@ -129,8 +131,8 @@ export interface IConnectionManagerFactoryArgs {
     readonly reconnectionDelayHandler: (delayMs: number, error: unknown) => void;
 
     /**
-     * Called by connection manager whwnever critical error happens and container should be closed.
-     * Expects dispose() call in respose to this call.
+     * Called by connection manager whenever critical error happens and container should be closed.
+     * Expects dispose() call in response to this call.
      */
     readonly closeHandler: (error?: any) => void;
 
@@ -161,7 +163,7 @@ export interface IConnectionManagerFactoryArgs {
 
 /**
  *
- * @param codeDetails- Data structure used to describe the code to load on the Fluid document
+ * @param codeDetails- - Data structure used to describe the code to load on the Fluid document
  * @returns The name of the Fluid package
  */
 export const getPackageName = (codeDetails: IFluidCodeDetails | undefined): IContainerPackageInfo => {

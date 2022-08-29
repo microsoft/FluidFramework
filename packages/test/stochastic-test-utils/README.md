@@ -153,3 +153,11 @@ For example, the JS Map spec prescribes that key iteration order is deterministi
 One could write a fuzz test on map operations which looks much like the above, but part of the "apply" step
 would be keeping a side-channel record of the expected iteration order, and the `doValidation` step at the end
 would assert that the real order matches the expected one.
+
+## describeFuzz
+
+This package also exports a `describeFuzz` helper, which is a simple wrapper around Mocha's `describe` function.
+`describeFuzz` supports injection of test-running policy through the following environment variables:
+
+- `FUZZ_TEST_COUNT`: Controls the `testCount` value passed to the fuzz test's `describeFuzz` block callback.
+- `FUZZ_STRESS_RUN`: If set to a truthy value, test commands in packages with fuzz tests will only run `describeFuzz` blocks.

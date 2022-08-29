@@ -6,7 +6,7 @@
 import assert from "assert";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainerContext } from "@fluidframework/container-definitions";
-import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime";
 
@@ -18,7 +18,7 @@ describe("Hardware Stats", () => {
     let mockLogger = new MockLogger();
     let mockContext: Partial<IContainerContext> = {
         deltaManager: new MockDeltaManager(),
-        quorum: new MockQuorum(),
+        quorum: new MockQuorumClients(),
         taggedLogger: mockLogger,
         clientDetails: { capabilities: { interactive: true } },
         updateDirtyContainerState: (dirty: boolean) => {},
@@ -42,7 +42,7 @@ describe("Hardware Stats", () => {
         mockLogger = new MockLogger();
         mockContext = {
             deltaManager: new MockDeltaManager(),
-            quorum: new MockQuorum(),
+            quorum: new MockQuorumClients(),
             taggedLogger: mockLogger,
             clientDetails: { capabilities: { interactive: true } },
             updateDirtyContainerState: (dirty: boolean) => {},

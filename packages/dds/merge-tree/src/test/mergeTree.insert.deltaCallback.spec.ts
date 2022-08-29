@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
-import { MergeTree } from "../mergeTree";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
+import { MergeTree } from "../mergeTree";
 import {
     MergeTreeDeltaType,
     ReferenceType,

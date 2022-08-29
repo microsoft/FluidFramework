@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { createInsertSegmentOp, createRemoveRangeOp, PropertySet } from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-internal-modules
@@ -15,13 +16,17 @@ const verbose = true;
 class SubSequenceTestClient extends TestClient {
     constructor() {
         super(undefined,
-            (spec) => SubSequence.fromJSONObject(spec));
+            (spec) => {
+                const subSequence = SubSequence.fromJSONObject(spec);
+                assert(subSequence !== undefined, "expected `spec` to be a valid `SubSequence`");
+                return subSequence;
+            });
     }
 
     public insertItemsRemote<T>(
         pos: number,
         items: Serializable<T>[],
-        props: PropertySet,
+        props: PropertySet | undefined,
         seq: number,
         refSeq: number,
         longClientId: string,

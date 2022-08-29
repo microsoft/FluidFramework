@@ -9,6 +9,7 @@ import * as jwt from "jsonwebtoken";
 import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
@@ -22,13 +23,13 @@ import { containsPathTraversal, parseToken } from "../utils";
  * @param successStatus Status to send when result is successful. Default: 200
  * @param onSuccess Additional callback fired when response is successful before sending response.
  */
- export function handleResponse<T>(
+export function handleResponse<T>(
     resultP: Promise<T>,
     response: Response,
     allowClientCache?: boolean,
     errorStatus?: number,
     successStatus: number = 200,
-    onSuccess: (value: T) => void = () => {},
+    onSuccess: (value: T) => void = () => { },
 ) {
     resultP.then(
         (result) => {
@@ -42,13 +43,17 @@ import { containsPathTraversal, parseToken } from "../utils";
             response.status(successStatus).json(result);
         },
         (error) => {
+            // Only log unexpected errors on the assumption that explicitly thrown
+            // NetworkErrors have additional logging in place at the source.
             if (error instanceof Error && error?.name === "NetworkError") {
                 const networkError = error as NetworkError;
                 response
                     .status(errorStatus ?? networkError.code ?? 400)
                     .json(networkError.details ?? error);
             } else {
-                response.status(errorStatus ?? 400).json(error?.message ?? error);
+                // Mask unexpected internal errors in outgoing response.
+                Lumberjack.error("Unexpected error when processing HTTP Request", undefined, error);
+                response.status(errorStatus ?? 400).json("Internal Server Error");
             }
         });
 }
@@ -112,7 +117,7 @@ export const Constants = Object.freeze({
  * Validate specific request parameters to prevent directory traversal.
  * TODO: replace with validateRequestParams from service-shared.
  */
- export function validateRequestParams(...paramNames: (string | number)[]): RequestHandler {
+export function validateRequestParams(...paramNames: (string | number)[]): RequestHandler {
     return (req, res, next) => {
         for (const paramName of paramNames) {
             const param = req.params[paramName];

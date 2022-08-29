@@ -52,6 +52,8 @@ async function main() {
         .option("-v, --verbose", "Enables verbose logging")
         .option("-b, --browserAuth", "Enables browser auth which may require a user to open a url in a browser.")
         .option("-m, --enableMetrics", "Enable capturing client & ops metrics")
+        .option("--createTestId", "Flag indicating whether to create a document corresponding \
+        to the testId passed")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
@@ -65,6 +67,7 @@ async function main() {
     const browserAuth: true | undefined = commander.browserAuth;
     const credFile: string | undefined = commander.credFile;
     const enableMetrics: boolean = commander.enableMetrics ?? false;
+    const createTestId: boolean = commander.createTestId ?? false;
 
     const profile = getProfile(profileArg);
 
@@ -78,7 +81,7 @@ async function main() {
         driver,
         endpoint,
         { ...profile, name: profileArg, testUsers },
-        { testId, debug, verbose, seed, browserAuth, enableMetrics });
+        { testId, debug, verbose, seed, browserAuth, enableMetrics, createTestId });
 }
 
 /**
@@ -89,7 +92,7 @@ async function orchestratorProcess(
     endpoint: DriverEndpoint | undefined,
     profile: ILoadTestConfig & { name: string; testUsers?: ITestUserConfig; },
     args: { testId?: string; debug?: true; verbose?: true; seed?: number; browserAuth?: true;
-        enableMetrics?: boolean; },
+        enableMetrics?: boolean; createTestId?: boolean; },
 ) {
     const seed = args.seed ?? Date.now();
     const seedArg = `0x${seed.toString(16)}`;
@@ -102,10 +105,15 @@ async function orchestratorProcess(
         undefined,
         args.browserAuth);
 
-    // Create a new file if a testId wasn't provided
-    const url = args.testId !== undefined
-        ? await testDriver.createContainerUrl(args.testId)
-        : await initialize(testDriver, seed, profile, args.verbose === true);
+    let url;
+    if (args.testId !== undefined && args.createTestId === false) {
+        // If testId is provided and createTestId is false, then load the file;
+        url = await testDriver.createContainerUrl(args.testId);
+    } else {
+        // If no testId is provided, (or) if testId is provided but createTestId is not false, then create a file;
+        // In case testId is provided, name of the file to be created is taken as the testId provided
+        url = await initialize(testDriver, seed, profile, args.verbose === true, args.testId);
+    }
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
@@ -166,7 +174,11 @@ async function orchestratorProcess(
             const password = username !== undefined ? profile.testUsers?.credentials[username] : undefined;
             const envVar = { ...process.env };
             if (username !== undefined && password !== undefined) {
-                envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+                if (endpoint === "odsp") {
+                    envVar.login__odsp__test__accounts = createLoginEnv(username, password);
+                } else if (endpoint === "odsp-df") {
+                    envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
+                }
             }
             const runnerProcess = child_process.spawn(
                 "node",

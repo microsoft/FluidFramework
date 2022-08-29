@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/merge-tree",
-  "version": "0.59.3000",
+  "version": "2.0.0-internal.1.1.0",
   "description": "Merge tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -29,10 +29,12 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "postpack": "cd dist && tar -cvf ../merge-tree.test-files.tar ./test",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup -r source-map-support/register --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+    "test:stress": "cross-env FUZZ_STRESS_RUN=1 FUZZ_TEST_COUNT=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
@@ -60,46 +62,37 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000",
-    "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore-definitions": "^0.59.3000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/runtime-definitions": "^0.59.3000",
-    "@fluidframework/runtime-utils": "^0.59.3000",
-    "@fluidframework/shared-object-base": "^0.59.3000",
-    "@fluidframework/telemetry-utils": "^0.59.3000"
+    "@fluidframework/common-utils": "^1.0.0",
+    "@fluidframework/container-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-definitions": "^1.0.0",
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/shared-object-base": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66793",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
-    "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@0.59.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.3000",
-    "@fluidframework/test-runtime-utils": "^0.59.3000",
+    "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.3.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@^1.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
     "@types/random-js": "^1.0.31",
-    "@typescript-eslint/eslint-plugin": "~5.9.0",
-    "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "diff": "^3.5.0",
     "eslint": "~8.6.0",
-    "eslint-plugin-editorconfig": "~3.2.0",
-    "eslint-plugin-eslint-comments": "~3.2.0",
-    "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-jest": "~26.1.3",
-    "eslint-plugin-mocha": "~10.0.3",
-    "eslint-plugin-promise": "~6.0.0",
-    "eslint-plugin-react": "~7.28.0",
-    "eslint-plugin-tsdoc": "~0.2.14",
-    "eslint-plugin-unicorn": "~40.0.0",
-    "mocha": "^8.4.0",
+    "mocha": "^10.0.0",
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
@@ -108,52 +101,83 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
+    "version": "2.0.0",
     "broken": {
-      "InterfaceDeclaration_IMergeTreeAnnotateMsg": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeDelta": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_IMergeTreeDeltaOp": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeDeltaOpArgs": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeGroupMsg": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeInsertMsg": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs": {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_IMergeTreeOp": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_IMergeTreeRemoveMsg":  {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_IntervalNode":  {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_MergeTreeDeltaOperationType":  {"forwardCompat": false, "backCompat": false},
-      "TypeAliasDeclaration_MergeTreeDeltaOperationTypes": {"forwardCompat": false, "backCompat": false},
-      "EnumDeclaration_MergeTreeDeltaType": {"forwardCompat": false, "backCompat": false},
-      "EnumDeclaration_MergeTreeMaintenanceType": {"forwardCompat": false, "backCompat": false},
-      "EnumDeclaration_RBColor": {"forwardCompat": false, "backCompat": false},
-      "InterfaceDeclaration_RBNode": {"forwardCompat": false, "backCompat": false},
-      "ClassDeclaration_List": {"forwardCompat": false},
-      "ClassDeclaration_BaseSegment": {"forwardCompat": false},
-      "ClassDeclaration_Client": {"forwardCompat": false},
-      "InterfaceDeclaration_IConsensusInfo": {"forwardCompat": false},
-      "InterfaceDeclaration_IHierBlock": {"forwardCompat": false},
-      "InterfaceDeclaration_IMergeBlock": {"forwardCompat": false},
-      "TypeAliasDeclaration_IMergeNode": {"forwardCompat": false},
-      "InterfaceDeclaration_IMergeNodeCommon": {"forwardCompat": false},
-      "InterfaceDeclaration_IMergeTreeSegmentDelta": {"forwardCompat": false},
-      "ClassDeclaration_IncrementalMapState": {"forwardCompat": false},
-      "InterfaceDeclaration_InsertContext": {"forwardCompat": false},
-      "InterfaceDeclaration_ISegment": {"forwardCompat": false},
-      "ClassDeclaration_LocalReference": {"forwardCompat": false},
-      "ClassDeclaration_LocalReferenceCollection": {"forwardCompat": false},
-      "InterfaceDeclaration_LRUSegment": {"forwardCompat": false},
-      "ClassDeclaration_MergeBlock": {"forwardCompat": false},
-      "InterfaceDeclaration_ISegmentChanges": {"forwardCompat": false},
-      "ClassDeclaration_Marker": {"forwardCompat": false},
-      "ClassDeclaration_MergeNode": {"forwardCompat": false},
-      "ClassDeclaration_MergeTree": {"forwardCompat": false},
-      "InterfaceDeclaration_SegmentAccumulator": {"forwardCompat": false},
-      "InterfaceDeclaration_SegmentGroup": {"forwardCompat": false},
-      "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false},
-      "ClassDeclaration_SortedSegmentSet": {"forwardCompat": false},
-      "ClassDeclaration_TextSegment": {"forwardCompat": false},
-      "ClassDeclaration_TrackingGroup": {"forwardCompat": false}
-
+      "ClassDeclaration_Client": {
+        "backCompat": false
+      },
+      "ClassDeclaration_LocalReference": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_List": {
+        "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_LocalReferenceMapper": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_Marker": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "ClassDeclaration_SnapshotLegacy": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IConsensusInfo": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_LocalReference": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_LocalReferencePosition": {
+        "backCompat": false
+      },
+      "ClassDeclaration_MergeTree": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ClassDeclaration_BaseSegment": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IHierBlock": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IMergeBlock": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_IncrementalMapState": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_InsertContext": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISegmentChanges": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_LocalReferenceCollection": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_LRUSegment": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_MergeBlock": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_IMergeNode": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_MergeNode": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IMergeNodeCommon": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_TextSegment": {
+        "forwardCompat": false
+      }
     }
   }
 }

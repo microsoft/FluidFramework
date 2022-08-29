@@ -41,6 +41,7 @@ gitrest:
     lib:
       name: nodegit
     persistLatestFullSummary: false
+    repoPerDocEnabled: false
 
 gitssh:
   name: gitssh

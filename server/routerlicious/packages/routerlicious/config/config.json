@@ -53,7 +53,9 @@
     "alfred": {
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",
+        "verifyMaxMessageSize": false,
         "maxNumberOfClientsPerDocument": 1000000,
+        "numberOfMessagesPerTrace": 100,
         "throttling": {
             "restCalls": {
                 "maxPerMs": 1000000,
@@ -68,6 +70,12 @@
                 "minThrottleIntervalInMs": 1000000
             },
             "submitOps": {
+                "maxPerMs": 1000000,
+                "maxBurst": 1000000,
+                "minCooldownIntervalInMs": 1000000,
+                "minThrottleIntervalInMs": 1000000
+            },
+            "submitSignal": {
                 "maxPerMs": 1000000,
                 "maxBurst": 1000000,
                 "minCooldownIntervalInMs": 1000000,
@@ -96,7 +104,11 @@
             "enableCustomSocketIoAdapter": true,
             "shouldDisableDefaultNamespace": false
         },
-        "enforceServerGeneratedDocumentId": false
+        "enforceServerGeneratedDocumentId": false,
+        "socketIo": {
+            "perMessageDeflate": true
+        },
+        "sessionStickinessDurationMs": 3600000
     },
     "client": {
         "type": "browser",
@@ -128,6 +140,10 @@
         "topics": {
             "send": "deltas"
         }
+    },
+    "usage": {
+        "clientConnectivityCountingEnabled": false,
+        "signalUsageCountingEnabled": false
     },
     "auth": {
         "endpoint": "http://riddler:5000",
@@ -228,7 +244,7 @@
     "worker": {
         "alfredUrl": "http://alfred:3003",
         "serverUrl": "http://localhost:3003",
-        "blobStorageUrl": "http://historian:3000",
+        "blobStorageUrl": "http://localhost:3001",
         "internalBlobStorageUrl": "http://historian:3000",
         "permission": [
             "snapshot",
@@ -239,7 +255,8 @@
             "chain-spell",
             "chain-intel",
             "chain-translation"
-        ]
+        ],
+        "enforceDiscoveryFlow": false
     },
     "tenantConfig": [
         {

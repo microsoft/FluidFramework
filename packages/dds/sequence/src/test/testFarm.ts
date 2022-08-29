@@ -12,15 +12,15 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import path from "path";
-import { Trace } from "@fluidframework/common-utils";
+import { assert, Trace } from "@fluidframework/common-utils";
 import * as MergeTree from "@fluidframework/merge-tree";
-// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
 import {
     TextSegment,
     createGroupOp,
     PropertySet,
     MergeTreeTextHelper,
     IMergeTreeDeltaOp,
+    ReferenceType,
 } from "@fluidframework/merge-tree";
 import {
     LocalClientId,
@@ -66,7 +66,7 @@ export function propertyCopy() {
         v[i] = i;
     }
     let clockStart = clock();
-    let obj: MergeTree.MapLike<number>;
+    let obj: MergeTree.MapLike<number> = MergeTree.createMap<number>();
     for (let j = 0; j < iterCount; j++) {
         obj = MergeTree.createMap<number>();
         for (let i = 0; i < propCount; i++) {
@@ -114,17 +114,11 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
         if (segoff1?.segment && segoff2?.segment) {
             const baseSegment1 = <MergeTree.BaseSegment>segoff1.segment;
             const baseSegment2 = <MergeTree.BaseSegment>segoff2.segment;
-            const lref1 = new MergeTree.LocalReference(client, baseSegment1, segoff1.offset);
-            const lref2 = new MergeTree.LocalReference(client, baseSegment2, segoff2.offset);
-            lref1.refType = MergeTree.ReferenceType.RangeBegin;
+            const lref1 = client.createLocalReferencePosition(baseSegment1, segoff1.offset, MergeTree.ReferenceType.RangeBegin, undefined);
+            const lref2 = client.createLocalReferencePosition(baseSegment2, segoff2.offset, MergeTree.ReferenceType.RangeEnd, undefined);
             lref1.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
-            // Can do this locally; for shared refs need to use id/index to ref end
-            lref1.pairedRef = lref2;
-            lref2.refType = MergeTree.ReferenceType.RangeEnd;
             lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
-            client.addLocalReference(lref1);
-            client.addLocalReference(lref2);
-            bookmarks.push(new SharedString.SequenceInterval(lref1, lref2, SharedString.IntervalType.Simple));
+            bookmarks.push(new SharedString.SequenceInterval(client, lref1, lref2, SharedString.IntervalType.Simple));
         } else {
             i--;
         }
@@ -135,18 +129,17 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
 function makeReferences(client: TestClient, referenceCount: number) {
     const mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    const refs = <MergeTree.LocalReference[]>[];
+    const refs = <MergeTree.LocalReferencePosition[]>[];
     const len = client.mergeTree.getLength(UniversalSequenceNumber, NonCollabClient);
     for (let i = 0; i < referenceCount; i++) {
         const pos = random.integer(0, len - 1)(mt);
         const segoff = client.getContainingSegment(pos);
         if (segoff?.segment) {
             const baseSegment = <MergeTree.BaseSegment>segoff.segment;
-            const lref = new MergeTree.LocalReference(client, baseSegment, segoff.offset);
+            const lref = client.createLocalReferencePosition(baseSegment, segoff.offset, MergeTree.ReferenceType.Simple, undefined);
             if (i & 1) {
                 lref.refType = MergeTree.ReferenceType.SlideOnRemove;
             }
-            client.addLocalReference(lref);
             refs.push(lref);
         } else {
             i--;
@@ -186,6 +179,7 @@ export function TestPack(verbose = true) {
         const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
         const stats = client.mergeTree.getStats();
         const windowTime = stats.windowTime;
+        assert(windowTime !== undefined, "window time is expected to exist");
         const packTime = stats.packTime;
         const ordTime = stats.ordTime;
         const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
@@ -229,7 +223,7 @@ export function TestPack(verbose = true) {
         const measureRanges = true;
         const referenceCount = 2000;
         const bookmarkCount = 5000;
-        let references: MergeTree.LocalReference[];
+        let references: MergeTree.LocalReferencePosition[];
         let refReads = 0;
         let refReadTime = 0;
         let posContextChecks = 0;
@@ -241,7 +235,7 @@ export function TestPack(verbose = true) {
         const testSyncload = false;
         let snapClient: TestClient;
         const useGroupOperationsForMoveWord = false;
-        let annotateProps: PropertySet;
+        let annotateProps: PropertySet | undefined;
         const insertAsRefPos = false;
 
         const testServer = new TestServer({});
@@ -342,23 +336,13 @@ export function TestPack(verbose = true) {
 
         function clientProcessSome(client: TestClient, all = false) {
             const cliMsgCount = client.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = cliMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
-            }
+            const countToApply: number = all ? cliMsgCount : random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
             client.applyMessages(countToApply);
         }
 
         function serverProcessSome(server: TestClient, all = false) {
             const svrMsgCount = server.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = svrMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
-            }
+            const countToApply: number = all ? svrMsgCount : random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             return server.applyMessages(countToApply);
         }
 
@@ -402,7 +386,7 @@ export function TestPack(verbose = true) {
                     if (TestClient.useCheckQ) {
                         client.enqueueTestString();
                     }
-                } else {
+                } else if (removeOp) {
                     ops.push(removeOp);
                 }
 
@@ -412,15 +396,12 @@ export function TestPack(verbose = true) {
                 }
                 const pos = word2.pos + word2.text.length;
 
-                let insertOp;
                 const segOff = client.getContainingSegment(pos);
-                if (!insertAsRefPos && segOff.segment) {
-                    insertOp = client.insertAtReferencePositionLocal(
-                        new MergeTree.LocalReference(client, segOff.segment, segOff.offset, MergeTree.ReferenceType.Transient),
-                        TextSegment.make(word1.text));
-                } else {
-                    insertOp = client.insertTextLocal(pos, word1.text);
-                }
+                const insertOp = !insertAsRefPos && segOff.segment
+                    ? client.insertAtReferencePositionLocal(
+                        client.createLocalReferencePosition(segOff.segment, segOff.offset, MergeTree.ReferenceType.Transient, undefined),
+                        TextSegment.make(word1.text))
+                    : client.insertTextLocal(pos, word1.text);
 
                 if (!useGroupOperationsForMoveWord) {
                     testServer.enqueueMsg(
@@ -428,7 +409,7 @@ export function TestPack(verbose = true) {
                     if (TestClient.useCheckQ) {
                         client.enqueueTestString();
                     }
-                } else {
+                } else if (insertOp) {
                     ops.push(insertOp);
                 }
 
@@ -436,7 +417,7 @@ export function TestPack(verbose = true) {
                     const annotateOp = client.annotateRangeLocal(pos, pos + word1.text.length, annotateProps, undefined);
                     if (!useGroupOperationsForMoveWord) {
                         testServer.enqueueMsg(client.makeOpMessage(annotateOp));
-                    } else {
+                    } else if (annotateOp) {
                         ops.push(annotateOp);
                     }
                 }
@@ -537,7 +518,7 @@ export function TestPack(verbose = true) {
                 const rangeChecksPerRound = 200;
                 let clockStart = clock();
                 for (let i = 0; i < refReadsPerRound; i++) {
-                    references[i].toPosition();
+                    testServer.localReferencePositionToPosition(references[i]);
                     refReads++;
                 }
                 refReadTime += elapsedMicroseconds(clockStart);
@@ -588,9 +569,9 @@ export function TestPack(verbose = true) {
                         const segoff1 = testServer.getContainingSegment(checkPos[i]);
                         const segoff2 = testServer.getContainingSegment(checkPos[i] + 1);
                         if (segoff1?.segment && segoff2?.segment) {
-                            const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
-                            const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkPosRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, SharedString.IntervalType.Simple);
+                            const lrefPos1 = testServer.createLocalReferencePosition(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset, ReferenceType.Simple, undefined);
+                            const lrefPos2 = testServer.createLocalReferencePosition(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset, ReferenceType.Simple, undefined);
+                            checkPosRanges[i] = new SharedString.SequenceInterval(testServer, lrefPos1, lrefPos2, SharedString.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -606,9 +587,9 @@ export function TestPack(verbose = true) {
                         const segoff1 = testServer.getContainingSegment(checkRange[i][0]);
                         const segoff2 = testServer.getContainingSegment(checkRange[i][1]);
                         if (segoff1?.segment && segoff2?.segment) {
-                            const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
-                            const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkRangeRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, SharedString.IntervalType.Simple);
+                            const lrefPos1 = testServer.createLocalReferencePosition(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset, ReferenceType.Simple, undefined);
+                            const lrefPos2 = testServer.createLocalReferencePosition(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset, ReferenceType.Simple, undefined);
+                            checkRangeRanges[i] = new SharedString.SequenceInterval(testServer, lrefPos1, lrefPos2, SharedString.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -890,8 +871,10 @@ export function TestPack(verbose = true) {
         }
         cli.insertTextRemote(0, "abcde", undefined, 1, 0, "2");
         const segoff = cli.getContainingSegment(0);
-        const lref1 = new MergeTree.LocalReference(cli, <MergeTree.BaseSegment>(segoff.segment),
-            segoff.offset);
+        const lref1 = cli.createLocalReferencePosition(<MergeTree.BaseSegment>(segoff.segment),
+            segoff.offset,
+            ReferenceType.Simple,
+            undefined);
         cli.insertTextRemote(0, "yyy", undefined, 2, 0, "1");
         cli.insertTextRemote(2, "zzz", undefined, 3, 1, "3");
         cli.insertTextRemote(1, "EAGLE", undefined, 4, 1, "4");
@@ -1069,7 +1052,17 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
     const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const checkText = editFlat(origText, start, end - start);
     const clockStart = clock();
-    mergeTree.markRangeRemoved(start, end, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
+    mergeTree.markRangeRemoved(
+        start,
+        end,
+        UniversalSequenceNumber,
+        LocalClientId,
+        UniversalSequenceNumber,
+        false,
+        // `opArgs` being `undefined` is special-cased specifically for internal
+        // test code
+        undefined as any,
+    );
     accumTime += elapsedMicroseconds(clockStart);
     const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const result = (checkText === updatedText);
@@ -1264,11 +1257,7 @@ export class RandomPack {
 }
 
 function docNodeToString(docNode: DocumentNode) {
-    if (typeof docNode === "string") {
-        return docNode;
-    } else {
-        return docNode.name;
-    }
+    return typeof docNode === "string" ? docNode : docNode.name;
 }
 
 export type DocumentNode = string | DocumentTree;
@@ -1283,7 +1272,7 @@ export type DocumentNode = string | DocumentTree;
 export class DocumentTree {
     pos = 0;
     ids = { box: 0, row: 0 };
-    id: string;
+    id: string | undefined;
     static randPack = new RandomPack();
 
     constructor(public name: string, public children: DocumentNode[]) {
@@ -1295,7 +1284,7 @@ export class DocumentTree {
             client.insertTextLocal(this.pos, text);
             this.pos += text.length;
         } else {
-            let id: number;
+            let id: number | undefined;
             if (docNode.name === "pg") {
                 client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.Tile,
                     {
@@ -1325,6 +1314,7 @@ export class DocumentTree {
                 this.addToMergeTree(client, child);
             }
             if (docNode.name !== "pg") {
+                assert(id !== undefined, "expected `id` to be defined");
                 const etrid = `end-${docNode.name}${id.toString()}`;
                 client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.NestEnd,
                     {
@@ -1419,12 +1409,12 @@ export class DocumentTree {
         };
 
         let prevPos = -1;
-        let prevChild: DocumentNode;
+        let prevChild: DocumentNode | undefined;
 
         // Console.log(client.mergeTree.toString());
         for (const rootChild of this.children) {
             if (prevPos >= 0) {
-                if ((typeof prevChild !== "string") && (prevChild.name === "row")) {
+                if ((typeof prevChild !== "string") && (prevChild?.name === "row")) {
                     const id = prevChild.id;
                     const endId = `end-${id}`;
                     const endRowMarker = <MergeTree.Marker>client.getMarkerFromId(endId);

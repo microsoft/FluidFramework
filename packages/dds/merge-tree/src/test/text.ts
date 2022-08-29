@@ -6,8 +6,8 @@
 import {
     ISegment,
     Marker,
-    MergeTree,
-} from "../mergeTree";
+} from "../mergeTreeNodes";
+import { MergeTree } from "../mergeTree";
 import { ReferenceType } from "../ops";
 import { reservedTileLabelsKey } from "../referencePositions";
 import { TextSegment } from "../textSegment";

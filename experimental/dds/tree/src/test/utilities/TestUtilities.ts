@@ -6,7 +6,7 @@
 import { resolve } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
-import { SummaryCollection } from '@fluidframework/container-runtime';
+import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
@@ -21,6 +21,7 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	createAndAttachContainer,
+	ITestObjectProvider,
 } from '@fluidframework/test-utils';
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
@@ -190,7 +191,7 @@ export function setUpTestSharedTree(
 		});
 	}
 
-	const newContainerRuntimeFactory = containerRuntimeFactory || new MockContainerRuntimeFactory();
+	const newContainerRuntimeFactory = containerRuntimeFactory ?? new MockContainerRuntimeFactory();
 
 	if (localMode === true) {
 		componentRuntime.local = true;
@@ -264,6 +265,10 @@ export interface LocalServerSharedTreeTestingOptions {
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
 	setupEditId?: EditId;
+	/**
+	 * If set, will be passed to the container on load
+	 */
+	pendingLocalState?: string;
 }
 
 const testObjectProviders: TestObjectProvider[] = [];
@@ -294,6 +299,7 @@ export async function setUpLocalServerTestSharedTree(
 		writeFormat,
 		uploadEditChunks,
 		attributionId,
+		pendingLocalState,
 	} = options;
 
 	const treeId = id ?? 'test';
@@ -316,11 +322,17 @@ export async function setUpLocalServerTestSharedTree(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
 			{
+				enableOfflineLoad: true,
 				summaryOptions: {
 					summaryConfigOverrides: {
-						idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
+						...DefaultSummaryConfiguration,
+						...{
+							minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
+							maxIdleTime: 1000,
+							maxTime: 1000 * 12,
+							initialSummarizerDelayMs: 0,
+						},
 					},
-					initialSummarizerDelayMs: 0,
 				},
 			},
 			[innerRequestHandler]
@@ -346,7 +358,10 @@ export async function setUpLocalServerTestSharedTree(
 		const driver = new LocalServerTestDriver();
 		const loader = makeTestLoader(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.loadTestContainer` instead.
-		container = (await loader.resolve({ url: await driver.createContainerUrl(treeId), headers })) as Container;
+		container = (await loader.resolve(
+			{ url: await driver.createContainerUrl(treeId), headers },
+			pendingLocalState
+		)) as Container;
 		await waitContainerToCatchUp(container);
 	} else {
 		const driver = new LocalServerTestDriver();
@@ -451,7 +466,7 @@ export async function asyncFunctionThrowsCorrectly(
 	return errorMessage === expectedError;
 }
 
-/*
+/**
  * Returns true if two nodes have equivalent data, otherwise false.
  * Does not compare children or payloads.
  * @param nodes - two or more nodes to compare
@@ -653,4 +668,19 @@ export async function waitForSummary(mainContainer: IContainer): Promise<string>
 	const summaryCollection = new SummaryCollection(deltaManager, new TelemetryNullLogger());
 	const ackedSummary = await summaryCollection.waitSummaryAck(deltaManager.lastSequenceNumber);
 	return ackedSummary.summaryAck.contents.handle;
+}
+
+/**
+ * Runs an action while the given container has been paused
+ */
+export async function withContainerOffline<TReturn>(
+	provider: ITestObjectProvider,
+	container: IContainer,
+	action: () => TReturn
+): Promise<{ actionReturn: TReturn; pendingLocalState: string }> {
+	await provider.ensureSynchronized();
+	await provider.opProcessingController.pauseProcessing(container);
+	const actionReturn = action();
+	const pendingLocalState = container.closeAndGetPendingLocalState();
+	return { actionReturn, pendingLocalState };
 }

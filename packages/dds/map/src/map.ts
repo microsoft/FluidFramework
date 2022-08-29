@@ -11,7 +11,7 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     IFluidSerializer,
@@ -33,7 +33,8 @@ interface IMapSerializationFormat {
 const snapshotFileName = "header";
 
 /**
- * The factory that defines the map.
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMap}.
+ *
  * @sealed
  */
 export class MapFactory implements IChannelFactory {
@@ -91,10 +92,7 @@ export class MapFactory implements IChannelFactory {
 }
 
 /**
- * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
- * and retrieving values that JavaScript developers are accustomed to with the
- * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
- * However, the keys of a SharedMap must be strings.
+ * {@inheritDoc ISharedMap}
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
@@ -144,7 +142,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         runtime: IFluidDataStoreRuntime,
         attributes: IChannelAttributes,
     ) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_map_");
         this.kernel = new MapKernel(
             this.serializer,
             this.handle,
@@ -245,7 +243,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
      * @internal
      */
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+        telemetryContext?: ITelemetryContext,
+    ): ISummaryTreeWithStats {
         let currentSize = 0;
         let counter = 0;
         let headerBlob: IMapDataObjectSerializable = {};
@@ -320,7 +321,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @internal
      */
     protected async loadCore(storage: IChannelStorageService) {
-        // eslint-disable-next-line @typescript-eslint/ban-types
         const json = await readAndParse<object>(storage, snapshotFileName);
         const newFormat = json as IMapSerializationFormat;
         if (Array.isArray(newFormat.blobs)) {
@@ -338,7 +338,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      * @internal
      */
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
@@ -353,8 +353,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @internal
      */
     protected applyStashedOp(content: any): unknown {
-        this.kernel.tryProcessMessage(content, false, undefined);
-        return this.kernel.tryGetStashedOpLocalMetadata(content);
+        return this.kernel.tryApplyStashedOp(content);
     }
 
     /**
@@ -365,5 +364,13 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
         if (message.type === MessageType.Operation) {
             this.kernel.tryProcessMessage(message.contents, local, localOpMetadata);
         }
+    }
+
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
+     * @internal
+    */
+    protected rollback(content: any, localOpMetadata: unknown) {
+        this.kernel.rollback(content, localOpMetadata);
     }
 }

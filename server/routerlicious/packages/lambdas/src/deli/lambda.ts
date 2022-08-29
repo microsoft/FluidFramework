@@ -17,6 +17,7 @@ import {
     ScopeType,
     ISignalMessage,
     ISummaryAck,
+    IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize, defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
@@ -186,7 +187,18 @@ export interface IDeliLambdaEvents extends IEvent {
     (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
 
     /**
-     * Emitted when the lambda recieves a custom control message.
+     * Emitted when the lambda is updating a nack message
+     */
+    (event: "updatedNackMessages",
+        listener: (type: NackMessagesType, contents: INackMessagesControlMessageContents | undefined) => void);
+
+    /**
+     * Emitted when the lambda receives a summarize message.
+     */
+    (event: "summarizeMessage", listener: (summarizeMessage: ISequencedDocumentAugmentedMessage) => void);
+
+    /**
+     * Emitted when the lambda receives a custom control message.
      */
     (event: "controlMessage", listener: (controlMessage: IControlMessage) => void);
 
@@ -260,7 +272,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         private readonly serviceConfiguration: IServiceConfiguration,
         private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
         private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
-        private readonly readClients: Map<string, ISequencedSignalClient> = new Map()) {
+        private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map()) {
         super();
 
         // Instantiate existing clients
@@ -327,12 +339,58 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         if (this.serviceConfiguration.deli.opEvent.enable) {
             this.updateOpMaxTimeTimer();
+
+            /**
+             * Deli's opEvent system is supposed to tell us when it's time to post ops for the session.
+             * It sends an "opEvent" event based heuristics like idle / max time / max ops.
+             * There's an edge case though. Suppose the following:
+             * 1. Server A created a deli for the session, consumes 100 kafka messages, and sequences 100 ops.
+             * 2. Within 5 seconds of sequencing those ops,
+             *  Server A's deli saves a checkpoint (it remembers it sequenced those 100 ops)
+             * 3. Within a second of that checkpoint, the Kafka partition is rebalanced.
+             * 4. Server B now creates a deli for that session and it consumes those same 100 kafka messages.
+             * 4a. Server B's deli instance is smart enough to detect that those 100 kafka messages were already
+             *  processed (due to the checkpoint created in #2) so it ignores them (the first if statement in handler).
+             *
+             * The above flow is a problem because the opEvent logic is not going to trigger since
+             *  no messages were sequenced by this deli.
+             *
+             * Deli should be smart and check if it hasn't yet sent an opEvent for messages that
+             * were not durably stored.
+             */
+            if (this.sequenceNumber > this.durableSequenceNumber) {
+                /**
+                 * This makes it so the next time deli checks for a "maxTime" opEvent,
+                 * it will fire the event since sequencedMessagesSinceLastOpEvent \> 0.
+                 */
+                this.opEvent.sequencedMessagesSinceLastOpEvent = this.sequenceNumber - this.durableSequenceNumber;
+            }
         }
 
         this.isNewDocument = this.sequenceNumber === 0;
 
         if (serviceConfiguration.enableLumberjack) {
             this.logSessionStartMetrics();
+        }
+
+        if (this.serviceConfiguration.deli.checkForIdleClientsOnStartup) {
+            /**
+             * Instruct deli to check for idle clients on startup. Why do we want to do this?
+             *
+             * Suppose the following:
+             * 1. Deli starts up and there is 1 write client and it
+             * consumes 1 message it has already previouly consumed.
+             * 2. Deli is closed due to a rebalance 2 minutes later.
+             * 3. Suppose that deli keeps rebalancing every 2 minutes indefinitely.
+             *
+             * Deli is configured to checkpoint 1 message behind the head while there is a client in the session.
+             * This will cause the kafka partition to never get a new checkpoint because it's in this bad loop.
+             * Never checkpointing could eventually lead to messages expiring from Kafka (data loss/corruption).
+             *
+             * We can recover from this loop if we check for idle clients on startup and insert a leave message
+             * for that 1 write client (who is now definitely expired). It would end up making deli checkpoint properly.
+             */
+            this.checkIdleWriteClients(Date.now());
         }
     }
 
@@ -372,8 +430,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
             switch (ticketedMessage.ticketType) {
                 case TicketType.Sequenced: {
-                    // Check for idle write clients.
-                    this.checkIdleWriteClients(ticketedMessage);
+                    if (ticketedMessage.type !== MessageType.ClientLeave) {
+                        // Check for idle write clients.
+                        this.checkIdleWriteClients(ticketedMessage.timestamp);
+                    }
 
                     // Check for document inactivity.
                     if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
@@ -412,27 +472,17 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         continue;
                     }
 
-                    // Check if Deli is over the max ops since last summary nack limit
-                    if (this.serviceConfiguration.deli.summaryNackMessages.enable &&
-                        !this.nackMessages.has(NackMessagesType.SummaryMaxOps)) {
-                        const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
-                        if (opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
-                            // this op brings us over the limit
-                            // start nacking non-system ops and ops that are submitted by non-summarizers
-                            this.nackMessages.set(NackMessagesType.SummaryMaxOps, {
-                                identifier: NackMessagesType.SummaryMaxOps,
-                                content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
-                                allowSystemMessages: true,
-                                allowedScopes: [ScopeType.SummaryWrite],
-                            });
-                        }
-                    }
-
                     const sequencedMessage = ticketedMessage.message;
 
                     if (this.serviceConfiguration.deli.enableOpHashing) {
                         this.lastHash = getNextHash(sequencedMessage, this.lastHash);
                         sequencedMessage.expHash1 = this.lastHash;
+                    }
+
+                    if (sequencedMessage.type === MessageType.Summarize) {
+                        // note: this is being emitted before it's produced to the deltas topic
+                        // that lets event handlers alter the message if necessary
+                        this.emit("summarizeMessage", sequencedMessage as ISequencedDocumentAugmentedMessage);
                     }
 
                     const outgoingMessage: ISequencedOperationMessage = {
@@ -461,10 +511,19 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                             (sequencedMessage.serverMetadata &&
                                 typeof (sequencedMessage.serverMetadata) === "object" &&
                                 sequencedMessage.serverMetadata.createSignal))) {
+                        const dataContent = this.extractDataContent(message as IRawOperationMessage);
+
                         const signalMessage = this.createSignalMessage(
                             message as IRawOperationMessage,
                             sequencedMessage.sequenceNumber - 1,
-                            this.extractDataContent(message as IRawOperationMessage));
+                            dataContent);
+
+                        if (sequencedMessage.type === MessageType.ClientJoin) {
+                            this.addSequencedSignalClient(dataContent as IClientJoin, signalMessage);
+                        } else {
+                            this.sequencedSignalClients.delete(dataContent);
+                        }
+
                         this.produceMessage(this.signalsProducer, signalMessage.message);
                     }
 
@@ -505,16 +564,35 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.clearActivityIdleTimer();
         this.setActivityIdleTimer();
 
-        // Update the op event idle & max ops counter if ops were just sequenced
-        if (this.serviceConfiguration.deli.opEvent.enable && sequencedMessageCount > 0) {
-            this.updateOpIdleTimer();
+        if (sequencedMessageCount > 0) {
+            // Check if Deli is over the max ops since last summary nack limit
+            // Note: we are explicitly checking this after processing the entire boxcar in order to not break batches
+            if (this.serviceConfiguration.deli.summaryNackMessages.enable &&
+                !this.nackMessages.has(NackMessagesType.SummaryMaxOps)) {
+                const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
+                if (opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
+                    // this op brings us over the limit
+                    // start nacking non-system ops and ops that are submitted by non-summarizers
+                    this.updateNackMessages(NackMessagesType.SummaryMaxOps, {
+                        identifier: NackMessagesType.SummaryMaxOps,
+                        content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
+                        allowSystemMessages: true,
+                        allowedScopes: [ScopeType.SummaryWrite],
+                    });
+                }
+            }
 
-            const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
-            if (maxOps !== undefined) {
-                this.opEvent.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
+            // Update the op event idle & max ops counter if ops were just sequenced
+            if (this.serviceConfiguration.deli.opEvent.enable) {
+                this.updateOpIdleTimer();
 
-                if (this.opEvent.sequencedMessagesSinceLastOpEvent > maxOps) {
-                    this.emitOpEvent(OpEventType.MaxOps);
+                const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
+                if (maxOps !== undefined) {
+                    this.opEvent.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
+
+                    if (this.opEvent.sequencedMessagesSinceLastOpEvent > maxOps) {
+                        this.emitOpEvent(OpEventType.MaxOps);
+                    }
                 }
             }
         }
@@ -694,11 +772,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         // Handle client join/leave messages.
         if (!message.clientId) {
             if (message.operation.type === MessageType.ClientLeave) {
-                const readClient = this.readClients.get(dataContent);
-                if (readClient) {
-                    this.readClients.delete(dataContent);
-                    return this.createSignalMessage(message, this.sequenceNumber, dataContent);
-                } else if (!this.clientSeqManager.removeClient(dataContent)) {
+                if (!this.clientSeqManager.removeClient(dataContent)) {
+                    // not a write client. check if it was a read client
+                    const readClient = this.sequencedSignalClients.get(dataContent);
+                    if (readClient) {
+                        this.sequencedSignalClients.delete(dataContent);
+                        return this.createSignalMessage(message, this.sequenceNumber, dataContent);
+                    }
+
                     // Return if the client has already been removed due to a prior leave message.
                     return;
                 }
@@ -706,7 +787,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 const clientJoinMessage = dataContent as IClientJoin;
 
                 if (clientJoinMessage.detail.mode === "read") {
-                    if (this.readClients.has(clientJoinMessage.clientId)) {
+                    if (this.sequencedSignalClients.has(clientJoinMessage.clientId)) {
                         // Return if the client has already been added due to a prior join message.
                         return;
                     }
@@ -714,15 +795,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     // create the signal message
                     const signalMessage = this.createSignalMessage(message, this.sequenceNumber, dataContent);
 
-                    // store the read client in-memory, including the signal sequence numbers
-                    const readClient: ISequencedSignalClient = {
-                        client: clientJoinMessage.detail,
-                        referenceSequenceNumber: (signalMessage.message.operation as any).referenceSequenceNumber,
-                        clientConnectionNumber: (signalMessage.message.operation as any).clientConnectionNumber,
-                        exp: Date.now() + this.serviceConfiguration.deli.clientTimeout,
-                    };
-
-                    this.readClients.set(clientJoinMessage.clientId, readClient);
+                    this.addSequencedSignalClient(clientJoinMessage, signalMessage);
 
                     return signalMessage;
                 } else {
@@ -919,11 +992,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         const controlContents: INackMessagesControlMessageContents |
                             IDisableNackMessagesControlMessageContents = controlMessage.contents;
 
-                        if (controlContents.content !== undefined) {
-                            this.nackMessages.set(controlContents.identifier, controlContents);
-                        } else {
-                            this.nackMessages.delete(controlContents.identifier);
-                        }
+                        this.updateNackMessages(
+                            controlContents.identifier,
+                            controlContents.content !== undefined ? controlContents : undefined);
 
                         break;
                     }
@@ -947,7 +1018,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         const clientIds = controlContents.clientIds ??
                             (controlContents.clientId ? [controlContents.clientId] : []);
                         for (const clientId of clientIds) {
-                            const client = this.readClients.get(clientId);
+                            const client = this.sequencedSignalClients.get(clientId);
                             if (client) {
                                 clientsToExtend.set(clientId, client);
                             }
@@ -1172,13 +1243,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Craft and send a leave message if one is found.
      * To prevent recurrent leave message sending, leave messages are only piggybacked with other message type.
      */
-    private checkIdleWriteClients(message: ISequencedDocumentMessageOutput) {
-        if (message.type !== MessageType.ClientLeave) {
-            const idleClient = this.getIdleClient(message.timestamp);
-            if (idleClient?.clientId) {
-                const leaveMessage = this.createLeaveMessage(idleClient.clientId, idleClient.serverMetadata);
-                void this.sendToRawDeltas(leaveMessage);
-            }
+    private checkIdleWriteClients(timestamp: number) {
+        const idleClient = this.getIdleClient(timestamp);
+        if (idleClient?.clientId) {
+            const leaveMessage = this.createLeaveMessage(idleClient.clientId, idleClient.serverMetadata);
+            void this.sendToRawDeltas(leaveMessage);
         }
     }
 
@@ -1191,8 +1260,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     private checkIdleReadClients() {
         const currentTime = Date.now();
 
-        for (const [clientId, { exp }] of this.readClients) {
-            if (exp < currentTime) {
+        for (const [clientId, { client, exp }] of this.sequencedSignalClients) {
+            // only handle read clients here
+            // write client idle is handled by checkIdleWriteClients
+            if (client.mode === "read" && exp < currentTime) {
                 const leaveMessage = this.createLeaveMessage(clientId);
                 void this.sendToRawDeltas(leaveMessage);
             }
@@ -1203,7 +1274,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Creates a leave message for inactive clients.
      */
     private createLeaveMessage(clientId: string, serverMetadata?: any): IRawOperationMessage {
-        const operation: IDocumentSystemMessage = {
+        const leaveMessage: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
             data: JSON.stringify(clientId),
@@ -1212,15 +1283,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             type: MessageType.ClientLeave,
             serverMetadata,
         };
-        const leaveMessage: IRawOperationMessage = {
-            clientId: null,
-            documentId: this.documentId,
-            operation,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-        return leaveMessage;
+        return this.createRawOperationMessage(leaveMessage);
     }
 
     /**
@@ -1231,10 +1294,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         code: number,
         type: NackErrorType,
         reason: string,
-        retryAfter?: number): INackMessageOutput {
+        retryAfter?: number): INackMessageOutput | undefined {
+        const clientId = message.clientId;
+        if (!clientId) {
+            // message was sent by the system and not a client
+            // "nacking" the system is not supported
+            return undefined;
+        }
+
         const nackMessage: INackMessage = {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            clientId: message.clientId!,
+            clientId,
             documentId: this.documentId,
             operation: {
                 content: {
@@ -1309,21 +1378,24 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     private createOpMessage(type: string): IRawOperationMessage {
-        const noOpMessage: IRawOperationMessage = {
+        return this.createRawOperationMessage({
+            clientSequenceNumber: -1,
+            contents: null,
+            referenceSequenceNumber: -1,
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
+            type,
+        });
+    }
+
+    private createRawOperationMessage(operation: IDocumentMessage): IRawOperationMessage {
+        return {
             clientId: null,
             documentId: this.documentId,
-            operation: {
-                clientSequenceNumber: -1,
-                contents: null,
-                referenceSequenceNumber: -1,
-                traces: this.serviceConfiguration.enableTraces ? [] : undefined,
-                type,
-            },
+            operation,
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: RawOperationType,
         };
-        return noOpMessage;
     }
 
     /**
@@ -1543,7 +1615,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
             if (opsSinceLastSummary <= this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
                 // stop nacking future messages
-                this.nackMessages.delete(NackMessagesType.SummaryMaxOps);
+                this.updateNackMessages(NackMessagesType.SummaryMaxOps, undefined);
             }
         }
     }
@@ -1663,5 +1735,37 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             // that will make the MaxTime & MaxOps op events accurate
             this.emitOpEvent(OpEventType.UpdatedDurableSequenceNumber, true);
         }
+    }
+
+    /**
+     * Adds/updates/removes a nack message
+     * @param type - Nack message type
+     * @param contents - Nack messages contents or undefined to delete the nack message
+     */
+    private updateNackMessages(type: NackMessagesType, contents: INackMessagesControlMessageContents | undefined) {
+        if (contents !== undefined) {
+            this.nackMessages.set(type, contents);
+        } else {
+            this.nackMessages.delete(type);
+        }
+
+        this.emit("updatedNackMessages", type, contents);
+    }
+
+    /**
+     * Adds a sequenced signal client to the in-memory map.
+     * Alfred will periodically send ExtendClient control messages, which will extend the client expiration times.
+     * @param clientJoinMessage - Client join message (from dataContent)
+     * @param signalMessage - Ticketed join signal message
+     */
+    private addSequencedSignalClient(clientJoinMessage: IClientJoin, signalMessage: ISignalMessageOutput) {
+        const sequencedSignalClient: ISequencedSignalClient = {
+            client: clientJoinMessage.detail,
+            referenceSequenceNumber: (signalMessage.message.operation as any).referenceSequenceNumber,
+            clientConnectionNumber: (signalMessage.message.operation as any).clientConnectionNumber,
+            exp: Date.now() + this.serviceConfiguration.deli.clientTimeout,
+        };
+
+        this.sequencedSignalClients.set(clientJoinMessage.clientId, sequencedSignalClient);
     }
 }

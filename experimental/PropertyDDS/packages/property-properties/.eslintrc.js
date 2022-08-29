@@ -5,12 +5,13 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        require.resolve("@fluidframework/eslint-config-fluid")
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "rules": {
+        // Many rules are disabled in PropertyDDS projects. See https://github.com/microsoft/FluidFramework/pull/10272
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/comma-spacing": "off",
         "@typescript-eslint/dot-notation": "off",
@@ -18,6 +19,7 @@ module.exports = {
         "@typescript-eslint/no-extraneous-class": "off",
         "@typescript-eslint/no-extraneous-dependencies": "off",
         "@typescript-eslint/no-implied-eval": "off",
+        "@typescript-eslint/no-invalid-this": "off",
         "@typescript-eslint/no-require-imports": "off",
         "@typescript-eslint/no-shadow": "off",
         "@typescript-eslint/no-this-alias": "off",

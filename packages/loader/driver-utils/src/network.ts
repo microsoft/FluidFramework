@@ -8,6 +8,8 @@ import {
     IDriverErrorBase,
     IAuthorizationError,
     DriverErrorType,
+    ILocationRedirectionError,
+    IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
@@ -88,6 +90,19 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     ) {
         // don't log claims or tenantId
         super(message, props, new Set(["claims", "tenantId"]));
+    }
+}
+
+export class LocationRedirectionError extends LoggingError implements ILocationRedirectionError, IFluidErrorBase {
+    readonly errorType = DriverErrorType.locationRedirection;
+    readonly canRetry = false;
+
+    constructor(
+        message: string,
+        readonly redirectUrl: IResolvedUrl,
+        props: DriverErrorTelemetryProps,
+    ) {
+        super(message, props);
     }
 }
 

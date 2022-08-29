@@ -7,6 +7,7 @@
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { IDebugger } from 'debug';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { ILoggingError } from '@fluidframework/common-definitions';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
@@ -156,7 +157,7 @@ export interface ITelemetryLoggerPropertyBags {
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L): MonitoringContext<L>;
 
 // @public
-export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
+export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
@@ -208,9 +209,6 @@ export class MultiSinkLogger extends TelemetryLogger {
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
 // @public
-export function originatedAsExternalError(e: any): boolean;
-
-// @public
 export class PerformanceEvent {
     protected constructor(logger: ITelemetryLogger, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers);
     // (undocumented)
@@ -237,6 +235,17 @@ export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmit
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
 
 // @public
+export class SampledTelemetryHelper implements IDisposable {
+    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryLogger, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
+    // (undocumented)
+    dispose(error?: Error | undefined): void;
+    // (undocumented)
+    disposed: boolean;
+    // (undocumented)
+    measure<T>(codeToMeasure: () => T, bucket?: string): T;
+}
+
+// @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @public @deprecated (undocumented)
@@ -248,7 +257,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 
 // @public
 export enum TelemetryDataTag {
-    PackageData = "PackageData",
+    CodeArtifact = "CodeArtifact",
     UserData = "UserData"
 }
 

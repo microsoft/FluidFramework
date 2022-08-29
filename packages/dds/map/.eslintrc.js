@@ -5,10 +5,13 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        require.resolve("@fluidframework/eslint-config-fluid")
     ],
     "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+        "project": [
+            "./tsconfig.json",
+            "./src/test/tsconfig.json",
+        ]
     },
     "rules": {
         "@typescript-eslint/no-use-before-define": "off",

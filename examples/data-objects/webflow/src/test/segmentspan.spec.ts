@@ -15,7 +15,7 @@ describeLoaderCompat("SegmentSpan", (getTestObjectProvider) => {
     let doc: FlowDocument;
     let provider: ITestObjectProvider;
     before(async () => {
-        provider = getTestObjectProvider(/* reset */ false);
+        provider = getTestObjectProvider({ resetAfterEach: false });
         const container = await provider.createContainer(FlowDocument.getFactory());
         doc = await requestFluidObject<FlowDocument>(container, "default");
     });

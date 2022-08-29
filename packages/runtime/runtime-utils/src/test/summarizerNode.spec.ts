@@ -195,9 +195,7 @@ describe("Runtime", () => {
 
                 it("Load base summary should do nothing for simple snapshot", async () => {
                     createRoot({ refSeq: 1 });
-                    const { baseSummary, outstandingOps } = await rootNode.loadBaseSummary(
-                        simpleSnapshot, readAndParseBlob);
-                    assert.strictEqual(outstandingOps.length, 0, "no outstanding ops");
+                    const baseSummary = await rootNode.loadBaseSummary(simpleSnapshot, readAndParseBlob);
                     assert.strictEqual(Object.keys(baseSummary.trees).length, 2, "only 2 subtrees");
                     assert(baseSummary.trees[ids[1]] !== undefined, "mid subtree");
 
@@ -209,9 +207,7 @@ describe("Runtime", () => {
 
                 it("Load base summary should strip channels subtree", async () => {
                     createRoot({ refSeq: 1 });
-                    const { baseSummary, outstandingOps } = await rootNode.loadBaseSummary(
-                        channelsSnapshot, readAndParseBlob);
-                    assert.strictEqual(outstandingOps.length, 0, "no outstanding ops");
+                    const baseSummary = await rootNode.loadBaseSummary(channelsSnapshot, readAndParseBlob);
                     assert.strictEqual(Object.keys(baseSummary.trees).length, 2, "only 2 subtrees");
                     assert(baseSummary.trees[channelsTreeName] !== undefined, "channels subtree");
 

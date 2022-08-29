@@ -4,16 +4,17 @@
  */
 
 import { Stack } from "./collections";
-import { ISegment } from "./mergeTree";
+import { ISegment } from "./mergeTreeNodes";
 import { ReferenceType, ICombiningOp } from "./ops";
 import { PropertySet, MapLike } from "./properties";
 
 export const reservedTileLabelsKey = "referenceTileLabels";
 export const reservedRangeLabelsKey = "referenceRangeLabels";
 
-export function refTypeIncludesFlag(refPos: ReferencePosition, flags: ReferenceType): boolean {
+export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean {
+    const refType = typeof refPosOrType === "number" ? refPosOrType : refPosOrType.refType;
     // eslint-disable-next-line no-bitwise
-    return (refPos.refType & flags) !== 0;
+    return (refType & flags) !== 0;
 }
 
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
@@ -62,35 +63,15 @@ export interface ReferencePosition {
     getSegment(): ISegment | undefined;
     getOffset(): number;
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
-    isLeaf(): boolean;
-
-    /**
-     * @deprecated - use refHasTileLabels
-     */
-    hasTileLabels(): boolean;
-    /**
-     * @deprecated - use refHasRangeLabels
-     */
-    hasRangeLabels(): boolean;
-    /**
-     * @deprecated - use refHasTileLabel
-     */
-    hasTileLabel(label: string): boolean;
-    /**
-     * @deprecated - use refHasRangeLabel
-     */
-    hasRangeLabel(label: string): boolean;
-    /**
-     * @deprecated - use refGetTileLabels
-     */
-    getTileLabels(): string[] | undefined;
-    /**
-     * @deprecated - use refGetRangeLabels
-     */
-    getRangeLabels(): string[] | undefined;
+    isLeaf(): this is ISegment;
 }
 
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
+
 export const DetachedReferencePosition = -1;
 
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T {

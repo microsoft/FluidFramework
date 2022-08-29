@@ -167,7 +167,7 @@ async function* loadAllSequencedMessages(
         deltaStream.dispose();
         console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);
 
-        if (initialMessages) {
+        if (initialMessages !== undefined) {
             const lastSequenceNumber = lastSeq;
             const filtered = initialMessages.filter((a) => a.sequenceNumber > lastSequenceNumber);
             const sorted = filtered.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
@@ -205,7 +205,7 @@ async function* saveOps(
         if (files.length === 0) {
             curr = firstAvailableDelta;
         }
-        if (!result.done) {
+        if (result.done !== true) {
             let messages = result.value;
             yield messages;
             if (messages[messages.length - 1].sequenceNumber < curr) {
@@ -224,7 +224,7 @@ async function* saveOps(
         }
 
         // Time to write it out?
-        while (sequencedMessages.length >= chunk || (result.done && sequencedMessages.length !== 0)) {
+        while (sequencedMessages.length >= chunk || (result.done === true && sequencedMessages.length !== 0)) {
             const name = filenameFromIndex(index);
             const write = sequencedMessages.splice(0, chunk);
             console.log(`writing messages${name}.json`);
@@ -238,7 +238,7 @@ async function* saveOps(
             index++;
         }
 
-        if (result.done) {
+        if (result.done === true) {
             break;
         }
     }
@@ -250,9 +250,9 @@ export async function fluidFetchMessages(documentService?: IDocumentService, sav
         return;
     }
 
-    const files = !saveDir ?
-        undefined :
-        fs.readdirSync(saveDir)
+    const files = saveDir === undefined
+        ? undefined
+        : fs.readdirSync(saveDir)
             .filter((file) => {
                 if (!file.startsWith("messages")) {
                     return false;
@@ -263,7 +263,7 @@ export async function fluidFetchMessages(documentService?: IDocumentService, sav
 
     let generator = loadAllSequencedMessages(documentService, saveDir, files);
 
-    if (saveDir && files !== undefined && documentService) {
+    if (saveDir !== undefined && files !== undefined && documentService) {
         generator = saveOps(generator, saveDir, files);
     }
 

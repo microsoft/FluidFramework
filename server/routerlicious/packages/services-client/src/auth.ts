@@ -18,6 +18,10 @@ export function validateTokenClaims(
     token: string,
     documentId: string,
     tenantId: string): ITokenClaims {
+    if (typeof token !== "string") {
+        throw new NetworkError(403, `Token must be a string. Received: ${typeof token}`);
+    }
+
     const claims = jwtDecode<ITokenClaims>(token);
 
     if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {

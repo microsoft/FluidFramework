@@ -40,10 +40,10 @@ export class BannedModulesPlugin {
                 stats.toJson().modules?.forEach((mod)=> {
                     // Infer the name of the package from the path. This current implementation assumes the name has 'node_modules/<packageName>' in it somewhere
                     // modulePath should contain the relative path to the module, where the first part of the path should be the module name (e.g. assert/build/assert.js)
-                    const modulePath = mod.name.substring(mod.name.indexOf("node_modules") + "node_modules".length + 1);
+                    const modulePath = mod.name?.substring(mod.name.indexOf("node_modules") + "node_modules".length + 1);
 
                     for (const bannedModule of this.options.bannedModules) {
-                        if (modulePath.startsWith(bannedModule.moduleName)) {
+                        if (modulePath?.startsWith(bannedModule.moduleName)) {
                             // We store the issuers as a set to remove duplicates
                             const bannedModuleIssuers = foundBannedModules.get(bannedModule) || new Set();
                             bannedModuleIssuers.add(JSON.stringify(mod.issuerPath));

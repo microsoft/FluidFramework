@@ -5,8 +5,9 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ISnapshotContents } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
+import { ISnapshotTreeEx } from "./contracts";
 import {
     assertBlobCoreInstance,
     assertBoolInstance,
@@ -66,8 +67,9 @@ function readOpsSection(node: NodeTypes) {
  * @param node - tree node to de-serialize from
  */
 function readTreeSection(node: NodeCore) {
-    const snapshotTree: ISnapshotTree = {
+    const snapshotTree: ISnapshotTreeEx = {
         blobs: {},
+        commits: {},
         trees: {},
     };
     for (let count = 0; count < node.length; count++) {
@@ -79,9 +81,11 @@ function readTreeSection(node: NodeCore) {
         if (records.value !== undefined) {
             assertBlobCoreInstance(records.value, "Blob value should be BlobCore");
             snapshotTree.blobs[path] = records.value.toString();
-        } else {
+        } else if (records.children !== undefined) {
             assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
             snapshotTree.trees[path] = readTreeSection(records.children);
+        } else {
+            snapshotTree.trees[path] = { blobs: {}, commits: {}, trees: {} };
         }
         if (records.unreferenced !== undefined) {
             assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
@@ -125,19 +129,25 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     const root = builder.getNode(0);
 
     const records = getAndValidateNodeProps(root,
-        ["mrv", "cv", "snapshot", "blobs", "deltas"], false);
+        ["mrv", "cv", "lsn", "snapshot", "blobs", "deltas"], false);
 
     assertBlobCoreInstance(records.mrv, "minReadVersion should be of BlobCore type");
     assertBlobCoreInstance(records.cv, "createVersion should be of BlobCore type");
-    assert(snapshotMinReadVersion >= records.mrv.toString(),
+    if (records.lsn !== undefined) {
+        assertNumberInstance(records.lsn, "lsn should be a number");
+    }
+
+    assert(parseFloat(snapshotMinReadVersion) >= parseFloat(records.mrv.toString()),
         0x20f /* "Driver min read version should >= to server minReadVersion" */);
-    assert(records.cv.toString() >= snapshotMinReadVersion,
+    assert(parseFloat(records.cv.toString()) >= parseFloat(snapshotMinReadVersion),
         0x210 /* "Snapshot should be created with minReadVersion or above" */);
     assert(currentReadVersion === records.cv.toString(),
         0x2c2 /* "Create Version should be equal to currentReadVersion" */);
+
     return {
         ...readSnapshotSection(records.snapshot),
         blobs: readBlobSection(records.blobs),
         ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
+        latestSequenceNumber: records.lsn,
     };
 }

@@ -8,7 +8,7 @@ aliases:
 ## Fluid Data: Operations all the way down
 
 Fluid data is different than data you might be familiar with. In Fluid, when data is changed, the change is modeled as
-an operation (often shortened to op) on the existing data (if you've used [Operational
+an operation (often shortened as "op") on the existing data (if you've used [Operational
 Transform](https://en.wikipedia.org/wiki/Operational_transformation), this concept may sound familiar).
 
 Operations describe changes to a data structure. By chaining a series of operations together we can represent changes to
@@ -19,7 +19,7 @@ However, just sending operations is not enough -- we need to be sure that each c
 order.
 
 Fluid is, at its core, a data model for distributed state. Building collaborative experiences boils down to managing
-distributed state, and Fluid provides powerful developer-friendly abstractions for managing this state in the form of
+distributed state. Fluid provides powerful, developer-friendly abstractions for managing this state in the form of
 distributed data structures (DDSes). Each of these data structures is eventually consistent -- this means that, assuming
 no new changes to the data structures, all clients reach an identical state in a finite amount of time.
 
@@ -39,7 +39,7 @@ eventually be consistent with the client that originated the change.
 ## Operations
 
 Fluid is also efficient when communicating with the server. When you change a data structure, Fluid doesn't send the
-whole data structure to the server. Rather, it sends operations. For example, consider the [SharedNumberSequence][] data
+whole data structure to the server. Rather, it sends operations. For example, consider the [SharedSequence][] data
 structure. When a client inserts, appends, or deletes items in the sequence, Fluid sends the server the operation that
 was performed and the data that was inserted/appended/etc. When the Fluid service broadcasts the operation to all the
 other connected clients, it again sends only the operation itself, not the full data structure. This efficiency in
@@ -55,10 +55,10 @@ with all other clients. This is managed by the Fluid runtime.
 
 ## Summary operations
 
-As the number of operations increases, replaying all ops when loading a Fluid data structure is inefficient. Fluid
-provides a specialized operation, called a Summary operation, to address this. As the name implies, a Summary op is an
-operation that summarizes all previous operations. Thus, a Summary op represents the state of Fluid data structures at a
-particular sequence number.
+As the number of operations increases, replaying all ops when loading a Fluid data structure is inefficient.
+Fluid provides a specialized operation, called a Summary operation, to address this.
+As the name implies, a Summary operation is one that summarizes all previous operations.
+Thus, a Summary op represents the state of Fluid data structures at a particular sequence number.
 
 When a client boots, rather than loading all ops, the client can load the most recent Summary op, making the local Fluid
 data structures consistent with the rest of the clients. Summary ops, like all Fluid operations, are created by the

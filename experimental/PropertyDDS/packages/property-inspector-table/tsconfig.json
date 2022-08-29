@@ -6,18 +6,16 @@
     "typeRoots": [
       "../node_modules/@types",
     ],
-    "baseUrl": ".",
-    "outDir": "./dist",
-    "paths": {
-      "src/*": ["src/*"]
-    }
+    "declarationDir": "./dist",
+    "outDir": "./dist"
   },
-  "include": [
-    "./src/**/*",
-    "./assets/**/*",
-    "./custom.d.ts"
-  ],
   "exclude": [
-    "./src/**/*.stories.*"
-  ]
+    "dist",
+    "node_modules"
+],
+  "include": [
+    "src/**/*",
+    "assets/**/*",
+    "custom.d.ts"
+  ],
 }

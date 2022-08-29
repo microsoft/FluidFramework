@@ -4,6 +4,7 @@
  */
 
 import { INackContent, NackErrorType } from "@fluidframework/protocol-definitions";
+import { IUsageData } from ".";
 
 export interface IThrottlerResponse {
     throttleStatus: boolean;
@@ -34,9 +35,9 @@ export class ThrottlingError implements INackContent {
 }
 
 /**
- * Storage getter/setter with logic specific to throttling metrics.
+ * Storage getter/setter with logic specific to throttling metrics and usage data.
  */
-export interface IThrottleStorageManager {
+export interface IThrottleAndUsageStorageManager {
     /**
      * Store throttling metrics for the given id.
      */
@@ -46,6 +47,25 @@ export interface IThrottleStorageManager {
      * Get throttling metrics for the given id.
      */
     getThrottlingMetric(id: string): Promise<IThrottlingMetrics>;
+
+    /**
+     * Store throttling metrics and usage data for the given id.
+     */
+     setThrottlingMetricAndUsageData(
+        id: string,
+        throttlingMetric: IThrottlingMetrics,
+        usageStorageId: string,
+        usageData: IUsageData): Promise<void>;
+
+    /**
+     * Store usage data for given id.
+     */
+    setUsageData(id: string, usageData: IUsageData): Promise<void>;
+
+    /**
+     * Get usage data for given id.
+     */
+    getUsageData(id: string): Promise<IUsageData>;
 }
 
 /**
@@ -54,8 +74,13 @@ export interface IThrottleStorageManager {
 export interface IThrottlerHelper {
     /**
      * Updates throttling metric count for given id, runs rate-limiting algorithm, and updates throttle status.
+     * Optionally, stores usage data if provided with.
      */
-    updateCount(id: string, count: number): Promise<IThrottlerResponse>;
+     updateCount(
+        id: string,
+        count: number,
+        usageStorageId?: string,
+        usageData?: IUsageData): Promise<IThrottlerResponse>;
 
     /**
      * Retrieve most recent throttle status for given id.
@@ -69,9 +94,10 @@ export interface IThrottlerHelper {
 export interface IThrottler {
     /**
      * Increment the current processing count of operations by `weight`.
+     * Optionally, stores usage data if provided with.
      * @throws {@link ThrottlingError} when throttled.
      */
-    incrementCount(id: string, weight?: number): void;
+     incrementCount(id: string, weight?: number, usageStorageId?: string, usageData?: IUsageData): void;
 
     /**
      * Decrement the current processing count of operations by `weight`.

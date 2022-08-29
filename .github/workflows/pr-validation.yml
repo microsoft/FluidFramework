@@ -1,18 +1,18 @@
 name: "Fluid PR Validation"
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
     branches:
-    - main
-    - release/*
+      - main
+      - release/*
 
 jobs:
   validate-codeowners:
     name: Validate CODEOWNERS
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: mszostok/codeowners-validator@v0.6.0
-      with:
-        github_access_token: "${{ secrets.GITHUB_TOKEN }}"
-        checks: "files,duppatterns,syntax"
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+      - uses: mszostok/codeowners-validator@2f6e3bb39aa6837d7dcf8eff2de5d6c046d0c9a9 # pin@v0.6.0
+        with:
+          github_access_token: "${{ secrets.GITHUB_TOKEN }}"
+          checks: "files,duppatterns,syntax"

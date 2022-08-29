@@ -154,7 +154,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @param id - optional name of the task queue
      */
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
-        super(id, runtime, attributes);
+        super(id, runtime, attributes, "fluid_taskManager_");
 
         this.opWatcher.on("volunteer", (taskId: string, clientId: string, local: boolean, messageId: number) => {
             // We're tracking local ops from this connection. Filter out local ops during "connecting"

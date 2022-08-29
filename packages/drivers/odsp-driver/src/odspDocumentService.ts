@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     IFluidErrorBase,
@@ -21,8 +21,7 @@ import {
     IDocumentServicePolicies,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
-import { IFacetCodes } from "@fluidframework/odsp-doclib-utils";
+import { canRetryOnError, DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
@@ -35,6 +34,7 @@ import {
     InstrumentedStorageTokenFetcher,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
@@ -108,6 +108,8 @@ export class OdspDocumentService implements IDocumentService {
     private _opsCache?: OpsCache;
 
     private currentConnection?: OdspDocumentDeltaConnection;
+
+    private relayServiceTenantAndSessionId: string | undefined;
 
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
@@ -184,6 +186,11 @@ export class OdspDocumentService implements IDocumentService {
                         return this.currentConnection.flush();
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
+                },
+                () => {
+                    assert(this.relayServiceTenantAndSessionId !== undefined,
+                        0x37b /* relayServiceTenantAndSessionId should be present */);
+                    return this.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
             );
@@ -267,7 +274,7 @@ export class OdspDocumentService implements IDocumentService {
                     this.socketIoClientFactory().catch(annotateAndRethrowConnectionError("socketIoClientFactory")),
                 ]);
 
-            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
+            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken ?? null);
             if (finalWebsocketToken === null) {
                 throw this.annotateConnectionError(
                     new NonRetryableError(
@@ -340,10 +347,9 @@ export class OdspDocumentService implements IDocumentService {
         requestSocketToken: boolean,
         options: TokenFetchOptionsEx,
     ) {
-        return this.joinSessionCore(requestSocketToken, options).catch((e) => {
-            const likelyFacetCodes = e as IFacetCodes;
-            if (Array.isArray(likelyFacetCodes.facetCodes)) {
-                for (const code of likelyFacetCodes.facetCodes) {
+        const response = await this.joinSessionCore(requestSocketToken, options).catch((e) => {
+            if (hasFacetCodes(e) && e.facetCodes !== undefined) {
+                for (const code of e.facetCodes) {
                     switch (code) {
                         case "sessionForbiddenOnPreservedFiles":
                         case "sessionForbiddenOnModerationEnabledLibrary":
@@ -360,6 +366,8 @@ export class OdspDocumentService implements IDocumentService {
             }
             throw e;
         });
+        this.relayServiceTenantAndSessionId = `${response.tenantId}/${response.id}`;
+        return response;
     }
 
     private async joinSessionCore(
@@ -415,12 +423,16 @@ export class OdspDocumentService implements IDocumentService {
             if (response.refreshAfterDeltaMs > 0) {
                 this.scheduleJoinSessionRefresh(response.refreshAfterDeltaMs)
                     .catch((error) => {
-                        this.mc.logger.sendErrorEvent({
+                        const canRetry = canRetryOnError(error);
+                        // Only record error event in case it is non retriable.
+                        if (!canRetry) {
+                            this.mc.logger.sendErrorEvent({
                                 eventName: "JoinSessionRefreshError",
                                 details: JSON.stringify(props),
                             },
                             error,
-                        );
+                            );
+                        }
                     });
             } else {
                 // Logging just for informational purposes to help with debugging as this is a new feature.

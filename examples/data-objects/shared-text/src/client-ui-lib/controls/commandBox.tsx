@@ -62,26 +62,36 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
     };
 
     const keydownHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Escape") {
-            dismissCommandBox();
-        } else if (e.key === "ArrowDown") {
-            if (arrowedCommand === undefined) {
-                if (matchingCommands.length > 0) {
-                    setArrowedCommand(0);
-                }
-            } else {
-                setArrowedCommand((arrowedCommand + 1) % matchingCommands.length);
+        switch (e.key) {
+            case "Escape": {
+                dismissCommandBox();
+               break;
             }
-            e.preventDefault();
-        } else if (e.key === "ArrowUp") {
-            if (arrowedCommand === undefined) {
-                if (matchingCommands.length > 0) {
-                    setArrowedCommand(matchingCommands.length - 1);
+            case "ArrowDown": {
+                if (arrowedCommand === undefined) {
+                    if (matchingCommands.length > 0) {
+                        setArrowedCommand(0);
+                    }
+                } else {
+                    setArrowedCommand((arrowedCommand + 1) % matchingCommands.length);
                 }
-            } else {
-                setArrowedCommand((arrowedCommand - 1) % matchingCommands.length);
+                e.preventDefault();
+                break;
             }
-            e.preventDefault();
+            case "ArrowUp": {
+                if (arrowedCommand === undefined) {
+                    if (matchingCommands.length > 0) {
+                        setArrowedCommand(matchingCommands.length - 1);
+                    }
+                } else {
+                    setArrowedCommand((arrowedCommand - 1) % matchingCommands.length);
+                }
+                e.preventDefault();
+                break;
+            }
+            default: {
+                break;
+            }
         }
     };
 
@@ -110,19 +120,14 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
             dismissCommandBox();
         };
 
-        if (index === arrowedCommand) {
-            return (
+        return index === arrowedCommand ? (
                 <div key={ command.friendlyName } onClick={ clickCommand } style={{ backgroundColor: "#ccc" }}>
                     { command.friendlyName }
                 </div>
-            );
-        } else {
-            return <div key={ command.friendlyName } onClick={ clickCommand }>{ command.friendlyName }</div>;
-        }
+            ) : <div key={ command.friendlyName } onClick={ clickCommand }>{ command.friendlyName }</div>;
     });
 
-    if (show) {
-        return (
+    return show ? (
             <div style={{ position: "absolute", width: "100%", height: "100%" }}>
                 <div>
                     <input type="text" ref={ filterRef } onKeyDown={ keydownHandler } onKeyPress={ keypressHandler }/>
@@ -137,8 +142,5 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
                     : <></>
                 }
             </div>
-        );
-    } else {
-        return <></>;
-    }
+        ) : <></>;
 };

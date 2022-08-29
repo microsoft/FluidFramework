@@ -27,6 +27,7 @@ import {
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummarizerNodeWithGC,
+    ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ChildLogger, TelemetryDataTag, ThresholdCounter } from "@fluidframework/telemetry-utils";
 import {
@@ -68,6 +69,8 @@ export class RemoteChannelContext implements IChannelContext {
         getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase>,
         private readonly attachMessageType?: string,
     ) {
+        assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
+
         this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
 
         this.services = createServiceEndpoints(
@@ -82,7 +85,8 @@ export class RemoteChannelContext implements IChannelContext {
             extraBlobs);
 
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
+            this.summarizeInternal(fullTree, trackState, telemetryContext);
 
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
@@ -138,18 +142,33 @@ export class RemoteChannelContext implements IChannelContext {
         this.services.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
+    public rollback(content: any, localOpMetadata: unknown) {
+        assert(this.isLoaded, 0x2f0 /* "Remote channel must be loaded when rolling back op" */);
+
+        this.services.deltaConnection.rollback(content, localOpMetadata);
+    }
+
     /**
      * Returns a summary at the current sequence number.
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
+     * @param telemetryContext - summary data passed through the layers for telemetry purposes
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
-        return this.summarizerNode.summarize(fullTree, trackState);
+    public async summarize(
+        fullTree: boolean = false,
+        trackState: boolean = true,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeResult> {
+        return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
     }
 
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
+    private async summarizeInternal(
+        fullTree: boolean,
+        trackState: boolean,
+        telemetryContext?: ITelemetryContext,
+    ): Promise<ISummarizeInternalResult> {
         const channel = await this.getChannel();
-        const summarizeResult = await summarizeChannelAsync(channel, fullTree, trackState);
+        const summarizeResult = await summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
         return { ...summarizeResult, id: this.id };
     }
 
@@ -175,11 +194,11 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new DataCorruptionError("channelTypeNotAvailable", {
                     channelId: {
                         value: this.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                 });
@@ -190,11 +209,11 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
                     channelId: {
                         value: this.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: this.attachMessageType,
@@ -208,11 +227,11 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
                     channelId: {
                         value: this.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: attributes.type,
@@ -226,14 +245,14 @@ export class RemoteChannelContext implements IChannelContext {
                 this.subLogger.sendTelemetryEvent(
                     {
                         eventName: "ChannelAttributesVersionMismatch",
-                        channelType: { value: attributes.type, tag: TelemetryDataTag.PackageData },
+                        channelType: { value: attributes.type, tag: TelemetryDataTag.CodeArtifact },
                         channelSnapshotVersion: {
                             value: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
-                            tag: TelemetryDataTag.PackageData,
+                            tag: TelemetryDataTag.CodeArtifact,
                         },
                         channelCodeVersion: {
                             value: `${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`,
-                            tag: TelemetryDataTag.PackageData,
+                            tag: TelemetryDataTag.CodeArtifact,
                         },
                     },
                 );
@@ -286,7 +305,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         /**
-         * Currently, DDSs are always considered referenced and are not garbage collected. Update the summarizer node's
+         * Currently, DDSes are always considered referenced and are not garbage collected. Update the summarizer node's
          * used routes to contain a route to this channel context.
          * Once we have GC at DDS level, this will be updated to use the passed usedRoutes. See -
          * https://github.com/microsoft/FluidFramework/issues/4611

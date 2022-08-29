@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { GenericError } from "@fluidframework/container-utils";
 import {
+    FetchSource,
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     ISummaryContext,
@@ -15,7 +16,6 @@ import {
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -41,9 +41,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return this.internalStorageService.repositoryUrl;
     }
 
-    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+    public async getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null> {
         return this.runWithRetry(
-            async () => this.internalStorageService.getSnapshotTree(version),
+            async () => this.internalStorageService.getSnapshotTree(version, scenarioName),
             "storage_getSnapshotTree",
         );
     }
@@ -55,17 +55,15 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         );
     }
 
-    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+    public async getVersions(
+        versionId: string | null,
+        count: number,
+        scenarioName?: string,
+        fetchSource?: FetchSource,
+    ): Promise<IVersion[]> {
         return this.runWithRetry(
-            async () => this.internalStorageService.getVersions(versionId, count),
+            async () => this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource),
             "storage_getVersions",
-        );
-    }
-
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.runWithRetry(
-            async () => this.internalStorageService.write(tree, parents, message, ref),
-            "storage_write",
         );
     }
 

@@ -54,7 +54,8 @@ const viewRequestHandler = async (request: RequestParser, runtime: IContainerRun
 
 class CodeMirrorFactory extends RuntimeFactoryHelper {
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-        await runtime.createRootDataStore(smde.type, defaultComponentId);
+        const dataStore = await runtime.createDataStore(smde.type);
+        await dataStore.trySetAlias(defaultComponentId);
     }
 
     public async preInitialize(

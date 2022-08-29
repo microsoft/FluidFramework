@@ -17,9 +17,7 @@ import {
     IFluidModule,
     IHostLoader,
     ILoader,
-    IPendingLocalState,
     ILoaderOptions as ILoaderOptions1,
-    IProxyLoaderFactory,
     LoaderHeader,
     IProvideFluidCodeDetailsComparer,
     IFluidCodeDetails,
@@ -47,9 +45,10 @@ import {
     MultiUrlResolver,
     MultiDocumentServiceFactory,
 } from "@fluidframework/driver-utils";
-import { Container } from "./container";
+import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
+import { ProtocolHandlerBuilder } from "./protocol";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -128,7 +127,7 @@ function createCachedResolver(resolver: IUrlResolver) {
     return cacheResolver;
 }
 
-export interface ILoaderOptions extends ILoaderOptions1{
+export interface ILoaderOptions extends ILoaderOptions1 {
     summarizeProtocolTree?: boolean;
 }
 
@@ -201,13 +200,6 @@ export interface ILoaderProps {
     readonly scope?: FluidObject;
 
     /**
-     * Proxy loader factories for loading containers via proxy in other contexts,
-     * like web workers, or worker threads.
-     * @deprecated Not recommended for general use and will be removed in an upcoming release.
-     */
-    readonly proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
-
-    /**
      * The logger that all telemetry should be pushed to.
      */
     readonly logger?: ITelemetryBaseLogger;
@@ -220,7 +212,13 @@ export interface ILoaderProps {
     /**
      * The configuration provider which may be used to control features.
      */
-     readonly configProvider?: IConfigProviderBase;
+    readonly configProvider?: IConfigProviderBase;
+
+    /**
+    * Optional property for allowing the container to use a custom
+    * protocol implementation for handling the quorum and/or the audience.
+    */
+    readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
 }
 
 /**
@@ -258,13 +256,6 @@ export interface ILoaderServices {
     readonly scope: FluidObject;
 
     /**
-     * Proxy loader factories for loading containers via proxy in other contexts,
-     * like web workers, or worker threads.
-     * @deprecated Not recommended for general use and will be removed in an upcoming release.
-     */
-    readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
-
-    /**
      * The logger downstream consumers should construct their loggers from
      */
     readonly subLogger: ITelemetryLogger;
@@ -294,6 +285,7 @@ export class Loader implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly mc: MonitoringContext;
+    private readonly protocolHandlerBuilder: ProtocolHandlerBuilder | undefined;
 
     constructor(loaderProps: ILoaderProps) {
         const scope: FluidObject<ILoader> = { ...loaderProps.scope };
@@ -318,11 +310,11 @@ export class Loader implements IHostLoader {
             options: loaderProps.options ?? {},
             scope,
             subLogger: subMc.logger,
-            proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
             detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.services.subLogger, "Loader"));
+        this.protocolHandlerBuilder = loaderProps.protocolHandlerBuilder;
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -331,6 +323,7 @@ export class Loader implements IHostLoader {
         const container = await Container.createDetached(
             this,
             codeDetails,
+            this.protocolHandlerBuilder,
         );
 
         if (this.cachingEnabled) {
@@ -347,7 +340,7 @@ export class Loader implements IHostLoader {
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
-        return Container.rehydrateDetachedFromSnapshot(this, snapshot);
+        return Container.rehydrateDetachedFromSnapshot(this, snapshot, this.protocolHandlerBuilder);
     }
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
@@ -394,7 +387,7 @@ export class Loader implements IHostLoader {
 
     private async resolveCore(
         request: IRequest,
-        pendingLocalState?: IPendingLocalState,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<{ container: Container; parsed: IParsedUrl; }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -436,7 +429,7 @@ export class Loader implements IHostLoader {
                 await this.loadContainer(
                     request,
                     resolvedAsFluid,
-                    pendingLocalState?.pendingRuntimeState);
+                    pendingLocalState);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -487,7 +480,7 @@ export class Loader implements IHostLoader {
     private async loadContainer(
         request: IRequest,
         resolved: IFluidResolvedUrl,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<Container> {
         return Container.load(
             this,
@@ -499,6 +492,7 @@ export class Loader implements IHostLoader {
                 loadMode: request.headers?.[LoaderHeader.loadMode],
             },
             pendingLocalState,
+            this.protocolHandlerBuilder,
         );
     }
 }

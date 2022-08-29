@@ -73,13 +73,9 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
             // eslint-disable-next-line no-inner-declarations
             function compare(a, b) {
                 const sortKey = Object.keys(sort)[0];
-                if (sort[sortKey] === 1) {
-                    // A goes before b, sorting in ascending order
-                    return getValueByKey(a, sortKey) - getValueByKey(b, sortKey);
-                } else {
-                    // B goes before a, sorting in descending order
-                    return getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
-                }
+                return sort[sortKey] === 1
+                    ? getValueByKey(a, sortKey) - getValueByKey(b, sortKey)
+                    : getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
             }
 
             filteredCollection = filteredCollection.sort(compare);
@@ -292,6 +288,14 @@ class LocalSessionStorageDb extends EventEmitter implements IDb {
             this.collections.set(name, new LocalSessionStorageCollection<T>(`${this.namespace}-db`, name));
         }
         return this.collections.get(name) as LocalSessionStorageCollection<T>;
+    }
+
+    public async dropCollection(name: string): Promise<boolean> {
+        if (!this.collections.has(name)) {
+            return true;
+        }
+        this.collections.delete(name);
+        return true;
     }
 }
 

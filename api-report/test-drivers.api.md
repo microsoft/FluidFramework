@@ -124,6 +124,8 @@ export class OdspTestDriver implements ITestDriver {
     // (undocumented)
     createUrlResolver(): IUrlResolver;
     // (undocumented)
+    readonly endpointName?: string | undefined;
+    // (undocumented)
     getUrlFromItemId(itemId: string): string;
     // (undocumented)
     readonly tenantName?: string | undefined;

@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UnassignedSequenceNumber } from "../constants";
-import { SegmentGroup } from "../mergeTree";
+import { SegmentGroup } from "../mergeTreeNodes";
 import { MergeTreeDeltaType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";

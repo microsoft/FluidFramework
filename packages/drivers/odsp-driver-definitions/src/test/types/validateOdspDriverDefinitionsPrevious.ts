@@ -215,6 +215,7 @@ declare function get_old_InterfaceDeclaration_IOdspError():
 declare function use_current_InterfaceDeclaration_IOdspError(
     use: TypeOnly<current.IOdspError>);
 use_current_InterfaceDeclaration_IOdspError(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IOdspError());
 
 /*
@@ -383,6 +384,7 @@ declare function get_old_TypeAliasDeclaration_OdspError():
 declare function use_current_TypeAliasDeclaration_OdspError(
     use: TypeOnly<current.OdspError>);
 use_current_TypeAliasDeclaration_OdspError(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_OdspError());
 
 /*
@@ -407,6 +409,7 @@ declare function get_old_EnumDeclaration_OdspErrorType():
 declare function use_current_EnumDeclaration_OdspErrorType(
     use: TypeOnly<current.OdspErrorType>);
 use_current_EnumDeclaration_OdspErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_OdspErrorType());
 
 /*

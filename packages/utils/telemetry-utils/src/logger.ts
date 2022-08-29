@@ -31,9 +31,9 @@ import {
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  * Please do not modify existing entries for backwards compatibility.
  */
- export enum TelemetryDataTag {
-    /** Data containing terms from code packages that may have been dynamically loaded */
-    PackageData = "PackageData",
+export enum TelemetryDataTag {
+    /** Data containing terms or IDs from code packages that may have been dynamically loaded */
+    CodeArtifact = "CodeArtifact",
     /** Personal data of a variety of classifications that pertains to the user */
     UserData = "UserData",
 }
@@ -161,7 +161,13 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
-        this.sendTelemetryEventCore({ ...event, category: "error" }, error);
+        this.sendTelemetryEventCore({
+            // ensure the error field has some value,
+            // this can and will be overridden by event, or error
+            error: event.eventName,
+            ...event,
+            category: "error",
+        }, error);
     }
 
     /**
@@ -238,8 +244,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                     // No tag means we can log plainly
                     newEvent[key] = value;
                     break;
-                case TelemetryDataTag.PackageData:
-                    // For Microsoft applications, PackageData is safe for now
+                case "PackageData": // For back-compat
+                case TelemetryDataTag.CodeArtifact:
+                    // For Microsoft applications, CodeArtifact is safe for now
                     // (we don't load 3P code in 1P apps)
                     newEvent[key] = value;
                     break;
@@ -268,7 +275,7 @@ export class ChildLogger extends TelemetryLogger {
     /**
      * Create child logger
      * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
-     * is created, but it does not sends telemetry events anywhere.
+     * is created, but it does not send telemetry events anywhere.
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
      * @param propertyGetters - Getters to add additional properties to all events

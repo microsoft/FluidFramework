@@ -4,7 +4,7 @@
  */
 
 import { List, ListMakeHead } from "./collections";
-import { ISegment, SegmentGroup } from "./mergeTree";
+import { ISegment, SegmentGroup } from "./mergeTreeNodes";
 
 export class SegmentGroupCollection {
     private readonly segmentGroups: List<SegmentGroup>;
@@ -28,6 +28,10 @@ export class SegmentGroupCollection {
 
     public dequeue(): SegmentGroup | undefined {
         return this.segmentGroups.dequeue();
+    }
+
+    public pop?(): SegmentGroup | undefined {
+        return this.segmentGroups.pop ? this.segmentGroups.pop() : undefined;
     }
 
     public clear() {

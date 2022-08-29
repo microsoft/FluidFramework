@@ -77,7 +77,7 @@ describe("MergeTree.Client", () => {
                         for (let t = 0; t < c.getLength(); t++) {
                             const seg = c.getContainingSegment(t);
                             const lref = c.createLocalReferencePosition(
-                                seg.segment!, seg.offset!, ReferenceType.SlideOnRemove, { t });
+                                seg.segment!, seg.offset, ReferenceType.SlideOnRemove, { t });
                             refs[i].push(lref);
                         }
                     });

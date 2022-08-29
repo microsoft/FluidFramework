@@ -19,12 +19,16 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
-    public find(query: object, sort: any, limit = MaxFetchSize): Promise<T[]> {
-        return this.collection
+    public find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
+        let queryCursor = this.collection
             .find(query)
             .sort(sort)
-            .limit(limit)
-            .toArray();
+            .limit(limit);
+
+        if (skip) {
+            queryCursor = queryCursor.skip(skip);
+        }
+        return queryCursor.toArray();
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
@@ -152,6 +156,10 @@ export class MongoDb implements core.IDb {
         const collection = this.client.db("admin").collection<T>(name);
         return new MongoCollection<T>(collection);
     }
+
+    public async dropCollection(name: string): Promise<boolean> {
+        return this.client.db("admin").dropCollection(name);
+    }
 }
 
 interface IMongoDBConfig {
@@ -159,20 +167,33 @@ interface IMongoDBConfig {
     bufferMaxEntries: number | undefined;
     globalDbEndpoint?: string;
     globalDbEnabled?: boolean;
+    connectionPoolMinSize?: number;
+    connectionPoolMaxSize?: number;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
     private readonly operationsDbEndpoint: string;
     private readonly bufferMaxEntries?: number;
     private readonly globalDbEndpoint?: string;
+    private readonly connectionPoolMinSize?: number;
+    private readonly connectionPoolMaxSize?: number;
     constructor(config: IMongoDBConfig) {
-        const { operationsDbEndpoint, bufferMaxEntries, globalDbEnabled, globalDbEndpoint } = config;
+        const {
+            operationsDbEndpoint,
+            bufferMaxEntries,
+            globalDbEnabled,
+            globalDbEndpoint,
+            connectionPoolMinSize,
+            connectionPoolMaxSize,
+        } = config;
         if (globalDbEnabled) {
             this.globalDbEndpoint = globalDbEndpoint;
         }
         assert(!!operationsDbEndpoint, `No endpoint provided`);
         this.operationsDbEndpoint = operationsDbEndpoint;
         this.bufferMaxEntries = bufferMaxEntries;
+        this.connectionPoolMinSize = connectionPoolMinSize;
+        this.connectionPoolMaxSize = connectionPoolMaxSize;
     }
 
     public async connect(global = false): Promise<core.IDb> {
@@ -189,6 +210,13 @@ export class MongoDbFactory implements core.IDbFactory {
             socketTimeoutMS: 120000,
             useNewUrlParser: true,
         };
+        if (this.connectionPoolMinSize) {
+            options.minSize = this.connectionPoolMinSize;
+        }
+
+        if (this.connectionPoolMaxSize) {
+            options.poolSize = this.connectionPoolMaxSize;
+        }
 
         const connection = await MongoClient.connect(
             global ?

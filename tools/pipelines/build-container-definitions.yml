@@ -22,18 +22,19 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 
 trigger:
   branches:
     include:
-    - main
-    - next
-    - release/*
+    - release/0.*
   paths:
     include:
     - common/lib/container-definitions
     - tools/pipelines/build-container-definitions.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -45,14 +46,11 @@ trigger:
 pr:
   branches:
     include:
-    - main
-    - next
-    - release/*
+    - release/0.*
   paths:
     include:
     - common/lib/container-definitions
     - tools/pipelines/build-container-definitions.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -62,6 +60,7 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/container-definitions
     tagName: container-definitions
     taskTest: false

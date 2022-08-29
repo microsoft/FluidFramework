@@ -35,7 +35,7 @@ changes over time.)
 
 To process operations like insertion and removal, the MergeTree maps positions in the sequence to the containing segment
 and offset of the position within the segment.  While the MergeTree implementation uses a B+Tree to accelerate this
-mapping, to understand the semantics of the MergeTree it is easier to consider a naive implementation that searches
+mapping, to understand the semantics of the MergeTree it is easier to consider a naïve implementation that searches
 for the containing (segment, offset) by walking all segments in order.  This naïve search subtracts the length of each
 segment from the desired position until it reaches the segment that contains the remaining offset.
 
@@ -74,7 +74,7 @@ tombstoned the segment.
 For clients to be able to reason about which segment insertions/removals other clients have processed the
 MergeTree we do two things:
 
-1. The MergeTree tracks which client inserted/removed each segment and the seq# assigned by the Fluid service to the
+1. The MergeTree tracks which client inserted/removed each segment and the sequence number (abbreviated "seq") assigned by the Fluid service to the
    insertion/removal operation.
 2. When sending a MergeTree op, the client includes the last seq# it has processed from the Fluid service.  This number
    is known as an op's "reference sequence number" or "refSeq#"
@@ -89,7 +89,7 @@ A segment was inserted and/or removed on the remote client at the time client se
 
 * The referenced sequence number is greater than or equal the server-assigned sequence number of the operation
   that inserted/removed the segment.
-* The client sent the operation that resulted in insertion/removal. (In which case, the client hadn't yet recieved
+* The client sent the operation that resulted in insertion/removal. (In which case, the client hadn't yet received
   their sequenced op from the server but was aware of the insertion/removal because the client produced it locally.)
 
 If both above conditions are false, then the insertion/removal happened "after" the remote operation, and

@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
+    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -59,6 +60,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         };
     }
 
+    /**
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createContainer}
+     *
+     * @throws {@link DocumentPostCreateError}
+     * If an exception is thrown while invoking the provided {@link ITokenProvider.documentPostCreateCallback}.
+     */
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
@@ -115,29 +122,27 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         let documentId: string;
         let token: string | undefined;
         let session: ISession | undefined;
-        let fluidResolvedUrl: IResolvedUrl;
         if (typeof res === "string") {
             documentId = res;
         } else {
             documentId = res.id;
             token = res.token;
-            session = res.session;
+            session = this.driverPolicies.enableDiscovery ? res.session : undefined;
         }
-        if (session && this.driverPolicies.enableDiscovery) {
-            fluidResolvedUrl = getDiscoveredFluidResolvedUrl(resolvedUrl, session);
-        } else {
-            fluidResolvedUrl = resolvedUrl;
-        }
-        parsedUrl = parseFluidUrl(fluidResolvedUrl.url);
+        parsedUrl = parseFluidUrl(resolvedUrl.url);
 
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
         if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
-            await this.tokenProvider.documentPostCreateCallback(documentId, token);
+            try {
+                await this.tokenProvider.documentPostCreateCallback(documentId, token);
+            } catch (error: any) {
+                throw new DocumentPostCreateError(error);
+            }
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
-        const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
         if (!deltaStorageUrl) {
             throw new Error(
                 `All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`);
@@ -147,31 +152,30 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         return this.createDocumentService(
             {
-                ...fluidResolvedUrl,
+                ...resolvedUrl,
                 url: parsedUrl.toString(),
                 id: documentId,
                 endpoints: {
-                    ...fluidResolvedUrl.endpoints,
+                    ...resolvedUrl.endpoints,
                     deltaStorageUrl: parsedDeltaStorageUrl.toString(),
                 },
             },
             logger,
             clientIsSummarizer,
-            true,
+            session,
         );
     }
 
     /**
-     * Creates the document service after extracting different endpoints URLs from a resolved URL.
+     * {@inheritDoc @fluidframework/driver-definitions#IDocumentServiceFactory.createDocumentService}
      *
-     * @param resolvedUrl - URL containing different endpoint URLs.
      * @returns Routerlicious document service.
      */
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
         clientIsSummarizer?: boolean,
-        isCreateContainer?: boolean,
+        session?: ISession,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
@@ -183,8 +187,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion } });
 
-        let fluidResolvedUrl: IResolvedUrl;
-        if (!isCreateContainer && this.driverPolicies.enableDiscovery) {
+        const discoverFluidResolvedUrl = async (): Promise<IFluidResolvedUrl> => {
+            if (!this.driverPolicies.enableDiscovery) {
+                return resolvedUrl;
+            }
             const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
             const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                 tenantId,
@@ -195,15 +201,15 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 this.driverPolicies.enableRestLess,
                 resolvedUrl.endpoints.ordererUrl,
             );
-
-            // the backend responds with the actual document session associated with the container.
-            const session: ISession = await ordererRestWrapper.get<ISession>(
+            // The service responds with the current document session associated with the container.
+            const discoveredSession = await ordererRestWrapper.get<ISession>(
                 `/documents/${tenantId}/session/${documentId}`,
             );
-            fluidResolvedUrl = getDiscoveredFluidResolvedUrl(resolvedUrl, session);
-        } else {
-            fluidResolvedUrl = resolvedUrl;
-        }
+            return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
+        };
+        const fluidResolvedUrl: IFluidResolvedUrl = session !== undefined
+            ? getDiscoveredFluidResolvedUrl(resolvedUrl, session)
+            : await discoverFluidResolvedUrl();
 
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
@@ -224,6 +230,33 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             documentId,
             this.driverPolicies,
             this.blobCache,
-            this.snapshotTreeCache);
+            this.snapshotTreeCache,
+            discoverFluidResolvedUrl);
     }
+}
+
+/**
+ * Error returned by {@link RouterliciousDocumentServiceFactory.createContainer} when an error is thrown
+ * in {@link ITokenProvider.documentPostCreateCallback}.
+ * It is the consumer's responsibility to ensure that any state related to container creation is appropriately
+ * cleaned up in the event of failure.
+ * This includes the document itself, which will have been created by the time this error was thrown.
+ *
+ * @remarks TODO: examples of suggested actions for recovery.
+ * - How would a user delete the created document?
+ * - What would a retry pattern look like here?
+ */
+export class DocumentPostCreateError extends Error {
+    public constructor(
+        /**
+         * Inner error being wrapped.
+         */
+        private readonly innerError: Error,
+    ) {
+        super(innerError.message);
+    }
+
+    public readonly name = "DocumentPostCreateError";
+
+    public get stack() { return this.innerError.stack; }
 }

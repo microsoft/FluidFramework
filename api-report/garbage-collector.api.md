@@ -7,7 +7,6 @@
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionState } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData;
@@ -52,7 +51,16 @@ export function removeRouteFromAllNodes(gcNodes: {
 // @public
 export function runGarbageCollection(referenceGraph: {
     [id: string]: string[];
-}, rootIds: string[], logger: ITelemetryLogger): IGCResult;
+}, rootIds: string[]): IGCResult;
+
+// @public
+export function trimLeadingAndTrailingSlashes(str: string): string;
+
+// @public
+export function trimLeadingSlashes(str: string): string;
+
+// @public
+export function trimTrailingSlashes(str: string): string;
 
 // @public
 export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBase): Map<string, IGarbageCollectionDetailsBase>;

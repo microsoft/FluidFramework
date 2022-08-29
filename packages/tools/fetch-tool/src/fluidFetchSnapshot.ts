@@ -88,7 +88,7 @@ function fetchBlobs(prefix: string,
             // Use the blobIdMap to assign a number for each unique blob
             // and use it as a prefix for files to avoid case-insensitive fs
             let index = blobIdMap.get(blobId);
-            if (!index) {
+            if (index === undefined) {
                 index = blobIdMap.size;
                 blobIdMap.set(blobId, index);
             }
@@ -317,7 +317,7 @@ export async function fluidFetchSnapshot(
                 const res = await dumpSnapshotTree(name, blobs);
 
                 let date = "";
-                if (v.date) {
+                if (v.date !== undefined) {
                     try {
                         date = new Date(v.date).toLocaleString();
                     } catch (e) {

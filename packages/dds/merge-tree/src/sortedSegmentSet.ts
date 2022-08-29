@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "./mergeTree";
+import { ISegment } from "./mergeTreeNodes";
 
 /**
  * Stores a unique and sorted set of segments, or objects with segments

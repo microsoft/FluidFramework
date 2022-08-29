@@ -167,6 +167,7 @@ export function createFluidServiceNetworkError(
                 message,
                 false,  /* canRetry */
                 false); /* isFatal */
+        case 413:
         case 422:
             return new NetworkError(
                 statusCode,

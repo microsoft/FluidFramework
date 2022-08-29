@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/azure-client",
-  "version": "0.59.3000",
+  "version": "1.1.0",
   "description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -28,9 +28,12 @@
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
+    "format": "npm run prettier:fix",
+    "lint": "npm run prettier && npm run eslint",
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "postpack": "cd dist && tar -cvf ../azure-client.test-files.tar ./test",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
     "start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
     "test:realsvc": "npm run test:realsvc:tinylicious",
     "test:realsvc:azure": "cross-env FLUID_CLIENT=azure npm run test:realsvc:azure:run",
@@ -43,45 +46,54 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-definitions": "^0.48.1000",
-    "@fluidframework/container-loader": "^0.59.2001",
-    "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/driver-definitions": "^0.46.1000",
-    "@fluidframework/driver-utils": "^0.59.2001",
-    "@fluidframework/fluid-static": "^0.59.2001",
-    "@fluidframework/map": "^0.59.2001",
-    "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/routerlicious-driver": "^0.59.2001",
-    "@fluidframework/runtime-utils": "^0.59.2000",
-    "@fluidframework/server-services-client": "^0.1036.3000-0",
+    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/container-definitions": "^1.0.1",
+    "@fluidframework/container-loader": "^1.0.1",
+    "@fluidframework/core-interfaces": "^1.0.1",
+    "@fluidframework/driver-definitions": "^1.0.1",
+    "@fluidframework/driver-utils": "^1.0.1",
+    "@fluidframework/fluid-static": "^1.0.1",
+    "@fluidframework/map": "^1.0.1",
+    "@fluidframework/protocol-definitions": "^1.0.0",
+    "@fluidframework/routerlicious-driver": "^1.0.1",
+    "@fluidframework/runtime-utils": "^1.0.1",
+    "@fluidframework/server-services-client": "^0.1037.1000-0",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/aqueduct": "^0.59.2001",
-    "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@0.59.2000",
+    "@fluidframework/aqueduct": "^1.0.1",
+    "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@1.0.0-73930",
     "@fluidframework/azure-local-service": "^0.1.38773",
-    "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.66793",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
-    "@fluidframework/test-client-utils": "^0.59.2001",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.3.1000",
+    "@fluidframework/counter": "^1.0.1",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/test-client-utils": "^1.0.1",
+    "@fluidframework/test-utils": "^1.0.1",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^9.1.1",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
-    "mocha": "^8.4.0",
+    "eslint-config-prettier": "~8.5.0",
+    "mocha": "^10.0.0",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
     "typescript": "~4.5.5"
   },
   "peerDependencies": {
-    "fluid-framework": "^0.58.0"
+    "fluid-framework": "^1.0.1"
   },
   "typeValidation": {
-    "version": "0.59.3000",
-    "broken": {}
+    "version": "1.1.0",
+    "broken": {
+      "InterfaceDeclaration_AzureClientProps": {
+        "forwardCompat": false
+      }
+    }
   }
 }

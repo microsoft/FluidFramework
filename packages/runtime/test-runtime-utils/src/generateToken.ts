@@ -25,8 +25,28 @@ import { v4 as uuid } from "uuid";
  */
 
 /**
- * Generates a JWT token to authorize access to a Routerlicious-based Fluid service. This function uses a browser
- * friendly auth library (jsrsasign) and should only be used in client (browser) context.
+ * Generates a {@link https://en.wikipedia.org/wiki/JSON_Web_Token | JSON Web Token} (JWT)
+ * to authorize access to a Routerlicious-based Fluid service.
+ *
+ * @remarks Note: this function uses a browser friendly auth library
+ * ({@link https://www.npmjs.com/package/jsrsasign | jsrsasign}) and may only be used in client (browser) context.
+ * It is **not** Node.js-compatible.
+ *
+ * @param tenantId - See {@link @fluidframework/protocol-definitions#ITokenClaims.tenantId}
+ * @param key - API key to authenticate user. Must be {@link https://en.wikipedia.org/wiki/UTF-8 | UTF-8}-encoded.
+ * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+ * @param documentId - See {@link @fluidframework/protocol-definitions#ITokenClaims.documentId}.
+ * If not specified, the token will not be associated with a document, and an empty string will be used.
+ * @param user - User with whom generated tokens will be associated.
+ * If not specified, the token will not be associated with a user, and a randomly generated mock user will be
+ * used instead.
+ * See {@link @fluidframework/protocol-definitions#ITokenClaims.user}
+ * @param lifetime - Used to generate the {@link @fluidframework/protocol-definitions#ITokenClaims.exp | expiration}.
+ * Expiration = now + lifetime.
+ * Expressed in seconds.
+ * Default: 3600 (1 hour).
+ * @param ver - See {@link @fluidframework/protocol-definitions#ITokenClaims.ver}.
+ * Default: `1.0`.
  */
 export function generateToken(
     tenantId: string,
@@ -60,6 +80,10 @@ export function generateToken(
     return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 }
 
+/**
+ * Generates an arbitrary ("random") {@link @fluidframework/protocol-definitions#IUser} by generating a
+ * random UUID for its {@link @fluidframework/protocol-definitions#IUser.id} and `name` properties.
+ */
 export function generateUser(): IUser {
     const randomUser = {
         id: uuid(),

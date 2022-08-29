@@ -14,7 +14,11 @@ import { fluidFetchSnapshot } from "./fluidFetchSnapshot";
 
 async function fluidFetchOneFile(urlStr: string, name?: string) {
     const documentService = await fluidFetchInit(urlStr);
-    const saveDir = paramSaveDir ? (name ? `${paramSaveDir}/${name}` : paramSaveDir) : undefined;
+    const saveDir = paramSaveDir !== undefined
+        ? (name !== undefined
+            ? `${paramSaveDir}/${name}`
+            : paramSaveDir)
+        : undefined;
     if (saveDir !== undefined) {
         const mkdir = util.promisify(fs.mkdir);
         const writeFile = util.promisify(fs.writeFile);
@@ -67,7 +71,7 @@ function getSharepointServerRelativePathFromURL(url: URL) {
 }
 
 async function fluidFetchMain() {
-    if (!paramURL) {
+    if (paramURL === undefined) {
         return;
     }
 
@@ -84,7 +88,7 @@ async function fluidFetchMain() {
 
         // See if the url given represent a sharepoint directory
         const serverRelativePath = getSharepointServerRelativePathFromURL(url);
-        if (serverRelativePath) {
+        if (serverRelativePath !== undefined) {
             const files = await getSharepointFiles(server, serverRelativePath, false);
             for (const file of files) {
                 if (file.name.endsWith(".b") || file.name.endsWith(".fluid")) {
@@ -111,7 +115,7 @@ fluidFetchMain()
                     if (key !== "message" && key !== "stack") {
                         extraMsg += `\n${key}: ${JSON.stringify(error[key], undefined, 2)}`;
                     }
-                } catch (_) {}
+                } catch (_) { }
             }
             console.error(`ERROR: ${error.stack}${extraMsg}`);
         } else if (typeof error === "object") {

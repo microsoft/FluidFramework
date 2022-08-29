@@ -54,14 +54,17 @@ export function compareWithReferenceSnapshot(
 
     /**
      * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
-     * package versions with X before we compare them. This is how it will looks like:
-     * Before replace -
+     * package versions with X before we compare them.
+     *
+     * @example
+     * This is how it will look:
+     * Before replace:
      *
      * ```
      * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"0.28.0-214\"}"
      * ```
      *
-     * After replace  -
+     * After replace:
      *
      * ```
      * "{\"type\":\"https://graph.microsoft.com/types/map\",\"packageVersion\":\"X\"}"
@@ -141,8 +144,11 @@ export async function loadContainer(
     // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
     // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: { disableSummaries: true, maxOpsSinceLastSummary: 100000 },
-        gcOptions: { writeDataAtRoot: true },
+        summaryOptions: {
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+        },
     };
     const codeLoader = new ReplayCodeLoader(
         new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),

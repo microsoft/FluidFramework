@@ -12,13 +12,14 @@ import {
     isNetworkError,
     NetworkError,
 } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, HttpProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
     BaseGitRestTelemetryProperties,
     Constants,
     IExternalWriterConfig,
     IFileSystemManager,
     IRepoManagerParams,
+    IRepositoryManagerFactory,
     IStorageRoutingId,
 } from "./definitions";
 
@@ -119,22 +120,30 @@ export async function retrieveLatestFullSummaryFromStorage(
 /**
  * Retrieves the full repository path. Or throws an error if not valid.
  */
-export function getRepoPath(name: string, owner?: string): string {
-    // `name` needs to be always present and valid.
-    if (!name || path.parse(name).dir !== "") {
-        throw new NetworkError(400, `Invalid repo name provided.`);
+export function getRepoPath(
+    tenantId: string,
+    documentId?: string,
+    owner?: string): string {
+    // `tenantId` needs to be always present and valid.
+    if (!tenantId || path.parse(tenantId).dir !== "") {
+        throw new NetworkError(400, `Invalid repo name (tenantId) provided: ${tenantId}`);
     }
 
     // When `owner` is present, it needs to be valid.
     if (owner && path.parse(owner).dir !== "") {
-        throw new NetworkError(400, `Invalid repo owner provided.`);
+        throw new NetworkError(400, `Invalid repo owner provided: ${owner}`);
     }
 
-    return owner ? `${owner}/${name}` : name;
+    // When `documentId` is present, it needs to be valid.
+    if (documentId && path.parse(documentId).dir !== "") {
+        throw new NetworkError(400, `Invalid repo name (documentId) provided: ${documentId}`);
+    }
+
+    return [owner, tenantId, documentId].filter((x) => x !== undefined).join("/");
 }
 
-export function getGitDirectory(repoPath: string, baseDir?: string): string {
-    return baseDir ? `${baseDir}/${repoPath}` : repoPath;
+export function getGitDirectory(repoPath: string, baseDir?: string, suffixPath?: string): string {
+    return [baseDir, repoPath, suffixPath].filter((x) => x !== undefined).join("/");
 }
 
 export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
@@ -166,8 +175,8 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
     const pathCategory = getRequestPathCategory(request);
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(params),
-        [BaseGitRestTelemetryProperties.method]: request.method,
-        [BaseGitRestTelemetryProperties.pathCategory]: pathCategory,
+        [HttpProperties.method]: request.method,
+        [HttpProperties.pathCategory]: pathCategory,
     };
     Lumberjack.error(`${request.method} request to ${pathCategory} failed`, lumberjackProperties, error);
 
@@ -179,4 +188,50 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
     // of that, for now, we use 400 here. But ideally, we would revisit every RepoManager API and make sure that API
     // is actively throwing NetworkErrors with appropriate status codes according to what the protocols expect.
     throw new NetworkError(400, `Error when processing ${request.method} request to ${request.url}`);
+}
+
+export async function getRepoManagerFromWriteAPI(
+    repoManagerFactory: IRepositoryManagerFactory,
+    repoManagerParams: IRepoManagerParams,
+    repoPerDocEnabled: boolean) {
+    try {
+        return await repoManagerFactory.open(repoManagerParams);
+    } catch(error: any) {
+        // If repoPerDocEnabled is true, we want the behavior to be "open or create" for GitRest Write APIs,
+        // creating the repository on the fly. So, if the open operation fails with a 400 code (representing
+        // the repo does not exist), we try to create the reposiroty instead.
+        if (repoPerDocEnabled &&
+            error instanceof Error &&
+            error?.name === "NetworkError" &&
+            (error as NetworkError)?.code === 400) {
+                return repoManagerFactory.create(repoManagerParams);
+        }
+        throw error;
+    }
+}
+
+export function getSoftDeletedMarkerPath(basePath: string): string {
+    return `${basePath}/.softDeleted`;
+}
+
+export async function checkSoftDeleted(
+    fileSystemManager: IFileSystemManager,
+    repoPath: string,
+    repoManagerParams: IRepoManagerParams,
+    repoPerDocEnabled: boolean): Promise<void> {
+    // DELETE API is only implemented for the repo-per-doc model
+    if (!repoPerDocEnabled) {
+        return;
+    }
+    const lumberjackProperties = {
+        ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
+    };
+    const softDeletedMarkerPath = getSoftDeletedMarkerPath(repoPath);
+    const softDeleteBlobExists = await exists(fileSystemManager, softDeletedMarkerPath);
+    const softDeleted = softDeleteBlobExists !== false && softDeleteBlobExists.isFile();
+    if (softDeleted) {
+        const error = new NetworkError(410, "The requested resource has been deleted.");
+        Lumberjack.error("Attempted to retrieve soft-deleted document.", lumberjackProperties, error);
+        throw error;
+    }
 }

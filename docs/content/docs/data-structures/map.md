@@ -1,26 +1,46 @@
 ---
 title: SharedMap
-menuPosition: 4
+menuPosition: 2
 ---
 
 ## Introduction
 
-The `SharedMap` distributed data structure (DDS) is use to store key-value data. It provides the same API as the [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) built-in object that is provided in JavaScript, but also ensures that any edits being made to the object are simultaneously transmitted to all clients.
+The `SharedMap` distributed data structure (DDS) is use to store key-value data.
+It provides the same API as the built-in [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object that is provided in JavaScript, but also ensures that any edits being made to the object are simultaneously transmitted to all clients.
 
 For example, in a traditional `Map`, setting a key would only set it on the local object. In a `SharedMap`, the moment one client sets that key, that update is automatically sent to all of the other connected clients who will update their local state with the new remote change. From a development standpoint, this allows you to develop against the `SharedMap` DDS as you would with a traditional `Map`, while ensuring that the data being updated is synced between all clients with all of the logic for managing and merging the changes abstracted away.
 
 {{% callout tip "Differences between Map and SharedMap" %}}
 
 - SharedMaps *must* use string keys.
-- You must only store *plain objects* -- those that are safely JSON-serializable -- as values in a SharedMap. If you store class instances, for example, then data synchronization will not work as expected.
+- You must only store the following as values in a `SharedMap`:
+  - *Plain objects* -- those that are safely JSON-serializable.
+    If you store class instances, for example, then data synchronization will not work as expected.
+  - [Handles]({{< relref "handles.md" >}}) to other Fluid DDSes
 - When storing objects as values in a SharedMap, changes to the object will be synchronized whole-for-whole. This means that individual changes to the properties of an object are not merged during synchronization. If you need this behavior you should store individual properties in the SharedMap instead of full objects. See [Picking the right data structure]({{< relref "dds.md#picking-the-right-data-structure" >}}) for more information.
 {{% /callout %}}
 
-For additional background on DDSes and a general overview of their design, please take a look [here]({{< relref "dds.md" >}}).
+For additional background on DDSes and a general overview of their design, see [Introducing distributed data structures]({{< relref "dds.md" >}}).
 
-## Creation
+## Usage
 
-The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it. It provides two separate fields for establishing an initial roster of objects and dynamically creating new ones. For general guidance on using the `ContainerSchema`, please see [here]({{< relref "data-modeling.md" >}}) and for guidance on how to create/load a container using a service-specific client, please see [here]({{< relref "containers.md#creating--loading" >}}).
+### Installation
+
+The `SharedMap` library can be found in the [fluid-framework](https://www.npmjs.com/package/fluid-framework) package.
+
+To get started, run the following from a terminal in your repository:
+
+```bash
+npm install fluid-framework
+```
+
+### Creation
+
+The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it.
+It provides two separate fields for establishing an initial roster of objects and dynamically creating new ones.
+
+- For general guidance on using the `ContainerSchema`, please see [Data modeling]({{< relref "data-modeling.md" >}}).
+- For guidance on how to create/load a container using a service-specific client, please see [Containers - Creating and loading]({{< relref "containers.md#creating--loading" >}}).
 
 Let's take a look at how you would specifically use the `ContainerSchema` for `SharedMap`.
 
@@ -69,17 +89,21 @@ const newMap = await container.create(SharedMap); // Create a new SharedMap
 
 Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the [Storing shared objects]({{< relref "#storing-shared-objects" >}}) section below and for general guidance on storing DDS references as handles, please see [Using handles to store and retrieve shared objects]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-shared-objects" >}}).
 
-## API
+### API
 
-The `SharedMap` object provides a number of functions to allow you to edit the key/value pairs stored on the object. As stated earlier, these are intended to match the `Map` API. However, the keys used in `SharedMap` must be strings. Each edit will also trigger a `valueChanged` event which will be discussed in the [Events]({{< relref "#events" >}}) section below.
+The `SharedMap` object provides a number of methods to allow you to edit the key/value pairs stored on the object.
+As stated earlier, these are intended to match the `Map` API.
+However, the keys used in `SharedMap` must be strings.
+Each edit will also trigger a `valueChanged` event which will be discussed in the [Events]({{< relref "#events" >}}) section below.
 
-- `set(key, value)` -- Used for updating the value stored at `key` with the new provided value
-- `get(key)` -- Returns the latest value stored on the key or `undefined` if it does not exist
-- `has(key)` -- Checks to see if the key is available in the SharedMap and returns a boolean
-- `keys()` -- Returns an iterator for all the keys that have been set for this map
-- `entries()` -- Returns an iterator for all key/value pairs stored on the map
-- `delete(key)` -- Removes the key/value from the map
-- `forEach(callbackFn: (value, key, map) => void)` -- Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
+- `set(key, value)` -- Updates the value stored at `key` with the new provided value
+- `get(key)` -- Returns the latest value stored on the key, or `undefined` if the key does not exist
+- `has(key)` -- Returns whether or not the key is exists in the SharedMap
+- `keys()` -- Returns an iterator for all the keys that have been set in the map
+- `entries()` -- Returns an iterator for all key/value pairs stored in the map
+- `delete(key)` -- Removes the key/value pair from the map
+- `forEach(callbackFn: (value, key, map) => void)` -- Applies the provided function to each entry in the map.
+  For example, the following will print out all of the key/value pairs in the map
 
     ```javascript
     this.map.forEach((value, key) => console.log(`${key}-${value}`));
@@ -87,21 +111,22 @@ The `SharedMap` object provides a number of functions to allow you to edit the k
 
 - `clear()` -- Removes all data from the map, deleting all of the keys and values stored within it
 
-## Events
+### Events
 
 The `SharedMap` object will emit events on changes from local and remote clients. There are two events emitted:
 
-### `valueChanged`
+#### `valueChanged`
 
 - Signature: `(event: "valueChanged", listener: (changed, local) => void)`
 - Description: This event is sent anytime the map is modified due to a key being added, updated, or removed. It takes in as parameters a `changed` object which provides the `key` that was updated and what the `previousValue` was, and a `local` boolean that indicates if the current client was the one that initiated the change
 
-### `clear`
+#### `clear`
 
 - Signature: `(event: "clear", listener: (local) => void)`
 - Description: This event is sent when `clear()` is called to alert clients that all data from the map has been removed. The `local` boolean parameter indicates if the current client is the one that made the function call.
 
-If client A and client B are both updating the same `SharedMap` and client B triggers a `set` call to update a value, both client A and B's local `SharedMap` objects will fire the `valueChanged` event. You can use these events in order to keep your application state in sync with all changes various clients are making to the map.
+If client A and client B are both updating the same `SharedMap`, and client B triggers a `set` call to update a value, both client A's and B's local `SharedMap` objects will fire the `valueChanged` event.
+You can use these events in order to keep your application state in sync with all changes various clients are making to the map.
 
 Consider the following example where you have a label and a button. When clicked, the button updates the label contents to be a random number.
 
@@ -158,7 +183,7 @@ map.on('valueChanged', updateLabel);
 
 Now, with the changes in `updateLabel`, the label will update to say if the value was last updated by the current user or by someone else. It will also compare the current value to the last one, and if the value has increased, it will set the text color to green. Otherwise, it will be red.
 
-## Storing primitives
+### Storing primitives
 
 As demonstrated in the examples above, you can store and fetch primitive values from a `SharedMap` using the `set`/`get` functions on the same key. The typical pattern is as follows:
 
@@ -167,7 +192,7 @@ As demonstrated in the examples above, you can store and fetch primitive values 
 
 Because the local `set` call causes the `valueChanged` event to be sent, and you're handling those changes by updating your application state, then all local and remote clients see all of their local app states getting updated.
 
-## Storing objects
+### Storing objects
 
 Storing objects in a `SharedMap` is very similar to storing primitives. However, one thing to note is that all values in `SharedMap` are merged using a last writer wins (LWW) strategy. This means that if multiple clients are writing values to the same key, whoever made the last update will "win" and overwrite the others. While this is fine for primitives, you should be mindful when storing objects in `SharedMaps` if you are looking for individual fields within the object to be independently modified. See [Picking the right data structure]({{< relref "dds.md#picking-the-right-data-structure" >}}) for more information.
 
@@ -229,7 +254,7 @@ Each time that User A makes an edit, `map.set("task1", editedTask)` will get cal
 
 There are two strategies you can use to avoid this behavior.
 
-### Storing values in separate keys
+#### Storing values in separate keys
 
 You can store each of these values in their own key and only hold the key at which they are stored in the `task1` object itself. This means your `SharedMap` would have an object like this:
 
@@ -266,11 +291,11 @@ map.set(task.descriptionKey, editedDescription);
 
 Now each user is updating the fields independently and would not overwrite each other, because the parent `task1` object isn't the one that is being set each time but rather just holding the references to each of the separate fields being edited.
 
-### Storing values in separate SharedMaps
+#### Storing values in separate SharedMaps
 
 One of the caveats of the above approach is that both the tasks as well as their values are now all stored at the same level within the map. For example, if you call `map.values()`, it will return both the tasks themselves as well as each of their individual fields. Instead, you can have each task be stored in its own `SharedMap` and have a parent `SharedMap` that keeps track of all of the different tasks under it. See the [Nested shared objects example]({{< relref "#nested-shared-objects-example" >}}) to see how to do this.
 
-### When values do not need to be separately stored
+#### When values do not need to be separately stored
 
 You can follow this same pattern for the `assignedTo` object. However, since the data in `assignedTo` is coming as a singular blob from a service, there's no need to edit individual properties independently, so you can take the simpler approach of storing the whole object in the SharedMap in this case.
 
@@ -290,7 +315,7 @@ This will work as expected **because the entire object is being stored each time
 
 One way to think about this is that each value stored into the `SharedMap` is the smallest simultaneously editable piece of data. Any time you want users to be able to simultaneously edit individual pieces of an object, you should store those properties in separate keys.
 
-## Storing shared objects
+### Storing shared objects
 
 One of the powerful features of DDSes is that they are nestable. A DDS can be stored in another DDS allowing you to dynamically set up your data hierarchy as best fits your application needs.
 
@@ -339,7 +364,7 @@ Loading any DDS from its handle is an asynchronous operation. You will need to u
 
 {{< /callout >}}
 
-### Nested shared objects example
+#### Nested shared objects example
 
 You can further extend the example from the [Storing objects]({{< relref "#storing-objects" >}}) section above to see how it can be updated to use nested `SharedMaps`. This will introduce a hierarchy to the data to make it easier to work with. To do so, consider the earlier data model but with two tasks.
 

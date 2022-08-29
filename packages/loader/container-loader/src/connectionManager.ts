@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { default as AbortController } from "abort-controller";
 import {
     IDisposable,
     ITelemetryLogger,
@@ -15,9 +16,7 @@ import {
     IConnectionDetails,
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
-    GenericError,
-} from "@fluidframework/container-utils";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentDeltaConnection,
@@ -32,6 +31,7 @@ import {
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
     logNetworkFailure,
+    // isRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -97,7 +97,6 @@ class NoDeltaStream
     serviceConfiguration: IClientConfiguration = {
         maxMessageSize: 0,
         blockSize: 0,
-        summary: undefined as any,
     };
     checkpointSequenceNumber?: number | undefined = undefined;
     submit(messages: IDocumentMessage[]): void {
@@ -121,15 +120,35 @@ class NoDeltaStream
 }
 
 /**
+ * Interface to track the current in-progress connection attempt.
+ */
+interface IPendingConnection {
+    /**
+     * Used to cancel an in-progress connection attempt.
+     */
+    abort(): void;
+
+    /**
+     * Desired ConnectionMode of this in-progress connection attempt.
+     */
+    connectionMode: ConnectionMode;
+}
+
+/**
  * Implementation of IConnectionManager, used by Container class
- * Implements constant connectivity to relay service, by reconnecting in case of loast connection or error.
- * Exposes various controls to influecen this process, including manual reconnects, forced read-only mode, etc.
+ * Implements constant connectivity to relay service, by reconnecting in case of lost connection or error.
+ * Exposes various controls to influence this process, including manual reconnects, forced read-only mode, etc.
  */
 export class ConnectionManager implements IConnectionManager {
     /** Connection mode used when reconnecting on error or disconnect. */
     private readonly defaultReconnectionMode: ConnectionMode;
 
-    private pendingConnection = false;
+    /**
+     * Tracks the current in-progress connection attempt. Undefined if there is none.
+     * Note: Once the connection attempt fires and the code becomes asynchronous, its possible that a new connection
+     * attempt was fired and this.pendingConnection was overwritten to reflect the new attempt.
+     */
+    private pendingConnection: IPendingConnection | undefined;
     private connection: IDocumentDeltaConnection | undefined;
 
     /** file ACL - whether user has only read-only access to a file */
@@ -171,7 +190,7 @@ export class ConnectionManager implements IConnectionManager {
     /**
      * The current connection mode, initially read.
      */
-     public get connectionMode(): ConnectionMode {
+    public get connectionMode(): ConnectionMode {
         return this.connection?.mode ?? "read";
     }
 
@@ -182,7 +201,7 @@ export class ConnectionManager implements IConnectionManager {
      * Automatic reconnecting enabled or disabled.
      * If set to Never, then reconnecting will never be allowed.
      */
-     public get reconnectMode(): ReconnectMode {
+    public get reconnectMode(): ReconnectMode {
         return this._reconnectMode;
     }
 
@@ -214,7 +233,7 @@ export class ConnectionManager implements IConnectionManager {
      * Returns set of props that can be logged in telemetry that provide some insights / statistics
      * about current or last connection (if there is no connection at the moment)
     */
-     public get connectionProps(): ITelemetryProperties {
+    public get connectionProps(): ITelemetryProperties {
         if (this.connection !== undefined) {
             return this._connectionProps;
         } else {
@@ -306,7 +325,7 @@ export class ConnectionManager implements IConnectionManager {
         }
         this.closed = true;
 
-        this.pendingConnection = false;
+        this.pendingConnection = undefined;
 
         // Ensure that things like triggerConnect() will short circuit
         this._reconnectMode = ReconnectMode.Never;
@@ -359,7 +378,7 @@ export class ConnectionManager implements IConnectionManager {
      *
      * @param readonly - set or clear force readonly.
      */
-     public forceReadonly(readonly: boolean) {
+    public forceReadonly(readonly: boolean) {
         if (readonly !== this._forceReadonly) {
             this.logger.sendTelemetryEvent({
                 eventName: "ForceReadOnly",
@@ -370,9 +389,9 @@ export class ConnectionManager implements IConnectionManager {
         this._forceReadonly = readonly;
 
         if (oldValue !== this.readonly) {
-            assert(this._reconnectMode !== ReconnectMode.Never,
-                0x279 /* "API is not supported for non-connecting or closed container" */);
-
+            if (this._reconnectMode === ReconnectMode.Never) {
+                throw new UsageError("API is not supported for non-connecting or closed container");
+            }
             let reconnect = false;
             if (this.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
@@ -413,11 +432,18 @@ export class ConnectionManager implements IConnectionManager {
     private async connectCore(connectionMode?: ConnectionMode): Promise<void> {
         assert(!this.closed, 0x26a /* "not closed" */);
 
-        if (this.connection !== undefined || this.pendingConnection) {
-            return;
+        if (this.connection !== undefined) {
+            return;  // Connection attempt already completed successfully
         }
 
-        let requestedMode = connectionMode ?? this.defaultReconnectionMode;
+        let pendingConnectionMode;
+        if (this.pendingConnection !== undefined) {
+            pendingConnectionMode = this.pendingConnection.connectionMode;
+            this.cancelConnection();  // Throw out in-progress connection attempt in favor of new attempt
+            assert(this.pendingConnection === undefined, 0x344 /* this.pendingConnection should be undefined */);
+        }
+        // If there is no specified ConnectionMode, try the previous mode, if there is no previous mode use default
+        let requestedMode = connectionMode ?? pendingConnectionMode ?? this.defaultReconnectionMode;
 
         // if we have any non-acked ops from last connection, reconnect as "write".
         // without that we would connect in view-only mode, which will result in immediate
@@ -435,31 +461,39 @@ export class ConnectionManager implements IConnectionManager {
 
         if (docService.policies?.storageOnly === true) {
             connection = new NoDeltaStream();
-            // to keep setupNewSuccessfulConnection happy
-            this.pendingConnection = true;
             this.setupNewSuccessfulConnection(connection, "read");
-            assert(!this.pendingConnection, 0x2b3 /* "logic error" */);
+            assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
             return;
         }
-
-        // this.pendingConnection resets to false as soon as we know the outcome of the connection attempt
-        this.pendingConnection = true;
 
         let delayMs = InitialReconnectDelayInMs;
         let connectRepeatCount = 0;
         const connectStartTime = performance.now();
         let lastError: any;
 
+        const abortController = new AbortController();
+        const abortSignal = abortController.signal;
+        this.pendingConnection = { abort: () => { abortController.abort(); }, connectionMode: requestedMode };
+
         // This loop will keep trying to connect until successful, with a delay between each iteration.
         while (connection === undefined) {
             if (this.closed) {
                 throw new Error("Attempting to connect a closed DeltaManager");
             }
+            if (abortSignal.aborted === true) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "ConnectionAttemptCancelled",
+                    attempts: connectRepeatCount,
+                    duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    connectionEstablished: false,
+                });
+                return;
+            }
             connectRepeatCount++;
 
             try {
                 this.client.mode = requestedMode;
-                connection = await docService.connectToDeltaStream(this.client);
+                connection = await docService.connectToDeltaStream({ ...this.client, mode: requestedMode });
 
                 if (connection.disposed) {
                     // Nobody observed this connection, so drop it on the floor and retry.
@@ -517,15 +551,27 @@ export class ConnectionManager implements IConnectionManager {
             );
         }
 
+        // Check for abort signal after while loop as well
+        if (abortSignal.aborted === true) {
+            connection.dispose();
+            this.logger.sendTelemetryEvent({
+                eventName: "ConnectionAttemptCancelled",
+                attempts: connectRepeatCount,
+                duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                connectionEstablished: true,
+            });
+            return;
+        }
+
         this.setupNewSuccessfulConnection(connection, requestedMode);
     }
 
     /**
-     * Start the connection. Any error should result in container being close.
-     * And report the error if it excape for any reason.
+     * Start the connection. Any error should result in container being closed.
+     * And report the error if it escapes for any reason.
      * @param args - The connection arguments
      */
-     private triggerConnect(connectionMode: ConnectionMode) {
+    private triggerConnect(connectionMode: ConnectionMode) {
         assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
         if (this.reconnectMode !== ReconnectMode.Enabled) {
             return;
@@ -536,15 +582,20 @@ export class ConnectionManager implements IConnectionManager {
     /**
      * Disconnect the current connection.
      * @param reason - Text description of disconnect reason to emit with disconnect event
+     * @returns A boolean that indicates if there was an existing connection (or pending connection) to disconnect
      */
-     private disconnectFromDeltaStream(reason: string): boolean {
+    private disconnectFromDeltaStream(reason: string): boolean {
         this.pendingReconnect = false;
 
         if (this.connection === undefined) {
+            if (this.pendingConnection !== undefined) {
+                this.cancelConnection();
+                return true;
+            }
             return false;
         }
 
-        assert(!this.pendingConnection, 0x27b /* "reentrancy may result in incorrect behavior" */);
+        assert(this.pendingConnection === undefined, 0x27b /* "reentrancy may result in incorrect behavior" */);
 
         const connection = this.connection;
         // Avoid any re-entrancy - clear object reference
@@ -571,20 +622,28 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     /**
+     * Cancel in-progress connection attempt.
+     */
+    private cancelConnection() {
+        assert(this.pendingConnection !== undefined,
+            0x345 /* this.pendingConnection is undefined when trying to cancel */);
+        this.pendingConnection.abort();
+        this.pendingConnection = undefined;
+        this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
+    }
+
+    /**
      * Once we've successfully gotten a connection, we need to set up state, attach event listeners, and process
      * initial messages.
      * @param connection - The newly established connection
      */
-     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
+    private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
 
-        if (this.pendingConnection) {
-            this.pendingConnection = false;
-        } else {
-            assert(this.closed, 0x27f /* "reentrancy may result in incorrect behavior" */);
-        }
+        this.pendingConnection = undefined;
+
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -676,7 +735,7 @@ export class ConnectionManager implements IConnectionManager {
      * @param error - Error reconnect information including whether or not to reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
-     private reconnectOnError(
+    private reconnectOnError(
         requestedMode: ConnectionMode,
         error: IAnyDriverError,
     ) {
@@ -684,7 +743,7 @@ export class ConnectionManager implements IConnectionManager {
             requestedMode,
             error.message,
             error)
-        .catch(this.props.closeHandler);
+            .catch(this.props.closeHandler);
     }
 
     /**
@@ -713,7 +772,7 @@ export class ConnectionManager implements IConnectionManager {
             this.logger.sendTelemetryEvent({
                 eventName: "reconnectingDespiteFatalError",
                 reconnectMode: this.reconnectMode,
-             }, error);
+            }, error);
         }
 
         if (this.reconnectMode === ReconnectMode.Never) {
@@ -782,7 +841,6 @@ export class ConnectionManager implements IConnectionManager {
 
     public sendMessages(messages: IDocumentMessage[]) {
         assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
-
         // If connection is "read" or implicit "read" (got leave op for "write" connection),
         // then op can't make it through - we will get a nack if op is sent.
         // We can short-circuit this process.
@@ -799,8 +857,7 @@ export class ConnectionManager implements IConnectionManager {
                             "Switch to write", // message
                         );
                     }
-                })
-                .catch(() => {});
+                }).catch(() => { });
             }
             return;
         }
@@ -834,7 +891,7 @@ export class ConnectionManager implements IConnectionManager {
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
 
                 // Please see #8483 for more details on why maintaining connection further as is would not work.
-                // Short story - connection properties are immutable, and many processes (consensus DDSs, summarizer)
+                // Short story - connection properties are immutable, and many processes (consensus DDSes, summarizer)
                 // assume that connection stays "write" connection until disconnect, and act accordingly, which may
                 // not work well with de-facto "read" connection we are in after receiving own leave op on timeout.
                 // Clients need to be able to transition to "read" state after some time of inactivity!

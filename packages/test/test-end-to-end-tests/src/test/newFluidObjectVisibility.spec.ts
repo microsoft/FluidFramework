@@ -10,9 +10,9 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidHandle, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, timeoutPromise } from "@fluidframework/test-utils";
+import { ITestObjectProvider, ensureContainerConnected } from "@fluidframework/test-utils";
 import {
-    describeNoCompat,
+    describeFullCompat,
     ITestDataObject,
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
@@ -47,7 +47,8 @@ async function createRootDataObject(
     containerRuntime: IContainerRuntime,
     rootDataStoreId: string,
 ): Promise<ITestDataObject> {
-    const dataStore = await containerRuntime.createRootDataStore(TestDataObjectType, rootDataStoreId);
+    const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+    await dataStore.trySetAlias(rootDataStoreId);
     const dataObject = await requestTestObjectWithoutWait(dataStore, "");
     // Non-root data stores are visible (reachable) from the root as soon as they are created.
     await assert.doesNotReject(requestTestObjectWithoutWait(container, dataObject._context.id),
@@ -69,18 +70,12 @@ async function getAndValidateDataObject(
     return dataObject;
 }
 
-async function ensureContainerConnected(container: Container): Promise<void> {
-    if (!container.connected) {
-        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-    }
-}
-
 /**
- * These tests validate that new Fluid objects such as data stores and DDSs become visible correctly. For example,
+ * These tests validate that new Fluid objects such as data stores and DDSes become visible correctly. For example,
  * new non-root data stores should not become visible (or reachable from root) until their handles are added to a
  * visible DDS.
  */
-describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
+describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let container1: IContainer;
     let containerRuntime1: IContainerRuntime;
@@ -232,7 +227,7 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
          * Validates that DDSes created in non-root data stores become visible and can send ops when the data store
          * becomes globally visible to all clients.
          */
-         it("validates that DDSs in non-root data stores become visible correctly", async () => {
+         it("validates that DDSes in non-root data stores become visible correctly", async () => {
             const dataObject2 = await createNonRootDataObject(container1, containerRuntime1);
 
             // Create a DDS when data store is not visible and store its handle.
@@ -260,7 +255,7 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
             const dataObject1C2 = await requestTestObjectWithoutWait(container2, "default");
             const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2", container2);
 
-            // Validate that the DDSs are present in the second container.
+            // Validate that the DDSes are present in the second container.
             const map1C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map1"))?.get();
             assert(map1C2 !== undefined, "map1 not found in second container");
             const map2C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map2"))?.get();
@@ -268,7 +263,7 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
             const map3C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map3"))?.get();
             assert(map3C2 !== undefined, "map3 not found in second container");
 
-            // Send ops for all the DDSs created above in both local and remote container and validate that the ops are
+            // Send ops for all the DDSes created above in both local and remote container and validate that the ops are
             // successfully processed.
             map1.set("key1", "value1");
             map1C2.set("key2", "value2");
@@ -289,7 +284,7 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
          * Validates that DDSes created in root data stores become visible and can send ops when the data store
          * becomes globally visible to all clients.
          */
-         it("validates that DDSs in root data stores become visible correctly", async () => {
+         it("validates that DDSes in root data stores become visible correctly", async () => {
             const dataObject2 = await createRootDataObject(container1, containerRuntime1, "rootDataStore");
 
             // Create a DDS after data store is locally visible and store its handle.
@@ -315,13 +310,13 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
             await provider.ensureSynchronized();
             const dataObject2C2 = await requestFluidObject<ITestDataObject>(container2, "rootDataStore");
 
-            // Validate that the DDSs are present in the second container.
+            // Validate that the DDSes are present in the second container.
             const map1C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map1"))?.get();
             assert(map1C2 !== undefined, "map1 not found in second container");
             const map2C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map2"))?.get();
             assert(map2C2 !== undefined, "map2 not found in second container");
 
-            // Send ops for all the DDSs created above in both local and remote container and validate that the ops are
+            // Send ops for all the DDSes created above in both local and remote container and validate that the ops are
             // successfully processed.
             map1.set("key1", "value1");
             map1C2.set("key2", "value2");

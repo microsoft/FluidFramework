@@ -4,11 +4,11 @@
  */
 
 /**
- * Interface for a comparere
+ * Interface for a comparer.
  */
 export interface IComparer<T> {
     /**
-     * The minimum value of type T
+     * The minimum value of type T.
      */
     min: T;
 
@@ -21,23 +21,23 @@ export interface IComparer<T> {
 }
 
 /**
- * A comparer for numbers
+ * A comparer for numbers.
  */
 export const NumberComparer: IComparer<number> = {
     /**
-     * The compare function for numbers,
-     * @returns difference of the two number
+     * The compare function for numbers.
+     * @returns The difference of the two numbers.
      */
-    compare: (a, b) => a - b,
+    compare: (a, b): number => a - b,
 
     /**
-     * The minimum value of a javascript number, which is Number.MIN_VALUE
+     * The minimum value of a JavaScript number, which is `Number.MIN_VALUE`.
      */
     min: Number.MIN_VALUE,
 };
 
 /**
- * Interface to a node in Heap
+ * Interface to a node in {@link Heap}.
  */
 export interface IHeapNode<T> {
     value: T;
@@ -45,14 +45,14 @@ export interface IHeapNode<T> {
 }
 
 /**
- * Ordered Heap data structure implementation
+ * Ordered {@link https://en.wikipedia.org/wiki/Heap_(data_structure) | Heap} data structure implementation.
  */
 export class Heap<T> {
     private L: IHeapNode<T>[];
 
     /**
-     * Creates an instance of Heap with comparer
-     * @param comp - a comparer that specify how elements are ordered
+     * Creates an instance of `Heap` with comparer.
+     * @param comp - A comparer that specify how elements are ordered.
      */
     constructor(public comp: IComparer<T>) {
         this.L = [{ value: comp.min, position: 0 }];
@@ -61,7 +61,7 @@ export class Heap<T> {
     /**
      * Return the smallest element in the heap as determined by the order of the comparer
      *
-     * @returns heap node containing the smallest element
+     * @returns Heap node containing the smallest element
      */
     public peek(): IHeapNode<T> {
         return this.L[1];
@@ -70,12 +70,13 @@ export class Heap<T> {
     /**
      * Get and remove the smallest element in the heap as determined by the order of the comparer
      *
-     * @returns the smallest value in the heap
+     * @returns The smallest value in the heap
      */
     public get(): T {
         this.swap(1, this.count());
         const x = this.L.pop();
         this.fixdown(1);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return x!.value;
     }
 
@@ -83,7 +84,7 @@ export class Heap<T> {
      * Add a value to the heap
      *
      * @param x - value to add
-     * @returns the heap node that contains the value
+     * @returns The heap node that contains the value
      */
     public add(x: T): IHeapNode<T> {
         const node = { value: x, position: this.L.length };
@@ -94,9 +95,9 @@ export class Heap<T> {
     }
 
     /**
-     * Allows for heap to be updated after a node's value changes
+     * Allows for the Heap to be updated after a node's value changes.
      */
-    public update(node: IHeapNode<T>) {
+    public update(node: IHeapNode<T>): void {
         const k = node.position;
         if (this.isGreaterThanParent(k)) {
             this.fixup(k);
@@ -106,11 +107,11 @@ export class Heap<T> {
     }
 
     /**
-     * Removes the given node from the heap
+     * Removes the given node from the heap.
      *
-     * @param node - the node to remove from the heap
+     * @param node - The node to remove from the heap.
      */
-    public remove(node: IHeapNode<T>) {
+    public remove(node: IHeapNode<T>): void {
         // Move the node we want to remove to the end of the array
         const position = node.position;
         this.swap(node.position, this.L.length - 1);
@@ -123,17 +124,18 @@ export class Heap<T> {
     }
 
     /**
-     * Get the number of elements in the Heap
+     * Get the number of elements in the Heap.
      *
-     * @returns the number of elements in the Heap
+     * @returns The number of elements in the Heap.
      */
-    public count() {
+    public count(): number {
         return this.L.length - 1;
     }
 
-    private fixup(pos: number) {
+    private fixup(pos: number): void {
         let k = pos;
         while (this.isGreaterThanParent(k)) {
+            // eslint-disable-next-line no-bitwise
             const parent = k >> 1;
             this.swap(k, parent);
             k = parent;
@@ -141,14 +143,17 @@ export class Heap<T> {
     }
 
     private isGreaterThanParent(k: number): boolean {
-        return k > 1 && (this.comp.compare(this.L[k >> 1].value, this.L[k].value) > 0);
+        // eslint-disable-next-line no-bitwise
+        return k > 1 && this.comp.compare(this.L[k >> 1].value, this.L[k].value) > 0;
     }
 
-    private fixdown(pos: number) {
+    private fixdown(pos: number): void {
         let k = pos;
-        while ((k << 1) <= this.count()) {
+        // eslint-disable-next-line no-bitwise
+        while (k << 1 <= this.count()) {
+            // eslint-disable-next-line no-bitwise
             let j = k << 1;
-            if ((j < this.count()) && (this.comp.compare(this.L[j].value, this.L[j + 1].value) > 0)) {
+            if (j < this.count() && this.comp.compare(this.L[j].value, this.L[j + 1].value) > 0) {
                 j++;
             }
             if (this.comp.compare(this.L[k].value, this.L[j].value) <= 0) {
@@ -159,7 +164,7 @@ export class Heap<T> {
         }
     }
 
-    private swap(k: number, j: number) {
+    private swap(k: number, j: number): void {
         const tmp = this.L[k];
         this.L[k] = this.L[j];
         this.L[k].position = k;

@@ -50,7 +50,7 @@ export async function prefetchLatestSnapshot(
     forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryBaseLogger,
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
-    enableRedeemFallback?: boolean,
+    enableRedeemFallback: boolean = true,
     fetchBinarySnapshotFormat?: boolean,
     snapshotFormatFetchType?: SnapshotFormatSupportType,
 ): Promise<boolean> {

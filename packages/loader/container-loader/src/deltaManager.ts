@@ -31,7 +31,6 @@ import {
     IDocumentService,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -41,6 +40,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     NonRetryableError,
+    isClientMessage,
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
@@ -105,10 +105,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
+    /**
+     * Track down the ops size.
+    */
+    private opsSize: number = 0;
     private prevEnqueueMessagesReason: string | undefined;
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
 
     // The sequence number we initially loaded from
+    // In case of reading from a snapshot or pending state, its value will be equal to
+    // the last message that got serialized.
     private initSequenceNumber: number = 0;
 
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
@@ -198,6 +204,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             return -1;
         }
 
+        this.opsSize += message.contents.length;
+
         this.messageBuffer.push(message);
 
         this.emit("submitOp", message);
@@ -226,6 +234,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get connectionProps(): ITelemetryProperties {
         return {
             sequenceNumber: this.lastSequenceNumber,
+            opsSize: this.opsSize > 0 ? this.opsSize : undefined,
             ...this.connectionManager.connectionProps,
         };
     }
@@ -267,8 +276,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     ) {
         super();
         const props: IConnectionManagerFactoryArgs = {
-            incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) =>
-                this.enqueueMessages(messages, reason),
+            incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
+                try {
+                    this.enqueueMessages(messages, reason);
+                } catch (error) {
+                    this.logger.sendErrorEvent({ eventName: "EnqueueMessages_Exception" }, error);
+                    this.close(normalizeError(error));
+                }
+            },
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
@@ -330,6 +345,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
         // state. As requirements change, so should these checks.
         assert(this.messageBuffer.length === 0, 0x0e9 /* "messageBuffer is not empty on new connection" */);
+
+        this.opsSize = 0;
 
         this.emit(
             "connect",
@@ -395,7 +412,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         if (prefetchType !== "none") {
             const cacheOnly = prefetchType === "cached";
-            await this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber);
+            await this.fetchMissingDeltasCore(`DocumentOpen_${prefetchType}`, cacheOnly);
 
             // Keep going with fetching ops from storage once we have all cached ops in.
             // But do not block load and make this request async / not blocking this api.
@@ -403,7 +420,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // (which in most cases will happen when we are done processing cached ops)
             if (cacheOnly) {
                 // fire and forget
-                this.fetchMissingDeltas("DocumentOpen");
+                this.fetchMissingDeltas("PostDocumentOpen");
             }
         }
 
@@ -438,6 +455,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private async getDeltas(
         from: number, // inclusive
         to: number | undefined, // exclusive
+        fetchReason: string,
         callback: (messages: ISequencedDocumentMessage[]) => void,
         cacheOnly: boolean) {
         const docService = this.serviceProvider();
@@ -458,7 +476,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // received through delta stream. Validate that before moving forward.
             if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
                 this.logger.sendPerformanceEvent({
-                    reason: this.fetchReason,
+                    reason: fetchReason,
                     eventName: "ExtraStorageCall",
                     early: true,
                     from,
@@ -506,7 +524,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 to, // exclusive
                 controller.signal,
                 cacheOnly,
-                this.fetchReason);
+                fetchReason);
 
             // eslint-disable-next-line no-constant-condition
             while (true) {
@@ -706,11 +724,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                     const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
-                        // This looks like a data corruption but the culprit has been found instead
-                        // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
+                            // This looks like a data corruption but the culprit was that the file was overwritten
+                            // in storage.  See PR #5882.
+                            // Likely to be an issue with Fluid Services. Content does not match previous client
+                            // knowledge about this file. If the file is overwritten for any reason, this error can be
+                            // hit. One example is that some clients could be submitting ops to two different service
+                            // instances such that the same sequence number is reused for two different ops.
                             // pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
-                            "Found two messages with the same sequenceNumber but different payloads",
+                            "Found two messages with the same sequenceNumber but different payloads. Likely to be a "
+                            + "service issue",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connectionManager.clientId,
@@ -747,7 +770,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // System messages may have no clientId (but some do, like propose, noop, summarize)
         assert(
             message.clientId !== undefined
-            || isSystemMessage(message),
+            || !(isClientMessage(message)),
             0x0ed /* "non-system message have to have clientId" */,
         );
 
@@ -856,6 +879,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             await this.getDeltas(
                 from,
                 to,
+                fetchReason,
                 (messages) => {
                     this.refreshDelayInfo(this.deltaStorageDelayId);
                     this.enqueueMessages(messages, fetchReason);

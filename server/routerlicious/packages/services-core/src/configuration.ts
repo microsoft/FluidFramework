@@ -19,6 +19,9 @@ export interface IDeliServerConfiguration {
     // Enables creating join/leave signals for write clients
     enableWriteClientSignals: boolean;
 
+    // Enables deli to check for idle clients when it starts
+    checkForIdleClientsOnStartup: boolean;
+
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
@@ -159,16 +162,11 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     maxMessageSize: 16 * 1024,
     enableTraces: true,
     enableLumberjack: true,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
     deli: {
         enableNackMessages: true,
         enableOpHashing: true,
         enableAutoDSNUpdate: false,
+        checkForIdleClientsOnStartup: false,
         enableWriteClientSignals: false,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
