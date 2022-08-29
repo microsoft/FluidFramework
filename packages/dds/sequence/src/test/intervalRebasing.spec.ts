@@ -72,21 +72,17 @@ describe("interval rebasing", () => {
     });
 
     it("does not crash when entire string on which interval lies is concurrently removed", () => {
-        clients[1].sharedString.insertText(0, "J");
         clients[0].sharedString.insertText(0, "a");
+        clients[1].sharedString.insertText(0, "a");
+        containerRuntimeFactory.processAllMessages();
+        assertConsistent(clients);
         clients[0].containerRuntime.connected = false;
+        clients[1].sharedString.removeRange(0, 2);
+        const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+        collection_0.add(0, 1, IntervalType.SlideOnRemove, { intervalId: "id" });
         containerRuntimeFactory.processAllMessages();
         assertConsistent(clients);
-        clients[1].sharedString.insertText(0, "WAj");
-        clients[0].sharedString.insertText(1, "HUvPz");
-        clients[2].sharedString.removeRange(0, 1);
-        clients[1].containerRuntime.connected = false;
-        clients[1].sharedString.insertText(0, "p21nY82");
-        const collection_0 = clients[1].sharedString.getIntervalCollection("comments");
-        collection_0.add(4, 10, IntervalType.SlideOnRemove, { intervalId: "id" });
-        containerRuntimeFactory.processAllMessages();
-        assertConsistent(clients);
-        clients[1].containerRuntime.connected = true;
+        clients[0].containerRuntime.connected = true;
     });
 
     it("does not crash when interval slides off end of string", () => {
