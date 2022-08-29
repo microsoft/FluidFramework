@@ -28,11 +28,11 @@ let logger: Logger;
 
 export async function dangerfile() {
     if (process.env.ADO_API_TOKEN === undefined) {
-        logger.logError("no env ado api token provided");
+        logger.error("no env ado api token provided");
     }
 
     if (process.env.DANGER_GITHUB_API_TOKEN === undefined) {
-        logger.logError("no env github api token provided");
+        logger.error("no env github api token provided");
     }
 
     const adoConnection = getAzureDevopsApi(
@@ -54,8 +54,8 @@ export async function dangerfile() {
     if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
         markdown(result.message);
     } else {
-        logger.log("No size changes detected, skipping posting PR comment");
+        logger.info("No size changes detected, skipping posting PR comment");
     }
 }
 
-dangerfile().catch((error: string) => logger.logError(error));
+dangerfile().catch((error: string) => logger.error(error));

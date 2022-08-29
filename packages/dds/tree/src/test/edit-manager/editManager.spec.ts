@@ -5,7 +5,6 @@
 
 import { fail, strict as assert } from "assert";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
-import { SeqNumber } from "../../changeset";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
@@ -15,11 +14,11 @@ interface NonEmptyTestChangeset {
     /**
      * Identifies the document state that the changeset should apply to.
      */
-    inputContext: number;
+    inputContext: number[];
     /**
      * Identifies the document state brought about by applying the changeset to the document.
      */
-    outputContext: number;
+    outputContext: number[];
     /**
      * Identifies the editing intentions included in the changeset.
      * Editing intentions can be thought of as user actions, where each user action is unique.
@@ -40,41 +39,70 @@ export type TestChangeset = NonEmptyTestChangeset | EmptyTestChangeset;
 function isNonEmptyChange(
     change: RecursiveReadonly<TestChangeset>,
 ): change is RecursiveReadonly<NonEmptyTestChangeset> {
-    return "inputContext" in change && "outputContext" in change;
+    return "inputContext" in change;
 }
 
 interface AnchorRebaseData {
     rebases: RecursiveReadonly<NonEmptyTestChangeset>[];
-    intentions: Set<number>;
+    intentions: number[];
 }
 
 class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
-    private contextCounter: number = 0;
-    private intentionCounter: number = 0;
     public readonly anchorRebases: Map<AnchorSet, AnchorRebaseData> = new Map();
 
+    public static mintChangeset(inputContext: readonly number[], intentionOpt: number): NonEmptyTestChangeset {
+        const intention = intentionOpt;
+        return {
+            inputContext: [...inputContext],
+            intentions: [intention],
+            outputContext: TestChangeRebaser.composeIntentions(inputContext, [intention]),
+        };
+    }
+
+    public static composeIntentions(base: readonly number[], extras: readonly number[]): number[] {
+        const composed = [...base];
+        let last: number | undefined = composed[composed.length - 1];
+        for (const extra of extras) {
+            // Check wether we are composing intentions that cancel each other out.
+            // This helps us ensure that we always represent sequences of intentions
+            // in the same canonical form.
+            if (last === -extra) {
+                composed.pop();
+                last = composed[composed.length - 1];
+            } else {
+                composed.push(extra);
+                last = extra;
+            }
+        }
+        return composed;
+    }
+
     public compose(changes: TestChangeset[]): TestChangeset {
-        let inputContext: number | undefined;
-        let outputContext: number | undefined;
-        const intentions: number[] = [];
+        let inputContext: number[] | undefined;
+        let outputContext: number[] | undefined;
+        let intentions: number[] = [];
         for (const change of changes) {
             if (isNonEmptyChange(change)) {
-                if (outputContext !== undefined) {
-                    // One can only compose changes of the output context of each change N matches
-                    // the input context of the change N+1.
-                    assert.equal(outputContext, change.inputContext);
-                }
                 inputContext ??= change.inputContext;
-                outputContext = change.outputContext;
-                intentions.push(...change.intentions);
+                if (outputContext !== undefined) {
+                    // The input context should match the output context of the previous change.
+                    assert.deepEqual(change.inputContext, outputContext);
+                }
+                outputContext = TestChangeRebaser.composeIntentions(
+                    outputContext ?? inputContext,
+                    change.intentions,
+                );
+                intentions = TestChangeRebaser.composeIntentions(
+                    intentions,
+                    change.intentions,
+                );
             }
         }
         if (inputContext !== undefined) {
             return {
                 inputContext,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                outputContext: outputContext!,
                 intentions,
+                outputContext: outputContext ?? fail(),
             };
         }
         return emptyChange;
@@ -94,16 +122,11 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
     public rebase(change: TestChangeset, over: TestChangeset): TestChangeset {
         if (isNonEmptyChange(change)) {
             if (isNonEmptyChange(over)) {
+                // Rebasing should only occur between two changes with the same input context
+                assert.deepEqual(change.inputContext, over.inputContext);
                 return {
                     inputContext: over.outputContext,
-                    // Note that we mint a new context ID for each rebased operation.
-                    // This means that rebasing some change A over some change B will produce
-                    // a change with a different output context every time.
-                    // This lack of fidelity could make some of the tests fail when they
-                    // should not, but will not make tests pass if they should not.
-                    // If a rebaser implementation needed to leverage this missing fidelity then this gap could
-                    // be addressed by using a more complex encoding to represent contexts.
-                    outputContext: ++this.contextCounter,
+                    outputContext: TestChangeRebaser.composeIntentions(over.outputContext, change.intentions),
                     intentions: change.intentions,
                 };
             }
@@ -116,11 +139,11 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
         if (isNonEmptyChange(over)) {
             let data = this.anchorRebases.get(anchors);
             if (data === undefined) {
-                data = { rebases: [], intentions: new Set() };
+                data = { rebases: [], intentions: [] };
                 this.anchorRebases.set(anchors, data);
             }
             let lastChange: RecursiveReadonly<NonEmptyTestChangeset> | undefined;
-            const { rebases, intentions } = data;
+            const { rebases } = data;
             for (let iChange = rebases.length - 1; iChange >= 0; --iChange) {
                 const change = rebases[iChange];
                 if (isNonEmptyChange(change)) {
@@ -130,40 +153,28 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
             }
             if (lastChange !== undefined) {
                 // The new change should apply to the context brought about by the previous change
-                assert.equal(over.inputContext, lastChange.outputContext);
+                assert.deepEqual(over.inputContext, lastChange.outputContext);
             }
-            updateIntentionSet(over.intentions, intentions);
+            data.intentions = TestChangeRebaser.composeIntentions(data.intentions, over.intentions);
             rebases.push(over);
         }
     }
 
-    public mintChangeset(inputContext: number): NonEmptyTestChangeset {
-        return {
-            inputContext,
-            outputContext: ++this.contextCounter,
-            intentions: [++this.intentionCounter],
-        };
-    }
-
-    public checkChangeList(changes: readonly RecursiveReadonly<TestChangeset>[], intentions?: Set<number>): void {
+    public static checkChangeList(changes: readonly RecursiveReadonly<TestChangeset>[], intentions: number[]): void {
         const filtered = changes.filter(isNonEmptyChange);
-        const intentionsSeen = new Set<number>();
-        const intentionsExpected = new Set<number>(
-            intentions ??
-            makeArray(this.intentionCounter, (i: number) => i + 1),
-        );
+        let intentionsSeen: number[] = [];
         let index = 0;
         for (const change of filtered) {
-            updateIntentionSet(change.intentions, intentionsSeen);
+            intentionsSeen = TestChangeRebaser.composeIntentions(intentionsSeen, change.intentions);
             if (index > 0) {
                 const prev = filtered[index - 1];
                 // The current change should apply to the context brought about by the previous change
-                assert.equal(change.inputContext, prev.outputContext);
+                assert.deepEqual(change.inputContext, prev.outputContext);
             }
             ++index;
         }
         // All expected intentions were present
-        assert.deepEqual(intentionsSeen, intentionsExpected);
+        assert.deepEqual(intentionsSeen, intentions);
     }
 }
 
@@ -178,25 +189,6 @@ class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
 
 type TestChangeFamily = ChangeFamily<unknown, TestChangeset>;
 type TestEditManager = EditManager<TestChangeset, TestChangeFamily>;
-
-function updateIntentionSet(
-    intentions: readonly number[],
-    intentionsSeen: Set<number>,
-) {
-    for (const intention of intentions) {
-        if (intention > 0) {
-            // The same intention should never be applied multiple times
-            assert(!intentionsSeen.has(intention));
-            intentionsSeen.add(intention);
-            // The intention should be part of the expected set for this client
-        } else if (intention < 0) {
-            // We are dealing with the inverse of an intention.
-            // In order for the inverse to apply, the non-inverse should have been applied already
-            assert(intentionsSeen.has(-intention));
-            intentionsSeen.delete(-intention);
-        }
-    }
-}
 
 function changeFamilyFactory(): {
     family: ChangeFamily<unknown, TestChangeset>;
@@ -231,313 +223,293 @@ const peerSessionId2: SessionId = "2";
 const NUM_STEPS = 5;
 const NUM_CLIENTS = 3;
 
+type TestCommit = Commit<TestChangeset>;
+
 describe("EditManager", () => {
     it("Can handle non-concurrent local changes being sequenced immediately", () => {
         const { rebaser, manager } = editManagerFactory();
-        const cs1 = rebaser.mintChangeset(0);
-        const cs2 = rebaser.mintChangeset(cs1.outputContext);
-        const cs3 = rebaser.mintChangeset(cs2.outputContext);
-        manager.addLocalChange(cs1);
-        manager.addSequencedChange({
+        const c1: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(1),
             refNumber: brand(0),
-            changeset: cs1,
-        });
-        manager.addLocalChange(cs2);
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([], 1),
+        };
+        const c2: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(2),
             refNumber: brand(1),
-            changeset: cs2,
-        });
-        manager.addLocalChange(cs3);
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([1], 2),
+        };
+        const c3: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(3),
             refNumber: brand(2),
-            changeset: cs3,
-        });
-        checkChangeList(manager, rebaser);
+            changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
+        };
+        manager.addLocalChange(c1.changeset);
+        manager.addSequencedChange(c1);
+        manager.addLocalChange(c2.changeset);
+        manager.addSequencedChange(c2);
+        manager.addLocalChange(c3.changeset);
+        manager.addSequencedChange(c3);
+        checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can handle non-concurrent local changes being sequenced later", () => {
         const { rebaser, manager } = editManagerFactory();
-        const cs1 = rebaser.mintChangeset(0);
-        const cs2 = rebaser.mintChangeset(cs1.outputContext);
-        const cs3 = rebaser.mintChangeset(cs2.outputContext);
-        manager.addLocalChange(cs1);
-        manager.addLocalChange(cs2);
-        manager.addLocalChange(cs3);
-        manager.addSequencedChange({
+        const c1: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(1),
             refNumber: brand(0),
-            changeset: cs1,
-        });
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([], 1),
+        };
+        const c2: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(2),
             refNumber: brand(0),
-            changeset: cs2,
-        });
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([1], 2),
+        };
+        const c3: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(3),
             refNumber: brand(0),
-            changeset: cs3,
-        });
-        checkChangeList(manager, rebaser);
+            changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
+        };
+        manager.addLocalChange(c1.changeset);
+        manager.addLocalChange(c2.changeset);
+        manager.addLocalChange(c3.changeset);
+        manager.addSequencedChange(c1);
+        manager.addSequencedChange(c2);
+        manager.addSequencedChange(c3);
+        checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can handle non-concurrent peer changes sequenced immediately", () => {
         const { rebaser, manager } = editManagerFactory();
-        const cs1 = rebaser.mintChangeset(0);
-        const cs2 = rebaser.mintChangeset(cs1.outputContext);
-        const cs3 = rebaser.mintChangeset(cs2.outputContext);
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
-            changeset: cs1,
+            changeset: TestChangeRebaser.mintChangeset([], 1),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(1),
-            changeset: cs2,
+            changeset: TestChangeRebaser.mintChangeset([1], 2),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(2),
-            changeset: cs3,
+            changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         });
-        checkChangeList(manager, rebaser);
+        checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can handle non-concurrent peer changes sequenced later", () => {
         const { rebaser, manager } = editManagerFactory();
-        const cs1 = rebaser.mintChangeset(0);
-        const cs2 = rebaser.mintChangeset(cs1.outputContext);
-        const cs3 = rebaser.mintChangeset(cs2.outputContext);
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
-            changeset: cs1,
+            changeset: TestChangeRebaser.mintChangeset([], 1),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(0),
-            changeset: cs2,
+            changeset: TestChangeRebaser.mintChangeset([1], 2),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(0),
-            changeset: cs3,
+            changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         });
-        checkChangeList(manager, rebaser);
+        checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can rebase a single peer change over multiple peer changes", () => {
         const { rebaser, manager } = editManagerFactory();
-        const cs1 = rebaser.mintChangeset(0);
-        const cs2 = rebaser.mintChangeset(cs1.outputContext);
-        const cs3 = rebaser.mintChangeset(cs2.outputContext);
-        const cs4 = rebaser.mintChangeset(0);
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
-            changeset: cs1,
+            changeset: TestChangeRebaser.mintChangeset([], 1),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(1),
-            changeset: cs2,
+            changeset: TestChangeRebaser.mintChangeset([1], 2),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(2),
-            changeset: cs3,
+            changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId2,
             seqNumber: brand(4),
             refNumber: brand(0),
-            changeset: cs4,
+            changeset: TestChangeRebaser.mintChangeset([], 4),
         });
-        checkChangeList(manager, rebaser);
+        checkChangeList(manager, [1, 2, 3, 4]);
     });
 
     it("Can rebase multiple non-interleaved peer changes", () => {
         const { rebaser, manager } = editManagerFactory();
-        const cs1 = rebaser.mintChangeset(0);
-        const cs2 = rebaser.mintChangeset(cs1.outputContext);
-        const cs3 = rebaser.mintChangeset(cs2.outputContext);
-        const cs4 = rebaser.mintChangeset(0);
-        const cs5 = rebaser.mintChangeset(cs4.outputContext);
-        const cs6 = rebaser.mintChangeset(cs5.outputContext);
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
-            changeset: cs1,
+            changeset: TestChangeRebaser.mintChangeset([], 1),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(1),
-            changeset: cs2,
+            changeset: TestChangeRebaser.mintChangeset([1], 2),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(2),
-            changeset: cs3,
+            changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId2,
             seqNumber: brand(4),
             refNumber: brand(0),
-            changeset: cs4,
+            changeset: TestChangeRebaser.mintChangeset([], 4),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId2,
             seqNumber: brand(5),
             refNumber: brand(0),
-            changeset: cs5,
+            changeset: TestChangeRebaser.mintChangeset([4], 5),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId2,
             seqNumber: brand(6),
             refNumber: brand(0),
-            changeset: cs6,
+            changeset: TestChangeRebaser.mintChangeset([4, 5], 6),
         });
-        checkChangeList(manager, rebaser);
+        checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
     });
 
     it("Can rebase multiple interleaved peer changes", () => {
         const { rebaser, manager } = editManagerFactory();
-        const cs1 = rebaser.mintChangeset(0);
-        const cs2 = rebaser.mintChangeset(cs1.outputContext);
-        const cs3 = rebaser.mintChangeset(cs2.outputContext);
-        const cs4 = rebaser.mintChangeset(0);
-        const cs5 = rebaser.mintChangeset(cs4.outputContext);
-        const cs6 = rebaser.mintChangeset(cs5.outputContext);
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
-            changeset: cs1,
+            changeset: TestChangeRebaser.mintChangeset([], 1),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId2,
             seqNumber: brand(2),
             refNumber: brand(0),
-            changeset: cs4,
+            changeset: TestChangeRebaser.mintChangeset([], 2),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(1),
-            changeset: cs2,
+            changeset: TestChangeRebaser.mintChangeset([1], 3),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId1,
             seqNumber: brand(4),
             refNumber: brand(2),
-            changeset: cs3,
+            changeset: TestChangeRebaser.mintChangeset([1, 2, 3], 4),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId2,
             seqNumber: brand(5),
             refNumber: brand(0),
-            changeset: cs5,
+            changeset: TestChangeRebaser.mintChangeset([2], 5),
         });
         manager.addSequencedChange({
             sessionId: peerSessionId2,
             seqNumber: brand(6),
             refNumber: brand(0),
-            changeset: cs6,
+            changeset: TestChangeRebaser.mintChangeset([2, 5], 6),
         });
-        checkChangeList(manager, rebaser);
+        checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
     });
 
     it("Can rebase multiple interleaved peer and local changes", () => {
         const { rebaser, manager } = editManagerFactory();
-        const cs1 = rebaser.mintChangeset(0);
-        const cs2 = rebaser.mintChangeset(cs1.outputContext);
-        const cs3 = rebaser.mintChangeset(cs2.outputContext);
-        const cs4 = rebaser.mintChangeset(0);
-        const cs5 = rebaser.mintChangeset(cs4.outputContext);
-        const cs6 = rebaser.mintChangeset(cs5.outputContext);
-        const cs7 = rebaser.mintChangeset(0);
-        manager.addLocalChange(cs7);
-        manager.addSequencedChange({
+        const c1: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
-            changeset: cs1,
-        });
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([], 1),
+        };
+        const c2: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(2),
             refNumber: brand(0),
-            changeset: cs4,
-        });
-        const cs8 = rebaser.mintChangeset(getTipContext(manager));
-        manager.addLocalChange(cs8);
-        const cs9 = rebaser.mintChangeset(getTipContext(manager));
-        manager.addLocalChange(cs9);
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([], 2),
+        };
+        const c3: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(3),
             refNumber: brand(0),
-            changeset: cs7,
-        });
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([], 3),
+        };
+        const c4: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(4),
             refNumber: brand(1),
-            changeset: cs2,
-        });
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([1], 4),
+        };
+        const c5: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(5),
             refNumber: brand(2),
-            changeset: cs3,
-        });
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([1, 2, 4], 5),
+        };
+        const c6: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(6),
             refNumber: brand(2),
-            changeset: cs8,
-        });
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([1, 2, 3], 6),
+        };
+        const c7: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(7),
             refNumber: brand(0),
-            changeset: cs5,
-        });
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([2], 7),
+        };
+        const c8: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(8),
             refNumber: brand(2),
-            changeset: cs9,
-        });
-        manager.addSequencedChange({
+            changeset: TestChangeRebaser.mintChangeset([1, 2, 3, 6], 8),
+        };
+        const c9: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(9),
             refNumber: brand(0),
-            changeset: cs6,
-        });
-        checkChangeList(manager, rebaser);
+            changeset: TestChangeRebaser.mintChangeset([2, 7], 9),
+        };
+        manager.addLocalChange(c3.changeset);
+        manager.addSequencedChange(c1);
+        manager.addSequencedChange(c2);
+        manager.addLocalChange(c6.changeset);
+        manager.addLocalChange(c8.changeset);
+        manager.addSequencedChange(c3);
+        manager.addSequencedChange(c4);
+        manager.addSequencedChange(c5);
+        manager.addSequencedChange(c6);
+        manager.addSequencedChange(c7);
+        manager.addSequencedChange(c8);
+        manager.addSequencedChange(c9);
+        checkChangeList(manager, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
 
     /**
@@ -555,6 +527,9 @@ describe("EditManager", () => {
             seq: 0,
         };
         for (const scenario of buildScenario([], meta)) {
+            // Uncomment the lines below to see which scenario fails first.
+            // const name = scenario.map((step) => `${step.type}${step.client}`).join("-");
+            // console.debug(name);
             runScenario(scenario);
         }
     });
@@ -573,8 +548,8 @@ type ScenarioStep =
  * State needed by the scenario builder.
  */
 interface ScenarioBuilderState {
-    clientData: { pulled: SeqNumber; numLocal: number; }[];
-    seq: SeqNumber;
+    clientData: { pulled: number; numLocal: number; }[];
+    seq: number;
 }
 
 function* buildScenario(
@@ -630,29 +605,29 @@ function* buildScenario(
 interface ClientData {
     manager: TestEditManager;
     /** The local changes in their original form */
-    localChanges: { change: TestChangeset; ref: SeqNumber; }[];
+    localChanges: { change: TestChangeset; ref: number; }[];
     /** The last sequence number received by the client */
-    ref: SeqNumber;
+    ref: number;
     /** Intentions that the client should be aware of */
-    intentions: Set<number>;
+    intentions: number[];
 }
 
 function runScenario(scenario: readonly ScenarioStep[]): void {
-    const name = scenario.map((step) => `${step.type}${step.client}`).join("-");
     const { rebaser, family } = changeFamilyFactory();
     const trunk: Commit<TestChangeset>[] = [];
     const clientData: ClientData[] = makeArray(NUM_CLIENTS, (iClient) => newClientData(family, iClient));
+    let changeCounter = 0;
     for (const step of scenario) {
         // Perform the step
         {
             const client = clientData[step.client];
             if (step.type === "Mint") {
-                const cs = rebaser.mintChangeset(getTipContext(client.manager));
+                const cs = TestChangeRebaser.mintChangeset(getTipContext(client.manager), ++changeCounter);
                 client.manager.addLocalChange(cs);
                 client.localChanges.push({ change: cs, ref: client.ref });
-                cs.intentions.forEach((intention) => client.intentions.add(intention));
+                cs.intentions.forEach((intention) => client.intentions.push(intention));
             } else if (step.type === "Sequence") {
-                const local = client.localChanges.shift() ?? fail("No local changes to sequence");
+                const local = client.localChanges[0] ?? fail("No local changes to sequence");
                 trunk.push({
                     changeset: local.change,
                     refNumber: brand(local.ref),
@@ -662,18 +637,30 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
             } else { // step.type === "Receive"
                 const commit = trunk[client.ref];
                 client.manager.addSequencedChange(commit);
-                commit.changeset.intentions.forEach((intention) => client.intentions.add(intention));
+                // If the change came from this client
+                if (commit.sessionId === step.client.toString()) {
+                    // Discard the local change
+                    client.localChanges.shift();
+                    // Do not update the intentions
+                } else {
+                    // Update the intentions known to this client
+                    client.intentions.splice(
+                        client.intentions.length - client.localChanges.length,
+                        0,
+                        ...commit.changeset.intentions,
+                    );
+                }
                 client.ref += 1;
             }
         }
         // Check the validity of the managers
         for (const client of clientData) {
-            checkChangeList(client.manager, rebaser, client.intentions);
+            checkChangeList(client.manager, client.intentions);
             const intentionsThatAnchorsWereRebasedOver =
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 rebaser.anchorRebases.get(client.manager.anchors!)?.intentions;
             // Check the anchors have been updated if applicable
-            assert.deepEqual(intentionsThatAnchorsWereRebasedOver ?? new Set(), client.intentions);
+            assert.deepEqual(intentionsThatAnchorsWereRebasedOver ?? [], client.intentions);
         }
     }
 }
@@ -685,25 +672,25 @@ function newClientData(family: TestChangeFamily, iClient: number): ClientData {
         manager,
         localChanges: [],
         ref: 0,
-        intentions: new Set(),
+        intentions: [],
     };
 }
 
-function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser, intentions?: Set<number>): void {
-    rebaser.checkChangeList(getAllChanges(manager), intentions);
+function checkChangeList(manager: TestEditManager, intentions: number[]): void {
+    TestChangeRebaser.checkChangeList(getAllChanges(manager), intentions);
 }
 
 function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChangeset>[] {
     return manager.getTrunk().map((c) => c.changeset).concat(manager.getLocalChanges());
 }
 
-function getTipContext(manager: TestEditManager): number {
+function getTipContext(manager: TestEditManager): number[] {
     const changes = getAllChanges(manager);
     for (let i = changes.length - 1; i >= 0; --i) {
         const change = changes[i];
         if (isNonEmptyChange(change)) {
-            return change.outputContext;
+            return [...change.outputContext];
         }
     }
-    return 0;
+    return [];
 }

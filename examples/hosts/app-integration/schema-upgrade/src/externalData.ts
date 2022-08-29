@@ -22,7 +22,8 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
     public constructor() {
         super();
         this.externalInventoryData =
-`Alpha:1
+`version:one
+Alpha:1
 Beta:2
 Gamma:3
 Delta:4`;

@@ -46,7 +46,7 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/isomorphic-fetch": "^0.0.35",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
     "rimraf": "^2.6.2",
     "source-map-loader": "^2.0.0",

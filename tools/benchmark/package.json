@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/benchmark",
-  "version": "0.42.0",
+  "version": "0.43.0",
   "description": "Benchmarking tools",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -27,7 +27,7 @@
     "lint:fix": "npm run eslint:fix",
     "perf": "mocha --config ./.mocharc.js --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
     "test": "npm run test:mocha",
-    "test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test:mocha": "mocha \"dist/test/**/*.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc"
   },
