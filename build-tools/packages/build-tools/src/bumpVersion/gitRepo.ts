@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { parseISO } from "date-fns";
 import { exec, execNoError } from "./utils";
 
 export class GitRepo {
@@ -161,7 +162,7 @@ export class GitRepo {
      * Fetch Tags
      */
     public async fetchTags() {
-        return await this.exec(`fetch --tags`, `fetch tags`);
+        return await this.exec(`fetch --tags --force`, `fetch tags`);
     }
 
     /**
@@ -176,11 +177,21 @@ export class GitRepo {
     /**
      * Get all tags matching a pattern.
      *
-     * @param pattern pattern of tags to get
+     * @param pattern - Pattern of tags to get.
      */
     public async getAllTags(pattern?: string): Promise<string[]> {
         const results = pattern === undefined ? await this.exec(`tag -l`, `get all tags`) : await this.exec(`tag -l "${pattern}"`, `get tags ${pattern}`);
         return results.split("\n").filter(t => t !== undefined && t !== "" && t !== null);
+    }
+
+    /**
+     * @param gitRef - A reference to a git commit/tag/branch for which the commit date will be parsed.
+     * @returns The commit date of the ref.
+     */
+    public async getCommitDate(gitRef: string) {
+        const result = (await this.exec(`show -s --format=%cI "${gitRef}"`, `get commit date ${gitRef}`)).trim();
+        const date = parseISO(result);
+        return date;
     }
 
     /**

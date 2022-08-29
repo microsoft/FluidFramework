@@ -8,13 +8,20 @@ import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { IChannelPath } from "./handlesTracker";
 import { DataObjectManyDDSes } from "./testDataObjects";
 
+/**
+ * A path from a DataStore to its DDS
+ */
 export interface IFluidObjectPath {
     dataStoreId: string; // which DataStore/DataObject?
     ddsId?: string; // which DDS/SharedObject?
 }
 
+/**
+ * FluidObjectTracker is responsible for tracking where any FluidObject may reside
+ */
 export class FluidObjectTracker {
     private readonly allFluidObjects: Map<string, IFluidObjectPath> = new Map();
+    // Channels that can store handles
     private readonly handleChannels: Map<string, IChannelPath> = new Map();
 
     private get usableFluidObjects(): IFluidObjectPath[] {
@@ -30,15 +37,19 @@ export class FluidObjectTracker {
         return random.pick(this.usableFluidObjects);
     }
 
+    // Path to a random channel that can store handles
     public getRandomHandleChannel(random: IRandom): IChannelPath {
         return random.pick(this.handleChannelPaths);
     }
 
     public trackDataObject(dataObject: DataObjectManyDDSes) {
+        // add the dataObject
         this.addFluidObject({ dataStoreId: dataObject.id });
+        // add all the channels of the dataObject
         for (const id of dataObject.getChannelIds()) {
             this.addFluidObject({ dataStoreId: dataObject.id, ddsId: id });
         }
+        // track all the channels fo the dataObject that can add handles
         for (const id of dataObject.getHandleChannelIds()) {
             this.addChannel({ dataStoreId: dataObject.id, ddsId: id });
         }
