@@ -4,16 +4,1226 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { ConnectionState } from '@fluidframework/container-loader';
+/// <reference types="node" />
 
-export { AttachState }
+import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
+import { BaseSegment } from '@fluidframework/merge-tree';
+import { Client } from '@fluidframework/merge-tree';
+import { ConnectionMode } from '@fluidframework/protocol-definitions';
+import { DataObject } from '@fluidframework/aqueduct';
+import { Deferred } from '@fluidframework/common-utils';
+import { EventEmitter } from 'events';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IClient } from '@fluidframework/protocol-definitions';
+import { IClientConfiguration } from '@fluidframework/protocol-definitions';
+import { IClientDetails } from '@fluidframework/protocol-definitions';
+import { ICombiningOp } from '@fluidframework/merge-tree';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IErrorEvent } from '@fluidframework/common-definitions';
+import { IEvent } from '@fluidframework/common-definitions';
+import { IEventProvider } from '@fluidframework/common-definitions';
+import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IFluidRouter } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IInterval } from '@fluidframework/merge-tree';
+import { IJSONSegment } from '@fluidframework/merge-tree';
+import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
+import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
+import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree';
+import { IMergeTreeInsertMsg } from '@fluidframework/merge-tree';
+import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
+import { IMergeTreeOp } from '@fluidframework/merge-tree';
+import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
+import { IntervalConflictResolver } from '@fluidframework/merge-tree';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { IRelativePosition } from '@fluidframework/merge-tree';
+import { IRequest } from '@fluidframework/core-interfaces';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IResponse } from '@fluidframework/core-interfaces';
+import { ISegment } from '@fluidframework/merge-tree';
+import { ISegmentAction } from '@fluidframework/merge-tree';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedProposal } from '@fluidframework/protocol-definitions';
+import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISignalClient } from '@fluidframework/protocol-definitions';
+import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import { Jsonable } from '@fluidframework/datastore-definitions';
+import { LocalReferencePosition } from '@fluidframework/merge-tree';
+import { Marker } from '@fluidframework/merge-tree';
+import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
+import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree';
+import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree';
+import { PropertiesManager } from '@fluidframework/merge-tree';
+import { PropertySet } from '@fluidframework/merge-tree';
+import { RangeStackMap } from '@fluidframework/merge-tree';
+import { ReferencePosition } from '@fluidframework/merge-tree';
+import { ReferenceType } from '@fluidframework/merge-tree';
+import { Serializable } from '@fluidframework/datastore-definitions';
+import { SharedObject } from '@fluidframework/shared-object-base';
+import { SummarySerializer } from '@fluidframework/shared-object-base';
+import { TextSegment } from '@fluidframework/merge-tree';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-export { ConnectionState }
+// @public
+export enum AttachState {
+    Attached = "Attached",
+    Attaching = "Attaching",
+    Detached = "Detached"
+}
 
+// @public
+export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
 
-export * from "@fluidframework/fluid-static";
-export * from "@fluidframework/map";
-export * from "@fluidframework/sequence";
+// @public (undocumented)
+export enum ConnectionState {
+    CatchingUp = 1,
+    Connected = 2,
+    Disconnected = 0,
+    EstablishingConnection = 3
+}
+
+// @public
+export interface ContainerSchema {
+    dynamicObjectTypes?: LoadableObjectClass<any>[];
+    initialObjects: LoadableObjectClassRecord;
+}
+
+// @public
+export type DataObjectClass<T extends IFluidLoadable> = {
+    readonly factory: IFluidDataStoreFactory;
+} & LoadableObjectCtor<T>;
+
+// @public (undocumented)
+export type DeserializeCallback = (properties: PropertySet) => void;
+
+// @public @sealed
+export class DirectoryFactory implements IChannelFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
+    // (undocumented)
+    static readonly Type = "https://graph.microsoft.com/types/directory";
+    // (undocumented)
+    get type(): string;
+}
+
+// @public
+export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+    constructor(schema: ContainerSchema);
+    // (undocumented)
+    protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
+}
+
+// @public
+export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
+    // Warning: (ae-forgotten-export) The symbol "IContainer" needs to be exported by the entry point index.d.ts
+    constructor(container: IContainer, rootDataObject: RootDataObject);
+    attach(): Promise<string>;
+    get attachState(): AttachState;
+    connect(): Promise<void>;
+    // Warning: (ae-forgotten-export) The symbol "ConnectionState" needs to be exported by the entry point index.d.ts
+    get connectionState(): ConnectionState_2;
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    disconnect(): Promise<void>;
+    dispose(): void;
+    get disposed(): boolean;
+    get initialObjects(): LoadableObjectRecord;
+    get isDirty(): boolean;
+}
+
+// @public
+export function getTextAndMarkers(sharedString: SharedString, label: string): {
+    parallelText: string[];
+    parallelMarkers: Marker[];
+};
+
+// @public
+export interface IConnection {
+    id: string;
+    mode: "write" | "read";
+}
+
+// @public
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+    readonly absolutePath: string;
+    countSubDirectory?(): number;
+    createSubDirectory(subdirName: string): IDirectory;
+    deleteSubDirectory(subdirName: string): boolean;
+    get<T = any>(key: string): T | undefined;
+    getSubDirectory(subdirName: string): IDirectory | undefined;
+    getWorkingDirectory(relativePath: string): IDirectory | undefined;
+    hasSubDirectory(subdirName: string): boolean;
+    set<T = any>(key: string, value: T): this;
+    subdirectories(): IterableIterator<[string, IDirectory]>;
+}
+
+// @public
+export interface IDirectoryClearOperation {
+    path: string;
+    type: "clear";
+}
+
+// @public
+export interface IDirectoryCreateSubDirectoryOperation {
+    path: string;
+    subdirName: string;
+    type: "createSubDirectory";
+}
+
+// @public
+export interface IDirectoryDataObject {
+    storage?: {
+        [key: string]: ISerializableValue;
+    };
+    subdirectories?: {
+        [subdirName: string]: IDirectoryDataObject;
+    };
+}
+
+// @public
+export interface IDirectoryDeleteOperation {
+    key: string;
+    path: string;
+    type: "delete";
+}
+
+// @public
+export interface IDirectoryDeleteSubDirectoryOperation {
+    path: string;
+    subdirName: string;
+    type: "deleteSubDirectory";
+}
+
+// @public
+export interface IDirectoryEvents extends IEvent {
+    (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public
+export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
+
+// Warning: (ae-internal-missing-underscore) The name "IDirectoryNewStorageFormat" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export interface IDirectoryNewStorageFormat {
+    blobs: string[];
+    content: IDirectoryDataObject;
+}
+
+// @public
+export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
+
+// @public
+export interface IDirectorySetOperation {
+    key: string;
+    path: string;
+    type: "set";
+    value: ISerializableValue;
+}
+
+// @public
+export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
+
+// @public
+export type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
+
+// @public
+export interface IDirectoryValueChanged extends IValueChanged {
+    path: string;
+}
+
+// @public
+export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
+    attach(): Promise<string>;
+    readonly attachState: AttachState;
+    connect(): void;
+    readonly connectionState: ConnectionState_2;
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    disconnect(): void;
+    dispose(): void;
+    readonly disposed: boolean;
+    readonly initialObjects: LoadableObjectRecord;
+    readonly isDirty: boolean;
+}
+
+// @public
+export interface IFluidContainerEvents extends IEvent {
+    // (undocumented)
+    (event: "connected" | "dispose" | "disconnected" | "saved" | "dirty", listener: () => void): void;
+}
+
+// @public (undocumented)
+export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
+    (event: "changeInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
+    // (undocumented)
+    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
+    // (undocumented)
+    (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void): any;
+}
+
+// @public (undocumented)
+export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
+    // (undocumented)
+    compareEnds(a: TInterval, b: TInterval): number;
+    // (undocumented)
+    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean): TInterval;
+}
+
+// @public (undocumented)
+export interface IJSONRunSegment<T> extends IJSONSegment {
+    // (undocumented)
+    items: Serializable<T>[];
+}
+
+// @public
+export interface ILocalValue {
+    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
+    readonly type: string;
+    readonly value: any;
+}
+
+// Warning: (ae-internal-missing-underscore) The name "IMapMessageLocalMetadata" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface IMapMessageLocalMetadata {
+    // (undocumented)
+    localSeq: number;
+}
+
+// @public
+export interface IMember {
+    connections: IConnection[];
+    userId: string;
+}
+
+// @public (undocumented)
+export class Interval implements ISerializableInterval {
+    constructor(start: number, end: number, props?: PropertySet);
+    // (undocumented)
+    addProperties(newProps: PropertySet, collaborating?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
+    // (undocumented)
+    addPropertySet(props: PropertySet): void;
+    // (undocumented)
+    auxProps: PropertySet[];
+    // (undocumented)
+    clone(): Interval;
+    // (undocumented)
+    compare(b: Interval): number;
+    // (undocumented)
+    compareEnd(b: Interval): number;
+    // (undocumented)
+    compareStart(b: Interval): number;
+    // (undocumented)
+    end: number;
+    // (undocumented)
+    getAdditionalPropertySets(): PropertySet[];
+    // (undocumented)
+    getIntervalId(): string | undefined;
+    // (undocumented)
+    getProperties(): PropertySet;
+    // (undocumented)
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): Interval;
+    // (undocumented)
+    overlaps(b: Interval): boolean;
+    // (undocumented)
+    properties: PropertySet;
+    // (undocumented)
+    propertyManager: PropertiesManager;
+    // (undocumented)
+    serialize(client: Client): ISerializedInterval;
+    // (undocumented)
+    start: number;
+    // (undocumented)
+    union(b: Interval): Interval;
+}
+
+// @public (undocumented)
+export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
+    // (undocumented)
+    [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
+    // @internal
+    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2);
+    // @internal (undocumented)
+    ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
+    // @internal (undocumented)
+    ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
+    // @internal (undocumented)
+    ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
+    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
+    // (undocumented)
+    addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
+    // (undocumented)
+    attachDeserializer(onDeserialize: DeserializeCallback): void;
+    // (undocumented)
+    get attached(): boolean;
+    // (undocumented)
+    attachGraph(client: Client, label: string): void;
+    // (undocumented)
+    change(id: string, start?: number, end?: number): TInterval | undefined;
+    // (undocumented)
+    changeProperties(id: string, props: PropertySet): void;
+    // (undocumented)
+    CreateBackwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
+    // (undocumented)
+    CreateBackwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
+    // (undocumented)
+    CreateForwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
+    // (undocumented)
+    CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
+    // (undocumented)
+    findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
+    // (undocumented)
+    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
+    // (undocumented)
+    getIntervalById(id: string): TInterval;
+    // (undocumented)
+    map(fn: (interval: TInterval) => void): void;
+    // (undocumented)
+    nextInterval(pos: number): TInterval;
+    // (undocumented)
+    previousInterval(pos: number): TInterval;
+    // @internal (undocumented)
+    rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
+    // (undocumented)
+    removeIntervalById(id: string): TInterval;
+    // @internal (undocumented)
+    serializeInternal(): ISerializedIntervalCollectionV2;
+}
+
+// @public (undocumented)
+export class IntervalCollectionIterator<TInterval extends ISerializableInterval> {
+    constructor(collection: IntervalCollection<TInterval>, iteratesForward?: boolean, start?: number, end?: number);
+    // (undocumented)
+    next(): {
+        value: TInterval;
+        done: boolean;
+    };
+}
+
+// @public
+export interface IntervalLocator {
+    interval: SequenceInterval;
+    label: string;
+}
+
+// @public
+export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
+
+// @public (undocumented)
+export enum IntervalType {
+    // (undocumented)
+    Nest = 1,
+    // (undocumented)
+    Simple = 0,
+    SlideOnRemove = 2,
+    // @internal
+    Transient = 4
+}
+
+// @public
+export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    // (undocumented)
+    operation: TOperation;
+    position: number;
+    // (undocumented)
+    propertyDeltas: PropertySet;
+    segment: ISegment;
+}
+
+// @public (undocumented)
+export interface ISerializableInterval extends IInterval {
+    // (undocumented)
+    addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
+    // (undocumented)
+    getIntervalId(): string | undefined;
+    // (undocumented)
+    properties: PropertySet;
+    // (undocumented)
+    propertyManager: PropertiesManager;
+    // (undocumented)
+    serialize(client: Client): ISerializedInterval;
+}
+
+// @public @deprecated
+export interface ISerializableValue {
+    type: string;
+    value: any;
+}
+
+// @public (undocumented)
+export interface ISerializedInterval {
+    // (undocumented)
+    end: number;
+    // (undocumented)
+    intervalType: IntervalType;
+    // (undocumented)
+    properties?: PropertySet;
+    // (undocumented)
+    sequenceNumber: number;
+    // (undocumented)
+    start: number;
+}
+
+// Warning: (ae-internal-missing-underscore) The name "ISerializedIntervalCollectionV2" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface ISerializedIntervalCollectionV2 {
+    // (undocumented)
+    intervals: CompressedSerializedInterval[];
+    // (undocumented)
+    label: string;
+    // (undocumented)
+    version: 2;
+}
+
+// @public
+export interface ISerializedValue {
+    type: string;
+    value: string | undefined;
+}
+
+// @public
+export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
+    getMembers(): Map<string, M>;
+    getMyself(): M | undefined;
+}
+
+// @public
+export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
+    // (undocumented)
+    (event: "membersChanged", listener: () => void): void;
+    // (undocumented)
+    (event: "memberAdded" | "memberRemoved", listener: (clientId: string, member: M) => void): void;
+}
+
+// @public
+export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<[string, any]>;
+    // (undocumented)
+    readonly [Symbol.toStringTag]: string;
+}
+
+// @public
+export interface ISharedDirectoryEvents extends ISharedObjectEvents {
+    (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public (undocumented)
+export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
+    // (undocumented)
+    getIntervalCollection(label: string): IntervalCollection<TInterval>;
+    // (undocumented)
+    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
+}
+
+// @public
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+    get<T = any>(key: string): T | undefined;
+    set<T = any>(key: string, value: T): this;
+}
+
+// @public
+export interface ISharedMapEvents extends ISharedObjectEvents {
+    (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public
+export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
+    // (undocumented)
+    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public
+export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
+    insertText(pos: number, text: string, props?: PropertySet): void;
+    posFromRelativePos(relativePos: IRelativePosition): number;
+}
+
+// @public
+export interface IValueChanged {
+    key: string;
+    previousValue: any;
+}
+
+// Warning: (ae-internal-missing-underscore) The name "IValueOpEmitter" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export interface IValueOpEmitter {
+    emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
+}
+
+// @public
+export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
+
+// @public
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+
+// @public
+export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
+
+// @public
+export type LoadableObjectRecord = Record<string, IFluidLoadable>;
+
+// @public
+export class LocalValueMaker {
+    constructor(serializer: IFluidSerializer);
+    fromInMemory(value: any): ILocalValue;
+    fromSerializable(serializable: ISerializableValue): ILocalValue;
+}
+
+// @public @sealed
+export class MapFactory implements IChannelFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
+    // (undocumented)
+    static readonly Type = "https://graph.microsoft.com/types/map";
+    // (undocumented)
+    get type(): string;
+}
+
+// @public @deprecated (undocumented)
+export type MatrixSegment = RunSegment | PaddingSegment;
+
+// @public @deprecated (undocumented)
+export const maxCellPosition: number;
+
+// @public @deprecated (undocumented)
+export const maxCol = 2097152;
+
+// @public @deprecated (undocumented)
+export const maxCols: number;
+
+// @public @deprecated (undocumented)
+export const maxRow = 4294967295;
+
+// @public @deprecated (undocumented)
+export const maxRows: number;
+
+// @public @deprecated
+export class PaddingSegment extends BaseSegment {
+    constructor(size: number);
+    // (undocumented)
+    append(segment: ISegment): void;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clone(start?: number, end?: number): PaddingSegment;
+    // (undocumented)
+    protected createSplitSegmentAt(pos: number): PaddingSegment;
+    // (undocumented)
+    static fromJSONObject(spec: any): PaddingSegment;
+    // (undocumented)
+    static is(segment: ISegment): segment is PaddingSegment;
+    // (undocumented)
+    removeRange(start: number, end: number): boolean;
+    // (undocumented)
+    toJSONObject(): {
+        pad: number;
+        props: PropertySet;
+    };
+    // (undocumented)
+    toString(): string;
+    // (undocumented)
+    readonly type = "PaddingSegment";
+    // (undocumented)
+    static readonly typeString = "PaddingSegment";
+}
+
+// @public @deprecated (undocumented)
+export function positionToRowCol(position: number): {
+    row: number;
+    col: number;
+};
+
+// @public
+export class RootDataObject extends DataObject<{
+    InitialState: RootDataObjectProps;
+}> {
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    protected hasInitialized(): Promise<void>;
+    protected initializingFirstTime(props: RootDataObjectProps): Promise<void>;
+    get initialObjects(): LoadableObjectRecord;
+}
+
+// @public
+export interface RootDataObjectProps {
+    initialObjects: LoadableObjectClassRecord;
+}
+
+// @public @deprecated (undocumented)
+export const rowColToPosition: (row: number, col: number) => number;
+
+// @public @deprecated (undocumented)
+export class RunSegment extends SubSequence<SparseMatrixItem> {
+    constructor(items: SparseMatrixItem[]);
+    // (undocumented)
+    append(segment: ISegment): this;
+    // (undocumented)
+    clone(start?: number, end?: number): RunSegment;
+    // (undocumented)
+    protected createSplitSegmentAt(pos: number): RunSegment;
+    // (undocumented)
+    static fromJSONObject(spec: any): RunSegment;
+    // (undocumented)
+    getTag(pos: number): any;
+    // (undocumented)
+    static is(segment: ISegment): segment is RunSegment;
+    // (undocumented)
+    items: SparseMatrixItem[];
+    // (undocumented)
+    removeRange(start: number, end: number): boolean;
+    // (undocumented)
+    setTag(pos: number, tag: any): void;
+    // (undocumented)
+    readonly type = "RunSegment";
+    // (undocumented)
+    static readonly typeString = "RunSegment";
+}
+
+// @public
+export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+    constructor(opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, mergeTreeClient: Client);
+    readonly isLocal: boolean;
+    // (undocumented)
+    readonly opArgs: IMergeTreeDeltaOpArgs;
+}
+
+// @public
+export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    constructor(deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>, mergeTreeClient: Client);
+    get clientId(): string;
+    // (undocumented)
+    readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
+    // (undocumented)
+    readonly deltaOperation: TOperation;
+    get first(): Readonly<ISequenceDeltaRange<TOperation>>;
+    get last(): Readonly<ISequenceDeltaRange<TOperation>>;
+    get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
+}
+
+// @public (undocumented)
+export class SequenceInterval implements ISerializableInterval {
+    constructor(client: Client, start: LocalReferencePosition, end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet);
+    // @internal
+    addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
+    // (undocumented)
+    addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
+    // (undocumented)
+    clone(): SequenceInterval;
+    // (undocumented)
+    compare(b: SequenceInterval): number;
+    // (undocumented)
+    compareEnd(b: SequenceInterval): number;
+    // (undocumented)
+    compareStart(b: SequenceInterval): number;
+    // (undocumented)
+    end: LocalReferencePosition;
+    // (undocumented)
+    getIntervalId(): string | undefined;
+    // (undocumented)
+    intervalType: IntervalType;
+    // (undocumented)
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): SequenceInterval;
+    // (undocumented)
+    overlaps(b: SequenceInterval): boolean;
+    // (undocumented)
+    overlapsPos(bstart: number, bend: number): boolean;
+    // (undocumented)
+    properties: PropertySet;
+    // (undocumented)
+    propertyManager: PropertiesManager;
+    // @internal
+    removePositionChangeListeners(): void;
+    // (undocumented)
+    serialize(client: Client): ISerializedInterval;
+    // (undocumented)
+    start: LocalReferencePosition;
+    // (undocumented)
+    union(b: SequenceInterval): SequenceInterval;
+}
+
+// @public
+export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
+    constructor(opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
+    // (undocumented)
+    readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
+}
+
+// @public
+export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
+    constructor(
+    container: IContainer);
+    // Warning: (ae-forgotten-export) The symbol "IAudience" needs to be exported by the entry point index.d.ts
+    protected readonly audience: IAudience;
+    protected readonly container: IContainer;
+    protected abstract createServiceMember(audienceMember: IClient): M;
+    getMembers(): Map<string, M>;
+    getMyself(): M | undefined;
+    protected lastMembers: Map<string, M>;
+    protected shouldIncludeAsMember(member: IClient): boolean;
+}
+
+// @public @sealed
+export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
+    [Symbol.iterator](): IterableIterator<[string, any]>;
+    [Symbol.toStringTag]: string;
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    get absolutePath(): string;
+    // @internal (undocumented)
+    protected applyStashedOp(): void;
+    clear(): void;
+    countSubDirectory(): number;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
+    createSubDirectory(subdirName: string): IDirectory;
+    delete(key: string): boolean;
+    deleteSubDirectory(subdirName: string): boolean;
+    // (undocumented)
+    dispose(error?: Error): void;
+    // (undocumented)
+    get disposed(): boolean;
+    entries(): IterableIterator<[string, any]>;
+    forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
+    get<T = any>(key: string): T | undefined;
+    static getFactory(): IChannelFactory;
+    getSubDirectory(subdirName: string): IDirectory | undefined;
+    getWorkingDirectory(relativePath: string): IDirectory | undefined;
+    has(key: string): boolean;
+    hasSubDirectory(subdirName: string): boolean;
+    keys(): IterableIterator<string>;
+    // @internal (undocumented)
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // @internal (undocumented)
+    readonly localValueMaker: LocalValueMaker;
+    // @internal (undocumented)
+    protected onDisconnect(): void;
+    // @internal
+    protected populate(data: IDirectoryDataObject): void;
+    // @internal (undocumented)
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
+    set<T = any>(key: string, value: T): this;
+    get size(): number;
+    subdirectories(): IterableIterator<[string, IDirectory]>;
+    // @internal
+    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    values(): IterableIterator<any>;
+}
+
+// @public @deprecated (undocumented)
+export class SharedIntervalCollection extends SharedObject implements ISharedIntervalCollection<Interval> {
+    // (undocumented)
+    readonly [Symbol.toStringTag]: string;
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    // (undocumented)
+    protected applyStashedOp(): void;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedIntervalCollection;
+    static getFactory(): IChannelFactory;
+    // (undocumented)
+    getIntervalCollection(label: string): IntervalCollection<Interval>;
+    protected getIntervalCollectionPath(label: string): string;
+    // (undocumented)
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // (undocumented)
+    protected onDisconnect(): void;
+    // (undocumented)
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    // @deprecated (undocumented)
+    waitIntervalCollection(label: string): Promise<IntervalCollection<Interval>>;
+}
+
+// @public @deprecated
+export class SharedIntervalCollectionFactory implements IChannelFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(runtime: IFluidDataStoreRuntime, id: string): SharedIntervalCollection;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedIntervalCollection>;
+    // (undocumented)
+    static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
+    // (undocumented)
+    get type(): string;
+}
+
+// @public
+export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
+    [Symbol.iterator](): IterableIterator<[string, any]>;
+    readonly [Symbol.toStringTag]: string;
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    // @internal (undocumented)
+    protected applyStashedOp(content: any): unknown;
+    clear(): void;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
+    delete(key: string): boolean;
+    entries(): IterableIterator<[string, any]>;
+    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
+    get<T = any>(key: string): T | undefined;
+    static getFactory(): IChannelFactory;
+    has(key: string): boolean;
+    keys(): IterableIterator<string>;
+    // @internal (undocumented)
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // @internal (undocumented)
+    protected onDisconnect(): void;
+    // @internal (undocumented)
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
+    set(key: string, value: any): this;
+    get size(): number;
+    // @internal (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    values(): IterableIterator<any>;
+}
+
+// @public @deprecated
+export class SharedNumberSequence extends SharedSequence<number> {
+    // @deprecated
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    // @deprecated
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedNumberSequence;
+    // @deprecated
+    static getFactory(): SharedNumberSequenceFactory;
+    // @deprecated (undocumented)
+    getRange(start: number, end?: number): number[];
+    // (undocumented)
+    id: string;
+}
+
+// @public @deprecated (undocumented)
+export class SharedNumberSequenceFactory implements IChannelFactory {
+    // @deprecated (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // @deprecated (undocumented)
+    get attributes(): IChannelAttributes;
+    // @deprecated (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
+    // @deprecated (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
+    // @deprecated (undocumented)
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number>;
+    // @deprecated (undocumented)
+    static Type: string;
+    // @deprecated (undocumented)
+    get type(): string;
+}
+
+// @public
+export type SharedObjectClass<T extends IFluidLoadable> = {
+    readonly getFactory: () => IChannelFactory;
+} & LoadableObjectCtor<T>;
+
+// @public @deprecated
+export class SharedObjectSequence<T> extends SharedSequence<T> {
+    // @deprecated
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    // @deprecated
+    static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedObjectSequence<T>;
+    // @deprecated
+    static getFactory(): SharedObjectSequenceFactory;
+    // @deprecated (undocumented)
+    getRange(start: number, end?: number): Serializable<T>[];
+    // (undocumented)
+    id: string;
+}
+
+// @public @deprecated (undocumented)
+export class SharedObjectSequenceFactory implements IChannelFactory {
+    // @deprecated (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // @deprecated (undocumented)
+    get attributes(): IChannelAttributes;
+    // @deprecated (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
+    // @deprecated (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
+    // @deprecated (undocumented)
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object>;
+    // @deprecated (undocumented)
+    static Type: string;
+    // @deprecated (undocumented)
+    get type(): string;
+}
+
+// @public (undocumented)
+export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval> {
+    constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
+    annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
+    // (undocumented)
+    protected applyStashedOp(content: any): unknown;
+    // (undocumented)
+    protected client: Client;
+    // (undocumented)
+    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    // (undocumented)
+    protected didAttach(): void;
+    // (undocumented)
+    getContainingSegment(pos: number): {
+        segment: T;
+        offset: number;
+    };
+    // (undocumented)
+    getCurrentSeq(): number;
+    // (undocumented)
+    getIntervalCollection(label: string): IntervalCollection<SequenceInterval>;
+    // (undocumented)
+    getIntervalCollectionLabels(): IterableIterator<string>;
+    getLength(): number;
+    getPosition(segment: ISegment): number;
+    // (undocumented)
+    getPropertiesAtPosition(pos: number): PropertySet;
+    // (undocumented)
+    getRangeExtentsOfPosition(pos: number): {
+        posStart: number;
+        posAfterEnd: number;
+    };
+    // @internal @deprecated (undocumented)
+    getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
+    // (undocumented)
+    groupOperation(groupOp: IMergeTreeGroupMsg): void;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    protected initializeLocalCore(): void;
+    // (undocumented)
+    insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
+    // (undocumented)
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // (undocumented)
+    get loaded(): Promise<void>;
+    // (undocumented)
+    protected loadedDeferred: Deferred<void>;
+    // (undocumented)
+    localReferencePositionToPosition(lref: ReferencePosition): number;
+    // (undocumented)
+    protected onConnect(): void;
+    // (undocumented)
+    protected onDisconnect(): void;
+    posFromRelativePos(relativePos: IRelativePosition): number;
+    // (undocumented)
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processGCDataCore(serializer: SummarySerializer): void;
+    // (undocumented)
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition;
+    // (undocumented)
+    removeRange(start: number, end: number): IMergeTreeRemoveMsg;
+    protected replaceRange(start: number, end: number, segment: ISegment): void;
+    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number;
+    // (undocumented)
+    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    readonly segmentFromSpec: (spec: IJSONSegment) => ISegment;
+    // (undocumented)
+    submitSequenceMessage(message: IMergeTreeOp): void;
+    // (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    // @deprecated (undocumented)
+    waitIntervalCollection(label: string): Promise<IntervalCollection<SequenceInterval>>;
+    walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
+}
+
+// @public (undocumented)
+export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, specToSegment: (spec: IJSONSegment) => ISegment);
+    getItemCount(): number;
+    getItems(start: number, end?: number): Serializable<T>[];
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    insert(pos: number, items: Serializable<T>[], props?: PropertySet): void;
+    // (undocumented)
+    remove(start: number, end: number): void;
+}
+
+// @public
+export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
+    annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
+    // (undocumented)
+    findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {
+        tile: ReferencePosition;
+        pos: number;
+    };
+    static getFactory(): SharedStringFactory;
+    // (undocumented)
+    getMarkerFromId(id: string): ISegment;
+    getText(start?: number, end?: number): string;
+    // @deprecated (undocumented)
+    getTextAndMarkers(label: string): {
+        parallelText: string[];
+        parallelMarkers: Marker[];
+    };
+    // (undocumented)
+    getTextRangeWithMarkers(start: number, end: number): string;
+    // @deprecated (undocumented)
+    getTextRangeWithPlaceholders(start: number, end: number): string;
+    getTextWithPlaceholders(start?: number, end?: number): string;
+    // (undocumented)
+    id: string;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
+    insertMarkerRelative(relativePos1: IRelativePosition, refType: ReferenceType, props?: PropertySet): void;
+    insertText(pos: number, text: string, props?: PropertySet): void;
+    insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
+    // (undocumented)
+    get ISharedString(): ISharedString;
+    removeText(start: number, end: number): IMergeTreeRemoveMsg;
+    replaceText(start: number, end: number, text: string, props?: PropertySet): void;
+    protected rollback(content: any, localOpMetadata: unknown): void;
+}
+
+// @public (undocumented)
+export class SharedStringFactory implements IChannelFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): SharedString;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedString>;
+    // (undocumented)
+    static segmentFromSpec(spec: any): SharedStringSegment;
+    // (undocumented)
+    static Type: string;
+    // (undocumented)
+    get type(): string;
+}
+
+// @public (undocumented)
+export type SharedStringSegment = TextSegment | Marker;
+
+// @public @deprecated (undocumented)
+export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    // (undocumented)
+    annotatePosition(row: number, col: number, props: PropertySet): void;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SparseMatrix;
+    static getFactory(): IChannelFactory;
+    // (undocumented)
+    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle>;
+    // (undocumented)
+    getPositionProperties(row: number, col: number): PropertySet;
+    // (undocumented)
+    getTag(row: number, col: number): any;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    insertCols(col: number, numCols: number): void;
+    // (undocumented)
+    insertRows(row: number, numRows: number): void;
+    // (undocumented)
+    get numRows(): number;
+    // (undocumented)
+    removeCols(col: number, numCols: number): void;
+    // (undocumented)
+    removeRows(row: number, numRows: number): void;
+    // (undocumented)
+    setItems(row: number, col: number, values: SparseMatrixItem[], props?: PropertySet): void;
+    // (undocumented)
+    setTag(row: number, col: number, tag: any): void;
+}
+
+// @public @deprecated (undocumented)
+export class SparseMatrixFactory implements IChannelFactory {
+    // (undocumented)
+    static Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
+    // (undocumented)
+    static segmentFromSpec(spec: IJSONSegment): ISegment;
+    // (undocumented)
+    static Type: string;
+    // (undocumented)
+    get type(): string;
+}
+
+// @public @deprecated (undocumented)
+export type SparseMatrixItem = Serializable;
+
+// @public (undocumented)
+export class SubSequence<T> extends BaseSegment {
+    constructor(items: Serializable<T>[]);
+    // (undocumented)
+    append(segment: ISegment): void;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clone(start?: number, end?: number): SubSequence<T>;
+    // (undocumented)
+    protected createSplitSegmentAt(pos: number): SubSequence<T>;
+    // (undocumented)
+    static fromJSONObject<U>(spec: Serializable): SubSequence<U>;
+    // (undocumented)
+    static is(segment: ISegment): segment is SubSequence<any>;
+    // (undocumented)
+    items: Serializable<T>[];
+    // (undocumented)
+    removeRange(start: number, end: number): boolean;
+    // (undocumented)
+    toJSONObject(): IJSONRunSegment<T>;
+    // (undocumented)
+    toString(): string;
+    // (undocumented)
+    readonly type: string;
+    // (undocumented)
+    static readonly typeString: string;
+}
 
 ```
