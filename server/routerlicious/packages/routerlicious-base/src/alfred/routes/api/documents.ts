@@ -129,6 +129,7 @@ export function create(
                         ordererUrl: externalOrdererUrl,
                         historianUrl: externalHistorianUrl,
                         deltaStreamUrl,
+                        // Indicate to consumer that session was newly created.
                         isSessionAlive: false,
                         isSessionActive: false,
                     };
