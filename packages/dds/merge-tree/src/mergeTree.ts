@@ -115,7 +115,7 @@ const LRUSegmentComparer: Comparer<LRUSegment> = {
 interface IReferenceSearchInfo {
     mergeTree: MergeTree;
     tileLabel: string;
-    posPrecedesTile?: boolean;
+    tilePrecedesPos?: boolean;
     tile?: ReferencePosition;
 }
 
@@ -198,7 +198,7 @@ function tileShift(
     } else {
         const block = <IHierBlock>node;
         let marker: Marker;
-        if (searchInfo.posPrecedesTile) {
+        if (searchInfo.tilePrecedesPos) {
             marker = <Marker>block.rightmostTiles[searchInfo.tileLabel];
         } else {
             marker = <Marker>block.leftmostTiles[searchInfo.tileLabel];
@@ -1042,14 +1042,14 @@ export class MergeTree {
     }
 
     // TODO: filter function
-    public findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile = true) {
+    public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
         const searchInfo: IReferenceSearchInfo = {
             mergeTree: this,
-            posPrecedesTile,
+            tilePrecedesPos,
             tileLabel,
         };
 
-        if (posPrecedesTile) {
+        if (tilePrecedesPos) {
             this.search(startPos, UniversalSequenceNumber, clientId,
                 { leaf: recordTileStart, shift: tileShift }, searchInfo);
         } else {
