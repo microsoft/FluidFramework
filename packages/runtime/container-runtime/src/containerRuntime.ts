@@ -163,6 +163,7 @@ import {
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
+import { IPendingMessage } from ".";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -2914,6 +2915,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad)) {
             throw new UsageError("can't get state when offline load disabled");
         }
+
+        const pendingMessages = this.pendingStateManager.getLocalState();
+        const firstMessage = pendingMessages?.pendingStates[0] as IPendingMessage;
+        const isFirstMessageBatchFirst = firstMessage.opMetadata?.batch;
+        const lastMessage = pendingMessages?.pendingStates[pendingMessages.pendingStates.length - 1].type;
+        assert(!!isFirstMessageBatchFirst, "First message must have batch metadata");
+        assert(isFirstMessageBatchFirst === true, "First message must be first in batch");
+        assert(lastMessage === "flush", "Last message in batch must be flush");
 
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
         if (previousPendingState) {
