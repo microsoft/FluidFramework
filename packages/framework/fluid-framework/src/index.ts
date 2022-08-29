@@ -25,7 +25,7 @@
  * @packageDocumentation
  */
 
- export { AttachState } from "@fluidframework/container-definitions";
+export { AttachState } from "@fluidframework/container-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export * from "@fluidframework/fluid-static";
 export * from "@fluidframework/map";
