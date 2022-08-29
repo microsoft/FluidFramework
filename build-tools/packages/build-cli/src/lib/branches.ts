@@ -64,14 +64,14 @@ export function generateBumpBranchName(
  *
  * @param bumpedDep - The release group on which dependencies were bumped.
  * @param bumpType - The bump type.
- * @param releaseGroup - If set, the changes were made to only this release group.
+ * @param releaseGroup - If set, changes were made to only this release group.
  * @returns The generated branch name.
  *
  * @internal
  */
 export function generateBumpDepsBranchName(
     bumpedDep: ReleaseGroup,
-    bumpType: VersionBumpTypeExtended | string,
+    bumpType: VersionBumpTypeExtended,
     releaseGroup?: ReleaseGroup,
 ): string {
     const releaseGroupSegment = releaseGroup ? `_${releaseGroup}` : "";

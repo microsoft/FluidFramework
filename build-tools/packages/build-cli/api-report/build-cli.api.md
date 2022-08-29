@@ -18,10 +18,10 @@ import { VersionScheme } from '@fluid-tools/version-tools';
 
 // Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "VersionBag"
 //
-// @public
+// @internal
 export function bumpPackageDependencies(pkg: Package, bumpPackageMap: Map<string, PackageWithRangeSpec>, prerelease: boolean, onlyBumpPrerelease: boolean, updateWithinSameReleaseGroup?: boolean, changedVersions?: VersionBag): Promise<boolean>;
 
-// @public
+// @internal
 export function bumpReleaseGroup(context: Context, bumpType: VersionChangeType, releaseGroupOrPackage: MonoRepo | Package, scheme: VersionScheme): Promise<string>;
 
 // Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Context"
@@ -36,7 +36,7 @@ export function difference<T>(setA: Set<T>, setB: Set<T>): Set<T>;
 export function generateBumpBranchName(releaseGroupOrPackage: ReleaseGroup | ReleasePackage, bumpType: VersionBumpTypeExtended, version: string): string;
 
 // @internal
-export function generateBumpDepsBranchName(bumpedDep: ReleaseGroup, bumpType: VersionBumpTypeExtended | string, releaseGroup?: ReleaseGroup): string;
+export function generateBumpDepsBranchName(bumpedDep: ReleaseGroup, bumpType: VersionBumpTypeExtended, releaseGroup?: ReleaseGroup): string;
 
 // @internal
 export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: string): string;
@@ -72,14 +72,14 @@ export function isReleased(context: Context, releaseGroupOrPackage: MonoRepo | P
 // Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Logger"
 //
 // @internal
-export function npmCheckUpdates(context: Context, releaseGroup: ReleaseGroup | ReleasePackage, depsToUpdate: ReleasePackage[] | RegExp[], bumpType: "patch" | "minor" | "current", prerelease?: boolean, writeChanges?: boolean, log?: Logger | undefined): Promise<{
+export function npmCheckUpdates(context: Context, releaseGroup: ReleaseGroup | ReleasePackage, depsToUpdate: ReleasePackage[] | RegExp[], bumpType: "patch" | "minor" | "current", prerelease?: boolean, writeChanges?: boolean, log?: Logger): Promise<{
     updatedPackages: Package[];
     updatedDependencies: Package[];
 }>;
 
 // Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Package"
 //
-// @public
+// @internal
 export interface PackageWithRangeSpec {
     // (undocumented)
     pkg: Package;
@@ -87,20 +87,17 @@ export interface PackageWithRangeSpec {
     rangeOrBumpType: string;
 }
 
-// @public (undocumented)
+// @internal
 export interface PreReleaseDependencies {
-    // (undocumented)
     isEmpty: boolean;
-    // (undocumented)
     packages: Map<ReleasePackage, string>;
-    // (undocumented)
     releaseGroups: Map<ReleaseGroup, string>;
 }
 
-// @public (undocumented)
+// @internal
 export type ReleaseGroup = MonoRepoKind;
 
-// @public (undocumented)
+// @internal
 export type ReleasePackage = string;
 
 export { run }

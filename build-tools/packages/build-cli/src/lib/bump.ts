@@ -15,7 +15,11 @@ import {
 } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 
-/** A mapping of {@link Package} to a version range string or a bump type. This interface is used for convenience. */
+/**
+ * A mapping of {@link Package} to a version range string or a bump type. This interface is used for convenience.
+ *
+ * @internal
+ */
 export interface PackageWithRangeSpec {
     pkg: Package;
     rangeOrBumpType: string;
@@ -35,6 +39,8 @@ export interface PackageWithRangeSpec {
  * same release group.
  * @param changedVersions - If provided, the changed packages will be put into this {@link VersionBag}.
  * @returns True if the packages dependencies were changed; false otherwise.
+ *
+ * @internal
  */
 // eslint-disable-next-line max-params
 export async function bumpPackageDependencies(
@@ -95,6 +101,8 @@ export async function bumpPackageDependencies(
  * @param bumpType - The bump type.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
+ *
+ * @internal
  */
 export async function bumpReleaseGroup(
     context: Context,

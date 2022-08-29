@@ -13,15 +13,25 @@ import * as semver from "semver";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
 
 /**
+ * Returns the name of a package without the scope.
+ *
  * @param pkgName - The full scoped package name.
  * @returns The package name without the scope.
  *
  * @internal
  */
-export function getPackageShortName(pkgName: string) {
-    let name = pkgName.split("/").pop()!;
-    if (name.startsWith("fluid-")) {
-        name = name.slice("fluid-".length);
+export function getPackageShortName(pkgName: string): string {
+    const split = pkgName.split("/");
+
+    // Handle unscoped packages
+    if (split.length === 1) {
+        return split[0];
+    }
+
+    // Handle scoped packages
+    const name = split.pop();
+    if (name === undefined) {
+        throw new Error(`Error getting the package short name for: ${pkgName}`);
     }
 
     return name;
@@ -46,10 +56,11 @@ export async function npmCheckUpdates(
     releaseGroup: ReleaseGroup | ReleasePackage,
     depsToUpdate: ReleasePackage[] | RegExp[],
     bumpType: "patch" | "minor" | "current",
+    // eslint-disable-next-line default-param-last
     prerelease = false,
+    // eslint-disable-next-line default-param-last
     writeChanges = false,
-    // eslint-disable-next-line unicorn/no-useless-undefined
-    log: Logger | undefined = undefined,
+    log?: Logger,
 ): Promise<{
     updatedPackages: Package[];
     updatedDependencies: Package[];
@@ -132,9 +143,17 @@ export async function npmCheckUpdates(
     return { updatedPackages, updatedDependencies };
 }
 
+/**
+ * An object containing release groups and package dependencies that are a prerelease version.
+ *
+ * @internal
+ */
 export interface PreReleaseDependencies {
+    /** A map of release groups to a version string. */
     releaseGroups: Map<ReleaseGroup, string>;
+    /** A map of release packages to a version string. Only includes independent packages. */
     packages: Map<ReleasePackage, string>;
+    /** True if there are no pre-release dependencies. False otherwise. */
     isEmpty: boolean;
 }
 
@@ -143,8 +162,7 @@ export interface PreReleaseDependencies {
  *
  * @param context - The context.
  * @param releaseGroup - The release group.
- * @returns Two arrays of release groups and packages that are prerelease and must be released before this release group
- * can be.
+ * @returns A {@link PreReleaseDependencies} object containing the pre-release dependency names and versions.
  *
  * @internal
  */
@@ -347,6 +365,18 @@ export function getVersionFromTag(tag: string): string | undefined {
 }
 
 /**
+ * Represents a version and its release date, if applicable.
+ *
+ * @internal
+ */
+export interface VersionDetails {
+    /** The version. */
+    version: string;
+    /** The date the version was released, if applicable. */
+    date?: Date;
+}
+
+/**
  * Gets all the versions for a release group or independent package. This function only considers the tags in the repo
  * to determine releases and dates.
  *
@@ -372,6 +402,7 @@ export async function getAllVersions(
             ver !== undefined &&
             ver !== "" &&
             ver !== null
+            // TODO: Verify this logic
             // &&
             // isInternalVersionScheme(ver, allowPrereleases)
         ) {
@@ -394,40 +425,29 @@ export async function getAllVersions(
 }
 
 /**
- * Sorts an array of {@link VersionDetails} by version or date in place.
+ * Sorts an array of {@link VersionDetails} by version or date. The array will be cloned then sorted in place.
  *
  * @param versions - The array of versions to sort.
  * @param sortKey - The sort key.
- * @returns The sorted array.
+ * @returns A sorted array.
  *
  * @internal
  */
 export async function sortVersions(versions: VersionDetails[], sortKey: "version" | "date") {
-    const r: VersionDetails[] = [];
+    const sortedVersions: VersionDetails[] = [];
+
+    // Clone the array
     for (const item of versions) {
-        // console.log(`pushing ${version}`)
-        r.push(item);
+        sortedVersions.push(item);
     }
 
     if (sortKey === "version") {
-        r.sort((a, b) => semver.rcompare(a.version, b.version));
+        sortedVersions.sort((a, b) => semver.rcompare(a.version, b.version));
     } else {
-        r.sort((a, b) =>
+        sortedVersions.sort((a, b) =>
             a.date === undefined || b.date === undefined ? -1 : compareDesc(a.date, b.date),
         );
     }
 
-    return r;
-}
-
-/**
- * Represents a version and its release date, if applicable.
- *
- * @internal
- */
-export interface VersionDetails {
-    /** The version. */
-    version: string;
-    /** The date the version was released, if applicable. */
-    date?: Date;
+    return sortedVersions;
 }
