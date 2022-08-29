@@ -128,7 +128,7 @@ export class SchemaChangeFamily implements
                     baseChanges,
                     (child, baseChild) => this.rebaseI(childSchema, child, baseChild));
 
-                // TODO: Could optimize by checking that composedField is non-empty
+                // TODO: Could optimize by checking that rebasedField is non-empty
                 fields[field] = rebasedField;
             }
         }
