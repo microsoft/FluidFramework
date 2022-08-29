@@ -1584,7 +1584,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("readonly", (readonly) => {
-            this.context.setConnectionState(false, this.clientId);
+            this.context.setConnectionState(!readonly, this.clientId);
             this.emit("readonly", readonly);
         });
 
