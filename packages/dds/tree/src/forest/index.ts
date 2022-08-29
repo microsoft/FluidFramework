@@ -14,7 +14,7 @@ export {
     ITreeCursor as ITreeCursorNew,
     CursorLocationType,
     mapCursorField as mapCursorFieldNew,
-    reduceField as reduceFieldNew,
+    forEachNode,
 } from "./cursor";
 export * from "./forest";
 export {

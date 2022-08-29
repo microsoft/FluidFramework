@@ -236,37 +236,6 @@ export class TextCursor implements ITreeCursor {
         return false;
     }
 
-    public forEachNode(f: (c: TextCursor) => void): void {
-        const siblings = this.getField();
-        const len = siblings.length;
-        if (len === 0) {
-            return;
-        }
-        this.siblingStack.push(this.siblings);
-        this.indexStack.push(this.index);
-        this.siblings = siblings;
-        for (this.index = 0; this.index < len; this.index++) {
-            f(this);
-        }
-        this.upToField();
-    }
-
-    public forEachField(f: (c: TextCursor) => void): void {
-        const fields = keys(this.getNode());
-        const len = fields.length;
-        if (len === 0) {
-            return;
-        }
-
-        this.siblingStack.push(this.siblings);
-        this.siblings = fields;
-        this.indexStack.push(this.index);
-        for (this.index = 0; this.index < len; this.index++) {
-            f(this);
-        }
-        this.upToNode();
-    }
-
     public upToNode(): void {
         // assert(this.mode === CursorLocationType.Fields, "can only navigate up from field when in field");
         this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");

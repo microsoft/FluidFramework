@@ -12,8 +12,9 @@ import {
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
-import { defaultSchemaPolicy } from "../../../feature-libraries";
+import { defaultSchemaPolicy, jsonableTreeFromCursorNew } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
+import { forEachNode } from "../../../forest";
 import { generateCanada } from "./json";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -55,30 +56,32 @@ function bench(name: string, getJson: () => any) {
     };
     const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
 
-    // benchmark({
-    //     type: BenchmarkType.Measurement,
-    //     title: `Direct: '${name}'`,
-    //     before: () => {
-    //         const cloned = clone(json);
-    //         assert.deepEqual(cloned, json,
-    //             "clone() must return an equivalent tree.");
-    //         assert.notEqual(cloned, json,
-    //             "clone() must not return the same tree instance.");
-    //     },
-    //     benchmarkFn: () => {
-    //         clone(json);
-    //     },
-    // });
+    benchmark({
+        type: BenchmarkType.Measurement,
+        title: `Direct: '${name}'`,
+        before: () => {
+            const cloned = clone(json);
+            assert.deepEqual(cloned, json,
+                "clone() must return an equivalent tree.");
+            assert.notEqual(cloned, json,
+                "clone() must not return the same tree instance.");
+        },
+        benchmarkFn: () => {
+            clone(json);
+        },
+    });
 
     const cursorFactories: [string, () => ITreeCursorNew][] = [
         ["TextCursor", () => singleTextCursorNew(encodedTree)],
     ];
 
     const consumers: [string, (cursor: ITreeCursorNew) => void][] = [
+        // TODO: finish porting other cursor code and enable this.
         // ["cursorToJsonObject", cursorToJsonObjectNew],
-        // ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+        ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
         ["sum", sum],
         ["sum-map", sumMap],
+        // TODO: benchmarks that access fields by name (ex: canada perminater)
     ];
 
     for (const [consumerName, consumer] of consumers) {
@@ -97,8 +100,6 @@ function bench(name: string, getJson: () => any) {
                 benchmarkFn: () => {
                     consumer(cursor);
                 },
-                // maxBenchmarkDurationSeconds: 30,
-                // minSampleDurationSeconds: 2,
             });
         }
     }
@@ -128,7 +129,11 @@ function sumMap(cursor: ITreeCursorNew): number {
     if (typeof value === "number") {
         total += value;
     }
-    cursor.forEachField((c) => { c.forEachNode((c2) => { total += sumMap(c2); }); });
+    let moreFields = cursor.firstField();
+    while (moreFields) {
+        forEachNode(cursor, sumMap);
+        moreFields = cursor.nextField();
+    }
     return total;
 }
 

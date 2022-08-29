@@ -355,10 +355,6 @@ export interface ITreeCursorNew {
     enterField(key: FieldKey): void;
     firstField(): boolean;
     firstNode(): boolean;
-    // (undocumented)
-    forEachField(f: (c: ITreeCursorNew) => void): void;
-    // (undocumented)
-    forEachNode(f: (c: ITreeCursorNew) => void): void;
     getCurrentFieldKey(): FieldKey;
     // (undocumented)
     getCurrentFieldLength(): number;
@@ -811,10 +807,6 @@ export class TextCursorNew implements ITreeCursorNew {
     firstField(): boolean;
     // (undocumented)
     firstNode(): boolean;
-    // (undocumented)
-    forEachField(f: (c: TextCursorNew) => void): void;
-    // (undocumented)
-    forEachNode(f: (c: TextCursorNew) => void): void;
     // (undocumented)
     getCurrentFieldKey(): FieldKey;
     // (undocumented)

@@ -81,9 +81,6 @@ export interface ITreeCursor {
      */
     nextNode(): boolean;
 
-    forEachNode(f: (c: ITreeCursor) => void): void;
-    forEachField(f: (c: ITreeCursor) => void): void;
-
     // ********** APIs for when mode = Fields, and not pending ********** //
 
     /**
@@ -115,8 +112,10 @@ export interface ITreeCursor {
      *
      * Only valid when `mode` is `Nodes`.
      * Assumes this cursor has a root node where its field keys are actually detached sequences.
-     * If the cursor is not rooted at such a node, calling this function is invalid, and the returned UpPath (if any) may not be meaningful.
-     * This requirement exists because {@link UpPath}s are absolute paths and thus must be rooted in a detached sequence.
+     * If the cursor is not rooted at such a node,
+     * calling this function is invalid, and the returned UpPath (if any) may not be meaningful.
+     * This requirement exists because {@link UpPath}s are absolute paths
+     * and thus must be rooted in a detached sequence.
      * TODO: consider adding an optional base path to append to remove/clarify this restriction.
      */
     getPath(): UpPath | undefined;
@@ -219,18 +218,21 @@ export interface ITreeCursorSynchronous extends ITreeCursor{
  */
 export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) => T): T[] {
     const output: T[] = [];
-    reduceField(cursor, undefined, (c) => { output.push(f(c)); });
+    forEachNode(cursor, (c) => { output.push(f(c)); });
     return output;
 }
 
-export function reduceField<T>(
-    cursor: ITreeCursor, initial: T, f: (cursor: ITreeCursor, initial: T) => T): T {
+/**
+ * @param cursor - cursor at a field whose nodes will be visited.
+ * @param f - For on each node.
+ *  If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ */
+export function forEachNode(
+    cursor: ITreeCursor, f: (cursor: ITreeCursor) => void): void {
     assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
-    let output: T = initial;
     let inField = cursor.firstNode();
     while (inField) {
-        output = f(cursor, output);
+        f(cursor);
         inField = cursor.nextField();
     }
-    return output;
 }
