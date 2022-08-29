@@ -12,7 +12,11 @@ import chalk from "chalk";
 import * as semver from "semver";
 import { BaseCommand } from "../../base";
 import { bumpTypeExtendedFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
-import { bumpDepsBranchName, bumpPackageDependencies, PackageWithRangeSpec } from "../../lib";
+import {
+    generateBumpDepsBranchName,
+    bumpPackageDependencies,
+    PackageWithRangeSpec,
+} from "../../lib";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -208,7 +212,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             const changedVersionMessage = changedVersionsString.join("\n");
             if (shouldCommit) {
                 const commitMessage = `Bump dependencies\n\n${changedVersionMessage}`;
-                const bumpBranch = bumpDepsBranchName(
+                const bumpBranch = generateBumpDepsBranchName(
                     args.package_or_release_group,
                     flags.bumpType!,
                     flags.releaseGroup,

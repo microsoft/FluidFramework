@@ -9,6 +9,10 @@
     "extractorMessageReporting": {
       "ae-unresolved-link": {
         "logLevel": "warning",
+        "addToApiReportFile": true
+      },
+      "ae-internal-missing-underscore": {
+        "logLevel": "none",
         "addToApiReportFile": false
       }
     }

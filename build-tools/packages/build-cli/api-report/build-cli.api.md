@@ -16,51 +16,69 @@ import { VersionBumpTypeExtended } from '@fluid-tools/version-tools';
 import { VersionChangeType } from '@fluid-tools/version-tools';
 import { VersionScheme } from '@fluid-tools/version-tools';
 
-// @public
-export function bumpBranchName(releaseGroup: ReleaseGroup | ReleasePackage, bumpType: VersionBumpTypeExtended, version: string): string;
-
-// @public (undocumented)
-export function bumpDepsBranchName(bumpedDep: ReleaseGroup, bumpType: VersionBumpTypeExtended | string, releaseGroup?: ReleaseGroup): string;
-
+// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "VersionBag"
+//
 // @public
 export function bumpPackageDependencies(pkg: Package, bumpPackageMap: Map<string, PackageWithRangeSpec>, prerelease: boolean, onlyBumpPrerelease: boolean, updateWithinSameReleaseGroup?: boolean, changedVersions?: VersionBag): Promise<boolean>;
 
 // @public
 export function bumpReleaseGroup(context: Context, bumpType: VersionChangeType, releaseGroupOrPackage: MonoRepo | Package, scheme: VersionScheme): Promise<string>;
 
-// @public
-export function createBumpBranch(context: Context, releaseGroup: ReleaseGroup | ReleasePackage, bumpType: VersionBumpType): Promise<string>;
+// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Context"
+//
+// @internal
+export function createBumpBranch(context: Context, releaseGroupOrPackage: ReleaseGroup | ReleasePackage, bumpType: VersionBumpType): Promise<string>;
 
-// @public (undocumented)
-export function defaultReleaseForBranch(branchName: string): VersionBumpType | undefined;
-
-// @public (undocumented)
+// @internal
 export function difference<T>(setA: Set<T>, setB: Set<T>): Set<T>;
 
-// @public (undocumented)
-export function getAllVersions(context: Context, releaseGroup: ReleaseGroup | ReleasePackage, allowPrereleases?: boolean): Promise<VersionDetails[] | undefined>;
+// @internal
+export function generateBumpBranchName(releaseGroupOrPackage: ReleaseGroup | ReleasePackage, bumpType: VersionBumpTypeExtended, version: string): string;
 
-// @public
+// @internal
+export function generateBumpDepsBranchName(bumpedDep: ReleaseGroup, bumpType: VersionBumpTypeExtended | string, releaseGroup?: ReleaseGroup): string;
+
+// @internal
+export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: string): string;
+
+// @internal
+export function generateReleaseTagName(releaseGroupOrPackage: MonoRepo | Package | string, version?: string): string;
+
+// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Context"
+//
+// @internal
+export function getAllVersions(context: Context, releaseGroupOrPackage: ReleaseGroup | ReleasePackage, allowPrereleases?: boolean): Promise<VersionDetails[] | undefined>;
+
+// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "VersionBumpType"
+//
+// @internal (undocumented)
+export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType | undefined;
+
+// @internal
 export function getPreReleaseDependencies(context: Context, releaseGroup: ReleaseGroup | ReleasePackage): Promise<PreReleaseDependencies>;
 
-// @public (undocumented)
-export function getTagName(context: Context, releaseGroup: MonoRepo | Package | string, version?: string): Promise<string>;
+// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Context"
+//
+// @internal
+export function getTagsForReleaseGroup(context: Context, releaseGroupOrPackage: ReleaseGroup | ReleasePackage): Promise<string[]>;
 
-// @public (undocumented)
-export function getTagsForReleaseGroup(context: Context, releaseGroup: ReleaseGroup | ReleasePackage): Promise<string[]>;
-
-// @public (undocumented)
+// @internal
 export function getVersionFromTag(tag: string): string | undefined;
 
-// @public
-export function isReleased(context: Context, releaseGroup: MonoRepo | Package | string, version?: string, log?: Logger): Promise<boolean>;
+// @internal
+export function isReleased(context: Context, releaseGroupOrPackage: MonoRepo | Package | string, version: string, log?: Logger): Promise<boolean>;
 
-// @public
+// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Context"
+// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Logger"
+//
+// @internal
 export function npmCheckUpdates(context: Context, releaseGroup: ReleaseGroup | ReleasePackage, depsToUpdate: ReleasePackage[] | RegExp[], bumpType: "patch" | "minor" | "current", prerelease?: boolean, writeChanges?: boolean, log?: Logger | undefined): Promise<{
     updatedPackages: Package[];
     updatedDependencies: Package[];
 }>;
 
+// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Package"
+//
 // @public
 export interface PackageWithRangeSpec {
     // (undocumented)
@@ -80,9 +98,6 @@ export interface PreReleaseDependencies {
 }
 
 // @public (undocumented)
-export function releaseBranchName(releaseGroup: ReleaseGroup, version: string): string;
-
-// @public (undocumented)
 export type ReleaseGroup = MonoRepoKind;
 
 // @public (undocumented)
@@ -90,14 +105,12 @@ export type ReleasePackage = string;
 
 export { run }
 
-// @public (undocumented)
+// @internal
 export function sortVersions(versions: VersionDetails[], sortKey: "version" | "date"): Promise<VersionDetails[]>;
 
-// @public (undocumented)
+// @internal
 export interface VersionDetails {
-    // (undocumented)
     date?: Date;
-    // (undocumented)
     version: string;
 }
 

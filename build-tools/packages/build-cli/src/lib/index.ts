@@ -4,17 +4,17 @@
  */
 
 export {
-    bumpBranchName,
-    bumpDepsBranchName,
+    generateBumpBranchName,
+    generateBumpDepsBranchName,
     createBumpBranch,
-    defaultReleaseForBranch,
-    releaseBranchName,
+    getDefaultBumpTypeForBranch,
+    generateReleaseBranchName,
 } from "./branches";
 export { bumpPackageDependencies, bumpReleaseGroup, PackageWithRangeSpec } from "./bump";
 export {
     getAllVersions,
     getPreReleaseDependencies,
-    getTagName,
+    generateReleaseTagName,
     getTagsForReleaseGroup,
     getVersionFromTag,
     isReleased,
