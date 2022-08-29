@@ -1,4 +1,11 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-  "extends": "@fluidframework/build-common/api-extractor-common-strict.json"
+  "extends": "@fluidframework/build-common/api-extractor-common-report.json",
+  "bundledPackages": [
+    "@fluidframework/container-definitions",
+    "@fluidframework/container-loader",
+    "@fluidframework/fluid-static",
+    "@fluidframework/map",
+    "@fluidframework/sequence"
+  ]
 }
