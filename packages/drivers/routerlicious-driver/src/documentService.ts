@@ -192,13 +192,17 @@ export class DocumentService implements api.IDocumentService {
                 this.documentId,
                 refreshToken,
             );
+
+            const deltaStreamUrl = this.resolvedUrl.type === "fluid" ?
+                this.resolvedUrl.endpoints.deltaStreamUrl : this.ordererUrl;
+
             return R11sDocumentDeltaConnection.create(
                 this.tenantId,
                 this.documentId,
                 ordererToken.jwt,
                 io,
                 client,
-                this.ordererUrl,
+                deltaStreamUrl,
                 this.logger,
             );
         };
