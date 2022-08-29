@@ -387,7 +387,6 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         let sharedMap2: SharedMap;
 
         beforeEach(async () => {
-            await reset();
             provider = getTestObjectProvider();
         });
 
