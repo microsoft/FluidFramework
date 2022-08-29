@@ -25,8 +25,8 @@
  * @packageDocumentation
  */
 
-export * from "./containerDefinitions";
-export * from "./containerLoader";
-export * from "./fluidStatic";
-export * from "./map";
-export * from "./sequence";
+ export { AttachState } from "@fluidframework/container-definitions";
+export { ConnectionState } from "@fluidframework/container-loader";
+export * from "@fluidframework/fluid-static";
+export * from "@fluidframework/map";
+export * from "@fluidframework/sequence";
