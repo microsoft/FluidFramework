@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import { IMigratableModel, MigrationState } from "../migrationInterfaces";
+import { IMigratableModel, MigrationState } from "../migratableModel";
 
 export interface IDebugViewProps {
     model: IMigratableModel;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataTransformationCallback } from "./migrationInterfaces";
+import { DataTransformationCallback } from "./migrator";
 
 /**
  * Read the version of the string data, to understand how to parse it.  This is shared between versions.

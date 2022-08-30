@@ -7,7 +7,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform";
-import { MigrationState } from "../migrationInterfaces";
+import { MigrationState } from "../migratableModel";
 import type {
     IMigrationTool,
 } from "../migrationTool";
