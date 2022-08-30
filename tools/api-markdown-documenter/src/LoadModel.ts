@@ -60,11 +60,11 @@ export async function loadModel(reportsDirectoryPath: string): Promise<ApiModel>
     return apiModel;
 }
 
-// Copied from `@microsoft/api-documenter` as a workaround for an `API-Extractor` limitation tracked by this issue:
-// <https://github.com/microsoft/rushstack/issues/2062>
-
 /**
  * Pre-apply `{@inheritDoc}` comments to API items as needed.
+ *
+ * @remarks Copied from `@microsoft/api-documenter` as a workaround for an `API-Extractor` limitation tracked by
+ * this issue: {@link https://github.com/microsoft/rushstack/issues/2062}.
  */
 function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel): void {
     if (apiItem instanceof ApiDocumentedItem) {
@@ -109,6 +109,9 @@ function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel): void {
 
 /**
  * Copy the content from `sourceDocComment` to `targetDocComment`.
+ *
+ * @remarks Copied from `@microsoft/api-documenter` as a workaround for an `API-Extractor` limitation tracked by
+ * this issue: {@link https://github.com/microsoft/rushstack/issues/2062}.
  */
 function copyInheritedDocs(targetDocComment: DocComment, sourceDocComment: DocComment): void {
     targetDocComment.summarySection = sourceDocComment.summarySection;
