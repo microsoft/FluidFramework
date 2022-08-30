@@ -15,7 +15,7 @@ import {
     TreeSchemaIdentifier,
 } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey } from "../../tree";
-import { brand, Invariant, Multimap } from "../../util";
+import { brand, fail, Invariant, Multimap } from "../../util";
 import { FieldChangeHandler, FieldChangeMap, FieldChangeset, NodeChangeset } from "./fieldChangeHandler";
 import { FullSchemaPolicy } from "./fieldKind";
 
@@ -269,7 +269,7 @@ export class ModularChangeFamily implements
             ?? this.fieldSchemaForGlobalField(parentSchema, field as GlobalFieldKey)
             ?? this.fieldSchemaForExtraField(parentSchema, field);
 
-        assert(fieldSchema !== undefined, `No schema defined for field ${field}`);
+        assert(fieldSchema !== undefined, "No schema defined for field");
         return fieldSchema;
     }
 
@@ -292,7 +292,7 @@ function firstFromSet<T>(set: ReadonlySet<T>): T {
         return element;
     }
 
-    throw new Error("Expected a non-empty set");
+    fail("Expected a non-empty set");
 }
 
 export class SchemaEditBuilder extends ProgressiveEditBuilder<NodeChangeset> {
