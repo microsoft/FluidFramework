@@ -164,7 +164,7 @@ describe("generate:buildVersion", () => {
             "--tag",
             "client",
             "--release",
-            "release",
+            "none",
             "--includeInternalVersions",
             "true",
             "--tags",
@@ -188,7 +188,7 @@ describe("generate:buildVersion", () => {
             "--tag",
             "client",
             "--release",
-            "release",
+            "none",
             "--tags",
             ...test_tags,
         ])

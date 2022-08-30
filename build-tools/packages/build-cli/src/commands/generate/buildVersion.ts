@@ -94,10 +94,10 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             const out = childProcess.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
             if (out.trim() === tagName) {
                 if (isRelease) {
-                    this.error(`Tag ${tagName} already exist`);
+                    this.error(`Tag ${tagName} already exists.`);
                 }
 
-                this.warn(`Tag ${tagName} already exist`);
+                this.warn(`Tag ${tagName} already exists.`);
             }
         }
 

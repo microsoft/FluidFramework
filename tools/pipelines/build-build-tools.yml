@@ -70,7 +70,7 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskTest: test
+    taskTest: ci:test
     poolBuild: Large
     cgSubDirectory: packages
     checkoutSubmodules: true
