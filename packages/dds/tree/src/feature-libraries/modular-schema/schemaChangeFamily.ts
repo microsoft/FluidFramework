@@ -120,7 +120,7 @@ export class SchemaChangeFamily implements
         for (const field of Object.keys(change.fields)) {
             const baseChanges = over.fields[field];
             if (baseChanges === undefined) {
-                fields[field] = baseChanges;
+                fields[field] = change.fields[field];
             } else {
                 const childSchema = this.getChildSchema(schema, brand(field));
                 const rebasedField = this.getChangeHandler(schema, brand(field)).rebaser.rebase(
@@ -128,7 +128,7 @@ export class SchemaChangeFamily implements
                     baseChanges,
                     (child, baseChild) => this.rebaseI(childSchema, child, baseChild));
 
-                // TODO: Could optimize by checking that composedField is non-empty
+                // TODO: Could optimize by checking that rebasedField is non-empty
                 fields[field] = rebasedField;
             }
         }
