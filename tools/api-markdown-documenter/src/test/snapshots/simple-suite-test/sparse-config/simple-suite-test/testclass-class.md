@@ -25,7 +25,7 @@ Here are some remarks about the class
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
+|  [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) | <code>readonly</code> | () =&gt; void | Test class event property |
 
 ## Constructors
 
@@ -37,10 +37,10 @@ Here are some remarks about the class
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](docs/simple-suite-test/testclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassGetterProperty](docs/simple-suite-test/testclass-testclassgetterproperty-property) | readonly | number | Test class getter-only property |
-|  [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) | readonly | TTypeParameterB | Test class property |
-|  [testClassStaticProperty](docs/simple-suite-test/testclass-testclassstaticproperty-property) | static | (foo: number) =&gt; string | Test static class property |
+|  [abstractPropertyGetter](docs/simple-suite-test/testclass-abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
+|  [testClassGetterProperty](docs/simple-suite-test/testclass-testclassgetterproperty-property) | <code>readonly</code> | number | Test class getter-only property |
+|  [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) | <code>readonly</code> | TTypeParameterB | Test class property |
+|  [testClassStaticProperty](docs/simple-suite-test/testclass-testclassstaticproperty-property) | <code>static</code> | (foo: number) =&gt; string | Test static class property |
 
 ## Methods
 
@@ -48,5 +48,5 @@ Here are some remarks about the class
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](docs/simple-suite-test/testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
 |  [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) |  | TTypeParameterA | Test class method |
-|  [testClassStaticMethod(foo)](docs/simple-suite-test/testclass-testclassstaticmethod-method) | static | string | Test class static method |
+|  [testClassStaticMethod(foo)](docs/simple-suite-test/testclass-testclassstaticmethod-method) | <code>static</code> | string | Test class static method |
 |  [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method)<!-- -->. |

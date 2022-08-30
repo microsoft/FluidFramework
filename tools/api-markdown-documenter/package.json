@@ -24,7 +24,7 @@
     "build:genver": "gen-version",
     "build:tsc": "tsc --pretty",
     "ci:build:docs": "api-extractor run",
-    "clean": "rimraf _api-extractor-temp dist *.tsbuildinfo *.build.log",
+    "clean": "rimraf _api-extractor-temp .nyc_output dist *.tsbuildinfo *.build.log",
     "eslint": "eslint",
     "eslint:fix": "eslint --fix",
     "format": "npm run prettier:fix",
@@ -42,12 +42,12 @@
     "@microsoft/api-extractor-model": "^7.23.0",
     "@microsoft/tsdoc": "^0.14.1",
     "@rushstack/node-core-library": "^3.50.1",
-    "colors": "^1.4.0",
+    "chalk": "^2.4.2",
     "mdast-builder": "^1.1.1",
     "mdast-util-assert": "^4.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.3.0-0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.2.2",

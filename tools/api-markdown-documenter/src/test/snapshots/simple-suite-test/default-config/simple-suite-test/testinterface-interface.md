@@ -18,7 +18,7 @@ Here are some remarks about the interface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
+|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | <code>readonly</code> | () =&gt; void | Test interface event property |
 
 ## Construct Signatures
 
@@ -31,7 +31,7 @@ Here are some remarks about the interface
 |  Property | Modifiers | Default Value | Type | Description |
 |  --- | --- | --- | --- | --- |
 |  [testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
-|  [testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature) | optional | 0 | number | Test optional property |
+|  [testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature) | <code>optional</code> | 0 | number | Test optional property |
 
 ## Methods
 
@@ -73,6 +73,10 @@ Test construct signature.
 ```typescript
 new (): TestInterface;
 ```
+
+#### Returns {#_new_-returns}
+
+<b>Return type:</b> [TestInterface](./simple-suite-test/testinterface-interface)
 
 ## Property Details
 

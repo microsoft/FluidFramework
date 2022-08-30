@@ -10,6 +10,7 @@
         "forest",
         "shared-tree-core",
         "feature-libraries",
-        "transaction"
+        "transaction",
+        "checkout"
     ]
 }

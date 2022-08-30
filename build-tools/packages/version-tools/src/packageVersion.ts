@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-tools/version-tools";
-export const pkgVersion = "0.3.2000";
+export const pkgVersion = "0.4.3000";

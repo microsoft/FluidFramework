@@ -15,7 +15,7 @@ import {
     Parameter,
     ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
+import { DocCodeSpan, DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
@@ -405,7 +405,11 @@ export function renderApiSummaryCell(
         if (apiItem.releaseTag === ReleaseTag.Beta) {
             docNodes.push(
                 new DocEmphasisSpan(
-                    { configuration: config.tsdocConfiguration, bold: true, italic: true },
+                    {
+                        configuration: config.tsdocConfiguration,
+                        bold: true,
+                        italic: true,
+                    },
                     [
                         new DocPlainText({
                             configuration: config.tsdocConfiguration,
@@ -480,9 +484,33 @@ export function renderModifiersCell(
 ): DocTableCell {
     const modifiers = getModifiers(apiItem);
 
+    const docNodes: DocNode[] = [];
+    let needsComma = false;
+    for (const modifier of modifiers) {
+        if (needsComma) {
+            docNodes.push(
+                new DocPlainText({
+                    configuration: config.tsdocConfiguration,
+                    text: ", ",
+                }),
+            );
+        }
+        docNodes.push(
+            new DocCodeSpan({
+                configuration: config.tsdocConfiguration,
+                code: modifier,
+            }),
+        );
+    }
+
     return modifiers.length === 0
         ? renderEmptyTableCell(config)
-        : renderPlainTextCell(modifiers.join(", "), config);
+        : new DocTableCell(
+              {
+                  configuration: config.tsdocConfiguration,
+              },
+              docNodes,
+          );
 }
 
 /**
@@ -580,12 +608,12 @@ export function renderTypeExcerptCell(
     typeExcerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const renderedExcerpt = renderExcerptWithHyperlinks(typeExcerpt, config);
+    const renderedExcerptNodes = renderExcerptWithHyperlinks(typeExcerpt, config);
 
-    return renderedExcerpt === undefined
+    return renderedExcerptNodes === undefined
         ? renderEmptyTableCell(config)
         : new DocTableCell({ configuration: config.tsdocConfiguration }, [
-              new DocParagraph({ configuration: config.tsdocConfiguration }, renderedExcerpt),
+              new DocParagraph({ configuration: config.tsdocConfiguration }, renderedExcerptNodes),
           ]);
 }
 

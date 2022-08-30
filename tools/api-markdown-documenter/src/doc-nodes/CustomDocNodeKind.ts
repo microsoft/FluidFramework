@@ -43,13 +43,34 @@ export class CustomDocNodes {
             const configuration: TSDocConfiguration = new TSDocConfiguration();
 
             configuration.docNodeManager.registerDocNodes("@fluid-tools/api-markdown-documenter", [
-                { docNodeKind: CustomDocNodeKind.EmphasisSpan, constructor: DocEmphasisSpan },
-                { docNodeKind: CustomDocNodeKind.Heading, constructor: DocHeading },
-                { docNodeKind: CustomDocNodeKind.List, constructor: DocList },
-                { docNodeKind: CustomDocNodeKind.NoteBox, constructor: DocNoteBox },
-                { docNodeKind: CustomDocNodeKind.Table, constructor: DocTable },
-                { docNodeKind: CustomDocNodeKind.TableCell, constructor: DocTableCell },
-                { docNodeKind: CustomDocNodeKind.TableRow, constructor: DocTableRow },
+                {
+                    docNodeKind: CustomDocNodeKind.EmphasisSpan,
+                    constructor: DocEmphasisSpan,
+                },
+                {
+                    docNodeKind: CustomDocNodeKind.Heading,
+                    constructor: DocHeading,
+                },
+                {
+                    docNodeKind: CustomDocNodeKind.List,
+                    constructor: DocList,
+                },
+                {
+                    docNodeKind: CustomDocNodeKind.NoteBox,
+                    constructor: DocNoteBox,
+                },
+                {
+                    docNodeKind: CustomDocNodeKind.Table,
+                    constructor: DocTable,
+                },
+                {
+                    docNodeKind: CustomDocNodeKind.TableCell,
+                    constructor: DocTableCell,
+                },
+                {
+                    docNodeKind: CustomDocNodeKind.TableRow,
+                    constructor: DocTableRow,
+                },
             ]);
 
             configuration.docNodeManager.registerAllowableChildren(CustomDocNodeKind.EmphasisSpan, [
@@ -62,6 +83,7 @@ export class CustomDocNodes {
                 CustomDocNodeKind.List,
                 CustomDocNodeKind.NoteBox,
                 CustomDocNodeKind.Table,
+                DocNodeKind.CodeSpan,
                 DocNodeKind.Section,
             ]);
 

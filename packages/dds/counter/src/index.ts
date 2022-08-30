@@ -4,8 +4,8 @@
  */
 
 /**
- * This package contains the SharedCounter distributed data structure. A SharedCounter is a shared object
- * which holds a number that can be incremented or decremented.
+ * This package contains the {@link SharedCounter} distributed data structure.
+ * A `SharedCounter` is a shared object which holds a whole number that can be incremented or decremented.
  *
  * @packageDocumentation
  */

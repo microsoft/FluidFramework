@@ -41,6 +41,7 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
      */
     readonly tsdocConfiguration?: TSDocConfiguration;
 
+    // TODO: take in an optional logger instead.
     /**
      * Whether or not verbose logging is enabled.
      *

@@ -27,7 +27,7 @@ Here are some remarks about the class
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
+|  [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property) | <code>readonly</code> | () =&gt; void | Test class event property |
 
 ## Constructors
 
@@ -39,10 +39,10 @@ Here are some remarks about the class
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](./simple-suite-test/testclass-class#abstractpropertygetter-property) | readonly | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | readonly | number | Test class getter-only property |
-|  [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) | readonly | TTypeParameterB | Test class property |
-|  [testClassStaticProperty](./simple-suite-test/testclass-class#testclassstaticproperty-property) | static | (foo: number) =&gt; string | Test static class property |
+|  [abstractPropertyGetter](./simple-suite-test/testclass-class#abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | <code>readonly</code> | number | Test class getter-only property |
+|  [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) | <code>readonly</code> | TTypeParameterB | Test class property |
+|  [testClassStaticProperty](./simple-suite-test/testclass-class#testclassstaticproperty-property) | <code>static</code> | (foo: number) =&gt; string | Test static class property |
 
 ## Methods
 
@@ -50,7 +50,7 @@ Here are some remarks about the class
 |  --- | --- | --- | --- |
 |  [publicAbstractMethod()](./simple-suite-test/testclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
 |  [testClassMethod(input)](./simple-suite-test/testclass-class#testclassmethod-method) |  | TTypeParameterA | Test class method |
-|  [testClassStaticMethod(foo)](./simple-suite-test/testclass-class#testclassstaticmethod-method) | static | string | Test class static method |
+|  [testClassStaticMethod(foo)](./simple-suite-test/testclass-class#testclassstaticmethod-method) | <code>static</code> | string | Test class static method |
 |  [virtualMethod()](./simple-suite-test/testclass-class#virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method)<!-- -->. |
 
 ## Event Details
@@ -178,6 +178,10 @@ Here are some remarks about the method
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
 
+#### Returns {#testclassmethod-returns}
+
+<b>Return type:</b> TTypeParameterA
+
 #### Throws {#testclassmethod-throws}
 
 Some sort of error in 1 case.
@@ -204,6 +208,8 @@ static testClassStaticMethod(foo: number): string;
 
 - Some string
 
+<b>Return type:</b> string
+
 ### virtualMethod {#virtualmethod-method}
 
 Overrides [TestAbstractClass.virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method)<!-- -->.
@@ -214,3 +220,7 @@ Overrides [TestAbstractClass.virtualMethod()](./simple-suite-test/testabstractcl
 /** @override */
 protected virtualMethod(): number;
 ```
+
+#### Returns {#virtualmethod-returns}
+
+<b>Return type:</b> number
