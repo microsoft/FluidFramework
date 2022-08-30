@@ -15,7 +15,7 @@ import type {
 } from "../modelInterfaces";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
-export type InventoryListAppModelExportType = string;
+export type InventoryListAppModelExportFormat1 = string;
 
 /**
  * The InventoryListAppModel serves the purpose of wrapping this particular Container in a friendlier interface,
@@ -48,7 +48,7 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
         this._migrationTool = migrationTool;
     }
 
-    public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListAppModelExportType => {
+    public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListAppModelExportFormat1 => {
         return typeof initialData === "string" && readVersion(initialData) === "one";
     };
 
@@ -69,7 +69,7 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
         }
     };
 
-    public readonly exportData = async (): Promise<InventoryListAppModelExportType> => {
+    public readonly exportData = async (): Promise<InventoryListAppModelExportFormat1> => {
         // Exports in version:one format (using ':' delimiter between name/quantity)
         const inventoryItems = this.inventoryList.getItems();
         const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
