@@ -12,7 +12,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MigrationToolInstantiationFactory, IMigrationTool } from "../migrationTool";
 import { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
 import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoader";
-import { InventoryListAppModel } from "./containerModel";
+import { InventoryListAppModel } from "./appModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
 export const inventoryListId = "default-inventory-list";
