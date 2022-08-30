@@ -13,7 +13,7 @@ export interface IInventoryListAppViewProps {
 }
 
 /**
- * The InventoryListContainerView is the top-level app view.  It is made to pair with an InventoryListContainer and
+ * The InventoryListAppView is the top-level app view.  It is made to pair with an InventoryListAppModel and
  * render its contents appropriately.  Since container migration is a top-level concept, it takes the responsibility
  * of appropriately disabling the view during migration.  It would also be what triggers any other migration UI we
  * might want, progress wheels, etc.

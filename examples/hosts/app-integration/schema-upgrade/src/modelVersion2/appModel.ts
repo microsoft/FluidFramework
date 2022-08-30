@@ -48,7 +48,7 @@ const exportStringData = async (inventoryList: IInventoryList) => {
 export type InventoryListAppModelExportType = string;
 
 /**
- * The InventoryListContainer serves the purpose of wrapping this particular Container in a friendlier interface,
+ * The InventoryListAppModel serves the purpose of wrapping this particular Container in a friendlier interface,
  * with stronger typing and accessory functionality.  It should have the same layering restrictions as we want for
  * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
  * Container does -- instead it is specially designed for the specific container code.
@@ -88,7 +88,7 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
     };
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
-    // importing data into a completely untouched InventoryListContainer.
+    // importing data into a completely untouched InventoryListAppModel.
     public readonly importData = async (initialData: unknown) => {
         if (this.container.attachState !== AttachState.Detached) {
             throw new Error("Cannot set initial data after attach");
