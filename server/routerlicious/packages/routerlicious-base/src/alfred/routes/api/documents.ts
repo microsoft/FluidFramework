@@ -106,6 +106,7 @@ export function create(
                 crypto.randomBytes(4).toString("hex"),
                 externalOrdererUrl,
                 externalHistorianUrl,
+                externalDeltaStreamUrl,
                 values,
                 enableDiscovery);
 
