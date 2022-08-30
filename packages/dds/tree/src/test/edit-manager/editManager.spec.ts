@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/common-utils";
 import { fail, strict as assert } from "assert";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
@@ -230,16 +231,95 @@ function editManagerFactory(): {
 }
 
 const localSessionId: SessionId = "0";
-const peerSessionId1: SessionId = "1";
-const peerSessionId2: SessionId = "2";
+const peer1: SessionId = "1";
+const peer2: SessionId = "2";
 
 const NUM_STEPS = 5;
 const NUM_CLIENTS = 3;
 
 type TestCommit = Commit<TestChangeset>;
 
+type UnitTestScenarioStep =
+ | { seq: number; type: "Push"; }
+ | { seq: number; type: "Ack"; }
+ | { seq: number; type: "Pull"; ref: number; from: SessionId; expectedDelta: number[]; }
+;
+
+function unitTest(title: string, steps: UnitTestScenarioStep[]): void {
+    it(title, () => {
+        const { manager, anchors } = editManagerFactory();
+        const localCommits: TestCommit[] = [];
+        let knownToLocal: number[] = [];
+        let localRef: number = 0;
+        const trunk: number[] = [];
+        for (const step of steps) {
+            const { seq, type } = step;
+            switch (type) {
+                case "Push": {
+                    const changeset = TestChangeRebaser.mintChangeset(knownToLocal, seq);
+                    localCommits.push({
+                        sessionId: localSessionId,
+                        seqNumber: brand(seq),
+                        refNumber: brand(localRef),
+                        changeset,
+                    });
+                    knownToLocal.push(seq);
+                    assert.deepEqual(manager.addLocalChange(changeset), asDelta([seq]));
+                    break;
+                }
+                case "Ack": {
+                    const commit = localCommits.shift();
+                    if (commit === undefined) {
+                        fail("Invalid test scenario: no local commit to acknowledge");
+                    }
+                    if (commit.seqNumber !== seq) {
+                        fail("Invalid test scenario: acknowledged commit does not mach oldest local change");
+                    }
+                    assert.deepEqual(manager.addSequencedChange(commit), Delta.empty);
+                    trunk.push(seq);
+                    localRef = seq;
+                    break;
+                }
+                case "Pull": {
+                    const peerTrunkChangesFilter = (s: UnitTestScenarioStep) =>
+                        s.seq <= step.ref;
+                    const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
+                        s.seq > step.ref && s.seq < step.seq && s.type === "Pull" && s.from === step.from;
+                    const knownToPeer: number[] = [
+                        ...steps.filter(peerTrunkChangesFilter),
+                        ...steps.filter(peerLocalChangesFilter),
+                    ].map((s) => s.seq);
+                    const commit: TestCommit = {
+                        sessionId: step.from,
+                        seqNumber: brand(seq),
+                        refNumber: brand(step.ref),
+                        changeset: TestChangeRebaser.mintChangeset(knownToPeer, seq),
+                    };
+                    const localIntentions = localCommits.map((c) => c.seqNumber);
+                    const expected = [
+                        ...localIntentions.map((i) => -i).reverse(),
+                        seq,
+                        ...localIntentions,
+                    ];
+                    assert.deepEqual(manager.addSequencedChange(commit), asDelta(expected));
+                    trunk.push(seq);
+                    knownToLocal = [
+                        ...trunk,
+                        ...localCommits.map((c) => c.seqNumber),
+                    ];
+                    localRef = seq;
+                    break;
+                }
+                default: unreachableCase(type);
+            }
+            assert.deepEqual(anchors.intentions, knownToLocal);
+            checkChangeList(manager, knownToLocal);
+        }
+    });
+}
+
 describe("EditManager", () => {
-    it("Can handle non-concurrent local changes being sequenced immediately", () => {
+    it("Can handle non-concurrent local changes being sequenced immediately (old)", () => {
         const { manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
             sessionId: localSessionId,
@@ -268,6 +348,15 @@ describe("EditManager", () => {
         assert.deepEqual(anchors.intentions, [1, 2, 3]);
         checkChangeList(manager, [1, 2, 3]);
     });
+
+    unitTest("Can handle non-concurrent local changes being sequenced immediately", [
+        { seq: 1, type: "Push" },
+        { seq: 1, type: "Ack" },
+        { seq: 2, type: "Push" },
+        { seq: 2, type: "Ack" },
+        { seq: 3, type: "Push" },
+        { seq: 3, type: "Ack" },
+    ]);
 
     it("Can handle non-concurrent local changes being sequenced later", () => {
         const { manager, anchors } = editManagerFactory();
@@ -302,19 +391,19 @@ describe("EditManager", () => {
     it("Can handle non-concurrent peer changes sequenced immediately", () => {
         const { manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
         };
         const c2: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: TestChangeRebaser.mintChangeset([1], 2),
         };
         const c3: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
@@ -329,19 +418,19 @@ describe("EditManager", () => {
     it("Can handle non-concurrent peer changes sequenced later", () => {
         const { manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
         };
         const c2: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(2),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([1], 2),
         };
         const c3: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(3),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
@@ -356,25 +445,25 @@ describe("EditManager", () => {
     it("Can rebase a single peer change over multiple peer changes", () => {
         const { manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
         };
         const c2: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: TestChangeRebaser.mintChangeset([1], 2),
         };
         const c3: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         };
         const c4: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(4),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 4),
@@ -390,37 +479,37 @@ describe("EditManager", () => {
     it("Can rebase multiple non-interleaved peer changes", () => {
         const { manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
         };
         const c2: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: TestChangeRebaser.mintChangeset([1], 2),
         };
         const c3: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         };
         const c4: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(4),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 4),
         };
         const c5: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(5),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([4], 5),
         };
         const c6: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(6),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([4, 5], 6),
@@ -438,37 +527,37 @@ describe("EditManager", () => {
     it("Can rebase multiple interleaved peer changes", () => {
         const { manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
         };
         const c2: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(2),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 2),
         };
         const c3: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(3),
             refNumber: brand(1),
             changeset: TestChangeRebaser.mintChangeset([1], 3),
         };
         const c4: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(4),
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2, 3], 4),
         };
         const c5: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(5),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([2], 5),
         };
         const c6: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(6),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([2, 5], 6),
@@ -483,16 +572,16 @@ describe("EditManager", () => {
         checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
     });
 
-    it("Can rebase multiple interleaved peer and local changes", () => {
+    it("Can rebase multiple interleaved peer and local changes (old)", () => {
         const { rebaser, manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
         };
         const c2: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(2),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 2),
@@ -504,13 +593,13 @@ describe("EditManager", () => {
             changeset: TestChangeRebaser.mintChangeset([], 3),
         };
         const c4: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(4),
             refNumber: brand(1),
             changeset: TestChangeRebaser.mintChangeset([1], 4),
         };
         const c5: TestCommit = {
-            sessionId: peerSessionId1,
+            sessionId: peer1,
             seqNumber: brand(5),
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2, 4], 5),
@@ -522,7 +611,7 @@ describe("EditManager", () => {
             changeset: TestChangeRebaser.mintChangeset([1, 2, 3], 6),
         };
         const c7: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(7),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([2], 7),
@@ -534,7 +623,7 @@ describe("EditManager", () => {
             changeset: TestChangeRebaser.mintChangeset([1, 2, 3, 6], 8),
         };
         const c9: TestCommit = {
-            sessionId: peerSessionId2,
+            sessionId: peer2,
             seqNumber: brand(9),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([2, 7], 9),
@@ -557,6 +646,21 @@ describe("EditManager", () => {
         assert.deepEqual(anchors.intentions, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
         checkChangeList(manager, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
+
+    unitTest("Can rebase multiple interleaved peer and local changes", [
+        { seq: 3, type: "Push" },
+        { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [-3, 1, 3] },
+        { seq: 2, type: "Pull", ref: 0, from: peer2, expectedDelta: [-3, 2, 3] },
+        { seq: 6, type: "Push" },
+        { seq: 8, type: "Push" },
+        { seq: 3, type: "Ack" },
+        { seq: 4, type: "Pull", ref: 1, from: peer1, expectedDelta: [-8, -6, 4, 6, 8] },
+        { seq: 5, type: "Pull", ref: 2, from: peer1, expectedDelta: [-8, -6, 5, 6, 8] },
+        { seq: 6, type: "Ack" },
+        { seq: 7, type: "Pull", ref: 0, from: peer2, expectedDelta: [-8, 7, 8] },
+        { seq: 8, type: "Ack" },
+        { seq: 9, type: "Pull", ref: 0, from: peer2, expectedDelta: [9] },
+    ]);
 
     /**
      * This test case effectively tests most of the scenarios covered by the other test cases.
