@@ -13,14 +13,16 @@ import { IChannelPath } from "./handlesTracker";
 import { DataObjectManyDDSes } from "./testDataObjects";
 import { IFluidObjectPath } from "./fluidObjectTracker";
 
+/**
+ * ContainerDataObjectManager is responsible for:
+ * - retrieval and creation of DataObjects
+ * - retrieval of handles to DataObjects and their DDSes
+ * - adding handles to DataObjects' DDSes
+ */
 export class ContainerDataObjectManager {
     private readonly dataStoreType: string = DataObjectManyDDSes.type;
 
     constructor(private readonly container: IContainer) {}
-
-    public async getDataObject(dataStoreId: string): Promise<DataObjectManyDDSes> {
-        return this.getDataObjectFromRoute(this.container, dataStoreId);
-    }
 
     public async createDataObject(): Promise<DataObjectManyDDSes> {
         const defaultDataStore = await this.getDataObjectFromRoute(this.container, "default");
@@ -29,6 +31,10 @@ export class ContainerDataObjectManager {
         return newDataObject;
     }
 
+    /**
+     * @param handlePath - is the path from the container to the handle
+     * @returns an IFluidHandle of the given path
+     */
     public async getHandle(handlePath: IFluidObjectPath): Promise<IFluidHandle> {
         const dataObject = await this.getDataObjectFromRoute(this.container, `/${handlePath.dataStoreId}`);
         if (handlePath.ddsId === undefined) {
@@ -49,6 +55,8 @@ export class ContainerDataObjectManager {
         return dataObject.removeHandleForChannel(handlePath.ddsId, random);
     }
 
+    // For now, the request pattern is being used, this should eventually be updated to retrieve DataObjects/DDSes
+    // by calling handle.get and retrieving the underlying object.
     private async getDataObjectFromRoute(router: IFluidRouter, route: string) {
         const dataObject = await requestFluidObject<DataObjectManyDDSes>(router, route);
         return dataObject;

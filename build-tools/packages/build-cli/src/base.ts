@@ -5,8 +5,13 @@
 
 import { Context, getResolvedFluidRoot, GitRepo, Logger } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
-// eslint-disable-next-line import/no-internal-modules
-import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces";
+import {
+    FlagInput,
+    OutputFlags,
+    ParserOutput,
+    PrettyPrintableError,
+    // eslint-disable-next-line import/no-internal-modules
+} from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import { rootPathFlag } from "./flags";
 
@@ -82,7 +87,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
                 },
                 warning: this.warn.bind(this),
                 error: (msg: string | Error) => {
-                    this.error(msg);
+                    this.errorLog(msg);
                 },
                 verbose: (msg: string | Error) => {
                     this.verbose(msg);
@@ -142,13 +147,13 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
         this.log("=".repeat(72));
     }
 
-    public logError(message: string | Error) {
+    /** Logs an error without exiting the process. */
+    public errorLog(message: string | Error) {
         this.log(chalk.red(`ERROR: ${message}`));
-        this.exit();
     }
 
     /** Log a message with an indent. */
-    public logIndent(input: string, indent = 2) {
+    public logIndent(input: string, indent = 2): void {
         this.log(`${" ".repeat(indent)}${input}`);
     }
 }
