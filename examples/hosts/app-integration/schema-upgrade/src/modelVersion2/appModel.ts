@@ -49,15 +49,12 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
     }
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListAppModelExportType => {
-        if (typeof initialData !== "string" || readVersion(initialData) !== "two") {
-            return false;
-        }
-        return true;
+        return typeof initialData === "string" && readVersion(initialData) === "two";
     };
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
     // importing data into a completely untouched InventoryListAppModel.
-    public readonly importData = async (initialData: unknown) => {
+    public readonly importData = async (initialData: unknown): Promise<void> => {
         if (this.container.attachState !== AttachState.Detached) {
             throw new Error("Cannot set initial data after attach");
         }
