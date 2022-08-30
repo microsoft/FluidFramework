@@ -77,8 +77,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             this.log("Resolving errors if possible.");
         }
 
-
-
         const handlerRegex: RegExp =
             // eslint-disable-next-line no-negated-condition
             this.processedFlags.handler !== undefined
@@ -98,15 +96,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             this.log(`Filtering file paths by regex: ${pathRegex}`);
         }
 
-        const exclusions: RegExp[] = this.processedFlags.exclusions === undefined ?
-        exclusionsFile.map(
-            (e: string) => new RegExp(e, "i"),
-        ) :
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
-        require(this.processedFlags.exclusions).map(
-            (e: string) => new RegExp(e, "i"),
-        )
-
+        const exclusions: RegExp[] =
+            this.processedFlags.exclusions === undefined
+                ? exclusionsFile.map((e: string) => new RegExp(e, "i"))
+                : // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
+                  require(this.processedFlags.exclusions).map((e: string) => new RegExp(e, "i"));
 
         if (this.processedFlags.stdin) {
             const pipeString = await readStdin();
@@ -159,8 +153,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     // synchronize output, exit code, and resolve decision for all handlers
     routeToHandlers(file: string, handlerRegex: RegExp) {
         const filteredHandlers = handlers.filter(
-            (handler) =>
-                handler.match.test(file) && handlerRegex.test(handler.name),
+            (handler) => handler.match.test(file) && handlerRegex.test(handler.name),
         );
 
         for (const handler of filteredHandlers) {
