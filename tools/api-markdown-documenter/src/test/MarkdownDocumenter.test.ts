@@ -49,7 +49,9 @@ async function snapshotTest(
     await renderFiles(config, outputDirPath, new MarkdownEmitter(config.apiModel));
 
     // Verify against expected contents
-    const result = await compare(outputDirPath, snapshotDirPath, { compareContent: true });
+    const result = await compare(outputDirPath, snapshotDirPath, {
+        compareContent: true,
+    });
 
     if (!result.same) {
         await FileSystem.ensureEmptyFolderAsync(snapshotDirPath);
