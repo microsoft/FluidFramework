@@ -37,7 +37,7 @@ export interface IRandomOpManager extends IOpManager {
  *
  * Note: not all channels can store handles.
  */
- export interface IHandleOpManager extends IOpManager {
+export interface IHandleOpManager extends IOpManager {
     type: string;
     addHandle(handle: IFluidHandle, random: IRandom): Promise<IAddedHandle>;
     removeRandomHandle(random: IRandom): Promise<IRemovedHandle>;
