@@ -161,16 +161,16 @@ export interface Dependent extends NamedComputation {
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
 
-// @public (undocumented)
-export type EditableTreeNode<T> = IEditableTree<T> & {
-    [P in keyof T]: T[P] extends Value ? T[P] : EditableTreeNode<T[P]>;
+// @public
+export type EditableTree<T> = IEditableTreeSignature<T> & EditableTreeNode<T>;
+
+// @public
+export type EditableTreeNode<T> = {
+    [P in keyof T]?: T[P] extends number | string | boolean ? T[P] : EditableTree<T[P]>;
 };
 
 // @public (undocumented)
 export const editableTreeProxySymbol: unique symbol;
-
-// @public (undocumented)
-export const editableTreeTypeSymbol: unique symbol;
 
 // @public (undocumented)
 const empty: Root;
@@ -273,8 +273,11 @@ export interface GenericTreeNode<TChild> extends NodeData {
     fields?: FieldMap<TChild>;
 }
 
-// @public (undocumented)
-export function getEditableTree<T = unknown>(forest: IEditableForest): EditableTreeNode<T>;
+// @public
+export function getEditableTree<T = unknown>(forest: IEditableForest): EditableTree<T>;
+
+// @public
+export const getTypeSymbol: unique symbol;
 
 // @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
@@ -287,11 +290,11 @@ export interface IEditableForest extends IForestSubscription {
 }
 
 // @public
-export interface IEditableTree<T> {
+export interface IEditableTreeSignature<T> {
     // (undocumented)
-    [editableTreeTypeSymbol]: (key?: FieldKey) => TreeSchemaIdentifier;
+    [getTypeSymbol]: (key?: FieldKey) => TreeSchemaIdentifier;
     // (undocumented)
-    [key: string]: EditableTreeNode<T>;
+    [key: string]: T extends number | string | boolean ? T : EditableTreeNode<T>;
 }
 
 // @public
