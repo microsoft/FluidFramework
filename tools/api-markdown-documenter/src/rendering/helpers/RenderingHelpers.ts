@@ -65,7 +65,10 @@ export function renderSignature(
             const docNodes: DocNode[] = [];
             docNodes.push(
                 renderHeading(
-                    { title: "Signature", id: `${getQualifiedApiItemName(apiItem)}-signature` },
+                    {
+                        title: "Signature",
+                        id: `${getQualifiedApiItemName(apiItem)}-signature`,
+                    },
                     config,
                 ),
             );
@@ -213,7 +216,10 @@ function renderHeritageTypeList(
 
         docNodes.push(
             new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
-                new DocPlainText({ configuration: config.tsdocConfiguration, text: `${label}: ` }),
+                new DocPlainText({
+                    configuration: config.tsdocConfiguration,
+                    text: `${label}: `,
+                }),
             ]),
         );
 
@@ -221,7 +227,10 @@ function renderHeritageTypeList(
         for (const heritageType of heritageTypes) {
             if (needsComma) {
                 docNodes.push(
-                    new DocPlainText({ configuration: config.tsdocConfiguration, text: ", " }),
+                    new DocPlainText({
+                        configuration: config.tsdocConfiguration,
+                        text: ", ",
+                    }),
                 );
             }
 
@@ -269,7 +278,10 @@ export function renderTypeParameters(
 
             if (typeParameter.tsdocTypeParamBlock !== undefined) {
                 paragraphNodes.push(
-                    new DocPlainText({ configuration: config.tsdocConfiguration, text: ": " }),
+                    new DocPlainText({
+                        configuration: config.tsdocConfiguration,
+                        text: ": ",
+                    }),
                 );
                 paragraphNodes.push(...typeParameter.tsdocTypeParamBlock.content.nodes);
             }
@@ -289,7 +301,10 @@ export function renderTypeParameters(
                 ]),
             ]),
             new DocList(
-                { configuration: config.tsdocConfiguration, listKind: ListKind.Unordered },
+                {
+                    configuration: config.tsdocConfiguration,
+                    listKind: ListKind.Unordered,
+                },
                 listItemNodes,
             ),
         ]);
@@ -455,7 +470,10 @@ export function renderBetaWarning(config: Required<MarkdownDocumenterConfigurati
 
     return new DocNoteBox({ configuration: config.tsdocConfiguration }, [
         new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            new DocPlainText({ configuration: config.tsdocConfiguration, text: betaWarning }),
+            new DocPlainText({
+                configuration: config.tsdocConfiguration,
+                text: betaWarning,
+            }),
         ]),
     ]);
 }
@@ -487,7 +505,10 @@ export function renderRemarksSection(
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.remarksBlock !== undefined) {
         return new DocSection({ configuration: config.tsdocConfiguration }, [
             renderHeading(
-                { title: "Remarks", id: `${getQualifiedApiItemName(apiItem)}-remarks` },
+                {
+                    title: "Remarks",
+                    id: `${getQualifiedApiItemName(apiItem)}-remarks`,
+                },
                 config,
             ),
             apiItem.tsdocComment.remarksBlock.content,
@@ -519,7 +540,10 @@ export function renderThrowsSection(
 
         return new DocSection({ configuration: config.tsdocConfiguration }, [
             renderHeading(
-                { title: "Throws", id: `${getQualifiedApiItemName(apiItem)}-throws` },
+                {
+                    title: "Throws",
+                    id: `${getQualifiedApiItemName(apiItem)}-throws`,
+                },
                 config,
             ),
             ...throwsBlocks,
@@ -603,7 +627,10 @@ export function renderExamplesSection(
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
         renderHeading(
-            { title: "Examples", id: `${getQualifiedApiItemName(apiItem)}-examples` },
+            {
+                title: "Examples",
+                id: `${getQualifiedApiItemName(apiItem)}-examples`,
+            },
             config,
         ),
         mergedSection,
@@ -676,7 +703,10 @@ export function renderParametersSection(
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
         renderHeading(
-            { title: "Parameters", id: `${getQualifiedApiItemName(apiFunctionLike)}-parameters` },
+            {
+                title: "Parameters",
+                id: `${getQualifiedApiItemName(apiFunctionLike)}-parameters`,
+            },
             config,
         ),
         renderParametersSummaryTable(apiFunctionLike.parameters, config),
@@ -720,7 +750,10 @@ export function renderReturnsSection(
                     new DocSection({ configuration: config.tsdocConfiguration }, [
                         new DocParagraph({ configuration: config.tsdocConfiguration }, [
                             new DocEmphasisSpan(
-                                { configuration: config.tsdocConfiguration, bold: true },
+                                {
+                                    configuration: config.tsdocConfiguration,
+                                    bold: true,
+                                },
                                 [
                                     new DocPlainText({
                                         configuration: config.tsdocConfiguration,
@@ -740,7 +773,10 @@ export function renderReturnsSection(
         ? undefined
         : new DocSection({ configuration: config.tsdocConfiguration }, [
               renderHeading(
-                  { title: "Returns", id: `${getQualifiedApiItemName(apiItem)}-returns` },
+                  {
+                      title: "Returns",
+                      id: `${getQualifiedApiItemName(apiItem)}-returns`,
+                  },
                   config,
               ),
               mergeSections(docSections, config.tsdocConfiguration),

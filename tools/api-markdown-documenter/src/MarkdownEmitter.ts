@@ -431,20 +431,21 @@ function contextWithIncrementedHeadingLevel(context: EmitterContext): EmitterCon
  *
  * @param document - The document to be emitted.
  * @param partialConfig - See {@link MarkdownDocumenterConfiguration}.
- * @param maybeEmitter - An optional {@link MarkdownEmitter} instance.
+ * @param markdownEmitter - An optional {@link MarkdownEmitter} instance.
  * Can be used to provide a custom emitter implementation.
- * If not provided, a new instance of `MarkdownEmitter` will be used.
+ * If not provided, a new instance of `MarkdownEmitter` will be generated from the provided configuration's
+ * {@link MarkdownDocumenterConfiguration.apiModel}.
  */
 export function emitMarkdown(
     document: MarkdownDocument,
     partialConfig: MarkdownDocumenterConfiguration,
-    maybeEmitter?: MarkdownEmitter,
+    markdownEmitter?: MarkdownEmitter,
 ): string {
     const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 
-    const emitter: MarkdownEmitter = maybeEmitter ?? new MarkdownEmitter(config.apiModel);
+    markdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
 
-    return emitter.emit(new StringBuilder(), document.contents, {
+    return markdownEmitter.emit(new StringBuilder(), document.contents, {
         contextApiItem: document.apiItem,
         getLinkUrlApiItem: (_apiItem) => getLinkUrlForApiItem(_apiItem, config),
     });

@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.3.2000 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.4.3000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -104,6 +104,7 @@ USAGE
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
 * [`flub commands`](#flub-commands)
+* [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
@@ -209,6 +210,36 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.0/src/commands/commands.ts)_
 
+## `flub generate buildVersion`
+
+This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
+
+```
+USAGE
+  $ flub generate buildVersion --build <value> [--testBuild <value>] [--release release|none] [--patch <value>] [--base
+    <value>] [--tag <value>] [-i <value>] [-v]
+
+FLAGS
+  -i, --includeInternalVersions=<value>  Include Fluid internal versions.
+  -v, --verbose                          Verbose logging.
+  --base=<value>                         The base version. This will be read from lerna.json/package.json if not
+                                         provided.
+  --build=<value>                        (required) The CI build number.
+  --patch=<value>                        Indicates the build is a patch build.
+  --release=<option>                     Indicates the build is a release build.
+                                         <options: release|none>
+  --tag=<value>                          The tag name to use.
+  --testBuild=<value>                    Indicates the build is a test build.
+
+DESCRIPTION
+  This command is used to compute the version number of Fluid packages. The release version number is based on what's in
+  the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease
+  suffix if it is not a tagged build
+
+EXAMPLES
+  $ flub generate buildVersion
+```
+
 ## `flub generate packageJson`
 
 Generate mono repo package json
@@ -264,7 +295,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/info.ts)_
 
 ## `flub version VERSION`
 
@@ -310,7 +341,7 @@ EXAMPLES
     $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/version.ts)_
 
 ## `flub version latest`
 

@@ -81,6 +81,14 @@ parameters:
 - name: tagName
   type: string
 
+- name: includeInternalVersions
+  type: boolean
+  default: false
+
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
+
 trigger: none
 
 variables:
@@ -303,6 +311,10 @@ stages:
                   npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm && \
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
                   npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
+
+                  # This saves a list of the packages in the working directory in topological order to a temporary file.
+                  # Each package name is modified to match the packed tar files.
+                  npx lerna ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
                 else
                   npm pack --unsafe-perm && \
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz

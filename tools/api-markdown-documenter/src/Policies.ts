@@ -7,9 +7,6 @@ import { ApiDeclaredItem, ApiItem, ApiItemKind, ApiPackage } from "@microsoft/ap
 
 import { getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
 
-// TODOs:
-// - use `kind` not `type` (and link to ApiModel docs)
-
 /**
  * This module contains policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
  */
@@ -25,7 +22,17 @@ import { getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
  * Also note that `EntryPoint` items will always be ignored by the system, even if specified here.
  *
  * @example
- * TODO
+ * A configuration like
+ *
+ * ```typescript
+ * ...
+ * documentBoundaries: [
+ *  ApiItemKind.Namespace,
+ * ],
+ * ...
+ * ```
+ *
+ * will result in separate documents being generated for `Namespace` items, but will not for other item kinds (`Classes`, `Interfaces`, etc.).
  */
 export type DocumentBoundaries = ApiItemKind[];
 
@@ -34,7 +41,29 @@ export type DocumentBoundaries = ApiItemKind[];
  * If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
  *
  * @example
- * TODO
+ * A configuration like
+ *
+ * ```typescript
+ * ...
+ * hierarchyBoundaries: [
+ *  ApiItemKind.Namespace,
+ * ],
+ * ...
+ * ```
+ *
+ * will result in documents rendered for children of the `Namespace` to be generated in a subdirectory named after
+ * the `Namespace` item.
+ *
+ * So for some namespace `Foo` with children `Bar` and `Baz` (assuming `Bar` and `Baz` are item kinds matching
+ * the configured {@link PolicyOptions.documentBoundaries}), the resulting file structure would look like the
+ * following:
+ *
+ * ```
+ * foo.md
+ * foo
+ *  | bar.md
+ *  | baz.md
+ * ```
  */
 export type HierarchyBoundaries = ApiItemKind[];
 
@@ -177,7 +206,7 @@ export namespace DefaultPolicies {
     /**
      * Default {@link PolicyOptions.documentBoundaries}.
      *
-     * Generates separate documents for the following types:
+     * Generates separate documents for the following API item kinds:
      *
      * - Model*
      * - Package*
@@ -196,7 +225,7 @@ export namespace DefaultPolicies {
     /**
      * Default {@link PolicyOptions.hierarchyBoundaries}.
      *
-     * Creates sub-directories for the following types:
+     * Creates sub-directories for the following API item kinds:
      *
      * - Package*
      * - Namespace

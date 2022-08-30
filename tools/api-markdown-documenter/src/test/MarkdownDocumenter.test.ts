@@ -49,7 +49,9 @@ async function snapshotTest(
     await renderFiles(config, outputDirPath, new MarkdownEmitter(config.apiModel));
 
     // Verify against expected contents
-    const result = await compare(outputDirPath, snapshotDirPath, { compareContent: true });
+    const result = await compare(outputDirPath, snapshotDirPath, {
+        compareContent: true,
+    });
 
     if (!result.same) {
         await FileSystem.ensureEmptyFolderAsync(snapshotDirPath);
@@ -170,19 +172,19 @@ describe("api-markdown-documenter full-suite tests", () => {
     };
 
     /**
-     * A sample "flat" configuration, which renders everything to the package parent document.
+     * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
      */
     const flatConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
         uriRoot: "docs",
-        includeBreadcrumb: false,
-        includeTopLevelDocumentHeading: true,
+        includeBreadcrumb: true,
+        includeTopLevelDocumentHeading: false,
         documentBoundaries: [], // Render everything to package documents
-        hierarchyBoundaries: [],
+        hierarchyBoundaries: [], // No additional hierarchy beyond the package level
         emptyTableCellText: "---",
     };
 
     /**
-     * A sample "sparse" configuration, which renders everything to its own document.
+     * A sample "sparse" configuration, which renders every item kind to its own document.
      */
     const sparseConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
         uriRoot: "docs",
@@ -207,7 +209,7 @@ describe("api-markdown-documenter full-suite tests", () => {
             ApiItemKind.TypeAlias,
             ApiItemKind.Variable,
         ],
-        hierarchyBoundaries: [],
+        hierarchyBoundaries: [], // No additional hierarchy beyond the package level
         emptyTableCellText: "📝",
     };
 

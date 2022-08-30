@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import Colors from "colors";
+import chalk from "chalk";
 
 /**
  * Contains simple console logging utilities used by the package.
@@ -13,7 +13,7 @@ import Colors from "colors";
  * @internal
  */
 export function logError(message: string): void {
-    console.log(Colors.red(`ERROR: ${message}`));
+    console.log(chalk.red(`ERROR: ${message}`));
 }
 
 /**
@@ -21,7 +21,7 @@ export function logError(message: string): void {
  * @internal
  */
 export function logSuccess(message: string): void {
-    console.log(Colors.green(`SUCCESS: ${message}`));
+    console.log(chalk.green(`SUCCESS: ${message}`));
 }
 
 /**
@@ -29,5 +29,5 @@ export function logSuccess(message: string): void {
  * @internal
  */
 export function logWarning(message: string): void {
-    console.log(Colors.yellow(`WARNING: ${message}`));
+    console.log(chalk.yellow(`WARNING: ${message}`));
 }
