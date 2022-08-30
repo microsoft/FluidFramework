@@ -159,7 +159,7 @@ export function doesItemKindRequireOwnDocument(kind: ApiItemKind, documentBounda
 export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
 
 // @public
-export function emitMarkdown(document: MarkdownDocument, partialConfig: MarkdownDocumenterConfiguration, maybeEmitter?: MarkdownEmitter): string;
+export function emitMarkdown(document: MarkdownDocument, partialConfig: MarkdownDocumenterConfiguration, markdownEmitter?: MarkdownEmitter): string;
 
 // @public
 export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
@@ -413,7 +413,7 @@ function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocume
 function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocNode[] | undefined;
 
 // @public
-export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, maybeMarkdownEmitter?: MarkdownEmitter): Promise<void>;
+export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, markdownEmitter?: MarkdownEmitter): Promise<void>;
 
 // @public
 function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;

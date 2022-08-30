@@ -405,7 +405,11 @@ export function renderApiSummaryCell(
         if (apiItem.releaseTag === ReleaseTag.Beta) {
             docNodes.push(
                 new DocEmphasisSpan(
-                    { configuration: config.tsdocConfiguration, bold: true, italic: true },
+                    {
+                        configuration: config.tsdocConfiguration,
+                        bold: true,
+                        italic: true,
+                    },
                     [
                         new DocPlainText({
                             configuration: config.tsdocConfiguration,
@@ -485,11 +489,17 @@ export function renderModifiersCell(
     for (const modifier of modifiers) {
         if (needsComma) {
             docNodes.push(
-                new DocPlainText({ configuration: config.tsdocConfiguration, text: ", " }),
+                new DocPlainText({
+                    configuration: config.tsdocConfiguration,
+                    text: ", ",
+                }),
             );
         }
         docNodes.push(
-            new DocCodeSpan({ configuration: config.tsdocConfiguration, code: modifier }),
+            new DocCodeSpan({
+                configuration: config.tsdocConfiguration,
+                code: modifier,
+            }),
         );
     }
 

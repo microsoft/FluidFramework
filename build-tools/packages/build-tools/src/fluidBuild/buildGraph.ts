@@ -4,7 +4,7 @@
  */
 
 import { AsyncPriorityQueue } from "async";
-import { logStatus, logVerbose } from "../common/logging";
+import { defaultLogger } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
@@ -14,6 +14,8 @@ import chalk from "chalk";
 import { options } from "./options";
 import * as semver from "semver";
 import { WorkerPool } from "./tasks/workers/workerPool";
+
+const {info, verbose} = defaultLogger;
 
 export enum BuildResult {
     Success,
@@ -136,12 +138,12 @@ export class BuildGraph {
         const isUpToDate = await this.isUpToDate();
         if (timer) timer.time(`Check up to date completed`);
 
-        logStatus(`Starting npm script "${chalk.cyanBright(this.buildScriptNames.join(" && "))}" for ${this.buildPackages.size} packages, ${this.buildContext.taskStats.leafTotalCount} tasks`);
+        info(`Starting npm script "${chalk.cyanBright(this.buildScriptNames.join(" && "))}" for ${this.buildPackages.size} packages, ${this.buildContext.taskStats.leafTotalCount} tasks`);
         if (isUpToDate) {
             return BuildResult.UpToDate;
         }
         if (this.numSkippedTasks) {
-            logStatus(`Skipping ${this.numSkippedTasks} up to date tasks.`);
+            info(`Skipping ${this.numSkippedTasks} up to date tasks.`);
         }
         this.buildContext.fileHashCache.clear();
         const q = Task.createTaskQueue();
@@ -197,14 +199,14 @@ export class BuildGraph {
                 if (child) {
                     if (semver.satisfies(child.pkg.version, version)) {
                         if (depFilter(child.pkg)) {
-                            logVerbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                            verbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
                             node.dependentPackages.push(child);
                             child.parents.push(node);
                         } else {
-                            logVerbose(`Package dependency skipped: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                            verbose(`Package dependency skipped: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
                         }
                     } else {
-                        logVerbose(`Package dependency version mismatch: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                        verbose(`Package dependency version mismatch: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
                     }
                 }
             }
@@ -252,7 +254,7 @@ export class BuildGraph {
         let hasTask = false;
         this.buildPackages.forEach((node, name) => {
             if (!node.pkg.markForBuild) {
-                logVerbose(`${node.pkg.nameColored}: Not marked for build`);
+                verbose(`${node.pkg.nameColored}: Not marked for build`);
                 this.buildPackages.delete(name);
                 return;
             }

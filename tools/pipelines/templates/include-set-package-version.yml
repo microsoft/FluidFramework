@@ -9,21 +9,59 @@ parameters:
   default:
 - name: tagName
   type: string
+- name: includeInternalVersions
+  type: boolean
+  default: false
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
 
 # Set version
 steps:
+- ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
+  - task: Bash@3
+    name: PrependPath
+    displayName: Prepend build-tools CLI to path
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        # Prepend the cli bin dir to the path. See
+        # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
+        # more information.
+        echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
+
+  - task: Bash@3
+    name: InstallBuildTools
+    displayName: Install Fluid Build Tools (from repo)
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        pushd "$(Build.SourcesDirectory)/build-tools"
+        npm ci
+        popd
+
+- ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
+  - task: Bash@3
+    name: InstallBuildTools
+    displayName: Install Fluid Build Tools (from npm)
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+
 - task: Bash@3
-  name: InstallBuildTools
-  displayName: Install Fluid Build Tools
+  name: BuildToolsInstallCheck
+  displayName: Check Build Tools Installation
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      pushd "$(Build.SourcesDirectory)/build-tools"
-      npm ci
-      npm run install:build-tools
-      popd
-      npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
+      # Output the help and full command list for debugging purposes
+      flub --help
+      flub commands
 
 - task: Bash@3
   name: SetVersion
@@ -34,6 +72,7 @@ steps:
     TEST_BUILD: $(testBuild)
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
     VERSION_TAGNAME: ${{ parameters.tagName }}
+    VERSION_INCLUDE_INTERNAL_VERSIONS: ${{ parameters.includeInternalVersions }}
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
@@ -44,8 +83,11 @@ steps:
       echo TEST_BUILD=$TEST_BUILD
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
+      echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
 
-      fluid-build-version
+      # Generate the build version
+      flub generate buildVersion
+
 - task: Bash@3
   displayName: Update Package Version
   env:
