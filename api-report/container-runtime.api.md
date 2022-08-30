@@ -111,8 +111,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // (undocumented)
-    flush(): void;
-    // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -155,7 +153,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
     processSignal(message: ISignalMessage, local: boolean): void;
-    refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -166,8 +164,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
-    // (undocumented)
-    setFlushMode(mode: FlushMode): void;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
@@ -190,7 +186,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -309,6 +305,11 @@ export interface IClientSummaryWatcher extends IDisposable {
     watchSummary(clientSequenceNumber: number): ISummary;
 }
 
+// @public
+export interface ICompressionRuntimeOptions {
+    readonly minimumSize?: number;
+}
+
 // @public (undocumented)
 export interface IConnectableRuntime {
     // (undocumented)
@@ -325,6 +326,7 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
@@ -348,7 +350,7 @@ export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getNodeType(nodePath: string): GCNodeType;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public (undocumented)
@@ -413,14 +415,6 @@ export interface IPendingFlush {
     type: "flush";
 }
 
-// @public
-export interface IPendingFlushMode {
-    // (undocumented)
-    flushMode: FlushMode;
-    // (undocumented)
-    type: "flushMode";
-}
-
 // @public (undocumented)
 export interface IPendingLocalState {
     pendingStates: IPendingState[];
@@ -445,12 +439,20 @@ export interface IPendingMessage {
 }
 
 // @public (undocumented)
-export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
+export type IPendingState = IPendingMessage | IPendingFlush;
 
 // @public @deprecated (undocumented)
 export interface IProvideSummarizer {
     // @deprecated (undocumented)
     readonly ISummarizer: ISummarizer;
+}
+
+// @public
+export interface IRefreshSummaryAckOptions {
+    readonly ackHandle: string;
+    readonly proposalHandle: string | undefined;
+    readonly summaryLogger: ITelemetryLogger;
+    readonly summaryRefSeq: number;
 }
 
 // @public
@@ -510,7 +512,7 @@ export interface ISummarizerEvents extends IEvent {
 
 // @public (undocumented)
 export interface ISummarizerInternalsProvider {
-    refreshLatestSummaryAck(proposalHandle: string, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 }
 
@@ -589,8 +591,6 @@ export interface ISummaryConfigurationDisableSummarizer {
 
 // @public (undocumented)
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
-    // @deprecated (undocumented)
-    idleTime: number;
     maxIdleTime: number;
     maxOps: number;
     maxTime: number;
@@ -742,7 +742,11 @@ export type SummarizerStopReason =
 * client to no longer be elected as responsible for summaries. Then it
 * tries to stop its spawned summarizer client.
 */
-| "parentShouldNotSummarize"
+| "notElectedParent"
+/**
+* We are not already running the summarizer and we are not the current elected client id.
+*/
+| "notElectedClient"
 /** Summarizer client was disconnected */
 | "summarizerClientDisconnected" | "summarizerException";
 

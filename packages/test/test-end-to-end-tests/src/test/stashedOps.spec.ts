@@ -48,7 +48,6 @@ const testContainerConfig: ITestContainerConfig = {
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{
-                    idleTime: 5000,
                     maxTime: 5000 * 12,
                     maxAckWaitTime: 120000,
                     maxOps: 1,
@@ -555,18 +554,19 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         const simpleMarker1 = string1.getMarkerFromId("markerId");
-        assert.strictEqual(simpleMarker1.type, "Marker", "Could not get simple marker");
-        assert.strictEqual(simpleMarker1.properties?.markerId, "markerId", "markerId is incorrect");
-        assert.strictEqual(simpleMarker1.properties?.markerSimpleType, "markerKeyValue");
+
+        assert.strictEqual(simpleMarker1?.type, "Marker", "Could not get simple marker");
+        assert.strictEqual(simpleMarker1?.properties?.markerId, "markerId", "markerId is incorrect");
+        assert.strictEqual(simpleMarker1?.properties?.markerSimpleType, "markerKeyValue");
         const parallelMarkers1 = getTextAndMarkers(string1, "tileLabel");
         const parallelMarker1 = parallelMarkers1.parallelMarkers[0];
         assert.strictEqual(parallelMarker1.type, "Marker", "Could not get tile marker");
         assert.strictEqual(parallelMarker1.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
 
         const simpleMarker2 = string2.getMarkerFromId("markerId");
-        assert.strictEqual(simpleMarker2.type, "Marker", "Could not get simple marker");
-        assert.strictEqual(simpleMarker2.properties?.markerId, "markerId", "markerId is incorrect");
-        assert.strictEqual(simpleMarker2.properties?.markerSimpleType, "markerKeyValue");
+        assert.strictEqual(simpleMarker2?.type, "Marker", "Could not get simple marker");
+        assert.strictEqual(simpleMarker2?.properties?.markerId, "markerId", "markerId is incorrect");
+        assert.strictEqual(simpleMarker2?.properties?.markerSimpleType, "markerKeyValue");
         const parallelMarkers2 = getTextAndMarkers(string2, "tileLabel");
         const parallelMarker2 = parallelMarkers2.parallelMarkers[0];
         assert.strictEqual(parallelMarker2.type, "Marker", "Could not get tile marker");

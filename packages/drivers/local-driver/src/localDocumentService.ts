@@ -9,7 +9,7 @@ import * as socketStorage from "@fluidframework/routerlicious-driver";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { LocalDeltaStorageService, LocalDocumentDeltaConnection } from ".";
 
 /**

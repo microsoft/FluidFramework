@@ -33,6 +33,7 @@ import {
     Trace,
     TypedEventEmitter,
     unreachableCase,
+    IsoBuffer,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -105,6 +106,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
+import { compress, decompress } from "lz4js";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
@@ -141,6 +143,7 @@ import {
     ISummarizerInternalsProvider,
     ISummarizerOptions,
     ISummarizerRuntime,
+    IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
@@ -223,10 +226,6 @@ export interface ISummaryBaseConfiguration {
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
     state: "enabled";
     /**
-     * @deprecated - please move all implementation to minIdleTime and maxIdleTime
-     */
-    idleTime: number;
-    /**
      * Defines the maximum allowed time, since the last received Ack, before running the summary
      * with reason maxTime.
      * For example, say we receive ops one by one just before the idle time is triggered.
@@ -288,8 +287,6 @@ export type ISummaryConfiguration =
 
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
-
-    idleTime: 15 * 1000, // 15 secs.
 
     minIdleTime: 0,
 
@@ -407,6 +404,18 @@ export interface ISummaryRuntimeOptions {
 }
 
 /**
+ * Options for op compression.
+ * @experimental - Not ready for use
+ */
+export interface ICompressionRuntimeOptions {
+    /**
+     * The minimum size the content payload must exceed before it is compressed.
+     * Compression is disabled if undefined.
+     */
+    readonly minimumSize?: number;
+}
+
+/**
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
@@ -432,6 +441,11 @@ export interface IContainerRuntimeOptions {
      * Save enough runtime state to be able to serialize upon request and load to the same state in a new container.
      */
     readonly enableOfflineLoad?: boolean;
+    /**
+     * Enables the runtime to compress ops.
+     * @experimental Not ready for use.
+     */
+    readonly compressionOptions?: ICompressionRuntimeOptions;
 }
 
 /**
@@ -519,13 +533,19 @@ export enum RuntimeMessage {
 }
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
-        return true;
-    }
-    return false;
+    return (Object.values(RuntimeMessage) as string[]).includes(message.type);
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
+    if (message.metadata?.compressed) {
+        const contents = IsoBuffer.from(message.contents.contents, "base64");
+        const decompressedMessage = decompress(contents);
+        const intoString = new TextDecoder().decode(decompressedMessage);
+        const asObj = JSON.parse(intoString);
+        message.contents.contents = asObj;
+        message.metadata.compressed = false;
+    }
+
     if (message.type === MessageType.Operation) {
         // legacy op format?
         if (message.contents.address !== undefined && message.contents.type === undefined) {
@@ -614,6 +634,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
+            compressionOptions = {},
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -689,6 +710,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 loadSequenceNumberVerification,
                 flushMode,
                 enableOfflineLoad,
+                compressionOptions,
             },
             containerScope,
             logger,
@@ -781,9 +803,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 7;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode;
+    private readonly _flushMode: FlushMode;
     private needsFlush = false;
-    private flushTrigger = false;
+    private flushMicroTaskExists = false;
 
     private _connected: boolean;
 
@@ -791,6 +813,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private baseSnapshotBlobs?: ISerializedBaseSnapshotBlobs;
 
     private consecutiveReconnects = 0;
+    private compressedOpCount = 0;
 
     /**
      * Used to delay transition to "connected" state while we upload
@@ -1041,7 +1064,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 packagePath,
             ),
             new Map<string, string>(dataStoreAliasMap),
-            this.garbageCollector.writeDataAtRoot,
         );
 
         this.blobManager = new BlobManager(
@@ -1073,12 +1095,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 close: this.closeFn,
                 connected: () => this.connected,
                 flush: this.flush.bind(this),
-                flushMode: () => this.flushMode,
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
-                setFlushMode: (mode) => this.setFlushMode(mode),
+                orderSequentially: this.orderSequentially.bind(this),
             },
-            this._flushMode,
             pendingRuntimeState?.pending);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1426,11 +1446,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addTreeToSummary(summaryTree, blobsTreeName, blobManagerSummary);
         }
 
-        if (this.garbageCollector.writeDataAtRoot) {
-            const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
-            if (gcSummary !== undefined) {
-                addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
-            }
+        const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
+        if (gcSummary !== undefined) {
+            addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
         }
     }
 
@@ -1744,29 +1762,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return context.realize();
     }
 
-    public setFlushMode(mode: FlushMode): void {
-        if (mode === this._flushMode) {
-            return;
-        }
-
-        this.mc.logger.sendTelemetryEvent({
-            eventName: "FlushMode Updated",
-            old: this._flushMode,
-            new: mode,
-        });
-
-        // Flush any pending batches if switching to immediate
-        if (mode === FlushMode.Immediate) {
-            this.flush();
-        }
-
-        this._flushMode = mode;
-
-        // Let the PendingStateManager know that FlushMode has been updated.
-        this.pendingStateManager.onFlushModeUpdated(mode);
-    }
-
-    public flush(): void {
+    /**
+     * Flush the pending ops manually.
+     * This method is expected to be called at the end of a batch.
+     */
+    private flush(): void {
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
@@ -1775,9 +1775,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         // Let the PendingStateManager know that there was an attempt to flush messages.
-        // Note that this should happen before the `this.needsFlush` check below because in the scenario where we are
-        // not connected, `this.needsFlush` will be false but the PendingStateManager might have pending messages and
-        // hence needs to track this.
+        // Note that this should happen before the `this.needsFlush` check below because in the scenario where we
+        // are not connected, `this.needsFlush` will be false but the PendingStateManager might have pending
+        // messages and hence needs to track this.
         this.pendingStateManager.onFlush();
 
         // If flush has already been called then exit early
@@ -1797,33 +1797,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public orderSequentially(callback: () => void): void {
-        // If flush mode is already TurnBased we are either
-        // nested in another orderSequentially, or
-        // the app is flushing manually, in which
-        // case this invocation doesn't own
-        // flushing.
-        if (this.flushMode === FlushMode.TurnBased) {
-            this.trackOrderSequentiallyCalls(callback);
-            return;
-        }
-
-        const savedFlushMode = this.flushMode;
-        this.setFlushMode(FlushMode.TurnBased);
-
-        try {
-            this.trackOrderSequentiallyCalls(callback);
-            this.flush();
-        } finally {
-            this.setFlushMode(savedFlushMode);
-        }
-    }
-
-    private trackOrderSequentiallyCalls(callback: () => void): void {
         let checkpoint: { rollback: () => void; } | undefined;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             checkpoint = this.pendingStateManager.checkpoint();
         }
-
         try {
             this._orderSequentiallyCalls++;
             callback();
@@ -1838,6 +1815,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
+        }
+
+        if (this.flushMode === FlushMode.Immediate && this._orderSequentiallyCalls === 0) {
+            this.flush();
         }
     }
 
@@ -1886,6 +1867,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readOnlyInfo.readonly;
+    }
+
+    /**
+     * Are we in the middle of batching ops together?
+     */
+    private currentlyBatching() {
+        return this.flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls !== 0;
     }
 
     public getQuorum(): IQuorumClients {
@@ -2103,10 +2091,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
      * After GC has run, called to notify this container's nodes of routes that are used in it.
      * @param usedRoutes - The routes that are used in all nodes in this Container.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
-     * unreferenced as part of this GC run, this should be used to update the time when it happens.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Update our summarizer node's used routes. Updating used routes in summarizer node before
         // summarizing is required and asserted by the the summarizer node. We are the root and are
         // always referenced, so the used routes is only self-route (empty string).
@@ -2119,7 +2105,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        return this.dataStores.updateUsedRoutes(dataStoreUsedRoutes, gcTimestamp);
+        return this.dataStores.updateUsedRoutes(dataStoreUsedRoutes);
     }
 
     /**
@@ -2544,25 +2530,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;
 
+        // We should add the "batch: true" metadata regardless of the connected state
+        if (this.currentlyBatching() && !this.needsFlush) {
+            opMetadataInternal = {
+                ...opMetadata,
+                batch: true,
+            };
+            this.needsFlush = true;
+        }
+
         if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
 
             // If in TurnBased flush mode we will trigger a flush at the next turn break
-            if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
-                opMetadataInternal = {
-                    ...opMetadata,
-                    batch: true,
-                };
-                this.needsFlush = true;
-
+            if (this.flushMode === FlushMode.TurnBased && !this.flushMicroTaskExists) {
+                this.flushMicroTaskExists = true;
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                if (!this.flushTrigger) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flushTrigger = false;
-                        this.flush();
-                    });
-                }
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flushMicroTaskExists = false;
+                    this.flush();
+                });
             }
 
             if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
@@ -2605,7 +2593,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
         // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
-        const middleOfBatch = this.flushMode === FlushMode.TurnBased && this.needsFlush;
+        const middleOfBatch = this.currentlyBatching() && this.needsFlush;
         if (middleOfBatch) {
             this.mc.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
         }
@@ -2620,10 +2608,48 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
+        contentLength: number,
+        serializedContent?: string,
         appData?: any,
     ) {
         this.verifyNotClosed();
         assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
+
+        if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
+            serializedContent &&
+            contentLength > this.runtimeOptions.compressionOptions.minimumSize
+        ) {
+            this.compressedOpCount++;
+
+            const compressionStart = Date.now();
+            const contentsAsBuffer = new TextEncoder().encode(serializedContent);
+            const compressedContents = compress(contentsAsBuffer);
+            const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+            const duration = Date.now() - compressionStart;
+
+            if (this.compressedOpCount % 100) {
+                this.mc.logger.sendPerformanceEvent({
+                    eventName: "compressedOp",
+                    duration,
+                    sizeBeforeCompression: contentLength,
+                    sizeAfterCompression: compressedContent.length,
+                });
+            }
+
+            // Only compress the payload if it's actually smaller after compression
+            const shouldCompress = contentLength > compressedContent.length;
+            const compressedPayload: ContainerRuntimeMessage = {
+                type,
+                contents: shouldCompress ? compressedContent : contents,
+            };
+
+            return this.context.submitFn(
+                MessageType.Operation,
+                compressedPayload,
+                batch,
+                { ...appData, compressed: shouldCompress });
+        }
+
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,
@@ -2694,12 +2720,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
-    public async refreshLatestSummaryAck(
-        proposalHandle: string | undefined,
-        ackHandle: string,
-        summaryRefSeq: number,
-        summaryLogger: ITelemetryLogger,
-    ) {
+    public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
+        const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const { snapshotTree } = await this.fetchSnapshotFromStorage(
             ackHandle,

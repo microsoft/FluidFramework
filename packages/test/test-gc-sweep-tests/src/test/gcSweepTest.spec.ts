@@ -47,7 +47,6 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
                 summarizerClientElection: true,
                 maxAckWaitTime: 5000,
                 maxOpsSinceLastSummary: 100,
-                idleTime: 100,
                 minIdleTime: 0,
                 maxIdleTime: 300,
                 maxTime: 4000,

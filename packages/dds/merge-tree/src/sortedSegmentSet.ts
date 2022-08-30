@@ -5,6 +5,8 @@
 
 import { ISegment } from "./mergeTreeNodes";
 
+export type SortedSegmentSetItem = ISegment | { readonly segment: ISegment; };
+
 /**
  * Stores a unique and sorted set of segments, or objects with segments
  *
@@ -15,7 +17,8 @@ import { ISegment } from "./mergeTreeNodes";
  * the segments changes. This invariant allows ensure the segments stay ordered and unique, and that new segments
  * can be inserted into that order.
  */
-export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment; } = ISegment> {
+export class SortedSegmentSet<
+    T extends SortedSegmentSetItem= ISegment> {
     private readonly ordinalSortedItems: T[] = [];
 
     public get size(): number {
@@ -27,7 +30,7 @@ export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment;
     }
 
     public addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T) {
-        const position = this.findOrdinalPosition(this.getOrdinal(newItem));
+        const position = this.findItemPosition(newItem);
         if (position.exists) {
             if (update) {
                 update(this.ordinalSortedItems[position.index], newItem);
@@ -38,7 +41,7 @@ export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment;
     }
 
     public remove(item: T): boolean {
-        const position = this.findOrdinalPosition(this.getOrdinal(item));
+        const position = this.findItemPosition(item);
         if (position.exists) {
             this.ordinalSortedItems.splice(position.index, 1);
             return true;
@@ -47,7 +50,7 @@ export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment;
     }
 
     public has(item: T): boolean {
-        const position = this.findOrdinalPosition(this.getOrdinal(item));
+        const position = this.findItemPosition(item);
         return position.exists;
     }
 
@@ -61,25 +64,52 @@ export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment;
         return maybeSegment.ordinal;
     }
 
-    private findOrdinalPosition(ordinal: string, start?: number, end?: number): { exists: boolean; index: number; } {
+    private findItemPosition(item: T): { exists: boolean; index: number; } {
         if (this.ordinalSortedItems.length === 0) {
             return { exists: false, index: 0 };
         }
-        if (start === undefined || end === undefined) {
-            return this.findOrdinalPosition(ordinal, 0, this.ordinalSortedItems.length - 1);
-        }
-        const index = start + Math.floor((end - start) / 2);
-        if (this.getOrdinal(this.ordinalSortedItems[index]) > ordinal) {
-            if (start === index) {
+        let start = 0;
+        let end = this.ordinalSortedItems.length - 1;
+        const itemOrdinal = this.getOrdinal(item);
+        let index = -1;
+
+        while (start <= end) {
+            index = start + Math.floor((end - start) / 2);
+            const indexOrdinal = this.getOrdinal(this.ordinalSortedItems[index]);
+            if (indexOrdinal > itemOrdinal) {
+                if (start === index) {
+                    return { exists: false, index };
+                }
+                end = index - 1;
+            } else if (indexOrdinal < itemOrdinal) {
+                if (index === end) {
+                    return { exists: false, index: index + 1 };
+                }
+                start = index + 1;
+            } else if (indexOrdinal === itemOrdinal) {
+                // at this point we've found the ordinal of the item
+                // so we need to find the index of the item instance
+                //
+                if (item === this.ordinalSortedItems[index]) {
+                    return { exists: true, index };
+                }
+                for (let b = index - 1; b >= 0 && this.getOrdinal(this.ordinalSortedItems[b]) === itemOrdinal; b--) {
+                    if (this.ordinalSortedItems[b] === item) {
+                        return { exists: true, index: b };
+                    }
+                }
+                for (index + 1;
+                    index < this.ordinalSortedItems.length
+                        && this.getOrdinal(this.ordinalSortedItems[index]) === itemOrdinal;
+                    index++
+                ) {
+                    if (this.ordinalSortedItems[index] === item) {
+                        return { exists: true, index };
+                    }
+                }
                 return { exists: false, index };
             }
-            return this.findOrdinalPosition(ordinal, start, index - 1);
-        } else if (this.getOrdinal(this.ordinalSortedItems[index]) < ordinal) {
-            if (index === end) {
-                return { exists: false, index: index + 1 };
-            }
-            return this.findOrdinalPosition(ordinal, index + 1, end);
         }
-        return { exists: true, index };
+        return { exists: false, index };
     }
 }
