@@ -290,9 +290,8 @@ describe("TaskManager", () => {
                 await volunteerTaskP;
                 assert.ok(taskManager1.assigned(taskId), "Should be assigned");
 
-                const markCompletedP = taskManager1.complete(taskId);
+                taskManager1.complete(taskId);
                 containerRuntimeFactory.processAllMessages();
-                await markCompletedP;
                 assert.ok(!taskManager1.queued(taskId), "Should not be queued");
                 assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
             });
@@ -309,8 +308,7 @@ describe("TaskManager", () => {
                 assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
                 assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
-                const markCompletedP = taskManager2.complete(taskId);
-                await assert.rejects(markCompletedP);
+                assert.throws(() => { taskManager2.complete(taskId); }, "Should throw error");
                 containerRuntimeFactory.processAllMessages();
                 assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
             });
@@ -328,9 +326,8 @@ describe("TaskManager", () => {
                 assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
                 assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
-                const markCompletedP = taskManager1.complete(taskId);
+                taskManager1.complete(taskId);
                 containerRuntimeFactory.processAllMessages();
-                await markCompletedP;
                 const isAssigned2 = await volunteerTaskP2;
                 assert.ok(!isAssigned2, "Should resolve false");
 
@@ -348,9 +345,8 @@ describe("TaskManager", () => {
                 assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
                 assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
-                const markCompletedP = taskManager1.complete(taskId);
+                taskManager1.complete(taskId);
                 containerRuntimeFactory.processAllMessages();
-                await markCompletedP;
 
                 assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
                 assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
@@ -370,7 +366,7 @@ describe("TaskManager", () => {
                         assert.ok(completedTaskId === taskId, "taskId should match");
                         resolve();
                     });
-                    void taskManager1.complete(taskId);
+                    taskManager1.complete(taskId);
                     containerRuntimeFactory.processAllMessages();
                 }, {
                     durationMs: timeoutMs,
@@ -532,8 +528,7 @@ describe("TaskManager", () => {
                     containerRuntime1.connected = false;
                     containerRuntimeFactory.processAllMessages();
 
-                    const volunteerTaskP = taskManager1.complete(taskId);
-                    await assert.rejects(volunteerTaskP);
+                    assert.throws(() => { taskManager1.complete(taskId); }, "Should throw error");
                     containerRuntimeFactory.processAllMessages();
                 });
             });

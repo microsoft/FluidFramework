@@ -480,7 +480,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         return this.subscribedTasks.has(taskId);
     }
 
-    public async complete(taskId: string): Promise<void> {
+    public complete(taskId: string): void {
         if (!this.assigned(taskId)) {
             throw new Error(`Attempted to mark task as complete while not being assigned: ${taskId}`);
         }
@@ -489,11 +489,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             throw new Error(`Attempted to complete task in disconnected state: ${taskId}`);
         }
 
-        const markCompleteP = new Promise<void>((resolve, reject) => {
-            this.submitCompletedOp(taskId);
-            resolve();
-        });
-        return markCompleteP;
+        this.submitCompletedOp(taskId);
     }
 
     /**
