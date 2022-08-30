@@ -42,7 +42,7 @@
     "@microsoft/api-extractor-model": "^7.23.0",
     "@microsoft/tsdoc": "^0.14.1",
     "@rushstack/node-core-library": "^3.50.1",
-    "colors": "^1.4.0"
+    "chalk": "^2.4.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
