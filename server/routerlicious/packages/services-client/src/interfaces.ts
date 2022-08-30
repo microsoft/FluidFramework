@@ -19,7 +19,7 @@ export interface ISession {
     /**
       * WebSocket server url of the session
       */
-    deltaStreamUrl?: string;
+    deltaStreamUrl: string;
     /**
       * Historian url of the session
       */

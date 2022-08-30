@@ -162,7 +162,7 @@ function convertSessionToFreshSession(session: ISession, lumberjackProperties): 
 export async function getSession(
     ordererUrl: string,
     historianUrl: string,
-    deltaStreamUrl: string = ordererUrl,
+    deltaStreamUrl: string,
     tenantId: string,
     documentId: string,
     documentsCollection: ICollection<IDocument>,
