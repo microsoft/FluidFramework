@@ -9,7 +9,7 @@ import { Delta } from "../../tree";
 import { Brand, Invariant } from "../../util";
 
 /**
- * Functionality provided by a field kind which will be composed together to
+ * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
  */
 export interface FieldChangeHandler<TChangeset> {
