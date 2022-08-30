@@ -7,9 +7,6 @@ import { ApiItem, ApiItemKind, ApiPackage } from "@microsoft/api-extractor-model
 
 import { getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
 
-// TODOs:
-// - use `kind` not `type` (and link to ApiModel docs)
-
 /**
  * This module contains policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
  */
@@ -170,7 +167,7 @@ export namespace DefaultPolicies {
     /**
      * Default {@link PolicyOptions.documentBoundaries}.
      *
-     * Generates separate documents for the following types:
+     * Generates separate documents for the following API item kinds:
      *
      * - Model*
      * - Package*
@@ -189,7 +186,7 @@ export namespace DefaultPolicies {
     /**
      * Default {@link PolicyOptions.hierarchyBoundaries}.
      *
-     * Creates sub-directories for the following types:
+     * Creates sub-directories for the following API item kinds:
      *
      * - Package*
      * - Namespace
