@@ -12,8 +12,8 @@ import type {
     IMigrationTool,
 } from "../migrationTool";
 import type {
-    IInventoryListContainer,
-    IInventoryListContainerEvents,
+    IInventoryListAppModel,
+    IInventoryListAppModelEvents,
     IInventoryList,
 } from "../modelInterfaces";
 
@@ -47,7 +47,7 @@ const exportStringData = async (inventoryList: IInventoryList) => {
 };
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
-export type InventoryListContainerExportType = string;
+export type InventoryListAppModelExportType = string;
 
 /**
  * The InventoryListContainer serves the purpose of wrapping this particular Container in a friendlier interface,
@@ -55,8 +55,8 @@ export type InventoryListContainerExportType = string;
  * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
  * Container does -- instead it is specially designed for the specific container code.
  */
-export class InventoryListContainer extends TypedEventEmitter<IInventoryListContainerEvents>
-    implements IInventoryListContainer {
+export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppModelEvents>
+    implements IInventoryListAppModel {
     // To be used by the consumer of the model to pair with an appropriate view.
     public readonly version = "one";
     private _migrationState = MigrationState.collaborating;
@@ -82,7 +82,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         this.migrationTool.on("migrated", this.onMigrated);
     }
 
-    public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListContainerExportType => {
+    public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListAppModelExportType => {
         if (typeof initialData !== "string" || readVersion(initialData) !== "one") {
             return false;
         }
@@ -116,7 +116,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         this.emit("migrated");
     };
 
-    public readonly exportData = async (): Promise<InventoryListContainerExportType> => {
+    public readonly exportData = async (): Promise<InventoryListAppModelExportType> => {
         return exportStringData(this.inventoryList);
     };
 

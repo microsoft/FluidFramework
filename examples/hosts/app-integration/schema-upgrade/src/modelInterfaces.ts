@@ -9,13 +9,13 @@ import { SharedString } from "@fluidframework/sequence";
 import { IMigratableModel, IMigratableModelEvents } from "./migratableModel";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IInventoryListContainerEvents extends IMigratableModelEvents { }
+export interface IInventoryListAppModelEvents extends IMigratableModelEvents { }
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
  * for the application to run.
  */
-export interface IInventoryListContainer extends IMigratableModel, IEventProvider<IInventoryListContainerEvents> {
+export interface IInventoryListAppModel extends IMigratableModel, IEventProvider<IInventoryListAppModelEvents> {
     /**
      * An inventory tracker list.
      */

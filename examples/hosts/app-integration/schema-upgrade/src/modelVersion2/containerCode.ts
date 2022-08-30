@@ -10,15 +10,15 @@ import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { MigrationToolInstantiationFactory, IMigrationTool } from "../migrationTool";
-import { IInventoryList, IInventoryListContainer } from "../modelInterfaces";
+import { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
 import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoader";
-import { InventoryListContainer } from "./containerModel";
+import { InventoryListAppModel } from "./containerModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
 export const inventoryListId = "default-inventory-list";
 export const migrationToolId = "migration-tool";
 
-const makeInventoryListModel: ModelMakerCallback<IInventoryListContainer> =
+const makeInventoryListAppModel: ModelMakerCallback<IInventoryListAppModel> =
     async (runtime: IContainerRuntime, container: IContainer) => {
         const inventoryList = await requestFluidObject<IInventoryList>(
             await runtime.getRootDataStore(inventoryListId),
@@ -28,7 +28,7 @@ const makeInventoryListModel: ModelMakerCallback<IInventoryListContainer> =
             await runtime.getRootDataStore(migrationToolId),
             "",
         );
-        return new InventoryListContainer(inventoryList, migrationTool, container);
+        return new InventoryListAppModel(inventoryList, migrationTool, container);
     };
 
 export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFactory {
@@ -40,7 +40,7 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
             ]), // registryEntries
             undefined,
             [
-                makeModelRequestHandler(makeInventoryListModel),
+                makeModelRequestHandler(makeInventoryListAppModel),
                 rootDataStoreRequestHandler,
             ],
         );

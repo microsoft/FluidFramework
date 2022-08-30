@@ -12,9 +12,9 @@ import { ModelLoader } from "./modelLoader";
 import { externalDataSource } from "./externalData";
 import type { IMigratableModel, IVersionedModel } from "./migratableModel";
 import { Migrator } from "./migrator";
-import { IInventoryListContainer } from "./modelInterfaces";
+import { IInventoryListAppModel } from "./modelInterfaces";
 import { TinyliciousService } from "./tinyliciousService";
-import { DebugView, InventoryListContainerView } from "./view";
+import { DebugView, InventoryListAppView } from "./view";
 import { inventoryListDataTransformationCallback } from "./dataTransform";
 
 const updateTabForId = (id: string) => {
@@ -25,7 +25,7 @@ const updateTabForId = (id: string) => {
     document.title = id;
 };
 
-const isIInventoryListContainer = (model: IVersionedModel): model is IInventoryListContainer => {
+const isIInventoryListAppModel = (model: IVersionedModel): model is IInventoryListAppModel => {
     return model.version === "one" || model.version === "two";
 };
 
@@ -37,9 +37,9 @@ const render = (model: IVersionedModel) => {
     // This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
     // versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
     // view code loader to pull in the view dynamically based on the version we discover.
-    if (isIInventoryListContainer(model)) {
+    if (isIInventoryListAppModel(model)) {
         ReactDOM.render(
-            React.createElement(InventoryListContainerView, { model }),
+            React.createElement(InventoryListAppView, { model }),
             appDiv,
         );
     } else {
