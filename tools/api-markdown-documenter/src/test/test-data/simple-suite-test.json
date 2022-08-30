@@ -1592,6 +1592,43 @@
         },
         {
           "kind": "Namespace",
+          "canonicalReference": "simple-suite-test!TestModule:namespace",
+          "docComment": "",
+          "excerptTokens": [],
+          "releaseTag": "None",
+          "name": "TestModule",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "Variable",
+              "canonicalReference": "simple-suite-test!TestModule.foo:var",
+              "docComment": "/**\n * Test constant in module.\n *\n * @public\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "foo = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "2"
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isReadonly": true,
+              "releaseTag": "Public",
+              "name": "foo",
+              "variableTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            }
+          ]
+        },
+        {
+          "kind": "Namespace",
           "canonicalReference": "simple-suite-test!TestNamespace:namespace",
           "docComment": "/**\n * Test Namespace\n *\n * @remarks\n *\n * Here are some remarks about the namespace\n *\n * @example\n *\n * Example 1\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @example\n *\n * Example 2\n * ```javascript\n * const bar = foo\n * ```\n *\n * @public\n */\n",
           "excerptTokens": [
