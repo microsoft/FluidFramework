@@ -26,10 +26,10 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
      */
     newContainerId: string | undefined;
     /**
-     * Set the container id where the migrated content can be found.
+     * Set the container id where the migrated content can be found, finalizing the migration.
      * @param id - the container id
      */
-    setNewContainerId(id: string): Promise<void>;
+    finalizeMigration(id: string): Promise<void>;
 
     /**
      * The version string of the proposed new version to use, if one has been proposed.

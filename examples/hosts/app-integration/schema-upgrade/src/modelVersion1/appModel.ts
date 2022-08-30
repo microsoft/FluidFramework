@@ -121,7 +121,7 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
         if (this.newContainerId !== undefined) {
             throw new Error("The migration has already been finalized.");
         }
-        return this.migrationTool.setNewContainerId(newContainerId);
+        return this.migrationTool.finalizeMigration(newContainerId);
     };
 
     public close() {

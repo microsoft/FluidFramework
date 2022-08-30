@@ -65,7 +65,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         return this._newContainerId;
     }
 
-    public async setNewContainerId(id: string) {
+    public async finalizeMigration(id: string) {
         // Only permit a single container to be set as a migration destination.
         if (this.crc.read(newContainerIdKey) !== undefined) {
             throw new Error("New container was already established");
