@@ -9,7 +9,7 @@ import * as childProcess from "child_process";
 // eslint-disable-next-line unicorn/import-style
 import * as path from "path";
 import { Flags } from "@oclif/core";
-import { handlers, exclusionsFile } from "@fluidframework/build-tools";
+import { handlers, readJsonAsync } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 
 const readStdin: () => Promise<string | undefined> = async () => {
@@ -57,7 +57,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         exclusions: Flags.file({
             description: `Path to the exclusions.json file`,
             exists: true,
-            required: false,
+            required: true,
             char: "e",
         }),
         stdin: Flags.boolean({
@@ -96,11 +96,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             this.log(`Filtering file paths by regex: ${pathRegex}`);
         }
 
-        const exclusions: RegExp[] =
-            this.processedFlags.exclusions === undefined
-                ? exclusionsFile.map((e: string) => new RegExp(e, "i"))
-                : // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
-                  require(this.processedFlags.exclusions).map((e: string) => new RegExp(e, "i"));
+        if (this.processedFlags.exclusions === undefined) {
+            this.error("ERROR: No exclusions file provided.");
+        }
+
+        const exclusionsFile = await readJsonAsync(this.processedFlags.exclusions);
+
+        const exclusions: RegExp[] = exclusionsFile.map((e: string) => new RegExp(e, "i"));
 
         if (this.processedFlags.stdin) {
             const pipeString = await readStdin();

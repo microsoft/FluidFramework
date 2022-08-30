@@ -15,11 +15,9 @@
         "types": [
             "node"
         ],
-        "resolveJsonModule": true
     },
     "include": [
-        "src/**/*.ts",
-        "src/data/*.json"
+        "src/**/*.ts"
     ],
     "exclude": [
         "src/test/**/*",
