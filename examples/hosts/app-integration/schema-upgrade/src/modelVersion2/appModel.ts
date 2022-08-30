@@ -28,24 +28,12 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
     // To be used by the consumer of the model to pair with an appropriate view.
     public readonly version = "two";
 
-    private readonly _inventoryList: IInventoryList;
-    public get inventoryList() {
-        return this._inventoryList;
-    }
-
-    private readonly _migrationTool: IMigrationTool;
-    public get migrationTool() {
-        return this._migrationTool;
-    }
-
     public constructor(
-        inventoryList: IInventoryList,
-        migrationTool: IMigrationTool,
+        public readonly inventoryList: IInventoryList,
+        public readonly migrationTool: IMigrationTool,
         private readonly container: IContainer,
     ) {
         super();
-        this._inventoryList = inventoryList;
-        this._migrationTool = migrationTool;
     }
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListAppModelExportFormat2 => {
