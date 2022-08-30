@@ -51,6 +51,8 @@
     "stop:docker:full": "docker-compose -f server/docker-compose.yml down && docker volume prune --force",
     "test": "npm run test:mocha && npm run test:jest && npm run test:types && npm run test:realsvc",
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
+    "test:benchmark:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/benchmarkOutput/**\" benchmarkOutput",
+    "test:benchmark:report": "lerna run test:benchmark:report --stream --no-bail --no-sort -- -- --reporterOptions reportDir=./benchmarkOutput",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
     "test:coverage": "c8 npm run test:report",
     "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",

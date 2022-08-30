@@ -7,6 +7,10 @@ import { strict as assert } from "assert";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils";
 import { ITelemetryBaseEvent, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 
+/**
+ * Ignores certain error types (does not pay attention to count)
+ * Potentially, we may want to raise the severity of telemetry as an error. i.e - inactiveObjectX telemetry
+ */
 export class IgnoreErrorLogger extends EventAndErrorTrackingLogger {
     private readonly ignoredEvents: Map<string, ITelemetryGenericEvent> = new Map();
 
