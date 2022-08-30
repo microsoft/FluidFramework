@@ -32,6 +32,6 @@ so:
 npm run start -- <arguments to the tool>
 ```
 
-Make sure that the files in the folders you specify and the test type matcth (i.e. run with `--testType executionTime`
+Make sure that the files in the folders you specify and the test type match (i.e. run with `--testType executionTime`
 and folders that contain output files for execution-time tests, or `--testType memoryUsage` and folders that contain
 output files for memory usage tests).
