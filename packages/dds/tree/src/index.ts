@@ -27,10 +27,9 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
 
 export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
-    FieldSchema, ValueSchema, TreeSchema, FieldKind,
-    emptyField, neverTree,
-    SchemaRepository, StoredSchemaRepository,
-    rootFieldKey, TreeTypeSet,
+    FieldSchema, ValueSchema, TreeSchema,
+    StoredSchemaRepository, FieldKindIdentifier,
+    rootFieldKey, TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
 } from "./schema-stored";
 
 export {
@@ -44,7 +43,13 @@ export {
     Covariant,
     ExtractFromOpaque,
     isAny,
+    brand,
+    brandOpaque,
+    ValueFromBranded,
+    NameFromBranded,
 } from "./util";
+
+export { ChangeEncoder, JsonCompatibleReadOnly, JsonCompatible } from "./change-family";
 
 export {
     Rebaser,
@@ -65,4 +70,13 @@ export {
     TextCursor,
     jsonableTreeFromCursor,
     singleTextCursor,
+    emptyField,
+    neverTree,
+    FieldKinds,
+    ChangeHandler,
+    FieldKind,
+    Multiplicity,
+    isNeverField,
+    FullSchemaPolicy,
+    defaultSchemaPolicy,
 } from "./feature-libraries";

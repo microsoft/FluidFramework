@@ -6,13 +6,14 @@
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
 export interface IMigrationToolEvents extends IEvent {
-    (event: "newVersionAccepted" | "migrated", listener: () => void);
+    (event: "newVersionProposed" | "newVersionAccepted" | "migrated", listener: () => void);
 }
 
 export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
     migrated: boolean;
     newContainerId: string | undefined;
     setNewContainerId(id: string): Promise<void>;
+    proposedVersion: string | undefined;
     acceptedVersion: string | undefined;
     proposeVersion(newVersion: string): Promise<void>;
     volunteerForMigration(): Promise<void>;

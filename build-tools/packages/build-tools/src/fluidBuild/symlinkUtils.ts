@@ -5,7 +5,7 @@
 
 import * as path from "path";
 import { Package } from "../common/npmPackage";
-import { logVerbose } from "../common/logging";
+import { defaultLogger } from "../common/logging";
 import {
     existsSync,
     mkdirAsync,
@@ -21,8 +21,10 @@ import * as semver from "semver";
 import * as fs from "fs";
 import { MonoRepo } from "../common/monoRepo";
 
+const {verbose} = defaultLogger;
+
 async function writeAndReplace(outFile: string, bakFile: string, content: string) {
-    logVerbose(`Writing ${outFile}`);
+    verbose(`Writing ${outFile}`);
     if (existsSync(`${outFile}`)) {
         await renameAsync(`${outFile}`, `${bakFile}`)
     }
@@ -81,7 +83,7 @@ async function revertBin(dir: string, binName: string) {
 
 async function fixSymlink(stat: fs.Stats | undefined, symlinkPath: string, pkg: Package, depBuildPackage: Package) {
     // Fixing the symlink
-    logVerbose(`${pkg.nameColored}: Fixing symlink ${symlinkPath}`);
+    verbose(`${pkg.nameColored}: Fixing symlink ${symlinkPath}`);
     if (stat) {
         await renameAsync(symlinkPath, path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`));
     } else {
@@ -107,9 +109,9 @@ async function revertSymlink(symlinkPath: string, pkg: Package, depBuildPackage:
     const origPath = path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`);
     if (existsSync(origPath)) {
         await renameAsync(origPath, symlinkPath);
-        logVerbose(`${pkg.nameColored}: Reverted symlink ${symlinkPath}`);
+        verbose(`${pkg.nameColored}: Reverted symlink ${symlinkPath}`);
     } else {
-        logVerbose(`${pkg.nameColored}: Removed symlink ${symlinkPath}`);
+        verbose(`${pkg.nameColored}: Removed symlink ${symlinkPath}`);
     }
 
     if (depBuildPackage.packageJson.bin) {
@@ -143,7 +145,7 @@ export async function symlinkPackage(repo: FluidRepoBuild, pkg: Package, buildPa
         if (depBuildPackage) {
             const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
             const satisfied = semver.satisfies(depBuildPackage.version, version);
-            logVerbose(`${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${depBuildPackage.version} ${satisfied? "satisfied": "not satisfied"} by range ${version}`);
+            verbose(`${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${depBuildPackage.version} ${satisfied? "satisfied": "not satisfied"} by range ${version}`);
             if (!satisfied) {
                 if (sameMonoRepo) {
                     console.warn(`${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`)
@@ -184,7 +186,7 @@ export async function symlinkPackage(repo: FluidRepoBuild, pkg: Package, buildPa
                             }
                             continue;
                         }
-                        logVerbose(`${pkg.nameColored}: Symlink found ${symlinkPath} @${realPath}, expects ${depBuildPackage.directory}`);
+                        verbose(`${pkg.nameColored}: Symlink found ${symlinkPath} @${realPath}, expects ${depBuildPackage.directory}`);
                     }
                 }
 

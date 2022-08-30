@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { FluidRepo, isMonoRepoKind, VersionBag } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
@@ -168,6 +169,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                 if (versionOrBump === undefined) {
                     this.error(`versionOrBump cannot be undefined.`);
                 }
+
+                assert(pkg !== undefined, "Package is undefined.");
 
                 const rangeSpec: PackageWithRangeSpec = { pkg, rangeOrBumpType: versionOrBump };
                 return [pkg.name, rangeSpec];

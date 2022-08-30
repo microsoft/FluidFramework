@@ -6,6 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
+import { parseStringDataVersionTwo, readVersion } from "../dataTransform";
 import { MigrationState } from "../migrationInterfaces";
 import type {
     IMigrationTool,
@@ -21,33 +22,28 @@ const getStateFromMigrationTool = (migrationTool: IMigrationTool) => {
         return MigrationState.migrated;
     } else if (migrationTool.acceptedVersion !== undefined) {
         return MigrationState.migrating;
+    } else if (migrationTool.proposedVersion !== undefined) {
+        return MigrationState.stopping;
     } else {
         return MigrationState.collaborating;
     }
 };
 
-// These helper functions produce and consume the same stringified form of the data.
-function parseStringData(stringData: string) {
-    const itemStrings = stringData.split("\n");
-    return itemStrings.map((itemString) => {
-        const [itemNameString, itemQuantityString] = itemString.split(":");
-        return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
-    });
-}
-
+// Applies string data in version:two format.
 const applyStringData = async (inventoryList: IInventoryList, stringData: string) => {
-    const parsedInventoryItemData = parseStringData(stringData);
+    const parsedInventoryItemData = parseStringDataVersionTwo(stringData);
     for (const { name, quantity } of parsedInventoryItemData) {
         inventoryList.addItem(name, quantity);
     }
 };
 
-const extractStringData = async (inventoryList: IInventoryList) => {
+// Exports in version:two format (using tab delimiter between name/quantity)
+const exportStringData = async (inventoryList: IInventoryList) => {
     const inventoryItems = inventoryList.getItems();
     const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-        return `${ inventoryItem.name.getText() }:${ inventoryItem.quantity.toString() }`;
+        return `${ inventoryItem.name.getText() }\t${ inventoryItem.quantity.toString() }`;
     });
-    return inventoryItemStrings.join("\n");
+    return `version:two\n${inventoryItemStrings.join("\n")}`;
 };
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
@@ -81,17 +77,13 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         super();
         this._inventoryList = inventoryList;
         this._migrationState = getStateFromMigrationTool(this.migrationTool);
+        this.migrationTool.on("newVersionProposed", this.onNewVersionProposed);
         this.migrationTool.on("newVersionAccepted", this.onNewVersionAccepted);
         this.migrationTool.on("migrated", this.onMigrated);
     }
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListContainerExportType => {
-        if (typeof initialData !== "string") {
-            return false;
-        }
-        try {
-            parseStringData(initialData);
-        } catch {
+        if (typeof initialData !== "string" || readVersion(initialData) !== "two") {
             return false;
         }
         return true;
@@ -109,6 +101,11 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         await applyStringData(this.inventoryList, initialData);
     };
 
+    private readonly onNewVersionProposed = () => {
+        this._migrationState = MigrationState.stopping;
+        this.emit("stopping");
+    };
+
     private readonly onNewVersionAccepted = () => {
         this._migrationState = MigrationState.migrating;
         this.emit("migrating");
@@ -120,8 +117,16 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     };
 
     public readonly exportData = async (): Promise<InventoryListContainerExportType> => {
-        return extractStringData(this.inventoryList);
+        return exportStringData(this.inventoryList);
     };
+
+    public get proposedVersion() {
+        const version = this.migrationTool.proposedVersion;
+        if (typeof version !== "string" && version !== undefined) {
+            throw new Error("Unexpected code detail format");
+        }
+        return version;
+    }
 
     public get acceptedVersion() {
         const version = this.migrationTool.acceptedVersion;
