@@ -8,8 +8,8 @@ This document is incomplete and extensions to it are welcome.
 
 ## <a name="trailing-ops"></a>Trailing Ops and Compatibility
 
-When initializing a DDS instance from an existing document, first the summary is loaded, and then any ops since that summary are applied.
-These ops are called "Trailing Ops", and they can get persisted as part of the server side summarization when a session ends between summaries.
-Fluid typically has no service that applies these trailing ops to the DDS.
+When a session ends between summaries, the server saves all ops since the last summary as "Trailing Ops".
+When a client loads a DDS from an existing document, first the summary is loaded, then the trailing ops are applied.
+Fluid typically has no service that updates summaries by applying these trailing ops to the DDS.
 Thus these trailing ops may remain in documents indefinitely, only being removed if a client opens, edits and re-summarizes the document.
-This means DDSes should support processing all versions of ops that were ever used (in addition to supporting all past summary formats) to ensure all documents continue to be openable.
+This means DDSes need to support processing all versions of ops that were ever used (in addition to supporting all past summary formats) to ensure all documents continue to be openable.
