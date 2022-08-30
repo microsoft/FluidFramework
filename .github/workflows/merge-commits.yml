@@ -45,7 +45,7 @@ jobs:
     needs: [ check-pr ]
     if: needs.check-pr.outputs.EXISTS == 'false'
     steps:
-      - run: npm install @azure/storage-queue
+      - run: npm install @azure/storage-queue @octokit/core
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         id: dequeue-message
         with:
