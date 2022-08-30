@@ -5,11 +5,17 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
+export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
+
 export interface IMigrationToolEvents extends IEvent {
     (event: "newVersionProposed" | "newVersionAccepted" | "migrated", listener: () => void);
 }
 
 export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
+    /**
+     * The current state of migration.
+     */
+    migrationState: MigrationState;
     /**
      * Whether the migration has fully completed.
      */

@@ -45,6 +45,18 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         return this._taskManager;
     }
 
+    public get migrationState() {
+        if (this.migrated) {
+            return "migrated";
+        } else if (this.acceptedVersion !== undefined) {
+            return "migrating";
+        } else if (this.proposedVersion !== undefined) {
+            return "stopping";
+        } else {
+            return "collaborating";
+        }
+    }
+
     public get migrated() {
         return this.crc.read(newContainerIdKey) !== undefined;
     }
