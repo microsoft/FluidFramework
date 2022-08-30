@@ -290,7 +290,7 @@ describe("TaskManager", () => {
                 await volunteerTaskP;
                 assert.ok(taskManager1.assigned(taskId), "Should be assigned");
 
-                const markCompletedP = taskManager1.markAsCompleted(taskId);
+                const markCompletedP = taskManager1.complete(taskId);
                 containerRuntimeFactory.processAllMessages();
                 await markCompletedP;
                 assert.ok(!taskManager1.queued(taskId), "Should not be queued");
@@ -309,7 +309,7 @@ describe("TaskManager", () => {
                 assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
                 assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
-                const markCompletedP = taskManager2.markAsCompleted(taskId);
+                const markCompletedP = taskManager2.complete(taskId);
                 await assert.rejects(markCompletedP);
                 containerRuntimeFactory.processAllMessages();
                 assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
@@ -328,7 +328,7 @@ describe("TaskManager", () => {
                 assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
                 assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
-                const markCompletedP = taskManager1.markAsCompleted(taskId);
+                const markCompletedP = taskManager1.complete(taskId);
                 containerRuntimeFactory.processAllMessages();
                 await markCompletedP;
                 const isAssigned2 = await volunteerTaskP2;
@@ -348,7 +348,7 @@ describe("TaskManager", () => {
                 assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
                 assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
-                const markCompletedP = taskManager1.markAsCompleted(taskId);
+                const markCompletedP = taskManager1.complete(taskId);
                 containerRuntimeFactory.processAllMessages();
                 await markCompletedP;
 
@@ -370,7 +370,7 @@ describe("TaskManager", () => {
                         assert.ok(completedTaskId === taskId, "taskId should match");
                         resolve();
                     });
-                    void taskManager1.markAsCompleted(taskId);
+                    void taskManager1.complete(taskId);
                     containerRuntimeFactory.processAllMessages();
                 }, {
                     durationMs: timeoutMs,
@@ -532,7 +532,7 @@ describe("TaskManager", () => {
                     containerRuntime1.connected = false;
                     containerRuntimeFactory.processAllMessages();
 
-                    const volunteerTaskP = taskManager1.markAsCompleted(taskId);
+                    const volunteerTaskP = taskManager1.complete(taskId);
                     await assert.rejects(volunteerTaskP);
                     containerRuntimeFactory.processAllMessages();
                 });

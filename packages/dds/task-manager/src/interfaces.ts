@@ -64,5 +64,5 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
      * fails for any reason.
      * @param taskId - Identifier for the task
      */
-    markAsCompleted(taskId: string): Promise<void>;
+    complete(taskId: string): Promise<void>;
 }

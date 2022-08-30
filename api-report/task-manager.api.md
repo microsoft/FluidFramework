@@ -19,7 +19,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     abandon(taskId: string): void;
     assigned(taskId: string): boolean;
-    markAsCompleted(taskId: string): Promise<void>;
+    complete(taskId: string): Promise<void>;
     queued(taskId: string): boolean;
     subscribed(taskId: string): boolean;
     subscribeToTask(taskId: string): void;
@@ -40,6 +40,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     applyStashedOp(): void;
     // (undocumented)
     assigned(taskId: string): boolean;
+    // (undocumented)
+    complete(taskId: string): Promise<void>;
     static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
     static getFactory(): IChannelFactory;
     // (undocumented)
@@ -48,8 +50,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected initializeLocalCore(): void;
     // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    markAsCompleted(taskId: string): Promise<void>;
     // @internal (undocumented)
     protected onConnect(): void;
     // @internal (undocumented)

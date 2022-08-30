@@ -147,7 +147,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
     // connectionWatcher emits an event whenever we get connected or disconnected.
     private readonly connectionWatcher: EventEmitter = new EventEmitter();
-    // completedWatcher emits an event whenever the local client calls markAsCompleted() on a task.
+    // completedWatcher emits an event whenever the local client calls complete() on a task.
     private readonly completedWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
@@ -480,7 +480,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         return this.subscribedTasks.has(taskId);
     }
 
-    public async markAsCompleted(taskId: string): Promise<void> {
+    public async complete(taskId: string): Promise<void> {
         if (!this.assigned(taskId)) {
             throw new Error(`Attempted to mark task as complete while not being assigned: ${taskId}`);
         }
