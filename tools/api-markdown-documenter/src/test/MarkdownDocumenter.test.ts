@@ -172,7 +172,7 @@ describe("api-markdown-documenter full-suite tests", () => {
     };
 
     /**
-     * A sample "flat" configuration, which renders everything to the package parent document.
+     * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
      */
     const flatConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
         uriRoot: "docs",
@@ -183,7 +183,7 @@ describe("api-markdown-documenter full-suite tests", () => {
     };
 
     /**
-     * A sample "sparse" configuration, which renders everything to its own document.
+     * A sample "sparse" configuration, which renders every item kind to its own document.
      */
     const sparseConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
         uriRoot: "docs",
