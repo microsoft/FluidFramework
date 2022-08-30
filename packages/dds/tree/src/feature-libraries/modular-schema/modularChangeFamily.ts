@@ -19,7 +19,11 @@ import { brand, Invariant, Multimap } from "../../util";
 import { FieldChangeHandler, FieldChangeMap, FieldChangeset, NodeChangeset } from "./fieldChangeHandler";
 import { FullSchemaPolicy } from "./fieldKind";
 
-export class SchemaChangeFamily implements
+/**
+ * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
+ * as determined by the schema.
+ */
+export class ModularChangeFamily implements
     ChangeFamily<any, NodeChangeset>,
     ChangeRebaser<NodeChangeset>,
     ChangeEncoder<NodeChangeset> {
@@ -293,7 +297,7 @@ function firstFromSet<T>(set: ReadonlySet<T>): T {
 
 export class SchemaEditBuilder extends ProgressiveEditBuilder<NodeChangeset> {
     constructor(
-        family: SchemaChangeFamily,
+        family: ModularChangeFamily,
         deltaReciever: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ) {
