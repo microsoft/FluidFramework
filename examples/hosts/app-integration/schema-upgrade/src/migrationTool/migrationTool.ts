@@ -6,7 +6,7 @@
 import { IQuorum, Quorum } from "@fluid-experimental/quorum";
 import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@fluidframework/register-collection";
 
 import type { IMigrationTool } from "./interfaces";

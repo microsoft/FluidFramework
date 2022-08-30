@@ -4,7 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IMigrationTool } from "../migrationTool";
+import type { IMigrationTool } from "../migrationTool";
 
 export interface IVersionedModel {
     /**

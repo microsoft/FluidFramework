@@ -12,7 +12,7 @@ import { ModelLoader } from "./modelLoader";
 import { externalDataSource } from "./externalData";
 import type { IMigratableModel, IVersionedModel } from "./migratableModel";
 import { Migrator } from "./migrator";
-import { IInventoryListAppModel } from "./modelInterfaces";
+import type { IInventoryListAppModel } from "./modelInterfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import { DebugView, InventoryListAppView } from "./view";
 import { inventoryListDataTransformationCallback } from "./dataTransform";

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import type { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
-import { IModelLoader, ModelMakerCallback } from "./interfaces";
+import type { IModelLoader, ModelMakerCallback } from "./interfaces";
 
 // This ModelLoader works on a convention, that the container it will load a model for must respond to a specific
 // request format with the model object.  Here we export a helper function for those container authors to align to

@@ -4,13 +4,13 @@
  */
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { MigrationToolInstantiationFactory, IMigrationTool } from "../migrationTool";
-import { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
+import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
 import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoader";
 import { InventoryListAppModel } from "./appModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";

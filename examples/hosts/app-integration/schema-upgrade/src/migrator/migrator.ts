@@ -9,8 +9,8 @@ import type {
     IMigratableModel,
     MigrationState,
 } from "../migratableModel";
-import { IModelLoader } from "../modelLoader";
-import {
+import type { IModelLoader } from "../modelLoader";
+import type {
     DataTransformationCallback,
     IMigrator,
     IMigratorEvents,

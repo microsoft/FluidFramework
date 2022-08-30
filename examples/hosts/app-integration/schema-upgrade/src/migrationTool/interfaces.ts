@@ -15,12 +15,12 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
     /**
      * The current state of migration.
      */
-    migrationState: MigrationState;
+    readonly migrationState: MigrationState;
 
     /**
      * The container id where the migrated content can be found, if the migration has fully completed.
      */
-    newContainerId: string | undefined;
+    readonly newContainerId: string | undefined;
     /**
      * Set the container id where the migrated content can be found, finalizing the migration.
      * @param id - the container id
@@ -30,11 +30,11 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
     /**
      * The version string of the proposed new version to use, if one has been proposed.
      */
-    proposedVersion: string | undefined;
+    readonly proposedVersion: string | undefined;
     /**
      * The version string of the accepted new version to use, if one has been accepted.
      */
-    acceptedVersion: string | undefined;
+    readonly acceptedVersion: string | undefined;
     /**
      * Propose a new version to use.
      * @param newVersion - the version string

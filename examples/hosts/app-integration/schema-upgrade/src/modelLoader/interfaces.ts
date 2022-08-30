@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 export interface IModelLoader<ModelType> {
     /**
