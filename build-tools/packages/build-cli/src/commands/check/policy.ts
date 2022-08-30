@@ -57,9 +57,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         exclusions: Flags.file({
             description: `Path to the exclusions.json file`,
             exists: true,
-            required: true,
+            required: false,
             char: "e",
-            default: "exclusions.json",
         }),
         stdin: Flags.boolean({
             description: `Get file from stdin`,
