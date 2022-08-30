@@ -16,10 +16,6 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
      * The current state of migration.
      */
     migrationState: MigrationState;
-    /**
-     * Whether the migration has fully completed.
-     */
-    migrated: boolean;
 
     /**
      * The container id where the migrated content can be found, if the migration has fully completed.

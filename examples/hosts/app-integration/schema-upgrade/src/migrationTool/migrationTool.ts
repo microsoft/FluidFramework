@@ -22,7 +22,6 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     private _quorum: IQuorum<string> | undefined;
     private _crc: IConsensusRegisterCollection<string> | undefined;
     private _taskManager: ITaskManager | undefined;
-    private _newContainerId: string | undefined;
 
     private get quorum() {
         if (this._quorum === undefined) {
@@ -46,7 +45,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     }
 
     public get migrationState() {
-        if (this.migrated) {
+        if (this.newContainerId !== undefined) {
             return "migrated";
         } else if (this.acceptedVersion !== undefined) {
             return "migrating";
@@ -57,12 +56,8 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         }
     }
 
-    public get migrated() {
-        return this.crc.read(newContainerIdKey) !== undefined;
-    }
-
     public get newContainerId() {
-        return this._newContainerId;
+        return this.crc.read(newContainerIdKey);
     }
 
     public async finalizeMigration(id: string) {
@@ -139,9 +134,8 @@ export class MigrationTool extends DataObject implements IMigrationTool {
             }
         });
 
-        this.crc.on("atomicChanged", (key: string, value: string) => {
+        this.crc.on("atomicChanged", (key: string) => {
             if (key === newContainerIdKey) {
-                this._newContainerId = value;
                 this.emit("migrated");
             }
         });
