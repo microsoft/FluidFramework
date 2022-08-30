@@ -28,7 +28,7 @@ Are you already generating `.api.json` report files as a part of your build?
 If yes, create a file called `api-markdown-documenter.js` and paste the following code:
 
 ```javascript
-const { readModel, renderFiles } = require("@fluidtools/api-markdown-documenter");
+const { readModel, renderFiles } = require("@fluid-tools/api-markdown-documenter");
 
 const inputDir = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
 const outputDir = "<YOUR-OUTPUT-DIRECTORY-PATH>";
