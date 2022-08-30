@@ -7,25 +7,23 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform";
-import { MigrationState } from "../migratableModel";
-import type {
-    IMigrationTool,
-} from "../migrationTool";
+import type { MigrationState } from "../migratableModel";
+import type { IMigrationTool } from "../migrationTool";
 import type {
     IInventoryListAppModel,
     IInventoryListAppModelEvents,
     IInventoryList,
 } from "../modelInterfaces";
 
-const getStateFromMigrationTool = (migrationTool: IMigrationTool) => {
+const getStateFromMigrationTool = (migrationTool: IMigrationTool): MigrationState => {
     if (migrationTool.migrated) {
-        return MigrationState.migrated;
+        return "migrated";
     } else if (migrationTool.acceptedVersion !== undefined) {
-        return MigrationState.migrating;
+        return "migrating";
     } else if (migrationTool.proposedVersion !== undefined) {
-        return MigrationState.stopping;
+        return "stopping";
     } else {
-        return MigrationState.collaborating;
+        return "collaborating";
     }
 };
 
@@ -59,7 +57,7 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
     implements IInventoryListAppModel {
     // To be used by the consumer of the model to pair with an appropriate view.
     public readonly version = "one";
-    private _migrationState = MigrationState.collaborating;
+    private _migrationState: MigrationState = "collaborating";
     public getMigrationState(): MigrationState {
         return this._migrationState;
     }
@@ -102,17 +100,17 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
     };
 
     private readonly onNewVersionProposed = () => {
-        this._migrationState = MigrationState.stopping;
+        this._migrationState = "stopping";
         this.emit("stopping");
     };
 
     private readonly onNewVersionAccepted = () => {
-        this._migrationState = MigrationState.migrating;
+        this._migrationState = "migrating";
         this.emit("migrating");
     };
 
     private readonly onMigrated = () => {
-        this._migrationState = MigrationState.migrated;
+        this._migrationState = "migrated";
         this.emit("migrated");
     };
 

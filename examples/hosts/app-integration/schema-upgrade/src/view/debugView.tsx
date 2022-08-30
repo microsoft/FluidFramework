@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import { IMigratableModel, MigrationState } from "../migratableModel";
+import type { IMigratableModel, MigrationState } from "../migratableModel";
 
 export interface IDebugViewProps {
     model: IMigratableModel;
@@ -95,10 +95,10 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
             </div>
             <div>
                 Status:
-                { migrationState === MigrationState.collaborating && " Normal collaboration" }
-                { migrationState === MigrationState.stopping && " Migration proposed" }
-                { migrationState === MigrationState.migrating && " Migration in progress" }
-                { migrationState === MigrationState.migrated && " Migration complete" }
+                { migrationState === "collaborating" && " Normal collaboration" }
+                { migrationState === "stopping" && " Migration proposed" }
+                { migrationState === "migrating" && " Migration in progress" }
+                { migrationState === "migrated" && " Migration complete" }
             </div>
             <div>{ proposedVersionStatus }</div>
             <div>{ acceptedVersionStatus }</div>

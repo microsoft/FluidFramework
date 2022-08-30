@@ -31,12 +31,7 @@ export interface IImportExportModel<ImportType, ExportType> {
     exportData: () => Promise<ExportType>;
 }
 
-export enum MigrationState {
-    collaborating,
-    stopping,
-    migrating,
-    migrated,
-}
+export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 export interface IMigratableModelEvents extends IEvent {
     (event: "stopping" | "migrating" | "migrated", listener: () => void);

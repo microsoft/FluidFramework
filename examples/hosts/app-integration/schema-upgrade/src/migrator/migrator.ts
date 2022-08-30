@@ -5,7 +5,7 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
-import {
+import type {
     IMigratableModel,
     MigrationState,
 } from "../migratableModel";
@@ -63,9 +63,9 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
      */
     private readonly takeAppropriateActionForCurrentMigratable = () => {
         const migrationState = this._currentModel.getMigrationState();
-        if (migrationState === MigrationState.migrating) {
+        if (migrationState === "migrating") {
             this.ensureMigrating();
-        } else if (migrationState === MigrationState.migrated) {
+        } else if (migrationState === "migrated") {
             this.ensureLoading();
         } else {
             this._currentModel.once("migrating", this.takeAppropriateActionForCurrentMigratable);
@@ -135,7 +135,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
             // Before attaching, let's check to make sure no one else has already done the migration
             // To avoid creating unnecessary extra containers.
-            if (migratable.getMigrationState() === MigrationState.migrated) {
+            if (migratable.getMigrationState() === "migrated") {
                 this._migrationP = undefined;
                 migratedModel.close();
                 this.takeAppropriateActionForCurrentMigratable();
@@ -149,7 +149,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             const containerId = await createResponse.attach();
 
             // Again, it could be the case that someone else finished the migration during our attach.
-            if (migratable.getMigrationState() === MigrationState.migrated) {
+            if (migratable.getMigrationState() === "migrated") {
                 this._migrationP = undefined;
                 migratedModel.close();
                 this.takeAppropriateActionForCurrentMigratable();

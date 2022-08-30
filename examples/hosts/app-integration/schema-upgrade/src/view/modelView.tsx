@@ -6,7 +6,6 @@
 import React, { useEffect, useState } from "react";
 
 import { IInventoryListAppModel } from "../modelInterfaces";
-import { MigrationState } from "../migratableModel";
 import { InventoryListView } from "./inventoryView";
 
 export interface IInventoryListAppViewProps {
@@ -24,12 +23,12 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> =
     const { model } = props;
 
     const [disableInput, setDisableInput] = useState<boolean>(
-        model.getMigrationState() !== MigrationState.collaborating,
+        model.getMigrationState() !== "collaborating",
     );
 
     useEffect(() => {
         const migrationStateChangedHandler = () => {
-            setDisableInput(model.getMigrationState() !== MigrationState.collaborating);
+            setDisableInput(model.getMigrationState() !== "collaborating");
         };
         model.on("stopping", migrationStateChangedHandler);
         model.on("migrating", migrationStateChangedHandler);
