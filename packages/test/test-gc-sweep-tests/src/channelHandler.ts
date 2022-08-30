@@ -56,7 +56,7 @@ export interface IHandleOpManager extends IOpManager {
  * The OpManagers were written to isolate the logic out of the TestDataObject that was responsible for
  * creating and receiving ops from how each individual channel worked.
  */
- export class ConsensusQueueHandler implements IHandleOpManager {
+export class ConsensusQueueHandler implements IHandleOpManager {
     constructor(
         public readonly channel: ConsensusQueue<IFluidHandle>,
     ) {}
