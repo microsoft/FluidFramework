@@ -102,19 +102,11 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
     };
 
     public get proposedVersion() {
-        const version = this.migrationTool.proposedVersion;
-        if (typeof version !== "string" && version !== undefined) {
-            throw new Error("Unexpected code detail format");
-        }
-        return version;
+        return this.migrationTool.proposedVersion;
     }
 
     public get acceptedVersion() {
-        const version = this.migrationTool.acceptedVersion;
-        if (typeof version !== "string" && version !== undefined) {
-            throw new Error("Unexpected code detail format");
-        }
-        return version;
+        return this.migrationTool.acceptedVersion;
     }
 
     public readonly proposeVersion = (newVersion: string) => {
