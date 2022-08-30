@@ -68,7 +68,7 @@ extends:
     buildDirectory: build-tools
     tagName: build-tools
     taskBuild: build
-    taskBuildDocs: true
+    taskBuildDocs: false
     taskLint: true
     taskTest: ci:test
     poolBuild: Large
