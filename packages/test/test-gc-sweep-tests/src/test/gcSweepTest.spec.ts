@@ -94,20 +94,6 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
     const testTime = 10 * 1000;
 
     beforeEach(async () => {
-        provider = getTestObjectProvider({
-            syncSummarizer: true,
-        });
-
-        // Wrap the logger
-        overrideLogger = new IgnoreErrorLogger(provider.logger);
-        provider.logger = overrideLogger;
-
-        // Ignore session expiry errors
-        overrideLogger.ignoreExpectedEventTypes({
-            eventName: "fluid:telemetry:Container:ContainerClose",
-            errorType: ContainerErrorType.clientSessionExpiredError,
-        });
-
         seed = Math.random();
         random = makeRandom(seed);
     });
@@ -118,6 +104,20 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
     const numberOfTests = 10;
     for (let i = 0; i < numberOfTests; i++) {
         it(`GC Randomization Test with Seed: ${seed}`, async () => {
+            provider = getTestObjectProvider({
+                syncSummarizer: true,
+            });
+
+            // Wrap the logger
+            overrideLogger = new IgnoreErrorLogger(provider.logger);
+            provider.logger = overrideLogger;
+
+            // Ignore session expiry errors
+            overrideLogger.ignoreExpectedEventTypes({
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                errorType: ContainerErrorType.clientSessionExpiredError,
+            });
+
             // Create the containerManager responsible for retrieving, creating, loading, and tracking the lifetime of containers.
             const containerManager = new ContainerManager(runtimeFactory, configProvider, provider);
             const mainContainer = await containerManager.createContainer();
