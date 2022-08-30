@@ -242,8 +242,15 @@ async function fetchLatestSnapshotCore(
                     accept: response.requestHeaders.accept,
                 };
                 let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
+                let contentTypeToRead: string | undefined;
+                if (contentType?.indexOf("application/ms-fluid") !== -1) {
+                    contentTypeToRead = "application/ms-fluid";
+                } else if (contentType?.indexOf("application/json") !== -1) {
+                    contentTypeToRead = "application/json";
+                }
+
                 try {
-                    switch (contentType) {
+                    switch (contentTypeToRead) {
                         case "application/json": {
                             const text = await odspResponse.content.text();
                             odspResponse.propsToLog.bodySize = text.length;
@@ -535,14 +542,12 @@ export async function downloadSnapshot(
     };
     // Decide what snapshot format to fetch as per the feature gate.
     switch (snapshotFormatFetchType) {
-        case SnapshotFormatSupportType.JsonAndBinary:
-            headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
-            break;
         case SnapshotFormatSupportType.Binary:
             headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
             break;
         default:
-            headers.accept = "application/json";
+            // By default ask both versions and let the server decide the format.
+            headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
     }
 
     const odspResponse = await (epochTracker?.fetch(url, fetchOptions, "treesLatest", true, scenarioName) ??
