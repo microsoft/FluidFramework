@@ -160,13 +160,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     routeToHandlers(file: string, handlerRegex: RegExp) {
         const filteredHandlers = handlers.filter(
             (handler) =>
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-return
                 handler.match.test(file) && handlerRegex.test(handler.name),
         );
 
         for (const handler of filteredHandlers) {
             const result = runWithPerf(handler.name, "handle", () =>
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 handler.handler(file, CheckPolicy.pathToGitRoot),
             );
 
@@ -183,17 +181,14 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
             output += `${newline}attempting to resolve: ${file}`;
             const resolveResult = runWithPerf(handler.name, "resolve", () =>
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 resolver(file, CheckPolicy.pathToGitRoot),
             );
 
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (resolveResult.message) {
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 output += newline + resolveResult.message;
             }
 
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!resolveResult.resolved) {
                 return this.exit(1);
             }
@@ -256,10 +251,8 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 function runPolicyCheck(fix: boolean) {
     for (const h of handlers) {
         const final = h.final;
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (final) {
             const result = runWithPerf(h.name, "final", () =>
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 final(CheckPolicy.pathToGitRoot, fix),
             );
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
