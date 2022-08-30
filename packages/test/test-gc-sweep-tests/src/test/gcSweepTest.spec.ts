@@ -87,6 +87,9 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+    let seed = Math.random();
+    let random: IRandom = makeRandom(seed);
+
     // Time spent to run the test. Currently 10 seconds, for better coverage increase this number.
     const testTime = 10 * 1000;
 
@@ -104,6 +107,9 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
             eventName: "fluid:telemetry:Container:ContainerClose",
             errorType: ContainerErrorType.clientSessionExpiredError,
         });
+
+        seed = Math.random();
+        random = makeRandom(seed);
     });
 
     // Currently for GC Sweep testing only, run with npm run test. Should not be running in CI
@@ -111,8 +117,6 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
     // TODO: setup test to run in CI
     const numberOfTests = 10;
     for (let i = 0; i < numberOfTests; i++) {
-        const seed = Math.random();
-        const random: IRandom = makeRandom(seed);
         it(`GC Randomization Test with Seed: ${seed}`, async () => {
             // Create the containerManager responsible for retrieving, creating, loading, and tracking the lifetime of containers.
             const containerManager = new ContainerManager(runtimeFactory, configProvider, provider);
