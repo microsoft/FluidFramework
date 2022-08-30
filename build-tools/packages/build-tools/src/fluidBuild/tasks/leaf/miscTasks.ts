@@ -6,13 +6,15 @@
 import registerDebug from "debug";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
-import { logVerbose } from "../../../common/logging";
+import { defaultLogger } from "../../../common/logging";
 import { ScriptDependencies } from "../../../common/npmPackage";
 import * as path from "path";
 import { BuildPackage } from "../../buildGraph";
 import { assert } from "console";
 
 /* eslint-disable @typescript-eslint/no-empty-function */
+
+const {verbose} = defaultLogger;
 
 export class EchoTask extends LeafTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) { }
@@ -39,7 +41,7 @@ export class LesscTask extends LeafTask {
             }
             return result;
         } catch (e: any) {
-            logVerbose(`${this.node.pkg.nameColored}: ${e.message}`);
+            verbose(`${this.node.pkg.nameColored}: ${e.message}`);
             this.logVerboseTrigger("failed to get file stats");
             return false;
         }
