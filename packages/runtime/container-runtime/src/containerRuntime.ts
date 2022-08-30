@@ -2555,7 +2555,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
                 clientSequenceNumber = this.submitRuntimeMessage(type,
-                    content, this._flushMode === FlushMode.TurnBased /* batch */, opMetadataInternal);
+                    content,
+                    this._flushMode === FlushMode.TurnBased /* batch */,
+                    serializedContent?.length ?? 0,
+                    serializedContent,
+                    opMetadataInternal);
             } else {
                 // If the content length is larger than the client configured message size
                 // instead of splitting the content, we will fail by explicitly closing the container
