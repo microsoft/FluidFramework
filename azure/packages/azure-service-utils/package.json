@@ -53,7 +53,7 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jsrsasign": "^8.0.8",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
     "eslint-config-prettier": "~8.5.0",
     "prettier": "~2.6.2",

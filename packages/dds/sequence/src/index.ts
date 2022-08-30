@@ -22,6 +22,8 @@ export {
     Interval,
     IntervalCollection,
     IntervalCollectionIterator,
+    IntervalLocator,
+    intervalLocatorFromEndpoint,
     IntervalType,
     ISerializableInterval,
     ISerializedInterval,

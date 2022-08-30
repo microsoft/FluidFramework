@@ -312,7 +312,7 @@ describe("Runtime", () => {
         });
 
         describe("Pending state progress tracking", () => {
-            const maxReconnects = 15;
+            const maxReconnects = 7;
 
             let containerRuntime: ContainerRuntime;
             const mockLogger = new MockLogger();
@@ -424,8 +424,8 @@ describe("Runtime", () => {
                     assert.strictEqual(error.getTelemetryProperties().pendingMessages, maxReconnects);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
-                        attempts: 7,
-                        pendingMessages: 7,
+                        attempts: 3,
+                        pendingMessages: 3,
                     }]);
                 });
 
@@ -442,7 +442,7 @@ describe("Runtime", () => {
                     assert.equal(containerErrors.length, 0);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
-                        attempts: 7,
+                        attempts: 3,
                         pendingMessages: 1,
                     }]);
                 });
@@ -520,8 +520,8 @@ describe("Runtime", () => {
                     assert.strictEqual(error.getTelemetryProperties().pendingMessages, maxReconnects);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
-                        attempts: 7,
-                        pendingMessages: 7,
+                        attempts: 3,
+                        pendingMessages: 3,
                     }]);
                 });
         });

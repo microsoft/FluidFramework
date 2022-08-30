@@ -5,7 +5,13 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
-import { IMigratableModel, IMigrator, IMigratorEvents, MigrationState } from "./migrationInterfaces";
+import {
+    DataTransformationCallback,
+    IMigratableModel,
+    IMigrator,
+    IMigratorEvents,
+    MigrationState,
+} from "./migrationInterfaces";
 import { IModelLoader } from "./modelLoading";
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
@@ -39,6 +45,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         private readonly modelLoader: IModelLoader<IMigratableModel>,
         initialMigratable: IMigratableModel,
         initialId: string,
+        private readonly dataTransformationCallback?: DataTransformationCallback,
     ) {
         super();
         this._currentModel = initialMigratable;
@@ -92,23 +99,37 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 return;
             }
 
-            const extractedData = await migratable.exportData();
-
-            // If we needed to transform the extracted data, we would do it here.  In this demo, the export/import
-            // format is unchanged between the two versions, so there's no transformation needed.
-            // TODO: think about how we might enable a transform while allowing Migrator to remain generic?
-            // E.g. have some callback with from/to version that does the transform?
-
             const createResponse = await this.modelLoader.createDetached(acceptedVersion);
             const migratedModel: IMigratableModel = createResponse.model;
-            if (!migratedModel.supportsDataFormat(extractedData)) {
-                throw new Error("New model doesn't support extracted data format");
+
+            const exportedData = await migratable.exportData();
+
+            // TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the exported
+            // data into a format that the new model can import?  If we can determine it early, then clients with old
+            // ModelLoaders can use that opportunity to dispose early and try to get new ModelLoaders.
+            let transformedData: unknown;
+            if (migratedModel.supportsDataFormat(exportedData)) {
+                // If the migrated model already supports the data format, go ahead with the migration.
+                transformedData = exportedData;
+            } else if (this.dataTransformationCallback !== undefined) {
+                // Otherwise, try using the dataTransformationCallback if provided to get the exported data into
+                // a format that we can import.
+                try {
+                    transformedData = await this.dataTransformationCallback(exportedData, migratedModel.version);
+                } catch {
+                    // TODO: This implies that the contract is to throw if the data can't be transformed, which isn't
+                    // great.  How should the dataTransformationCallback indicate failure?
+                    this.emit("migrationNotSupported", acceptedVersion);
+                    this._migrationP = undefined;
+                    return;
+                }
+            } else {
+                // We can't get the data into a format that we can import, give up.
+                this.emit("migrationNotSupported", acceptedVersion);
+                this._migrationP = undefined;
+                return;
             }
-            // TODO: Probably should also validate at proposal time that the model we're proposing will be
-            // able to import the exported format of the current container (taking into consideration our format
-            // transform options).  Not all clients might agree about support if some have old ModelLoaders -- these
-            // clients could use this opportunity to dispose early and try to get new ModelLoaders.
-            await migratedModel.importData(extractedData);
+            await migratedModel.importData(transformedData);
 
             // Before attaching, let's check to make sure no one else has already done the migration
             // To avoid creating unnecessary extra containers.
