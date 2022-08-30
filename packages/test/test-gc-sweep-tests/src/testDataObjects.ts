@@ -18,15 +18,10 @@ import { IChannel, IChannelFactory, IFluidDataStoreRuntime } from "@fluidframewo
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import {
-    ConsensusQueueHandler,
-    ConsensusRegisterCollectionHandler,
     IAddedHandle,
     IHandleOpManager,
-    InkHandler,
     IRandomOpManager,
     IRemovedHandle,
-    SharedCellHandler,
-    SharedCounterHandler,
     SharedMapHandler,
 } from "./channelHandler";
 
@@ -137,26 +132,6 @@ export class DataObjectManyDDSes extends BaseTestDataObject {
 
     // Create IHandleManagers for DDSes that can add handles, and IRandomOpHandlers that can create non-handle ops
     protected async hasInitialized(): Promise<void> {
-        const consensusQueueHandler = new ConsensusQueueHandler(
-            await this.assertedGet<ConsensusQueue>("ConsensusQueue"),
-        );
-        this.handleManager.add(consensusQueueHandler);
-
-        const consensusRegisterCollectionHandler = new ConsensusRegisterCollectionHandler(
-            this.root,
-            await this.assertedGet<ConsensusRegisterCollection<IFluidHandle | null>>("ConsensusRegisterCollection"),
-        );
-        this.handleManager.add(consensusRegisterCollectionHandler);
-
-        const inkHandler = new InkHandler(await this.assertedGet<Ink>("Ink"));
-        this.randomOpHandlers.push(inkHandler);
-
-        const sharedCellHandler = new SharedCellHandler(await this.assertedGet<SharedCell>("SharedCell"));
-        this.handleManager.add(sharedCellHandler);
-
-        const sharedCounterHandler = new SharedCounterHandler(await this.assertedGet<SharedCounter>("SharedCounter"));
-        this.randomOpHandlers.push(sharedCounterHandler);
-
         const sharedMapHandler = new SharedMapHandler(await this.assertedGet<SharedMap>("SharedMap"));
         this.handleManager.add(sharedMapHandler);
         this.randomOpHandlers.push(sharedMapHandler);
