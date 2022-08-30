@@ -120,34 +120,33 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
     }
 
     /** Output a horizontal rule. */
-    public logHr() {
+    protected logHr() {
         this.log("=".repeat(72));
     }
 
-    public logError(message: string | Error) {
-        this.log(chalk.red(`ERROR: ${message}`));
-        this.exit();
-    }
-
     /** Log a message with an indent. */
-    public logIndent(input: string, indent = 2) {
+    protected logIndent(input: string, indent = 2) {
         this.log(`${this.indent(indent)}${input}`);
     }
 
-    public indent(indent = 2): string {
+    /** Indent text by prepending spaces. */
+    protected indent(indent = 2): string {
         return " ".repeat(indent);
     }
 
-    public errorLog(message: string | Error) {
+    /** Logs an error without exiting. */
+    protected errorLog(message: string | Error) {
         this.log(chalk.red(`ERROR: ${message}`));
     }
 
-    public warning(message: string | Error): string | Error {
+    /** Logs a warning. */
+    protected warning(message: string | Error): string | Error {
         this.log(chalk.yellow(`WARNING: ${message}`));
         return message;
     }
 
-    public verbose(message: string | Error): string | Error {
+    /** Logs a verbose log statement. */
+    protected verbose(message: string | Error): string | Error {
         if (this.baseFlags.verbose === true) {
             if (typeof message === "string") {
                 this.log(chalk.grey(`VERBOSE: ${message}`));
