@@ -176,10 +176,10 @@ describe("api-markdown-documenter full-suite tests", () => {
      */
     const flatConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
         uriRoot: "docs",
-        includeBreadcrumb: false,
-        includeTopLevelDocumentHeading: true,
+        includeBreadcrumb: true,
+        includeTopLevelDocumentHeading: false,
         documentBoundaries: [], // Render everything to package documents
-        hierarchyBoundaries: [],
+        hierarchyBoundaries: [], // No additional hierarchy beyond the package level
     };
 
     /**
@@ -208,7 +208,7 @@ describe("api-markdown-documenter full-suite tests", () => {
             ApiItemKind.TypeAlias,
             ApiItemKind.Variable,
         ],
-        hierarchyBoundaries: [],
+        hierarchyBoundaries: [], // No additional hierarchy beyond the package level
     };
 
     const configs: ConfigTestProps[] = [
