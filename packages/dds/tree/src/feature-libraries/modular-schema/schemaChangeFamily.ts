@@ -237,19 +237,21 @@ export class SchemaChangeFamily implements
     }
 
     private getChangeHandler(schema: TreeSchema, field: FieldKey): FieldChangeHandler<any> {
-        // TODO: Check extra fields
-        const fieldSchema = schema.localFields.get(field as LocalFieldKey)
-            ?? this.fieldSchemaForGlobalField(schema, field as GlobalFieldKey);
-
-        assert(fieldSchema !== undefined, "Unknown field key");
+        const fieldSchema = this.getFieldSchema(schema, field);
         const fieldKind = this.schemaPolicy.fieldKinds.get(fieldSchema.kind);
         assert(fieldKind !== undefined, "Unknown field kind");
         return fieldKind.changeHandler;
     }
 
+    /**
+     * If children in `field` of a node with `parentSchema` must all use the same schema,
+     * returns the ID for that schema. Otherwise returns undefined.
+     */
     private getChildSchema(parentSchema: TreeSchema, field: FieldKey): TreeSchemaIdentifier | undefined {
-        // TODO: Return child schema ID when known
-        return undefined;
+        const fieldSchema = this.getFieldSchema(parentSchema, field);
+        return fieldSchema.types?.size === 1
+            ? firstFromSet(fieldSchema.types)
+            : undefined;
     }
 
     private getTreeSchema(schemaId: TreeSchemaIdentifier): TreeSchema {
@@ -258,11 +260,35 @@ export class SchemaChangeFamily implements
         return schema;
     }
 
+    private getFieldSchema(parentSchema: TreeSchema, field: FieldKey): FieldSchema {
+        const fieldSchema = parentSchema.localFields.get(field as LocalFieldKey)
+            ?? this.fieldSchemaForGlobalField(parentSchema, field as GlobalFieldKey)
+            ?? this.fieldSchemaForExtraField(parentSchema, field);
+
+        assert(fieldSchema !== undefined, `No schema defined for field ${field}`);
+        return fieldSchema;
+    }
+
+    private fieldSchemaForExtraField(schema: TreeSchema, key: FieldKey): FieldSchema | undefined {
+        if (schema.extraGlobalFields) {
+            return this.schemaData.globalFieldSchema.get(key as GlobalFieldKey);
+        }
+        return schema.extraLocalFields;
+    }
+
     private fieldSchemaForGlobalField(schema: TreeSchema, key: GlobalFieldKey): FieldSchema | undefined {
         return (schema.globalFields.has(key))
             ? this.schemaData.globalFieldSchema.get(key)
             : undefined;
     }
+}
+
+function firstFromSet<T>(set: ReadonlySet<T>): T {
+    for (const element of set.keys()) {
+        return element;
+    }
+
+    throw new Error("Expected a non-empty set");
 }
 
 export class SchemaEditBuilder extends ProgressiveEditBuilder<NodeChangeset> {
