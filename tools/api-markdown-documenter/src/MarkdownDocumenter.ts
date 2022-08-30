@@ -101,24 +101,24 @@ export function renderDocuments(
  * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
  * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
  * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
- * @param maybeMarkdownEmitter - The emitter to use for generating Markdown output.
+ * @param markdownEmitter - The emitter to use for generating Markdown output.
  * If not provided, a {@link MarkdownEmitter | default implementation} will be used.
  */
 export async function renderFiles(
     partialConfig: MarkdownDocumenterConfiguration,
     outputDirectoryPath: string,
-    maybeMarkdownEmitter?: MarkdownEmitter,
+    markdownEmitter?: MarkdownEmitter,
 ): Promise<void> {
     const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 
     await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
-    const markdownEmitter = maybeMarkdownEmitter ?? new MarkdownEmitter(config.apiModel);
+    markdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
 
     const documents = renderDocuments(config);
 
     await Promise.all(
         documents.map(async (document) => {
-            const emittedDocumentContents = markdownEmitter.emit(
+            const emittedDocumentContents = markdownEmitter!.emit(
                 new StringBuilder(),
                 document.contents,
                 {
