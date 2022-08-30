@@ -54,12 +54,10 @@
     "@oclif/test": "^2",
     "chalk": "^2.4.2",
     "date-fns": "^2.29.1",
-    "extended-enum": "^1.0.1",
     "inquirer": "^8.0.0",
     "jssm": "^5.79.18",
     "npm-check-updates": "^16.0.0",
     "semver": "^7.3.7",
-    "semver-diff": "^4.0.0",
     "table": "^6.8.0"
   },
   "devDependencies": {
