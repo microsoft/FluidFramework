@@ -14,23 +14,6 @@ import type {
     IInventoryList,
 } from "../modelInterfaces";
 
-// Applies string data in version:two format.
-const applyStringData = async (inventoryList: IInventoryList, stringData: string) => {
-    const parsedInventoryItemData = parseStringDataVersionTwo(stringData);
-    for (const { name, quantity } of parsedInventoryItemData) {
-        inventoryList.addItem(name, quantity);
-    }
-};
-
-// Exports in version:two format (using tab delimiter between name/quantity)
-const exportStringData = async (inventoryList: IInventoryList) => {
-    const inventoryItems = inventoryList.getItems();
-    const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-        return `${ inventoryItem.name.getText() }\t${ inventoryItem.quantity.toString() }`;
-    });
-    return `version:two\n${inventoryItemStrings.join("\n")}`;
-};
-
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
 export type InventoryListAppModelExportType = string;
 
@@ -81,11 +64,21 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
         if (!this.supportsDataFormat(initialData)) {
             throw new Error("Data format not supported");
         }
-        await applyStringData(this.inventoryList, initialData);
+
+        // Applies string data in version:two format.
+        const parsedInventoryItemData = parseStringDataVersionTwo(initialData);
+        for (const { name, quantity } of parsedInventoryItemData) {
+            this.inventoryList.addItem(name, quantity);
+        }
     };
 
     public readonly exportData = async (): Promise<InventoryListAppModelExportType> => {
-        return exportStringData(this.inventoryList);
+        // Exports in version:two format (using tab delimiter between name/quantity)
+        const inventoryItems = this.inventoryList.getItems();
+        const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
+            return `${ inventoryItem.name.getText() }\t${ inventoryItem.quantity.toString() }`;
+        });
+        return `version:two\n${inventoryItemStrings.join("\n")}`;
     };
 
     public close() {
