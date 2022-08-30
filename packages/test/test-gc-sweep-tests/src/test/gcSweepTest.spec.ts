@@ -94,8 +94,12 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
         provider = getTestObjectProvider({
             syncSummarizer: true,
         });
+
+        // Wrap the logger
         overrideLogger = new IgnoreErrorLogger(provider.logger);
         provider.logger = overrideLogger;
+
+        // Ignore session expiry errors
         overrideLogger.ignoreExpectedEventTypes({
             eventName: "fluid:telemetry:Container:ContainerClose",
             errorType: ContainerErrorType.clientSessionExpiredError,
