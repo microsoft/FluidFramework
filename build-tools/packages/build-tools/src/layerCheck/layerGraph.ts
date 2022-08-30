@@ -522,7 +522,7 @@ ${lines.join(newline)}
     }
 
     public static load(root: string, packages: Packages, info?: string): LayerGraph {
-        const layerInfoFile = require(info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json"));
+        const layerInfoFile = require(info ?? path.join(__dirname, "..", "data", "layerInfo.json"));
         return new LayerGraph(root, layerInfoFile, packages);
     }
 }

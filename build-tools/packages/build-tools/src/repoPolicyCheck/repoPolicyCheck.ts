@@ -17,7 +17,7 @@ import { handler as dockerfilePackageHandler } from "./handlers/dockerfilePackag
 import { handler as fluidCaseHandler } from "./handlers/fluidCase";
 import { handlers as lockfilesHandlers } from "./handlers/lockfiles";
 
-const exclusions: RegExp[] = require('../../data/exclusions.json').map((e: string) => new RegExp(e, "i"));
+const exclusions: RegExp[] = require('../data/exclusions.json').map((e: string) => new RegExp(e, "i"));
 
 /**
  * argument parsing
