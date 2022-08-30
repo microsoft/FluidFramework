@@ -2556,7 +2556,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
                 clientSequenceNumber = this.submitRuntimeMessage(type,
                     content,
-                    this._flushMode === FlushMode.TurnBased /* batch */,
+                    this.currentlyBatching() /* batch */,
                     serializedContent?.length ?? 0,
                     serializedContent,
                     opMetadataInternal);
