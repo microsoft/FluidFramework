@@ -4,7 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import type { IMigrationTool } from "../migrationTool";
+import type { IMigrationTool } from "./migrationTool";
 
 export interface IVersionedModel {
     /**
@@ -31,8 +31,6 @@ export interface IImportExportModel<ImportType, ExportType> {
      */
     exportData: () => Promise<ExportType>;
 }
-
-export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMigratableModelEvents extends IEvent {

@@ -5,7 +5,7 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
-import type { IMigratableModel, MigrationState } from "../migratableModel";
+import type { IMigratableModel, MigrationState } from "../migrationInterfaces";
 
 /**
  * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import

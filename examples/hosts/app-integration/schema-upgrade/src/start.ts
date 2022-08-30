@@ -10,7 +10,7 @@ import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-d
 import { DemoCodeLoader } from "./demoCodeLoader";
 import { ModelLoader } from "./modelLoader";
 import { externalDataSource } from "./externalData";
-import type { IMigratableModel, IVersionedModel } from "./migratableModel";
+import type { IMigratableModel, IVersionedModel } from "./migrationInterfaces";
 import { Migrator } from "./migrator";
 import type { IInventoryListAppModel } from "./modelInterfaces";
 import { TinyliciousService } from "./tinyliciousService";

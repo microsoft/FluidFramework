@@ -9,7 +9,8 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { MigrationToolInstantiationFactory, IMigrationTool } from "../migrationTool";
+import type { IMigrationTool } from "../migrationInterfaces";
+import { MigrationToolInstantiationFactory } from "../migrationTool";
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
 import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoader";
 import { InventoryListAppModel } from "./appModel";

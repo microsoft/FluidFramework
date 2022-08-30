@@ -9,7 +9,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@fluidframework/register-collection";
 
-import type { IMigrationTool } from "./interfaces";
+import type { IMigrationTool } from "../migrationInterfaces";
 
 const quorumKey = "quorum";
 const crcKey = "crc";

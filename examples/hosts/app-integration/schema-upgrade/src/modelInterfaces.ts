@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import type { IEventProvider } from "@fluidframework/common-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import type { IMigratableModel, IMigratableModelEvents } from "./migratableModel";
+import type { IMigratableModel, IMigratableModelEvents } from "./migrationInterfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IInventoryListAppModelEvents extends IMigratableModelEvents { }

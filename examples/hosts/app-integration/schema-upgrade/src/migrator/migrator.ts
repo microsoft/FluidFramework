@@ -6,15 +6,13 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 import type {
-    IMigratableModel,
-    MigrationState,
-} from "../migratableModel";
-import type { IModelLoader } from "../modelLoader";
-import type {
     DataTransformationCallback,
+    IMigratableModel,
     IMigrator,
     IMigratorEvents,
-} from "./interfaces";
+    MigrationState,
+} from "../migrationInterfaces";
+import type { IModelLoader } from "../modelLoader";
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
     private _currentModel: IMigratableModel;

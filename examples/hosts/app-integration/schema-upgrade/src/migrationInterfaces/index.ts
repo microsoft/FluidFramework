@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./interfaces";
+export * from "./migratableModel";
+export * from "./migrationTool";
+export * from "./migrator";

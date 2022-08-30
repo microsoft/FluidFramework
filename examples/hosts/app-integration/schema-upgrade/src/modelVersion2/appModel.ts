@@ -7,7 +7,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
 import { parseStringDataVersionTwo, readVersion } from "../dataTransform";
-import type { IMigrationTool } from "../migrationTool";
+import type { IMigrationTool } from "../migrationInterfaces";
 import type {
     IInventoryListAppModel,
     IInventoryListAppModelEvents,
