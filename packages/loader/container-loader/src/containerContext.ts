@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
