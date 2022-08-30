@@ -384,8 +384,19 @@ describe("Routerlicious", () => {
 
                     it("/:tenantId/session/:id", async () => {
 
-                        Sinon.stub(defaultDocumentsCollection, "findOne").returns(Promise.resolve({} as IDocument))
+                        // Create a new session
                         Sinon.stub(defaultDocumentsCollection, "upsert").returns(Promise.resolve());
+                        Sinon.stub(defaultDocumentsCollection, "findOne")
+                            .onFirstCall().returns(Promise.resolve({} as IDocument))
+                            .onSecondCall().returns(Promise.resolve({
+                                session: {
+                                    ordererUrl: defaultProvider.get("worker:serverUrl"),
+                                    deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+                                    historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+                                    isSessionAlive: false,
+                                    isSessionActive: true
+                                }
+                            } as IDocument));
 
                         await supertest.get(`/documents/${appTenant1.id}/session/${document1._id}`)
                             .set('Authorization', tenantToken1)
@@ -399,9 +410,22 @@ describe("Routerlicious", () => {
                                     isSessionActive: false
                                 })
                             });
+
+                        // Update an existing session
+                        await supertest.get(`/documents/${appTenant1.id}/session/${document1._id}`)
+                            .set('Authorization', tenantToken1)
+                            .expect((res) => {
+                                assert(spyGetSession.calledTwice);
+                                assert.deepStrictEqual(res.body, {
+                                    ordererUrl: defaultProvider.get("worker:serverUrl"),
+                                    historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+                                    deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+                                    isSessionAlive: false,
+                                    isSessionActive: false
+                                })
+                            });
                     });
                 });
-
             });
         });
     });
