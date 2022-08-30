@@ -24,7 +24,7 @@
     "build:genver": "gen-version",
     "build:tsc": "tsc --pretty",
     "ci:build:docs": "api-extractor run",
-    "clean": "rimraf _api-extractor-temp dist *.tsbuildinfo *.build.log",
+    "clean": "rimraf _api-extractor-temp .nyc_output dist *.tsbuildinfo *.build.log",
     "eslint": "eslint",
     "eslint:fix": "eslint --fix",
     "format": "npm run prettier:fix",
