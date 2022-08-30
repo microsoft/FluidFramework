@@ -80,6 +80,8 @@ export {
     FullSchemaPolicy,
     IEditableTree,
     getEditableTree,
-    editableTreeProxySymbol,
+    EditableTreeNode,
+    typeSymbol as editableTreeTypeSymbol,
+    proxySymbol as editableTreeProxySymbol,
     defaultSchemaPolicy,
 } from "./feature-libraries";

@@ -162,7 +162,15 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @public (undocumented)
+export type EditableTreeNode<T> = IEditableTree<T> & {
+    [P in keyof T]: T[P] extends Value ? T[P] : EditableTreeNode<T[P]>;
+};
+
+// @public (undocumented)
 export const editableTreeProxySymbol: unique symbol;
+
+// @public (undocumented)
+export const editableTreeTypeSymbol: unique symbol;
 
 // @public (undocumented)
 const empty: Root;
@@ -265,8 +273,8 @@ export interface GenericTreeNode<TChild> extends NodeData {
     fields?: FieldMap<TChild>;
 }
 
-// @public
-export function getEditableTree(forest: IEditableForest): IEditableTree;
+// @public (undocumented)
+export function getEditableTree<T = unknown>(forest: IEditableForest): EditableTreeNode<T>;
 
 // @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
@@ -279,9 +287,11 @@ export interface IEditableForest extends IForestSubscription {
 }
 
 // @public
-export interface IEditableTree {
+export interface IEditableTree<T> {
     // (undocumented)
-    [key: string]: undefined | IEditableTree | NodeData;
+    [editableTreeTypeSymbol]: (key?: FieldKey) => TreeSchemaIdentifier;
+    // (undocumented)
+    [key: string]: EditableTreeNode<T>;
 }
 
 // @public
