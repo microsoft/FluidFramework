@@ -15,7 +15,7 @@ import {
     TreeSchemaIdentifier,
 } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey } from "../../tree";
-import { brand, fail, Invariant, Multimap } from "../../util";
+import { brand, fail, Invariant, getOrAddEmptyToMap } from "../../util";
 import { FieldChangeHandler, FieldChangeMap, FieldChangeset, NodeChangeset } from "./fieldChangeHandler";
 import { FullSchemaPolicy } from "./fieldKind";
 
@@ -24,7 +24,7 @@ import { FullSchemaPolicy } from "./fieldKind";
  * as determined by the schema.
  */
 export class ModularChangeFamily implements
-    ChangeFamily<any, NodeChangeset>,
+    ChangeFamily<ModularEditBuilder, NodeChangeset>,
     ChangeRebaser<NodeChangeset>,
     ChangeEncoder<NodeChangeset> {
     _typeCheck?: Invariant<any> | undefined;
@@ -48,14 +48,14 @@ export class ModularChangeFamily implements
         }
 
         let schemaId = staticSchemaId;
-        const fieldChanges = new Multimap<FieldKey, FieldChangeset>();
+        const fieldChanges = new Map<FieldKey, FieldChangeset[]>();
         for (const change of changes) {
             if (change.schema !== undefined) {
                 schemaId = change.schema;
             }
 
             for (const key of Object.keys(change.fields)) {
-                fieldChanges.add(brand(key), change.fields[key]);
+                getOrAddEmptyToMap(fieldChanges, brand(key)).push(change.fields[key]);
             }
         }
 
@@ -66,7 +66,8 @@ export class ModularChangeFamily implements
         for (const field of fieldChanges.keys()) {
             const childSchema = this.getChildSchema(schema, field);
             const composedField = this.getChangeHandler(schema, field).rebaser.compose(
-                fieldChanges.get(field),
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                fieldChanges.get(field)!,
                 (...childChanges) => this.composeI(childSchema, childChanges),
             );
 
@@ -169,8 +170,8 @@ export class ModularChangeFamily implements
         return delta;
     }
 
-    buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet): SchemaEditBuilder {
-        return new SchemaEditBuilder(this, deltaReceiver, anchors);
+    buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet): ModularEditBuilder {
+        return new ModularEditBuilder(this, deltaReceiver, anchors);
     }
 
     public encodeForJson(formatVersion: number, change: NodeChangeset): JsonCompatibleReadOnly {
@@ -295,7 +296,7 @@ function firstFromSet<T>(set: ReadonlySet<T>): T {
     fail("Expected a non-empty set");
 }
 
-export class SchemaEditBuilder extends ProgressiveEditBuilder<NodeChangeset> {
+export class ModularEditBuilder extends ProgressiveEditBuilder<NodeChangeset> {
     constructor(
         family: ModularChangeFamily,
         deltaReciever: (delta: Delta.Root) => void,
