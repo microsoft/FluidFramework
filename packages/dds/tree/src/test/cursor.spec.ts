@@ -6,12 +6,12 @@
 import { strict as assert } from "assert";
 
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { ITreeCursor, TreeNavigationResult } from "../../forest";
-import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../../domains";
-import { recordDependency } from "../../dependency-tracking";
-import { clonePath, Delta, detachedFieldAsKey, EmptyKey, FieldKey, JsonableTree, UpPath } from "../../tree";
+import { ITreeCursor, TreeNavigationResult } from "../forest";
+import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../domains";
+import { recordDependency } from "../dependency-tracking";
+import { clonePath, Delta, detachedFieldAsKey, EmptyKey, FieldKey, JsonableTree, UpPath } from "../tree";
 import { jsonableTreeFromCursor } from "../..";
-import { brand } from "../../util";
+import { brand } from "../util";
 
 const testCases = [
     ["null", [null]],
@@ -51,10 +51,6 @@ interface CursorTestOptions {
      */
     factory: (data?: Jsonable) => ITreeCursor;
     /**
-     * Test cases used for the roundtrip tests.
-     */
-    // testCases: [string, Jsonable<T>[]][];
-    /**
      * Extract the contents of the given ITreeCursor as the original data type.
      * Assumes that ITreeCursor contains only unaugmented JsonTypes.
      */
@@ -69,7 +65,7 @@ export function testJsonCompatibleCursor<T>(suiteName: string, options: CursorTe
     } = options;
 
     describe(`${suiteName} cursor implementation`, () => {
-        describe.only("extract roundtrip", () => {
+        describe("extract roundtrip", () => {
             for (const [name, testValues] of testCases) {
                 for (const expected of testValues) {
                     it(`${name}: ${JSON.stringify(expected)}`, () => {
@@ -240,17 +236,26 @@ export function testJsonCompatibleCursor<T>(suiteName: string, options: CursorTe
     });
 }
 
-export function testCursors(suiteName: string, cursors: { cursorName: string; cursor: ITreeCursor; }[]) {
-    for (const { cursorName, cursor } of cursors) {
-        // down
+export function testCursors(
+    suiteName: string,
+    cursors: { cursorName: string; cursor: ITreeCursor; }[]) {
+    describe.only(`${suiteName} cursor functionality`, () => {
+        for (const { cursorName, cursor } of cursors) {
+            describe(`${cursorName}`, () => {
+                it("can traverse the tree", () => {
+                    const navigationStack = [];
 
+                    while (cursor.keys !== undefined) {
+                        navigationStack.push(cursor.value);
 
-        // seek
-
-
-        // up
-
-
-        // length
-    }
+                        for (const key of cursor.keys) {
+                            for (let index = 0; index < cursor.length(key); index++) {
+                                assert.equal(cursor.down(key, index), TreeNavigationResult.Ok);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+    });
 }
