@@ -2,6 +2,7 @@
     "extends": "@fluidframework/build-common/ts-common-config.json",
     "compilerOptions": {
         "outDir": "./dist",
+        "rootDir": "./src",
         "composite": true,
         "noImplicitAny": false,
         "noImplicitThis": true,
@@ -14,12 +15,11 @@
         "types": [
             "node"
         ],
-        "esModuleInterop": true,
         "resolveJsonModule": true
     },
     "include": [
         "src/**/*.ts",
-        "data/*.json"
+        "src/data/*.json"
     ],
     "exclude": [
         "src/test/**/*",

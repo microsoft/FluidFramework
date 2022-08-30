@@ -3,7 +3,6 @@
   "compilerOptions": {
     "composite": true,
     "rootDir": "./src",
-    "target": "es2018",
     "outDir": "./dist",
     "types": ["node"],
     "noUnusedLocals": false,

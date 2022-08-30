@@ -78,10 +78,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             this.log("Resolving errors if possible.");
         }
 
-        if (this.processedFlags.exclusions === undefined) {
-            this.processedFlags.exclusions = exclusionsFile
-            return
-        }
+
 
         const handlerRegex: RegExp =
             // eslint-disable-next-line no-negated-condition
@@ -102,10 +99,15 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             this.log(`Filtering file paths by regex: ${pathRegex}`);
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
-        const exclusions: RegExp[] = require(this.processedFlags.exclusions).map(
+        const exclusions: RegExp[] = this.processedFlags.exclusions === undefined ?
+        exclusionsFile.map(
             (e: string) => new RegExp(e, "i"),
-        );
+        ) :
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, unicorn/prefer-module
+        require(this.processedFlags.exclusions).map(
+            (e: string) => new RegExp(e, "i"),
+        )
+
 
         if (this.processedFlags.stdin) {
             const pipeString = await readStdin();
