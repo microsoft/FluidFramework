@@ -45,7 +45,7 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
     implements IInventoryListAppModel {
     // To be used by the consumer of the model to pair with an appropriate view.
     public readonly version = "two";
-    public getMigrationState(): MigrationState {
+    public get migrationState(): MigrationState {
         return this.migrationTool.migrationState;
     }
 

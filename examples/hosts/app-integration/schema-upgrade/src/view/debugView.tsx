@@ -38,11 +38,11 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
         getUrlForContainerId,
     } = props;
 
-    const [migrationState, setMigrationState] = useState<MigrationState>(model.getMigrationState());
+    const [migrationState, setMigrationState] = useState<MigrationState>(model.migrationState);
 
     useEffect(() => {
         const migrationStateChangedHandler = () => {
-            setMigrationState(model.getMigrationState());
+            setMigrationState(model.migrationState);
         };
         model.on("stopping", migrationStateChangedHandler);
         model.on("migrating", migrationStateChangedHandler);

@@ -28,7 +28,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     }
 
     public get migrationState(): MigrationState {
-        return this._currentModel.getMigrationState();
+        return this._currentModel.migrationState;
     }
 
     /**
@@ -62,7 +62,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
      * that a freshly-loaded migrated container is in collaborating state.
      */
     private readonly takeAppropriateActionForCurrentMigratable = () => {
-        const migrationState = this._currentModel.getMigrationState();
+        const migrationState = this._currentModel.migrationState;
         if (migrationState === "migrating") {
             this.ensureMigrating();
         } else if (migrationState === "migrated") {
@@ -135,7 +135,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
             // Before attaching, let's check to make sure no one else has already done the migration
             // To avoid creating unnecessary extra containers.
-            if (migratable.getMigrationState() === "migrated") {
+            if (migratable.migrationState === "migrated") {
                 this._migrationP = undefined;
                 migratedModel.close();
                 this.takeAppropriateActionForCurrentMigratable();
@@ -149,7 +149,9 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             const containerId = await createResponse.attach();
 
             // Again, it could be the case that someone else finished the migration during our attach.
-            if (migratable.getMigrationState() === "migrated") {
+            // Casting to MigrationState because TS doesn't understand that the state may have changed during the
+            // above await.
+            if (migratable.migrationState as MigrationState === "migrated") {
                 this._migrationP = undefined;
                 migratedModel.close();
                 this.takeAppropriateActionForCurrentMigratable();

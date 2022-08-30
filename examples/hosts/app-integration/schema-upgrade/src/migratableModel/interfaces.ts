@@ -45,16 +45,16 @@ export interface IMigratableModel
     /**
      * Get the current migration state of the model.
      */
-    getMigrationState(): MigrationState;
+    readonly migrationState: MigrationState;
 
     /**
      * The proposed migratory version, if migration has been proposed.
      */
-    proposedVersion: string | undefined;
+    readonly proposedVersion: string | undefined;
     /**
      * The accepted migratory version, if migration has been accepted.
      */
-    acceptedVersion: string | undefined;
+    readonly acceptedVersion: string | undefined;
     /**
      * Propose migration using the provided version.
      * @param version - The version that the new model should use.
@@ -64,7 +64,7 @@ export interface IMigratableModel
     /**
      * The containerId of the migrated model, if migration has completed.
      */
-    newContainerId: string | undefined;
+    readonly newContainerId: string | undefined;
     /**
      * Complete the migration with the provided containerId.
      * @param newContainerId - the ID of the container that the collaboration has migrated to.
