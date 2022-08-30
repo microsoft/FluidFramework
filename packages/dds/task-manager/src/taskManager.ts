@@ -147,7 +147,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
     // connectionWatcher emits an event whenever we get connected or disconnected.
     private readonly connectionWatcher: EventEmitter = new EventEmitter();
-    // completedWatcher emits an event whenever the local client calls complete() on a task.
+    // completedWatcher emits an event whenever the local client receives a completed op.
     private readonly completedWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
@@ -208,7 +208,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 const pendingOp = this.latestPendingOps.get(taskId);
                 assert(pendingOp !== undefined, "Unexpected op");
                 // TODO: check below comment and stuff, see if applicable
-                // Need to check the id, since it's possible to markAsComplete multiple times before the acks
+                // Need to check the id, since it's possible to complete multiple times before the acks
                 if (messageId === pendingOp.messageId) {
                     assert(pendingOp.type === "completed", "Unexpected op type");
                     // Delete the pending, because we no longer have an outstanding op
@@ -486,7 +486,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         if (!this.connected) {
-            throw new Error(`Attempted to lock in disconnected state: ${taskId}`);
+            throw new Error(`Attempted to complete task in disconnected state: ${taskId}`);
         }
 
         const markCompleteP = new Promise<void>((resolve, reject) => {
