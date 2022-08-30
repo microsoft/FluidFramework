@@ -249,7 +249,6 @@ export class SharedCounterHandler implements IRandomOpManager {
     }
 }
 
-// Adds and removes handles, and creates non handle ops
 export class SharedMapHandler implements IHandleOpManager, IRandomOpManager {
     constructor(
         public readonly channel: SharedMap,
