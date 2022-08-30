@@ -61,6 +61,7 @@
     "ioredis": "^4.24.2",
     "nconf": "^0.12.0",
     "request": "^2.88.0",
+    "socket.io": "^4.5.1",
     "winston": "^3.6.0"
   },
   "devDependencies": {
