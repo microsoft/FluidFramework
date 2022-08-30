@@ -87,22 +87,16 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    let seed = Math.random();
-    let random: IRandom = makeRandom(seed);
-
     // Time spent to run the test. Currently 10 seconds, for better coverage increase this number.
     const testTime = 10 * 1000;
-
-    beforeEach(async () => {
-        seed = Math.random();
-        random = makeRandom(seed);
-    });
 
     // Currently for GC Sweep testing only, run with npm run test. Should not be running in CI
     // Note: can run with npm run test:build to build and run the test
     // TODO: setup test to run in CI
     const numberOfTests = 10;
     for (let i = 0; i < numberOfTests; i++) {
+        const seed = Math.random();
+        const random: IRandom = makeRandom(seed);
     it(`GC Randomization Test with Seed: ${seed}`, async () => {
         provider = getTestObjectProvider({
             syncSummarizer: true,
