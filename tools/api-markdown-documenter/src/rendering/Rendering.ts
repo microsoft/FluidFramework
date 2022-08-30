@@ -136,14 +136,10 @@ export function renderApiItemDocument(
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
     if (apiItem.kind === ApiItemKind.None) {
-        throw new Error(`Encountered API item with a kind of "None".`);
+        throw new Error(`Encountered API item with a kind of "${apiItem.kind}".`);
     }
 
-    if (
-        apiItem.kind === ApiItemKind.Model ||
-        apiItem.kind === ApiItemKind.Package ||
-        apiItem.kind === ApiItemKind.EntryPoint
-    ) {
+    if ([ApiItemKind.Model, ApiItemKind.Package, ApiItemKind.EntryPoint].includes(apiItem.kind)) {
         throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
     }
 
@@ -215,11 +211,7 @@ function renderApiSection(
         throw new Error(`Encountered API item with a kind of "${apiItem.kind}".`);
     }
 
-    if (
-        apiItem.kind === ApiItemKind.Model ||
-        apiItem.kind === ApiItemKind.Package ||
-        apiItem.kind === ApiItemKind.EntryPoint
-    ) {
+    if ([ApiItemKind.Model, ApiItemKind.Package, ApiItemKind.EntryPoint].includes(apiItem.kind)) {
         throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
     }
 
