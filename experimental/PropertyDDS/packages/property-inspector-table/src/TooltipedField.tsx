@@ -5,8 +5,8 @@
 
 import Tooltip from "@material-ui/core/Tooltip";
 import * as React from "react";
-import { IEditableValueCellProps } from "./EditableValueCell";
 import { Field } from "./Field";
+import { IEditableValueCellProps } from "./InspectorTableTypes";
 
 export const TooltipedField: React.FunctionComponent<IEditableValueCellProps & {
   message: string;

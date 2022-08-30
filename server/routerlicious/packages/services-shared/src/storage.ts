@@ -195,6 +195,7 @@ export class DocumentStorage implements IDocumentStorage {
             ordererUrl,
             historianUrl,
             isSessionAlive: true,
+            isSessionActive: false,
         };
 
         const message: string = `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`;

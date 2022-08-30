@@ -39,7 +39,7 @@ below steps if you'd like to run a local version of the service or need to make 
 
 #### For Development
 
-* [Node v12.x](https://nodejs.org/en/) (v12.17 or above is required)
+* [Node v14.x](https://nodejs.org/en/)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
     * (Notes for Windows users, **not** using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)):
         * The easiest way to install the dependencies is with windows-build-tools: `npm install --global --production windows-build-tools`
@@ -182,6 +182,7 @@ via alfred for testing and verification.
 Foreman is in charge of managing a pool of remote agent instances. It listens to the same stream of Kafka messages as
 Scriptorium but uses this to understand which documents are active. It then schedules and manages work to be run
 across the pool of remote agent instances (spell check, entity extraction, etc...).
+
 ## Distributed data structures
 
 The API currently exposes four distributed data structures
@@ -239,28 +240,6 @@ git checkout <document id>
 
 From there you can use your git repository management tool of choice to inspect the various documents and revisions
 stored in the repository.
-
-## Alerting
-We are using [elastalert](https://github.com/Yelp/elastalert) plugin to send email alerts on production failures and errors. The plugin scans data from elasticsearch and looks for anomalies/patterns/spikes. Checkout the [documentation](http://elastalert.readthedocs.io/en/latest/) for creating new alert rules.
-
-### Alerting on Error
-To receive service side error alerts, just print the error message in console using `winston.error('message')`. Elastalert aggregates all error messages for last hour and sends an email. Kibana dashboard can also be filtered down to just error messages (search for 'level:error').
-
-## Latency tracking
-We are using telegraf, influxdb, and grafana to monitor the latency of our microservices. Each service annotates the messages with service name, tag, and timestamp (inspired by [Dapper paper](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/36356.pdf)). Once the message is acknowledged back, the latency information is written to telegraf. Telegraf daemon picks up the messages every 10 seconds and writes to influxdb as time series data. Finally Grafana is used to visualize the time series graphs.
-
-By default, the service does not run locally. To run locally, first add the following field to the config file.
-```
-"metric":
-    {
-      "client": "telegraf",
-      "telegraf": {
-          "host": "telegraf",
-          "port": 8094
-        }
-    }
-```
-This will enable the metric writer to write to telegraf client. Then run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.metric.yml up` to bring up telegraf, influxdb, and grafana containers. Navigate to "http://localhost:7000" to get grafana up and running.
 
 ## Authentication model
 Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is generated for each tenant. Apps are expected to pass `<secret-key>`, `<tenant-id>`, and `<user-info>` as a signed token to routerlicious. Tenants are given a symmetric-key beforehand to sign the token.

@@ -3,15 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { exec, MonoRepo, Package, VersionBag } from "@fluidframework/build-tools";
-import {
-    adjustVersion,
-    incRange,
-    isVersionBumpType,
-    isVersionBumpTypeExtended,
-    VersionChangeType,
-    VersionScheme,
-} from "@fluid-tools/version-tools";
+import { MonoRepo, Package, VersionBag } from "@fluidframework/build-tools";
+import { bumpRange, isVersionBumpTypeExtended } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 
 /** A mapping of {@link Package} to a version range string or a bump type. This interface is used for convenience. */
@@ -59,7 +52,7 @@ export async function bumpPackageDependencies(
             // eslint-disable-next-line unicorn/prefer-ternary
             if (isVersionBumpTypeExtended(depNewRangeOrBumpType)) {
                 // bump the current range string
-                newRangeString = incRange(verString, depNewRangeOrBumpType, prerelease);
+                newRangeString = bumpRange(verString, depNewRangeOrBumpType, prerelease);
             } else {
                 newRangeString = depNewRangeOrBumpType;
             }
