@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# build-benchmark-tool pipeline
+# build-api-markdown-documenter pipeline
 
 name: $(Build.BuildId)
 
