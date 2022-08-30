@@ -87,6 +87,9 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+    // Time spent to run the test. Currently 10 seconds, for better coverage increase this number.
+    const testTime = 10 * 1000;
+
     beforeEach(async () => {
         provider = getTestObjectProvider({
             syncSummarizer: true,
@@ -98,9 +101,6 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
             errorType: ContainerErrorType.clientSessionExpiredError,
         });
     });
-
-    // Time spent to run the test. Currently 10 seconds, for better coverage increase this number.
-    const testTime = 10 * 1000;
 
     // Currently for GC Sweep testing only, run with npm run test. Should not be running in CI
     // Note: can run with npm run test:build to build and run the test
