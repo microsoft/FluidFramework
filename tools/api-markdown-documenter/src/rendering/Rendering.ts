@@ -212,7 +212,7 @@ function renderApiSection(
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
     if (apiItem.kind === ApiItemKind.None) {
-        throw new Error(`Encountered API item with a kind of "None".`);
+        throw new Error(`Encountered API item with a kind of "${apiItem.kind}".`);
     }
 
     if (

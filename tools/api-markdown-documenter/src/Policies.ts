@@ -22,7 +22,7 @@ import { getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
  * Also note that `EntryPoint` items will always be ignored by the system, even if specified here.
  *
  * @example
- * A configuration like
+ * A configuration like the following:
  *
  * ```typescript
  * ...
@@ -41,7 +41,7 @@ export type DocumentBoundaries = ApiItemKind[];
  * If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
  *
  * @example
- * A configuration like
+ * A configuration like the following:
  *
  * ```typescript
  * ...
