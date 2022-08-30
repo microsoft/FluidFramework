@@ -23,21 +23,21 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> =
     const { model } = props;
 
     const [disableInput, setDisableInput] = useState<boolean>(
-        model.migrationState !== "collaborating",
+        model.migrationTool.migrationState !== "collaborating",
     );
 
     useEffect(() => {
         const migrationStateChangedHandler = () => {
-            setDisableInput(model.migrationState !== "collaborating");
+            setDisableInput(model.migrationTool.migrationState !== "collaborating");
         };
-        model.on("stopping", migrationStateChangedHandler);
-        model.on("migrating", migrationStateChangedHandler);
-        model.on("migrated", migrationStateChangedHandler);
+        model.migrationTool.on("stopping", migrationStateChangedHandler);
+        model.migrationTool.on("migrating", migrationStateChangedHandler);
+        model.migrationTool.on("migrated", migrationStateChangedHandler);
         migrationStateChangedHandler();
         return () => {
-            model.off("stopping", migrationStateChangedHandler);
-            model.off("migrating", migrationStateChangedHandler);
-            model.off("migrated", migrationStateChangedHandler);
+            model.migrationTool.off("stopping", migrationStateChangedHandler);
+            model.migrationTool.off("migrating", migrationStateChangedHandler);
+            model.migrationTool.off("migrated", migrationStateChangedHandler);
         };
     }, [model]);
 

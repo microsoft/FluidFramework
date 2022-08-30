@@ -28,7 +28,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     }
 
     public get migrationState(): MigrationState {
-        return this._currentModel.migrationState;
+        return this._currentModel.migrationTool.migrationState;
     }
 
     /**
@@ -62,13 +62,13 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
      * that a freshly-loaded migrated container is in collaborating state.
      */
     private readonly takeAppropriateActionForCurrentMigratable = () => {
-        const migrationState = this._currentModel.migrationState;
+        const migrationState = this._currentModel.migrationTool.migrationState;
         if (migrationState === "migrating") {
             this.ensureMigrating();
         } else if (migrationState === "migrated") {
             this.ensureLoading();
         } else {
-            this._currentModel.once("migrating", this.takeAppropriateActionForCurrentMigratable);
+            this._currentModel.migrationTool.once("migrating", this.takeAppropriateActionForCurrentMigratable);
         }
     };
 
@@ -82,7 +82,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         }
 
         const migratable = this._currentModel;
-        const acceptedVersion = migratable.acceptedVersion;
+        const acceptedVersion = migratable.migrationTool.acceptedVersion;
         if (acceptedVersion === undefined) {
             throw new Error("Expect an accepted version before migration starts");
         }
@@ -135,7 +135,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
             // Before attaching, let's check to make sure no one else has already done the migration
             // To avoid creating unnecessary extra containers.
-            if (migratable.migrationState === "migrated") {
+            if (migratable.migrationTool.migrationState === "migrated") {
                 this._migrationP = undefined;
                 migratedModel.close();
                 this.takeAppropriateActionForCurrentMigratable();
@@ -151,7 +151,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             // Again, it could be the case that someone else finished the migration during our attach.
             // Casting to MigrationState because TS doesn't understand that the state may have changed during the
             // above await.
-            if (migratable.migrationState as MigrationState === "migrated") {
+            if (migratable.migrationTool.migrationState as MigrationState === "migrated") {
                 this._migrationP = undefined;
                 migratedModel.close();
                 this.takeAppropriateActionForCurrentMigratable();
@@ -159,10 +159,10 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             }
 
             // TODO: Support retry
-            await migratable.finalizeMigration(containerId);
+            await migratable.migrationTool.finalizeMigration(containerId);
 
             // If someone else finalized the migration before us, we should close the one we created.
-            if (migratable.newContainerId !== containerId) {
+            if (migratable.migrationTool.newContainerId !== containerId) {
                 migratedModel.close();
             }
 
@@ -191,12 +191,12 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         }
 
         const migratable = this._currentModel;
-        const acceptedVersion = migratable.acceptedVersion;
+        const acceptedVersion = migratable.migrationTool.acceptedVersion;
         if (acceptedVersion === undefined) {
             throw new Error("Expect an accepted version before migration starts");
         }
 
-        const migratedId = migratable.newContainerId;
+        const migratedId = migratable.migrationTool.newContainerId;
         if (migratedId === undefined) {
             throw new Error("Migration ended without a new container being created");
         }

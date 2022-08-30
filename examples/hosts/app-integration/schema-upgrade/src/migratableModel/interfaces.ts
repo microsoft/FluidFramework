@@ -4,6 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IMigrationTool } from "../migrationTool";
 
 export interface IVersionedModel {
     /**
@@ -33,8 +34,8 @@ export interface IImportExportModel<ImportType, ExportType> {
 
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMigratableModelEvents extends IEvent {
-    (event: "stopping" | "migrating" | "migrated", listener: () => void);
 }
 
 // TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
@@ -43,33 +44,9 @@ export interface IMigratableModelEvents extends IEvent {
 export interface IMigratableModel
     extends IVersionedModel, IImportExportModel<unknown, unknown>, IEventProvider<IMigratableModelEvents> {
     /**
-     * Get the current migration state of the model.
+     * The tool that will be used to facilitate the migration.
      */
-    readonly migrationState: MigrationState;
-
-    /**
-     * The proposed migratory version, if migration has been proposed.
-     */
-    readonly proposedVersion: string | undefined;
-    /**
-     * The accepted migratory version, if migration has been accepted.
-     */
-    readonly acceptedVersion: string | undefined;
-    /**
-     * Propose migration using the provided version.
-     * @param version - The version that the new model should use.
-     */
-    proposeVersion: (version: string) => void;
-
-    /**
-     * The containerId of the migrated model, if migration has completed.
-     */
-    readonly newContainerId: string | undefined;
-    /**
-     * Complete the migration with the provided containerId.
-     * @param newContainerId - the ID of the container that the collaboration has migrated to.
-     */
-    finalizeMigration: (newContainerId: string) => Promise<void>;
+    readonly migrationTool: IMigrationTool;
 
     /**
      * Close the model, rendering it inoperable and closing connections.

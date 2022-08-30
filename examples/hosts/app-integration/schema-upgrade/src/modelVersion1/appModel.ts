@@ -7,7 +7,6 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform";
-import type { MigrationState } from "../migratableModel";
 import type { IMigrationTool } from "../migrationTool";
 import type {
     IInventoryListAppModel,
@@ -45,25 +44,25 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
     implements IInventoryListAppModel {
     // To be used by the consumer of the model to pair with an appropriate view.
     public readonly version = "one";
-    public get migrationState(): MigrationState {
-        return this.migrationTool.migrationState;
-    }
 
     private readonly _inventoryList: IInventoryList;
     public get inventoryList() {
         return this._inventoryList;
     }
 
+    private readonly _migrationTool: IMigrationTool;
+    public get migrationTool() {
+        return this._migrationTool;
+    }
+
     public constructor(
         inventoryList: IInventoryList,
-        private readonly migrationTool: IMigrationTool,
+        migrationTool: IMigrationTool,
         private readonly container: IContainer,
     ) {
         super();
         this._inventoryList = inventoryList;
-        this.migrationTool.on("newVersionProposed", this.onNewVersionProposed);
-        this.migrationTool.on("newVersionAccepted", this.onNewVersionAccepted);
-        this.migrationTool.on("migrated", this.onMigrated);
+        this._migrationTool = migrationTool;
     }
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListAppModelExportType => {
@@ -85,43 +84,8 @@ export class InventoryListAppModel extends TypedEventEmitter<IInventoryListAppMo
         await applyStringData(this.inventoryList, initialData);
     };
 
-    private readonly onNewVersionProposed = () => {
-        this.emit("stopping");
-    };
-
-    private readonly onNewVersionAccepted = () => {
-        this.emit("migrating");
-    };
-
-    private readonly onMigrated = () => {
-        this.emit("migrated");
-    };
-
     public readonly exportData = async (): Promise<InventoryListAppModelExportType> => {
         return exportStringData(this.inventoryList);
-    };
-
-    public get proposedVersion() {
-        return this.migrationTool.proposedVersion;
-    }
-
-    public get acceptedVersion() {
-        return this.migrationTool.acceptedVersion;
-    }
-
-    public readonly proposeVersion = (newVersion: string) => {
-        this.migrationTool.proposeVersion(newVersion).catch(console.error);
-    };
-
-    public get newContainerId() {
-        return this.migrationTool.newContainerId;
-    }
-
-    public readonly finalizeMigration = async (newContainerId: string) => {
-        if (this.newContainerId !== undefined) {
-            throw new Error("The migration has already been finalized.");
-        }
-        return this.migrationTool.finalizeMigration(newContainerId);
     };
 
     public close() {

@@ -8,7 +8,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/common-definitions"
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 export interface IMigrationToolEvents extends IEvent {
-    (event: "newVersionProposed" | "newVersionAccepted" | "migrated", listener: () => void);
+    (event: "stopping" | "migrating" | "migrated", listener: () => void);
 }
 
 export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
@@ -42,10 +42,8 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
     /**
      * Propose a new version to use.
      * @param newVersion - the version string
-     * @returns A promnise which resolves when a version has been accepted, which may or may not be the version
-     * proposed by the local client.
      */
-    proposeVersion(newVersion: string): Promise<void>;
+    proposeVersion: (newVersion: string) => void;
 
     /**
      * Volunteer to perform the migration.
