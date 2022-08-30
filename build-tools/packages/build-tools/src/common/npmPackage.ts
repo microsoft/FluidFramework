@@ -9,7 +9,7 @@ import * as fs from "fs";
 import { hasMagic, sync as globSync } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
-import { logStatus, logVerbose } from "./logging";
+import { defaultLogger } from "./logging";
 import {
     copyFileAsync,
     execWithErrorAsync,
@@ -25,6 +25,7 @@ import {
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
 import { options } from "../fluidBuild/options";
 
+const {info, verbose} = defaultLogger;
 export type ScriptDependencies = { [key: string]: string[] };
 
 interface IPerson {
@@ -103,7 +104,7 @@ export class Package {
 
     constructor(private readonly packageJsonFileName: string, public readonly group: string, public readonly monoRepo?: MonoRepo) {
         this._packageJson = readJsonSync(packageJsonFileName);
-        logVerbose(`Package Loaded: ${this.nameColored}`);
+        verbose(`Package Loaded: ${this.nameColored}`);
     }
 
     public get name(): string {
@@ -238,7 +239,7 @@ async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TI
         const startTime = Date.now();
         const result = await exec(item);
         const elapsedTime = (Date.now() - startTime) / 1000;
-        logStatus(`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`);
+        info(`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`);
         return result;
     } : exec;
     const q = queue(async (taskExec: TaskExec<TItem, TResult>) => {
@@ -348,7 +349,7 @@ export class Packages {
 
             if (status) {
                 const elapsedTime = (Date.now() - startTime) / 1000;
-                logStatus(`[${++numDone}/${cleanP.length}] ${pkg.nameColored}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`);
+                info(`[${++numDone}/${cleanP.length}] ${pkg.nameColored}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`);
             }
             return result;
         };

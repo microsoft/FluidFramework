@@ -5,13 +5,15 @@
 
 import * as assert from "assert";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { logVerbose } from "../../../common/logging";
+import { defaultLogger } from "../../../common/logging";
 import { readFileAsync, existsSync, isSameFileOrDir } from "../../../common/utils";
 import path from "path";
 import * as ts from "typescript";
 import * as TscUtils from "../../tscUtils";
 import * as fs from "fs";
 const isEqual = require("lodash.isequal");
+
+const {verbose} = defaultLogger;
 
 interface ITsBuildInfo {
     program: {
@@ -130,7 +132,7 @@ export class TscTask extends LeafTask {
                 }
             } catch (e: any) {
                 this.logVerboseTrigger(`exception generating hash for ${fileName}`);
-                logVerbose(e.stack);
+                verbose(e.stack);
                 return false;
             }
         }
@@ -170,11 +172,11 @@ export class TscTask extends LeafTask {
             TscUtils.convertToOptionsWithAbsolutePath(tsBuildInfo.program.options, tsBuildInfoFileDirectory);
 
         if (!isEqual(configOptions, tsBuildInfoOptions)) {
-            logVerbose(`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`);
-            logVerbose("Config:")
-            logVerbose(JSON.stringify(configOptions, undefined, 2));
-            logVerbose("BuildInfo:");
-            logVerbose(JSON.stringify(tsBuildInfoOptions, undefined, 2));
+            verbose(`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`);
+            verbose("Config:")
+            verbose(JSON.stringify(configOptions, undefined, 2));
+            verbose("BuildInfo:");
+            verbose(JSON.stringify(tsBuildInfoOptions, undefined, 2));
             return false;
         }
         return true;
@@ -190,7 +192,7 @@ export class TscTask extends LeafTask {
 
             const config = TscUtils.readConfigFile(configFileFullPath);
             if (!config) {
-                logVerbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
+                verbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
                 return undefined;
             }
 
@@ -203,7 +205,7 @@ export class TscTask extends LeafTask {
             const options = ts.parseJsonConfigFileContent(config, ts.sys, configDir, commandOptions, configFileFullPath);
 
             if (options.errors.length) {
-                logVerbose(`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`);
+                verbose(`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`);
                 return undefined;
             }
             this._tsConfig = options;
@@ -232,7 +234,7 @@ export class TscTask extends LeafTask {
     private get parsedCommandLine() {
         const parsedCommand = TscUtils.parseCommandLine(this.command);
         if (!parsedCommand) {
-            logVerbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
+            verbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
         }
         return parsedCommand;
     }
@@ -313,13 +315,13 @@ export class TscTask extends LeafTask {
                     if (tsBuildInfo.program && tsBuildInfo.program.fileNames) {
                         this._tsBuildInfo = tsBuildInfo;
                     } else {
-                        logVerbose(`${this.node.pkg.nameColored}: Missing program or fileNames property ${tsBuildInfoFileFullPath}`);
+                        verbose(`${this.node.pkg.nameColored}: Missing program or fileNames property ${tsBuildInfoFileFullPath}`);
                     }
                 } catch {
-                    logVerbose(`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`);
+                    verbose(`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`);
                 }
             } else {
-                logVerbose(`${this.node.pkg.nameColored}: ${this.tsBuildInfoFileName} file not found`);
+                verbose(`${this.node.pkg.nameColored}: ${this.tsBuildInfoFileName} file not found`);
             }
         }
         return this._tsBuildInfo;
