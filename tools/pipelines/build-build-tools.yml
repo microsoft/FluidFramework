@@ -68,9 +68,9 @@ extends:
     buildDirectory: build-tools
     tagName: build-tools
     taskBuild: build
-    taskBuildDocs: false
+    taskBuildDocs: true
     taskLint: true
-    taskTest: test
+    taskTest: ci:test
     poolBuild: Large
     cgSubDirectory: packages
     checkoutSubmodules: true
