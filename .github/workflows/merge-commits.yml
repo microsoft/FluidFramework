@@ -50,7 +50,9 @@ jobs:
         id: dequeue-message
         with:
           script: |
-            const octokit = new Octokit({ auth: `${{ secrets.GITHUB_TOKEN }}` });
+            const { Octokit } = require("@octokit/core");
+            const token = `${{ secrets.GITHUB_TOKEN }}`;
+            const octokit = new Octokit({ auth: token });
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
             const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
