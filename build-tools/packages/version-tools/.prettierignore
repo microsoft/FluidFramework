@@ -1,5 +1,6 @@
+/api-report
 /dist
+_api-extractor-temp/
+nyc/
 oclif.manifest.json
 README.md
-/_api-extractor-temp
-/api-report

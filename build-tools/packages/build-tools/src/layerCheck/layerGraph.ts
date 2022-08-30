@@ -4,10 +4,12 @@
  */
 
 import assert from "assert";
-import { logVerbose } from "../common/logging";
+import { defaultLogger } from "../common/logging";
 import { Package, Packages } from "../common/npmPackage";
 import { EOL as newline } from "os";
 import * as path from "path";
+
+const {verbose} = defaultLogger;
 
 interface ILayerInfo {
     deps?: string[];
@@ -105,16 +107,16 @@ class LayerNode extends BaseNode {
      */
     public verifyDependent(dep: PackageNode) {
         if (this.packages.has(dep)) {
-            logVerbose(`Found: ${dep.name} in ${this.name}`);
+            verbose(`Found: ${dep.name} in ${this.name}`);
             return true;
         }
         if (this.allowedDependentPackageNodes.has(dep)) {
-            logVerbose(`Found: ${dep.name} in ${this.name}`);
+            verbose(`Found: ${dep.name} in ${this.name}`);
             return true;
         }
 
         for (const node of this.allowedDependentLayerNodes) {
-            logVerbose(`Traversing: ${this.name} -> ${node.name}`);
+            verbose(`Traversing: ${this.name} -> ${node.name}`);
             if (node.verifyDependent(dep)) {
                 return true;
             }
@@ -337,7 +339,7 @@ export class LayerGraph {
             for (const dir of Object.keys(this.dirMapping)) {
                 if (pkg.directory.startsWith(dir)) {
                     const layerNode = this.dirMapping[dir];
-                    logVerbose(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
+                    verbose(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
                     const packageNode = this.createPackageNode(pkg.name, layerNode);
                     packageNode.pkg = pkg;
                     matched = true;
@@ -380,7 +382,7 @@ export class LayerGraph {
                 success = false;
             }
 
-            logVerbose(`${packageNode.pkg.nameColored}: checking ${depPackageNode.name} from ${packageNode.layerName}`);
+            verbose(`${packageNode.pkg.nameColored}: checking ${depPackageNode.name} from ${packageNode.layerName}`);
             if (!packageNode.verifyDependent(depPackageNode)) {
                 console.error(`${packageNode.pkg.nameColored}: error: Dependency layer violation ${depPackageNode.name}, "${packageNode.layerName}" -> "${depPackageNode.layerName}"`);
                 success = false;
