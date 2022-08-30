@@ -21,7 +21,7 @@ import { doesItemRequireOwnDocument, getLinkUrlForApiItem } from "./utilities";
  *
  * @remarks
  * This implementation is based on API-Documenter's standard MarkdownDocumenter implementation,
- * but has been updated to be used programatically rather than just from a CLI, and to be more extensible.
+ * but has been updated to be used programmatically rather than just from a CLI, and to be more extensible.
  *
  * The reference implementation can be found
  * {@link https://github.com/microsoft/rushstack/blob/main/apps/api-documenter/src/documenters/MarkdownDocumenter.ts
