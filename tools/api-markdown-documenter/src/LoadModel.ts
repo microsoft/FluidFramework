@@ -83,17 +83,12 @@ function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel): void {
                     logWarning(
                         `Unresolved @inheritDoc tag for ${apiItem.displayName}: ${result.errorMessage}.`,
                     );
-                } else {
-                    if (
-                        result.resolvedApiItem instanceof ApiDocumentedItem &&
-                        result.resolvedApiItem.tsdocComment &&
-                        result.resolvedApiItem !== apiItem
-                    ) {
-                        copyInheritedDocs(
-                            apiItem.tsdocComment,
-                            result.resolvedApiItem.tsdocComment,
-                        );
-                    }
+                } else if (
+                    result.resolvedApiItem instanceof ApiDocumentedItem &&
+                    result.resolvedApiItem.tsdocComment &&
+                    result.resolvedApiItem !== apiItem
+                ) {
+                    copyInheritedDocs(apiItem.tsdocComment, result.resolvedApiItem.tsdocComment);
                 }
             }
         }
