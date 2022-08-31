@@ -17,6 +17,7 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
     IContainerRuntimeBase,
     IFluidDataStoreFactory,
+    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
@@ -71,11 +72,13 @@ export async function createSummarizerFromFactory(
     dataStoreFactory: IFluidDataStoreFactory,
     summaryVersion?: string,
     containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
+    registryEntries?: NamedFluidDataStoreRegistryEntries,
 ): Promise<ISummarizer> {
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new containerRuntimeFactoryType(
         dataStoreFactory,
+        registryEntries ??
         [
             [dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
         ],

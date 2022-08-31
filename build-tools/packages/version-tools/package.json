@@ -43,7 +43,29 @@
     "prettier:fix": "prettier --write .",
     "test": "npm run test:mocha",
     "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
+    "test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
+    "test:report": "nyc npm run test:mocha:report",
     "tsc": "tsc"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
     "@oclif/core": "^1.9.5",
@@ -72,6 +94,7 @@
     "eslint-config-oclif-typescript": "^1.0.2",
     "eslint-config-prettier": "~8.5.0",
     "mocha": "^10.0.0",
+    "nyc": "^15.0.0",
     "oclif": "^3",
     "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
