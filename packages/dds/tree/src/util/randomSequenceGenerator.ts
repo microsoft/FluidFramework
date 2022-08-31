@@ -63,17 +63,18 @@ function getRandomParent(parentSet: Set<UpPath>, seed: number): UpPath {
  * @returns randomly generated change.
  */
 export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.LocalChangeset {
+    const random = makeRandom(seed);
     const builder = new SequenceEditBuilder(() => {}, new AnchorSet());
     const operations = ["setValue", "delete", "insert"];
     const nodeX = { type: jsonString.name, value: "X" };
-    const randomIndex = makeRandom(seed).integer(1, 10000000);
-    const currOperation = operations[randomIndex % operations.length];
+    const currOperation = random.pick(operations);
+    const randomIndex = random.integer(1, 10000000);
     if (currOperation === "setValue") {
         builder.setValue(getRandomParent(upPaths, randomIndex), randomIndex);
     } else if (currOperation === "insert") {
         builder.insert(getRandomParent(upPaths, randomIndex), singleTextCursor(nodeX));
     } else {
-        builder.delete(getRandomParent(upPaths, randomIndex), makeRandom(seed).integer(1, upPaths.size));
+        builder.delete(getRandomParent(upPaths, randomIndex), random.integer(1, upPaths.size));
     }
 
     return builder.getChanges()[0];
