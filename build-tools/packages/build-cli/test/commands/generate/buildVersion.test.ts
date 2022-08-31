@@ -239,4 +239,40 @@ describe("generate:buildVersion", () => {
             expect(ctx.stdout).to.contain("version=0.0.0-12345-test");
             expect(ctx.stdout).to.contain("isLatest=false");
         });
+
+    test.env({
+        VERSION_BUILDNUMBER: "88879",
+        VERSION_TAGNAME: "tinylicious",
+        TEST_BUILD: "false",
+        VERSION_RELEASE: "release",
+        VERSION_PATCH: "true",
+        VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+    })
+        .stdout()
+        .command([
+            "generate:buildVersion",
+            "--fileVersion",
+            "0.4.0",
+            "--tag",
+            "tinylicious",
+            "--tags",
+            "tinylicious_v0.2.0",
+            "tinylicious_v0.2.3810",
+            "tinylicious_v0.3.10860",
+            "tinylicious_v0.4.0",
+            "tinylicious_v0.4.11798",
+            "tinylicious_v0.4.13835",
+            "tinylicious_v0.4.17169",
+            "tinylicious_v0.4.18879",
+            "tinylicious_v0.4.21640",
+            "tinylicious_v0.4.34614",
+            "tinylicious_v0.4.38350",
+            "tinylicious_v0.4.45136",
+            "tinylicious_v0.4.57763",
+            "tinylicious_v0.4.86381",
+        ])
+        .it("tinylicious test case from 2022-08-26", (ctx) => {
+            expect(ctx.stdout).to.contain("version=0.4.88879");
+            expect(ctx.stdout).to.contain("isLatest=true");
+        });
 });
