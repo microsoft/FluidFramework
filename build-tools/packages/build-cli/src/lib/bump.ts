@@ -42,7 +42,7 @@ export interface PackageWithRangeSpec {
  *
  * @remarks
  *
- * By default, dependencies on packages within the same release group -- that is, inter-release-group dependencies --
+ * By default, dependencies on packages within the same release group -- that is, intra-release-group dependencies --
  * will not be changed (`updateWithinSameReleaseGroup === false`). This is typically the behavior you want. However,
  * there are some cases where you need to forcefully change the dependency range of packages across the whole repo. For
  * example, when bumping packages using the Fluid internal version scheme, we need to adjust the dependency ranges that

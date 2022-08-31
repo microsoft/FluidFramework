@@ -14,20 +14,6 @@ import * as semver from "semver";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
 
 /**
- * Returns the name of a package without the scope.
- *
- * @param pkgName - The full scoped package name.
- * @returns The package name without the scope.
- *
- * @deprecated Use \@rushstack/node-core-library's PackageName.getUnscopedName instead.
- *
- * @internal
- */
-export function getPackageShortName(pkgName: string): string {
-    return PackageName.getUnscopedName(pkgName);
-}
-
-/**
  * Checks the npm registry for updates for a release group's dependencies.
  *
  * @param context - The {@link Context}.
@@ -87,15 +73,12 @@ export async function npmCheckUpdates(
         // eslint-disable-next-line no-await-in-loop
         const result = (await ncu({
             filter: depsToUpdate,
-            // filterVersion: new RegExp(".*?-\d+"),
             cwd: repoPath,
             packageFile: `${glob}/package.json`,
             target: bumpType === "current" ? "latest" : bumpType,
             pre: prerelease,
             upgrade: writeChanges,
-
             jsonUpgraded: true,
-            // jsonAll: true,
             silent: true,
         })) as object;
 
