@@ -5,7 +5,7 @@
 
 /* eslint-disable max-len */
 
-import { EventEmitter } from "events";
+import { EventEmitter, Listener } from "events";
 import {
     IEvent,
     TransformedEvent,
@@ -70,22 +70,43 @@ export class TypedEventEmitter<TEvent>
     readonly off: TypedEventTransform<this, TEvent>;
 }
 
-export interface IEvents<TSignatures extends Record<EventEmitterEventType, any[]>> extends IEvent {
-    (event: keyof TSignatures, listener: (...args: TSignatures[typeof event]) => void);
+type SignatureKeys<TSig> =
+    keyof TSig extends string ?
+        TSig[keyof TSig] extends any[] ?
+            keyof TSig
+: never : never;
+
+type SignatureArgs<TSig, TEvent extends SignatureKeys<TSig> = SignatureKeys<TSig>> =
+    keyof TSig extends string ?
+        TSig[TEvent] extends any[] ?
+            TSig[TEvent]
+: never : never;
+
+export interface IEvents<TSig> {
+    <TEvent extends SignatureKeys<TSig>>(event: TEvent, listener: (...args: SignatureArgs<TSig, TEvent>) => void);
 }
 
-class TypedEventEmitter2<TSignatures extends Record<EventEmitterEventType, any[]>> extends TypedEventEmitter<IEvents<TSignatures>> {
-    emit<TEvent extends keyof TSignatures>(
+// Dropped extending TypedEventEmitter because I don't know how to incorporate the TypedEventTransform stuff
+class TypedEventEmitter2<TSignatures> extends EventEmitter {
+    emit<TEvent extends SignatureKeys<TSignatures>>(
         event: TEvent,
-        ...args: TSignatures[TEvent]
+        ...args: SignatureArgs<TSignatures, TEvent>
     ) {
         // Would want to incorporate this class directly in TypedEventEmitter rather than subclassing and calling super.emit
-        // Also, not sure why the EventEmitterEventType isn't sufficient here (I had to do `as string | number`)
-        return super.emit(event as string | number, ...args);
+        return super.emit(event, ...args);
+    }
+
+    on<TEvent extends SignatureKeys<TSignatures>>(
+        event: TEvent,
+        listener: (...args: SignatureArgs<TSignatures, TEvent>) => void,
+    ) {
+        // Would want to incorporate this class directly in TypedEventEmitter rather than subclassing and calling super.on
+        // Have to cast to Listener because it's expecting something that can take ...args: any[].  Alternative is to constrain Signatures to extend Record<string, any[]> and support arbitrary events
+        return super.on(event, listener as Listener);
     }
 }
 
-export interface ISampleEventSignatures extends Record<EventEmitterEventType, any[]> {
+export interface ISampleEventSignatures {
     foo: [x: number, y: string];
     bar: [];
     baz: [options: { a: string; b: boolean; }];
@@ -93,9 +114,9 @@ export interface ISampleEventSignatures extends Record<EventEmitterEventType, an
 const sample = new TypedEventEmitter2<ISampleEventSignatures>();
 
 // These are strongly typed (assuming you spell the type parameter correctly)
-sample.emit<"foo">("foo", 3, "asdf");
-sample.emit<"bar">("bar");
-sample.emit<"baz">("baz", { a: "hello", b: true });
+sample.emit("foo", 3, "asdf");
+sample.emit("bar");
+sample.emit("baz", { a: "hello", b: true });
 
-// You can emit something unspecified, you get an any[] for args as expected
-sample.emit<"asdf">("asdf", "unspecified", { anythingGoes: true });
+// Not supported
+sample.emit("unspecified", 123);
