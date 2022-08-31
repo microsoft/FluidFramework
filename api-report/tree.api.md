@@ -49,6 +49,18 @@ export abstract class ChangeEncoder<TChange> {
     abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleReadOnly;
 }
 
+// @public (undocumented)
+export interface ChangeFamily<TEditor, TChange> {
+    // (undocumented)
+    buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): TEditor;
+    // (undocumented)
+    readonly encoder: ChangeEncoder<TChange>;
+    // (undocumented)
+    intoDelta(change: TChange): Delta.Root;
+    // (undocumented)
+    readonly rebaser: ChangeRebaser<TChange>;
+}
+
 // @public
 export interface ChangeRebaser<TChangeset> {
     compose(changes: TChangeset[]): TChangeset;
@@ -550,6 +562,32 @@ interface ModifyMovedOut {
 }
 
 // @public
+export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap> {
+    constructor(fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>);
+    // (undocumented)
+    buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet): ModularEditBuilder;
+    // (undocumented)
+    compose(changes: FieldChangeMap[]): FieldChangeMap;
+    // (undocumented)
+    readonly encoder: ChangeEncoder<FieldChangeMap>;
+    // (undocumented)
+    intoDelta(change: FieldChangeMap): Delta.Root;
+    // (undocumented)
+    invert(changes: FieldChangeMap): FieldChangeMap;
+    // (undocumented)
+    rebase(change: FieldChangeMap, over: FieldChangeMap): FieldChangeMap;
+    // (undocumented)
+    rebaseAnchors(anchors: AnchorSet, over: FieldChangeMap): void;
+    // (undocumented)
+    get rebaser(): ChangeRebaser<FieldChangeMap>;
+}
+
+// @public (undocumented)
+export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
+    constructor(family: ModularChangeFamily, deltaReciever: (delta: Delta.Root) => void, anchors: AnchorSet);
+}
+
+// @public
 interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
 }
 
@@ -653,6 +691,14 @@ type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndD
 
 // @public
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+
+// @public (undocumented)
+export abstract class ProgressiveEditBuilder<TChange> {
+    constructor(changeFamily: ChangeFamily<unknown, TChange>, deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet);
+    protected applyChange(change: TChange): void;
+    // (undocumented)
+    getChanges(): TChange[];
+}
 
 // @public
 type ProtoNode = JsonableTree;

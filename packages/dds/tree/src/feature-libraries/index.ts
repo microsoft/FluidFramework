@@ -13,6 +13,7 @@ export * from "./defaultSchema";
 export {
     isNeverField,
     ModularChangeFamily,
+    ModularEditBuilder,
     FieldChangeHandler,
     FieldChangeRebaser,
     FieldChangeEncoder,
