@@ -316,19 +316,16 @@ export class TestClient extends Client {
             return posAccumulated <= pos;
         });
 
-        const { currentSeq: seqNumberTo } = this.getCollabWindow();
         assert(segment !== undefined, "No segment found");
-        if ((segment.removedSeq !== undefined &&
-             segment.removedSeq !== UnassignedSequenceNumber &&
-             segment.removedSeq <= seqNumberTo)
-            || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
-            // Segment that the position was in has been removed: null out offset.
-            offset = 0;
-        }
 
-        const slowPathResult = this.findReconnectionPosition(segment, localSeq) + offset;
+        const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
 
-        assert.equal(fastPathSegment, segment, "Unequal rebasePosition computed segments");
+        const slowPathResult =
+            segoff.segment !== undefined
+            && segoff.offset !== undefined
+            && this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+
+        assert.equal(fastPathSegment, segoff.segment || undefined, "Unequal rebasePosition computed segments");
         assert.equal(fastPathResult, slowPathResult, "Unequal rebasePosition results");
         return fastPathResult;
     }
