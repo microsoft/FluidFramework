@@ -186,7 +186,7 @@ The 0.50 release contains internal changes to the Framework.
 ### Other notable changes
 
 - {{< apiref IFluidContainer >}}s have a new property,
-  [isDirty]({{< relref "IFluidContainer.md#isdirty-PropertySignature" >}}), which will be true if
+  [isDirty]({{< relref "ifluidcontainer-interface.md#isdirty-PropertySignature" >}}), which will be true if
   the container has outstanding operations that have not been acknowledged by the Fluid service. Using this property
   correctly can help prevent data loss due to service connectivity issues ({{< issue 7891 >}}).
 
@@ -238,7 +238,7 @@ better reflect their experimental state. If you use these classes, you can add a
 
 ### Other notable changes
 
-- The published {{< apiref "fluid-framework" >}} package now publishes ESNext modules ({{< issue 7474 >}}).
-- Various APIs in the {{< apiref "azure-client" >}} and {{< apiref "tinylicious-client" >}} now return {{< apiref
+- The published {{< packageref "fluid-framework" >}} package now publishes ESNext modules ({{< issue 7474 >}}).
+- Various APIs in the {{< packageref "azure-client" >}} and {{< packageref "tinylicious-client" >}} now return {{< apiref
   "IFluidContainer" >}}s instead of {{< apiref "FluidContainer" >}}s. This change should have no effect to developers
   since the runtime object is the same ({{< issue 7457 >}}).
