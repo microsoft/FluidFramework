@@ -100,7 +100,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             this.error("ERROR: No exclusions file provided.");
         }
 
-        const exclusionsFile = await readJsonAsync(this.processedFlags.exclusions);
+        let exclusionsFile: string[];
+        try {
+            exclusionsFile = await readJsonAsync(this.processedFlags.exclusions);
+        } catch {
+            this.error("Unable to locate or parse path to exclusions file");
+        }
 
         const exclusions: RegExp[] = exclusionsFile.map((e: string) => new RegExp(e, "i"));
 
@@ -115,11 +120,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                     );
             }
 
-            try {
-                runPolicyCheck(this.processedFlags.fix);
-            } finally {
-                this.logStats();
-            }
+            this.onExit();
 
             return;
         }
@@ -143,12 +144,16 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             scriptOutput
                 .split("\n")
                 .map((line: string) => this.handleLine(line, handlerRegex, pathRegex, exclusions));
-            try {
-                runPolicyCheck(this.processedFlags.fix);
-            } finally {
-                this.logStats();
-            }
+            this.onExit();
         });
+    }
+
+    onExit() {
+        try {
+            runPolicyCheck(this.processedFlags.fix);
+        } finally {
+            this.logStats();
+        }
     }
 
     // route files to their handlers by regex testing their full paths
