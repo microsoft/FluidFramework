@@ -34,4 +34,4 @@ export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
 export { execAsync, execWithErrorAsync, readJsonAsync, readFileAsync, writeFileAsync } from "./common/utils";
 export { Handler } from "./repoPolicyCheck/common";
-export { policyHandlers } from "../src/repoPolicyCheck/handlers/index";
+export { policyHandlers } from "./repoPolicyCheck/handlers/index";
