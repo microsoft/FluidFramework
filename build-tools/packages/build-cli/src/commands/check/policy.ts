@@ -73,10 +73,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static pathToGitRoot = "";
 
     async run() {
-        if (this.processedFlags.fix) {
-            this.log("Resolving errors if possible.");
-        }
-
         const handlerRegex: RegExp =
             // eslint-disable-next-line no-negated-condition
             this.processedFlags.handler !== undefined
@@ -94,6 +90,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
         if (this.processedFlags.path !== undefined) {
             this.log(`Filtering file paths by regex: ${pathRegex}`);
+        }
+
+        if (this.processedFlags.fix) {
+            this.log("Resolving errors if possible.");
         }
 
         if (this.processedFlags.exclusions === undefined) {
