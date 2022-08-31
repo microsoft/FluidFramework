@@ -202,7 +202,7 @@ The site theme/template lives in `themes/thxvscode`.
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
-| `build:api` | `npm run build:uber-package && npm run build:api-documenter` |
+| `build:api` | `npm run build:api-rollup && npm run build:api-documenter` |
 | `build:api-documenter` | Convert API JSON into Markdown. |
 | `build:api-documenter:default` | --- |
 | `build:api-documenter:win32` | --- |
@@ -214,7 +214,7 @@ The site theme/template lives in `themes/thxvscode`.
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `hugo` | Run the local copy of Hugo. |
-| `linkcheck` | `npm run linkcheck:site` |
+| `linkcheck` | `npm run linkcheck:fast -- --external` |
 | `linkcheck:fast` | `linkcheck http://localhost:1313 --skip-file skipped-urls.txt` |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
