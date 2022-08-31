@@ -85,7 +85,7 @@ export function generateBumpVersionBranchName(
  */
 export function generateBumpDepsBranchName(
     bumpedDep: ReleaseGroup,
-    bumpType: VersionBumpTypeExtended,
+    bumpType: VersionBumpTypeExtended | "releasedDeps",
     releaseGroup?: ReleaseGroup,
 ): string {
     const releaseGroupSegment = releaseGroup ? `_${releaseGroup}` : "";
