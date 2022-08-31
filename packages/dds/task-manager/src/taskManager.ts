@@ -216,7 +216,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            this.deleteQueueForTask(taskId);
+            this.taskQueues.delete(taskId);
             this.completedWatcher.emit("completed", taskId);
             this.emit("completed", taskId);
         });
@@ -623,13 +623,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         for (const taskId of this.taskQueues.keys()) {
             this.removeClientFromQueue(taskId, clientId);
         }
-    }
-
-    /**
-     * Delete queue for a given taskId.
-     */
-    private deleteQueueForTask(taskId: string) {
-        this.taskQueues.delete(taskId);
     }
 
     // This seems like it should be unnecessary if we can trust to receive the join/leave messages and
