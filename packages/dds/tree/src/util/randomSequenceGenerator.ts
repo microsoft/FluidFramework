@@ -25,7 +25,7 @@ export function generateRandomUpPaths(
     // initialize set to keep track of all upPaths created
     const parents = new Set([root]);
 
-    // loop through to create more upPaths (up to arbitrary number of times 5 for now)
+    // loop through to create more upPaths
     for (let i = 0; i < (seed % maxUpPaths); i++) {
         const currParent = getRandomParent(parents, makeRandom(seed + i).integer(1, 10000000));
         const currUpPath: UpPath = {
