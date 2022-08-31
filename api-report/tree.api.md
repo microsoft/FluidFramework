@@ -181,6 +181,8 @@ export interface EditableTreeSignature<T> {
     readonly [getTypeSymbol]: (key?: FieldKey) => EditableTreeNodeSchema;
     // (undocumented)
     [key: string]: T extends number | string | boolean ? TreeValue : EditableTreeNode<T>;
+    // (undocumented)
+    readonly [key: symbol]: ((key?: FieldKey, withSchema?: boolean) => EditableTreeNodeSchema);
 }
 
 // @public (undocumented)

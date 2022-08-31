@@ -30,6 +30,7 @@ export type EditableTreeNodeSchema = Partial<NamedTreeSchema>;
  */
 export interface EditableTreeSignature<T> {
 	[key: string]: T extends number | string | boolean ? TreeValue : EditableTreeNode<T>;
+	readonly [key: symbol]: ((key?: FieldKey, withSchema?: boolean) => EditableTreeNodeSchema);
 	readonly [getTypeSymbol]: (key?: FieldKey) => EditableTreeNodeSchema;
 }
 
