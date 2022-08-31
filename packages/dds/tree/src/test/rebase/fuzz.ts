@@ -34,11 +34,9 @@ import { ChangeRebaser } from "../../rebase";
         const operation = operations[random % operations.length];
         if (operation === "rebase") {
             change = rebase(changeGenerator(random), change);
-        }
-        if (operation === "compose") {
+        } else if (operation === "compose") {
             change = compose([change, changeGenerator(random)]);
-        }
-        if (operation === "invert") {
+        } else {
             // get a random previous change to invert
             const inverseChange = invert(changes[random % changes.length]);
             change = compose([change, inverseChange]);
