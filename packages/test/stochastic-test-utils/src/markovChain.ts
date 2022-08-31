@@ -1,41 +1,42 @@
+import { createWeightedGenerator } from "./generators";
 import { makeRandom } from "./random";
 import { IRandom } from "./types";
 
-abstract class MarkovChain {
+export abstract class MarkovChain<PredictionPointType, OutputType> {
     public static readonly MARKOV_SENTENCE_BEGIN_KEY = "MARKOV_SENTENCE_BEGIN_KEY_01$#@%^#";
     public static readonly MARKOV_SENTENCE_END_KEY = "MARKOV_SENTENCE_END_KEY_01$#@%^#";
-    public abstract initialize(predicitionPoints: string[][]): void;
-    public abstract generateSentence(...args: any): string;
+    public abstract initialize(predicitionPoints: PredictionPointType[][]): void;
+    public abstract generateData(...args: any): OutputType;
 
-    protected static assumeWordLanguageSpacing(word: string): "SPACED" | "NO_SPACES" | "UNKNOWN" {
+    protected static assumeWordLanguageWordSpacing(word: string): WordSpacing {
         let spacedCount = 0;
         let unspacedCount = 0;
         for (let i = 0; i < word.length; i++) {
-            if (MarkovChain.getCharacaterSpacing(word.charAt(i)) === "SPACED") {
+            if (MarkovChain.getCharacaterWordSpacing(word.charAt(i)) === WordSpacing.Spaced) {
                 spacedCount++;
-            } else if (MarkovChain.getCharacaterSpacing(word.charAt(i)) === "NO_SPACES") {
+            } else if (MarkovChain.getCharacaterWordSpacing(word.charAt(i)) === WordSpacing.Unspaced) {
                 unspacedCount++;
             }
         }
 
         if (spacedCount >= unspacedCount) {
-            return "SPACED";
+            return WordSpacing.Spaced;
         }
         if (spacedCount < unspacedCount) {
-            return "NO_SPACES";
+            return WordSpacing.Unspaced;
         }
         // Will return if spacedCount + unspacedCount === 0
-        return "UNKNOWN";
+        return WordSpacing.Unknown;
     }
 
     // Todo: Add support for more languages
-    protected static getCharacaterSpacing(character: string): "SPACED" | "NO_SPACES" | "UNKNOWN" {
+    protected static getCharacaterWordSpacing(character: string): WordSpacing {
         // Latin without symbols & numbers
-        // range 1: ABCDEFGHIJKLMNO0050PQRSTUVWXYZ
+        // range 1: ABCDEFGHIJKLMNOPQRSTUVWXYZ
         if (character >= "\u0041" && character <= "\u005A"
             // range 2: abcdefghijklmnopqrstuvwxyz
             || character >= "\u0061" && character <= "\u007A") {
-            return "SPACED";
+            return WordSpacing.Spaced;
         }
         // CJK Unified Ideographs (also, Japanese Kanji Alphabet)
         if (character >= "\u4E00" && character <= "\u9FBF"
@@ -43,17 +44,23 @@ abstract class MarkovChain {
             || character >= "\u30F3" && character <= "\u30AA"
             // Japanese Hiragana Alphabet
             || character >= "\u304B" && character <= "\u3087") {
-            return "NO_SPACES";
+            return WordSpacing.Unspaced;
         }
-        return "UNKNOWN";
+        return WordSpacing.Unknown;
     }
 }
 
-export class SpaceEfficientMarkovChain extends MarkovChain {
-    readonly chain: Record<string, Record<string, number>>;
+export enum WordSpacing {
+    Spaced,
+    Unspaced,
+    Unknown,
+}
+
+export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
+    chain: Record<string, [string, number][]>;
     readonly random: IRandom;
 
-    constructor(random: IRandom = makeRandom(1), chain?: Record<string, Record<string, number>>) {
+    constructor(random: IRandom = makeRandom(1), chain?: Record<string, [string, number][]>) {
         super();
         if (chain) {
             this.chain = chain;
@@ -69,19 +76,20 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
      * @param sentences - A sentence is an array of string words, sentences is an array of sentences.
      */
     public initialize(sentences: string[][]) {
+        const initialChain: Record<string, Record<string, number>> = {};
         sentences.forEach((sentence) => {
             let prevWord: string | null = null;
             for (let i = 0; i < sentence.length; i++) {
                 const word = sentence[i];
-                if (this.chain[word] === undefined) {
-                    this.chain[word] = {};
+                if (initialChain[word] === undefined) {
+                    initialChain[word] = {};
                 }
 
                 // This case will occur at the beginning of a sentence which is why the given word is added to the
                 // MARKOV_SENTENCE_BEGIN_KEY within the markov chain.
                 if (i === 0) {
                     prevWord = word;
-                    const markovChainRoot = this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY];
+                    const markovChainRoot = initialChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY];
                     if (markovChainRoot !== undefined) {
                         const currentCount = markovChainRoot[word];
                         if (currentCount !== undefined) {
@@ -90,22 +98,22 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
                             markovChainRoot[word] = 1;
                         }
                     } else {
-                        this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] = { [word]: 1 };
+                        initialChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] = { [word]: 1 };
                     }
                 } else if (prevWord !== null) {
                     if (i === sentence.length - 1) {
-                        if (this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] !== undefined) {
-                            this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] += 1;
+                        if (initialChain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] !== undefined) {
+                            initialChain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] += 1;
                         } else {
-                            this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] = 1;
+                            initialChain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] = 1;
                         }
                     }
 
-                    const currentWordCount = this.chain[prevWord][word];
+                    const currentWordCount = initialChain[prevWord][word];
                     if (currentWordCount !== undefined) {
-                        this.chain[prevWord][word] = currentWordCount + 1;
+                        initialChain[prevWord][word] = currentWordCount + 1;
                     } else {
-                        this.chain[prevWord][word] = 1;
+                        initialChain[prevWord][word] = 1;
                     }
                     prevWord = word;
                 }
@@ -113,22 +121,32 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
 
             if (sentence.length === 1) {
                 const word = sentence[0];
-                if (this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] !== undefined) {
-                    this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] += 1;
+                if (initialChain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] !== undefined) {
+                    initialChain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] += 1;
                 } else {
-                    this.chain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] = 1;
+                    initialChain[word][MarkovChain.MARKOV_SENTENCE_END_KEY] = 1;
                 }
             }
         });
+
+        const weightedGeneratorReadyChain: Record<string, [string, number][]> = {};
+        Object.keys(initialChain).forEach((key) => {
+            weightedGeneratorReadyChain[key] = [];
+            Object.keys(initialChain[key]).forEach((innerKey) => {
+                weightedGeneratorReadyChain[key].push([innerKey, initialChain[key][innerKey]]);
+            });
+        });
+        this.chain = weightedGeneratorReadyChain;
     }
 
     /**
      * Runtime per word added to the generated sentence: O(totalNumberOfWordChoices) + O(wordLength)
      * @returns A sentence generated using the given class instances markov chain.
      */
-    public generateSentence(maxLength: number) {
+    public generateData(maxLength: number) {
         const markovChain = this.chain;
-        if (Object.keys(markovChain).length === 0 || markovChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] === undefined) {
+        if (Object.keys(markovChain).length === 0
+            || markovChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] === undefined) {
             return "";
         }
 
@@ -141,7 +159,7 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
 
         sentence += rootWord;
         let currWord = rootWord;
-        let currWordSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
+        let currWordSpacing = MarkovChain.assumeWordLanguageWordSpacing(currWord);
         let prevWordSpacing = currWordSpacing;
         let nextWordChoices = markovChain[currWord];
         while (sentence.length < maxLength && Object.keys(nextWordChoices).length !== 0) {
@@ -150,17 +168,17 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
             if (currWord === MarkovChain.MARKOV_SENTENCE_END_KEY) {
                 break;
             }
-            currWordSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
+            currWordSpacing = MarkovChain.assumeWordLanguageWordSpacing(currWord);
 
-            if (currWordSpacing === "UNKNOWN") {
-                if (prevWordSpacing === "NO_SPACES") {
+            if (currWordSpacing === WordSpacing.Unknown) {
+                if (prevWordSpacing === WordSpacing.Unspaced) {
                     sentence += `${currWord}`;
                 } else {
                     sentence += ` ${currWord}`;
                 }
-            } else if (currWordSpacing === "NO_SPACES") {
+            } else if (currWordSpacing === WordSpacing.Unspaced) {
                 sentence += `${currWord}`;
-            } else if (currWordSpacing === "SPACED") {
+            } else if (currWordSpacing === WordSpacing.Spaced) {
                 sentence += ` ${currWord}`;
             }
 
@@ -170,18 +188,13 @@ export class SpaceEfficientMarkovChain extends MarkovChain {
         return sentence;
     }
 
-    private randomlySelectWord(wordOccuranceMap: Record<string, number>) {
-        const wordChoices: string[] = [];
-        Object.entries(wordOccuranceMap).forEach(([word, occuranceCount]) => {
-            for (let i = 0; i < occuranceCount; i++) {
-                wordChoices.push(word);
-            }
-        });
-        return wordChoices[this.random.integer(0, wordChoices.length - 1)];
+    private randomlySelectWord(wordOccuranceMap: [string, number][]) {
+        const weightGenerator = createWeightedGenerator(wordOccuranceMap);
+        return weightGenerator({ random: this.random }) as string;
     }
 }
 
-export class PerformanceMarkovChain extends MarkovChain {
+export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
     readonly chain: Record<string, string[]>;
     readonly random: IRandom;
 
@@ -239,8 +252,9 @@ export class PerformanceMarkovChain extends MarkovChain {
      * Runtime per word added to the generated sentence: O(1) + O(wordLength).
      * @returns A sentence generated using the given class instances markov chain.
      */
-    public generateSentence(maxLength: number) {
-        if (Object.keys(this.chain).length === 0 || this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] === undefined) {
+    public generateData(maxLength: number) {
+        if (Object.keys(this.chain).length === 0
+            || this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] === undefined) {
             return "";
         }
 
@@ -253,9 +267,8 @@ export class PerformanceMarkovChain extends MarkovChain {
         const rootWord = rootWordChoices[this.random.integer(0, rootWordChoices.length - 1)];
         sentence += rootWord;
         let currWord = rootWord;
-        let currWordSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
+        let currWordSpacing = MarkovChain.assumeWordLanguageWordSpacing(currWord);
         let prevWordSpacing = currWordSpacing;
-        // let lastKnownSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
         let nextWordChoices = this.chain[currWord];
         while (sentence.length < maxLength && nextWordChoices.length !== 0) {
             prevWordSpacing = currWordSpacing;
@@ -263,16 +276,16 @@ export class PerformanceMarkovChain extends MarkovChain {
             if (currWord === MarkovChain.MARKOV_SENTENCE_END_KEY) {
                 break;
             }
-            currWordSpacing = MarkovChain.assumeWordLanguageSpacing(currWord);
-            if (currWordSpacing === "UNKNOWN") {
-                if (prevWordSpacing === "NO_SPACES") {
+            currWordSpacing = MarkovChain.assumeWordLanguageWordSpacing(currWord);
+            if (currWordSpacing === WordSpacing.Unknown) {
+                if (prevWordSpacing === WordSpacing.Unspaced) {
                     sentence += `${currWord}`;
                 } else {
                     sentence += ` ${currWord}`;
                 }
-            } else if (currWordSpacing === "NO_SPACES") {
+            } else if (currWordSpacing === WordSpacing.Unspaced) {
                 sentence += `${currWord}`;
-            } else if (currWordSpacing === "SPACED") {
+            } else if (currWordSpacing === WordSpacing.Spaced) {
                 sentence += ` ${currWord}`;
             }
             nextWordChoices = this.chain[currWord];

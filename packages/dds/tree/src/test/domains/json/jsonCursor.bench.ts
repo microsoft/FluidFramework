@@ -50,8 +50,8 @@ function bench(name: string, getJson: () => any) {
     const json = getJson();
     const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
     const schemaData: SchemaData = {
-            globalFieldSchema: new Map(),
-            treeSchema: jsonTypeSchema,
+        globalFieldSchema: new Map(),
+        treeSchema: jsonTypeSchema,
     };
     const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
 
