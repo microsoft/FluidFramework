@@ -4,19 +4,13 @@
 
 ```ts
 
-import { DocumentStorageServiceProxy } from '@fluidframework/driver-utils';
-import { GitManager } from '@fluidframework/server-services-client';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISession } from '@fluidframework/server-services-client';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import type { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { IVersion } from '@fluidframework/protocol-definitions';
 
 // @public
 export class DefaultTokenProvider implements ITokenProvider {
@@ -35,23 +29,6 @@ export class DocumentPostCreateError extends Error {
     readonly name = "DocumentPostCreateError";
     // (undocumented)
     get stack(): string | undefined;
-}
-
-// @public (undocumented)
-export class DocumentStorageService extends DocumentStorageServiceProxy {
-    // Warning: (ae-forgotten-export) The symbol "ICache" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-forgotten-export) The symbol "ISnapshotTreeVersion" needs to be exported by the entry point index.d.ts
-    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>, noCacheGitManager?: GitManager | undefined, getStorageManager?: (disableCache?: boolean) => Promise<GitManager>);
-    // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
-    // (undocumented)
-    readonly id: string;
-    // (undocumented)
-    get logTailSha(): string | undefined;
-    // (undocumented)
-    manager: GitManager;
-    // (undocumented)
-    noCacheGitManager?: GitManager | undefined;
 }
 
 // @public (undocumented)

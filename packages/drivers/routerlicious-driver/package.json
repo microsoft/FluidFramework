@@ -116,6 +116,10 @@
         "forwardCompat": false,
         "backCompat": false
       },
+      "RemovedClassDeclaration_DocumentStorageService": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
       "RemovedClassDeclaration_NullBlobStorageService": {
         "forwardCompat": false,
         "backCompat": false

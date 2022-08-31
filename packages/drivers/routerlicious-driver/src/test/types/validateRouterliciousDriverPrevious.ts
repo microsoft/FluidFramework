@@ -100,26 +100,14 @@ use_old_ClassDeclaration_DocumentPostCreateError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DocumentStorageService": {"forwardCompat": false}
+* "RemovedClassDeclaration_DocumentStorageService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_DocumentStorageService():
-    TypeOnly<old.DocumentStorageService>;
-declare function use_current_ClassDeclaration_DocumentStorageService(
-    use: TypeOnly<current.DocumentStorageService>);
-use_current_ClassDeclaration_DocumentStorageService(
-    get_old_ClassDeclaration_DocumentStorageService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_DocumentStorageService": {"backCompat": false}
+* "RemovedClassDeclaration_DocumentStorageService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_DocumentStorageService():
-    TypeOnly<current.DocumentStorageService>;
-declare function use_old_ClassDeclaration_DocumentStorageService(
-    use: TypeOnly<old.DocumentStorageService>);
-use_old_ClassDeclaration_DocumentStorageService(
-    get_current_ClassDeclaration_DocumentStorageService());
 
 /*
 * Validate forward compat by using old type in place of current type
