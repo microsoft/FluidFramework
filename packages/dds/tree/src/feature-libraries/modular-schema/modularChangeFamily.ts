@@ -24,8 +24,8 @@ export class ModularChangeFamily implements
         private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
     ) { }
 
-    get rebaser(): ChangeRebaser<any> { return this; }
-    get encoder(): ChangeEncoder<any> { return this; }
+    get rebaser(): ChangeRebaser<FieldChangeMap> { return this; }
+    get encoder(): ChangeEncoder<FieldChangeMap> { return this; }
 
     compose(changes: FieldChangeMap[]): FieldChangeMap {
         if (changes.length === 1) {
