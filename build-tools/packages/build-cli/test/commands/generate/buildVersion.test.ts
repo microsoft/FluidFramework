@@ -160,7 +160,7 @@ describe("generate:buildVersion", () => {
             "--build",
             "12345",
             "--fileVersion",
-            "1.2.5",
+            "1.2.4",
             "--tag",
             "client",
             "--release",
@@ -171,7 +171,7 @@ describe("generate:buildVersion", () => {
             ...test_tags,
         ])
         .it("calculates internal versions as latest", (ctx) => {
-            expect(ctx.stdout).to.contain("version=1.2.5");
+            expect(ctx.stdout).to.contain("version=1.2.4");
             expect(ctx.stdout).to.contain("isLatest=false");
         });
 
@@ -184,7 +184,7 @@ describe("generate:buildVersion", () => {
             "--build",
             "12345",
             "--fileVersion",
-            "1.2.5",
+            "1.2.4",
             "--tag",
             "client",
             "--release",
@@ -193,7 +193,7 @@ describe("generate:buildVersion", () => {
             ...test_tags,
         ])
         .it("reads internal versions setting from env variable", (ctx) => {
-            expect(ctx.stdout).to.contain("version=1.2.5");
+            expect(ctx.stdout).to.contain("version=1.2.4");
             expect(ctx.stdout).to.contain("isLatest=false");
         });
 
