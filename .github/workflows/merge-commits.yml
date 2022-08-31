@@ -72,12 +72,12 @@ jobs:
               username: firstMessage.author
             })
             if(collaboratorStatus !== 204) {
-              fisrtMessage.author = 'sonalivdeshpande'
+              firstMessage.author = 'sonalivdeshpande'
             }
             console.log("sha---", firstMessage.sha);
             console.log("label---", firstMessage.label);
             console.log("author---", firstMessage.author);
-            console.log("collaborators---", collaborators);
+            console.log("collaborators---", collaboratorStatus);
             console.log("author---", firstMessage.author);
             return firstMessage;
     outputs:

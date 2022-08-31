@@ -202,17 +202,19 @@ The site theme/template lives in `themes/thxvscode`.
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
-| `build:api` | `npm run build:uber-package && npm run build:api-documenter` |
+| `build:api` | `npm run build:api-rollup && npm run build:api-documenter` |
 | `build:api-documenter` | Convert API JSON into Markdown. |
 | `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
-| `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
+| `build:md-magic:code` | `node markdown-magic-code.js` |
+| `build:md-magic:website` | `node markdown-magic-website.js` |
+| `build:website` | `npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documenter && npm run hugo` |
 | `ci:build` | `npm run download && npm run build` |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `hugo` | Run the local copy of Hugo. |
-| `linkcheck` | `npm run linkcheck:site` |
+| `linkcheck` | `npm run linkcheck:fast -- --external` |
 | `linkcheck:fast` | `linkcheck http://localhost:1313 --skip-file skipped-urls.txt` |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
