@@ -255,7 +255,7 @@ interface UnitTestAckStep {
     seq: number;
 }
 
-/** Represents the sequencing of a peer change */
+/** Represents the reception of a (sequenced) peer change */
 interface UnitTestPullStep {
     type: "Pull";
     /** The sequence number for this change. */
@@ -268,16 +268,16 @@ interface UnitTestPullStep {
     /** The ID of the peer that issued the change. */
     from: SessionId;
     /**
-     * Ordered list of sequence numbers that correspond to the net change for the local document.
-     * This is required to make tests easier to read and debug. The `unitTest` function verifies
-     * that those expectations are correct.
+     * The delta which should be produced by the `EditManager` when it receives this change.
+     * This information is derived by the `runUnitTestScenario` function, but is explicitly provided
+     * to make tests easier to read and debug.
      */
     expectedDelta: number[];
 }
 
 type UnitTestScenarioStep = UnitTestPushStep | UnitTestAckStep | UnitTestPullStep;
 
-function unitTest(title: string, steps: UnitTestScenarioStep[]): void {
+function runUnitTestScenario(title: string, steps: UnitTestScenarioStep[]): void {
     it(title, () => {
         const { manager, anchors } = editManagerFactory();
         /** Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`) */
@@ -338,7 +338,7 @@ function unitTest(title: string, steps: UnitTestScenarioStep[]): void {
                     };
                     // Ordered list of intentions for local changes
                     const localIntentions = localCommits.map((c) => c.seqNumber);
-                    // When a peer commit is sequence we expect the update to be equivalent to the
+                    // When a peer commit is received we expect the update to be equivalent to the
                     // retraction of any local changes, followed by the peer changes, followed by the
                     // updated version of the local changes.
                     const expected = [
@@ -369,7 +369,7 @@ function unitTest(title: string, steps: UnitTestScenarioStep[]): void {
 
 describe("EditManager", () => {
     describe("Unit Tests", () => {
-        unitTest("Can handle non-concurrent local changes being sequenced immediately", [
+        runUnitTestScenario("Can handle non-concurrent local changes being sequenced immediately", [
             { seq: 1, type: "Push" },
             { seq: 1, type: "Ack" },
             { seq: 2, type: "Push" },
@@ -378,7 +378,7 @@ describe("EditManager", () => {
             { seq: 3, type: "Ack" },
         ]);
 
-        unitTest("Can handle non-concurrent local changes being sequenced later", [
+        runUnitTestScenario("Can handle non-concurrent local changes being sequenced later", [
             { seq: 1, type: "Push" },
             { seq: 2, type: "Push" },
             { seq: 3, type: "Push" },
@@ -387,26 +387,26 @@ describe("EditManager", () => {
             { seq: 3, type: "Ack" },
         ]);
 
-        unitTest("Can handle non-concurrent peer changes sequenced immediately", [
+        runUnitTestScenario("Can handle non-concurrent peer changes sequenced immediately", [
             { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
             { seq: 2, type: "Pull", ref: 1, from: peer1, expectedDelta: [2] },
             { seq: 3, type: "Pull", ref: 2, from: peer1, expectedDelta: [3] },
         ]);
 
-        unitTest("Can handle non-concurrent peer changes sequenced later", [
+        runUnitTestScenario("Can handle non-concurrent peer changes sequenced later", [
             { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
             { seq: 2, type: "Pull", ref: 0, from: peer1, expectedDelta: [2] },
             { seq: 3, type: "Pull", ref: 0, from: peer1, expectedDelta: [3] },
         ]);
 
-        unitTest("Can rebase a single peer change over multiple peer changes", [
+        runUnitTestScenario("Can rebase a single peer change over multiple peer changes", [
             { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
             { seq: 2, type: "Pull", ref: 1, from: peer1, expectedDelta: [2] },
             { seq: 3, type: "Pull", ref: 2, from: peer1, expectedDelta: [3] },
             { seq: 4, type: "Pull", ref: 0, from: peer2, expectedDelta: [4] },
         ]);
 
-        unitTest("Can rebase multiple non-interleaved peer changes", [
+        runUnitTestScenario("Can rebase multiple non-interleaved peer changes", [
             { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
             { seq: 2, type: "Pull", ref: 1, from: peer1, expectedDelta: [2] },
             { seq: 3, type: "Pull", ref: 2, from: peer1, expectedDelta: [3] },
@@ -415,7 +415,7 @@ describe("EditManager", () => {
             { seq: 6, type: "Pull", ref: 0, from: peer2, expectedDelta: [6] },
         ]);
 
-        unitTest("Can rebase multiple interleaved peer changes", [
+        runUnitTestScenario("Can rebase multiple interleaved peer changes", [
             { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
             { seq: 2, type: "Pull", ref: 0, from: peer2, expectedDelta: [2] },
             { seq: 3, type: "Pull", ref: 1, from: peer1, expectedDelta: [3] },
@@ -424,7 +424,7 @@ describe("EditManager", () => {
             { seq: 6, type: "Pull", ref: 0, from: peer2, expectedDelta: [6] },
         ]);
 
-        unitTest("Can rebase multiple local changes", [
+        runUnitTestScenario("Can rebase multiple local changes", [
             { seq: 3, type: "Push" },
             { seq: 4, type: "Push" },
             { seq: 5, type: "Push" },
@@ -436,7 +436,7 @@ describe("EditManager", () => {
             { seq: 6, type: "Pull", ref: 2, from: peer1, expectedDelta: [6] },
         ]);
 
-        unitTest("Can rebase multiple interleaved peer and local changes", [
+        runUnitTestScenario("Can rebase multiple interleaved peer and local changes", [
             { seq: 3, type: "Push" },
             { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [-3, 1, 3] },
             { seq: 2, type: "Pull", ref: 0, from: peer2, expectedDelta: [-3, 2, 3] },
