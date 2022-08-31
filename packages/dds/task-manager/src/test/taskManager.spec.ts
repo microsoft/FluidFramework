@@ -523,7 +523,7 @@ describe("TaskManager", () => {
             });
 
             describe("Completing tasks", () => {
-                it("Immediately rejects attempt to complete task", async () => {
+                it("Immediately throws on attempt to complete task", async () => {
                     const taskId = "taskId";
                     containerRuntime1.connected = false;
                     containerRuntimeFactory.processAllMessages();
