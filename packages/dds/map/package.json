@@ -33,6 +33,7 @@
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:memory": "mocha --config ./src/test/memory/.mocharc.js",
+    "test:memory-profiling:report": "mocha --config ./src/test/memory/.mocharc.js",
     "test:mocha": "mocha --unhandled-rejections=strict --recursive 'dist/test/mocha/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup --exit",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
@@ -75,7 +76,7 @@
   },
   "devDependencies": {
     "@fluid-internal/test-dds-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluid-tools/benchmark": "^0.42.0",
+    "@fluid-tools/benchmark": "^0.43.0",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.3.1000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
