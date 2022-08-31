@@ -4,7 +4,7 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { AnchorSet, Delta, FieldKey, UpPath } from "../tree";
+import { AnchorSet, FieldKey, UpPath } from "../tree";
 import { SequenceEditBuilder, singleTextCursor } from "../feature-libraries";
 import { jsonString } from "../domains";
 import { Transposed as T } from "../changeset";
