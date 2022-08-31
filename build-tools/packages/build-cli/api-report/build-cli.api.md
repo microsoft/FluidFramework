@@ -42,7 +42,7 @@ export function generateBumpVersionBranchName(releaseGroupOrPackage: ReleaseGrou
 export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: string): string;
 
 // @internal
-export function generateReleaseTagName(releaseGroupOrPackage: MonoRepo | Package | string, version?: string): string;
+export function generateReleaseGitTagName(releaseGroupOrPackage: MonoRepo | Package | string, version?: string): string;
 
 // Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluid-tools/build-cli" does not have an export "Context"
 //

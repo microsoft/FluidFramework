@@ -32,7 +32,7 @@ describe("VersionDetails sorting", async () => {
     });
 });
 
-describe("generateReleaseTagName", () => {
+describe("generateReleaseGitTagName", () => {
     it("semver", () => {
         const actual = generateReleaseGitTagName("release-group", "1.2.3");
         const expected = "release-group_v1.2.3";

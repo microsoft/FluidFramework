@@ -18,7 +18,7 @@ export {
 export {
     getAllVersions,
     getPreReleaseDependencies,
-    generateReleaseGitTagName as generateReleaseTagName,
+    generateReleaseGitTagName,
     getTagsForReleaseGroup,
     getVersionFromTag,
     isReleased,
