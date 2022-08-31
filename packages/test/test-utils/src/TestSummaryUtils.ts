@@ -72,11 +72,13 @@ export async function createSummarizerFromFactory(
     dataStoreFactory: IFluidDataStoreFactory,
     summaryVersion?: string,
     containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
+    registryEntries?: NamedFluidDataStoreRegistryEntries,
 ): Promise<ISummarizer> {
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new containerRuntimeFactoryType(
         dataStoreFactory,
+        registryEntries ??
         [
             [dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
         ],
