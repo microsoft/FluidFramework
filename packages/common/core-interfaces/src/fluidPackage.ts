@@ -100,7 +100,7 @@ export interface IFluidCodeDetails {
 }
 
 /**
- * @deprecated  in favor of {@link @fluidframework/container-definitions#isFluidCodeDetails}
+ * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#isFluidCodeDetails}
  * to have code loading modules in same package
 */
 export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluidCodeDetails> => {
@@ -111,14 +111,14 @@ export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluid
 };
 
 /**
- * @deprecated  in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsComparer}
+ * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetailsComparer}
  * to have code loading modules in same package.
 */
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer = "IFluidCodeDetailsComparer";
 
 /**
  * @deprecated  in favor of
- * {@link @fluidframework/container-definitions#IProvideFluidCodeDetailsComparer}
+ * {@link @fluidframework/container-definitions/fluidPackage.ts#IProvideFluidCodeDetailsComparer}
  * to have code loading modules in same package.
 */
 export interface IProvideFluidCodeDetailsComparer {
@@ -126,7 +126,7 @@ export interface IProvideFluidCodeDetailsComparer {
 }
 
 /**
- * @deprecated  in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsComparer}
+ * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetailsComparer}
  * to have code loading modules in same package.
  * Provides capability to compare Fluid code details.
  */

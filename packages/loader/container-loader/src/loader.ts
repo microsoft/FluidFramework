@@ -133,7 +133,7 @@ export interface ILoaderOptions extends ILoaderOptions1 {
 
 /**
  * @deprecated IFluidModuleWithDetails interface is moved to
- * {@link @fluidframework/container-definition#IFluidModuleWithDetails}
+ * {@link @fluidframework/container-definitions#IFluidModuleWithDetails}
  * to have all the code loading modules in one package. #8193
  * Encapsulates a module entry point with corresponding code details.
  */

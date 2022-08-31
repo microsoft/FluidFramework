@@ -14,6 +14,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 import { wrapError } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
+import { pkgVersion } from "./packageVersion";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -368,8 +369,23 @@ export class PendingStateManager implements IDisposable {
         } else {
             // Get the batch metadata from the last message in the batch.
             const batchEndMetadata = message.metadata?.batch;
-            assert(batchBeginMetadata === true, 0x16f /* "Did not receive batch begin metadata" */);
-            assert(batchEndMetadata === false, 0x170 /* "Did not receive batch end metadata" */);
+            if (batchBeginMetadata !== true || batchEndMetadata !== false) {
+                this.stateHandler.close(DataProcessingError.create(
+                    "Pending batch inconsistency", // Formerly known as asserts 0x16f and 0x170
+                    "processPendingLocalMessage",
+                    message,
+                    {
+                        runtimeVersion: pkgVersion,
+                        batchClientId: this.pendingBatchBeginMessage.clientId,
+                        clientId: this.stateHandler.clientId(),
+                        hasBatchStart: batchBeginMetadata === true,
+                        hasBatchEnd: batchEndMetadata === false,
+                        messageType: message.type,
+                        batchStartSequenceNumber: this.pendingBatchBeginMessage.clientSequenceNumber,
+                        pendingMessagesCount: this.pendingMessagesCount,
+                        nextPendingState: nextPendingState.type,
+                    }));
+            }
         }
 
         // Clear the pending batch state now that we have processed the entire batch.
