@@ -62,7 +62,7 @@ function getRandomParent(parentSet: Set<UpPath>, seed: number): UpPath {
  * @param seed - random seed used to generate the change.
  * @returns randomly generated change.
  */
-export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.LocalChangeset[] {
+export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.LocalChangeset {
     const builder = new SequenceEditBuilder(() => {}, new AnchorSet());
     const operations = ["setValue", "delete", "insert"];
     const nodeX = { type: jsonString.name, value: "X" };
@@ -78,5 +78,5 @@ export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.Loca
         builder.delete(getRandomParent(upPaths, randomIndex), makeRandom(seed).integer(1, upPaths.size));
     }
 
-    return builder.getChanges();
+    return builder.getChanges()[0];
 }
