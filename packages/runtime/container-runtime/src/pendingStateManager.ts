@@ -210,17 +210,15 @@ export class PendingStateManager implements IDisposable {
      * Applies stashed ops at their reference sequence number so they are ready to be ACKed or resubmitted
      * @param seqNum - Sequence number at which to apply ops. Will apply all ops if seqNum is undefined.
      */
-    public async applyStashedOpsAt(seqNum?: number) {
+    public async applyStashedOpsUpTo(seqNum?: number) {
         // apply stashed ops at sequence number
         while (!this.initialStates.isEmpty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const nextState = this.initialStates.peekFront()!;
             if (nextState.type === "message") {
                 if (seqNum !== undefined) {
-                    if (nextState.referenceSequenceNumber > seqNum) {
+                    if (nextState.referenceSequenceNumber >= seqNum) {
                         break; // nothing left to do at this sequence number
-                    } else if (nextState.referenceSequenceNumber < seqNum) {
-                        throw new Error("loaded from snapshot too recent to apply stashed ops");
                     }
                 }
 
@@ -233,6 +231,7 @@ export class PendingStateManager implements IDisposable {
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pendingStates.push(this.initialStates.shift()!);
+            this._pendingMessagesCount++;
         }
     }
 

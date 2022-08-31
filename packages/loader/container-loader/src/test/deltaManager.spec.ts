@@ -62,7 +62,9 @@ describe("Loader", () => {
                         client as IClient,
                         reconnectAllowed,
                         logger,
-                        props),
+                        props,
+                        () => true,
+                        ),
                 );
 
                 const tracker = new CollabWindowTracker(

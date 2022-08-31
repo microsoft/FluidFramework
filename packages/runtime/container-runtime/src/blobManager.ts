@@ -5,7 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { DriverErrorType, IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -363,7 +363,12 @@ export class BlobManager {
     private async onUploadReject(localId: string, error) {
         const entry = this.pendingBlobs.get(localId);
         assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
-        if (!this.runtime.connected) {
+
+        // Disconnect due to ping timeout on websocket takes ~45s; until then driver will throw errors with
+        // errorType "offlineError" or the enigmatic "fetchFailure".
+        if (!this.runtime.connected ||
+            error.errorType === DriverErrorType.offlineError ||
+            error.errorType === DriverErrorType.fetchFailure) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 this.transitionToOffline(localId);
             }
@@ -382,6 +387,12 @@ export class BlobManager {
         assert(!!entry, 0x389 /* No pending blob entry */);
         assert([PendingBlobStatus.OnlinePendingUpload, PendingBlobStatus.OnlinePendingOp].includes(entry.status),
             0x38a /* Blob must be in online flow to transition to offline flow */);
+
+        this.logger.sendTelemetryEvent({
+            eventName: "transitionBlobToOffline",
+            localId,
+            blobId: entry?.storageId,
+        });
 
         entry.status = entry.status === PendingBlobStatus.OnlinePendingUpload
             ? PendingBlobStatus.OfflinePendingUpload
@@ -426,8 +437,9 @@ export class BlobManager {
         if (local) {
             if (message.metadata.localId === undefined) {
                 // Since there is no local ID, we know this op was submitted while online.
-                const waitingBlobs = this.opsInFlight.get(message.metadata.blobId);
-                assert(!!waitingBlobs, 0x38e /* local online BlobAttach op with no pending blob */);
+                // If we stashed and rehydrated we will not have any waiting blobs since we don't
+                // stash pending online-flow blobs.
+                const waitingBlobs = this.opsInFlight.get(message.metadata.blobId) ?? [];
                 waitingBlobs.forEach((localId) => {
                     const pendingBlobEntry = this.pendingBlobs.get(localId);
                     assert(
@@ -584,7 +596,11 @@ export class BlobManager {
     public getPendingBlobs(): IPendingBlobs {
         const blobs = {};
         for (const [key, entry] of this.pendingBlobs) {
-            blobs[key] = { blob: bufferToString(entry.blob, "base64") };
+            // We never gave out handles for online-flow entries, so at this point there is no reason to save them
+            if (entry.status === PendingBlobStatus.OfflinePendingOp ||
+                entry.status === PendingBlobStatus.OfflinePendingUpload) {
+                blobs[key] = { blob: bufferToString(entry.blob, "base64") };
+            }
         }
         return blobs;
     }

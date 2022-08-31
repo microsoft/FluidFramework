@@ -6,6 +6,7 @@
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
 import {
+    DriverErrorType,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
     IDocumentDeltaStorageService,
@@ -58,8 +59,40 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
     }
 }
 
+function throwOfflineError(): never {
+    const error = new Error("simulated offline error");
+    (error as any).errorType = DriverErrorType.offlineError;
+
+    // ODSP driver will retry 5 times then throw a non-retryable error
+    (error as any).canRetry = false;
+    throw error;
+}
+
 export class FaultInjectionDocumentService implements IDocumentService {
-    private _currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
+    private _currentDeltaStream?: FaultInjectionDocumentDeltaConnection;
+    private _currentDeltaStorage?: FaultInjectionDocumentDeltaStorageService;
+    private _currentStorage?: FaultInjectionDocumentStorageService;
+
+    private _online = true;
+    public get online() { return this._online; }
+
+    public goOffline() {
+        this._online = false;
+        assert(!!this._currentDeltaStream, "no delta stream");
+        assert(!!this._currentStorage, "no storage");
+        this._currentDeltaStream.goOffline();
+        this._currentStorage.goOffline();
+        this._currentDeltaStorage?.goOffline();
+    }
+
+    public goOnline() {
+        this._online = true;
+        assert(!!this._currentDeltaStream, "no delta stream");
+        assert(!!this._currentStorage, "no storage");
+        this._currentDeltaStream.goOnline();
+        this._currentStorage.goOnline();
+        this._currentDeltaStorage?.goOnline();
+    }
 
     constructor(private readonly internal: IDocumentService) {
     }
@@ -69,17 +102,15 @@ export class FaultInjectionDocumentService implements IDocumentService {
     public get documentDeltaConnection() {
         return this._currentDeltaStream;
     }
+    public get documentDeltaStorageService() {
+        return this._currentDeltaStorage;
+    }
+    public get documentStorageService() {
+        return this._currentStorage;
+    }
 
     public dispose(error?: any) {
         this.internal.dispose(error);
-    }
-
-    async connectToStorage(): Promise<IDocumentStorageService> {
-        return this.internal.connectToStorage();
-    }
-
-    async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        return this.internal.connectToDeltaStorage();
     }
 
     async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
@@ -87,15 +118,90 @@ export class FaultInjectionDocumentService implements IDocumentService {
             this._currentDeltaStream?.disposed !== false,
             "Document service factory should only have one open connection");
         const internal = await this.internal.connectToDeltaStream(client);
-        this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal);
+        this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal, this.online);
         return this._currentDeltaStream;
+    }
+
+    async connectToStorage(): Promise<IDocumentStorageService> {
+        const internal = await this.internal.connectToStorage();
+        this._currentStorage = new FaultInjectionDocumentStorageService(internal, this.online);
+        return this._currentStorage;
+    }
+
+    async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
+        const internal = await this.internal.connectToDeltaStorage();
+        this._currentDeltaStorage = new FaultInjectionDocumentDeltaStorageService(internal, this.online);
+        return this._currentDeltaStorage;
+    }
+}
+
+export class FaultInjectionDocumentDeltaStorageService implements IDocumentDeltaStorageService {
+    constructor(private readonly internal: IDocumentDeltaStorageService, private online: boolean) { }
+    public goOffline() { this.online = false; }
+    public goOnline() { this.online = true; }
+
+    public fetchMessages(from, to, abortSignal, cachedOnly, fetchReason) {
+        if (!this.online) {
+            throwOfflineError();
+        }
+        return this.internal.fetchMessages(from, to, abortSignal, cachedOnly, fetchReason);
+    }
+}
+
+export class FaultInjectionDocumentStorageService implements IDocumentStorageService {
+    constructor(private readonly internal: IDocumentStorageService, private online: boolean) { }
+
+    public goOffline() {
+        this.online = false;
+    }
+    public goOnline() {
+        this.online = true;
+    }
+
+    private throwIfOffline() {
+        if (!this.online) {
+            throwOfflineError();
+        }
+    }
+
+    public get repositoryUrl(): string { return this.internal.repositoryUrl; }
+    public get policies() { return this.internal.policies; }
+
+    public async getSnapshotTree(version, scenarioName?: string) {
+        this.throwIfOffline();
+        return this.internal.getSnapshotTree(version, scenarioName);
+    }
+
+    public async getVersions(versionId, count, scenarioName, fetchSource) {
+        this.throwIfOffline();
+        return this.internal.getVersions(versionId, count, scenarioName, fetchSource);
+    }
+
+    public async createBlob(file: ArrayBufferLike) {
+        this.throwIfOffline();
+        return this.internal.createBlob(file);
+    }
+
+    public async readBlob(id: string): Promise<ArrayBufferLike> {
+        this.throwIfOffline();
+        return this.internal.readBlob(id);
+    }
+
+    public async uploadSummaryWithContext(summary: ISummaryTree, context): Promise<string> {
+        this.throwIfOffline();
+        return this.internal.uploadSummaryWithContext(summary, context);
+    }
+
+    public async downloadSummary(handle): Promise<ISummaryTree> {
+        this.throwIfOffline();
+        return this.internal.downloadSummary(handle);
     }
 }
 
 export class FaultInjectionDocumentDeltaConnection
 extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
     private _disposed: boolean = false;
-    constructor(private readonly internal: IDocumentDeltaConnection) {
+    constructor(private readonly internal: IDocumentDeltaConnection, private online: boolean) {
         super(internal);
     }
 
@@ -120,14 +226,20 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
      * Submit a new message to the server
      */
     submit(messages: IDocumentMessage[]): void {
-        this.internal.submit(messages);
+        if (this.online) {
+            // should probably simulate messages that are successful even though we don't see the ACK
+            // could just submit a random number of messages after going offline
+            this.internal.submit(messages);
+        }
     }
 
     /**
      * Submit a new signal to the server
      */
     submitSignal(message: any): void {
-        this.internal.submitSignal(message);
+        if (this.online) {
+            this.internal.submitSignal(message);
+        }
     }
 
     /**
@@ -158,9 +270,18 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
             "error",
             new FaultInjectionError("FaultInjectionError", canRetry));
     }
+
     public injectDisconnect() {
         assert(!this.disposed, "cannot inject disconnect into closed delta connection");
         this.emit("disconnect", "FaultInjectionDisconnect");
+    }
+
+    public goOffline() {
+        this.online = false;
+    }
+
+    public goOnline() {
+        this.online = true;
     }
 }
 

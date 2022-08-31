@@ -50,6 +50,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
             treePs.push(this.serializeTreeCore(subTree, blobs, storage));
         }
         for (const id of Object.values(tree.blobs)) {
+            // this is reading attachment blobs ?????????
             const blob = await storage.readBlob(id);
             // ArrayBufferLike will not survive JSON.stringify()
             blobs[id] = bufferToString(blob, "utf8");

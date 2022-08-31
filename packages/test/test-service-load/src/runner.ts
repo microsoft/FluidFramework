@@ -159,7 +159,23 @@ async function runnerProcess(
                     driverType: testDriver.type,
                     driverEndpointName: testDriver.endpointName,
                 },
+        });
+        const loadContainer = async (documentServiceFactory, headers, stashBlob?) => {
+            const loader = new Loader({
+                urlResolver: testDriver.createUrlResolver(),
+                documentServiceFactory,
+                codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
+                logger,
+                options: loaderOptions[runConfig.runId % loaderOptions.length],
+                configProvider: {
+                    getRawConfig(name) {
+                        return configurations[runConfig.runId % configurations.length][name];
+                    },
+                },
             });
+
+            return loader.resolve({ url, headers }, stashBlob);
+        };
         process.on("unhandledRejection", (reason, promise) => {
             try {
                 logger.sendErrorEvent({ eventName: "UnhandledPromiseRejection" }, reason);
@@ -177,6 +193,9 @@ async function runnerProcess(
         let done = false;
         // Reset the workload once, on the first iteration
         let reset = true;
+        let stashedChanges: string | undefined;
+        let stashedChangesP: Promise<string | undefined> | undefined;
+        const runContext: { [x: string]: any; } = {};
         while (!done) {
             const nextFactoryPermutation = iterator.next();
             if (nextFactoryPermutation.done === true) {
@@ -184,21 +203,10 @@ async function runnerProcess(
             }
             const { documentServiceFactory, headers } = nextFactoryPermutation.value;
 
-            // Construct the loader
-            const loader = new Loader({
-                urlResolver: testDriver.createUrlResolver(),
-                documentServiceFactory,
-                codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
-                logger,
-                options: loaderOptions[runConfig.runId % containerOptions.length],
-                configProvider: {
-                    getRawConfig(name) {
-                        return configurations[runConfig.runId % configurations.length][name];
-                    },
-                },
-            });
-
-            const container: IContainer = await loader.resolve({ url, headers });
+            const container = await loadContainer(documentServiceFactory, headers, stashedChanges);
+            // clear stashed changes once they've been passed to loader since using them twice could
+            // result in document corruption
+            stashedChanges = undefined;
             container.connect();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
@@ -224,12 +232,45 @@ async function runnerProcess(
                 assert(faultInjectionMinMs === undefined, "Define faultInjectionMaxMs.");
             }
 
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            if (containerOptions[runConfig.runId % containerOptions.length].enableOfflineLoad) {
+                stashedChangesP = scheduleOffline(documentServiceFactory, container, runConfig);
+            }
+
             try {
                 printStatus(runConfig, `running`);
-                done = await test.run(runConfig, reset, logger);
-                reset = false;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const ds = documentServiceFactory.documentServices.get(container.resolvedUrl!);
+                assert(!!ds, "no document services");
+
+                runContext.online = () => ds.online;
+                runContext.waitForSave = async () => {
+                    // TODO: Container.isDirty currently does not account for pending blob uploads
+                    // https://dev.azure.com/fluidframework/internal/_workitems/edit/724
+                    const blobsDirty = () => {
+                        const blobs = (container as any).context.runtime.blobManager.pendingBlobs.size;
+                        if (blobs !== 0) {
+                            console.log("waiting for", blobs, "blobs");
+                            return true;
+                        }
+                        return false;
+                    };
+                    while (container.isDirty || blobsDirty()) {
+                        if (container.isDirty) {
+                            await new Promise((res) => container.once("saved", res));
+                        }
+                        if (blobsDirty()) {
+                            await new Promise((res) => setTimeout(res, 500));
+                        }
+                    }
+                };
+                done = await test.run(runConfig, reset, logger, runContext);
                 printStatus(runConfig, done ? `finished` : "closed");
+                assert(!done || !container.isDirty, "early exit");
+                stashedChanges = stashedChangesP ? await stashedChangesP : undefined;
+                reset = false;
             } catch (error) {
+                console.log("\n".repeat(5), "runnerfailed", error);
                 logger.sendErrorEvent({
                     eventName: "RunnerFailed",
                     testHarnessEvent: true,
@@ -242,11 +283,77 @@ async function runnerProcess(
                 await baseLogger.flush({ url, runId: runConfig.runId });
             }
         }
-        return 0;
+
+        const nextFactoryPermutation2 = iterator.next();
+        if (nextFactoryPermutation2.done === true) {
+            throw new Error("Factory permutation iterator is expected to cycle forever");
+        }
+        // const values = nextFactoryPermutation2.value;
+        // const container2 = await loadContainer(values.documentServiceFactory, values.headers);
+        // container2.connect();
+        // const test2 = await requestFluidObject<ILoadTest>(container2, "/");
+
+        let verified: boolean | undefined;
+        while (verified === undefined) {
+            const values = nextFactoryPermutation2.value;
+            const verifyContainer = await loadContainer(values.documentServiceFactory, values.headers);
+            verifyContainer.connect();
+            const verifyTest = await requestFluidObject<ILoadTest>(verifyContainer, "/");
+            try {
+                verified = await verifyTest.verify(runConfig, logger, runContext);
+            } catch (e) {
+                printStatus(runConfig, "error while verifying:");
+                console.log(e);
+            } finally {
+                if (!verifyContainer.closed) {
+                    verifyContainer.close();
+                }
+            }
+        }
+
+        printStatus(runConfig, verified ? "verified" : `not verified: ${runContext.fail}`);
+        return verified ? 0 : -1;
     } catch (e) {
         printStatus(runConfig, `error: loading test`);
         console.error(e);
         return -1;
+    }
+}
+
+async function scheduleOffline(
+    dsf: FaultInjectionDocumentServiceFactory,
+    container: IContainer,
+    runConfig: IRunConfig,
+): Promise<string | undefined> {
+    // should it be possible to go offline without closing?
+    if (container.connectionState !== ConnectionState.Connected && !container.closed) {
+        await Promise.race([
+            new Promise((res) => container.once("connected", res)),
+            new Promise((res) => container.once("closed", res)),
+        ]);
+    }
+
+    if (container.closed) {
+        return;
+    }
+
+    // TODO: config values
+    const injectionTime = random.integer(0, 30_000)(runConfig.randEng);
+    const offlineTime = random.integer(5_000, 15_000)(runConfig.randEng);
+
+    await new Promise<void>((res) => setTimeout(res, injectionTime));
+    assert(container.resolvedUrl !== undefined, "no url");
+
+    const ds = dsf.documentServices.get(container.resolvedUrl);
+    assert(!!ds, "no documentServices");
+
+    printStatus(runConfig, `going offline! closing in ${offlineTime / 1000} seconds!`);
+    ds.goOffline();
+
+    await new Promise<void>((res) => setTimeout(res, offlineTime));
+    if (!container.closed) {
+        printStatus(runConfig, "stashing changes!");
+        return container.closeAndGetPendingLocalState();
     }
 }
 

@@ -792,8 +792,15 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * @internal
      */
-    protected applyStashedOp() {
-        throw new Error("not implemented");
+    protected applyStashedOp(op): unknown {
+        // TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/1524
+        assert(op.type === "set", "set only");
+        this.processCore(op, false, undefined);
+        return {
+            type: "edit",
+            previousValue: undefined,
+            pendingMessageId: (this.root as any).getKeyMessageId(op) as unknown,
+        };
     }
 
     private serializeDirectory(

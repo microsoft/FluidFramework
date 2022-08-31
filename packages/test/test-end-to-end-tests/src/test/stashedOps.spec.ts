@@ -451,7 +451,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
-        console.log(string2);
         await ensureContainerConnected(container2);
         await provider.ensureSynchronized();
         assert.strictEqual(string1.getText(), "hello world!");

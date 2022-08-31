@@ -168,7 +168,6 @@ export class ConnectionManager implements IConnectionManager {
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
     /** Counts the number of noops sent by the client which may not be acked. */
-    private trailingNoopCount = 0;
 
     /** track clientId used last time when we sent any ops */
     private lastSubmittedClientId: string | undefined;
@@ -245,11 +244,6 @@ export class ConnectionManager implements IConnectionManager {
         }
     }
 
-    public shouldJoinWrite(): boolean {
-        // We don't have to wait for ack for topmost NoOps. So subtract those.
-        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);
-    }
-
     /**
      * Tells if container is in read-only mode.
      * Data stores should listen for "readonly" notifications and disallow user
@@ -299,6 +293,7 @@ export class ConnectionManager implements IConnectionManager {
         reconnectAllowed: boolean,
         private readonly logger: ITelemetryLogger,
         private readonly props: IConnectionManagerFactoryArgs,
+        private readonly shouldJoinWrite: () => boolean,
     ) {
         this.clientDetails = this.client.details;
         this.defaultReconnectionMode = this.client.mode;
@@ -817,12 +812,6 @@ export class ConnectionManager implements IConnectionManager {
             this.lastSubmittedClientId = this.connection?.clientId;
             this.clientSequenceNumber = 0;
             this.clientSequenceNumberObserved = 0;
-        }
-
-        if (message.type === MessageType.NoOp) {
-            this.trailingNoopCount++;
-        } else {
-            this.trailingNoopCount = 0;
         }
 
         return {

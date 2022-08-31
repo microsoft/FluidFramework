@@ -94,13 +94,22 @@
             "opRatePerMin": 60,
             "progressIntervalMs": 5000,
             "numClients": 4,
-            "totalSendCount": 150,
+            "totalSendCount": 200,
             "readWriteCycleMs": 10000,
-            "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 50000,
-            "totalBlobCount": 300,
+            "totalBlobCount": 400,
             "blobSize": 10240,
-            "detachedBlobCount": 10
+            "detachedBlobCount": 0,
+            "optionOverrides":{
+                "odsp":{
+                    "configurations":{
+                        "Fluid.SharedObject.OpProcessingTelemetrySampling": [999999]
+                    },
+                    "container":{
+                        "enableOfflineLoad": [1],
+                        "loadSequenceNumberVerification": ["close"]
+                    }
+                }
+            }
         },
         "binarySnapshotFormat": {
             "opRatePerMin": 60,

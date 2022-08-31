@@ -631,12 +631,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             summarizeProtocolTree,
         };
 
+        // TODO: this information should be stored in the blob since we may have a blob with no pending changes
+        this._dirtyContainer = config.serializedContainerState !== undefined;
+
         this.connectionStateHandler = new ConnectionStateHandler(
             {
                 quorumClients: () => this._protocolHandler?.quorum,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
-                shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
+                shouldClientJoinWrite: () => this.isDirty,
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
                     // We get here when socket does not receive any ops on "write" connection, including
@@ -814,11 +817,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             clientId: this.clientId,
         };
 
-        this.mc.logger.sendTelemetryEvent({ eventName: "CloseAndGetPendingLocalState" });
-
         this.close();
+        const s = JSON.stringify(pendingState);
+        this.mc.logger.sendTelemetryEvent({ eventName: "CloseAndGetPendingLocalState", size: s.length });
 
-        return JSON.stringify(pendingState);
+        return s;
     }
 
     public get attachState(): AttachState {
@@ -1533,7 +1536,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.client,
                 this._canReconnect,
                 ChildLogger.create(this.subLogger, "ConnectionManager"),
-                props),
+                props,
+                () => this.isDirty,
+            ),
         );
 
         // Disable inbound queues as Container is not ready to accept any ops until we are fully loaded!

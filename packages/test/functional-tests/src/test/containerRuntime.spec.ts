@@ -103,7 +103,8 @@ describe("Container Runtime", () => {
                     client as IClient,
                     false,
                     DebugLogger.create("fluid:testConnectionManager"),
-                    props),
+                    props,
+                    () => true),
             );
 
             const emitter = new EventEmitter();
@@ -265,7 +266,8 @@ describe("Container Runtime", () => {
                     client as IClient,
                     true,
                     DebugLogger.create("fluid:testConnectionManager"),
-                    props),
+                    props,
+                    () => true),
             );
             await deltaManager2.attachOpHandler(0, 0, 1, {
                 process(message: ISequencedDocumentMessage) {

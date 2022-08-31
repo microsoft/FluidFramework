@@ -30,7 +30,8 @@ export interface IRunConfig {
 }
 
 export interface ILoadTest {
-    run(config: IRunConfig, reset: boolean, logger): Promise<boolean>;
+    run(config: IRunConfig, reset: boolean, logger, context): Promise<boolean>;
+    verify(config: IRunConfig, logger, context): Promise<boolean>;
     detached(config: Omit<IRunConfig, "runId">, logger): Promise<LoadTestDataStoreModel>;
 }
 
@@ -136,6 +137,7 @@ export class LoadTestDataStoreModel {
         runtime: IFluidDataStoreRuntime,
         containerRuntime: IContainerRuntimeBase,
         logger: TelemetryLogger,
+        context: IRunContext,
     ) {
         await LoadTestDataStoreModel.waitForCatchup(runtime);
 
@@ -173,6 +175,7 @@ export class LoadTestDataStoreModel {
             runDir,
             gcDataStore.handle,
             logger,
+            context,
         );
 
         if (reset) {
@@ -180,10 +183,11 @@ export class LoadTestDataStoreModel {
             runDir.set(startTimeKey, Date.now());
             runDir.delete(taskTimeKey);
             counter.increment(-1 * counter.value);
-            const partnerCounter = await dataModel.getPartnerCounter();
-            if (partnerCounter !== undefined && partnerCounter.value > 0) {
-                partnerCounter.increment(-1 * partnerCounter.value);
-            }
+
+            // const partnerCounter = await dataModel.getPartnerCounter();
+            // if (partnerCounter !== undefined && partnerCounter.value > 0) {
+            //     partnerCounter.increment(-1 * partnerCounter.value);
+            // }
         }
         return dataModel;
     }
@@ -206,6 +210,7 @@ export class LoadTestDataStoreModel {
         private readonly runDir: IDirectory,
         private readonly gcDataStoreHandle: IFluidHandle,
         private readonly logger: TelemetryLogger,
+        private readonly context: IRunContext,
     ) {
         const halfClients = Math.floor(this.config.testConfig.numClients / 2);
         // The runners are paired up and each pair shares a single taskId
@@ -229,16 +234,11 @@ export class LoadTestDataStoreModel {
             const blobsPerOp = clientBlobCount / clientOpCount;
 
             // start uploading blobs where we left off
-            this.blobCount = Math.trunc(this.counter.value * blobsPerOp);
+            this.blobCount = Math.trunc(context.opCount * blobsPerOp);
 
             // upload blobs progressively as the counter is incremented
-            this.counter.on("op", (_, local) => {
-                const value = this.counter.value;
-                if (!local) {
-                    // this is an old op, we should have already uploaded this blob
-                    this.blobCount = Math.max(this.blobCount, Math.trunc(value * blobsPerOp));
-                    return;
-                }
+            this.counter.on("incremented", () => {
+                const value = context.opCount;
                 const newBlobs = value >= clientOpCount
                     ? clientBlobCount - this.blobCount
                     : Math.trunc(value * blobsPerOp - this.blobCount);
@@ -287,9 +287,12 @@ export class LoadTestDataStoreModel {
     private get partnerBlobKeyPrefix(): string { return `blob_${this.partnerId}_`; }
 
     public async blobFinish() {
+        if (this.runtime.disposed) {
+            return;
+        }
         const p = Promise.all(this.blobUploads);
         this.blobUploads.length = 0;
-        return p;
+        return Promise.race([p, new Promise<void>((res) => this.runtime.once("dispose", res))]);
     }
 
     /**
@@ -305,8 +308,41 @@ export class LoadTestDataStoreModel {
         assert(buffer.byteLength === blobSize, "incorrect buffer size");
         const handle = await this.runtime.uploadBlob(buffer);
         if (!this.runtime.disposed) {
+            ++this.context.blobCount;
             this.root.set(this.blobKey(blobNumber), handle);
         }
+    }
+
+    public async verifyBlobs(context): Promise<boolean> {
+        let count = 0;
+        for (const key of this.root.keys()) {
+            if (key.startsWith(`blob_${this.config.runId}`)) {
+                const handle = this.root.get<IFluidHandle<ArrayBufferLike>>(key);
+                if (!handle) {
+                    return false;
+                }
+                ++count;
+
+                const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
+                const blob = await handle.get();
+                const expectedContent = `${this.config.runId}/${key.split("_").pop()}:`;
+                const content = Buffer.from(blob).toString("utf8", 0, expectedContent.length);
+
+                if (blob.byteLength !== blobSize || content !== expectedContent) {
+                    console.log(Buffer.from(blob).toString("utf8", 0, expectedContent.length));
+                    console.log(expectedContent);
+                    return false;
+                }
+            }
+        }
+
+        if (count !== context.blobCount) {
+            context.fail = context.fail ?? [];
+            context.fail.push(`${count} / ${context.blobCount} blobs`);
+            return false;
+        }
+
+        return true;
     }
 
     public async getPartnerCounter() {
@@ -410,6 +446,14 @@ export class LoadTestDataStoreModel {
     }
 }
 
+// TODO: name this something besides "context"
+interface IRunContext {
+    [x: string]: any;
+    waitForSave: () => Promise<void>;
+    // if we are "online", regardless of what runtime.connected says
+    online: () => boolean;
+}
+
 class LoadTestDataStore extends DataObject implements ILoadTest {
     public static DataStoreName = "StressTestDataStore";
 
@@ -425,12 +469,28 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             this.runtime,
             this.context.containerRuntime,
             logger,
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            {} as IRunContext,
         );
     }
 
-    public async run(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
+    public async verify(config: IRunConfig, logger: TelemetryLogger, context: IRunContext) {
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
-            config, reset, this.root, this.runtime, this.context.containerRuntime, logger);
+            config, false, this.root, this.runtime, this.context.containerRuntime, logger, context);
+
+        let correct = true;
+        correct = correct && await dataModel.verifyBlobs(context);
+        if (dataModel.counter.value !== context.opCount) {
+            context.fail = context.fail ?? [];
+            context.fail.push(`${dataModel.counter.value} / ${context.opCount} ops`);
+            return false;
+        }
+        return correct;
+    }
+
+    public async run(config: IRunConfig, reset: boolean, logger: TelemetryLogger, context: IRunContext) {
+        const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
+            config, reset, this.root, this.runtime, this.context.containerRuntime, logger, context);
 
         const leaderElection = new LeaderElection(this.runtime);
         leaderElection.setupLeaderElection();
@@ -450,33 +510,51 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
         }
 
+        context.opCount = reset ? 0 : context.opCount ?? 0;
+        context.blobCount = reset ? 0 : context.blobCount ?? 0;
+
+        if (context.opCount !== dataModel.counter.value) {
+            dataModel.printStatus();
+            console.log("expected:", context.opCount, "actual:", dataModel.counter.value);
+        }
+
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
         try {
-            while (dataModel.counter.value < clientSendCount && !this.disposed) {
+            if (random.bool()(config.randEng)) {
+                await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
+            }
+            while (!this.disposed && context.opCount < clientSendCount) {
                 // this enables a quick ramp down. due to restart, some clients can lag
-                // leading to a slow ramp down. so if there are less than half the clients
-                // and it's partner is done, return true to complete the runner.
-                if (this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
-                    && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
-                    return true;
-                }
+                // leading to a slow ramp down. so if there are fewer than half the clients
+                // and its partner is done, return true to complete the runner.
+                // if (this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
+                //     && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
+                //     return true;
+                // }
 
-                if (dataModel.haveTaskLock()) {
-                    dataModel.counter.increment(1);
-                    if (dataModel.counter.value % opsPerCycle === 0) {
-                        await dataModel.blobFinish();
-                        dataModel.abandonTask();
-                        // give our partner a half cycle to get the task
-                        await delay(cycleMs / 2);
-                    } else {
-                        // Random jitter of +- 50% of opWaitMs
-                        await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
-                    }
+                // if (dataModel.haveTaskLock()) {
+                ++context.opCount;
+                dataModel.counter.increment(1);
+                if (dataModel.counter.value % opsPerCycle === 0) {
+                    await dataModel.blobFinish();
+                    // dataModel.abandonTask();
+                    // give our partner a half cycle to get the task
+                    await delay(cycleMs / 2);
                 } else {
-                    await dataModel.lockTask();
+                    // Random jitter of +- 50% of opGapMs
+                    await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
                 }
+                // } else {
+                //     await dataModel.lockTask();
+            }
+
+            if (!this.runtime.disposed) {
+                await Promise.race([
+                    context.waitForSave(),
+                    new Promise<void>((res) => this.runtime.once("dispose", () => res())),
+                ]);
             }
             return !this.runtime.disposed;
         } finally {

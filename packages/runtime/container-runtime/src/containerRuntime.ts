@@ -477,11 +477,11 @@ interface IPendingRuntimeState {
     /**
      * Pending ops from PendingStateManager
      */
-    pending?: IPendingLocalState;
+    stashedOps?: IPendingLocalState;
     /**
      * Pending blobs from BlobManager
      */
-    pendingAttachmentBlobs?: IPendingBlobs;
+    stashedBlobs?: IPendingBlobs;
     /**
      * A base snapshot at a sequence number prior to the first pending op
      */
@@ -1055,7 +1055,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
-            pendingRuntimeState?.pendingAttachmentBlobs,
+            pendingRuntimeState?.stashedBlobs,
         );
 
         this.scheduleManager = new ScheduleManager(
@@ -1079,7 +1079,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 setFlushMode: (mode) => this.setFlushMode(mode),
             },
             this._flushMode,
-            pendingRuntimeState?.pending);
+            pendingRuntimeState?.stashedOps);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
             this.clearPartialChunks(clientId);
@@ -2794,7 +2794,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async getSnapshotBlobs(): Promise<void> {
         if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) ||
-            this.attachState !== AttachState.Attached || this.context.pendingLocalState) {
+            this.attachState !== AttachState.Attached || this.context.pendingLocalState ||
+            !this.clientDetails.capabilities.interactive) {
             return;
         }
         assert(!!this.context.baseSnapshot, 0x2e5 /* "Must have a base snapshot" */);
@@ -2806,24 +2807,40 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw new UsageError("can't get state when offline load disabled");
         }
 
+        // reuse snapshot from previous blob if we have it
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
+        // eslint-disable-next-line one-var
+        let snapshotBlobs, baseSnapshot;
         if (previousPendingState) {
-            return {
-                pending: this.pendingStateManager.getLocalState(),
-                pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
-                snapshotBlobs: previousPendingState.snapshotBlobs,
-                baseSnapshot: previousPendingState.baseSnapshot,
-                savedOps: this.savedOps,
-            };
+            baseSnapshot = previousPendingState.baseSnapshot;
+            snapshotBlobs = previousPendingState.snapshotBlobs;
+        } else {
+            assert(!!this.context.baseSnapshot, 0x2e6 /* "Must have a base snapshot" */);
+            assert(!!this.baseSnapshotBlobs, 0x2e7,
+                /* "Must serialize base snapshot blobs before getting runtime state" */);
+            baseSnapshot = this.context.baseSnapshot;
+            snapshotBlobs = this.baseSnapshotBlobs;
         }
-        assert(!!this.context.baseSnapshot, 0x2e6 /* "Must have a base snapshot" */);
-        assert(!!this.baseSnapshotBlobs, 0x2e7 /* "Must serialize base snapshot blobs before getting runtime state" */);
+
+        // stash pending local changes
+        const stashedOps = this.pendingStateManager.getLocalState();
+        const stashedBlobs = this.blobManager.getPendingBlobs();
+
+        this.logger.sendTelemetryEvent({
+            eventName: "getPendingRuntimeState",
+            reused: !!previousPendingState,
+            stashedOpCount: stashedOps?.pendingStates.length ?? 0,
+            stashedBlobCount: Object.keys(stashedBlobs ?? {}).length,
+            savedSnapshotBlobs: Object.keys(snapshotBlobs).length,
+            savedOpCount: this.savedOps.length,
+        });
+
         return {
-            pending: this.pendingStateManager.getLocalState(),
-            pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
-            snapshotBlobs: this.baseSnapshotBlobs,
-            baseSnapshot: this.context.baseSnapshot,
+            stashedOps,
+            stashedBlobs,
             savedOps: this.savedOps,
+            baseSnapshot,
+            snapshotBlobs,
         };
     }
 
@@ -2889,12 +2906,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async processSavedOps(state: IPendingRuntimeState) {
         for (const op of state.savedOps) {
+            await this.pendingStateManager.applyStashedOpsUpTo(op.sequenceNumber);
             this.process(op, false);
-            await this.pendingStateManager.applyStashedOpsAt(op.sequenceNumber);
         }
         // we may not have seen every sequence number (because of system ops) so apply everything once we
         // don't have any more saved ops
-        await this.pendingStateManager.applyStashedOpsAt();
+        await this.pendingStateManager.applyStashedOpsUpTo();
     }
 
     private validateSummaryHeuristicConfiguration(configuration: ISummaryConfigurationHeuristics) {

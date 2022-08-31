@@ -8,8 +8,10 @@ import assert from "assert";
 
 const childArgs: string[] = [
     "./dist/nodeStressTest.js",
-    "--driver", "tinylicious",
-    "--profile", "mini",
+    "--driver", "odsp",
+    "--profile", "blobs",
+    "-l", "fluid:*",
+    "-v",
 ];
 
 describe("stress test", () => {

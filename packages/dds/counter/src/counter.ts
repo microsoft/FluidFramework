@@ -192,7 +192,16 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * Not implemented.
      * @internal
      */
-    protected applyStashedOp() {
-        throw new Error("Not implemented");
+    protected applyStashedOp(content: any) {
+        // TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/1752
+        const op = content as IIncrementOperation;
+        switch (op.type) {
+            case "increment":
+                this.incrementCore(op.incrementAmount);
+                break;
+
+            default:
+                throw new Error("Unknown operation");
+        }
     }
 }
