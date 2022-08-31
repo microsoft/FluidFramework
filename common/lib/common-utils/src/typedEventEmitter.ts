@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { EventEmitter } from "events";
 import {
     IEvent,
@@ -67,3 +69,33 @@ export class TypedEventEmitter<TEvent>
     readonly removeListener: TypedEventTransform<this, TEvent>;
     readonly off: TypedEventTransform<this, TEvent>;
 }
+
+export interface IEvents<TSignatures extends Record<EventEmitterEventType, any[]>> extends IEvent {
+    (event: keyof TSignatures, listener: (...args: TSignatures[typeof event]) => void);
+}
+
+class TypedEventEmitter2<TSignatures extends Record<EventEmitterEventType, any[]>> extends TypedEventEmitter<IEvents<TSignatures>> {
+    emit<TEvent extends keyof TSignatures>(
+        event: TEvent,
+        ...args: TSignatures[TEvent]
+    ) {
+        // Would want to incorporate this class directly in TypedEventEmitter rather than subclassing and calling super.emit
+        // Also, not sure why the EventEmitterEventType isn't sufficient here (I had to do `as string | number`)
+        return super.emit(event as string | number, ...args);
+    }
+}
+
+export interface ISampleEventSignatures extends Record<EventEmitterEventType, any[]> {
+    foo: [x: number, y: string];
+    bar: [];
+    baz: [options: { a: string; b: boolean; }];
+}
+const sample = new TypedEventEmitter2<ISampleEventSignatures>();
+
+// These are strongly typed (assuming you spell the type parameter correctly)
+sample.emit<"foo">("foo", 3, "asdf");
+sample.emit<"bar">("bar");
+sample.emit<"baz">("baz", { a: "hello", b: true });
+
+// You can emit something unspecified, you get an any[] for args as expected
+sample.emit<"asdf">("asdf", "unspecified", { anythingGoes: true });
