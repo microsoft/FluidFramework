@@ -99,7 +99,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     // Feature gate that closes a container when sending an op if the container is
     // concurrently processing another op
-    private readonly preventConcurrentOpSend: boolean = false;
+    private readonly preventConcurrentOpSend: boolean = true;
+
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
