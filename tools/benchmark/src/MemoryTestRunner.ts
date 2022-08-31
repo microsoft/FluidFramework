@@ -15,6 +15,8 @@ import {
     MochaExclusiveOptions,
     HookArguments,
     BenchmarkType,
+    userCategoriesSplitter,
+    TestType,
 } from "./Configuration";
 import { getArrayStatistics } from "./ReporterUtilities";
 
@@ -37,6 +39,7 @@ import { getArrayStatistics } from "./ReporterUtilities";
 export interface MemoryBenchmarkStats {
     runs: number;
     samples: { before: MemoryTestData; after: MemoryTestData; };
+    stats: Benchmark.Stats | undefined;
     aborted: boolean;
     error?: Error;
 }
@@ -81,6 +84,18 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
 	 * The kind of benchmark.
 	 */
 	type?: BenchmarkType;
+
+    /**
+     * Percentage of samples (0.1 - 1) to use for calculating the statistics. Defaults to 1.
+     */
+    samplePercentageToUse?: number;
+
+    /**
+	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
+     * with an '\@' prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
+     * only execute specific tests.
+	 */
+	category?: string;
 }
 
 /**
@@ -97,6 +112,10 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
  * Optionally, setup and teardown functions for the whole benchmark can be provided via the
  * `before` and `after` options. Each of them will run only once, before/after all the
  * iterations/samples.
+ *
+ * Tests created with this function get tagged with '\@MemoryUsage', so mocha's --grep/--fgrep
+ * options can be used to only run this type of tests by fitering on that value.
+ *
  * @public
  *
  * @alpha The specifics of how this function works and what its output means are still subject
@@ -113,9 +132,16 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
         title: args.title,
         benchmarkFn: args.benchmarkFn,
         type: args.type ?? BenchmarkType.Measurement,
+        samplePercentageToUse: args.samplePercentageToUse ?? 1,
+        category: args.category ?? "",
     };
 
-    options.title = `${performanceTestSuiteTag} @${BenchmarkType[options.type]} ${options.title}`;
+    const benchmarkTypeTag = BenchmarkType[options.type];
+    const testTypeTag = TestType[TestType.MemoryUsage];
+    options.title = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${options.title}`;
+    if (options.category !== "") {
+        options.title = `${options.title} ${userCategoriesSplitter} @${options.category}`;
+    }
 
     const itFunction = options.only ? it.only : it;
     const test = itFunction(options.title, async () => {
@@ -208,12 +234,13 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
                     heapSpace: [],
                 },
             },
+            stats: undefined,
             aborted: false,
         };
 
         try {
             const startTime = performance.now();
-            let heapUsedStats: Benchmark.Stats;
+            let heapUsedStats: Benchmark.Stats | undefined;
             do {
                 global.gc();
                 benchmarkStats.samples.before.memoryUsage.push(process.memoryUsage());
@@ -240,9 +267,11 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
                     heapUsedArray.push(benchmarkStats.samples.after.memoryUsage[i].heapUsed
                                         - benchmarkStats.samples.before.memoryUsage[i].heapUsed);
                 }
-                heapUsedStats = getArrayStatistics(heapUsedArray);
+                heapUsedStats = getArrayStatistics(heapUsedArray, options.samplePercentageToUse);
             } while (benchmarkStats.runs < options.minSampleCount
                 || heapUsedStats.rme > options.maxRelativeMarginOfError);
+
+            benchmarkStats.stats = heapUsedStats;
         } catch (error) {
             benchmarkStats.aborted = true;
             benchmarkStats.error = error as Error;

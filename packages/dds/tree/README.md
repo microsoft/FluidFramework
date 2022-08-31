@@ -232,3 +232,92 @@ graph LR;
     ForestIndex--"invalidates"-->app
     Indexes--"delta (for apps that want deltas)"-->app
 ```
+
+### Dependencies
+
+`@fluid-internal/tree` depends on the Fluid runtime (various packages in `@fluidframework/*`)
+and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-internal`).
+`@fluid-internal/tree` is also complex,
+so its implementation is broken up into several parts which have carefully controlled dependencies to help ensure the codebase is maintainable.
+The goal of this internal structuring is to make evolution and maintenance easy.
+Some of the principles used to guide this are:
+
+- Avoid cyclic dependencies:
+
+    Cyclic dependencies can make it hard to learn a codebase incrementally, as well as make it hard to update or replace parts of the codebase incrementally.
+    Additionally they can cause runtime issues with initialization.
+
+- Minimize coupling:
+
+    Reducing the number and complexity of edges in the dependency graph.
+    This often involves approaches like making a component generic instead of depending on a concrete type directly,
+    or combining related components that have a lot of coupling.
+
+- Reducing transitive dependencies:
+
+    Try to keep the total number of dependencies of a given component small when possible.
+    This applies both at the module level, but also for the actual object defined by those modules.
+    One particular kind of dependency we make a particular effort to avoid are dependencies on stateful systems from code that has complex conditional logic.
+    One example of this is in [rebase](./src/rebase/README.md) where we ensured that the stateful system, `Rebaser` is not depended on by the actual change specific rebase policy.
+    Instead the actual replace policy logic for changes is behind the `ChangeRebaser` interface, which does not depend on `Rebaser` and exposes the policy as pure functions (and thus is stateless).
+    This is important for testability, since complex conditional logic (like `ChangeRebaser` implementations) require extensive unit testing,
+    which is very difficult (and often slow) for stateful systems and systems with lots of dependencies.
+    If we instead took the pattern of putting the change rebasing policy in `Rebaser` subclasses,
+    this would violate this guiding principal and result in much harder to isolate and test policy logic.
+
+    Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
+    This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
+    `shared-tree-core` is an excellent example of this: it can be run with no indexes, and trivial a change family allowing it to have very few required dependencies.
+    This often takes the form of either depending on interfaces (which can have their implementation swapped out or mocked), like [`ChangeFamily`](./src/change-family/README.md), or collection functionality in a registry, like we do for `FieldKinds` and `shared-tree-core`'s indexes.
+    Dependency injection is one example of a useful pattern for reducing transitive dependencies.
+    In addition to simplifying reasoning about the system (less total to think about for a given scenario) and simplifying testing,
+    this approach also makes the lifecycle for new features easier to manage, since they can be fully implemented and tested without having to modify code outside of themselves.
+    This makes pre-releases, stabilization and eventual deprecation of these features much easier, and even makes publishing them from separate packages possible if it ends up needing an even more separated lifecycle.
+
+    Additionally, this architectural approach can lead to smaller applications by not pulling in unneeded functionality.
+
+These approaches have led to a dependency structure that looks roughly like the diagram below.
+A more exact structure can be observed from the `fence.json` files which are enforced via [good-fences](https://www.npmjs.com/package/good-fences).
+In this diagram, some dependency arrows for dependencies which are already included transitively are omitted.
+
+```mermaid
+flowchart
+    direction TB
+    subgraph package ["@fluid-internal/tree"]
+        direction TB
+        subgraph core ["core libraries"]
+            direction TB
+            checkout-->forest
+            shared-tree-core-->change-family
+            forest-->schema-stored
+            change-family-->rebase
+            changeset-->tree
+            edit-manager-->change-family
+            rebase-->tree
+            schema-stored-->dependency-tracking
+            schema-view-->schema-stored
+            transaction-->change-family
+            transaction-->checkout
+            dependency-tracking
+            forest-->tree
+        end
+        core-->util
+        feature-->core
+        shared-tree-->feature
+        subgraph feature ["feature-libraries"]
+            direction TB
+            defaultRebaser
+            defaultSchema-->defaultFieldKinds-->modular-schema
+            forestIndex-->treeTextCursor
+            modular-schema
+            object-forest-->treeTextCursor
+            schemaIndex
+            sequence-change-family-->treeTextCursor
+        end
+        subgraph domains
+            JSON
+        end
+        domains-->feature
+    end
+    package-->runtime["Fluid runtime"]
+```
