@@ -9,7 +9,7 @@ import * as childProcess from "child_process";
 // eslint-disable-next-line unicorn/import-style
 import * as path from "path";
 import { Flags } from "@oclif/core";
-import { handlers, readJsonAsync } from "@fluidframework/build-tools";
+import { policyHandlers, readJsonAsync } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 
 const readStdin: () => Promise<string | undefined> = async () => {
