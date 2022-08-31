@@ -202,14 +202,11 @@ The site theme/template lives in `themes/thxvscode`.
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
-| `build:api` | `run-s build:api-rollup build:api-documenter` |
+| `build:api` | `npm run build:uber-package && npm run build:api-documenter` |
 | `build:api-documenter` | Convert API JSON into Markdown. |
 | `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
 | `build:md-magic` | Updates generated content in Markdown files. |
-| `build:md-magic:code` | `node md-magic-code.js` |
-| `build:md-magic:website` | `node md-magic-website.js` |
-| `build:website` | `run-s build:api-rollup build:md-magic:website build:api-documenter hugo` |
-| `ci:build` | `run-s download build` |
+| `ci:build` | `npm run download && npm run build` |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |

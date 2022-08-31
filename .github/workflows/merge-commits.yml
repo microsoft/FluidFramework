@@ -74,6 +74,8 @@ jobs:
             console.log("sha---", firstMessage.sha);
             console.log("label---", firstMessage.label);
             console.log("author---", firstMessage.author);
+            console.log("collaborators---", collaboratorStatus);
+            console.log("author---", firstMessage.author);
             return firstMessage;
     outputs:
       LABEL: ${{ fromJSON(steps.dequeue-message.outputs.result).label }}
