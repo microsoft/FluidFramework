@@ -269,10 +269,10 @@ interface UnitTestPullStep {
     from: SessionId;
     /**
      * The delta which should be produced by the `EditManager` when it receives this change.
-     * This information is derived by the `runUnitTestScenario` function, but is explicitly provided
-     * to make tests easier to read and debug.
+     * This information is derived by the `runUnitTestScenario` function, but can be explicitly
+     * provided to make tests easier to read and debug.
      */
-    expectedDelta: number[];
+    expectedDelta?: number[];
 }
 
 type UnitTestScenarioStep = UnitTestPushStep | UnitTestAckStep | UnitTestPullStep;
@@ -347,8 +347,10 @@ function runUnitTestScenario(title: string, steps: UnitTestScenarioStep[]): void
                         ...localIntentions,
                     ];
                     assert.deepEqual(manager.addSequencedChange(commit), asDelta(expected));
-                    // Verify that the test case was annotated with the right expectations.
-                    assert.deepEqual(step.expectedDelta, expected);
+                    if (step.expectedDelta !== undefined) {
+                        // Verify that the test case was annotated with the right expectations.
+                        assert.deepEqual(step.expectedDelta, expected);
+                    }
                     trunk.push(seq);
                     knownToLocal = [
                         ...trunk,
@@ -388,40 +390,40 @@ describe("EditManager", () => {
         ]);
 
         runUnitTestScenario("Can handle non-concurrent peer changes sequenced immediately", [
-            { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
-            { seq: 2, type: "Pull", ref: 1, from: peer1, expectedDelta: [2] },
-            { seq: 3, type: "Pull", ref: 2, from: peer1, expectedDelta: [3] },
+            { seq: 1, type: "Pull", ref: 0, from: peer1 },
+            { seq: 2, type: "Pull", ref: 1, from: peer1 },
+            { seq: 3, type: "Pull", ref: 2, from: peer1 },
         ]);
 
         runUnitTestScenario("Can handle non-concurrent peer changes sequenced later", [
-            { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
-            { seq: 2, type: "Pull", ref: 0, from: peer1, expectedDelta: [2] },
-            { seq: 3, type: "Pull", ref: 0, from: peer1, expectedDelta: [3] },
+            { seq: 1, type: "Pull", ref: 0, from: peer1 },
+            { seq: 2, type: "Pull", ref: 0, from: peer1 },
+            { seq: 3, type: "Pull", ref: 0, from: peer1 },
         ]);
 
         runUnitTestScenario("Can rebase a single peer change over multiple peer changes", [
-            { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
-            { seq: 2, type: "Pull", ref: 1, from: peer1, expectedDelta: [2] },
-            { seq: 3, type: "Pull", ref: 2, from: peer1, expectedDelta: [3] },
-            { seq: 4, type: "Pull", ref: 0, from: peer2, expectedDelta: [4] },
+            { seq: 1, type: "Pull", ref: 0, from: peer1 },
+            { seq: 2, type: "Pull", ref: 1, from: peer1 },
+            { seq: 3, type: "Pull", ref: 2, from: peer1 },
+            { seq: 4, type: "Pull", ref: 0, from: peer2 },
         ]);
 
         runUnitTestScenario("Can rebase multiple non-interleaved peer changes", [
-            { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
-            { seq: 2, type: "Pull", ref: 1, from: peer1, expectedDelta: [2] },
-            { seq: 3, type: "Pull", ref: 2, from: peer1, expectedDelta: [3] },
-            { seq: 4, type: "Pull", ref: 0, from: peer2, expectedDelta: [4] },
-            { seq: 5, type: "Pull", ref: 0, from: peer2, expectedDelta: [5] },
-            { seq: 6, type: "Pull", ref: 0, from: peer2, expectedDelta: [6] },
+            { seq: 1, type: "Pull", ref: 0, from: peer1 },
+            { seq: 2, type: "Pull", ref: 1, from: peer1 },
+            { seq: 3, type: "Pull", ref: 2, from: peer1 },
+            { seq: 4, type: "Pull", ref: 0, from: peer2 },
+            { seq: 5, type: "Pull", ref: 0, from: peer2 },
+            { seq: 6, type: "Pull", ref: 0, from: peer2 },
         ]);
 
         runUnitTestScenario("Can rebase multiple interleaved peer changes", [
-            { seq: 1, type: "Pull", ref: 0, from: peer1, expectedDelta: [1] },
-            { seq: 2, type: "Pull", ref: 0, from: peer2, expectedDelta: [2] },
-            { seq: 3, type: "Pull", ref: 1, from: peer1, expectedDelta: [3] },
-            { seq: 4, type: "Pull", ref: 2, from: peer1, expectedDelta: [4] },
-            { seq: 5, type: "Pull", ref: 0, from: peer2, expectedDelta: [5] },
-            { seq: 6, type: "Pull", ref: 0, from: peer2, expectedDelta: [6] },
+            { seq: 1, type: "Pull", ref: 0, from: peer1 },
+            { seq: 2, type: "Pull", ref: 0, from: peer2 },
+            { seq: 3, type: "Pull", ref: 1, from: peer1 },
+            { seq: 4, type: "Pull", ref: 2, from: peer1 },
+            { seq: 5, type: "Pull", ref: 0, from: peer2 },
+            { seq: 6, type: "Pull", ref: 0, from: peer2 },
         ]);
 
         runUnitTestScenario("Can rebase multiple local changes", [
