@@ -5,6 +5,13 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
+/**
+ * The collaboration session may be in one of four states:
+ * * collaborating - normal collaboration is ongoing.  The client may send data.
+ * * stopping - a proposal to migrate has been made, but not accepted yet.  The client must stop sending data.
+ * * migrating - a proposal to migrate has been accepted.  The data is currently being migrated.
+ * * migrated - migration has completed and the new container is available.
+ */
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 export interface IMigrationToolEvents extends IEvent {
