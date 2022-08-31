@@ -29,16 +29,15 @@ export type EditableTreeNodeSchema = Partial<NamedTreeSchema>;
  * This prevents accidental mixin with user-defined string keys.
  */
 export interface EditableTreeSignature<T> {
-	[key: string]: T extends number | string | boolean ? TreeValue : EditableTreeNode<T>;
-	readonly [key: symbol]: ((key?: FieldKey, withSchema?: boolean) => EditableTreeNodeSchema);
-	readonly [getTypeSymbol]: (key?: FieldKey) => EditableTreeNodeSchema;
+	[key: string]: T extends number | string | boolean ? TreeValue : EditableTree<T> | undefined;
+	readonly [getTypeSymbol]: (key?: FieldKey, withSchema?: boolean) => EditableTreeNodeSchema;
 }
 
 /**
  * This converts a type T into an {@link EditableTree} node or a primitive.
  */
 export type EditableTreeNode<T> = {
-	[P in keyof T]?: T[P] extends number | string | boolean ? TreeValue : EditableTree<T[P]>;
+	[P in keyof T]?: T[P] extends number | string | boolean ? TreeValue : EditableTree<T[P]> | undefined;
 };
 
 /**
@@ -86,7 +85,7 @@ class ProxyTarget {
 		return dummy;
 	};
 
-	public getNodeData = <T>(cursor?: ITreeSubscriptionCursor): TreeValue | EditableTreeNode<T> | undefined => {
+	public getNodeData = <T>(cursor?: ITreeSubscriptionCursor): TreeValue | EditableTree<T> | undefined => {
 		const _cursor = cursor ?? this.cursor;
 		const hasNoNodes = !(_cursor.keys as string[]).length;
 		if (_cursor.value !== undefined || hasNoNodes) {
@@ -99,7 +98,7 @@ class ProxyTarget {
 	public getArrayGreedy = <T>() => {
 		const getNodeData = this.getNodeData;
 		return mapCursorField(this.cursor, EmptyKey,
-			(cursor: ITreeCursor): TreeValue | EditableTreeNode<T> | undefined => {
+			(cursor: ITreeCursor): TreeValue | EditableTree<T> | undefined => {
 			return getNodeData(cursor as ITreeSubscriptionCursor);
 		});
 	};

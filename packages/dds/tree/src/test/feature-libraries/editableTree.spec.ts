@@ -47,6 +47,7 @@ const person: JsonableTree = {
 		address: [{
 			fields: {
 				street: [{ value: "treeStreet", type: brand("String") }],
+				// TODO: revisit as ideally we don't want to have undefined properties in our proxy object
 				zip: [{ type: brand("String") }],
 				phones: [{
 					type: brand("Test:Phones-1.0.0"),

@@ -166,7 +166,7 @@ export type EditableTree<T = any> = EditableTreeSignature<T> & EditableTreeNode<
 
 // @public
 export type EditableTreeNode<T> = {
-    [P in keyof T]?: T[P] extends number | string | boolean ? TreeValue : EditableTree<T[P]>;
+    [P in keyof T]?: T[P] extends number | string | boolean ? TreeValue : EditableTree<T[P]> | undefined;
 };
 
 // @public (undocumented)
@@ -178,11 +178,9 @@ export const editableTreeProxySymbol: unique symbol;
 // @public
 export interface EditableTreeSignature<T> {
     // (undocumented)
-    readonly [getTypeSymbol]: (key?: FieldKey) => EditableTreeNodeSchema;
+    readonly [getTypeSymbol]: (key?: FieldKey, withSchema?: boolean) => EditableTreeNodeSchema;
     // (undocumented)
-    [key: string]: T extends number | string | boolean ? TreeValue : EditableTreeNode<T>;
-    // (undocumented)
-    readonly [key: symbol]: ((key?: FieldKey, withSchema?: boolean) => EditableTreeNodeSchema);
+    [key: string]: T extends number | string | boolean ? TreeValue : EditableTree<T> | undefined;
 }
 
 // @public (undocumented)
