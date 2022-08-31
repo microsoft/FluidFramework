@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line unicorn/import-style
-import { posix as path } from "path";
+import path from "path";
 import { Context, readJsonAsync, Logger, Package, MonoRepo } from "@fluidframework/build-tools";
-import { isInternalVersionScheme } from "@fluid-tools/version-tools";
+import { isPrereleaseVersion } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc } from "date-fns";
 import ncu from "npm-check-updates";
@@ -182,7 +181,7 @@ export async function getPreReleaseDependencies(
             }
 
             // If the min version has a pre-release section, then it needs to be released.
-            if (minVer.prerelease.length > 0) {
+            if (isPrereleaseVersion(minVer)) {
                 const depPkg = context.fullPackageMap.get(depName);
                 if (depPkg === undefined) {
                     throw new Error(`Can't find package in context: ${depName}`);
