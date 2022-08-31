@@ -7,31 +7,19 @@ import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
-import { benchmarkTypes, isChildProcess, performanceTestSuiteTag } from "./Configuration";
-import { bold, getArrayStatistics, green, italicize, pad, prettyNumber, red } from "./ReporterUtilities";
+import { isChildProcess } from "./Configuration";
+import {
+    bold,
+    green,
+    italicize,
+    pad,
+    prettyNumber,
+    red,
+    getArrayStatistics,
+    getName,
+    getSuiteName,
+} from "./ReporterUtilities";
 import { MemoryBenchmarkStats } from "./MemoryTestRunner";
-
-const tags = [performanceTestSuiteTag];
-
-for (const tag of benchmarkTypes) {
-    tags.push(`@${tag}`);
-}
-
-/**
- * Strip tags from name.
- */
-const getSuiteName = (suite: Suite): string => getName(suite.fullTitle());
-
-/**
- * Strip tags from name.
- */
-function getName(name: string): string {
-    let s = name;
-    for (const tag of tags) {
-        s = s.replace(tag, "");
-    }
-    return s.trim();
-}
 
 /**
  * Custom mocha reporter for memory tests. It can be used by passing the JavaScript version of this file to
@@ -127,9 +115,11 @@ class MochaMemoryTestReporter {
                     console.log(`\n${bold(suiteName)}`);
 
                     const table = new Table();
+                    const failedTests = new Array<[string, MemoryBenchmarkStats]>();
                     suiteData?.forEach(([testName, testData]) => {
                         if (testData.aborted) {
                             table.cell("status", `${pad(4)}${red("×")}`);
+                            failedTests.push([testName, testData]);
                         } else {
                             table.cell("status", `${pad(4)}${green("✔")}`);
                         }
@@ -151,6 +141,10 @@ class MochaMemoryTestReporter {
                         table.newRow();
                     });
                     console.log(`${table.toString()}`);
+                    console.log("------------------------------------------------------", `\n${red("ERRORS:")}`);
+                    failedTests.forEach(([testName, testData]) => {
+                        console.log(`\n${red(testName)}`, "\n", testData.error);
+                    });
                     this.writeCompletedBenchmarks(suiteName);
                     this.inProgressSuites.delete(suiteName);
                 }

@@ -6,7 +6,7 @@
 import {
     getInputLength,
     getOutputLength,
-    isAttachGroup,
+    isAttach,
     isReattach,
     isSkipMark,
     MarkListFactory,
@@ -60,7 +60,7 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             break;
         }
 
-        if (isAttachGroup(currMark)) {
+        if (isAttach(currMark)) {
             // We currently ignore the ways in which base marks could affect attaches.
             // These are:
             // 1. Slices with which the attach would commute.
@@ -87,7 +87,7 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             // We ignore #2 because we do not yet produce tombs.
             factory.pushOffset(getOutputLength(baseMark));
             currIter.push(currMark);
-        } else if (isAttachGroup(baseMark)) {
+        } else if (isAttach(baseMark)) {
             // We currently ignore the ways in which curr marks overlap with these attaches.
             // These are:
             // 1. Slice ranges that include prior insertions

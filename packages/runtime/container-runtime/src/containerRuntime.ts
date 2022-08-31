@@ -501,11 +501,6 @@ interface IPendingRuntimeState {
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
-// Feature gate for the max op size. If the value is negative, chunking is enabled
-// and all ops over 16k would be chunked. If the value is positive, all ops with
-// a size strictly larger will be rejected and the container closed with an error.
-const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
-
 // By default, we should reject any op larger than 768KB,
 // in order to account for some extra overhead from serialization
 // to not reach the 1MB limits in socket.io and Kafka.
@@ -781,10 +776,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
-    private readonly _maxOpSizeInBytes: number;
 
     private readonly maxConsecutiveReconnects: number;
-    private readonly defaultMaxConsecutiveReconnects = 15;
+    private readonly defaultMaxConsecutiveReconnects = 7;
 
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
@@ -974,7 +968,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
-        this._maxOpSizeInBytes = (this.mc.config.getNumber(maxOpSizeInBytesKey) ?? defaultMaxOpSizeInBytes);
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
@@ -1564,7 +1557,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // There might be no change of state due to Container calling this API after loading runtime.
         const changeOfState = this._connected !== connected;
-        const reconnection = changeOfState && connected;
+        const reconnection = changeOfState && !connected;
         this._connected = connected;
 
         if (!connected) {
@@ -1573,6 +1566,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._perfSignalData.trackingSignalSequenceNumber = undefined;
         }
 
+        // Fail while disconnected
         if (reconnection) {
             this.consecutiveReconnects++;
 
@@ -2552,7 +2546,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
-            const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in TurnBased flush mode we will trigger a flush at the next turn break
             if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
@@ -2572,13 +2565,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             }
 
-            clientSequenceNumber = this.submitMaybeChunkedMessages(
-                type,
-                content,
-                serializedContent,
-                maxOpSize,
-                this._flushMode === FlushMode.TurnBased,
-                opMetadataInternal);
+            if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
+                clientSequenceNumber = this.submitRuntimeMessage(type,
+                    content, this._flushMode === FlushMode.TurnBased /* batch */, opMetadataInternal);
+            } else {
+                // If the content length is larger than the client configured message size
+                // instead of splitting the content, we will fail by explicitly closing the container
+                this.closeFn(new GenericError(
+                    "OpTooLarge",
+                    /* error */ undefined,
+                    {
+                        length: serializedContent.length,
+                        limit: defaultMaxOpSizeInBytes,
+                    }));
+                clientSequenceNumber = -1;
+            }
         }
 
         // Let the PendingStateManager know that a message was submitted.
@@ -2593,63 +2594,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
-    }
-
-    private submitMaybeChunkedMessages(
-        type: ContainerMessageType,
-        content: any,
-        serializedContent: string,
-        serverMaxOpSize: number,
-        batch: boolean,
-        opMetadataInternal: unknown = undefined,
-    ): number {
-        if (this._maxOpSizeInBytes >= 0) {
-            // Chunking disabled
-            if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
-                return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
-            }
-
-            // When chunking is disabled, we ignore the server max message size
-            // and if the content length is larger than the client configured message size
-            // instead of splitting the content, we will fail by explicitly close the container
-            this.closeFn(new GenericError(
-                "OpTooLarge",
-                /* error */ undefined,
-                {
-                    length: serializedContent.length,
-                    limit: this._maxOpSizeInBytes,
-                }));
-            return -1;
-        }
-
-        // Chunking enabled, fallback on the server's max message size
-        // and split the content accordingly
-        if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
-            return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
-        }
-
-        return this.submitChunkedMessage(type, serializedContent, serverMaxOpSize);
-    }
-
-    private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
-        const contentLength = content.length;
-        const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
-        let offset = 0;
-        let clientSequenceNumber: number = 0;
-        for (let i = 1; i <= chunkN; i = i + 1) {
-            const chunkedOp: IChunkedOp = {
-                chunkId: i,
-                contents: content.substr(offset, maxOpSize),
-                originalType: type,
-                totalChunks: chunkN,
-            };
-            offset += maxOpSize;
-            clientSequenceNumber = this.submitRuntimeMessage(
-                ContainerMessageType.ChunkedOp,
-                chunkedOp,
-                false);
-        }
-        return clientSequenceNumber;
     }
 
     private submitSystemMessage(

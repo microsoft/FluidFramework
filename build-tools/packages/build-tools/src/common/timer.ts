@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { logStatus } from "./logging";
+import { defaultLogger } from "./logging";
+
+const {info}=defaultLogger;
 
 export class Timer {
     private lastTime: number = Date.now();
@@ -20,12 +22,12 @@ export class Timer {
         if (msg) {
             if (this.enabled) {
                 if (diffTime > 100) {
-                    logStatus(`${msg} - ${diffTimeInSeconds.toFixed(3)}s`);
+                    info(`${msg} - ${diffTimeInSeconds.toFixed(3)}s`);
                 } else {
-                    logStatus(`${msg} - ${diffTime}ms`);
+                    info(`${msg} - ${diffTime}ms`);
                 }
             } else if (print) {
-                logStatus(msg);
+                info(msg);
             }
         }
         this.totalTime += diffTime;

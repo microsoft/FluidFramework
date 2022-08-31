@@ -62,6 +62,10 @@ parameters:
   type: string
   default: Small
 
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
+
 trigger: none
 
 variables:

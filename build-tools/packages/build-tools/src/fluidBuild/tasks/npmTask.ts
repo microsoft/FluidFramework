@@ -7,9 +7,10 @@ import registerDebug from "debug";
 import { AsyncPriorityQueue } from "async";
 import { Task, TaskExec } from "./task";
 import { LeafTask } from "./leaf/leafTask";
-import { logVerbose } from "../../common/logging";
+import { defaultLogger } from "../../common/logging";
 import { BuildResult, BuildPackage } from "../buildGraph";
 
+const {verbose} = defaultLogger;
 const traceTaskExec = registerDebug("fluid-build:task:exec");
 
 export class NPMTask extends Task {
@@ -73,6 +74,6 @@ export class NPMTask extends Task {
     protected logVerboseTask(msg: string) {
         const out = `Task: ${this.node.pkg.nameColored} ${this.command}: ${msg}`;
         traceTaskExec(out);
-        logVerbose(out);
+        verbose(out);
     }
 }
