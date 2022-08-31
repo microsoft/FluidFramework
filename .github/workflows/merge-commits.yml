@@ -72,7 +72,7 @@ jobs:
               username: firstMessage.author
             })
             if(collaboratorStatus !== 204) {
-              fisrtMessage.author = 'sonalivdeshpande'
+              firstMessage.author = 'sonalivdeshpande'
             }
             console.log("sha---", firstMessage.sha);
             console.log("label---", firstMessage.label);
