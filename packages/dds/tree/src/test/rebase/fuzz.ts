@@ -8,17 +8,17 @@ import { ChangeRebaser } from "../../rebase";
 
 /**
  *
- * @param rebaser - ChangeRebaser instance to apply the operations
- * @param changeGenerator - random change generator function
- * @param seed - random seed used to generate the changes
- * @param maxOps - maximum number of changes you would like to combine.
- * @returns changeset after all of the operations have been applied.
+ * @param rebaser - `ChangeRebaser` instance used to combine generated changes
+ * @param changeGenerator - Random change generator function
+ * @param seed - Seed used to randomly generate and combine the changes
+ * @param maxCombinations - Maximum number of changes to combine in order to produce the final change. Must be >= 0.
+ * @returns A random change resulting from the combination of several random changes.
  */
  export function generateFuzzyCombinedChange<TChange>(
     rebaser: ChangeRebaser<TChange>,
     changeGenerator: (seed: number) => TChange,
     seed: number,
-    maxOps: number): TChange {
+    maxCombinations: number): TChange {
     const rebase = rebaser.rebase.bind(rebaser);
     const compose = rebaser.compose.bind(rebaser);
     const invert = rebaser.invert.bind(rebaser);
@@ -28,7 +28,7 @@ import { ChangeRebaser } from "../../rebase";
 
     const operations = ["rebase", "invert", "compose"];
 
-    for (let i = 1; i < (seed % maxOps); i++) {
+    for (let i = 1; i < (seed % maxCombinations); i++) {
         const random = makeRandom(seed + i).integer(1, 10000000);
         const operation = operations[random % operations.length];
         if (operation === "rebase") {
