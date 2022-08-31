@@ -10,7 +10,13 @@ import { jsonString } from "../domains";
 import { Transposed as T } from "../changeset";
 import { brand } from ".";
 
-// generate random UpPath objects
+/**
+ *
+ * @param parentKey - parentKey used for creating the object for the parentField.
+ * @param seed - seed used to randomly select the location for the UpPath objects.
+ * @param maxUpPaths - maximum number of UpPaths generated during the function call.
+ * @returns - set of UpPaths representing the randomnly generated tree.
+ */
 export function generateRandomUpPaths(
     parentKey: FieldKey, seed: number, maxUpPaths: number): Set<UpPath> {
     const rootKey = brand<FieldKey>("root");
@@ -38,12 +44,24 @@ export function generateRandomUpPaths(
     return parents;
 }
 
+/**
+ *
+ * @param parentSet - set of the UpPaths to select a random parent from.
+ * @param seed - random seed used to select a parent.
+ * @returns - randomly selected parent from the set.
+ */
 function getRandomParent(parentSet: Set<UpPath>, seed: number): UpPath {
     const parents = Array.from(parentSet);
     const randomIndex = makeRandom(seed).integer(1, 10000000);
     return parents[randomIndex % parents.length];
 }
 
+/**
+ *
+ * @param upPaths - Set of UpPaths which represents the state of the tree.
+ * @param seed - random seed used to generate the change.
+ * @returns randomly generated change.
+ */
 export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.LocalChangeset[] {
     const deltas: Delta.Root[] = [];
     const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
