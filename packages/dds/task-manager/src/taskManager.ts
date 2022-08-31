@@ -38,12 +38,12 @@ interface ITaskManagerAbandonOperation {
 }
 
 interface ITaskManagerCompletedOperation {
-    type: "completed";
+    type: "complete";
     taskId: string;
 }
 
 interface IPendingOp {
-    type: "volunteer" | "abandon" | "completed";
+    type: "volunteer" | "abandon" | "complete";
     messageId: number;
 }
 
@@ -203,14 +203,14 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             this.removeClientFromQueue(taskId, clientId);
         });
 
-        this.opWatcher.on("completed", (taskId: string, clientId: string, local: boolean, messageId: number) => {
+        this.opWatcher.on("complete", (taskId: string, clientId: string, local: boolean, messageId: number) => {
             if (runtime.connected && local) {
                 const pendingOp = this.latestPendingOps.get(taskId);
                 assert(pendingOp !== undefined, "Unexpected op");
                 // TODO: check below comment and stuff, see if applicable
                 // Need to check the id, since it's possible to complete multiple times before the acks
                 if (messageId === pendingOp.messageId) {
-                    assert(pendingOp.type === "completed", "Unexpected op type");
+                    assert(pendingOp.type === "complete", "Unexpected op type");
                     // Delete the pending, because we no longer have an outstanding op
                     this.latestPendingOps.delete(taskId);
                 }
@@ -289,11 +289,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
     private submitCompletedOp(taskId: string) {
         const op: ITaskManagerCompletedOperation = {
-            type: "completed",
+            type: "complete",
             taskId,
         };
         const pendingOp: IPendingOp = {
-            type: "completed",
+            type: "complete",
             messageId: ++this.messageId,
         };
         this.submitLocalMessage(op, pendingOp.messageId);
@@ -568,8 +568,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     this.opWatcher.emit("abandon", op.taskId, message.clientId, local, messageId);
                     break;
 
-                case "completed":
-                    this.opWatcher.emit("completed", op.taskId, message.clientId, local, messageId);
+                case "complete":
+                    this.opWatcher.emit("complete", op.taskId, message.clientId, local, messageId);
                     break;
 
                 default:
