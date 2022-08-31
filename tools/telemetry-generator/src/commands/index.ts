@@ -38,8 +38,9 @@ export class EntryPoint extends Command {
 
     static examples = [
         {
-            command: "$ node bin/run --testType executionTime --dir /path/to/execution-time/tests",
-            description: "Process execution-time tests from /path/to/execution-time/tests and all its subfolders",
+            command: "$ node bin/run --handlerModule /path/to/my/module.js --dir /path/to/my/files",
+            description: "Process files from /path/to/my/files and all its subfolders, using the handler at " +
+                         "/path/to/my/module.js",
         },
     ];
 
