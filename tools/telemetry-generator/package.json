@@ -1,12 +1,12 @@
 {
-  "name": "@fluid-tools/perf-test-processing",
+  "name": "@fluid-tools/telemetry-generator",
   "version": "1.0.0",
   "description": "Tool to take performance benchmark output files and write them to our monitoring systems",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "tools/perf-test-processing"
+    "directory": "tools/telemetry-generator"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",

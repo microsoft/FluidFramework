@@ -20,7 +20,7 @@ trigger:
     - lerna.json
     - lerna-package-lock.json
     - tools/benchmark
-    - tools/perf-test-processing
+    - tools/telemetry-generator
     - tools/pipelines/test-perf-benchmarks.yml
     - tools/pipelines/templates/include-set-package-version.yml
 
@@ -64,7 +64,7 @@ stages:
         pool: ${{ parameters.poolBuild }}
         variables:
           releaseBuildVar: $[variables.releaseBuild]
-          toolFolder: ${{ variables.buildDirectory }}/tools/perf-test-processing
+          toolFolder: ${{ variables.buildDirectory }}/tools/telemetry-generator
         steps:
         # Setup
         - checkout: self
@@ -182,7 +182,7 @@ stages:
             script: |
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger bin/run --testType executionTime --dir '../../benchmarkOutput';
+              node --require @ff-internal/aria-logger bin/run --handlerModule dist/handlers/executionTimeTestHandler.js --dir '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - execution time'
@@ -213,7 +213,7 @@ stages:
             script: |
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger bin/run --testType memoryUsage --dir '../../memoryProfilingOutput';
+              node --require @ff-internal/aria-logger bin/run --handlerModule dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - memory usage'
