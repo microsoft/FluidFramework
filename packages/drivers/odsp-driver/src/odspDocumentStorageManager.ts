@@ -274,7 +274,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                         // Based on the concurrentSnapshotFetch policy:
                         // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
                         // or grab the cache value and then the network value if the cache value returns undefined.
-                        // For summarizer which could call this a lot due to refreshing of summary parent, always use the cache
+                        // For summarizer which could call this during refreshing of summary parent, always use the cache
                         // first. Also for other clients, if it is not critical path which is determined by firstVersionCall,
                         // then also check the cache first.
                         if (this.firstVersionCall && this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
