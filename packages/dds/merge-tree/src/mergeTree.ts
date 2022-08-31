@@ -1406,7 +1406,7 @@ export class MergeTree {
                     const splitNode = this.split(block);
                     if (block === this.root) {
                         this.updateRoot(splitNode);
-                        // Update root already updates all it's children ordinals
+                        // Update root already updates all its children ordinals
                         ordinalUpdateNode = undefined;
                     } else {
                         this.insertChildNode(block.parent!, splitNode, block.index + 1);
@@ -2154,11 +2154,13 @@ export class MergeTree {
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
     ): LocalReferencePosition {
-        if (isRemoved(segment)) {
-            if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)) {
-                throw new UsageError(
-                    "Can only create SlideOnRemove or Transient local reference position on a removed segment");
-            }
+        if (
+            isRemovedAndAcked(segment)
+            && !refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)
+        ) {
+            throw new UsageError(
+                "Can only create SlideOnRemove or Transient local reference position on a removed segment",
+            );
         }
         const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
         segment.localRefs = localRefs;

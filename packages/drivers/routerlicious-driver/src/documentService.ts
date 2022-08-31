@@ -205,18 +205,17 @@ export class DocumentService implements api.IDocumentService {
 
         // Attempt to establish connection.
         // Retry with new token on authorization error; otherwise, allow container layer to handle.
-        let connection: api.IDocumentDeltaConnection;
         try {
-            connection = await connect();
+            const connection = await connect();
+            return connection;
         } catch (error: any) {
             if (error?.statusCode === 401) {
                 // Fetch new token and retry once,
                 // otherwise 401 will be bubbled up as non-retriable AuthorizationError.
-                connection = await connect(true /* refreshToken */);
+                return connect(true /* refreshToken */);
             }
             throw error;
         }
-        return connection;
     }
 
     /**

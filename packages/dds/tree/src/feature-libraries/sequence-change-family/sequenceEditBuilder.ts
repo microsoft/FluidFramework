@@ -23,7 +23,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
     }
 
     public setValue(node: NodePath, value: Value) {
-        const modify: T.Modify & { value: T.SetValue; } = { type: "Modify", value: { type: "Set" } };
+        const modify: T.Modify & { value: T.SetValue; } = { type: "Modify", value: { id: 0 } };
         // Only set the `SetValue.value` field if the given `value` is defined.
         // This ensures the object properly round-trips through JSON.
         if (value !== undefined) {
@@ -36,7 +36,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
         const id = this.opId++;
         const content = jsonableTreeFromCursor(cursor);
         const insert: T.Insert = { type: "Insert", id, content: [content] };
-        this.applyMarkAtPath([insert], place);
+        this.applyMarkAtPath(insert, place);
     }
 
     public delete(place: PlacePath, count: number) {
@@ -51,7 +51,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
         }
         const id = this.opId++;
         const moveOut: T.Detach = { type: "MoveOut", id, count };
-        const moveIn: T.AttachGroup = [{ type: "MoveIn", id, count }];
+        const moveIn: T.MoveIn = { type: "MoveIn", id, count };
         if (source.parent === destination.parent) {
             const srcIndex = source.parentIndex;
             const dstIndex = destination.parentIndex;
@@ -78,8 +78,8 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
                         const id2 = this.opId++;
                         marks.push(
                             { type: "MoveOut", id, count: gap },
-                            [{ type: "MoveIn", id, count: count - gap }],
-                            [{ type: "MoveIn", id: id2, count: gap }],
+                            { type: "MoveIn", id, count: count - gap },
+                            { type: "MoveIn", id: id2, count: gap },
                             { type: "MoveOut", id: id2, count: count - gap },
                         );
                     } else {

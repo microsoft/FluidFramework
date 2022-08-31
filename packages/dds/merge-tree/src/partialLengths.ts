@@ -263,7 +263,7 @@ export class PartialSequenceLengths {
         }
 
         if (PartialSequenceLengths.options.verify) {
-            combinedPartialLengths.verify();
+            verify(combinedPartialLengths);
         }
 
         return combinedPartialLengths;
@@ -328,7 +328,7 @@ export class PartialSequenceLengths {
         }
 
         if (PartialSequenceLengths.options.verify) {
-            combinedPartialLengths.verify();
+            verify(combinedPartialLengths);
         }
         return combinedPartialLengths;
     }
@@ -611,7 +611,7 @@ export class PartialSequenceLengths {
             this.zamboni(collabWindow);
         }
         if (PartialSequenceLengths.options.verify) {
-            this.verify();
+            verify(this);
         }
     }
 
@@ -817,83 +817,89 @@ export class PartialSequenceLengths {
             return -1;
         }
     }
+}
 
-    // Debug only
-    private verifyPartialLengths(partialLengths: PartialSequenceLength[], clientPartials: boolean) {
-        if (partialLengths.length === 0) { return 0; }
+/* eslint-disable @typescript-eslint/dot-notation */
+function verifyPartialLengths(
+    partialSeqLengths: PartialSequenceLengths,
+    partialLengths: PartialSequenceLength[],
+    clientPartials: boolean,
+) {
+    if (partialLengths.length === 0) { return 0; }
 
-        let lastSeqNum = 0;
-        let accumSegLen = 0;
-        let count = 0;
+    let lastSeqNum = 0;
+    let accumSegLen = 0;
+    let count = 0;
 
-        for (const partialLength of partialLengths) {
-            // Count total number of partial length
-            count++;
+    for (const partialLength of partialLengths) {
+        // Count total number of partial length
+        count++;
 
-            // Sequence number should be larger or equal to minseq
-            assert(this.minSeq <= partialLength.seq, 0x054 /* "Sequence number less than minSeq!" */);
+        // Sequence number should be larger or equal to minseq
+        assert(partialSeqLengths.minSeq <= partialLength.seq, 0x054 /* "Sequence number less than minSeq!" */);
 
-            // Sequence number should be sorted
-            assert(lastSeqNum < partialLength.seq, 0x055 /* "Sequence number is not sorted!" */);
-            lastSeqNum = partialLength.seq;
+        // Sequence number should be sorted
+        assert(lastSeqNum < partialLength.seq, 0x055 /* "Sequence number is not sorted!" */);
+        lastSeqNum = partialLength.seq;
 
-            // Len is a accumulation of all the seglen adjustments
-            accumSegLen += partialLength.seglen;
-            if (accumSegLen !== partialLength.len) {
-                assert(false, 0x056 /* "Unexpected total for accumulation of all seglen adjustments!" */);
-            }
-
-            if (clientPartials) {
-                // Client partials used to track local edits so we can account for them some refSeq.
-                // But the information we keep track of are since minSeq, so we keep track of more history
-                // then needed, and some of them doesn't make sense to be used for length calculations
-                // e.g. if you have this sequence, where the minSeq is #5 because of other clients
-                //    seq 10: client 1: insert seg #1
-                //    seq 11: client 2: delete seg #2 refseq: 10
-                // minLength is 0, we would have keep a record of seglen: -1 for clientPartialLengths for client 2
-                // So if you ask for partial length for client 2 @ seq 5, we will have return -1.
-                // However, that combination is invalid, since we should never see any ops with refseq < 10 for
-                // client 2 after seq 11.
-            } else {
-                // Len adjustment should not make length negative
-                if (this.minLength + partialLength.len < 0) {
-                    assert(false, 0x057 /* "Negative length after length adjustment!" */);
-                }
-            }
-
-            if (partialLength.overlapRemoveClients) {
-                // Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
-                assert(!clientPartials, 0x058 /* "Both overlapRemoveClients and clientPartials are set!" */);
-
-                // Each overlap client count as one
-                count += partialLength.overlapRemoveClients.size();
-            }
+        // Len is a accumulation of all the seglen adjustments
+        accumSegLen += partialLength.seglen;
+        if (accumSegLen !== partialLength.len) {
+            assert(false, 0x056 /* "Unexpected total for accumulation of all seglen adjustments!" */);
         }
-        return count;
-    }
 
-    private verify() {
-        if (this.clientSeqNumbers) {
-            let cliCount = 0;
-            for (const cliSeq of this.clientSeqNumbers) {
-                if (cliSeq) {
-                    cliCount += this.verifyPartialLengths(cliSeq, true);
-                }
-            }
-
-            // If we have client view, we should have the flat view
-            assert(!!this.partialLengths, 0x059 /* "Client view exists but flat view does not!" */);
-            const flatCount = this.verifyPartialLengths(this.partialLengths, false);
-
-            // The number of partial lengths on the client view and flat view should be the same
-            assert(flatCount === cliCount,
-                0x05a /* "Mismatch between number of partial lengths on client and flat views!" */);
+        if (clientPartials) {
+            // Client partials used to track local edits so we can account for them some refSeq.
+            // But the information we keep track of are since minSeq, so we keep track of more history
+            // then needed, and some of them doesn't make sense to be used for length calculations
+            // e.g. if you have this sequence, where the minSeq is #5 because of other clients
+            //    seq 10: client 1: insert seg #1
+            //    seq 11: client 2: delete seg #2 refseq: 10
+            // minLength is 0, we would have keep a record of seglen: -1 for clientPartialLengths for client 2
+            // So if you ask for partial length for client 2 @ seq 5, we will have return -1.
+            // However, that combination is invalid, since we should never see any ops with refseq < 10 for
+            // client 2 after seq 11.
         } else {
-            // If we don't have a client view, we shouldn't have the flat view either
-            assert(!this.partialLengths, 0x05b /* "Flat view exists but client view does not!" */);
+            // Len adjustment should not make length negative
+            if (partialSeqLengths["minLength"] + partialLength.len < 0) {
+                assert(false, 0x057 /* "Negative length after length adjustment!" */);
+            }
         }
+
+        if (partialLength.overlapRemoveClients) {
+            // Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
+            assert(!clientPartials, 0x058 /* "Both overlapRemoveClients and clientPartials are set!" */);
+
+            // Each overlap client count as one, but the first remove to sequence was already counted.
+            // (this aligns with the logic to omit the removing client in `addClientSeqNumberFromPartial`)
+            count += partialLength.overlapRemoveClients.size() - 1;
+        }
+    }
+    return count;
+}
+
+function verify(partialSeqLengths: PartialSequenceLengths) {
+    if (partialSeqLengths["clientSeqNumbers"]) {
+        let cliCount = 0;
+        for (const cliSeq of partialSeqLengths["clientSeqNumbers"]) {
+            if (cliSeq) {
+                cliCount += verifyPartialLengths(partialSeqLengths, cliSeq, true);
+            }
+        }
+
+        // If we have client view, we should have the flat view
+        assert(!!partialSeqLengths["partialLengths"], 0x059 /* "Client view exists but flat view does not!" */);
+        const flatCount = verifyPartialLengths(partialSeqLengths, partialSeqLengths["partialLengths"], false);
+
+        // The number of partial lengths on the client view and flat view should be the same
+        assert(flatCount === cliCount,
+            0x05a /* "Mismatch between number of partial lengths on client and flat views!" */);
+    } else {
+        // If we don't have a client view, we shouldn't have the flat view either
+        assert(!partialSeqLengths["partialLengths"], 0x05b /* "Flat view exists but client view does not!" */);
     }
 }
+/* eslint-enable @typescript-eslint/dot-notation */
 
 /**
  * Clones an `overlapRemoveClients` red-black tree.

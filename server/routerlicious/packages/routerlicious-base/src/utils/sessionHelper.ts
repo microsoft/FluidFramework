@@ -71,7 +71,7 @@ async function updateExistingSession(
     // Otherwise, a moved session could end up without access to ops that still only exist in a location's
     // non-global storage.
     const isSessionSticky = document.lastAccessTime !== undefined
-        ? Date.now() - document.lastAccessTime > sessionStickinessDurationMs
+        ? Date.now() - document.lastAccessTime < sessionStickinessDurationMs
         : false; // If no session end has been recorded, allow session to move.
     // Allow session stickiness to be overridden by manually deleting a session's orderer/historian urls.
     const sessionHasLocation: boolean = !!existingSession.ordererUrl && !!existingSession.historianUrl;

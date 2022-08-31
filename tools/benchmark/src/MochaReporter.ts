@@ -4,31 +4,9 @@
  */
 
 import { Runner, Suite, Test } from "mocha";
-import { benchmarkTypes, isChildProcess, performanceTestSuiteTag, ReporterOptions } from "./Configuration";
+import { isChildProcess, ReporterOptions } from "./Configuration";
 import { BenchmarkData, BenchmarkReporter, failedData } from "./Reporter";
-import { red } from "./ReporterUtilities";
-
-const tags = [performanceTestSuiteTag];
-
-for (const tag of benchmarkTypes) {
-    tags.push(`@${tag}`);
-}
-
-/**
- * Strip tags from name.
- */
-const getSuiteName = (suite: Suite): string => getName(suite.fullTitle());
-
-/**
- * Strip tags from name.
- */
-function getName(name: string): string {
-    let s = name;
-    for (const tag of tags) {
-        s = s.replace(tag, "");
-    }
-    return s.trim();
-}
+import { red, getName, getSuiteName } from "./ReporterUtilities";
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).

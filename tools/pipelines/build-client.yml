@@ -22,6 +22,10 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 - name: nonScopedPackages
   displayName: Non-scoped packages to publish
   type: object
@@ -45,7 +49,6 @@ trigger:
     - lerna.json
     - lerna-package-lock.json
     - tools/pipelines/build-client.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -71,7 +74,6 @@ pr:
     - lerna.json
     - lerna-package-lock.json
     - tools/pipelines/build-client.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -82,6 +84,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: .
     tagName: client
     poolBuild: Large
@@ -109,4 +112,3 @@ extends:
           node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
-
