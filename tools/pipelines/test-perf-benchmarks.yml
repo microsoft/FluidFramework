@@ -182,7 +182,7 @@ stages:
             script: |
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger bin/run --handlerModule dist/handlers/executionTimeTestHandler.js --dir '../../benchmarkOutput';
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolFolder)/dist/handlers/executionTimeTestHandler.js --dir '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - execution time'
@@ -213,7 +213,7 @@ stages:
             script: |
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger bin/run --handlerModule dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolFolder)/dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - memory usage'
