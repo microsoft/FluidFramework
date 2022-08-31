@@ -73,7 +73,7 @@ export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.Loca
  * @param maxOps - maximum number of changes you would like to combine.
  * @returns changeset after all of the operations have been applied.
  */
-export function changeCombinator<TChange>(
+export function generateFuzzyCombinedChange<TChange>(
     rebaser: ChangeRebaser<TChange>,
     changeGenerator: (seed: number) => TChange,
     seed: number,
