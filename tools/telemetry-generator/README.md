@@ -29,7 +29,11 @@ npm run start -- <arguments to the tool>
 The tool has two required arguments:
 
 - `--dir`: the path(s) to one or more folders which contain the JSON files to be processed
-- `--handlerModule`: the path to a JavaScript file that exports a handler function which can process those JSON files.
+- `--handlerModule`: the **absolute** path to a JavaScript file that exports a handler function which can process those
+  JSON files. Relative paths are technically supported but you might need a good understanding of Node's
+  [module resolution](https://www.typescriptlang.org/docs/handbook/module-resolution.html) to use them successfully.
+  In short, a relative path will be resolved from the location of the executing file at runtime, and which file that is
+  is not obvious when we're using OCLIF.
 
 Run `node bin/run --help` for details on the arguments.
 
@@ -47,5 +51,5 @@ If you want to process your own JSON files with this tool you just need to pass 
 e.g.:
 
 ```bash
-node bin/run --handlerModule /path/to/your/handler.js --dir /path/to/your/files
+node bin/run --handlerModule /absolute/path/to/your/handler.js --dir /path/to/your/files
 ```

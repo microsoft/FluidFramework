@@ -64,7 +64,7 @@ stages:
         pool: ${{ parameters.poolBuild }}
         variables:
           releaseBuildVar: $[variables.releaseBuild]
-          toolFolder: ${{ variables.buildDirectory }}/tools/telemetry-generator
+          toolAbsolutePath: $(Build.SourcesDirectory)/tools/telemetry-generator
         steps:
         # Setup
         - checkout: self
@@ -128,7 +128,7 @@ stages:
           displayName: 'Add custom feeds to .npmrc'
           inputs:
             targetType: 'inline'
-            workingDirectory: $(toolFolder)
+            workingDirectory: $(toolAbsolutePath)
             script: |
               echo "Adding custom npm feeds to .npmrc"
               cat << EOF >> .npmrc
@@ -144,19 +144,19 @@ stages:
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (internal feed)'
           inputs:
-            workingFile: $(toolFolder)/.npmrc
+            workingFile: $(toolAbsolutePath)/.npmrc
 
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (office feed)'
           inputs:
-            workingFile: $(toolFolder)/.npmrc
+            workingFile: $(toolAbsolutePath)/.npmrc
             customEndpoint: 'Office Packages - Readonly'
 
         - task: Npm@1
           displayName: 'Install @ff-internal/aria-logger'
           inputs:
             command: 'custom'
-            workingDir: $(toolFolder)
+            workingDir: $(toolAbsolutePath)
             customCommand: 'install @ff-internal/aria-logger'
             customRegistry: 'useNpmrc'
 
@@ -178,11 +178,11 @@ stages:
           displayName: 'Write measurements to Aria/Kusto - execution time'
           inputs:
             targetType: 'inline'
-            workingDirectory: $(toolFolder)
+            workingDirectory: $(toolAbsolutePath)
             script: |
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolFolder)/dist/handlers/executionTimeTestHandler.js --dir '../../benchmarkOutput';
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - execution time'
@@ -209,11 +209,11 @@ stages:
           displayName: 'Write measurements to Aria/Kusto - memory usage'
           inputs:
             targetType: 'inline'
-            workingDirectory: $(toolFolder)
+            workingDirectory: $(toolAbsolutePath)
             script: |
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolFolder)/dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Artifact - Perf tests output - memory usage'

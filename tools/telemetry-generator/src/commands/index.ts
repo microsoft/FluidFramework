@@ -24,8 +24,8 @@ export class EntryPoint extends Command {
         handlerModule: Flags.string({
             char: "m",
             required: true,
-            description: "Path to a JavaScript file that exports a handler function to process the files contained " +
-                         "in the folders specified with --dir.",
+            description: "Absolute path to a JavaScript file that exports a handler function to process the files " +
+                         "contained in the folders specified with --dir.",
         }),
         dir: Flags.string({
             char: "d",
@@ -48,6 +48,9 @@ export class EntryPoint extends Command {
 
         let handler;
         try {
+            // Note: we expect the path to the handler module to be absolute. Relative paths technically work, but
+            // one needs to be very familiar with Node's module resolution strategy and understand exactly which file
+            // is the one getting executed at runtime (since that's where the relative path will be resolved from).
             handler = (await import(flags.handlerModule)).default;
         } catch (err) {
             exitWithError(`Unexpected error importing specified handler module.\n${err}`);
