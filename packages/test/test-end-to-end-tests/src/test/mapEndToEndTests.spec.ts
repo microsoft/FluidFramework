@@ -387,10 +387,9 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         let sharedMap2: SharedMap;
 
         beforeEach(async () => {
+            await reset();
             provider = getTestObjectProvider();
         });
-
-        afterEach(async () => reset());
 
         const setupContainers = async (
             containerConfig: ITestContainerConfig,

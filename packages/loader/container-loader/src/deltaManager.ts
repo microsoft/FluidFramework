@@ -101,7 +101,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     // concurrently processing another op
     private readonly preventConcurrentOpSend: boolean = true;
 
-
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
 
@@ -310,7 +309,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.connectionManager = createConnectionManager(props);
         this.mc = loggerToMonitoringContext(logger);
-        this.preventConcurrentOpSend = this.mc.config.getBoolean("Fluid.Container.ConcurrentOpSend") == true;
+        this.preventConcurrentOpSend = this.mc.config.getBoolean("Fluid.Container.ConcurrentOpSend") === true;
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
