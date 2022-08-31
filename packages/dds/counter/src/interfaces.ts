@@ -30,11 +30,14 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     /**
      * The counter value.
+     *
+     * @remarks Must be a whole number.
      */
     value: number;
 
     /**
-     * Increments or decrements the value.  Must only increment or decrement by a whole number value.
+     * Increments or decrements the value.
+     * Must only increment or decrement by a whole number value.
      *
      * @param incrementAmount - A whole number to increment or decrement by.
      */
