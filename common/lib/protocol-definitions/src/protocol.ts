@@ -16,8 +16,6 @@ export enum MessageType {
     // Proposes a new consensus value
     Propose = "propose",
 
-    // Message used to reject a pending proposal
-    Reject = "reject",
 
     // Summary op
     Summarize = "summarize",
@@ -31,14 +29,8 @@ export enum MessageType {
     // Channel operation.
     Operation = "op",
 
-    // Message to indicate the need of a remote agent for a document.
-    RemoteHelp = "remoteHelp",
-
     // Message to indicate that no active clients are present.
     NoClient = "noClient",
-
-    // Message to indicate successful round trip.
-    RoundTrip = "tripComplete",
 
     // Service specific control messages that are never sequenced.
     Control = "control",
@@ -159,6 +151,9 @@ export interface ISequencedDocumentMessage {
 
     // Timestamp when the server ticketed the message
     timestamp: number;
+
+    // Data provided by service. Only present in service generated messages.
+    data?: string;
 
     /**
      * Experimental field for storing the rolling hash at sequence number.
