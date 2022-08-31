@@ -70,11 +70,9 @@ export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.Loca
     const currOperation = operations[randomIndex % operations.length];
     if (currOperation === "setValue") {
         builder.setValue(getRandomParent(upPaths, randomIndex), randomIndex);
-    }
-    if (currOperation === "insert") {
+    } else if (currOperation === "insert") {
         builder.insert(getRandomParent(upPaths, randomIndex), singleTextCursor(nodeX));
-    }
-    if (currOperation === "delete") {
+    } else {
         builder.delete(getRandomParent(upPaths, randomIndex), makeRandom(seed).integer(1, upPaths.size));
     }
 
