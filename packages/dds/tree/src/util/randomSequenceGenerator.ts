@@ -63,8 +63,7 @@ function getRandomParent(parentSet: Set<UpPath>, seed: number): UpPath {
  * @returns randomly generated change.
  */
 export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.LocalChangeset[] {
-    const deltas: Delta.Root[] = [];
-    const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
+    const builder = new SequenceEditBuilder(() => {}, new AnchorSet());
     const operations = ["setValue", "delete", "insert"];
     const nodeX = { type: jsonString.name, value: "X" };
     const randomIndex = makeRandom(seed).integer(1, 10000000);
