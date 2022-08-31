@@ -65,7 +65,9 @@ Such documents will be disregarded by the build (by default) and will not be pub
 
 Drafts are a good option for making incremental progress on a document via pull requests before being ready to actually publish for the world to see.
 
-#### Previewing drafts locally.
+For more documentation on this Hugo feature, see [here](https://gohugo.io/getting-started/usage/#draft-future-and-expired-content).
+
+#### Previewing drafts locally
 
 As noted above, the `build` script won't build `draft` content.
 To build this content and preview it locally, you can run the build with the `--buildDrafts` flag.
@@ -74,21 +76,22 @@ To build this content and preview it locally, you can run the build with the `--
 npm run build -- --buildDrafts
 ```
 
-For more documentation on this Hugo feature, see [here](https://gohugo.io/getting-started/usage/#draft-future-and-expired-content).
-
 ### Future Content
 
 Hugo also supports creating content to be published at some future, pre-defined date and time.
-To build content and preview future content locally, you can run the build with the `--buildFuture` flag.
-
-```bash
-npm run build -- --buildFuture
-```
 
 > Note: we currently do not have a workflow for pre-publishing website content.
 > These docs are here as a placeholder until we enable such functionality.
 
 For more documentation on this Hugo feature, see [here](https://gohugo.io/getting-started/usage/#draft-future-and-expired-content).
+
+#### Previewing future content locally
+
+To build content and preview future content locally, you can run the build with the `--buildFuture` flag.
+
+```bash
+npm run build -- --buildFuture
+```
 
 ### API documentation
 
