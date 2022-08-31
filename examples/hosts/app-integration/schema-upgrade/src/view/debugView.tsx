@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import { IMigratableModel, MigrationState } from "../migrationInterfaces";
+import type { IMigratableModel, MigrationState } from "../migrationInterfaces";
 
 export interface IDebugViewProps {
     model: IMigratableModel;
@@ -22,7 +22,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
         <div>
             <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
             <MigrationStatusView model={ model } getUrlForContainerId={ getUrlForContainerId } />
-            <ControlsView proposeVersion={ model.proposeVersion } />
+            <ControlsView proposeVersion={ model.migrationTool.proposeVersion } />
         </div>
     );
 };
@@ -38,39 +38,39 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
         getUrlForContainerId,
     } = props;
 
-    const [migrationState, setMigrationState] = useState<MigrationState>(model.getMigrationState());
+    const [migrationState, setMigrationState] = useState<MigrationState>(model.migrationTool.migrationState);
 
     useEffect(() => {
         const migrationStateChangedHandler = () => {
-            setMigrationState(model.getMigrationState());
+            setMigrationState(model.migrationTool.migrationState);
         };
-        model.on("stopping", migrationStateChangedHandler);
-        model.on("migrating", migrationStateChangedHandler);
-        model.on("migrated", migrationStateChangedHandler);
+        model.migrationTool.on("stopping", migrationStateChangedHandler);
+        model.migrationTool.on("migrating", migrationStateChangedHandler);
+        model.migrationTool.on("migrated", migrationStateChangedHandler);
         migrationStateChangedHandler();
         return () => {
-            model.off("stopping", migrationStateChangedHandler);
-            model.off("migrating", migrationStateChangedHandler);
-            model.off("migrated", migrationStateChangedHandler);
+            model.migrationTool.off("stopping", migrationStateChangedHandler);
+            model.migrationTool.off("migrating", migrationStateChangedHandler);
+            model.migrationTool.off("migrated", migrationStateChangedHandler);
         };
     }, [model]);
 
-    const proposedVersionStatus = model.proposedVersion === undefined
+    const proposedVersionStatus = model.migrationTool.proposedVersion === undefined
         ? "No proposed version for migration yet"
-        : `Proposed version to migrate to: ${model.proposedVersion}`;
+        : `Proposed version to migrate to: ${model.migrationTool.proposedVersion}`;
 
-    const acceptedVersionStatus = model.acceptedVersion === undefined
+    const acceptedVersionStatus = model.migrationTool.acceptedVersion === undefined
         ? "No accepted version for migration yet"
-        : `Accepted version to migrate to: ${model.acceptedVersion}`;
+        : `Accepted version to migrate to: ${model.migrationTool.acceptedVersion}`;
 
     const migratedContainerStatus = (() => {
-        if (model.newContainerId === undefined) {
+        if (model.migrationTool.newContainerId === undefined) {
             return "No migrated container yet";
         }
 
         const navToNewContainer = () => {
-            if (model.newContainerId !== undefined && getUrlForContainerId !== undefined) {
-                location.href = getUrlForContainerId(model.newContainerId);
+            if (model.migrationTool.newContainerId !== undefined && getUrlForContainerId !== undefined) {
+                location.href = getUrlForContainerId(model.migrationTool.newContainerId);
                 location.reload();
             }
         };
@@ -78,10 +78,10 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
         // If we're able to get a direct link to the migrated container, do so.
         // Otherwise just use the string representation of the container id.
         const migratedReference = getUrlForContainerId === undefined
-            ? model.newContainerId
+            ? model.migrationTool.newContainerId
             : (
-                <a href={ getUrlForContainerId(model.newContainerId) } onClick={ navToNewContainer }>
-                    { model.newContainerId }
+                <a href={ getUrlForContainerId(model.migrationTool.newContainerId) } onClick={ navToNewContainer }>
+                    { model.migrationTool.newContainerId }
                 </a>
             );
 
@@ -95,10 +95,10 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
             </div>
             <div>
                 Status:
-                { migrationState === MigrationState.collaborating && " Normal collaboration" }
-                { migrationState === MigrationState.stopping && " Migration proposed" }
-                { migrationState === MigrationState.migrating && " Migration in progress" }
-                { migrationState === MigrationState.migrated && " Migration complete" }
+                { migrationState === "collaborating" && " Normal collaboration" }
+                { migrationState === "stopping" && " Migration proposed" }
+                { migrationState === "migrating" && " Migration in progress" }
+                { migrationState === "migrated" && " Migration complete" }
             </div>
             <div>{ proposedVersionStatus }</div>
             <div>{ acceptedVersionStatus }</div>
