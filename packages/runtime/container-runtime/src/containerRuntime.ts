@@ -548,16 +548,6 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-    if (message.metadata?.compressed &&
-        message.contents.type !== RuntimeMessage.ChunkedOp) {
-        const contents = IsoBuffer.from(message.contents.contents, "base64");
-        const decompressedMessage = decompress(contents);
-        const intoString = new TextDecoder().decode(decompressedMessage);
-        const asObj = JSON.parse(intoString);
-        message.contents.contents = asObj;
-        message.metadata.compressed = false;
-    }
-
     if (message.type === MessageType.Operation) {
         // legacy op format?
         if (message.contents.address !== undefined && message.contents.type === undefined) {
@@ -575,6 +565,19 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         // i.e. message.type is actually ContainerMessageType.
         // Nothing to do in such case.
     }
+    return message;
+}
+
+export function maybeDecompressMessage(message: ISequencedDocumentMessage) {
+    if (message.metadata?.compressed &&
+        message.contents.type !== RuntimeMessage.ChunkedOp) {
+        const contents = IsoBuffer.from(message.contents, "base64");
+        const decompressedMessage = decompress(contents);
+        const intoString = new TextDecoder().decode(decompressedMessage);
+        const asObj = JSON.parse(intoString);
+        message.contents = asObj;
+    }
+
     return message;
 }
 
@@ -1658,6 +1661,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // once all pieces are available
             message = this.processRemoteChunkedMessage(message);
 
+            // Decompress the message if it's compressed
+            message = maybeDecompressMessage(message);
+
+            // Uncompressed, reconstructed chunked ops need to be parsed from a string back into an object
+            if (message.type !== ContainerMessageType.ChunkedOp &&
+                typeof message.contents === "string") {
+                message.contents = JSON.parse(message.contents);
+            }
+
             let localOpMetadata: unknown;
             if (local) {
                 // Call the PendingStateManager to process local messages.
@@ -2476,15 +2488,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const newMessage = { ...message };
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const serializedContent = this.chunkMap.get(clientId)!.join("");
-            let maybeDecompressedContent: string;
-            if (newMessage.metadata?.compressed) {
-                const contents = IsoBuffer.from(serializedContent, "base64");
-                const decompressedMessage = decompress(contents);
-                maybeDecompressedContent = new TextDecoder().decode(decompressedMessage);
-            } else {
-                maybeDecompressedContent = serializedContent;
-            }
-            newMessage.contents = JSON.parse(maybeDecompressedContent);
+            newMessage.contents = serializedContent;
             newMessage.type = chunkedContent.originalType;
             this.clearPartialChunks(clientId);
             return newMessage;

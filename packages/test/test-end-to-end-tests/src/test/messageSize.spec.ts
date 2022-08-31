@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { randomBytes } from "crypto";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -122,6 +123,28 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         });
         // Server max op size should be at around 16000, therefore the runtime will chunk all ops.
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
+        const messageCount = 5;
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+
+        assertMapValues(dataObject2map, messageCount, largeString);
+    });
+
+    it("Large compressed ops pass with chunking enabled", async () => {
+        const compressionEnabledConfig: ITestContainerConfig = {
+            runtimeOptions: { compressionOptions: { minimumSize: 1 } },
+            ...testContainerConfig,
+        };
+        await setupContainers(compressionEnabledConfig, {
+            "Fluid.ContainerRuntime.MaxOpSizeInBytes": -1,
+        });
+        // We need a string that is large enough to chunk AFTER compression
+        // and is still worth compressing (smaller after compression)
+        let largeString: string = "";
+        while (largeString.length < 70000) {
+            largeString = largeString.concat(
+                JSON.stringify({ contents: randomBytes(2).toString("hex"), metadata: randomBytes(1).toString("hex") }));
+        }
         const messageCount = 5;
         setMapKeys(dataObject1map, messageCount, largeString);
         await provider.ensureSynchronized();
