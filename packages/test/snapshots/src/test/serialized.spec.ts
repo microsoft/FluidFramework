@@ -162,7 +162,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
             ]);
             const codeLoader = new LocalCodeLoader(
                 [[codeDetails, factory]],
-                { summaryOptions: { disableIsolatedChannels } });
+                {});
             const testLoader = new Loader({
                 urlResolver,
                 documentServiceFactory,
