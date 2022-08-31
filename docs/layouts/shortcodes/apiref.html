@@ -1,7 +1,18 @@
-{{- $name := .Get 0 -}}
-{{- $kind := .Get 1 -}}
-{{- $md := delimit (slice $name ".md") "" -}}
+{{/* Helper template for linking to an API member's generated docs. */}}
+{{/* Parameters: */}}
+{{/* - name: The API member name. Note that this must be an item for which a document is rendered. */}}
+{{/*   This includes classes, interfaces, and namespaces. */}}
+{{/* - (optional) unscopedPackageName: The *unscoped* name of the package to which the API member belongs. */}}
+{{/*   default value: "fluid-framework" */}}
+{{/* - (optional) headingId: The ID of a heading on the page to link to. */}}
+{{/*   This can be used to link directly to properties, methods, etc. on a parent type's page. */}}
+{{/*   default value: "" */}}
 
-<a href="{{ relref . $md }}"><code>{{ $name }}</code></a>
+{{- $name := default "index" (.Get 0) -}}
+{{- $unscopedPackageName := default "fluid-framework" (.Get 1) -}}
+{{- $fileName := delimit (slice (lower $name) ".md") "" -}}
+{{- $path := delimit (slice "/docs/apis/" $unscopedPackageName "/" $fileName ) "" -}}
+
+<a href="{{ relref . $path }}"><code>{{ $name }}</code></a>
 
 {{- /* Strip trailing newline. */ -}}
