@@ -54,12 +54,6 @@ describe("Document Dirty", () => {
             return new Promise((resolve) => c.once("connected", () => resolve()));
         }
 
-        async function ensureContainerConnected(c: Container): Promise<void> {
-            if (!c.connected) {
-                return waitForContainerReconnection(c);
-            }
-        }
-
         /**
          * Increments clean count when the "saved" event is fired
          */
@@ -345,7 +339,6 @@ describe("Document Dirty", () => {
         describe("Force readonly", () => {
             it(`sets operations when force readonly and then turn off force readonly to process them`, async () => {
                 container.forceReadonly(true);
-                await ensureContainerConnected(container);
 
                 // Set values in DDSes in force read only state.
                 sharedMap.set("key", "value");
@@ -356,7 +349,7 @@ describe("Document Dirty", () => {
                 checkDirtyState("after value set while force readonly", true, 0);
 
                 container.forceReadonly(false);
-                assert(container.connected, "Setting readonly to false should not cause disconnection");
+                await waitForContainerReconnection(container);
 
                 // Document should still be dirty right after turning off force readonly
                 checkDirtyState("after clear readonly and replayed ops", true, 0);
@@ -379,7 +372,6 @@ describe("Document Dirty", () => {
 
                     // force readonly
                     container.forceReadonly(true);
-                    await ensureContainerConnected(container);
 
                     await loaderContainerTracker.ensureSynchronized();
 
@@ -387,7 +379,7 @@ describe("Document Dirty", () => {
                     checkDirtyState("after value set while force readonly", true, 0);
 
                     container.forceReadonly(false);
-                    assert(container.connected, "Setting readonly to false should not cause disconnection");
+                    await waitForContainerReconnection(container);
 
                     // Document should still be dirty right after turning off force readonly
                     checkDirtyState("after reconnect and replayed ops", true, 0);
