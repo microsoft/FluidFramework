@@ -14,9 +14,7 @@
   "scripts": {
     "build": "npm run build:api-rollup && concurrently npm:build:md-magic npm:build:api-documenter && npm run hugo",
     "build:api": "npm run build:api-rollup && npm run build:api-documenter",
-    "build:api-documenter": "run-script-os",
-    "build:api-documenter:default": "[ -e ../_api-extractor-temp/doc-models ] && api-documenter generate --config api-documenter.json --input-folder ./_api-extractor-temp/_build --output-folder content/docs/apis/; exit 0",
-    "build:api-documenter:win32": "if exist ../_api-extractor-temp/doc-models api-documenter generate --config api-documenter.json --input-folder ./_api-extractor-temp/_build --output-folder content/docs/apis/",
+    "build:api-documenter": "node ./api-documenter.js",
     "build:api-rollup": "rimraf ./_api-extractor-temp && node ./rollup-api-json.js ../_api-extractor-temp/doc-models/ ./_api-extractor-temp/",
     "build:fast": "npm run build:api-rollup && concurrently npm:build:md-magic npm:build:api-documenter && npm run hugo",
     "build:md-magic": "node md.js",
@@ -32,7 +30,8 @@
     "start": "npm run build:md-magic && hugo server"
   },
   "dependencies": {
-    "@tylerbu/custom-api-documenter": "~0.3.4-7",
+    "@fluid-tools/api-markdown-documenter": "file:../tools/api-markdown-documenter",
+    "@microsoft/api-extractor-model": "^7.23.0",
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.28",
