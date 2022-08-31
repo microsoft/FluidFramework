@@ -111,7 +111,7 @@
     "semver": "^7.3.4",
     "sinon": "^7.4.2",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.86381",
+    "tinylicious": "^0.4.89251",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

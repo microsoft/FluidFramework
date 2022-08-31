@@ -339,12 +339,58 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         if (this.serviceConfiguration.deli.opEvent.enable) {
             this.updateOpMaxTimeTimer();
+
+            /**
+             * Deli's opEvent system is supposed to tell us when it's time to post ops for the session.
+             * It sends an "opEvent" event based heuristics like idle / max time / max ops.
+             * There's an edge case though. Suppose the following:
+             * 1. Server A created a deli for the session, consumes 100 kafka messages, and sequences 100 ops.
+             * 2. Within 5 seconds of sequencing those ops,
+             *  Server A's deli saves a checkpoint (it remembers it sequenced those 100 ops)
+             * 3. Within a second of that checkpoint, the Kafka partition is rebalanced.
+             * 4. Server B now creates a deli for that session and it consumes those same 100 kafka messages.
+             * 4a. Server B's deli instance is smart enough to detect that those 100 kafka messages were already
+             *  processed (due to the checkpoint created in #2) so it ignores them (the first if statement in handler).
+             *
+             * The above flow is a problem because the opEvent logic is not going to trigger since
+             *  no messages were sequenced by this deli.
+             *
+             * Deli should be smart and check if it hasn't yet sent an opEvent for messages that
+             * were not durably stored.
+             */
+            if (this.sequenceNumber > this.durableSequenceNumber) {
+                /**
+                 * This makes it so the next time deli checks for a "maxTime" opEvent,
+                 * it will fire the event since sequencedMessagesSinceLastOpEvent \> 0.
+                 */
+                this.opEvent.sequencedMessagesSinceLastOpEvent = this.sequenceNumber - this.durableSequenceNumber;
+            }
         }
 
         this.isNewDocument = this.sequenceNumber === 0;
 
         if (serviceConfiguration.enableLumberjack) {
             this.logSessionStartMetrics();
+        }
+
+        if (this.serviceConfiguration.deli.checkForIdleClientsOnStartup) {
+            /**
+             * Instruct deli to check for idle clients on startup. Why do we want to do this?
+             *
+             * Suppose the following:
+             * 1. Deli starts up and there is 1 write client and it
+             * consumes 1 message it has already previouly consumed.
+             * 2. Deli is closed due to a rebalance 2 minutes later.
+             * 3. Suppose that deli keeps rebalancing every 2 minutes indefinitely.
+             *
+             * Deli is configured to checkpoint 1 message behind the head while there is a client in the session.
+             * This will cause the kafka partition to never get a new checkpoint because it's in this bad loop.
+             * Never checkpointing could eventually lead to messages expiring from Kafka (data loss/corruption).
+             *
+             * We can recover from this loop if we check for idle clients on startup and insert a leave message
+             * for that 1 write client (who is now definitely expired). It would end up making deli checkpoint properly.
+             */
+            this.checkIdleWriteClients(Date.now());
         }
     }
 
@@ -384,8 +430,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
             switch (ticketedMessage.ticketType) {
                 case TicketType.Sequenced: {
-                    // Check for idle write clients.
-                    this.checkIdleWriteClients(ticketedMessage);
+                    if (ticketedMessage.type !== MessageType.ClientLeave) {
+                        // Check for idle write clients.
+                        this.checkIdleWriteClients(ticketedMessage.timestamp);
+                    }
 
                     // Check for document inactivity.
                     if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
@@ -1195,13 +1243,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Craft and send a leave message if one is found.
      * To prevent recurrent leave message sending, leave messages are only piggybacked with other message type.
      */
-    private checkIdleWriteClients(message: ISequencedDocumentMessageOutput) {
-        if (message.type !== MessageType.ClientLeave) {
-            const idleClient = this.getIdleClient(message.timestamp);
-            if (idleClient?.clientId) {
-                const leaveMessage = this.createLeaveMessage(idleClient.clientId, idleClient.serverMetadata);
-                void this.sendToRawDeltas(leaveMessage);
-            }
+    private checkIdleWriteClients(timestamp: number) {
+        const idleClient = this.getIdleClient(timestamp);
+        if (idleClient?.clientId) {
+            const leaveMessage = this.createLeaveMessage(idleClient.clientId, idleClient.serverMetadata);
+            void this.sendToRawDeltas(leaveMessage);
         }
     }
 

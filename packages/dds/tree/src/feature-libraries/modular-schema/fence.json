@@ -1,5 +1,5 @@
 {
     "tags": [ "modular-schema" ],
     "exports": [ "index"],
-    "imports": ["schema-stored","schema-view","tree","util","rebase","dependency-tracking","changeset","change-family"]
+    "imports": ["schema-stored","schema-view","tree","util","rebase","dependency-tracking","change-family"]
 }

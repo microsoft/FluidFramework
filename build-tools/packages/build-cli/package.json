@@ -1,7 +1,6 @@
 {
   "name": "@fluid-tools/build-cli",
-  "version": "0.3.2000",
-  "private": true,
+  "version": "0.4.3000",
   "description": "Build tools for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -23,14 +22,16 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
     "build:compile": "npm run build:clean && npm run tsc",
+    "build:docs": "api-extractor run --local",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
     "build:readme": "oclif readme",
+    "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log oclif.manifest.json",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -39,12 +40,35 @@
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
+    "test": "npm run test:mocha",
+    "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
+    "test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
+    "test:report": "nyc npm run test:mocha:report",
     "tsc": "tsc"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.3.2000",
-    "@fluidframework/build-tools": "^0.3.2000",
+    "@fluid-tools/version-tools": "^0.4.3000",
+    "@fluidframework/build-tools": "^0.4.3000",
     "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
@@ -81,6 +105,7 @@
     "eslint-plugin-unused-imports": "~2.0.0",
     "globby": "^11",
     "mocha": "^10.0.0",
+    "nyc": "^15.0.0",
     "oclif": "^3",
     "prettier": "~2.6.2",
     "rimraf": "^2.6.2",

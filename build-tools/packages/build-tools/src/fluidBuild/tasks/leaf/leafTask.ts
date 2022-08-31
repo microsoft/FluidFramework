@@ -9,13 +9,14 @@ import { AsyncPriorityQueue } from "async";
 import * as assert from "assert";
 import * as path from "path";
 import { BuildResult, BuildPackage, summarizeBuildResult } from "../../buildGraph";
-import { logStatus, logVerbose } from "../../../common/logging";
+import { defaultLogger } from "../../../common/logging";
 import { ScriptDependencies } from "../../../common/npmPackage";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../../common/utils";
 import chalk from "chalk";
 
+const {info, verbose} = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
 const traceTaskDep = registerDebug("fluid-build:task:dep");
 interface TaskExecResult extends ExecAsyncResult {
@@ -81,7 +82,7 @@ export abstract class LeafTask extends Task {
             this.node.buildContext.taskStats.leafBuiltCount++;
             const taskNum = this.node.buildContext.taskStats.leafBuiltCount.toString().padStart(3, " ");
             const totalTask = this.node.buildContext.taskStats.leafTotalCount - this.node.buildContext.taskStats.leafUpToDateCount;
-            logStatus(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
+            info(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
         }
         const startTime = Date.now();
         if (this.recheckLeafIsUpToDate && !this.forced && await this.checkLeafIsUpToDate()) {
@@ -177,7 +178,7 @@ export abstract class LeafTask extends Task {
             const elapsedTime = (Date.now() - startTime) / 1000;
             const workerMsg = worker ? "[worker] " : "";
             const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
-            logStatus(statusString);
+            info(statusString);
             if (status === BuildResult.Failed) {
                 this.node.buildContext.failedTaskLines.push(statusString);
             }
@@ -295,17 +296,17 @@ export abstract class LeafTask extends Task {
     protected logVerboseTrigger(reason: string) {
         const msg = `Triggering Leaf Task: [${reason}] ${this.node.pkg.nameColored} - ${this.command}`;
         traceTaskTrigger(msg);
-        logVerbose(msg);
+        verbose(msg);
     }
 
     protected logVerboseDependency(child: BuildPackage, dep: string) {
         const msg = `Task Dependency: ${this.node.pkg.nameColored} ${this.executable} -> ${child.pkg.nameColored} ${dep}`;
         traceTaskDep(msg);
-        logVerbose(msg);
+        verbose(msg);
     }
 
     protected logVerboseTask(msg: string) {
-        logVerbose(`Task: ${this.node.pkg.nameColored} ${this.executable}: ${msg}`);
+        verbose(`Task: ${this.node.pkg.nameColored} ${this.executable}: ${msg}`);
     }
 
     protected addAllDependentPackageTasks(dependentTasks: LeafTask[]) {
@@ -378,7 +379,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
         return false;
     }
 
-    
+
     /**
      * Subclass could override this to provide an alternative done file name
      */
