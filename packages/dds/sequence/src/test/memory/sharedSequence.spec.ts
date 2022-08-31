@@ -8,16 +8,39 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { benchmarkMemory } from "@fluid-tools/benchmark";
 import {
-    Marker,
-    ReferenceType,
-    reservedMarkerIdKey,
+    IJSONSegment, ISegment,
 } from "@fluidframework/merge-tree";
-import { IChannelAttributes, IFluidDataStoreRuntime, Serializable } from "@fluidframework/datastore-definitions";
-import { SharedSequence } from "../../sharedSequence";
-import { specToSegment } from "@fluidframework/merge-tree/dist/test";
+import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+
+// import { TestClient } from "@fluidframework/merge-tree/dist/test";
+import { SharedStringFactory } from "../../sequenceFactory";
+import { SubSequence, SharedSequence } from "../../sharedSequence";
+
+// class SubSequenceTestClient extends TestClient {
+//     constructor() {
+//         super(undefined,
+//             (spec) => {
+//                 const subSequence = SubSequence.fromJSONObject(spec);
+//                 return subSequence;
+//             });
+//     }
+// }
+
+class SharedSequenceTest extends SharedSequence<number> {
+    constructor(
+        document: IFluidDataStoreRuntime,
+        public id: string,
+        attributes: IChannelAttributes,
+        specToSegment: (spec: IJSONSegment) => ISegment,
+    ) {
+        super(document, id, attributes, specToSegment);
+    }
+}
 
 function createLocalSharedSequence(id: string) {
-    return new SharedSequence(new MockFluidDataStoreRuntime(), id, SharedSequence.attributes, specToSegment());
+    return new SharedSequenceTest(
+    // return new SharedSequence<number>(
+        new MockFluidDataStoreRuntime(), id, SharedStringFactory.Attributes, SharedStringFactory.segmentFromSpec);
 }
 
 describe("SharedSequence memory usage", () => {
@@ -51,79 +74,51 @@ describe("SharedSequence memory usage", () => {
 
     numbersOfEntriesForTests.forEach((x) => {
         benchmarkMemory({
-            title: `Insert and remove text ${x} times`,
+            title: `Insert and remove ${x} subsequences`,
             benchmarkFn: async () => {
-                const sharedString = createLocalSharedString("testSharedString");
+                const sharedSequence = createLocalSharedSequence("subsequence");
                 for (let i = 0; i < x; i++) {
-                    sharedString.insertText(0, "my-test-text");
-                    sharedString.removeText(0, 12);
+                    sharedSequence.insert(0, [i]);
+                    sharedSequence.remove(0, 1);
                 }
             },
         });
 
         benchmarkMemory({
-            title: `Replace text ${x} times`,
+            title: `Append and remove ${x} subsequences`,
             benchmarkFn: async () => {
-                const sharedString = createLocalSharedString("testSharedString");
-                sharedString.insertText(0, "0000");
+                const segment = new SubSequence<number>([]);
                 for (let i = 0; i < x; i++) {
-                    sharedString.replaceText(0, 4, i.toString().padStart(4, "0"));
+                    segment.append(new SubSequence<number>([i]));
+                    segment.removeRange(0, 1);
                 }
             },
         });
 
-        benchmarkMemory({
-            title: `Get text annotation ${x} times`,
-            benchmarkFn: async () => {
-                const sharedString = createLocalSharedString("testSharedString");
+    //     benchmarkMemory({
+    //         title: `Get text annotation ${x} times`,
+    //         benchmarkFn: async () => {
+    //             const sharedSequence = createLocalSharedSequence("testSharedString");
 
-                const text = "hello world";
-                const styleProps = { style: "bold" };
-                sharedString.insertText(0, text, styleProps);
+    //             const text = "hello world";
+    //             const styleProps = { style: "bold" };
+    //             sharedSequence.insert(0, text.split(""), styleProps);
 
-                for (let i = 0; i < x; i++) {
-                    sharedString.getPropertiesAtPosition(i);
-                }
-            },
-        });
+    //             for (let i = 0; i < x; i++) {
+    //                 sharedSequence.getPropertiesAtPosition(i);
+    //             }
+    //         },
+    //     });
 
-        benchmarkMemory({
-            title: `Get marker ${x} times`,
-            benchmarkFn: async () => {
-                const markerId = "myMarkerId";
-                const sharedString = createLocalSharedString("testSharedString");
-                sharedString.insertText(0, "my-test-text");
-                sharedString.insertMarker(
-                    0,
-                    ReferenceType.Simple,
-                    {
-                        [reservedMarkerIdKey]: markerId,
-                    });
-                for (let i = 0; i < x; i++) {
-                    sharedString.getMarkerFromId(markerId);
-                }
-            },
-        });
-
-        benchmarkMemory({
-            title: `Annotate marker ${x} times with same options`,
-            benchmarkFn: async () => {
-                const markerId = "myMarkerId";
-                const sharedString = createLocalSharedString("testSharedString");
-                sharedString.insertText(0, "my-test-text");
-                sharedString.insertMarker(
-                    0,
-                    ReferenceType.Simple,
-                    {
-                        [reservedMarkerIdKey]: markerId,
-                    },
-                );
-
-                const simpleMarker = sharedString.getMarkerFromId(markerId) as Marker;
-                for (let i = 0; i < x; i++) {
-                    sharedString.annotateMarker(simpleMarker, { color: "blue" });
-                }
-            },
-        });
+    //     benchmarkMemory({
+    //         title: `Get items ${x} times from sequence`,
+    //         benchmarkFn: async () => {
+    //             const sharedSequence = createLocalSharedSequence("testSharedString");
+    //             for (let i = 0; i < x; i++) {
+    //                 sharedSequence.insert(0, "my-test-text".split(""));
+    //                 sharedSequence.getItems(0, 12);
+    //             }
+    //         },
+    //     });
     });
 });
