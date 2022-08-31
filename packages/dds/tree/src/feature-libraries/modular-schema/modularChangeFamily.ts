@@ -6,17 +6,10 @@
 import { assert } from "@fluidframework/common-utils";
 import { ChangeEncoder, ChangeFamily, JsonCompatibleReadOnly, ProgressiveEditBuilder } from "../../change-family";
 import { ChangeRebaser } from "../../rebase";
-import {
-    FieldSchema,
-    GlobalFieldKey,
-    LocalFieldKey,
-    SchemaData,
-    TreeSchema,
-    TreeSchemaIdentifier,
-} from "../../schema-stored";
+import { FieldKindIdentifier } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey } from "../../tree";
-import { brand, fail, Invariant, getOrAddEmptyToMap } from "../../util";
-import { FieldChangeHandler, FieldChangeMap, FieldChangeset, NodeChangeset } from "./fieldChangeHandler";
+import { brand, getOrAddEmptyToMap } from "../../util";
+import { FieldChangeHandler, FieldChangeMap, FieldChange } from "./fieldChangeHandler";
 import { FullSchemaPolicy } from "./fieldKind";
 
 /**
@@ -24,148 +17,106 @@ import { FullSchemaPolicy } from "./fieldKind";
  * as determined by the schema.
  */
 export class ModularChangeFamily implements
-    ChangeFamily<ModularEditBuilder, NodeChangeset>,
-    ChangeRebaser<NodeChangeset>,
-    ChangeEncoder<NodeChangeset> {
-    _typeCheck?: Invariant<any> | undefined;
-
+    ChangeFamily<ModularEditBuilder, FieldChangeMap>,
+    ChangeRebaser<FieldChangeMap>,
+    ChangeEncoder<FieldChangeMap> {
     constructor(
-        readonly rootSchema: TreeSchemaIdentifier | undefined,
-        readonly schemaData: SchemaData,
-        readonly schemaPolicy: FullSchemaPolicy,
+        private readonly schemaPolicy: FullSchemaPolicy,
     ) { }
 
     get rebaser(): ChangeRebaser<any> { return this; }
     get encoder(): ChangeEncoder<any> { return this; }
 
-    compose(changes: NodeChangeset[]): NodeChangeset {
-        return this.composeI(this.rootSchema, changes);
-    }
-
-    private composeI(staticSchemaId: TreeSchemaIdentifier | undefined, changes: NodeChangeset[]): NodeChangeset {
+    compose(changes: FieldChangeMap[]): FieldChangeMap {
         if (changes.length === 1) {
             return changes[0];
         }
 
-        let schemaId = staticSchemaId;
-        const fieldChanges = new Map<FieldKey, FieldChangeset[]>();
+        const fieldChanges = new Map<FieldKey, FieldChange[]>();
         for (const change of changes) {
-            if (change.schema !== undefined) {
-                schemaId = change.schema;
-            }
-
             for (const key of Object.keys(change.fields)) {
-                getOrAddEmptyToMap(fieldChanges, brand(key)).push(change.fields[key]);
+                getOrAddEmptyToMap(fieldChanges, brand(key)).push(change[key]);
             }
         }
-
-        assert(schemaId !== undefined, "Need schema ID for root");
-        const schema = this.getTreeSchema(schemaId);
 
         const composedFields: FieldChangeMap = {};
         for (const field of fieldChanges.keys()) {
-            const childSchema = this.getChildSchema(schema, field);
-            const composedField = this.getChangeHandler(schema, field).rebaser.compose(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                fieldChanges.get(field)!,
-                (...childChanges) => this.composeI(childSchema, childChanges),
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const changesForField = fieldChanges.get(field)!;
+
+            // TODO: Handle the case where changes don't all have same field kind
+            const kind = changesForField[0].fieldKind;
+            const composedField = this.getChangeHandler(kind).rebaser.compose(
+                changesForField.map((change) => change.change),
+                (...childChanges) => this.compose(childChanges),
             );
 
             // TODO: Could optimize by checking that composedField is non-empty
-            composedFields[field as string] = composedField;
+            composedFields[field as string] = {
+                fieldKind: kind,
+                change: brand(composedField),
+            };
         }
 
-        const result: NodeChangeset = { fields: composedFields };
-        if (staticSchemaId === undefined) {
-            result.schema = schemaId;
-        }
-        return result;
+        return composedFields;
     }
 
-    invert(changes: NodeChangeset): NodeChangeset {
-        return this.invertI(this.rootSchema, changes);
-    }
+    invert(changes: FieldChangeMap): FieldChangeMap {
+        const invertedFields: FieldChangeMap = {};
 
-    private invertI(staticSchemaId: TreeSchemaIdentifier | undefined, changes: NodeChangeset): NodeChangeset {
-        const schemaId = staticSchemaId ?? changes.schema;
-        assert(schemaId !== undefined, "Need schema ID for root");
-        const schema = this.getTreeSchema(schemaId);
+        for (const field of Object.keys(changes)) {
+            const fieldChange = changes[field];
+            const invertedChange = this.getChangeHandler(fieldChange.fieldKind).rebaser.invert(
+                fieldChange.change,
+                (childChanges) => this.invert(childChanges));
 
-        const fields: FieldChangeMap = {};
-
-        for (const field of Object.keys(changes.fields)) {
-            const childSchema = this.getChildSchema(schema, brand(field));
-            fields[field] = this.getChangeHandler(schema, brand(field)).rebaser.invert(
-                changes.fields[field],
-                (nodeChanges) => this.invertI(childSchema, nodeChanges));
+            invertedFields[field] = {
+                fieldKind: fieldChange.fieldKind,
+                change: brand(invertedChange),
+            };
         }
 
-        const result: NodeChangeset = { fields };
-        if (staticSchemaId === undefined) {
-            result.schema = schemaId;
-        }
-        return result;
+        return invertedFields;
     }
 
-    rebase(change: NodeChangeset, over: NodeChangeset): NodeChangeset {
-        return this.rebaseI(this.rootSchema, change, over);
-    }
+    rebase(change: FieldChangeMap, over: FieldChangeMap): FieldChangeMap {
+        const rebasedFields: FieldChangeMap = {};
 
-    private rebaseI(
-        staticSchemaId: TreeSchemaIdentifier | undefined,
-        change: NodeChangeset,
-        over: NodeChangeset,
-    ): NodeChangeset {
-        const schemaId = staticSchemaId ?? change.schema;
-        assert(schemaId !== undefined, "Need schema ID for root");
-        const schema = this.getTreeSchema(schemaId);
-
-        const fields: FieldChangeMap = {};
-
-        for (const field of Object.keys(change.fields)) {
-            const baseChanges = over.fields[field];
+        for (const field of Object.keys(change)) {
+            const baseChanges = over[field];
             if (baseChanges === undefined) {
-                fields[field] = change.fields[field];
+                rebasedFields[field] = change[field];
             } else {
-                const childSchema = this.getChildSchema(schema, brand(field));
-                const rebasedField = this.getChangeHandler(schema, brand(field)).rebaser.rebase(
-                    change.fields[field],
+                const fieldChange = change[field];
+                const rebasedField = this.getChangeHandler(fieldChange.fieldKind).rebaser.rebase(
+                    fieldChange.change,
                     baseChanges,
-                    (child, baseChild) => this.rebaseI(childSchema, child, baseChild));
+                    (child, baseChild) => this.rebase(child, baseChild));
 
-                // TODO: Could optimize by checking that rebasedField is non-empty
-                fields[field] = rebasedField;
+                // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
+                rebasedFields[field] = {
+                    fieldKind: fieldChange.fieldKind,
+                    change: brand(rebasedField),
+                };
             }
         }
 
-        const result: NodeChangeset = { fields };
-        if (staticSchemaId === undefined) {
-            result.schema = schemaId;
-        }
-        return result;
+        return rebasedFields;
     }
 
-    rebaseAnchors(anchors: AnchorSet, over: NodeChangeset): void {
+    rebaseAnchors(anchors: AnchorSet, over: FieldChangeMap): void {
         anchors.applyDelta(this.intoDelta(over));
     }
 
-    intoDelta(change: NodeChangeset): Delta.Root {
-        return this.intoDeltaI(this.rootSchema, change);
-    }
-
-    private intoDeltaI(schemaId: TreeSchemaIdentifier | undefined, change: NodeChangeset): Delta.Root {
-        const schemaIdFinal = change.schema ?? schemaId;
-        assert(schemaIdFinal !== undefined, "Expected schema ID");
-        const schema = this.getTreeSchema(schemaIdFinal);
-
+    intoDelta(change: FieldChangeMap): Delta.Root {
         const delta: Delta.Root = new Map();
-        for (const field of change.fields.keys()) {
-            const childSchema = this.getChildSchema(schema, brand(field));
-            const deltaField = this.getChangeHandler(schema, field).intoDelta(
-                change.fields.get(field),
-                (childChange) => this.intoDeltaI(childSchema, childChange),
+        for (const field of Object.keys(change)) {
+            const fieldChange = change[field];
+            const deltaField = this.getChangeHandler(fieldChange.fieldKind).intoDelta(
+                fieldChange.change,
+                (childChange) => this.intoDelta(childChange),
             );
-            delta.set(field, deltaField);
+            delta.set(brand(field), deltaField);
         }
         return delta;
     }
@@ -174,129 +125,58 @@ export class ModularChangeFamily implements
         return new ModularEditBuilder(this, deltaReceiver, anchors);
     }
 
-    public encodeForJson(formatVersion: number, change: NodeChangeset): JsonCompatibleReadOnly {
-        return this.encodeForJsonI(formatVersion, this.rootSchema, change);
-    }
-
-    private encodeForJsonI(
-        formatVersion: number,
-        schemaId: TreeSchemaIdentifier | undefined,
-        change: NodeChangeset,
-    ): JsonCompatibleReadOnly {
-        const schemaIdFinal = change.schema ?? schemaId;
-        assert(schemaIdFinal !== undefined, "Expected schema ID");
-        const schema = this.getTreeSchema(schemaIdFinal);
-
-        const fields: FieldChangeMap = {};
-        for (const field of Object.keys(change.fields)) {
-            const childSchema = this.getChildSchema(schema, brand(field));
-            fields[field] = this.getChangeHandler(schema, brand(field)).encoder.encodeForJson(
+    encodeForJson(formatVersion: number, change: FieldChangeMap): JsonCompatibleReadOnly {
+        const encodedFields: { [key: string]: JsonCompatibleReadOnly; } = {};
+        for (const field of Object.keys(change)) {
+            const fieldChange = change[field];
+            encodedFields[field] = this.getChangeHandler(fieldChange.fieldKind).encoder.encodeForJson(
                 formatVersion,
-                change.fields[field],
-                (childChange) => this.encodeForJsonI(formatVersion, childSchema, childChange),
+                fieldChange.change,
+                (childChange) => this.encodeForJson(formatVersion, childChange),
             );
         }
 
-        return {
-            ...change,
-            fields,
-        };
+        return encodedFields;
     }
 
-    public encodeBinary(formatVersion: number, change: NodeChangeset): Buffer {
+    encodeBinary(formatVersion: number, change: FieldChangeMap): Buffer {
         throw new Error("Method not implemented.");
     }
 
-    public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): NodeChangeset {
-        return this.decodeJsonI(formatVersion, this.rootSchema, change);
-    }
-
-    private decodeJsonI(
-        formatVersion: number,
-        schemaId: TreeSchemaIdentifier | undefined,
-        encoded: JsonCompatibleReadOnly,
-    ): NodeChangeset {
-        const change = encoded as unknown as NodeChangeset;
-        const schemaIdFinal = change.schema ?? schemaId;
-        assert(schemaIdFinal !== undefined, "Expected schema ID");
-        const schema = this.getTreeSchema(schemaIdFinal);
-
-        const fields: FieldChangeMap = {};
-        for (const field of Object.keys(change.fields)) {
-            const childSchema = this.getChildSchema(schema, brand(field));
-            fields[field] = this.getChangeHandler(schema, brand(field)).encoder.decodeJson(
+    decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): FieldChangeMap {
+        const encodedChange = change as Record<string, JsonCompatibleReadOnly>;
+        const decodedFields: FieldChangeMap = {};
+        for (const field of Object.keys(encodedChange)) {
+            const fieldChange = encodedChange[field] as unknown as EncodedFieldChange;
+            const fieldChangeset = this.getChangeHandler(fieldChange.fieldKind).encoder.decodeJson(
                 formatVersion,
-                change.fields[field],
-                (encodedChild) => this.decodeJsonI(formatVersion, childSchema, encodedChild),
+                fieldChange.change,
+                (encodedChild) => this.decodeJson(formatVersion, encodedChild),
             );
+
+            decodedFields[field] = { fieldKind: fieldChange.fieldKind, change: brand(fieldChangeset) };
         }
 
-        return {
-            ...change,
-            fields,
-        };
+        return decodedFields;
     }
 
-    public decodeBinary(formatVersion: number, change: Buffer): NodeChangeset {
+    decodeBinary(formatVersion: number, change: Buffer): FieldChangeMap {
         throw new Error("Method not implemented.");
     }
 
-    private getChangeHandler(schema: TreeSchema, field: FieldKey): FieldChangeHandler<any> {
-        const fieldSchema = this.getFieldSchema(schema, field);
-        const fieldKind = this.schemaPolicy.fieldKinds.get(fieldSchema.kind);
+    private getChangeHandler(kind: FieldKindIdentifier): FieldChangeHandler<unknown> {
+        const fieldKind = this.schemaPolicy.fieldKinds.get(kind);
         assert(fieldKind !== undefined, "Unknown field kind");
         return fieldKind.changeHandler;
     }
-
-    /**
-     * If children in `field` of a node with `parentSchema` must all use the same schema,
-     * returns the ID for that schema. Otherwise returns undefined.
-     */
-    private getChildSchema(parentSchema: TreeSchema, field: FieldKey): TreeSchemaIdentifier | undefined {
-        const fieldSchema = this.getFieldSchema(parentSchema, field);
-        return fieldSchema.types?.size === 1
-            ? firstFromSet(fieldSchema.types)
-            : undefined;
-    }
-
-    private getTreeSchema(schemaId: TreeSchemaIdentifier): TreeSchema {
-        const schema = this.schemaData.treeSchema.get(schemaId);
-        assert(schema !== undefined, "Unknown schema identifer)");
-        return schema;
-    }
-
-    private getFieldSchema(parentSchema: TreeSchema, field: FieldKey): FieldSchema {
-        const fieldSchema = parentSchema.localFields.get(field as LocalFieldKey)
-            ?? this.fieldSchemaForGlobalField(parentSchema, field as GlobalFieldKey)
-            ?? this.fieldSchemaForExtraField(parentSchema, field);
-
-        assert(fieldSchema !== undefined, "No schema defined for field");
-        return fieldSchema;
-    }
-
-    private fieldSchemaForExtraField(schema: TreeSchema, key: FieldKey): FieldSchema | undefined {
-        if (schema.extraGlobalFields) {
-            return this.schemaData.globalFieldSchema.get(key as GlobalFieldKey);
-        }
-        return schema.extraLocalFields;
-    }
-
-    private fieldSchemaForGlobalField(schema: TreeSchema, key: GlobalFieldKey): FieldSchema | undefined {
-        return (schema.globalFields.has(key))
-            ? this.schemaData.globalFieldSchema.get(key)
-            : undefined;
-    }
 }
 
-function firstFromSet<T>(set: ReadonlySet<T>): T {
-    for (const element of set.keys()) {
-        return element;
-    }
-
-    fail("Expected a non-empty set");
+interface EncodedFieldChange {
+    fieldKind: FieldKindIdentifier;
+    change: JsonCompatibleReadOnly;
 }
 
-export class ModularEditBuilder extends ProgressiveEditBuilder<NodeChangeset> {
+export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(
         family: ModularChangeFamily,
         deltaReciever: (delta: Delta.Root) => void,

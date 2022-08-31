@@ -171,6 +171,14 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaqu
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
 // @public (undocumented)
+export interface FieldChange {
+    // (undocumented)
+    change: FieldChangeset;
+    // (undocumented)
+    fieldKind: FieldKindIdentifier;
+}
+
+// @public (undocumented)
 export interface FieldChangeEncoder<TChangeset> {
     decodeJson(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder): TChangeset;
     encodeForJson(formatVersion: number, change: TChangeset, encodeChild: NodeChangeEncoder): JsonCompatibleReadOnly;
@@ -191,7 +199,7 @@ export interface FieldChangeHandler<TChangeset> {
 // @public (undocumented)
 export interface FieldChangeMap {
     // (undocumented)
-    [key: string]: FieldChangeset;
+    [key: string]: FieldChange;
 }
 
 // @public (undocumented)
@@ -203,7 +211,7 @@ export interface FieldChangeRebaser<TChangeset> {
 }
 
 // @public (undocumented)
-export type FieldChangeset = Brand<any, "FieldChangeset">;
+export type FieldChangeset = Brand<unknown, "FieldChangeset">;
 
 // @public (undocumented)
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
@@ -602,27 +610,19 @@ export const neverTree: TreeSchema;
 const noChangeHandle: FieldChangeHandler<0>;
 
 // @public (undocumented)
-export type NodeChangeComposer = (...changes: NodeChangeset[]) => NodeChangeset;
+export type NodeChangeComposer = (...changes: FieldChangeMap[]) => FieldChangeMap;
 
 // @public (undocumented)
-export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
+export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => FieldChangeMap;
 
 // @public (undocumented)
-export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
+export type NodeChangeEncoder = (change: FieldChangeMap) => JsonCompatibleReadOnly;
 
 // @public (undocumented)
-export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
+export type NodeChangeInverter = (change: FieldChangeMap) => FieldChangeMap;
 
 // @public (undocumented)
-export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
-
-// @public (undocumented)
-export interface NodeChangeset {
-    // (undocumented)
-    fields: FieldChangeMap;
-    // (undocumented)
-    schema?: TreeSchemaIdentifier;
-}
+export type NodeChangeRebaser = (change: FieldChangeMap, baseChange: FieldChangeMap) => FieldChangeMap;
 
 // @public
 export interface NodeData {
@@ -803,7 +803,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
 }
 
 // @public (undocumented)
-export type ToDelta = (child: NodeChangeset) => Delta.Root;
+export type ToDelta = (child: FieldChangeMap) => Delta.Root;
 
 // @public (undocumented)
 export interface TreeLocation {

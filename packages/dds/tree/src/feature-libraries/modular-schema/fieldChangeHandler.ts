@@ -4,7 +4,7 @@
  */
 
 import { JsonCompatibleReadOnly } from "../../change-family";
-import { TreeSchemaIdentifier } from "../../schema-stored";
+import { FieldKindIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { Brand, Invariant } from "../../util";
 
@@ -64,27 +64,27 @@ export interface FieldChangeEncoder<TChangeset> {
      decodeJson(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder): TChangeset;
 }
 
-export type ToDelta = (child: NodeChangeset) => Delta.Root;
+export type ToDelta = (child: FieldChangeMap) => Delta.Root;
 
-export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
+export type NodeChangeInverter = (change: FieldChangeMap) => FieldChangeMap;
 
 export type NodeChangeRebaser = (
-    change: NodeChangeset,
-    baseChange: NodeChangeset
-) => NodeChangeset;
+    change: FieldChangeMap,
+    baseChange: FieldChangeMap
+) => FieldChangeMap;
 
-export type NodeChangeComposer = (...changes: NodeChangeset[]) => NodeChangeset;
-export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
-export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
+export type NodeChangeComposer = (...changes: FieldChangeMap[]) => FieldChangeMap;
+export type NodeChangeEncoder = (change: FieldChangeMap) => JsonCompatibleReadOnly;
+export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => FieldChangeMap;
 
-export interface NodeChangeset {
-    schema?: TreeSchemaIdentifier;
-    fields: FieldChangeMap;
-}
-
-// TODO: Replace with Map<FieldKey, FieldChangeset>
+// TODO: Replace with Map<FieldKey, FieldChanges>
 export interface FieldChangeMap {
-    [key: string]: FieldChangeset;
+    [key: string]: FieldChange;
 }
 
-export type FieldChangeset = Brand<any, "FieldChangeset">;
+export interface FieldChange {
+     fieldKind: FieldKindIdentifier;
+     change: FieldChangeset;
+}
+
+export type FieldChangeset = Brand<unknown, "FieldChangeset">;
