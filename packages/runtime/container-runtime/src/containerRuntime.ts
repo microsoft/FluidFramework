@@ -2911,23 +2911,38 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.baseSnapshotBlobs = await SerializedSnapshotStorage.serializeTree(this.context.baseSnapshot, this.storage);
     }
 
+    private validatePendingMessages(pendingMessages: IPendingLocalState | undefined): void {
+        if (pendingMessages === undefined) {
+            return;
+        }
+        const firstMessage = pendingMessages.pendingStates[0] as IPendingMessage;
+        const isFirstMessageBatchFirst = firstMessage.opMetadata?.batch;
+        const lastMessage = pendingMessages.pendingStates[pendingMessages.pendingStates.length - 1].type;
+        if (isFirstMessageBatchFirst == null) {
+            throw new UsageError("First message must have batch metadata");
+        }
+        if (!isFirstMessageBatchFirst) {
+            throw new UsageError(`First message must be first in batch, opMetadata.batch: ${isFirstMessageBatchFirst}`);
+        }
+        if (lastMessage !== "flush") {
+            throw new UsageError(`"Last message in batch must be flush, type: ${lastMessage}"`);
+        }
+        assert(!!isFirstMessageBatchFirst, "First message must have batch metadata");
+        assert(isFirstMessageBatchFirst === true, "First message must be first in batch");
+        assert(lastMessage === "flush", "Last message in batch must be flush");
+    }
+
     public getPendingLocalState(): unknown {
         if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad)) {
             throw new UsageError("can't get state when offline load disabled");
         }
 
         const pendingMessages = this.pendingStateManager.getLocalState();
-        const firstMessage = pendingMessages?.pendingStates[0] as IPendingMessage;
-        const isFirstMessageBatchFirst = firstMessage.opMetadata?.batch;
-        const lastMessage = pendingMessages?.pendingStates[pendingMessages.pendingStates.length - 1].type;
-        assert(!!isFirstMessageBatchFirst, "First message must have batch metadata");
-        assert(isFirstMessageBatchFirst === true, "First message must be first in batch");
-        assert(lastMessage === "flush", "Last message in batch must be flush");
-
+        this.validatePendingMessages(pendingMessages);
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
         if (previousPendingState) {
             return {
-                pending: this.pendingStateManager.getLocalState(),
+                pending: pendingMessages,
                 pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
                 snapshotBlobs: previousPendingState.snapshotBlobs,
                 baseSnapshot: previousPendingState.baseSnapshot,
@@ -2937,7 +2952,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(!!this.context.baseSnapshot, 0x2e6 /* "Must have a base snapshot" */);
         assert(!!this.baseSnapshotBlobs, 0x2e7 /* "Must serialize base snapshot blobs before getting runtime state" */);
         return {
-            pending: this.pendingStateManager.getLocalState(),
+            pending: pendingMessages,
             pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
             snapshotBlobs: this.baseSnapshotBlobs,
             baseSnapshot: this.context.baseSnapshot,
