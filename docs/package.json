@@ -39,7 +39,7 @@
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.28",
     "broken-link-checker": "^0.7.8",
-    "colors": "^1.2.1",
+    "chalk": "^2.4.2",
     "copyfiles": "^2.4.1",
     "cpy": "^8.1.2",
     "deepdash": "^5.3.9",

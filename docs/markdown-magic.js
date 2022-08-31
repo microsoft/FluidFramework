@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const colors = require("colors");
+const chalk = require("chalk");
 const markdownMagic = require("@tylerbu/markdown-magic");
 const process = require("process");
 
@@ -24,7 +24,7 @@ function main(workingDirectory, matchPatterns) {
 
     markdownMagic(matchPatterns, config).then(
         () => {
-            console.log(colors.green(`SUCCESS: Markdown Magic completed in "${workingDirectory}"!`));
+            console.log(chalk.green(`SUCCESS: Markdown Magic completed in "${workingDirectory}"!`));
             process.exit(0);
         },
         (error) => {
