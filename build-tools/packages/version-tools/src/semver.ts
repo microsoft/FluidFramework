@@ -138,3 +138,32 @@ export function detectBumpType(
         }
     }
 }
+
+/**
+ * Checks if a version is prerelease or not, taking into account the Fluid internal version scheme.
+ *
+ * @param version - The version to check.
+ * @returns True if the version is a prerelease version, false otherwise.
+ */
+export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean {
+    if (version === undefined) {
+        return false;
+    }
+
+    const scheme = detectVersionScheme(version);
+
+    // Fluid internal versions need special handling
+    if (scheme === "internalPrerelease") {
+        return true;
+    } else if (scheme === "internal") {
+        return false;
+    }
+
+    // All other schemes can use the semver library
+    const prerelease = semver.prerelease(version);
+    if (semver.parse(version) === null) {
+        throw new Error(`Cannot parse version: ${version}`);
+    }
+
+    return prerelease !== null && prerelease.length > 0;
+}

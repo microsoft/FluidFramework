@@ -18,12 +18,12 @@
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:compile": "npm run build:tsc && npm run build:copy-test-resources",
     "build:copy-test-resources": "copyfiles \"src/test/test-data/**\" dist --up 1",
-    "build:docs": "api-extractor run --local",
+    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
     "build:tsc": "tsc --pretty",
-    "ci:build:docs": "api-extractor run",
+    "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "clean": "rimraf _api-extractor-temp .nyc_output dist *.tsbuildinfo *.build.log",
     "eslint": "eslint",
     "eslint:fix": "eslint --fix",
@@ -42,9 +42,7 @@
     "@microsoft/api-extractor-model": "^7.23.0",
     "@microsoft/tsdoc": "^0.14.1",
     "@rushstack/node-core-library": "^3.50.1",
-    "chalk": "^2.4.2",
-    "mdast-builder": "^1.1.1",
-    "mdast-util-assert": "^4.0.0"
+    "chalk": "^2.4.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
@@ -57,7 +55,6 @@
     "@types/chai": "^4",
     "@types/fs-extra": "^9.0.13",
     "@types/mocha": "^9.1.1",
-    "@types/unist": "^2.0.6",
     "chai": "^4.2.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",

@@ -71,6 +71,7 @@ const foo = bar;
 
 |  Namespace | Description |
 |  --- | --- |
+|  [TestModule](docs/simple-suite-test#testmodule-namespace) |  |
 |  [TestNamespace](docs/simple-suite-test#testnamespace-namespace) | Test Namespace |
 
 ## Variables
@@ -95,7 +96,7 @@ A test abstract class.
 #### Signature {#testabstractclass-signature}
 
 ```typescript
-export declare abstract class TestAbstractClass 
+export declare abstract class TestAbstractClass
 ```
 
 #### Constructors
@@ -213,11 +214,11 @@ Test class
 #### Signature {#testclass-signature}
 
 ```typescript
-export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass 
+export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
 ```
 <b>Extends:</b> [TestAbstractClass](docs/simple-suite-test#testabstractclass-class)
 
-<b>Type parameters:</b> 
+<b>Type parameters:</b>
 
 * <b>TTypeParameterA</b>: A type parameter
 
@@ -440,7 +441,7 @@ Test Enum
 #### Signature {#testenum-signature}
 
 ```typescript
-export declare enum TestEnum 
+export declare enum TestEnum
 ```
 
 #### Remarks {#testenum-remarks}
@@ -572,7 +573,7 @@ An inline type
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
 > This is a test deprecation notice. Here is a [link](docs/simple-suite-test#testfunctionreturninguniontype-function) to something else!
-> 
+>
 
 Test function that returns an inline type
 
@@ -613,7 +614,7 @@ An empty interface
 #### Signature {#testemptyinterface-signature}
 
 ```typescript
-export interface TestEmptyInterface 
+export interface TestEmptyInterface
 ```
 
 ### TestInterface {#testinterface-interface}
@@ -623,7 +624,7 @@ Test interface
 #### Signature {#testinterface-signature}
 
 ```typescript
-export interface TestInterface 
+export interface TestInterface
 ```
 
 #### Remarks {#testinterface-remarks}
@@ -773,7 +774,7 @@ Test interface that extends other interfaces
 #### Signature {#testinterfaceextendingotherinterfaces-signature}
 
 ```typescript
-export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number> 
+export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
 ```
 <b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)<!-- -->, [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)<!-- -->, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)
 
@@ -822,9 +823,9 @@ Test interface with generic type parameter
 #### Signature {#testinterfacewithtypeparameter-signature}
 
 ```typescript
-export interface TestInterfaceWithTypeParameter<T> 
+export interface TestInterfaceWithTypeParameter<T>
 ```
-<b>Type parameters:</b> 
+<b>Type parameters:</b>
 
 * <b>T</b>: A type parameter
 
@@ -857,6 +858,26 @@ Here are some remarks about the property
 
 ## Namespace Details
 
+### TestModule {#testmodule-namespace}
+
+#### Variables
+
+|  Variable | Modifiers | Description |
+|  --- | --- | --- |
+|  [foo](docs/simple-suite-test#testmodule-foo-variable) | <code>readonly</code> | Test constant in module. |
+
+#### Variable Details
+
+##### foo {#testmodule-foo-variable}
+
+Test constant in module.
+
+###### Signature {#foo-signature}
+
+```typescript
+foo = 2
+```
+
 ### TestNamespace {#testnamespace-namespace}
 
 Test Namespace
@@ -864,7 +885,7 @@ Test Namespace
 #### Signature {#testnamespace-signature}
 
 ```typescript
-export declare namespace TestNamespace 
+export declare namespace TestNamespace
 ```
 
 #### Remarks {#testnamespace-remarks}
@@ -940,7 +961,7 @@ Test class
 ###### Signature {#testclass-signature}
 
 ```typescript
-class TestClass 
+class TestClass
 ```
 
 ###### Constructors
@@ -1032,7 +1053,7 @@ Test Enum
 ###### Signature {#testenum-signature}
 
 ```typescript
-enum TestEnum 
+enum TestEnum
 ```
 
 ###### Flags
@@ -1101,7 +1122,7 @@ Test interface
 ###### Signature {#testinterface-signature}
 
 ```typescript
-interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum> 
+interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 ```
 <b>Extends:</b> [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;[TestEnum](docs/simple-suite-test#testnamespace-testenum-enum)
 
@@ -1150,7 +1171,7 @@ Test sub-namespace
 ###### Signature {#testsubnamespace-signature}
 
 ```typescript
-namespace TestSubNamespace 
+namespace TestSubNamespace
 ```
 
 #### Variable Details

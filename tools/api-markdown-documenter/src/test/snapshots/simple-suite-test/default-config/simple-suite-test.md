@@ -73,6 +73,7 @@ const foo = bar;
 
 |  Namespace | Description |
 |  --- | --- |
+|  [TestModule](./simple-suite-test/testmodule-namespace) |  |
 |  [TestNamespace](./simple-suite-test/testnamespace-namespace) | Test Namespace |
 
 ## Variables
@@ -97,7 +98,7 @@ Test Enum
 #### Signature {#testenum-signature}
 
 ```typescript
-export declare enum TestEnum 
+export declare enum TestEnum
 ```
 
 #### Remarks {#testenum-remarks}
@@ -229,7 +230,7 @@ An inline type
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
 > This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
-> 
+>
 
 Test function that returns an inline type
 

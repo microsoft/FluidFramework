@@ -13,7 +13,7 @@ export interface Link {
     text: string;
 
     /**
-     * Link target URL
+     * Link target URL.
      */
     url: string;
 }
