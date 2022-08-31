@@ -88,6 +88,8 @@ export class ModularChangeFamily implements
                 rebasedFields[field] = change[field];
             } else {
                 const fieldChange = change[field];
+
+                // TODO: Handle the case where `change` and `over` have different field kinds for this field
                 const rebasedField = this.getChangeHandler(fieldChange.fieldKind).rebaser.rebase(
                     fieldChange.change,
                     baseChanges,
