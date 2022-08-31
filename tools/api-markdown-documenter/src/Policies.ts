@@ -5,7 +5,7 @@
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import { ApiItem, ApiItemKind, ApiPackage } from "@microsoft/api-extractor-model";
 
-import { ApiMemberKind, getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
+import { getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
 
 /**
  * This module contains policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
@@ -22,7 +22,7 @@ import { ApiMemberKind, getQualifiedApiItemName, getUnscopedPackageName } from "
  * Also note that `EntryPoint` items will always be ignored by the system, even if specified here.
  *
  * @example
- * A configuration like the following:
+ * A configuration like
  *
  * ```typescript
  * ...
@@ -34,17 +34,14 @@ import { ApiMemberKind, getQualifiedApiItemName, getUnscopedPackageName } from "
  *
  * will result in separate documents being generated for `Namespace` items, but will not for other item kinds (`Classes`, `Interfaces`, etc.).
  */
-export type DocumentBoundaries = ApiMemberKind[];
+export type DocumentBoundaries = ApiItemKind[];
 
 /**
  * List of item kinds for which sub-directories will be generated, and under which child item documents will be created.
  * If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
  *
- * @remarks Note that `Package` items will *always* have separate documents generated for them, even if
- * not specified.
- *
  * @example
- * A configuration like the following:
+ * A configuration like
  *
  * ```typescript
  * ...
@@ -68,7 +65,7 @@ export type DocumentBoundaries = ApiMemberKind[];
  *  | baz.md
  * ```
  */
-export type HierarchyBoundaries = ApiMemberKind[];
+export type HierarchyBoundaries = ApiItemKind[];
 
 /**
  * Policy for generating file names.
@@ -204,14 +201,15 @@ export namespace DefaultPolicies {
      *
      * Generates separate documents for the following API item kinds:
      *
+     * - Model*
+     * - Package*
      * - Class
-     *
      * - Interface
-     *
      * - Namespace
-     *
      */
-    export const defaultDocumentBoundaries: ApiMemberKind[] = [
+    export const defaultDocumentBoundaries: ApiItemKind[] = [
+        ApiItemKind.Model,
+        ApiItemKind.Package,
         ApiItemKind.Class,
         ApiItemKind.Interface,
         ApiItemKind.Namespace,
@@ -222,9 +220,13 @@ export namespace DefaultPolicies {
      *
      * Creates sub-directories for the following API item kinds:
      *
+     * - Package*
      * - Namespace
      */
-    export const defaultHierarchyBoundaries: ApiMemberKind[] = [ApiItemKind.Namespace];
+    export const defaultHierarchyBoundaries: ApiItemKind[] = [
+        ApiItemKind.Package,
+        ApiItemKind.Namespace,
+    ];
 
     /**
      * Default {@link PolicyOptions.fileNamePolicy}.
@@ -232,8 +234,8 @@ export namespace DefaultPolicies {
      * Uses the item's qualified API name, but is handled differently for the following items:
      *
      * - Model: Uses "index".
-     *
      * - Package: Uses the unscoped package name.
+     *
      */
     export function defaultFileNamePolicy(apiItem: ApiItem): string {
         switch (apiItem.kind) {

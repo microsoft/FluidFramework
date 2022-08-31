@@ -33,13 +33,13 @@ export interface TinyliciousClientProps {
 export interface TinyliciousConnectionConfig {
     /**
      * Optional. Override of the port
-     * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousPort}
+     * @defaultValue - {@link @fluidframework/tinylicious-driver#defaultTinyliciousPort}
      */
     port?: number;
 
     /**
      * Optional. Override of the domain
-     * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousEndpoint}
+     * @defaultValue - {@link @fluidframework/tinylicious-driver#defaultTinyliciousEndpoint}
      */
     domain?: string;
 }

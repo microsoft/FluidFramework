@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# build-api-markdown-documenter pipeline
+# build-benchmark-tool pipeline
 
 name: $(Build.BuildId)
 
@@ -62,7 +62,7 @@ extends:
     buildDirectory: tools/api-markdown-documenter
     tagName:
     taskBuild: build
-    taskBuildDocs: true
-    taskLint: true
+    taskBuildDocs: false
+    taskLint: false
     taskTest: test
     buildNumberInPatch: true

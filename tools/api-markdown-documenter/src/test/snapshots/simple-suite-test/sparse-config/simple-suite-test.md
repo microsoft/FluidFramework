@@ -73,7 +73,6 @@ const foo = bar;
 
 |  Namespace | Description |
 |  --- | --- |
-|  [TestModule](docs/simple-suite-test/testmodule-namespace) |  |
 |  [TestNamespace](docs/simple-suite-test/testnamespace-namespace) | Test Namespace |
 
 ## Variables

@@ -51,9 +51,6 @@ export { ApiItem }
 
 export { ApiItemKind }
 
-// @public
-export type ApiMemberKind = Omit<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
-
 export { ApiModel }
 
 // @public
@@ -80,8 +77,8 @@ interface ChildSectionProperties {
 
 // @public (undocumented)
 export namespace DefaultPolicies {
-    const defaultDocumentBoundaries: ApiMemberKind[];
-    const defaultHierarchyBoundaries: ApiMemberKind[];
+    const defaultDocumentBoundaries: ApiItemKind[];
+    const defaultHierarchyBoundaries: ApiItemKind[];
     export function defaultFileNamePolicy(apiItem: ApiItem): string;
     export function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
     export function defaultLinkTextPolicy(apiItem: ApiItem): string;
@@ -147,7 +144,7 @@ export { DocTableCell }
 export { DocTableRow }
 
 // @public
-export type DocumentBoundaries = ApiMemberKind[];
+export type DocumentBoundaries = ApiItemKind[];
 
 // @public
 export function doesItemGenerateHierarchy(apiItem: ApiItem, hierarchyBoundaries: HierarchyBoundaries): boolean;
@@ -242,7 +239,7 @@ export interface Heading {
 export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
 // @public
-export type HierarchyBoundaries = ApiMemberKind[];
+export type HierarchyBoundaries = ApiItemKind[];
 
 // @public
 export type IDocHeadingParameters = IDocNodeParameters & Heading;

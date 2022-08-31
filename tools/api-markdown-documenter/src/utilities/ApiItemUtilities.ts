@@ -32,25 +32,6 @@ import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfigurat
 import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
 
 /**
- * Represents "member" API item kinds.
- * These are the kinds of items the system supports generally for rendering, file-system, etc. policies.
- *
- * @remarks This type explicitly excludes the following API item kinds represented in API-Extractor models:
- *
- * - `None`
- *
- * - `EntryPoint`
- *
- * - `Model`
- *
- * - `Package`
- */
-export type ApiMemberKind = Omit<
-    ApiItemKind,
-    ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package
->;
-
-/**
  * `ApiItem` union type representing function-like API kinds.
  */
 export type ApiFunctionLike =

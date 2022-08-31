@@ -71,7 +71,6 @@ const foo = bar;
 
 |  Namespace | Description |
 |  --- | --- |
-|  [TestModule](docs/simple-suite-test#testmodule-namespace) |  |
 |  [TestNamespace](docs/simple-suite-test#testnamespace-namespace) | Test Namespace |
 
 ## Variables
@@ -857,26 +856,6 @@ testProperty: T;
 Here are some remarks about the property
 
 ## Namespace Details
-
-### TestModule {#testmodule-namespace}
-
-#### Variables
-
-|  Variable | Modifiers | Description |
-|  --- | --- | --- |
-|  [foo](docs/simple-suite-test#testmodule-foo-variable) | <code>readonly</code> | Test constant in module. |
-
-#### Variable Details
-
-##### foo {#testmodule-foo-variable}
-
-Test constant in module.
-
-###### Signature {#foo-signature}
-
-```typescript
-foo = 2
-```
 
 ### TestNamespace {#testnamespace-namespace}
 
