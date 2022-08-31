@@ -61,7 +61,8 @@ interface Section {
  */
 export class ReleaseCommand<T extends typeof ReleaseCommand.flags>
     extends StateMachineCommand<T>
-    implements StateHandler {
+    implements StateHandler
+{
     machine = UnifiedReleaseMachine.machine;
     releaseGroup: ReleaseGroup | ReleasePackage | undefined;
     versionScheme: VersionScheme | undefined;
@@ -310,7 +311,7 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags>
                             );
                             if (!["main", "next", "lts"].includes(context.originalBranchName)) {
                                 this.warn(
-                                    `Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${this._context?.originalBranchName}'.`,
+                                    `Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${context.originalBranchName}'.`,
                                 );
                                 this.machine.action("failure");
                                 this.exit();
@@ -337,7 +338,9 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags>
                 const answer = await inquirer.prompt(installQuestion);
                 if (answer.install === true) {
                     this.log(`Installing build-tools so we can run build:genver`);
-                    const buildToolsMonoRepo = context.repo.releaseGroups.get(MonoRepoKind.BuildTools)!;
+                    const buildToolsMonoRepo = context.repo.releaseGroups.get(
+                        MonoRepoKind.BuildTools,
+                    )!;
                     const ret = await buildToolsMonoRepo.install();
                     if (ret.error) {
                         this.errorLog("Install failed.");
@@ -419,7 +422,8 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags>
                 const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
 
                 this.log(
-                    `Version ${this.releaseVersion} of ${this.releaseGroup
+                    `Version ${this.releaseVersion} of ${
+                        this.releaseGroup
                     } already released, so we can bump to ${newVersion} (${chalk.blue(
                         this.bumpType!,
                     )} bump)!`,
@@ -576,8 +580,9 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags>
                     sections: [
                         {
                             title: "FIRST",
-                            message: `Push and create a PR for branch ${await context.gitRepo.getCurrentBranchName()} targeting the ${context.originalBranchName
-                                } branch.`,
+                            message: `Push and create a PR for branch ${await context.gitRepo.getCurrentBranchName()} targeting the ${
+                                context.originalBranchName
+                            } branch.`,
                         },
                         {
                             title: "NEXT",
