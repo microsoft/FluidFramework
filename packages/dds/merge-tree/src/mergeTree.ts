@@ -1042,6 +1042,15 @@ export class MergeTree {
     }
 
     // TODO: filter function
+    /**
+     * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
+
+     * @param startPos - Position at which to start the search
+     * @param clientId - clientId dictating the perspective to search from
+     * @param tileLabel - Label of the tile to search for
+     * @param tilePrecedesPos - Whether the desired tile comes before (true) or after (false) `startPos`
+     * @returns
+     */
     public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
         const searchInfo: IReferenceSearchInfo = {
             mergeTree: this,

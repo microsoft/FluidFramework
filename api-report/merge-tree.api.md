@@ -1000,8 +1000,7 @@ export class MergeTree {
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // (undocumented)
-    findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
+    findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos?: boolean): {
         tile: ReferencePosition;
         pos: number;
     } | undefined;
