@@ -8,7 +8,7 @@ import { assertShortCodeHandler, copyrightFileHeaderHandlers, dockerfilePackageH
 /**
  * declared file handlers
  */
- export const handlers: Handler[] = [
+ export const policyHandlers: Handler[] = [
     ...copyrightFileHeaderHandlers,
     ...npmPackageContentsHandlers,
     dockerfilePackageHandler,
