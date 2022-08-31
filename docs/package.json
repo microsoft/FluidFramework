@@ -12,33 +12,33 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "scripts": {
-    "build": "npm run build:api-rollup && concurrently npm:build:md-magic npm:build:api-documenter && npm run hugo",
-    "build:api": "npm run build:api-rollup && npm run build:api-documenter",
-    "build:api-documenter": "run-script-os",
-    "build:api-documenter:default": "[ -e ../_api-extractor-temp/doc-models ] && api-documenter generate --config api-documenter.json --input-folder ./_api-extractor-temp/_build --output-folder content/docs/apis/; exit 0",
-    "build:api-documenter:win32": "if exist ../_api-extractor-temp/doc-models api-documenter generate --config api-documenter.json --input-folder ./_api-extractor-temp/_build --output-folder content/docs/apis/",
+    "build": "run-s build:api build:md-magic hugo",
+    "build:api": "run-s build:api-rollup build:api-documenter",
+    "build:api-documenter": "node api-markdown-documenter.js",
     "build:api-rollup": "rimraf ./_api-extractor-temp && node ./rollup-api-json.js ../_api-extractor-temp/doc-models/ ./_api-extractor-temp/",
-    "build:fast": "npm run build:api-rollup && concurrently npm:build:md-magic npm:build:api-documenter && npm run hugo",
-    "build:md-magic": "node md.js",
-    "ci:build": "npm run download && npm run build",
+    "build:md-magic": "run-p build:md-magic:code build:md-magic:website",
+    "build:md-magic:code": "node md-magic-code.js",
+    "build:md-magic:website": "node md-magic-website.js",
+    "build:website": "run-s build:api-rollup build:md-magic:website build:api-documenter hugo",
+    "ci:build": "run-s download build",
     "clean": "rimraf public content/docs/apis _api-extractor-temp",
-    "download": "npm run download:api && npm run build:api-documenter",
+    "download": "run-s download:api build:api-documenter",
     "download:api": "download --extract --out ../_api-extractor-temp/doc-models/ https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz",
     "hugo": "hugo",
     "linkcheck": "npm run linkcheck:fast -- --external",
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
-    "start": "npm run build:md-magic && hugo server"
+    "start": "hugo server"
   },
   "dependencies": {
-    "@tylerbu/custom-api-documenter": "~0.3.4-7",
+    "@fluid-tools/api-markdown-documenter": "file:../tools/api-markdown-documenter",
+    "@microsoft/api-extractor-model": "^7.23.0",
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.28",
     "broken-link-checker": "^0.7.8",
     "colors": "^1.2.1",
-    "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "cpy": "^8.1.2",
     "deepdash": "^5.3.9",
@@ -56,8 +56,10 @@
     "node-fetch": "^2.6.7",
     "replace-in-file": "^6.2.0",
     "rimraf": "^2.6.2",
-    "run-script-os": "^1.1.5",
     "serve": "^13.0.2",
     "shelljs": "^0.8.5"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
   }
 }
