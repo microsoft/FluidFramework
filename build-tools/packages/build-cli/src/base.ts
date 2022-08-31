@@ -53,7 +53,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
         return this.processedFlags as Partial<OutputFlags<typeof BaseCommand.flags>>;
     }
 
-    protected _context: Context | undefined;
+    private _context: Context | undefined;
     private _logger: Logger | undefined;
 
     async init() {

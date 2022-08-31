@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { PackageName } from "@rushstack/node-core-library";
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
 import {
-    getPackageShortName,
-    generateReleaseTagName,
+    generateReleaseGitTagName,
     sortVersions,
     VersionDetails,
 } from "../../src/lib/package";
@@ -38,49 +38,51 @@ describe("VersionDetails sorting", async () => {
 
 describe("generateReleaseTagName", () => {
     it("semver", () => {
-        const actual = generateReleaseTagName("release-group", "1.2.3");
+        const actual = generateReleaseGitTagName("release-group", "1.2.3");
         const expected = "release-group_v1.2.3";
         assert.equal(actual, expected);
     });
 
     it("virtualPatch version scheme", () => {
-        const actual = generateReleaseTagName("build-tools", "0.4.2000");
+        const actual = generateReleaseGitTagName("build-tools", "0.4.2000");
         const expected = "build-tools_v0.4.2000";
         assert.equal(actual, expected);
     });
 
     it("Fluid internal version scheme", () => {
-        const actual = generateReleaseTagName("client", "2.0.0-internal.1.0.0");
+        const actual = generateReleaseGitTagName("client", "2.0.0-internal.1.0.0");
         const expected = "client_v2.0.0-internal.1.0.0";
         assert.equal(actual, expected);
     });
 });
 
-describe("getPackageShortName", () => {
+// The tests below verify that the rushstack PackageName.getUnscopedName function correctly works as a replacement for
+// the removed getPackageShortName function.
+describe("the rushstack PackageName.getUnscopedName function", () => {
     it("@fluidframework/container-runtime", () => {
         const input = "@fluidframework/container-runtime";
-        const actual = getPackageShortName(input);
+        const actual = PackageName.getUnscopedName(input);
         const expected = "container-runtime";
         assert.equal(actual, expected);
     });
 
     it("@fluid-tools/build-cli", () => {
         const input = "@fluid-tools/build-cli";
-        const actual = getPackageShortName(input);
+        const actual = PackageName.getUnscopedName(input);
         const expected = "build-cli";
         assert.equal(actual, expected);
     });
 
     it("fluid-framework", () => {
         const input = "fluid-framework";
-        const actual = getPackageShortName(input);
+        const actual = PackageName.getUnscopedName(input);
         const expected = "fluid-framework";
         assert.equal(actual, expected);
     });
 
     it("@fluidframework/fluid-static", () => {
         const input = "@fluidframework/fluid-static";
-        const actual = getPackageShortName(input);
+        const actual = PackageName.getUnscopedName(input);
         const expected = "fluid-static";
         assert.equal(actual, expected);
     });

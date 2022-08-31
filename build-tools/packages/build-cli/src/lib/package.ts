@@ -7,6 +7,7 @@
 import { posix as path } from "path";
 import { Context, readJsonAsync, Logger, Package, MonoRepo } from "@fluidframework/build-tools";
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
+import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc } from "date-fns";
 import ncu from "npm-check-updates";
 import * as semver from "semver";
@@ -18,23 +19,12 @@ import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
  * @param pkgName - The full scoped package name.
  * @returns The package name without the scope.
  *
+ * @deprecated Use \@rushstack/node-core-library's PackageName.getUnscopedName instead.
+ *
  * @internal
  */
 export function getPackageShortName(pkgName: string): string {
-    const split = pkgName.split("/");
-
-    // Handle unscoped packages
-    if (split.length === 1) {
-        return split[0];
-    }
-
-    // Handle scoped packages
-    const name = split.pop();
-    if (name === undefined) {
-        throw new Error(`Error getting the package short name for: ${pkgName}`);
-    }
-
-    return name;
+    return PackageName.getUnscopedName(pkgName);
 }
 
 /**
@@ -42,9 +32,10 @@ export function getPackageShortName(pkgName: string): string {
  *
  * @param context - The {@link Context}.
  * @param releaseGroup - The release group to check.
+ * @param depsToUpdate - An array of packages on which dependencies should be checked.
  * @param bumpType - The bump type.
  * @param prerelease - If true, include prerelease versions as eligible to update.
- * @param depsToUpdate - An array of packages on which dependencies should be checked.
+ * @param writeChanges - If true, changes will be written to the package.json files.
  * @param log - A {@link Logger}.
  * @returns An array of packages that had updated dependencies.
  *
@@ -275,7 +266,7 @@ export async function isReleased(
 ): Promise<boolean> {
     await context.gitRepo.fetchTags();
 
-    const tagName = generateReleaseTagName(releaseGroupOrPackage, version);
+    const tagName = generateReleaseGitTagName(releaseGroupOrPackage, version);
     if (typeof releaseGroupOrPackage === "string" && isReleaseGroup(releaseGroupOrPackage)) {
         // eslint-disable-next-line no-param-reassign
         releaseGroupOrPackage = context.repo.releaseGroups.get(releaseGroupOrPackage)!;
@@ -287,7 +278,7 @@ export async function isReleased(
 }
 
 /**
- * Generates the correct tag name for the release of a given release group and version.
+ * Generates the correct git tag name for the release of a given release group and version.
  *
  * @param releaseGroupOrPackage - The release group or independent package to generate a tag name for.
  * @param version - The version to use for the generated tag.
@@ -295,7 +286,7 @@ export async function isReleased(
  *
  * @internal
  */
-export function generateReleaseTagName(
+export function generateReleaseGitTagName(
     releaseGroupOrPackage: MonoRepo | Package | string,
     version?: string,
 ): string {
@@ -305,11 +296,11 @@ export function generateReleaseTagName(
         const kindLowerCase = releaseGroupOrPackage.kind.toLowerCase();
         tagName = `${kindLowerCase}_v${version ?? releaseGroupOrPackage.version}`;
     } else if (releaseGroupOrPackage instanceof Package) {
-        tagName = `${getPackageShortName(releaseGroupOrPackage.name)}_v${
+        tagName = `${PackageName.getUnscopedName(releaseGroupOrPackage.name)}_v${
             version ?? releaseGroupOrPackage.version
         }`;
     } else {
-        tagName = `${getPackageShortName(releaseGroupOrPackage)}_v${version}`;
+        tagName = `${PackageName.getUnscopedName(releaseGroupOrPackage)}_v${version}`;
     }
 
     return tagName;
@@ -332,7 +323,7 @@ export async function getTagsForReleaseGroup(
     try {
         prefix = isReleaseGroup(releaseGroupOrPackage)
             ? releaseGroupOrPackage.toLowerCase()
-            : getPackageShortName(releaseGroupOrPackage);
+            : PackageName.getUnscopedName(releaseGroupOrPackage);
     } catch {
         console.log(releaseGroupOrPackage);
     }
@@ -402,9 +393,6 @@ export async function getAllVersions(
             ver !== undefined &&
             ver !== "" &&
             ver !== null
-            // TODO: Verify this logic
-            // &&
-            // isInternalVersionScheme(ver, allowPrereleases)
         ) {
             // eslint-disable-next-line no-await-in-loop
             const date = await context.gitRepo.getCommitDate(tag);
@@ -433,7 +421,7 @@ export async function getAllVersions(
  *
  * @internal
  */
-export async function sortVersions(versions: VersionDetails[], sortKey: "version" | "date") {
+export async function sortVersions(versions: VersionDetails[], sortKey: "version" | "date"): Promise<VersionDetails[]> {
     const sortedVersions: VersionDetails[] = [];
 
     // Clone the array

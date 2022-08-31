@@ -40,6 +40,15 @@ export interface PackageWithRangeSpec {
  * @param changedVersions - If provided, the changed packages will be put into this {@link VersionBag}.
  * @returns True if the packages dependencies were changed; false otherwise.
  *
+ * @remarks
+ *
+ * By default, dependencies on packages within the same release group -- that is, inter-release-group dependencies --
+ * will not be changed (`updateWithinSameReleaseGroup === false`). This is typically the behavior you want. However,
+ * there are some cases where you need to forcefully change the dependency range of packages across the whole repo. For
+ * example, when bumping packages using the Fluid internal version scheme, we need to adjust the dependency ranges that
+ * lerna creates automatically, because the Fluid internal version scheme requires us to use \>= \< dependency ranges
+ * instead of ^.
+ *
  * @internal
  */
 // eslint-disable-next-line max-params
@@ -96,7 +105,7 @@ export async function bumpPackageDependencies(
 }
 
 /**
- * Bumps a release group (or standalone package) by the bumpType.
+ * Bumps a release group or standalone package by the bumpType.
  *
  * @param bumpType - The bump type.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
@@ -104,7 +113,7 @@ export async function bumpPackageDependencies(
  *
  * @internal
  */
-export async function bumpReleaseGroup(
+export async function bumpVersion(
     context: Context,
     bumpType: VersionChangeType,
     releaseGroupOrPackage: MonoRepo | Package,

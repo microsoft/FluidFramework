@@ -8,12 +8,14 @@ import {
     bumpVersionScheme,
     detectVersionScheme,
     fromInternalScheme,
+    fromVirtualPatchScheme,
+    toVirtualPatchScheme,
     VersionBumpType,
     VersionBumpTypeExtended,
 } from "@fluid-tools/version-tools";
+import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
-import { getPackageShortName } from "./package";
 
 /**
  * Creates an appropriate branch for a release group and bump type. Does not commit!
@@ -23,6 +25,10 @@ import { getPackageShortName } from "./package";
  * @param bumpType - The bump type.
  * @returns The name of the newly created branch.
  *
+ * @remarks
+ *
+ * Generated branch names are of the form `bump_<RELEASEGROUP>_<BUMPTYPE>_<VERSION>`.
+ *
  * @internal
  */
 export async function createBumpBranch(
@@ -31,7 +37,7 @@ export async function createBumpBranch(
     bumpType: VersionBumpType,
 ) {
     const version = context.getVersion(releaseGroupOrPackage);
-    const name = generateBumpBranchName(releaseGroupOrPackage, bumpType, version);
+    const name = generateBumpVersionBranchName(releaseGroupOrPackage, bumpType, version);
     await context.createBranch(name);
     return name;
 }
@@ -44,9 +50,13 @@ export async function createBumpBranch(
  * @param version - The version to use for the generated branch name.
  * @returns The generated branch name.
  *
+ * @remarks
+ *
+ * Generated branch names are of the form `bump_<RELEASEGROUP>_<BUMPTYPE>_<VERSION>`.
+ *
  * @internal
  */
-export function generateBumpBranchName(
+export function generateBumpVersionBranchName(
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
     bumpType: VersionBumpTypeExtended,
     version: string,
@@ -54,7 +64,7 @@ export function generateBumpBranchName(
     const newVersion = bumpVersionScheme(version, bumpType);
     const name = isReleaseGroup(releaseGroupOrPackage)
         ? releaseGroupOrPackage
-        : getPackageShortName(releaseGroupOrPackage);
+        : PackageName.getUnscopedName(releaseGroupOrPackage);
     const branchName = `bump_${name.toLowerCase()}_${bumpType}_${newVersion}`;
     return branchName;
 }
@@ -66,6 +76,10 @@ export function generateBumpBranchName(
  * @param bumpType - The bump type.
  * @param releaseGroup - If set, changes were made to only this release group.
  * @returns The generated branch name.
+ *
+ * @remarks
+ *
+ * Generated branch names are of the form `bump_deps_<RELEASEGROUP>_<BUMPTYPE>`.
  *
  * @internal
  */
@@ -87,14 +101,23 @@ export function generateBumpDepsBranchName(
  * using the Fluid internal or virtualPatch version schemes the versions may differ.
  * @returns The generated branch name.
  *
+ * @remarks
+ *
+ * Generated branch names are of the form `release/<RELEASEGROUP>/<MAJOR.MINORVERSION>`.
+ *
  * @internal
  */
 export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: string): string {
     const scheme = detectVersionScheme(version);
-    const branchVersion = scheme === "internal" ? fromInternalScheme(version)[1].version : version;
+    const branchVersion =
+        scheme === "internal"
+            ? fromInternalScheme(version)[1].version
+            : scheme === "virtualPatch"
+            ? fromVirtualPatchScheme(version).version
+            : version;
     const releaseBranchVersion =
         scheme === "virtualPatch"
-            ? branchVersion
+            ? toVirtualPatchScheme(`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`)
             : `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
     const branchName = releaseGroup === "client" ? "v2int" : releaseGroup;
     const releaseBranch = `release/${branchName}/${releaseBranchVersion}`;

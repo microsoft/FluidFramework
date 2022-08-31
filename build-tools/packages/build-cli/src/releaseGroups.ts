@@ -10,7 +10,8 @@ import { isMonoRepoKind, MonoRepoKind } from "@fluidframework/build-tools";
  *
  * @remarks
  *
- * This type is an alias for string now but it could become a real class/interface in the future.
+ * This type is an alias for string now but it could become a real class/interface in the future. Right now it is the
+ * full package name including scope.
  *
  * @internal
  */

@@ -6,28 +6,28 @@
 import { MonoRepoKind } from "@fluidframework/build-tools";
 import { assert } from "chai";
 import {
-    generateBumpBranchName,
+    generateBumpVersionBranchName,
     generateBumpDepsBranchName,
     generateReleaseBranchName,
     getDefaultBumpTypeForBranch,
 } from "../../src/lib/branches";
 
-describe("generateBumpBranchName", () => {
+describe("generateBumpVersionBranchName", () => {
     it("semver versions", () => {
         it("patch", () => {
-            const actual = generateBumpBranchName("azure", "patch", "1.2.3");
+            const actual = generateBumpVersionBranchName("azure", "patch", "1.2.3");
             const expected = "bump_azure_patch_1.2.4";
             assert.equal(actual, expected);
         });
 
         it("minor", () => {
-            const actual = generateBumpBranchName("azure", "minor", "1.2.3");
+            const actual = generateBumpVersionBranchName("azure", "minor", "1.2.3");
             const expected = "bump_azure_minor_1.3.0";
             assert.equal(actual, expected);
         });
 
         it("major", () => {
-            const actual = generateBumpBranchName("azure", "major", "1.2.3");
+            const actual = generateBumpVersionBranchName("azure", "major", "1.2.3");
             const expected = "bump_azure_major_2.0.0";
             assert.equal(actual, expected);
         });
@@ -35,19 +35,19 @@ describe("generateBumpBranchName", () => {
 
     it("Fluid internal versions", () => {
         it("patch", () => {
-            const actual = generateBumpBranchName("client", "patch", "2.0.0-internal.1.0.0");
+            const actual = generateBumpVersionBranchName("client", "patch", "2.0.0-internal.1.0.0");
             const expected = "bump_client_patch_2.0.0-internal.1.0.1";
             assert.equal(actual, expected);
         });
 
         it("minor", () => {
-            const actual = generateBumpBranchName("client", "minor", "2.0.0-internal.1.0.0");
+            const actual = generateBumpVersionBranchName("client", "minor", "2.0.0-internal.1.0.0");
             const expected = "bump_client_patch_2.0.0-internal.1.1.0";
             assert.equal(actual, expected);
         });
 
         it("major", () => {
-            const actual = generateBumpBranchName("client", "major", "2.0.0-internal.1.0.0");
+            const actual = generateBumpVersionBranchName("client", "major", "2.0.0-internal.1.0.0");
             const expected = "bump_client_patch_2.0.0-internal.2.0.0";
             assert.equal(actual, expected);
         });
@@ -77,19 +77,19 @@ describe("generateBumpDepsBranchName", () => {
 
     it("Fluid internal versions", () => {
         it("patch", () => {
-            const actual = generateBumpBranchName("client", "patch", "2.0.0-internal.1.0.0");
+            const actual = generateBumpVersionBranchName("client", "patch", "2.0.0-internal.1.0.0");
             const expected = "bump_client_patch_2.0.0-internal.1.0.1";
             assert.equal(actual, expected);
         });
 
         it("minor", () => {
-            const actual = generateBumpBranchName("client", "minor", "2.0.0-internal.1.0.0");
+            const actual = generateBumpVersionBranchName("client", "minor", "2.0.0-internal.1.0.0");
             const expected = "bump_client_patch_2.0.0-internal.1.1.0";
             assert.equal(actual, expected);
         });
 
         it("major", () => {
-            const actual = generateBumpBranchName("client", "major", "2.0.0-internal.1.0.0");
+            const actual = generateBumpVersionBranchName("client", "major", "2.0.0-internal.1.0.0");
             const expected = "bump_client_patch_2.0.0-internal.2.0.0";
             assert.equal(actual, expected);
         });
@@ -109,7 +109,7 @@ describe("generateReleaseBranchName", () => {
         assert.equal(actual, expected);
     });
 
-    it.skip("virtualPatch patch", () => {
+    it("virtualPatch patch", () => {
         const actual = generateReleaseBranchName(MonoRepoKind.BuildTools, "0.4.2002");
         const expected = "release/build-tools/0.4.2000";
         assert.equal(actual, expected);

@@ -19,3 +19,4 @@ export {
     VersionScheme,
 } from "./schemes";
 export { bumpRange, detectBumpType } from "./semver";
+export { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";
