@@ -1584,6 +1584,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("readonly", (readonly) => {
+            this.setContextConnectedState(this.connectionState === ConnectionState.Connected, readonly);
             this.emit("readonly", readonly);
         });
 
@@ -1681,10 +1682,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Both protocol and context should not be undefined if we got so far.
 
+        this.setContextConnectedState(state, this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false);
         if (this._context?.disposed === false) {
-            this.context.setConnectionState(
-                state && !(this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false),
-                this.clientId);
+            this.context.setConnectionState(state, this.clientId);
         }
         this.protocolHandler.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
@@ -1879,5 +1879,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private logContainerError(warning: ContainerWarning) {
         this.mc.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
+    }
+
+    /**
+     * TODO
+     * @param state -
+     * @param readonly -
+     */
+    private setContextConnectedState(state: boolean, readonly: boolean): void {
+        if (this._context?.disposed === false) {
+            this.context.setConnectionState(state && !readonly, this.clientId);
+        }
     }
 }
