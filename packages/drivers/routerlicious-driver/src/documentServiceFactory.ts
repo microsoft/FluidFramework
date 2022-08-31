@@ -230,6 +230,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             fluidResolvedUrl,
             ordererUrl,
             deltaStorageUrl,
+            fluidResolvedUrl.endpoints.deltaStreamUrl,
             storageUrl,
             logger2,
             this.tokenProvider,

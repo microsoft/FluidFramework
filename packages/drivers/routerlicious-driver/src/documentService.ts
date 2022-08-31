@@ -49,6 +49,7 @@ export class DocumentService implements api.IDocumentService {
         private _resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,
         private deltaStorageUrl: string,
+        private readonly deltaStreamUrl: string,
         private storageUrl: string,
         private readonly logger: ITelemetryLogger,
         protected tokenProvider: ITokenProvider,
@@ -193,16 +194,13 @@ export class DocumentService implements api.IDocumentService {
                 refreshToken,
             );
 
-            const deltaStreamUrl = this.resolvedUrl.type === "fluid" ?
-                this.resolvedUrl.endpoints.deltaStreamUrl : this.ordererUrl;
-
             return R11sDocumentDeltaConnection.create(
                 this.tenantId,
                 this.documentId,
                 ordererToken.jwt,
                 io,
                 client,
-                deltaStreamUrl,
+                this.deltaStreamUrl,
                 this.logger,
             );
         };
