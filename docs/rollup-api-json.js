@@ -15,7 +15,7 @@
  * create copies.
  */
 
-const colors = require("colors");
+const chalk = require("chalk");
 const cpy = require("cpy");
 const findValue = require("deepdash/findValueDeep");
 const fs = require("fs-extra");
@@ -170,7 +170,7 @@ const main = async () => {
 
 main().then(
     () => {
-        console.log(colors.green("SUCCESS: API log files staged!"));
+        console.log(chalk.green("SUCCESS: API log files staged!"));
         process.exit(0);
     },
     (error) => {
