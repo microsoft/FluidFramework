@@ -235,16 +235,89 @@ This is generated automatically by reading the headers.
 There is a menu with actions such as tweeting the page, subscribing to the feed, asking questions etc...
 This is driven from the theme and the information for the accounts should be in the config.
 
+## Writing Markdown content
+
+Please refer to the following guidelines when writing new `Markdown` content for the website.
+
+> Remember that we prefer `Markdown` over `HTML` contents whenever possible, but you may embed `HTML` in your `Markdown` contents as needed.
+
+### Linking to other documents
+
+Standard [Markdown links]() are supported in our `Hugo` ecosystem.
+When linking to external webpages, this is the syntax we recommend.
+
+When linking to other documents on the website, however, we recommend either using the built-in [`relref`](#relref) shortcode, or one of our [custom shortcode templates](#custom-shortcode-templates).
+These are designed to reduce boilerplate and be more tolerant to future changes to the website.
+
 ## Shortcodes
 
 [Shortcodes](https://gohugo.io/content-management/shortcodes/) are custom functions that can be called from within the `Markdown` or `HTML` to insert specific content.
 
-### Shortcode templates
+### Built-in shortcode templates
+
+`Hugo` comes with a large suite of built-in shortcode templates that can be used when writing documentation.
+The complete list can be found [here](https://gohugo.io/content-management/shortcodes/#use-hugos-built-in-shortcodes).
+
+We will call out a few here in more detail because we recommend using them, and expect them to be used frequently.
+
+#### `relref`
+
+The [`relref` shortcode](https://gohugo.io/content-management/shortcodes/#ref-and-relref) is useful for linking to other pages on the website.
+It accepts a file-name / partial file-path (and optional heading ID), and generates a relative path link to that document.
+
+> Note: we recommend using `relref` over `ref`, as `ref` will generate an absolute url link, and won't work nicely when previewing the site locally.
+
+Using `relref` is a great option when adding links between documents on the website, as it is more tolerant of file-wise changes made over time.
+
+##### `relref` example
+
+`Markdown` like the following:
+https://fluidframework.com/docs/build/containers/
+```markdown
+For more details, see [Creating a container]({{< relref "containers.md#creating-a-container" >}}).
+```
+
+will generate something like:
+
+```markdown
+For more details, see <a href="/docs/build/containers/#creating-a-container">Creating a container</a>.
+```
+
+### Custom shortcode templates
 
 We have a series of premade shortcode templates that we use throughout our website content.
 These can be found under `layouts/shortcodes`.
 
+#### `apiref`
 
+When linking to the API docs for a class, interface, etc., we recommend using our `apiref` shortcode, rather than writing a manual link.
+
+This has a few of benefits:
+
+1. The shortcode is configured to understand our API documentation configuration, so it is better equipped to deal with file paths, etc.
+1. The generated link is formatted as a `<code>` block automatically.
+1. It reduces boilerplate.
+
+The shortcode accepts a single argument: the name of the API item being referenced.
+
+> Note that this will only work correctly for `package`, `class`, `interface`, and `namespace`/`module` items, as they are the only items for which individual `.md` files are generated for.
+> Contents like `paramters`, `methods`, etc. are rendered as sub-headings in their parent item's documents.
+
+This shortcode can be found in `layouts/shortcodes/apiref.html`.
+
+##### `apiref` example
+
+`Markdown` like the following:
+
+```markdown
+The {{< apiref FluidContainer >}} class can be used to...
+```
+
+will generate something like:
+
+```markdown
+The <a href="{{ relref /docs/apis/fluid-static/fluidcontainer.md }}"><code>FluidContainer</code></a> class can be used to...
+```
 
 ## Working on the template
 
