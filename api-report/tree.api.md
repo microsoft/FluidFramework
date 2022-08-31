@@ -162,15 +162,26 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @public
-export type EditableTree<T> = IEditableTreeSignature<T> & EditableTreeNode<T>;
+export type EditableTree<T = any> = EditableTreeSignature<T> & EditableTreeNode<T>;
 
 // @public
 export type EditableTreeNode<T> = {
-    [P in keyof T]?: T[P] extends number | string | boolean ? T[P] : EditableTree<T[P]>;
+    [P in keyof T]?: T[P] extends number | string | boolean ? TreeValue : EditableTree<T[P]>;
 };
 
 // @public (undocumented)
+export type EditableTreeNodeSchema = Partial<NamedTreeSchema>;
+
+// @public (undocumented)
 export const editableTreeProxySymbol: unique symbol;
+
+// @public
+export interface EditableTreeSignature<T> {
+    // (undocumented)
+    readonly [getTypeSymbol]: (key?: FieldKey) => EditableTreeNodeSchema;
+    // (undocumented)
+    [key: string]: T extends number | string | boolean ? TreeValue : EditableTreeNode<T>;
+}
 
 // @public (undocumented)
 const empty: Root;
@@ -274,7 +285,7 @@ export interface GenericTreeNode<TChild> extends NodeData {
 }
 
 // @public
-export function getEditableTree<T = unknown>(forest: IEditableForest): EditableTree<T>;
+export function getEditableTree<T = any>(forest: IEditableForest): EditableTree<T>;
 
 // @public
 export const getTypeSymbol: unique symbol;
@@ -287,14 +298,6 @@ export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKe
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
     applyDelta(delta: Delta.Root): void;
-}
-
-// @public
-export interface IEditableTreeSignature<T> {
-    // (undocumented)
-    [getTypeSymbol]: (key?: FieldKey) => TreeSchemaIdentifier;
-    // (undocumented)
-    [key: string]: T extends number | string | boolean ? T : EditableTreeNode<T>;
 }
 
 // @public

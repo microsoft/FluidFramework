@@ -10,7 +10,7 @@ import { StoredSchemaRepository } from "../../schema-stored";
 import { initializeForest } from "../../forest";
 import { JsonableTree, EmptyKey, Value } from "../../tree";
 import { brand, Brand } from "../../util";
-import { defaultSchemaPolicy, getEditableTree, EditableTree, buildForest, getTypeSymbol } from "../../feature-libraries";
+import { defaultSchemaPolicy, getEditableTree, EditableTree, buildForest, getTypeSymbol, proxySymbol } from "../../feature-libraries";
 
 type Int32 = Brand<number, "Int32">;
 
@@ -76,15 +76,44 @@ const buildTestProxy = async <T = any>(data: JsonableTree): Promise<EditableTree
 	return proxy;
 };
 
+const fullTraverse = (node: EditableTree, expected: JsonableTree) => {
+	for (const key of Object.keys(node)) {
+		const subNode = node[key];
+		let fields = expected.fields;
+		if (fields && "length" in Object.getOwnPropertyNames(node)) {
+			fields = fields[EmptyKey as string] as any;
+		}
+		if (!fields) {
+			continue;
+		}
+		assert.equal(key in fields, true);
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+		const field: JsonableTree = fields && fields[key] && fields[key][0];
+		if (field && typeof subNode === "object" && proxySymbol in subNode && Object.keys(subNode).length) {
+			fullTraverse(subNode as any, field);
+		} else {
+			assert.equal(subNode, field.value);
+			assert.equal(node[getTypeSymbol](brand(key)).name, field.type);
+		}
+	}
+};
+
 describe("editable-tree", () => {
 	it("proxified forest", async () => {
 		const proxy = await buildTestProxy<PersonType>(person);
 		assert.ok(proxy);
 		assert.equal(Object.keys(proxy).length, 5);
-		assert.equal(proxy[getTypeSymbol](), "Test:Person-1.0.0");
-		assert.equal(proxy[getTypeSymbol](brand("age")), "Int32");
-		assert.equal(proxy.address![getTypeSymbol](), "Test:Address-1.0.0");
-		assert.equal((proxy.address!.phones![2] as EditableTree<ComplexPhoneType>)[getTypeSymbol](), "Test:Phone-1.0.0");
+		assert.deepEqual(proxy[getTypeSymbol](), { name: "Test:Person-1.0.0" });
+		assert.deepEqual(proxy[getTypeSymbol](brand("age")), { name: "Int32" });
+		assert.deepEqual(proxy.address![getTypeSymbol](), { name: "Test:Address-1.0.0" });
+		assert.deepEqual((proxy.address!.phones![2] as EditableTree<ComplexPhoneType>)[getTypeSymbol](), { name: "Test:Phone-1.0.0" });
+	});
+
+	it("traverse a complete tree", async () => {
+		const typedProxy = await buildTestProxy<PersonType>(person);
+		fullTraverse(typedProxy, person);
+		const anyProxy = await buildTestProxy(person);
+		fullTraverse(anyProxy, person);
 	});
 
 	it("get own property descriptor", async () => {

@@ -7,7 +7,7 @@ import {
 	IEditableForest, TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeCursor,
 } from "../../forest";
 import { brand } from "../../util";
-import { TreeSchemaIdentifier } from "../../schema-stored";
+import { TreeSchemaIdentifier, NamedTreeSchema } from "../../schema-stored";
 
 export const proxySymbol: unique symbol = Symbol("editable-tree proxy");
 
@@ -19,6 +19,8 @@ export const proxySymbol: unique symbol = Symbol("editable-tree proxy");
  */
 export const getTypeSymbol: unique symbol = Symbol("editable-tree getType");
 
+export type EditableTreeNodeSchema = Partial<NamedTreeSchema>;
+
 /**
  * This is a basis type for {@link EditableTree}.
  *
@@ -26,23 +28,23 @@ export const getTypeSymbol: unique symbol = Symbol("editable-tree getType");
  * and for each and every new method its own symbol should be created correspondingly.
  * This prevents accidental mixin with user-defined string keys.
  */
-export interface IEditableTreeSignature<T> {
-	[key: string]: T extends number | string | boolean ? T : EditableTreeNode<T>;
-	[getTypeSymbol]: (key?: FieldKey) => TreeSchemaIdentifier;
+export interface EditableTreeSignature<T> {
+	[key: string]: T extends number | string | boolean ? TreeValue : EditableTreeNode<T>;
+	readonly [getTypeSymbol]: (key?: FieldKey) => EditableTreeNodeSchema;
 }
 
 /**
  * This converts a type T into an {@link EditableTree} node or a primitive.
  */
 export type EditableTreeNode<T> = {
-	[P in keyof T]?: T[P] extends number | string | boolean ? T[P] : EditableTree<T[P]>;
+	[P in keyof T]?: T[P] extends number | string | boolean ? TreeValue : EditableTree<T[P]>;
 };
 
 /**
  * A tree which can be traversed and edited.
  * TODO: support editing.
  */
-export type EditableTree<T> = IEditableTreeSignature<T> & EditableTreeNode<T>;
+export type EditableTree<T = any> = EditableTreeSignature<T> & EditableTreeNode<T>;
 
 class ProxyTarget {
 	public cursor: ITreeSubscriptionCursor;
@@ -59,9 +61,9 @@ class ProxyTarget {
 	}
 
 	public tryMoveDown = (key: FieldKey):
-		{ result: TreeNavigationResult; isArray: boolean; } => {
+		{ result: TreeNavigationResult; isArray: boolean; hasNodes: boolean; } => {
 		if (key !== EmptyKey && this.cursor.length(EmptyKey) && isNaN(Number(key))) {
-			return { result: TreeNavigationResult.NotFound, isArray: true };
+			return { result: TreeNavigationResult.NotFound, isArray: true, hasNodes: true };
 		}
 		let result = this.cursor.down(key, 0);
 		let isArray = false;
@@ -71,7 +73,8 @@ class ProxyTarget {
 		} else {
 			isArray = !!this.cursor.length(EmptyKey);
 		}
-		return { result, isArray };
+		const hasNodes = !!(this.cursor.keys as string[]).length;
+		return { result, isArray, hasNodes };
 	};
 
 	public getDummyArray = (length: number): undefined[] => {
@@ -84,7 +87,8 @@ class ProxyTarget {
 
 	public getNodeData = <T>(cursor?: ITreeSubscriptionCursor): TreeValue | EditableTreeNode<T> | undefined => {
 		const _cursor = cursor ?? this.cursor;
-		if (_cursor.value !== undefined) {
+		const hasNoNodes = !(_cursor.keys as string[]).length;
+		if (_cursor.value !== undefined || hasNoNodes) {
 			const result: TreeValue = _cursor.value;
 			return result;
 		}
@@ -99,17 +103,23 @@ class ProxyTarget {
 		});
 	};
 
-	[getTypeSymbol](key?: FieldKey): TreeSchemaIdentifier {
-		if (key) {
+	[getTypeSymbol](key?: FieldKey, withSchema: boolean = false): EditableTreeNodeSchema {
+		let name: TreeSchemaIdentifier;
+		if (key === undefined) {
+			name = this.cursor.type;
+		} else {
 			const { result } = this.tryMoveDown(key);
 			if (result === TreeNavigationResult.Ok) {
-				const type = this.cursor.type;
+				name = this.cursor.type;
 				this.cursor.up();
-				return type;
+			} else {
+				return { name: brand("") };
 			}
-			return brand("");
 		}
-		return this.cursor.type;
+		const schema: EditableTreeNodeSchema = withSchema
+			? { name, ...this.forest.schema.lookupTreeSchema(name) }
+			: { name };
+		return schema;
 	}
 }
 
@@ -229,6 +239,6 @@ function proxify<T>(forest: IEditableForest, cursor?: ITreeSubscriptionCursor): 
  *
  * @returns {@link EditableTree} for the given {@link IEditableForest}.
  */
-export function getEditableTree<T = unknown>(forest: IEditableForest): EditableTree<T> {
+export function getEditableTree<T = any>(forest: IEditableForest): EditableTree<T> {
 	return proxify<T>(forest);
 }
