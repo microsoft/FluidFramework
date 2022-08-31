@@ -33,7 +33,7 @@ function generateRandomCounterChange(seed: number) {
 }
 
 describe("Test randomSequenceBuilder", () => {
-    it("consistency of generateRandomUpPaths with same seed", () => {
+    it("consistency of generateRandomUpPaths with same seed.", () => {
         const fooKey = brand<FieldKey>("foo");
         const upPaths1 = generateRandomUpPaths(fooKey, testSeed, 10);
         const upPaths2 = generateRandomUpPaths(fooKey, testSeed, 10);
