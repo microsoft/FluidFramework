@@ -50,7 +50,9 @@ jobs:
         id: dequeue-message
         with:
           script: |
-            const octokit = new Octokit({ auth: `${{ secrets.GITHUB_TOKEN }}` });
+            const { Octokit } = require("@octokit/core");
+            const token = `${{ secrets.GITHUB_TOKEN }}`;
+            const octokit = new Octokit({ auth: token });
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
             const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
@@ -64,18 +66,18 @@ jobs:
                 console.log("Peeked message: ", peekedMessages.peekedMessageItems[i].messageText);
                 firstMessage = JSON.parse(peekedMessages.peekedMessageItems[i].messageText);
             }
-            const collaboratorStatus = await octokit.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
+            const collaborator = await octokit.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
               owner: 'microsoft',
               repo: 'FluidFramework',
               username: firstMessage.author
             })
-            if(collaboratorStatus !== 204) {
-              fisrtMessage.author = 'sonalivdeshpande'
+            if(collaborator.status !== 204) {
+              firstMessage.author = 'sonalivdeshpande'
             }
             console.log("sha---", firstMessage.sha);
             console.log("label---", firstMessage.label);
             console.log("author---", firstMessage.author);
-            console.log("collaborators---", collaborators);
+            console.log("collaborators---", collaborator.status);
             console.log("author---", firstMessage.author);
             return firstMessage;
     outputs:

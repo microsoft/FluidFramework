@@ -318,11 +318,11 @@ export class Client {
      * does not exist in this merge tree
      * @param segment - The segment to get the position of
      */
-    public getPosition(segment: ISegment): number {
+    public getPosition(segment: ISegment, localSeq?: number): number {
         if (segment?.parent === undefined) {
             return -1;
         }
-        return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
+        return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId(), localSeq);
     }
 
     public createLocalReferencePosition(
@@ -688,6 +688,12 @@ export class Client {
      * If the position refers to a segment/offset that was removed by some operation between `seqNumberFrom` and
      * the current sequence number, the returned position will align with the position of a reference given
      * `SlideOnRemove` semantics.
+     *
+     * If a reference was initially given `StayOnRemove` semantics, with intent to later change to `SlideOnRemove`,
+     * that isn't equivalent, and so local bookkeeping needs to be updated.
+     *
+     * If the position has slid off and there is no nearest position (i.e. the
+     * tree is empty), returns `DetachedReferencePosition`
      */
     public rebasePosition(
         pos: number,
@@ -695,7 +701,7 @@ export class Client {
         localSeq: number,
     ): number {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
-        const { clientId, currentSeq: seqNumberTo } = this.getCollabWindow();
+        const { clientId } = this.getCollabWindow();
         let { segment, offset } = this.mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
         if (segment === undefined && offset === undefined) {
             // getContainingSegment will only return non-removed segments. This means the position was past
@@ -708,17 +714,18 @@ export class Client {
             offset = 0;
         }
 
+        // if segment is undefined, it slid off the string
         assert(segment !== undefined, 0x302 /* No segment found */);
-        if ((segment.removedSeq !== undefined &&
-             segment.removedSeq !== UnassignedSequenceNumber &&
-             segment.removedSeq <= seqNumberTo)
-            || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
-            // Segment that the position was in has been removed: null out offset.
-            offset = 0;
+
+        const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
+
+        // case happens when rebasing op, but concurrently entire string has been deleted
+        if (segoff.segment === undefined || segoff.offset === undefined) {
+            return DetachedReferencePosition;
         }
 
         assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
-        return this.findReconnectionPosition(segment, localSeq) + offset;
+        return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
     }
 
     private resetPendingDeltaToOps(
@@ -1047,9 +1054,9 @@ export class Client {
         }
     }
 
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage) {
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number) {
         const args = this.getClientSequenceArgsForMessage(op);
-        return this.mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId);
+        return this.mergeTree.getContainingSegment<T>(pos, args.referenceSequenceNumber, args.clientId, localSeq);
     }
 
     /**
