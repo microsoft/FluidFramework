@@ -11,7 +11,6 @@ import {
     MockContainerRuntimeForReconnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
 import { TaskManager } from "../taskManager";
 import { TaskManagerFactory } from "../taskManagerFactory";
 import { ITaskManager } from "../interfaces";
@@ -360,18 +359,20 @@ describe("TaskManager", () => {
                 containerRuntimeFactory.processAllMessages();
                 await volunteerTaskP1;
 
-                const timeoutMs = 100;
-                await timeoutPromise((resolve) => {
-                    taskManager2.once("completed", (completedTaskId: string) => {
-                        assert.ok(completedTaskId === taskId, "taskId should match");
-                        resolve();
-                    });
-                    taskManager1.complete(taskId);
-                    containerRuntimeFactory.processAllMessages();
-                }, {
-                    durationMs: timeoutMs,
-                    errorMsg: "taskManager2 should emit completed event",
+                let taskManager1EventFired = false;
+                let taskManager2EventFired = false;
+                taskManager1.once("completed", (completedTaskId: string) => {
+                    assert.ok(completedTaskId === taskId, "taskId should match");
+                    taskManager1EventFired = true;
                 });
+                taskManager2.once("completed", (completedTaskId: string) => {
+                    assert.ok(completedTaskId === taskId, "taskId should match");
+                    taskManager2EventFired = true;
+                });
+                taskManager1.complete(taskId);
+                containerRuntimeFactory.processAllMessages();
+                assert.ok(taskManager1EventFired, "Should have raised completed event on taskManager1");
+                assert.ok(taskManager2EventFired, "Should have raised completed event on taskManager2");
             });
         });
     });

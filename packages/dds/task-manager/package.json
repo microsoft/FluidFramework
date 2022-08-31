@@ -79,7 +79,6 @@
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/test-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
