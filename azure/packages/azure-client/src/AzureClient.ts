@@ -66,7 +66,10 @@ export class AzureClient {
         const isRemoteConnection = isAzureRemoteConnectionConfig(this.props.connection);
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.props.connection.tokenProvider,
-            { enableWholeSummaryUpload: isRemoteConnection, enableDiscovery: isRemoteConnection },
+            {
+                enableWholeSummaryUpload: isRemoteConnection,
+                enableDiscovery: isRemoteConnection,
+            },
         );
     }
 
