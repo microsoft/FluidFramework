@@ -179,7 +179,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     nextInterval(pos: number): TInterval;
     // (undocumented)
     previousInterval(pos: number): TInterval;
-    // @internal (undocumented)
+    // @internal
     rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval | undefined;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
