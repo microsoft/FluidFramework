@@ -6,7 +6,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { assert } from "chai";
-import { detectConstraintType, bumpRange, detectBumpType, isPrereleaseVersion } from "../src/semver";
+import {
+    detectConstraintType,
+    bumpRange,
+    detectBumpType,
+    isPrereleaseVersion,
+} from "../src/semver";
 
 describe("semver", () => {
     describe("detect constraint types", () => {
@@ -596,6 +601,5 @@ describe("semver", () => {
             const result = isPrereleaseVersion(input);
             assert.isTrue(result);
         });
-
     });
 });

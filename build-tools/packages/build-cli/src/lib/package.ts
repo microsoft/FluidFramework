@@ -9,6 +9,10 @@ import { isPrereleaseVersion } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc } from "date-fns";
 import ncu from "npm-check-updates";
+// eslint-disable-next-line import/no-internal-modules
+import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
+// eslint-disable-next-line import/no-internal-modules
+import type { Index } from "npm-check-updates/build/src/types/IndexType";
 import * as semver from "semver";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
 
@@ -69,6 +73,7 @@ export async function npmCheckUpdates(
 
     for (const glob of searchGlobs) {
         log?.verbose(`Checking packages in ${glob}...`);
+
         // eslint-disable-next-line no-await-in-loop
         const result = (await ncu({
             filter: depsToUpdate,
@@ -79,7 +84,7 @@ export async function npmCheckUpdates(
             upgrade: writeChanges,
             jsonUpgraded: true,
             silent: true,
-        })) as object;
+        })) as Index<VersionSpec>;
 
         if (typeof result !== "object") {
             throw new TypeError(`Expected an object: ${typeof result}`);
@@ -181,7 +186,7 @@ export async function getPreReleaseDependencies(
             }
 
             // If the min version has a pre-release section, then it needs to be released.
-            if (isPrereleaseVersion(minVer)) {
+            if (isPrereleaseVersion(minVer) === true) {
                 const depPkg = context.fullPackageMap.get(depName);
                 if (depPkg === undefined) {
                     throw new Error(`Can't find package in context: ${depName}`);
