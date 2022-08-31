@@ -5,50 +5,85 @@
 
 import { ChangeRebaser } from "../rebase";
 
-interface outputType {
-    "diffRebaseOrder": string | any[];
-    "diffComposeOrder": string | any[];
-    "nestedComposeRebaseOrder": string | any[];
-    "doUndoPair": string | any[];
-    "sandwichRebase": string | any[];
-    "changeWithInverse": string | any[];
+export type Passed = "Passed";
+
+export interface OutputType<TChange> {
+    /**
+     * "Passed" iff `(A ○ B) ○ C = A (B ○ C) = A ○ B ○ C`,
+     * otherwise a triple that violates the axiom.
+     */
+    composeAssociativity: Passed | [TChange, TChange, TChange];
+    /**
+     * "Passed" iff `A ↷ (B ○ C) = (A ↷ B) ↷ C`,
+     * otherwise a triple that violates the axiom.
+     */
+    rebaseLeftDistributivity: Passed | [TChange, TChange, TChange];
+    /**
+     * "Passed" iff `(A ○ B) ↷ C = (A ↷ C) ○ (B ↷ (A⁻¹ ○ C ○ (A ↷ C)) ↷ C)`,
+     * otherwise a triple that violates the axiom.
+     */
+    rebaseRightDistributivity: Passed | [TChange, TChange, TChange];
+    /**
+     * "Passed" iff `(A ↷ B) ↷ B⁻¹ = A`,
+     * otherwise a pair that violates the axiom.
+     */
+    rebaseOverDoUndoPairIsNoOp: Passed | [TChange, TChange];
+    /**
+     * "Passed" iff `((A ↷ B) ↷ B⁻¹) ↷ B = A ↷ B`,
+     * otherwise a pair that violates the axiom.
+     */
+    rebaseOverUndoRedoPairIsNoOp: Passed | [TChange, TChange];
+    /**
+     * "Passed" iff `A ○ A⁻¹ = ε` where `ε` is the empty change,
+     * otherwise a change that violates the axiom.
+     */
+    composeWithInverseIsNoOp: Passed | TChange;
 }
-export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
+
+/**
+ * Verifies the axioms of `ChangeRebaser` are met by the given `rebaser`.
+ * @param rebaser - The rebaser to test.
+ * @param changes - The set of changes to use for testing the `rebaser`.
+ * @param isEquivalent - Used to compare whether two changes are equivalent for the purposes of this axioms.
+ */
+export function verifyChangeRebaser<TChange>(
+    rebaser: ChangeRebaser<TChange>,
     changes: ReadonlySet<TChange>,
-    isEquivalent: (a: TChange, b: TChange) => boolean): outputType {
+    isEquivalent: (a: TChange, b: TChange) => boolean,
+): OutputType<TChange> {
     const rebase = rebaser.rebase.bind(rebaser);
     const compose = rebaser.compose.bind(rebaser);
     const invert = rebaser.invert.bind(rebaser);
 
-    const output: outputType = {
-        diffRebaseOrder: "PASSED",
-        diffComposeOrder: "PASSED",
-        nestedComposeRebaseOrder: "PASSED",
-        doUndoPair: "PASSED",
-        sandwichRebase: "PASSED",
-        changeWithInverse: "PASSED",
+    const output: OutputType<TChange> = {
+        rebaseLeftDistributivity: "Passed",
+        rebaseRightDistributivity: "Passed",
+        composeAssociativity: "Passed",
+        rebaseOverDoUndoPairIsNoOp: "Passed",
+        rebaseOverUndoRedoPairIsNoOp: "Passed",
+        composeWithInverseIsNoOp: "Passed",
     };
 
     for (const changeA of changes) {
-        if (!checkChangeWithInverse(changeA)) {
-            output.changeWithInverse = [changeA];
+        if (!isComposeWithInverseNoOp(changeA)) {
+            output.composeWithInverseIsNoOp = changeA;
         }
         for (const changeB of changes) {
-            if (!checkDoUndoPair(changeA, changeB)) {
-                output.doUndoPair = [changeA, changeB];
+            if (!isRebaseOverDoUndoPairNoOp(changeA, changeB)) {
+                output.rebaseOverDoUndoPairIsNoOp = [changeA, changeB];
             }
-            if (!checkSandwichRebase(changeA, changeB)) {
-                output.doUndoPair = [changeA, changeB];
+            if (!isRebaseOverUndoRedoPairNoOp(changeA, changeB)) {
+                output.rebaseOverUndoRedoPairIsNoOp = [changeA, changeB];
             }
             for (const changeC of changes) {
-                if (!checkDiffRebaseOrder(changeA, changeB, changeC)) {
-                    output.diffRebaseOrder = [changeA, changeB, changeC];
+                if (!isRebaseLeftDistributive(changeA, changeB, changeC)) {
+                    output.rebaseLeftDistributivity = [changeA, changeB, changeC];
                 }
-                if (!checkDiffComposeOrder(changeA, changeB, changeC)) {
-                    output.diffComposeOrder = [changeA, changeB, changeC];
+                if (!isComposeAssociative(changeA, changeB, changeC)) {
+                    output.composeAssociativity = [changeA, changeB, changeC];
                 }
-                if (!checkNestedComposeRebaseOrder(changeA, changeB, changeC)) {
-                    output.nestedComposeRebaseOrder = [changeA, changeB, changeC];
+                if (!isRebaseRightDistributive(changeA, changeB, changeC)) {
+                    output.rebaseRightDistributivity = [changeA, changeB, changeC];
                 }
             }
         }
@@ -57,7 +92,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
     return output;
 
     // Requirement testing the rebasing of composed changes and rebased changes.
-    function checkDiffRebaseOrder(changeA: TChange, changeB: TChange, changeC: TChange) {
+    function isRebaseLeftDistributive(changeA: TChange, changeB: TChange, changeC: TChange) {
         const rebaseChangeset1 = rebase(
             changeA,
             compose([changeB, changeC]),
@@ -70,7 +105,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
     }
 
     // Requirement checking different ordering of composed changes
-    function checkDiffComposeOrder(changeA: TChange, changeB: TChange, changeC: TChange) {
+    function isComposeAssociative(changeA: TChange, changeB: TChange, changeC: TChange) {
         const changeset1 = compose([
             changeA,
             compose([changeB, changeC]),
@@ -83,7 +118,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
         return isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeset3);
     }
 
-    function checkNestedComposeRebaseOrder(changeA: TChange, changeB: TChange, changeC: TChange) {
+    function isRebaseRightDistributive(changeA: TChange, changeB: TChange, changeC: TChange) {
         const changeset1 = rebase(
             compose([changeA, changeB]),
             changeC,
@@ -103,7 +138,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
     }
 
     // requirement for do-undo pair
-    function checkDoUndoPair(changeA: TChange, changeB: TChange) {
+    function isRebaseOverDoUndoPairNoOp(changeA: TChange, changeB: TChange) {
         const inv = invert(changeB);
         const r1 = rebase(changeA, changeB);
         const r2 = rebase(r1, inv);
@@ -111,7 +146,7 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
     }
 
     // requirement for sandwich rebasing
-    function checkSandwichRebase(changeA: TChange, changeB: TChange) {
+    function isRebaseOverUndoRedoPairNoOp(changeA: TChange, changeB: TChange) {
         const invB = invert(changeB);
         const r1 = rebase(changeA, changeB);
         const r2 = rebase(r1, invB);
@@ -120,10 +155,10 @@ export function testChangeRebaser<TChange>(rebaser: ChangeRebaser<TChange>,
     }
 
     // requirement for compose of a change with it's inverse.
-    function checkChangeWithInverse(changeA: TChange) {
+    function isComposeWithInverseNoOp(changeA: TChange) {
         const changeset = compose([
-            invert(changeA),
             changeA,
+            invert(changeA),
         ]);
         return isEquivalent(changeset, compose([]));
     }

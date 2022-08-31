@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
-import { testChangeRebaser } from "../../util";
+import { verifyChangeRebaser } from "../../util";
 
 function commutativeRebaser<TChange>(data: {
     compose: (changes: TChange[]) => TChange;
@@ -27,42 +27,42 @@ const counterRebaser = commutativeRebaser({
 
 describe("testChangeRebaser", () => {
     it("test counter with safe integers", () => {
-        const output = testChangeRebaser(counterRebaser, new Set([-1, 2, 3, 0, -2, 4]), (a, b) => a === b);
-        assert.equal(output.diffRebaseOrder, "PASSED");
-        assert.equal(output.diffComposeOrder, "PASSED");
-        assert.equal(output.nestedComposeRebaseOrder, "PASSED");
-        assert.equal(output.doUndoPair, "PASSED");
-        assert.equal(output.sandwichRebase, "PASSED");
-        assert.equal(output.changeWithInverse, "PASSED");
+        const output = verifyChangeRebaser(counterRebaser, new Set([-1, 2, 3, 0, -2, 4]), (a, b) => a === b);
+        assert.equal(output.rebaseLeftDistributivity, "PASSED");
+        assert.equal(output.composeAssociativity, "PASSED");
+        assert.equal(output.rebaseRightDistributivity, "PASSED");
+        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "PASSED");
+        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "PASSED");
+        assert.equal(output.composeWithInverseIsNoOp, "PASSED");
     });
 
     it("test counter with unsafe integers", () => {
-        const output = testChangeRebaser(counterRebaser, new Set([Number.MAX_SAFE_INTEGER, -10, 2]), (a, b) => a === b);
-        assert.equal(output.diffRebaseOrder, "PASSED");
-        assert.notEqual(output.diffComposeOrder, "PASSED");
-        assert.equal(output.nestedComposeRebaseOrder, "PASSED");
-        assert.equal(output.doUndoPair, "PASSED");
-        assert.equal(output.sandwichRebase, "PASSED");
-        assert.equal(output.changeWithInverse, "PASSED");
+        const output = verifyChangeRebaser(counterRebaser, new Set([Number.MAX_SAFE_INTEGER, -10, 2]), (a, b) => a === b);
+        assert.equal(output.rebaseLeftDistributivity, "PASSED");
+        assert.notEqual(output.composeAssociativity, "PASSED");
+        assert.equal(output.rebaseRightDistributivity, "PASSED");
+        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "PASSED");
+        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "PASSED");
+        assert.equal(output.composeWithInverseIsNoOp, "PASSED");
     });
 
     it("test counter of floats with varying number of digits", () => {
-        const output = testChangeRebaser(
+        const output = verifyChangeRebaser(
             counterRebaser,
             new Set([1.0, 1.22, -1.222]),
             (a, b) => a === b,
         );
-        assert.equal(output.diffRebaseOrder, "PASSED");
-        assert.notEqual(output.diffComposeOrder, "PASSED");
-        assert.equal(output.nestedComposeRebaseOrder, "PASSED");
-        assert.equal(output.doUndoPair, "PASSED");
-        assert.equal(output.sandwichRebase, "PASSED");
-        assert.equal(output.changeWithInverse, "PASSED");
+        assert.equal(output.rebaseLeftDistributivity, "PASSED");
+        assert.notEqual(output.composeAssociativity, "PASSED");
+        assert.equal(output.rebaseRightDistributivity, "PASSED");
+        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "PASSED");
+        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "PASSED");
+        assert.equal(output.composeWithInverseIsNoOp, "PASSED");
     });
 
     // This test case contains all the different "edge case" numbers
     it("test counter with special number types", () => {
-        const output = testChangeRebaser(
+        const output = verifyChangeRebaser(
             counterRebaser,
             new Set([
                 Number.NaN,
@@ -75,11 +75,11 @@ describe("testChangeRebaser", () => {
             ]),
             (a, b) => a === b,
         );
-        assert.notEqual(output.diffRebaseOrder, "PASSED");
-        assert.notEqual(output.diffComposeOrder, "PASSED");
-        assert.notEqual(output.nestedComposeRebaseOrder, "PASSED");
-        assert.notEqual(output.doUndoPair, "PASSED");
-        assert.equal(output.sandwichRebase, "PASSED");
-        assert.notEqual(output.changeWithInverse, "PASSED");
+        assert.notEqual(output.rebaseLeftDistributivity, "PASSED");
+        assert.notEqual(output.composeAssociativity, "PASSED");
+        assert.notEqual(output.rebaseRightDistributivity, "PASSED");
+        assert.notEqual(output.rebaseOverDoUndoPairIsNoOp, "PASSED");
+        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "PASSED");
+        assert.notEqual(output.composeWithInverseIsNoOp, "PASSED");
     });
 });
