@@ -15,7 +15,7 @@ your other telemetry, and route the event data in whatever way you need.
 The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can
 be implemented and passed into the service client's constructor via the `props` parameter.
 
-All Fluid service clients (for example, [AzureClient]({{< relref "azure-frs.md" >}}) and [TinyliciousClient]({{< relref "tinyliciousclient-class.md" >}})) allow passing a `logger?: ITelemetryBaseLogger`
+All Fluid service clients (for example, [AzureClient][]) and [TinyliciousClient][])) allow passing a `logger?: ITelemetryBaseLogger`
 into the service client props. Both `createContainer()` and `getContainer()` methods will then create an instance of the `logger`.
 
 `TinyliciousClientProps` interface definition takes an optional parameter `logger`.
