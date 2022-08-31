@@ -11,7 +11,8 @@ import { ChangeRebaser } from "../../rebase";
  * @param rebaser - `ChangeRebaser` instance used to combine generated changes
  * @param changeGenerator - Random change generator function
  * @param seed - Seed used to randomly generate and combine the changes
- * @param maxCombinations - Maximum number of changes to combine in order to produce the final change. Must be >= 0.
+ * @param maxCombinations - Maximum number of changes to combine in order
+ * to produce the final change. Must be greater or equal to 0.
  * @returns A random change resulting from the combination of several random changes.
  */
  export function generateFuzzyCombinedChange<TChange>(
