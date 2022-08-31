@@ -14,7 +14,7 @@ import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
 import { generateCanada } from "./json";
-import { sum, sumMap } from "./benchmarks";
+import { sum } from "./benchmarks";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -86,7 +86,6 @@ function bench(name: string, getJson: () => any) {
         ["cursorToJsonObject", cursorToJsonObject],
         ["jsonableTreeFromCursor", jsonableTreeFromCursor],
         ["sum", sum],
-        ["sum-map", sumMap],
         // TODO: benchmarks that access fields by name (ex: canada perminater)
     ];
 

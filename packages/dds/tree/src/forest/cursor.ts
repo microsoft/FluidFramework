@@ -90,3 +90,22 @@ export function mapCursorField<T>(cursor: ITreeCursor, key: FieldKey, f: (cursor
     cursor.up();
     return output;
 }
+
+export function reduceField<T>(
+    cursor: ITreeCursor, key: FieldKey, initial: T, f: (cursor: ITreeCursor, initial: T) => T): T {
+    let output: T = initial;
+    let result = cursor.down(key, 0);
+    if (result !== TreeNavigationResult.Ok) {
+        assert(result === TreeNavigationResult.NotFound, "pending not supported in reduceField");
+        // This has to be special cased (and not fall through the code below)
+        // since the call to `up` needs to be skipped.
+        return output;
+    }
+    while (result === TreeNavigationResult.Ok) {
+        output = (f(cursor, output));
+        result = cursor.seek(1);
+    }
+    assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
+    cursor.up();
+    return output;
+}
