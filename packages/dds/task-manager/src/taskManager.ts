@@ -216,9 +216,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            this.taskQueues.delete(taskId);
-            this.completedWatcher.emit("completed", taskId);
-            this.emit("completed", taskId);
+            if (this.taskQueues.has(taskId)) {
+                this.taskQueues.delete(taskId);
+                this.completedWatcher.emit("completed", taskId);
+                this.emit("completed", taskId);
+            }
         });
 
         runtime.getQuorum().on("removeMember", (clientId: string) => {
@@ -490,6 +492,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         this.submitCompletedOp(taskId);
+        this.taskQueues.delete(taskId);
+        this.completedWatcher.emit("completed", taskId);
+        this.emit("completed", taskId);
     }
 
     /**
