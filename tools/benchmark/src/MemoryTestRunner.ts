@@ -116,8 +116,6 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
  * Tests created with this function get tagged with '\@MemoryUsage', so mocha's --grep/--fgrep
  * options can be used to only run this type of tests by fitering on that value.
  *
- * @public
- *
  * @alpha The specifics of how this function works and what its output means are still subject
  * to change.
  */
