@@ -159,7 +159,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     // route files to their handlers by regex testing their full paths
     // synchronize output, exit code, and resolve decision for all handlers
     routeToHandlers(file: string, handlerRegex: RegExp) {
-        const filteredHandlers = handlers.filter(
+        const filteredHandlers = policyHandlers.filter(
             (handler) => handler.match.test(file) && handlerRegex.test(handler.name),
         );
 
@@ -249,7 +249,7 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 }
 
 function runPolicyCheck(fix: boolean) {
-    for (const h of handlers) {
+    for (const h of policyHandlers) {
         const final = h.final;
         if (final) {
             const result = runWithPerf(h.name, "final", () =>
