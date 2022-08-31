@@ -3,23 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import type { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
-import { IModelLoader } from "./interfaces";
+import type { IModelLoader, ModelMakerCallback } from "./interfaces";
 
 // This ModelLoader works on a convention, that the container it will load a model for must respond to a specific
 // request format with the model object.  Here we export a helper function for those container authors to align to
 // that contract -- the container author provides a ModelMakerCallback that will produce the model given a container
 // runtime and container, and this helper will appropriately translate to/from the request/response format.
-
-/**
- * The callback signature that the container author will provide.  It must return a promise for the container's model.
- */
-export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
 
 /**
  * A helper function for container authors, which generates the request handler they need to align with the
