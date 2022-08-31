@@ -243,7 +243,7 @@ Please refer to the following guidelines when writing new `Markdown` content for
 
 ### Linking to other documents
 
-Standard [Markdown links]() are supported in our `Hugo` ecosystem.
+Standard [Markdown links](https://www.markdownguide.org/basic-syntax#links) are supported in our `Hugo` ecosystem.
 When linking to external webpages, this is the syntax we recommend.
 
 When linking to other documents on the website, however, we recommend either using the built-in [`relref`](#relref) shortcode, or one of our [custom shortcode templates](#custom-shortcode-templates).
