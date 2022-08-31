@@ -45,14 +45,11 @@ jobs:
     needs: [ check-pr ]
     if: needs.check-pr.outputs.EXISTS == 'false'
     steps:
-      - run: npm install @azure/storage-queue @octokit/core
+      - run: npm install @azure/storage-queue
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         id: dequeue-message
         with:
           script: |
-            const { Octokit } = require("@octokit/core");
-            const token = `${{ secrets.GITHUB_TOKEN }}`;
-            const octokit = new Octokit({ auth: token });
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
             const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
@@ -65,14 +62,6 @@ jobs:
                 // Display the peeked message
                 console.log("Peeked message: ", peekedMessages.peekedMessageItems[i].messageText);
                 firstMessage = JSON.parse(peekedMessages.peekedMessageItems[i].messageText);
-            }
-            const collaboratorStatus = await octokit.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
-              owner: 'microsoft',
-              repo: 'FluidFramework',
-              username: firstMessage.author
-            })
-            if(collaboratorStatus !== 204) {
-              fisrtMessage.author = 'sonalivdeshpande'
             }
             console.log("sha---", firstMessage.sha);
             console.log("label---", firstMessage.label);
