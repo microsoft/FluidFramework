@@ -35,7 +35,7 @@ export class GeneratePackageJson extends BaseCommand<typeof GeneratePackageJson.
                 this.error(`release group couldn't be found.`);
             }
 
-            const logger = await this.getLogger();
+            const logger = this.logger;
             await generateMonoRepoInstallPackageJson(releaseGroup, logger);
         }
 
