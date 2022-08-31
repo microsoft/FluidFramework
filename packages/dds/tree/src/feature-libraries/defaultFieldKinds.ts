@@ -90,14 +90,14 @@ export interface Replacement<T> {
     new: T;
 }
 
-type ReplaceOp<T> = Replacement<T> | 0;
+export type ReplaceOp<T> = Replacement<T> | 0;
 
 /**
  * Picks the last value written.
  *
  * Consistent if used on valid paths with correct old states.
  */
-function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
+export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
     return {
         rebase: (change: ReplaceOp<T>, over: ReplaceOp<T>, rebaseChild: NodeChangeRebaser) => {
             if (change === 0) {
@@ -134,9 +134,7 @@ export const noChangeHandle: FieldChangeHandler<0> = {
         rebase: (change: 0, over: 0, rebaseChild: NodeChangeRebaser) => 0,
     },
     encoder: new UnitEncoder(),
-    intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => {
-        throw new Error("Function not implemented.");
-    },
+    intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
 };
 
 /**
@@ -155,7 +153,10 @@ export const counterHandle: FieldChangeHandler<number> = {
         rebaseAnchors: (anchor: AnchorSet, over: number) => {},
     }),
     encoder: new ValueEncoder<number>(),
-    intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => { throw new Error("Not Implemented"); },
+    intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [{
+        type: Delta.MarkType.Modify,
+        setValue: change,
+    }],
 };
 
 /**

@@ -5,6 +5,7 @@
 
 export * from "./fieldKind";
 export * from "./fieldChangeHandler";
+export * from "./modularChangeFamily";
 export {
 	isNeverField, isNeverTree, allowsRepoSuperset, allowsTreeSchemaIdentifierSuperset, allowsFieldSuperset,
 	allowsTreeSuperset,

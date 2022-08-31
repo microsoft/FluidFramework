@@ -237,9 +237,11 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 declare namespace FieldKinds {
     export {
         lastWriteWinsRebaser,
+        replaceRebaser,
         UnitEncoder,
         ValueEncoder,
         Replacement,
+        ReplaceOp,
         noChangeHandle,
         counterHandle,
         counter,
@@ -679,6 +681,12 @@ interface Replacement<T> {
     // (undocumented)
     old: T;
 }
+
+// @public (undocumented)
+type ReplaceOp<T> = Replacement<T> | 0;
+
+// @public
+function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>>;
 
 // @public
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;

@@ -10,7 +10,7 @@ import { FieldKindIdentifier } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey } from "../../tree";
 import { brand, getOrAddEmptyToMap } from "../../util";
 import { FieldChangeHandler, FieldChangeMap, FieldChange } from "./fieldChangeHandler";
-import { FullSchemaPolicy } from "./fieldKind";
+import { FieldKind } from "./fieldKind";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -21,7 +21,7 @@ export class ModularChangeFamily implements
     ChangeRebaser<FieldChangeMap>,
     ChangeEncoder<FieldChangeMap> {
     constructor(
-        private readonly schemaPolicy: FullSchemaPolicy,
+        private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
     ) { }
 
     get rebaser(): ChangeRebaser<any> { return this; }
@@ -34,7 +34,7 @@ export class ModularChangeFamily implements
 
         const fieldChanges = new Map<FieldKey, FieldChange[]>();
         for (const change of changes) {
-            for (const key of Object.keys(change.fields)) {
+            for (const key of Object.keys(change)) {
                 getOrAddEmptyToMap(fieldChanges, brand(key)).push(change[key]);
             }
         }
@@ -92,7 +92,7 @@ export class ModularChangeFamily implements
                 // TODO: Handle the case where `change` and `over` have different field kinds for this field
                 const rebasedField = this.getChangeHandler(fieldChange.fieldKind).rebaser.rebase(
                     fieldChange.change,
-                    baseChanges,
+                    baseChanges.change,
                     (child, baseChild) => this.rebase(child, baseChild));
 
                 // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
@@ -131,11 +131,18 @@ export class ModularChangeFamily implements
         const encodedFields: { [key: string]: JsonCompatibleReadOnly; } = {};
         for (const field of Object.keys(change)) {
             const fieldChange = change[field];
-            encodedFields[field] = this.getChangeHandler(fieldChange.fieldKind).encoder.encodeForJson(
+            const encodedChange = this.getChangeHandler(fieldChange.fieldKind).encoder.encodeForJson(
                 formatVersion,
                 fieldChange.change,
                 (childChange) => this.encodeForJson(formatVersion, childChange),
             );
+
+            const encodedField: EncodedFieldChange & JsonCompatibleReadOnly = {
+                fieldKind: fieldChange.fieldKind,
+                change: encodedChange,
+            };
+
+            encodedFields[field] = encodedField;
         }
 
         return encodedFields;
@@ -167,7 +174,7 @@ export class ModularChangeFamily implements
     }
 
     private getChangeHandler(kind: FieldKindIdentifier): FieldChangeHandler<unknown> {
-        const fieldKind = this.schemaPolicy.fieldKinds.get(kind);
+        const fieldKind = this.fieldKinds.get(kind);
         assert(fieldKind !== undefined, "Unknown field kind");
         return fieldKind.changeHandler;
     }

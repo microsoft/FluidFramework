@@ -12,6 +12,7 @@ export * from "./sequence-change-family";
 export * from "./defaultSchema";
 export {
     isNeverField,
+    ModularChangeFamily,
     FieldChangeHandler,
     FieldChangeRebaser,
     FieldChangeEncoder,
