@@ -86,6 +86,7 @@ const foo = bar;
 
 |  Namespace | Description |
 |  --- | --- |
+|  [TestModule](./simple-suite-test/testmodule-namespace) |  |
 |  [TestNamespace](./simple-suite-test/testnamespace-namespace) | Test Namespace |
 
 ## Enumeration Details
