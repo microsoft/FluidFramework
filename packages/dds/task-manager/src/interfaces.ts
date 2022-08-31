@@ -60,8 +60,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     subscribed(taskId: string): boolean;
 
     /**
-     * Marks a task as completed.  Promise resolves if the task is successfully marked as complete, and rejects if it
-     * fails for any reason.
+     * Marks a task as completed and releases all clients from its queue.
      * @param taskId - Identifier for the task
      */
     complete(taskId: string): void;
