@@ -33,10 +33,10 @@ export function createBumpBranch(context: Context, releaseGroupOrPackage: Releas
 export function difference<T>(setA: Set<T>, setB: Set<T>): Set<T>;
 
 // @internal
-export function generateBumpBranchName(releaseGroupOrPackage: ReleaseGroup | ReleasePackage, bumpType: VersionBumpTypeExtended, version: string): string;
+export function generateBumpDepsBranchName(bumpedDep: ReleaseGroup, bumpType: VersionBumpTypeExtended, releaseGroup?: ReleaseGroup): string;
 
 // @internal
-export function generateBumpDepsBranchName(bumpedDep: ReleaseGroup, bumpType: VersionBumpTypeExtended, releaseGroup?: ReleaseGroup): string;
+export function generateBumpVersionBranchName(releaseGroupOrPackage: ReleaseGroup | ReleasePackage, bumpType: VersionBumpTypeExtended, version: string): string;
 
 // @internal
 export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: string): string;

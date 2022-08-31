@@ -10,7 +10,11 @@ export {
     getDefaultBumpTypeForBranch,
     generateReleaseBranchName,
 } from "./branches";
-export { bumpPackageDependencies, bumpVersion as bumpReleaseGroup, PackageWithRangeSpec } from "./bump";
+export {
+    bumpPackageDependencies,
+    bumpVersion as bumpReleaseGroup,
+    PackageWithRangeSpec,
+} from "./bump";
 export {
     getAllVersions,
     getPreReleaseDependencies,

@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.3000 win32-x64 node-v14.19.1
+@fluid-tools/build-cli/0.4.3000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND

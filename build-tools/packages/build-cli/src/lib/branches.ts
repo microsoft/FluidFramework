@@ -117,7 +117,9 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
             : version;
     const releaseBranchVersion =
         scheme === "virtualPatch"
-            ? toVirtualPatchScheme(`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`)
+            ? toVirtualPatchScheme(
+                  `${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
+              )
             : `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
     const branchName = releaseGroup === "client" ? "v2int" : releaseGroup;
     const releaseBranch = `release/${branchName}/${releaseBranchVersion}`;

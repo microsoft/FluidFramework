@@ -389,11 +389,7 @@ export async function getAllVersions(
 
     for (const tag of tags) {
         const ver = getVersionFromTag(tag);
-        if (
-            ver !== undefined &&
-            ver !== "" &&
-            ver !== null
-        ) {
+        if (ver !== undefined && ver !== "" && ver !== null) {
             // eslint-disable-next-line no-await-in-loop
             const date = await context.gitRepo.getCommitDate(tag);
             versions.set(ver, date);
@@ -421,7 +417,10 @@ export async function getAllVersions(
  *
  * @internal
  */
-export async function sortVersions(versions: VersionDetails[], sortKey: "version" | "date"): Promise<VersionDetails[]> {
+export async function sortVersions(
+    versions: VersionDetails[],
+    sortKey: "version" | "date",
+): Promise<VersionDetails[]> {
     const sortedVersions: VersionDetails[] = [];
 
     // Clone the array
