@@ -7,16 +7,18 @@ import { fail, strict as assert } from "assert";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
-import { AnchorSet } from "../../tree";
+import { AnchorSet, Delta, FieldKey } from "../../tree";
 import { brand, makeArray, RecursiveReadonly } from "../../util";
 
 interface NonEmptyTestChangeset {
     /**
      * Identifies the document state that the changeset should apply to.
+     * Represented as the concatenation of all previous intentions.
      */
     inputContext: number[];
     /**
      * Identifies the document state brought about by applying the changeset to the document.
+     * Represented as the concatenation of all previous intentions and the intentions in this change.
      */
     outputContext: number[];
     /**
@@ -33,6 +35,7 @@ interface EmptyTestChangeset {
 }
 
 const emptyChange: EmptyTestChangeset = { intentions: [] };
+const rootKey: FieldKey = brand("root");
 
 export type TestChangeset = NonEmptyTestChangeset | EmptyTestChangeset;
 
@@ -48,10 +51,7 @@ interface AnchorRebaseData {
 }
 
 class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
-    public readonly anchorRebases: Map<AnchorSet, AnchorRebaseData> = new Map();
-
-    public static mintChangeset(inputContext: readonly number[], intentionOpt: number): NonEmptyTestChangeset {
-        const intention = intentionOpt;
+    public static mintChangeset(inputContext: readonly number[], intention: number): NonEmptyTestChangeset {
         return {
             inputContext: [...inputContext],
             intentions: [intention],
@@ -136,14 +136,9 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
     }
 
     public rebaseAnchors(anchors: AnchorSet, over: TestChangeset): void {
-        if (isNonEmptyChange(over)) {
-            let data = this.anchorRebases.get(anchors);
-            if (data === undefined) {
-                data = { rebases: [], intentions: [] };
-                this.anchorRebases.set(anchors, data);
-            }
+        if (isNonEmptyChange(over) && anchors instanceof TestAnchorSet) {
             let lastChange: RecursiveReadonly<NonEmptyTestChangeset> | undefined;
-            const { rebases } = data;
+            const { rebases } = anchors;
             for (let iChange = rebases.length - 1; iChange >= 0; --iChange) {
                 const change = rebases[iChange];
                 if (isNonEmptyChange(change)) {
@@ -155,7 +150,7 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
                 // The new change should apply to the context brought about by the previous change
                 assert.deepEqual(over.inputContext, lastChange.outputContext);
             }
-            data.intentions = TestChangeRebaser.composeIntentions(data.intentions, over.intentions);
+            anchors.intentions = TestChangeRebaser.composeIntentions(anchors.intentions, over.intentions);
             rebases.push(over);
         }
     }
@@ -187,8 +182,23 @@ class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
     }
 }
 
+class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
+    public rebases: RecursiveReadonly<NonEmptyTestChangeset>[] = [];
+    public intentions: number[] = [];
+}
+
 type TestChangeFamily = ChangeFamily<unknown, TestChangeset>;
 type TestEditManager = EditManager<TestChangeset, TestChangeFamily>;
+
+/**
+ * This is a hack to encode arbitrary information (the intentions) into a Delta.
+ * The resulting Delta does note represent a concrete change to a document tree.
+ * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
+ * `ChangeFamily.intoDelta` with the expected change.
+ */
+function asDelta(intentions: number[]): Delta.Root {
+    return intentions.length === 0 ? Delta.empty : new Map([[rootKey, intentions]]);
+}
 
 function changeFamilyFactory(): {
     family: ChangeFamily<unknown, TestChangeset>;
@@ -199,7 +209,7 @@ function changeFamilyFactory(): {
         rebaser,
         encoder: new TestChangeEncoder(),
         buildEditor: () => assert.fail("Unexpected call to buildEditor"),
-        intoDelta: () => new Map(),
+        intoDelta: (change: TestChangeset): Delta.Root => asDelta(change.intentions),
     };
     return { rebaser, family };
 }
@@ -207,13 +217,16 @@ function changeFamilyFactory(): {
 function editManagerFactory(): {
     manager: TestEditManager;
     rebaser: TestChangeRebaser;
+    anchors: AnchorRebaseData;
 } {
     const { rebaser, family } = changeFamilyFactory();
+    const anchors = new TestAnchorSet();
     const manager = new EditManager<TestChangeset, ChangeFamily<unknown, TestChangeset>>(
         family,
+        anchors,
     );
     manager.setLocalSessionId(localSessionId);
-    return { rebaser, manager };
+    return { rebaser, manager, anchors };
 }
 
 const localSessionId: SessionId = "0";
@@ -227,7 +240,7 @@ type TestCommit = Commit<TestChangeset>;
 
 describe("EditManager", () => {
     it("Can handle non-concurrent local changes being sequenced immediately", () => {
-        const { rebaser, manager } = editManagerFactory();
+        const { manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(1),
@@ -246,17 +259,18 @@ describe("EditManager", () => {
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         };
-        manager.addLocalChange(c1.changeset);
-        manager.addSequencedChange(c1);
-        manager.addLocalChange(c2.changeset);
-        manager.addSequencedChange(c2);
-        manager.addLocalChange(c3.changeset);
-        manager.addSequencedChange(c3);
+        assert.deepEqual(manager.addLocalChange(c1.changeset), asDelta([1]));
+        assert.deepEqual(manager.addSequencedChange(c1), Delta.empty);
+        assert.deepEqual(manager.addLocalChange(c2.changeset), asDelta([2]));
+        assert.deepEqual(manager.addSequencedChange(c2), Delta.empty);
+        assert.deepEqual(manager.addLocalChange(c3.changeset), asDelta([3]));
+        assert.deepEqual(manager.addSequencedChange(c3), Delta.empty);
+        assert.deepEqual(anchors.intentions, [1, 2, 3]);
         checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can handle non-concurrent local changes being sequenced later", () => {
-        const { rebaser, manager } = editManagerFactory();
+        const { manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
             sessionId: localSessionId,
             seqNumber: brand(1),
@@ -275,174 +289,202 @@ describe("EditManager", () => {
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         };
-        manager.addLocalChange(c1.changeset);
-        manager.addLocalChange(c2.changeset);
-        manager.addLocalChange(c3.changeset);
-        manager.addSequencedChange(c1);
-        manager.addSequencedChange(c2);
-        manager.addSequencedChange(c3);
+        assert.deepEqual(manager.addLocalChange(c1.changeset), asDelta([1]));
+        assert.deepEqual(manager.addLocalChange(c2.changeset), asDelta([2]));
+        assert.deepEqual(manager.addLocalChange(c3.changeset), asDelta([3]));
+        assert.deepEqual(manager.addSequencedChange(c1), Delta.empty);
+        assert.deepEqual(manager.addSequencedChange(c2), Delta.empty);
+        assert.deepEqual(manager.addSequencedChange(c3), Delta.empty);
+        assert.deepEqual(anchors.intentions, [1, 2, 3]);
         checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can handle non-concurrent peer changes sequenced immediately", () => {
-        const { rebaser, manager } = editManagerFactory();
-        manager.addSequencedChange({
+        const { manager, anchors } = editManagerFactory();
+        const c1: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
-        });
-        manager.addSequencedChange({
+        };
+        const c2: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: TestChangeRebaser.mintChangeset([1], 2),
-        });
-        manager.addSequencedChange({
+        };
+        const c3: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
-        });
+        };
+        assert.deepEqual(manager.addSequencedChange(c1), asDelta([1]));
+        assert.deepEqual(manager.addSequencedChange(c2), asDelta([2]));
+        assert.deepEqual(manager.addSequencedChange(c3), asDelta([3]));
+        assert.deepEqual(anchors.intentions, [1, 2, 3]);
         checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can handle non-concurrent peer changes sequenced later", () => {
-        const { rebaser, manager } = editManagerFactory();
-        manager.addSequencedChange({
+        const { manager, anchors } = editManagerFactory();
+        const c1: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
-        });
-        manager.addSequencedChange({
+        };
+        const c2: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([1], 2),
-        });
-        manager.addSequencedChange({
+        };
+        const c3: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
-        });
+        };
+        assert.deepEqual(manager.addSequencedChange(c1), asDelta([1]));
+        assert.deepEqual(manager.addSequencedChange(c2), asDelta([2]));
+        assert.deepEqual(manager.addSequencedChange(c3), asDelta([3]));
+        assert.deepEqual(anchors.intentions, [1, 2, 3]);
         checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can rebase a single peer change over multiple peer changes", () => {
-        const { rebaser, manager } = editManagerFactory();
-        manager.addSequencedChange({
+        const { manager, anchors } = editManagerFactory();
+        const c1: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
-        });
-        manager.addSequencedChange({
+        };
+        const c2: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: TestChangeRebaser.mintChangeset([1], 2),
-        });
-        manager.addSequencedChange({
+        };
+        const c3: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
-        });
-        manager.addSequencedChange({
+        };
+        const c4: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(4),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 4),
-        });
+        };
+        assert.deepEqual(manager.addSequencedChange(c1), asDelta([1]));
+        assert.deepEqual(manager.addSequencedChange(c2), asDelta([2]));
+        assert.deepEqual(manager.addSequencedChange(c3), asDelta([3]));
+        assert.deepEqual(manager.addSequencedChange(c4), asDelta([4]));
+        assert.deepEqual(anchors.intentions, [1, 2, 3, 4]);
         checkChangeList(manager, [1, 2, 3, 4]);
     });
 
     it("Can rebase multiple non-interleaved peer changes", () => {
-        const { rebaser, manager } = editManagerFactory();
-        manager.addSequencedChange({
+        const { manager, anchors } = editManagerFactory();
+        const c1: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
-        });
-        manager.addSequencedChange({
+        };
+        const c2: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: TestChangeRebaser.mintChangeset([1], 2),
-        });
-        manager.addSequencedChange({
+        };
+        const c3: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
-        });
-        manager.addSequencedChange({
+        };
+        const c4: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(4),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 4),
-        });
-        manager.addSequencedChange({
+        };
+        const c5: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(5),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([4], 5),
-        });
-        manager.addSequencedChange({
+        };
+        const c6: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(6),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([4, 5], 6),
-        });
+        };
+        assert.deepEqual(manager.addSequencedChange(c1), asDelta([1]));
+        assert.deepEqual(manager.addSequencedChange(c2), asDelta([2]));
+        assert.deepEqual(manager.addSequencedChange(c3), asDelta([3]));
+        assert.deepEqual(manager.addSequencedChange(c4), asDelta([4]));
+        assert.deepEqual(manager.addSequencedChange(c5), asDelta([5]));
+        assert.deepEqual(manager.addSequencedChange(c6), asDelta([6]));
+        assert.deepEqual(anchors.intentions, [1, 2, 3, 4, 5, 6]);
         checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
     });
 
     it("Can rebase multiple interleaved peer changes", () => {
-        const { rebaser, manager } = editManagerFactory();
-        manager.addSequencedChange({
+        const { manager, anchors } = editManagerFactory();
+        const c1: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 1),
-        });
-        manager.addSequencedChange({
+        };
+        const c2: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(2),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 2),
-        });
-        manager.addSequencedChange({
+        };
+        const c3: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(1),
             changeset: TestChangeRebaser.mintChangeset([1], 3),
-        });
-        manager.addSequencedChange({
+        };
+        const c4: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(4),
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2, 3], 4),
-        });
-        manager.addSequencedChange({
+        };
+        const c5: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(5),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([2], 5),
-        });
-        manager.addSequencedChange({
+        };
+        const c6: TestCommit = {
             sessionId: peerSessionId2,
             seqNumber: brand(6),
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([2, 5], 6),
-        });
+        };
+        assert.deepEqual(manager.addSequencedChange(c1), asDelta([1]));
+        assert.deepEqual(manager.addSequencedChange(c2), asDelta([2]));
+        assert.deepEqual(manager.addSequencedChange(c3), asDelta([3]));
+        assert.deepEqual(manager.addSequencedChange(c4), asDelta([4]));
+        assert.deepEqual(manager.addSequencedChange(c5), asDelta([5]));
+        assert.deepEqual(manager.addSequencedChange(c6), asDelta([6]));
+        assert.deepEqual(anchors.intentions, [1, 2, 3, 4, 5, 6]);
         checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
     });
 
     it("Can rebase multiple interleaved peer and local changes", () => {
-        const { rebaser, manager } = editManagerFactory();
+        const { rebaser, manager, anchors } = editManagerFactory();
         const c1: TestCommit = {
             sessionId: peerSessionId1,
             seqNumber: brand(1),
@@ -497,18 +539,22 @@ describe("EditManager", () => {
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([2, 7], 9),
         };
-        manager.addLocalChange(c3.changeset);
-        manager.addSequencedChange(c1);
-        manager.addSequencedChange(c2);
-        manager.addLocalChange(c6.changeset);
-        manager.addLocalChange(c8.changeset);
-        manager.addSequencedChange(c3);
-        manager.addSequencedChange(c4);
-        manager.addSequencedChange(c5);
-        manager.addSequencedChange(c6);
-        manager.addSequencedChange(c7);
-        manager.addSequencedChange(c8);
-        manager.addSequencedChange(c9);
+        assert.deepEqual(manager.addLocalChange(c3.changeset), asDelta([3]));
+        assert.deepEqual(manager.addSequencedChange(c1), asDelta([-3, 1, 3]));
+        assert.deepEqual(manager.addSequencedChange(c2), asDelta([-3, 2, 3]));
+        assert.deepEqual(anchors.intentions, [1, 2, 3]);
+        assert.deepEqual(manager.addLocalChange(c6.changeset), asDelta([6]));
+        assert.deepEqual(manager.addLocalChange(c8.changeset), asDelta([8]));
+        assert.deepEqual(anchors.intentions, [1, 2, 3, 6, 8]);
+        assert.deepEqual(manager.addSequencedChange(c3), Delta.empty);
+        assert.deepEqual(manager.addSequencedChange(c4), asDelta([-8, -6, 4, 6, 8]));
+        assert.deepEqual(manager.addSequencedChange(c5), asDelta([-8, -6, 5, 6, 8]));
+        assert.deepEqual(anchors.intentions, [1, 2, 3, 4, 5, 6, 8]);
+        assert.deepEqual(manager.addSequencedChange(c6), Delta.empty);
+        assert.deepEqual(manager.addSequencedChange(c7), asDelta([-8, 7, 8]));
+        assert.deepEqual(manager.addSequencedChange(c8), Delta.empty);
+        assert.deepEqual(manager.addSequencedChange(c9), asDelta([9]));
+        assert.deepEqual(anchors.intentions, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
         checkChangeList(manager, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
 
@@ -517,7 +563,6 @@ describe("EditManager", () => {
      * Despite that, it's good to keep the other tests cases for the following reasons:
      * - They give a clearer account of what the API usage is like.
      * - They are easier to debug.
-     * - They are less reliant on the `EditManager` implementation in their construction of test input.
      * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
      *   but this one doesn't, then there might be something wrong with this test).
      */
@@ -604,6 +649,7 @@ function* buildScenario(
 
 interface ClientData {
     manager: TestEditManager;
+    anchors: TestAnchorSet;
     /** The local changes in their original form */
     localChanges: { change: TestChangeset; ref: number; }[];
     /** The last sequence number received by the client */
@@ -622,8 +668,9 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
         {
             const client = clientData[step.client];
             if (step.type === "Mint") {
-                const cs = TestChangeRebaser.mintChangeset(getTipContext(client.manager), ++changeCounter);
-                client.manager.addLocalChange(cs);
+                const cs = TestChangeRebaser.mintChangeset(client.intentions, ++changeCounter);
+                const delta = client.manager.addLocalChange(cs);
+                assert.deepEqual(delta, asDelta(cs.intentions));
                 client.localChanges.push({ change: cs, ref: client.ref });
                 cs.intentions.forEach((intention) => client.intentions.push(intention));
             } else if (step.type === "Sequence") {
@@ -636,13 +683,23 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
                 });
             } else { // step.type === "Receive"
                 const commit = trunk[client.ref];
-                client.manager.addSequencedChange(commit);
+                const delta = client.manager.addSequencedChange(commit);
                 // If the change came from this client
                 if (commit.sessionId === step.client.toString()) {
+                    assert.deepEqual(delta, Delta.empty);
                     // Discard the local change
                     client.localChanges.shift();
                     // Do not update the intentions
                 } else {
+                    const localIntentions = ([] as number[]).concat(
+                        ...client.localChanges.map((c) => c.change.intentions),
+                    );
+                    const expected = ([] as number[]).concat(
+                        ...localIntentions.map((i) => -i).reverse(),
+                        ...commit.changeset.intentions,
+                        ...localIntentions,
+                    );
+                    assert.deepEqual(delta, asDelta(expected));
                     // Update the intentions known to this client
                     client.intentions.splice(
                         client.intentions.length - client.localChanges.length,
@@ -656,20 +713,19 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
         // Check the validity of the managers
         for (const client of clientData) {
             checkChangeList(client.manager, client.intentions);
-            const intentionsThatAnchorsWereRebasedOver =
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                rebaser.anchorRebases.get(client.manager.anchors!)?.intentions;
             // Check the anchors have been updated if applicable
-            assert.deepEqual(intentionsThatAnchorsWereRebasedOver ?? [], client.intentions);
+            assert.deepEqual(client.anchors.intentions ?? [], client.intentions);
         }
     }
 }
 
 function newClientData(family: TestChangeFamily, iClient: number): ClientData {
-    const manager = new EditManager<TestChangeset, TestChangeFamily>(family, new AnchorSet());
+    const anchors = new TestAnchorSet();
+    const manager = new EditManager<TestChangeset, TestChangeFamily>(family, anchors);
     manager.setLocalSessionId(iClient.toString());
     return {
         manager,
+        anchors,
         localChanges: [],
         ref: 0,
         intentions: [],
@@ -682,15 +738,4 @@ function checkChangeList(manager: TestEditManager, intentions: number[]): void {
 
 function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChangeset>[] {
     return manager.getTrunk().map((c) => c.changeset).concat(manager.getLocalChanges());
-}
-
-function getTipContext(manager: TestEditManager): number[] {
-    const changes = getAllChanges(manager);
-    for (let i = changes.length - 1; i >= 0; --i) {
-        const change = changes[i];
-        if (isNonEmptyChange(change)) {
-            return [...change.outputContext];
-        }
-    }
-    return [];
 }
