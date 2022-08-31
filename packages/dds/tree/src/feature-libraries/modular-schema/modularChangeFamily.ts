@@ -18,14 +18,16 @@ import { FieldKind } from "./fieldKind";
  */
 export class ModularChangeFamily implements
     ChangeFamily<ModularEditBuilder, FieldChangeMap>,
-    ChangeRebaser<FieldChangeMap>,
-    ChangeEncoder<FieldChangeMap> {
+    ChangeRebaser<FieldChangeMap> {
+    readonly encoder: ChangeEncoder<FieldChangeMap>;
+
     constructor(
         private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-    ) { }
+    ) {
+        this.encoder = new ModularChangeEncoder(this.fieldKinds);
+    }
 
-    get rebaser(): ChangeRebaser<any> { return this; }
-    get encoder(): ChangeEncoder<any> { return this; }
+    get rebaser(): ChangeRebaser<FieldChangeMap> { return this; }
 
     compose(changes: FieldChangeMap[]): FieldChangeMap {
         if (changes.length === 1) {
@@ -46,7 +48,7 @@ export class ModularChangeFamily implements
 
             // TODO: Handle the case where changes don't all have same field kind
             const kind = changesForField[0].fieldKind;
-            const composedField = this.getChangeHandler(kind).rebaser.compose(
+            const composedField = getChangeHandler(this.fieldKinds, kind).rebaser.compose(
                 changesForField.map((change) => change.change),
                 (...childChanges) => this.compose(childChanges),
             );
@@ -66,7 +68,7 @@ export class ModularChangeFamily implements
 
         for (const field of Object.keys(changes)) {
             const fieldChange = changes[field];
-            const invertedChange = this.getChangeHandler(fieldChange.fieldKind).rebaser.invert(
+            const invertedChange = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser.invert(
                 fieldChange.change,
                 (childChanges) => this.invert(childChanges));
 
@@ -90,7 +92,7 @@ export class ModularChangeFamily implements
                 const fieldChange = change[field];
 
                 // TODO: Handle the case where `change` and `over` have different field kinds for this field
-                const rebasedField = this.getChangeHandler(fieldChange.fieldKind).rebaser.rebase(
+                const rebasedField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser.rebase(
                     fieldChange.change,
                     baseChanges.change,
                     (child, baseChild) => this.rebase(child, baseChild));
@@ -114,7 +116,7 @@ export class ModularChangeFamily implements
         const delta: Delta.Root = new Map();
         for (const field of Object.keys(change)) {
             const fieldChange = change[field];
-            const deltaField = this.getChangeHandler(fieldChange.fieldKind).intoDelta(
+            const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
                 fieldChange.change,
                 (childChange) => this.intoDelta(childChange),
             );
@@ -126,12 +128,27 @@ export class ModularChangeFamily implements
     buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet): ModularEditBuilder {
         return new ModularEditBuilder(this, deltaReceiver, anchors);
     }
+}
+
+function getChangeHandler(
+    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+    kind: FieldKindIdentifier,
+): FieldChangeHandler<unknown> {
+    const fieldKind = fieldKinds.get(kind);
+    assert(fieldKind !== undefined, "Unknown field kind");
+    return fieldKind.changeHandler;
+}
+
+class ModularChangeEncoder extends ChangeEncoder<FieldChangeMap> {
+    constructor(private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
+        super();
+    }
 
     encodeForJson(formatVersion: number, change: FieldChangeMap): JsonCompatibleReadOnly {
         const encodedFields: { [key: string]: JsonCompatibleReadOnly; } = {};
         for (const field of Object.keys(change)) {
             const fieldChange = change[field];
-            const encodedChange = this.getChangeHandler(fieldChange.fieldKind).encoder.encodeForJson(
+            const encodedChange = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).encoder.encodeForJson(
                 formatVersion,
                 fieldChange.change,
                 (childChange) => this.encodeForJson(formatVersion, childChange),
@@ -148,16 +165,12 @@ export class ModularChangeFamily implements
         return encodedFields;
     }
 
-    encodeBinary(formatVersion: number, change: FieldChangeMap): Buffer {
-        throw new Error("Method not implemented.");
-    }
-
     decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): FieldChangeMap {
         const encodedChange = change as Record<string, JsonCompatibleReadOnly>;
         const decodedFields: FieldChangeMap = {};
         for (const field of Object.keys(encodedChange)) {
             const fieldChange = encodedChange[field] as unknown as EncodedFieldChange;
-            const fieldChangeset = this.getChangeHandler(fieldChange.fieldKind).encoder.decodeJson(
+            const fieldChangeset = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).encoder.decodeJson(
                 formatVersion,
                 fieldChange.change,
                 (encodedChild) => this.decodeJson(formatVersion, encodedChild),
@@ -167,16 +180,6 @@ export class ModularChangeFamily implements
         }
 
         return decodedFields;
-    }
-
-    decodeBinary(formatVersion: number, change: Buffer): FieldChangeMap {
-        throw new Error("Method not implemented.");
-    }
-
-    private getChangeHandler(kind: FieldKindIdentifier): FieldChangeHandler<unknown> {
-        const fieldKind = this.fieldKinds.get(kind);
-        assert(fieldKind !== undefined, "Unknown field kind");
-        return fieldKind.changeHandler;
     }
 }
 

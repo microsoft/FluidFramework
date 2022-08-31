@@ -222,8 +222,8 @@ describe("ModularChangeFamily", () => {
 
     it("Json encoding", () => {
         const version = 0;
-        const encoded = JSON.stringify(family.encodeForJson(version, rootChange1a));
-        const decoded = family.decodeJson(version, JSON.parse(encoded));
+        const encoded = JSON.stringify(family.encoder.encodeForJson(version, rootChange1a));
+        const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
         assert.deepEqual(decoded, rootChange1a);
     });
 });
