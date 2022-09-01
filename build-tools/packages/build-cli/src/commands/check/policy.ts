@@ -74,10 +74,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     async run() {
         const handlerRegex: RegExp =
-            // eslint-disable-next-line no-negated-condition
-            this.processedFlags.handler !== undefined
-                ? new RegExp(this.processedFlags.handler, "i")
-                : /.?/;
+            this.processedFlags.handler === undefined
+                : /.?/
+                ? new RegExp(this.processedFlags.handler, "i");
         const pathRegex: RegExp =
             // eslint-disable-next-line no-negated-condition
             this.processedFlags.path !== undefined
