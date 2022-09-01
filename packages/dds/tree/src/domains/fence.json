@@ -1,5 +1,5 @@
 {
     "tags": [ "domains" ],
     "exports": [ "index"],
-    "imports": ["schema-stored", "util", "forest", "tree"]
+    "imports": ["schema-stored", "util", "forest", "tree", "feature-libraries"]
 }

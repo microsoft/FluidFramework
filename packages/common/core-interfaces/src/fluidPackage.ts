@@ -4,7 +4,7 @@
  */
 
  /**
-  * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidPackageEnvironment}
+  * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidPackageEnvironment}
   * to have code loading modules in same package.
   * Specifies an environment on Fluid property of a IFluidPackage
   */
@@ -31,7 +31,7 @@ export interface IFluidPackageEnvironment {
 }
 
 /**
- * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidPackage}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidPackage}
  * to have code loading modules in same package.
  * Fluid-specific properties expected on a package to be loaded by the code loader.
  * While compatible with the npm package format it is not necessary that that package is an
@@ -62,7 +62,7 @@ export interface IFluidPackage {
 }
 
 /**
- * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#isFluidPackage}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#isFluidPackage}
  * to have code loading modules in same package.
  * Check if the package.json defines a Fluid package
  * @param pkg - the package json data to check if it is a Fluid package.
@@ -73,7 +73,7 @@ export const isFluidPackage = (pkg: any): pkg is Readonly<IFluidPackage> =>
     && typeof pkg?.fluid === "object";
 
 /**
- * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetailsConfig}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsConfig}
  * to have code loading modules in same package.
  * Package manager configuration. Provides a key value mapping of config values
  */
@@ -82,7 +82,7 @@ export interface IFluidCodeDetailsConfig {
 }
 
 /**
- * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetails}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetails}
  * to have code loading modules in same package.
  * Data structure used to describe the code to load on the Fluid document
  */
@@ -100,7 +100,7 @@ export interface IFluidCodeDetails {
 }
 
 /**
- * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#isFluidCodeDetails}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#isFluidCodeDetails}
  * to have code loading modules in same package
 */
 export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluidCodeDetails> => {
@@ -111,14 +111,13 @@ export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluid
 };
 
 /**
- * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetailsComparer}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsComparer}
  * to have code loading modules in same package.
 */
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer = "IFluidCodeDetailsComparer";
 
 /**
- * @deprecated  in favor of
- * {@link @fluidframework/container-definitions/fluidPackage.ts#IProvideFluidCodeDetailsComparer}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IProvideFluidCodeDetailsComparer}
  * to have code loading modules in same package.
 */
 export interface IProvideFluidCodeDetailsComparer {
@@ -126,7 +125,7 @@ export interface IProvideFluidCodeDetailsComparer {
 }
 
 /**
- * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetailsComparer}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsComparer}
  * to have code loading modules in same package.
  * Provides capability to compare Fluid code details.
  */

@@ -1,20 +1,12 @@
 {
-  "exclude": ["dist", "node_modules"],
+  "extends": "@fluidframework/build-common/ts-common-config.json",
   "compilerOptions": {
-    "declaration": true,
-    "importHelpers": true,
-    "module": "commonjs",
-    "outDir": "dist",
-    "rootDir": "src",
-    "strict": true,
-    "target": "es2019",
+    "composite": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
     "types": ["node"],
-    "esModuleInterop": true,
-    "incremental": false,
-    "pretty": true,
-  },
-  "parserOptions": {
-    "project": ["./tsconfig.json", "./test/tsconfig.json"],
+    "noUnusedLocals": false,
   },
   "include": ["src/**/*"],
+  "exclude": ["src/test/**/*"],
 }

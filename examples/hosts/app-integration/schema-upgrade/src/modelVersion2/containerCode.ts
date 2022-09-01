@@ -4,31 +4,32 @@
  */
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { ContainerKillBitInstantiationFactory, IContainerKillBit } from "../containerKillBit";
-import { IInventoryList, IInventoryListContainer } from "../modelInterfaces";
-import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoading";
-import { InventoryListContainer } from "./containerModel";
+import type { IMigrationTool } from "../migrationInterfaces";
+import { MigrationToolInstantiationFactory } from "../migrationTool";
+import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
+import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoader";
+import { InventoryListAppModel } from "./appModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
 export const inventoryListId = "default-inventory-list";
-export const containerKillBitId = "container-kill-bit";
+export const migrationToolId = "migration-tool";
 
-const makeInventoryListModel: ModelMakerCallback<IInventoryListContainer> =
+const makeInventoryListAppModel: ModelMakerCallback<IInventoryListAppModel> =
     async (runtime: IContainerRuntime, container: IContainer) => {
         const inventoryList = await requestFluidObject<IInventoryList>(
             await runtime.getRootDataStore(inventoryListId),
             "",
         );
-        const containerKillBit = await requestFluidObject<IContainerKillBit>(
-            await runtime.getRootDataStore(containerKillBitId),
+        const migrationTool = await requestFluidObject<IMigrationTool>(
+            await runtime.getRootDataStore(migrationToolId),
             "",
         );
-        return new InventoryListContainer(inventoryList, containerKillBit, container);
+        return new InventoryListAppModel(inventoryList, migrationTool, container);
     };
 
 export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFactory {
@@ -36,11 +37,11 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
         super(
             new Map([
                 InventoryListInstantiationFactory.registryEntry,
-                ContainerKillBitInstantiationFactory.registryEntry,
+                MigrationToolInstantiationFactory.registryEntry,
             ]), // registryEntries
             undefined,
             [
-                makeModelRequestHandler(makeInventoryListModel),
+                makeModelRequestHandler(makeInventoryListAppModel),
                 rootDataStoreRequestHandler,
             ],
         );
@@ -52,14 +53,15 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         const inventoryList = await runtime.createDataStore(InventoryListInstantiationFactory.type);
         await inventoryList.trySetAlias(inventoryListId);
-        const containerKillBit = await runtime.createDataStore(ContainerKillBitInstantiationFactory.type);
-        await containerKillBit.trySetAlias(containerKillBitId);
+        const migrationTool = await runtime.createDataStore(MigrationToolInstantiationFactory.type);
+        await migrationTool.trySetAlias(migrationToolId);
     }
 
     protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
         console.info("Using runtime factory version two");
-        // Force the killbit to instantiate in all cases.  The Quorum it uses must be loaded and running in order to
-        // respond with accept ops, and without this call the killbit won't be instantiated on the summarizer client.
-        await requestFluidObject(await runtime.getRootDataStore(containerKillBitId), "");
+        // Force the MigrationTool to instantiate in all cases.  The Quorum it uses must be loaded and running in
+        // order to respond with accept ops, and without this call the MigrationTool won't be instantiated on the
+        // summarizer client.
+        await requestFluidObject(await runtime.getRootDataStore(migrationToolId), "");
     }
 }

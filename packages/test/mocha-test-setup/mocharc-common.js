@@ -64,6 +64,10 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
         }
     }
 
+    if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {
+        config["forbid-only"] = true;
+    }
+
     return config;
 }
 

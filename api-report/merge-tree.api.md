@@ -128,7 +128,7 @@ export class Client {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage): {
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -142,7 +142,7 @@ export class Client {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getOrAddShortClientId(longClientId: string): number;
-    getPosition(segment: ISegment): number;
+    getPosition(segment: ISegment, localSeq?: number): number;
     // (undocumented)
     getPropertiesAtPosition(pos: number): PropertySet | undefined;
     // (undocumented)
@@ -411,7 +411,7 @@ export interface IInterval {
     // (undocumented)
     compareStart(b: IInterval): number;
     // (undocumented)
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
     // (undocumented)
@@ -737,6 +737,7 @@ export interface IRelativePosition {
 
 // @public
 export interface IRemovalInfo {
+    localRemovedSeq?: number;
     removedClientIds: number[];
     removedSeq: number;
 }
@@ -1000,15 +1001,14 @@ export class MergeTree {
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // (undocumented)
-    findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
+    findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos?: boolean): {
         tile: ReferencePosition;
         pos: number;
     } | undefined;
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number): {
+    getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -1017,7 +1017,7 @@ export class MergeTree {
     // (undocumented)
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
-    getPosition(node: MergeNode, refSeq: number, clientId: number): number;
+    getPosition(node: MergeNode, refSeq: number, clientId: number, localSeq?: number): number;
     _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined;
     // @deprecated (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
@@ -1030,8 +1030,7 @@ export class MergeTree {
     // (undocumented)
     insertSegments(pos: number, segments: ISegment[], refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs | undefined): void;
     get length(): number;
-    // (undocumented)
-    localNetLength(segment: ISegment): number;
+    localNetLength(segment: ISegment, refSeq?: number, localSeq?: number): number;
     // (undocumented)
     map<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum: TClientData): void;
     // (undocumented)
@@ -1062,6 +1061,7 @@ export class MergeTree {
     // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: number): number | undefined;
+    rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup): void;
     // (undocumented)
     root: IMergeBlock;
     // (undocumented)
@@ -1425,6 +1425,8 @@ export interface SegmentGroup {
     localSeq: number;
     // (undocumented)
     previousProps?: PropertySet[];
+    // (undocumented)
+    removedReferences?: LocalReferencePosition[];
     // (undocumented)
     segments: ISegment[];
 }
