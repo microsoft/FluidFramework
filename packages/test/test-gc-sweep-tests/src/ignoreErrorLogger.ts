@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils";
 import { ITelemetryBaseEvent, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 
@@ -15,6 +14,8 @@ export class IgnoreErrorLogger extends EventAndErrorTrackingLogger {
     private readonly ignoredEvents: Map<string, ITelemetryGenericEvent> = new Map();
     public readonly events: ITelemetryBaseEvent[] = [];
     public readonly inactiveObjectEvents: ITelemetryBaseEvent[] = [];
+    public readonly errorEvents: ITelemetryBaseEvent[] = [];
+    public readonly errorEventStats: { [key: string]: number; } = {};
 
     public ignoreExpectedEventTypes(...anyIgnoredEvents: ITelemetryGenericEvent[]) {
         for (const event of anyIgnoredEvents) {
@@ -27,22 +28,12 @@ export class IgnoreErrorLogger extends EventAndErrorTrackingLogger {
         if (event.eventName.includes("InactiveObject")) {
             this.inactiveObjectEvents.push(event);
         }
-        // For ignored events, make them generic events.
-        if (this.ignoredEvents.has(event.eventName)) {
-            let matches = true;
-            const ie = this.ignoredEvents.get(event.eventName);
-            assert(ie !== undefined);
-            for (const key of Object.keys(ie)) {
-                if (ie[key] !== event[key]) {
-                    matches = false;
-                    break;
-                }
-            }
-            if (matches) {
-                event.category = "generic";
-            }
-        }
 
-        super.send(event);
+        // Ignore all errors, otherwise we only run one test.
+        if (event.category === "error") {
+            const count = this.errorEventStats[event.eventName] ?? 0;
+            this.errorEventStats[event.eventName] = count + 1;
+            this.errorEvents.push(event);
+        }
     }
 }
