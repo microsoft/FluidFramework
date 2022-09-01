@@ -21,7 +21,7 @@ This article will explain:
 Your code creates containers using APIs provided by a service-specific client library.
 Each service-specific client library implements a common API for manipulating containers.
 For example, the [Tinylicious library]({{< relref "Tinylicious" >}}) provides [these APIs]({{< relref "docs/apis/tinylicious-client.md" >}}) for the Tinylicious Fluid service.
-These common APIs enable your code to specify what shared objects should live in the `FluidContainer`, and retreive `FluidContainer` once it is created.
+These common APIs enable your code to specify what shared objects should live in the `FluidContainer`, and retrieve the `FluidContainer` once it is created.
 
 ### Container schema
 
