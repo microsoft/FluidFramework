@@ -9,6 +9,7 @@ import { List, ListNode } from "./collections";
 import {
     ISegment,
 } from "./mergeTreeNodes";
+import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
@@ -37,9 +38,12 @@ export function _validateReferenceType(refType: ReferenceType) {
             "Reference types can only be one of Transient, SlideOnRemove, and StayOnRemove");
     }
 }
-
+/**
+ * @sealed
+ */
 export interface LocalReferencePosition extends ReferencePosition {
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+    readonly trackingCollection: TrackingGroupCollection;
 }
 
 /**
@@ -54,6 +58,10 @@ class LocalReference implements LocalReferencePosition {
     private listNode: ListNode<LocalReference> | undefined;
 
     public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
+    private _trackingCollection?: TrackingGroupCollection;
+    public get trackingCollection(): TrackingGroupCollection {
+        return (this._trackingCollection ??= new TrackingGroupCollection(this));
+    }
 
     constructor(
         public refType = ReferenceType.Simple,

@@ -6,18 +6,24 @@
 import { strict as assert } from "assert";
 import { SortedSegmentSet, SortedSegmentSetItem } from "../sortedSegmentSet";
 import { ISegment } from "../mergeTreeNodes";
+import { LocalReferencePosition } from "../localReference";
+import { ReferenceType } from "../ops";
 import { TestClient } from "./testClient";
 const segmentCount = 15;
 
 function validateSorted<T extends SortedSegmentSetItem>(
-    set: SortedSegmentSet<T>, getOrdinal: (item: T) => string, prefix: string) {
+    set: SortedSegmentSet<T>, getOrdinal: (item: T) => string | undefined, prefix: string) {
     for (let i = 0; i < set.size - 1; i++) {
-        assert(getOrdinal(set.items[i]) <= getOrdinal(set.items[i + 1]), `${prefix}: Not sorted at item ${i}`);
+        const a = getOrdinal(set.items[i]);
+        const b = getOrdinal(set.items[i + 1]);
+        assert(a !== undefined, `${prefix}: Undefined ordinal ${i}`);
+        assert(b !== undefined, `${prefix}: Undefined ordinal  ${i + 1}`);
+        assert(a <= b, `${prefix}: Not sorted at item ${i}`);
     }
 }
 
 function validateSet<T extends SortedSegmentSetItem>(
-    client: TestClient, set: SortedSegmentSet<T>, getOrdinal: (item: T) => string) {
+    client: TestClient, set: SortedSegmentSet<T>, getOrdinal: (item: T) => string | undefined) {
     validateSorted(set, getOrdinal, "initial");
 
     // add content to shift ordinals in tree
@@ -74,5 +80,22 @@ describe("SortedSegmentSet", () => {
         }
         assert.equal(set.size, segmentCount);
         validateSet(client, set, (i) => i.ordinal);
+    });
+
+    it("SortedSegmentSet of local references", () => {
+        const set = new SortedSegmentSet<LocalReferencePosition>();
+        for (let i = 0; i < client.getLength(); i++) {
+            for (const pos of [i, client.getLength() - 1 - i]) {
+                const segmentInfo = client.getContainingSegment(pos);
+                assert(segmentInfo?.segment);
+                const lref = client.createLocalReferencePosition(
+                    segmentInfo.segment, segmentInfo.offset, ReferenceType.SlideOnRemove, undefined);
+                assert.equal(set.has(lref), false);
+                set.addOrUpdate(lref);
+                assert.equal(set.has(lref), true);
+            }
+        }
+        assert.equal(set.size, client.getLength() * 2);
+        validateSet(client, set, (i) => i.getSegment()?.ordinal);
     });
 });
