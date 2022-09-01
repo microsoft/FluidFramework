@@ -36,7 +36,7 @@ type policyAction = "handle" | "resolve" | "final";
 
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
-        "Checks that the dependencies between Fluid Framework packages are following policies.";
+        "Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.";
 
     static flags = {
         fix: Flags.boolean({
