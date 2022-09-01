@@ -71,7 +71,7 @@ Notes:
 
 A newly created container is in a *detached* state. A detached container is not connected to the Fluid service and no data is shared with other clients.
 This is the point where you can create initial data to populate your shared objects if needed.
-This is often useful in the scenarios where you want to make sure that all connected clients have coherent initial state.
+This is often useful in scenarios where you want to make sure that all connected clients have a coherent initial state.
 For example, this could mean setting a minimum table size if collaboration involves tables.
 
 ### Attaching a container
