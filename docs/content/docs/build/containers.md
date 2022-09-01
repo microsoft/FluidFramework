@@ -152,7 +152,7 @@ Notes:
 See the following section on dirty/saved state for more details on that topic.
 
 
-### Dirty/Saved state
+### Dirty/saved state
 
 A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service. You should always check the `isDirty` flag before disposing the container or disconneting from the service.
 Closing or disconnecting the container while `isDirty === true` may result in the loss of operations that have not yet been acknowledged by the service.
