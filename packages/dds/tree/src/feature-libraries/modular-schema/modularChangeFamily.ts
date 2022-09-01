@@ -194,7 +194,7 @@ export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
         deltaReceiver: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ) {
-        super(family, deltaReciever, anchors);
+        super(family, deltaReceiver, anchors);
     }
 
     // TODO: Finish implementation
