@@ -174,8 +174,8 @@ if(container.isDirty) {
 }
 ```
 
-In terms of user experience, keep in mind that the `isDirty` flag will flicker as pending changes are awaiting acknowledgement.
-Therefore, the host may choose to incorporate some delay before interpreting the flag again, when basing the user experience off of its state.
+In terms of user experience, keep in mind that the `isDirty` value will change rapidly as pending changes are awaiting acknowledgement.
+Therefore, the host may choose to incorporate some delay before reading the value again (debouncing), when basing the user experience off of its state.
 
 The container emits the *saved* event to notify the caller that all the local changes have been acknowledged by the service and the document is marked as clean.
 
