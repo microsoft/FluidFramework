@@ -7,7 +7,7 @@
     },
     "include": [
         "src/**/*"
-    ],
+, "src/test/memory/.mocharc.js"    ],
     "exclude": [
         "src/test/**/*"
     ]

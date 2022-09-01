@@ -13,7 +13,7 @@
     },
     "include": [
         "./**/*"
-    ],
+, "memory/.mocharc.js"    ],
     "references": [
         {
             "path": "../.."
