@@ -191,7 +191,7 @@ interface EncodedFieldChange {
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(
         family: ModularChangeFamily,
-        deltaReciever: (delta: Delta.Root) => void,
+        deltaReceiver: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ) {
         super(family, deltaReciever, anchors);
