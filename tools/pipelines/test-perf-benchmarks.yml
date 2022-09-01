@@ -1,7 +1,6 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-
 name: $(Build.BuildId)
 
 trigger:
@@ -21,7 +20,7 @@ trigger:
     - lerna.json
     - lerna-package-lock.json
     - tools/benchmark
-    - tools/perf-test-processing
+    - tools/telemetry-generator
     - tools/pipelines/test-perf-benchmarks.yml
     - tools/pipelines/templates/include-set-package-version.yml
 
@@ -32,7 +31,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Small
+  default: Large
 
 - name: checkoutSubmodules
   type: boolean
@@ -46,8 +45,6 @@ parameters:
   type: string
   default: client
 
-trigger: none
-
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -56,7 +53,6 @@ variables:
     value: 1
   - name: buildDirectory
     value: "."
-
 
 stages:
   # Install / Build / Test Stage
@@ -68,7 +64,7 @@ stages:
         pool: ${{ parameters.poolBuild }}
         variables:
           releaseBuildVar: $[variables.releaseBuild]
-          toolFolder: ${{ variables.buildDirectory }}/tools/perf-test-processing
+          toolAbsolutePath: $(Build.SourcesDirectory)/tools/telemetry-generator
         steps:
         # Setup
         - checkout: self
@@ -125,13 +121,14 @@ stages:
         # - Add custom npm feeds to the tool's .npmrc file
         # - Authenticate to the custom npm feeds
         # - Install the aria-logger package from the custom npm feeds
-        # - Run tests
+        # - Run execution-time tests
+        # - Run memory-usage tests
         # - Process output files and send telemetry to Kusto
         - task: Bash@3
           displayName: 'Add custom feeds to .npmrc'
           inputs:
             targetType: 'inline'
-            workingDirectory: $(toolFolder)
+            workingDirectory: $(toolAbsolutePath)
             script: |
               echo "Adding custom npm feeds to .npmrc"
               cat << EOF >> .npmrc
@@ -147,49 +144,80 @@ stages:
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (internal feed)'
           inputs:
-            workingFile: $(toolFolder)/.npmrc
+            workingFile: $(toolAbsolutePath)/.npmrc
 
         - task: npmAuthenticate@0
           displayName: 'npm authenticate (office feed)'
           inputs:
-            workingFile: $(toolFolder)/.npmrc
+            workingFile: $(toolAbsolutePath)/.npmrc
             customEndpoint: 'Office Packages - Readonly'
 
         - task: Npm@1
           displayName: 'Install @ff-internal/aria-logger'
           inputs:
             command: 'custom'
-            workingDir: $(toolFolder)
+            workingDir: $(toolAbsolutePath)
             customCommand: 'install @ff-internal/aria-logger'
             customRegistry: 'useNpmrc'
 
         - task: Npm@1
-          displayName: 'Run performance benchmarks - runtime'
+          displayName: 'Run performance test - execution time'
           inputs:
             command: 'custom'
             workingDir: ${{ variables.buildDirectory }}
             customCommand: 'run test:benchmark:report'
 
         - task: Npm@1
-          displayName: 'Consolidate output files - runtime'
+          displayName: 'Consolidate output files - execution time'
           inputs:
             command: 'custom'
             workingDir: ${{ variables.buildDirectory }}
             customCommand: 'run test:benchmark:copyresults'
 
         - task: Bash@3
-          displayName: 'Write runtime perf benchmarks to Aria/Kusto'
+          displayName: 'Write measurements to Aria/Kusto - execution time'
           inputs:
             targetType: 'inline'
-            workingDirectory: $(toolFolder)
+            workingDirectory: $(toolAbsolutePath)
             script: |
               npm i;
               npm run build:compile;
-              node --require @ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - Benchmark tests output
+          displayName: 'Publish Artifact - Perf tests output - execution time'
           inputs:
             targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
-            artifactName: 'benchmark-test-outputs'
+            artifactName: 'perf-test-outputs_execution-time'
+            condition: succeededOrFailed()
+
+        - task: Npm@1
+          displayName: 'Run performance test - memory usage'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'run test:memory-profiling:report'
+
+        - task: Npm@1
+          displayName: 'Consolidate output files - memory usage'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'run test:memory-profiling:copyresults'
+
+        - task: Bash@3
+          displayName: 'Write measurements to Aria/Kusto - memory usage'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              npm i;
+              npm run build:compile;
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir '../../memoryProfilingOutput';
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Artifact - Perf tests output - memory usage'
+          inputs:
+            targetPath: '${{ variables.buildDirectory }}/memoryProfilingOutput'
+            artifactName: 'perf-test-outputs_memory-usage'
             condition: succeededOrFailed()

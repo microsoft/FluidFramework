@@ -26,7 +26,7 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
-import { InMemoryCache } from "./cache";
+import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
 
@@ -38,6 +38,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enableDiscovery: false,
     enableWholeSummaryUpload: false,
     enableRestLess: true,
+    enableInternalSummaryCaching: true,
 };
 
 /**
@@ -47,8 +48,8 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
-    private readonly blobCache = new InMemoryCache<ArrayBufferLike>();
-    private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTreeVersion>();
+    private readonly blobCache: ICache<ArrayBufferLike>;
+    private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
@@ -58,6 +59,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
+        this.blobCache = new InMemoryCache<ArrayBufferLike>();
+        if (this.driverPolicies.enableInternalSummaryCaching) {
+            this.snapshotTreeCache = new InMemoryCache<ISnapshotTreeVersion>();
+        } else {
+            this.snapshotTreeCache = new NullCache<ISnapshotTreeVersion>();
+        }
     }
 
     /**
