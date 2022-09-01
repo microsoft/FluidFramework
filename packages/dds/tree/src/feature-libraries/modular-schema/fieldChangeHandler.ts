@@ -25,29 +25,19 @@ export interface FieldChangeHandler<TChangeset> {
 export interface FieldChangeRebaser<TChangeset> {
     /**
      * Compose a collection of changesets into a single one.
-     * See {@link ChangeRebaser} for requirements.
+     * See {@link ChangeRebaser} for details.
      */
      compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
 
      /**
       * @returns the inverse of `changes`.
-      *
-      * `compose([changes, inverse(changes)])` be equal to `compose([])`:
-      * See {@link FieldChangeHandler} for details.
+      * See {@link ChangeRebaser} for details.
       */
      invert(changes: TChangeset, invertChild: NodeChangeInverter): TChangeset;
 
      /**
       * Rebase `change` over `over`.
-      *
-      * The resulting changeset should, as much as possible, replicate the same semantics as `change`,
-      * except be valid to apply after `over` instead of before it.
-      *
-      * Requirements:
-      * The implementation must ensure that:
-      * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
-      * - `rebase(compose([a, b]), c)` is equal to
-      * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
+      * See {@link ChangeRebaser} for details.
       */
      rebase(change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser): TChangeset;
 }

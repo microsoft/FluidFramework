@@ -25,10 +25,9 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
     rebaser: FieldKinds.replaceRebaser(),
     encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
 
-    intoDelta: (change, deltaFromChild) => [{
-        type: Delta.MarkType.Modify,
-        setValue: (change as FieldKinds.Replacement<number>).new,
-    }],
+    intoDelta: (change, deltaFromChild) => change === 0
+        ? []
+        : [{ type: Delta.MarkType.Modify, setValue: change.new }],
 };
 
 const valueField = new FieldKind(
@@ -45,7 +44,7 @@ const singleNodeEncoder: FieldChangeEncoder<FieldChangeMap> = {
 };
 
 const singleNodeRebaser: FieldChangeRebaser<FieldChangeMap> = {
-    compose: (changes, composeChild) => composeChild(changes),
+    compose: (changes, composeChild) => composeChild(...changes),
     invert: (change, invertChild) => invertChild(change),
     rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 };
