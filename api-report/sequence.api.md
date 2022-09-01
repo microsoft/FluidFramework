@@ -280,8 +280,6 @@ export interface ISerializedIntervalCollectionV2 {
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
     // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
-    // (undocumented)
-    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
 }
 
 // @public
@@ -400,8 +398,6 @@ export class SharedIntervalCollection extends SharedObject implements ISharedInt
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    // @deprecated (undocumented)
-    waitIntervalCollection(label: string): Promise<IntervalCollection<Interval>>;
 }
 
 // @public @deprecated
@@ -492,8 +488,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     submitSequenceMessage(message: IMergeTreeOp): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    // @deprecated (undocumented)
-    waitIntervalCollection(label: string): Promise<IntervalCollection<SequenceInterval>>;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
 }
 
@@ -527,8 +521,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     getText(start?: number, end?: number): string;
     // (undocumented)
     getTextRangeWithMarkers(start: number, end: number): string;
-    // @deprecated (undocumented)
-    getTextRangeWithPlaceholders(start: number, end: number): string;
     getTextWithPlaceholders(start?: number, end?: number): string;
     // (undocumented)
     id: string;

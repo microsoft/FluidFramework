@@ -244,13 +244,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
     }
 
-    /**
-     * @deprecated - use `getTextWithPlaceholders` instead.
-     */
-    public getTextRangeWithPlaceholders(start: number, end: number) {
-        return this.getTextWithPlaceholders(start, end);
-    }
-
     public getTextRangeWithMarkers(start: number, end: number) {
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);

@@ -373,6 +373,7 @@ declare function get_current_InterfaceDeclaration_ISharedIntervalCollection():
 declare function use_old_InterfaceDeclaration_ISharedIntervalCollection(
     use: TypeOnly<old.ISharedIntervalCollection<any>>);
 use_old_InterfaceDeclaration_ISharedIntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedIntervalCollection());
 
 /*
@@ -690,6 +691,7 @@ declare function get_current_ClassDeclaration_SharedIntervalCollection():
 declare function use_old_ClassDeclaration_SharedIntervalCollection(
     use: TypeOnly<old.SharedIntervalCollection>);
 use_old_ClassDeclaration_SharedIntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedIntervalCollection());
 
 /*

@@ -406,16 +406,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
-    /**
-     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
-     * are supported. Use `getIntervalCollection` instead.
-     */
-    public async waitIntervalCollection(
-        label: string,
-    ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalCollections.get(label);
-    }
-
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
         return this.intervalCollections.get(label);
     }

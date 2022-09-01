@@ -107,6 +107,7 @@ bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and
 - [Marker.toString simplified](#markertostring-simplified)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
 - [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [waitIntervalCollection removed](#waitintervalcollection-removed)
 - [OldestClientObserver moved to @fluid-experimental/oldest-client-observer](#oldestclientobserver-moved-to-@fluid-experimental/oldest-client-observer)
 - [Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
 - [Remove deprecated data structures from `@fluidframework/sequence`](#remove-deprecated-data-structures-from-fluidframeworksequence)
@@ -221,6 +222,11 @@ The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is n
 `SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
 To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
 The corresponding method on `IMergeTreeTexHelper` will also be removed.
+
+### `waitIntervalCollection` removed
+
+`SharedSegmentSequence.waitIntervalCollection` has been removed.
+Use `getIntervalCollection` instead, which has the same semantics but is synchronous.
 
 ### OldestClientObserver moved to @fluid-experimental/oldest-client-observer
 The `OldestClientObserver` class and its associated interfaces have been removed from @fluid-experimental/task-manager and moved to the new package @fluid-experimental/oldest-client-observer. Please migrate all imports to @fluid-experimental/oldest-client-observer.
