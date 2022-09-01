@@ -11,6 +11,7 @@ import {
     VersionScheme,
 } from "@fluid-tools/version-tools";
 import { FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { StateMachineCommand } from "../base";
@@ -94,6 +95,18 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags>
         skipChecks: skipCheckFlag,
         ...checkFlags,
         ...StateMachineCommand.flags,
+
+        // Test mode flags
+        testMode: Flags.boolean({
+            default: false,
+            description: "Enables test mode. This flag enables other flags used for testing.",
+            hidden: true,
+        }),
+        state: Flags.string({
+            description: "A state to start in when the command initializes. Used to test the processing of specific states.",
+            dependsOn: ["testMode"],
+            hidden: true,
+        }),
     };
 
     async init() {
@@ -115,6 +128,17 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags>
         this.shouldCommit = flags.commit && !flags.skipChecks;
         this.shouldInstall = flags.install && !flags.skipChecks;
         this.shouldCheckBranchUpdate = flags.updateCheck && !flags.skipChecks;
+    }
+
+    async run(): Promise<void> {
+        const flags = this.processedFlags;
+
+        if(flags.state !== undefined) {
+            this.warn(`Setting state to: ${flags.state}`)
+            this.machine.force_transition(flags.state);
+        }
+
+        await super.run();
     }
 
     // eslint-disable-next-line complexity

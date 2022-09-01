@@ -25,14 +25,14 @@ export type InferredFlagsType<T> = T extends FlagInput<infer F>
 export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Command {
     static flags = {
         root: rootPathFlag(),
-        timer: Flags.boolean({
-            default: false,
-            hidden: true,
-        }),
         verbose: Flags.boolean({
             char: "v",
             description: "Verbose logging.",
             required: false,
+        }),
+        timer: Flags.boolean({
+            default: false,
+            hidden: true,
         }),
     };
 
