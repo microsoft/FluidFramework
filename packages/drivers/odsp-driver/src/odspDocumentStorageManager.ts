@@ -311,7 +311,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
                             method = retrievedSnapshot !== undefined ? "cache" : "network";
 
-                            let options: ISnapshotOptions = { ...hostSnapshotOptions };
+                            const options: ISnapshotOptions = { ...hostSnapshotOptions };
                             // Don't fetch the blobs/deltas if it is not the first call.
                             if (!this.firstVersionCall) {
                                 options.blobs = 0;
