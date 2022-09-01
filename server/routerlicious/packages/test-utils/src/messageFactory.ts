@@ -39,7 +39,8 @@ export class KafkaMessageFactory {
         }
     }
 
-    public sequenceMessage(value: any, key: string): IQueuedMessage {
+    public sequenceMessage(value: any | any[], key: string): IQueuedMessage {
+        const valueArray = Array.isArray(value) ? value : [value];
         const partition = this.getPartition(key);
         const offset = this.offsets[partition]++;
 
@@ -48,9 +49,9 @@ export class KafkaMessageFactory {
             partition,
             topic: this.topic,
             value: this.stringify
-                ? JSON.stringify(value)
+                ? JSON.stringify(valueArray)
                 : ({
-                    contents: [value],
+                    contents: valueArray,
                     documentId: this.documentId,
                     tenantId: this.tenantId,
                     type: BoxcarType,
