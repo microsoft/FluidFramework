@@ -70,14 +70,16 @@ export class TypedEventEmitter<TEvent>
     readonly off: TypedEventTransform<this, TEvent>;
 }
 
+// Allow keyof TSig extends string | number since keyof any extending Record<string, any> is string | number (surprise!)
+
 type SignatureKeys<TSig> =
-    keyof TSig extends string ?
+    keyof TSig extends string | number ?
         TSig[keyof TSig] extends any[] ?
             keyof TSig
 : never : never;
 
 type SignatureArgs<TSig, TEvent extends SignatureKeys<TSig> = SignatureKeys<TSig>> =
-    keyof TSig extends string ?
+    keyof TSig extends string | number ?
         TSig[TEvent] extends any[] ?
             TSig[TEvent]
 : never : never;
@@ -106,17 +108,46 @@ class TypedEventEmitter2<TSignatures> extends EventEmitter {
     }
 }
 
-export interface ISampleEventSignatures {
+export interface ISampleEventSignatures extends Record<string, any[]> {
     foo: [x: number, y: string];
     bar: [];
     baz: [options: { a: string; b: boolean; }];
+//    [key: string]: any[];
+//    45: number;
 }
 const sample = new TypedEventEmitter2<ISampleEventSignatures>();
+
+type SignatureKeys2<TSig> =
+    keyof TSig extends string | number ?
+        TSig[keyof TSig] extends any[] ?
+            keyof TSig
+: never : never;
+
+type SignatureArgs2<TSig, TEvent extends SignatureKeys2<TSig> = SignatureKeys2<TSig>> =
+    keyof TSig extends string | number ?
+        TSig[TEvent] extends any[] ?
+            TSig[TEvent]
+: never : never;
+
+
+type SK = SignatureKeys2<ISampleEventSignatures>;
+type SA = SignatureArgs2<ISampleEventSignatures>;
+
+type StringKey<T> = keyof T extends string ? keyof T : never;
+type IK = StringKey<{ [key: string]: any; }>;
+type RK = StringKey<Record<string, any>>;
+
+type IKey = keyof { [key: string]: any; };
+type RKey = keyof ERecord;
+
+interface ERecord extends Record<string, any> {}
 
 // These are strongly typed (assuming you spell the type parameter correctly)
 sample.emit("foo", 3, "asdf");
 sample.emit("bar");
 sample.emit("baz", { a: "hello", b: true });
 
-// Not supported
+// Now this is supported. But we lose suggestions on event names (but if you get the name right you still get the specific signature in intellisense)
 sample.emit("unspecified", 123);
+
+sample.on("foo", (x: number, y: string) => {});
