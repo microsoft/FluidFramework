@@ -38,7 +38,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enableDiscovery: false,
     enableWholeSummaryUpload: false,
     enableRestLess: true,
-    enableInternalCaching: true,
+    enableInternalSummaryCaching: true,
 };
 
 /**
@@ -60,7 +60,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             ...driverPolicies,
         };
         this.blobCache = new InMemoryCache<ArrayBufferLike>();
-        if (this.driverPolicies.enableInternalCaching) {
+        if (this.driverPolicies.enableInternalSummaryCaching) {
             this.snapshotTreeCache = new InMemoryCache<ISnapshotTreeVersion>();
         } else {
             this.snapshotTreeCache = new NullCache<ISnapshotTreeVersion>();

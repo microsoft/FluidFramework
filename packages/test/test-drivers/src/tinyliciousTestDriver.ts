@@ -20,12 +20,7 @@ export class TinyliciousTestDriver implements ITestDriver {
 
     constructor(private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi) { }
     createDocumentServiceFactory(): IDocumentServiceFactory {
-        return new this.api.RouterliciousDocumentServiceFactory(
-            new InsecureTinyliciousTokenProvider(),
-            {
-                enableInternalCaching: true,
-            },
-        );
+        return new this.api.RouterliciousDocumentServiceFactory(new InsecureTinyliciousTokenProvider());
     }
     createUrlResolver(): InsecureTinyliciousUrlResolver {
         return new InsecureTinyliciousUrlResolver();
