@@ -114,8 +114,6 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
 }
 
 describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
-    let disableIsolatedChannels = false;
-
     function assertSubtree(tree: ISnapshotTreeWithBlobContents, key: string, msg?: string):
         ISnapshotTreeWithBlobContents {
         const subTree = tree.trees[key];
@@ -123,9 +121,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         return subTree;
     }
 
-    const assertChannelsTree = (rootOrDatastore: ISnapshotTreeWithBlobContents) => disableIsolatedChannels
-        ? rootOrDatastore
-        : assertSubtree(rootOrDatastore, ".channels");
+    const assertChannelsTree = (rootOrDatastore: ISnapshotTreeWithBlobContents) =>
+        assertSubtree(rootOrDatastore, ".channels");
     const assertProtocolTree = (root: ISnapshotTreeWithBlobContents) => assertSubtree(root, ".protocol");
 
     function assertChannelTree(rootOrDatastore: ISnapshotTreeWithBlobContents, key: string, msg?: string) {
@@ -195,7 +192,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         ]);
         const codeLoader = new LocalCodeLoader(
             [[codeDetails, factory]],
-            { summaryOptions: { disableIsolatedChannels } });
+            {});
         const testLoader = new Loader({
             urlResolver: provider.urlResolver,
             documentServiceFactory: provider.documentServiceFactory,
@@ -797,13 +794,4 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
     // Run once with isolated channels
     tests();
-
-    // Run again with isolated channels disabled
-    describe("With isolated channels disabled", () => {
-        before(() => {
-            disableIsolatedChannels = true;
-        });
-
-        tests();
-    });
 });
