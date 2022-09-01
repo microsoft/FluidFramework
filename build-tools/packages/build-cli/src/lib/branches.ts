@@ -116,9 +116,9 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
 
     let branchVersion: string;
     if (schemeIsInternal === true) {
-        branchVersion = fromInternalScheme(version)[1].version
+        branchVersion = fromInternalScheme(version)[1].version;
     } else if (scheme === "virtualPatch") {
-        branchVersion = fromVirtualPatchScheme(version).version
+        branchVersion = fromVirtualPatchScheme(version).version;
     } else {
         branchVersion = version;
     }
@@ -133,7 +133,9 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
 
     const releaseBranchVersion =
         scheme === "virtualPatch"
-            ? toVirtualPatchScheme(`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`).version
+            ? toVirtualPatchScheme(
+                  `${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
+              ).version
             : `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
     branchPath.push(releaseBranchVersion);
 
