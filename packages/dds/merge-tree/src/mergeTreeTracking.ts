@@ -10,10 +10,10 @@ import { SortedSegmentSet } from "./sortedSegmentSet";
 export type Trackable = ISegment | LocalReferencePosition;
 
 export class TrackingGroup {
-    private readonly segmentSet: SortedSegmentSet<Trackable>;
+    private readonly trackedSet: SortedSegmentSet<Trackable>;
 
     constructor() {
-        this.segmentSet = new SortedSegmentSet<Trackable>();
+        this.trackedSet = new SortedSegmentSet<Trackable>();
     }
 
     /**
@@ -23,30 +23,30 @@ export class TrackingGroup {
      */
     public get segments(): readonly ISegment[] {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.segmentSet.items.map((v) => v.isLeaf() ? v : v.getSegment()!);
+        return this.trackedSet.items.map((v) => v.isLeaf() ? v : v.getSegment()!);
     }
 
     public get tracked(): readonly Trackable[] {
-        return this.segmentSet.items;
+        return this.trackedSet.items;
     }
 
     public get size(): number {
-        return this.segmentSet.size;
+        return this.trackedSet.size;
     }
 
     public has(trackable: Trackable): boolean {
-        return this.segmentSet.has(trackable);
+        return this.trackedSet.has(trackable);
     }
 
     public link(trackable: Trackable) {
-        if (!this.segmentSet.has(trackable)) {
-            this.segmentSet.addOrUpdate(trackable);
+        if (!this.trackedSet.has(trackable)) {
+            this.trackedSet.addOrUpdate(trackable);
             trackable.trackingCollection.link(this);
         }
     }
 
     public unlink(segment: Trackable) {
-        if (this.segmentSet.remove(segment)) {
+        if (this.trackedSet.remove(segment)) {
             segment.trackingCollection.unlink(this);
         }
     }

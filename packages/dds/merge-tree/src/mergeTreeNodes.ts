@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-/* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
+/* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
 import {
@@ -28,6 +28,7 @@ import {
     MergeTreeDeltaType,
     ReferenceType,
 } from "./ops";
+import { computeOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
 import {
     clone,
@@ -347,23 +348,12 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
             childCount = 7;
         }
         assert((childCount >= 1) && (childCount <= 7), 0x040 /* "Child count is not within [1,7] range!" */);
-        let localOrdinal: number;
-        const ordinalWidth = 1 << (MaxNodesInBlock - (childCount + 1));
-        if (index === 0) {
-            localOrdinal = ordinalWidth - 1;
-        } else {
-            const prevOrd = this.children[index - 1].ordinal;
-            const prevOrdCode = prevOrd.charCodeAt(prevOrd.length - 1);
-            localOrdinal = prevOrdCode + ordinalWidth;
-        }
-        child.ordinal = this.ordinal + String.fromCharCode(localOrdinal);
-        assert(child.ordinal.length === (this.ordinal.length + 1), 0x041 /* "Unexpected child ordinal length!" */);
-        if (index > 0) {
-            assert(
-                child.ordinal > this.children[index - 1].ordinal,
-                0x042, /* "Child ordinal <= previous sibling ordinal!" */
+        child.ordinal = computeOrdinal(
+            MaxNodesInBlock,
+            childCount,
+            this.ordinal,
+            index === 0 ? undefined : this.children[index - 1]?.ordinal,
             );
-        }
     }
 
     public assignChild(child: IMergeNode, index: number, updateOrdinal = true) {

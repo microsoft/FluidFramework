@@ -9,7 +9,7 @@ import { ISegment } from "../mergeTreeNodes";
 import { LocalReferencePosition } from "../localReference";
 import { ReferenceType } from "../ops";
 import { TestClient } from "./testClient";
-const segmentCount = 15;
+const segmentCount = 100;
 
 function validateSorted<T extends SortedSegmentSetItem>(
     set: SortedSegmentSet<T>, getOrdinal: (item: T) => string | undefined, prefix: string) {

@@ -5,6 +5,7 @@
 
 import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
+import { computeOrdinal } from "./ordinal";
 
 export type SortedSegmentSetItem =
     ISegment
@@ -61,11 +62,24 @@ export class SortedSegmentSet<
         const maybeRef = item as Partial<LocalReferencePosition>;
         if (maybeRef.getSegment !== undefined && maybeRef.isLeaf?.() === false) {
             const lref = maybeRef as LocalReferencePosition;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const segment = lref.getSegment()!;
+            const offset = lref.getOffset();
             // Give the local reference a temporary yet valid ordinal.
-            // We pad the ordinal with char(0) to leave space for siblings,
-            // and then add the offset, so the local refs are sorted by
-            // offset which preserves the ordering if the segment splits.
-            return `${lref.getSegment()}${String.fromCharCode(0)}${lref.getOffset()}`;
+            // for this ordinal we treat each offset as a child position
+            // this is pretty cheap to compute, and i don't see any
+            // easy way to reuse, as the segment ordinal can change
+            // out of band
+            let previousOrdinal: string | undefined;
+            for (let i = 0; i <= offset; i++) {
+                previousOrdinal = computeOrdinal(
+                    segment.cachedLength,
+                    i,
+                    segment.ordinal,
+                    previousOrdinal);
+            }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return previousOrdinal!;
         }
         const maybeObject = item as { readonly segment: ISegment; };
         if (maybeObject?.segment) {
