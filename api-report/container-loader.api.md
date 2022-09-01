@@ -12,6 +12,7 @@ import { IAudienceOwner } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
+import { IConnectionDetails } from '@fluidframework/container-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerEvents } from '@fluidframework/container-definitions';
 import { IContainerLoadMode } from '@fluidframework/container-definitions';
@@ -204,6 +205,8 @@ export interface IPendingContainerState {
 export interface IProtocolHandler extends IProtocolHandler_2 {
     // (undocumented)
     readonly audience: IAudienceOwner;
+    // (undocumented)
+    connectionHandler?(details: IConnectionDetails, opsBehind?: number): any;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
 }

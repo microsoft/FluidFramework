@@ -18,6 +18,7 @@ import {
     IFluidCodeDetails,
     IFluidModuleWithDetails,
     IFluidModule,
+    LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
@@ -118,13 +119,13 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
                     IRuntimeFactory: runtimeFactory,
                 },
             },
-            details: { package: packageJson.name, config: { } },
+            details: { package: packageJson.name, config: {} },
         };
     }
 
     return {
         module: fluidModule,
-        details: { package: packageJson.name, config: { } },
+        details: { package: packageJson.name, config: {} },
     };
 }
 
@@ -303,8 +304,14 @@ export async function start(
             );
             assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);
         }
-        container1 = await loader1.resolve({ url: documentUrl });
+        container1 = await loader1.resolve({
+            url: documentUrl,
+            headers: {
+                [LoaderHeader.loadMode]: { deltaConnection: "delayed" },
+            },
+        });
         containers.push(container1);
+        container1.connect();
     }
 
     let leftDiv: HTMLDivElement = div;
@@ -354,10 +361,16 @@ export async function start(
         // Create a new request url from the resolvedUrl of the first container.
         assert(container1.resolvedUrl !== undefined, 0x31b /* container1.resolvedUrl is undefined */);
         const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
-        const container2 = await loader2.resolve({ url: requestUrl2 });
+        const container2 = await loader2.resolve({
+            url: requestUrl2,
+            headers: {
+                [LoaderHeader.loadMode]: { deltaConnection: "delayed" },
+            },
+        });
         containers.push(container2);
 
         await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
+        container2.connect();
         // Handle the code upgrade scenario (which fires contextChanged)
         container2.on("contextChanged", () => {
             assert(rightDiv !== undefined, 0x31c /* rightDiv is undefined */);
