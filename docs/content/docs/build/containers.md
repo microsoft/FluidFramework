@@ -44,8 +44,8 @@ const schema = {
 };
 ```
 
-Note above that even though `SharedString` was used in the `initialObject`, it should still be included in `dynamicObjectTypes` if you
-plan to create dynamic `SharedString` after the container has been created.
+Note that even though `SharedString` was used in the `initialObjects` in the example above, it must also be included in `dynamicObjectTypes` if you
+want to create dynamic `SharedString` after the container has been created.
 
 ### Creating a container
 
