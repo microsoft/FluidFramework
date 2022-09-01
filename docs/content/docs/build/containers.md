@@ -67,7 +67,7 @@ const containerId = await container.attach();
 Notes:
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
-- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
+- It is a good practice to destructure the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example using `services`, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 A newly created container is in a *detached* state. A detached container is not connected to the Fluid service and no data is shared with other clients.
 This is the point where you can create initial data to populate your shared objects if needed.
