@@ -688,6 +688,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(map2.get(i.toString()), i, `map 2 ${map2.get(i.toString())} !== ${i}`));
     });
 
+    // TODO: remove skip after solving https://dev.azure.com/fluidframework/internal/_workitems/edit/1788
     it.skip("can make changes offline and stash them", async function() {
         const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
@@ -792,6 +793,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await map2.get("blob handle").get(), "utf8"), "blob contents");
     });
 
+    // TODO: remove skip after solving https://dev.azure.com/fluidframework/internal/_workitems/edit/1788
     it.skip("stashed changes with blobs", async function() {
         const container = await loadOffline(provider, { url });
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
