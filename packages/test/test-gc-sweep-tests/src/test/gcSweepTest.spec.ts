@@ -263,15 +263,9 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
              * At this point the test has finished, we might want to store a list of all the actions at this point and await them all to make sure they finish.
              * Feel free to put anything in the debug object. It's likely to get big. You can also put a range of actions if you're just trying to hone in on
              * what changed.
+             *
+             * This is the validation and data storage part of the test.
              */
-            const debugObject = {
-                actionCount: actionsList.length,
-                actionsList,
-                errorCount: errorList.length,
-                errorList,
-                ...actionStats,
-                handleRecord: handleTracker.handleActionRecord,
-            };
 
             const stats = {
                 ...actionStats,
@@ -289,13 +283,13 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
             fs.writeFileSync(`nyc/testData-${seed}/errors.json`, JSON.stringify(errorList));
 
             // Check that we don't have errors and print the debug object
-            assert(errorList.length === 0, `${errorList} errors occurred! Check the nyc/testData-${seed}/errors.json`);
+            assert(errorList.length === 0, `${errorList.length} errors occurred! Check the nyc/testData-${seed}/errors.json`);
 
             // Check that we don't have any error logs
             assert(overrideLogger.errorEvents.length === 0, `${overrideLogger.errorEvents.length} error events have been logged! Check the nyc/testData-${seed}/errorEvents.json`);
 
             /**
-             * This is just some heuristic expectations
+             * This is just some heuristic expectations and validations
              * - expect some number of actions.
              * - expect some number of each action type.
              *
@@ -303,7 +297,7 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
              */
             const minimumExpectedActions = 100;
             const minimumExpectedActionsPerActionType = minimumExpectedActions / 10;
-            assert(actionsList.length > minimumExpectedActions, `Very few actions!\nDebug: ${JSON.stringify(debugObject)}`);
+            assert(actionsList.length > minimumExpectedActions, `Very few actions!`);
             Object.entries(actionStats).forEach(([name, stat]) => {
                 assert(stat >= minimumExpectedActionsPerActionType, `There are less than ${minimumExpectedActionsPerActionType} calls to ${name}!`);
             });
