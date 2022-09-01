@@ -29,9 +29,8 @@ describe("Pending State Manager", () => {
                 clientId: () => undefined,
                 close: () => closeCalled = true,
                 connected: () => true,
-                flush: () => { },
-                flushMode: () => FlushMode.Immediate,
-                reSubmit: () => { },
+                flush: () => {},
+                reSubmit: () => {},
                 rollback: (type, content, metadata) => {
                     rollbackCalled = true;
                     rollbackContent.push(content);
@@ -39,8 +38,8 @@ describe("Pending State Manager", () => {
                         throw new Error();
                     }
                 },
-                setFlushMode: () => { },
-            }, FlushMode.Immediate, undefined);
+                orderSequentially: () => {},
+            }, undefined);
         });
 
         it("should do nothing when rolling back empty pending stack", () => {
@@ -121,15 +120,14 @@ describe("Pending State Manager", () => {
         beforeEach(async () => {
             pendingStateManager = new PendingStateManager({
                 applyStashedOp: () => { throw new Error(); },
-                clientId: () => clientId,
+                clientId: () => undefined,
                 close: (error?: ICriticalContainerError) => closeError = error,
                 connected: () => true,
-                flush: () => { },
-                flushMode: () => FlushMode.TurnBased,
-                reSubmit: () => { },
+                flush: () => {},
+                reSubmit: () => {},
                 rollback: () => { },
-                setFlushMode: () => { },
-            }, FlushMode.TurnBased, undefined);
+                orderSequentially: () => {},
+            }, undefined);
         });
 
         const submitBatch = (messages: Partial<ISequencedDocumentMessage>[]) => {
