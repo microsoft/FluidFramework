@@ -120,8 +120,11 @@ export type ChangesetFromChangeRebaser<
  * - `inverse(a)` gives the inverse element of `a`.
  *
  * In these requirements the definition of equality is up to the implementer,
- * but it is required that any two changes which are considered equal
- * have the same impact when applied to any tree, and rebaseAnchors has identical effects as well.
+ * but it is required that any two changes which are considered equal:
+ * - have the same impact when applied to any tree.
+ * - can be substituted for each-other in all methods on this
+ * interface and produce equal (by this same definition) results.
+ *
  * For the sake of testability, implementations will likely want to have a concrete equality implementation.
  *
  * This API uses `compose` on arrays instead of an explicit identity element and associative binary operator
@@ -160,10 +163,12 @@ export interface ChangeRebaser<TChangeset> {
      * except be valid to apply after `over` instead of before it.
      *
      * Requirements:
-     * The implementation must ensure that:
+     * The implementation must ensure that for all possible changesets `a`, `b` and `c`:
      * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
      * - `rebase(compose([a, b]), c)` is equal to
      * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
+     * - `rebase(a, compose([]))` is equal to `a`.
+     * - `rebase(compose([]), a)` is equal to `a`.
      */
     rebase(change: TChangeset, over: TChangeset): TChangeset;
 
