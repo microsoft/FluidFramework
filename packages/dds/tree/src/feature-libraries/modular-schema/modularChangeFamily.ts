@@ -50,7 +50,7 @@ export class ModularChangeFamily implements
             const kind = changesForField[0].fieldKind;
             const composedField = getChangeHandler(this.fieldKinds, kind).rebaser.compose(
                 changesForField.map((change) => change.change),
-                (...childChanges) => this.compose(childChanges),
+                (childChanges) => this.compose(childChanges),
             );
 
             // TODO: Could optimize by checking that composedField is non-empty

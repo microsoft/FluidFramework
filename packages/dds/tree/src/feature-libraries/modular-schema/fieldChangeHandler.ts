@@ -63,7 +63,7 @@ export type NodeChangeRebaser = (
     baseChange: FieldChangeMap
 ) => FieldChangeMap;
 
-export type NodeChangeComposer = (...changes: FieldChangeMap[]) => FieldChangeMap;
+export type NodeChangeComposer = (changes: FieldChangeMap[]) => FieldChangeMap;
 export type NodeChangeEncoder = (change: FieldChangeMap) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => FieldChangeMap;
 

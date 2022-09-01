@@ -584,7 +584,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
 
 // @public (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
-    constructor(family: ModularChangeFamily, deltaReciever: (delta: Delta.Root) => void, anchors: AnchorSet);
+    constructor(family: ModularChangeFamily, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
 }
 
 // @public
@@ -650,7 +650,7 @@ export const neverTree: TreeSchema;
 const noChangeHandle: FieldChangeHandler<0>;
 
 // @public (undocumented)
-export type NodeChangeComposer = (...changes: FieldChangeMap[]) => FieldChangeMap;
+export type NodeChangeComposer = (changes: FieldChangeMap[]) => FieldChangeMap;
 
 // @public (undocumented)
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => FieldChangeMap;
