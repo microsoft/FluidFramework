@@ -162,9 +162,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly subscribedTasks: Set<string> = new Set();
 
     /**
-     * Tracks tasks that have been completed locally and are pending ack.
+     * Map to track tasks that have pending complete ops.
      */
-     private readonly pendingCompletedTasks: Set<string> = new Set();
+     private readonly pendingCompletedTasks: Map<string, number[]> = new Map();
 
     /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
@@ -190,10 +190,12 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            // Ignore the volunteer op if we know this task is completed
-            if (!this.pendingCompletedTasks.has(taskId)) {
-                this.addClientToQueue(taskId, clientId);
+            const pendingIds = this.pendingCompletedTasks.get(taskId);
+            if (pendingIds !== undefined && pendingIds.length > 0) {
+                // Ignore the volunteer op if we know this task is about to be completed
+                return;
             }
+            this.addClientToQueue(taskId, clientId);
         });
 
         this.opWatcher.on("abandon", (taskId: string, clientId: string, local: boolean, messageId: number) => {
@@ -222,14 +224,21 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     // Delete the pending, because we no longer have an outstanding op
                     this.latestPendingOps.delete(taskId);
                 }
+
+                // Remove complete op from this.pendingCompletedTasks
+                const pendingIds = this.pendingCompletedTasks.get(taskId);
+                assert(pendingIds !== undefined && pendingIds.length > 0, "pendingIds is empty");
+                if (pendingIds.length === 1) {
+                    this.pendingCompletedTasks.delete(taskId);
+                } else {
+                    const index = pendingIds.indexOf(pendingOp.messageId);
+                    assert((index !== undefined) && index > -1, "Unable to find complete op id");
+                    this.pendingCompletedTasks.get(taskId)?.splice(index, 1);
+                }
             }
 
-            // We consider locally completed tasks "pending" until they are ack'd. Once they are ack'd the local client
-            // can remove it from this.pendingCompletedTasks. For all other clients, we need to remove the task from
-            // the queue and emit the proper events.
-            if (this.pendingCompletedTasks.has(taskId)) {
-                this.pendingCompletedTasks.delete(taskId);
-            } else {
+            // For clients in queue, we need to remove them from the queue and raise the proper events.
+            if (!local) {
                 this.taskQueues.delete(taskId);
                 this.completedWatcher.emit("completed", taskId);
                 this.emit("completed", taskId);
@@ -311,6 +320,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             type: "complete",
             messageId: ++this.messageId,
         };
+
+        if (this.pendingCompletedTasks.has(taskId)) {
+            this.pendingCompletedTasks.get(taskId)?.push(pendingOp.messageId);
+        } else {
+            this.pendingCompletedTasks.set(taskId, [pendingOp.messageId]);
+        }
+
         this.submitLocalMessage(op, pendingOp.messageId);
         this.latestPendingOps.set(taskId, pendingOp);
     }
@@ -508,7 +524,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.taskQueues.delete(taskId);
         this.completedWatcher.emit("completed", taskId);
         this.emit("completed", taskId);
-        this.pendingCompletedTasks.add(taskId);
     }
 
     /**
