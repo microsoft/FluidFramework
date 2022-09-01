@@ -764,6 +764,12 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags>
                 break;
             }
 
+            case "PromptToPRReleasedDepsBump": {
+                this.errorLog(`Not yet implemented`);
+                this.exit();
+                break;
+            }
+
             default: {
                 localHandled = false;
             }

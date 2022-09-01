@@ -69,7 +69,7 @@ export const stateDescriptions = new Map([
     ["PromptToIntegrateNext", "Prompts the user to integrate main and next."],
     ["PromptToPRBump", "Prompts to create a bump PR from the current branch."],
     ["PromptToPRDeps", "Prompts to create a dependency bump PR from the current branch."],
-    ["PromptToPRReleasedDepsBump", "Prompts to create a bump PR from the current branch."],
+    ["PromptToPRReleasedDepsBump", "TODO"],
     ["PromptToRelease", "Prompts to run a release build in ADO."],
     ["PromptToReleaseDeps", "Prompts to run a release builds in ADO for unreleased dependencies."],
 ]);
