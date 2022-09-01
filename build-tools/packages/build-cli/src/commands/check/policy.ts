@@ -34,6 +34,14 @@ const readStdin: () => Promise<string | undefined> = async () => {
 
 type policyAction = "handle" | "resolve" | "final";
 
+
+/**
+ * This tool enforces polices across the code base via a series of handlers.
+ *
+ * @remarks
+ *
+ * This command is equivalent to `fluid-repo-policy-check`.
+ */
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
         "Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.";
@@ -75,13 +83,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     async run() {
         const handlerRegex: RegExp =
             this.processedFlags.handler === undefined
-                : /.?/
-                ? new RegExp(this.processedFlags.handler, "i");
+                ? /.?/
+                : new RegExp(this.processedFlags.handler, "i");
+
         const pathRegex: RegExp =
-            // eslint-disable-next-line no-negated-condition
-            this.processedFlags.path !== undefined
-                ? new RegExp(this.processedFlags.path, "i")
-                : /.?/;
+            this.processedFlags.path === undefined
+                ? /.?/
+                : new RegExp(this.processedFlags.path, "i");
 
         if (this.processedFlags.handler !== undefined) {
             this.log(`Filtering handlers by regex: ${handlerRegex}`);
