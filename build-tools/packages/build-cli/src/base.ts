@@ -74,17 +74,17 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
     /**
      * @returns A default logger that can be passed to core functions enabling them to log using the command logging
      * system */
-    protected async getLogger(): Promise<Logger> {
+    protected get logger(): Logger {
         if (this._logger === undefined) {
             this._logger = {
-                log: (msg: string | Error) => {
+                info: (msg: string | Error) => {
                     this.log(msg.toString());
                 },
-                logWarning: this.warn.bind(this),
-                logError: (msg: string | Error) => {
-                    this.error(msg);
+                warning: this.warn.bind(this),
+                error: (msg: string | Error) => {
+                    this.errorLog(msg);
                 },
-                logVerbose: (msg: string | Error) => {
+                verbose: (msg: string | Error) => {
                     this.verbose(msg);
                 },
             };
@@ -104,7 +104,6 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
             const resolvedRoot = await getResolvedFluidRoot();
             const gitRepo = new GitRepo(resolvedRoot);
             const branch = await gitRepo.getCurrentBranchName();
-            const logger = await this.getLogger();
 
             this.verbose(`Repo: ${resolvedRoot}`);
             this.verbose(`Branch: ${branch}`);
@@ -113,19 +112,41 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
                 gitRepo,
                 "github.com/microsoft/FluidFramework",
                 branch,
-                logger,
+                this.logger,
             );
         }
 
         return this._context;
     }
 
-    public warn(message: string | Error): string | Error {
+    /** Output a horizontal rule. */
+    protected logHr() {
+        this.log("=".repeat(72));
+    }
+
+    /** Log a message with an indent. */
+    protected logIndent(input: string, indent = 2) {
+        this.log(`${this.indent(indent)}${input}`);
+    }
+
+    /** Indent text by prepending spaces. */
+    protected indent(indent = 2): string {
+        return " ".repeat(indent);
+    }
+
+    /** Logs an error without exiting. */
+    protected errorLog(message: string | Error) {
+        this.log(chalk.red(`ERROR: ${message}`));
+    }
+
+    /** Logs a warning. */
+    protected warning(message: string | Error): string | Error {
         this.log(chalk.yellow(`WARNING: ${message}`));
         return message;
     }
 
-    public verbose(message: string | Error): string | Error {
+    /** Logs a verbose log statement. */
+    protected verbose(message: string | Error): string | Error {
         if (this.baseFlags.verbose === true) {
             if (typeof message === "string") {
                 this.log(chalk.grey(`VERBOSE: ${message}`));
@@ -135,20 +156,5 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
         }
 
         return message;
-    }
-
-    /** Output a horizontal rule. */
-    public logHr() {
-        this.log("=".repeat(72));
-    }
-
-    public logError(message: string | Error) {
-        this.log(chalk.red(`ERROR: ${message}`));
-        this.exit();
-    }
-
-    /** Log a message with an indent. */
-    public logIndent(input: string, indent = 2) {
-        this.log(`${" ".repeat(indent)}${input}`);
     }
 }

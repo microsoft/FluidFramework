@@ -700,8 +700,8 @@
       "subCapability": "AutoMerge",
       "version": "1.0",
       "config": {
-        "taskName": "Automatically squash-merge pull requests in next",
-        "label": "",
+        "taskName": "Automatically merge pull requests in next",
+        "label": "msftbot: merge-next",
         "silentMode": false,
         "minMinutesOpen": "5",
         "deleteBranches": true,
@@ -711,14 +711,6 @@
         "usePrDescriptionAsCommitMessage": true,
         "requireAllStatuses": false,
         "conditionalMergeTypes": [
-          {
-            "mergeType": "squash",
-            "condition": {
-              "placeholder": "labels",
-              "operator": "contains",
-              "label_name": "msftbot: merge-next"
-            }
-          },
           {
             "mergeType": "squash",
             "condition": {
@@ -742,8 +734,17 @@
               "operator": "notEquals",
               "value": "github-actions"
             }
+          },
+          {
+            "mergeType": "merge",
+            "condition": {
+              "placeholder": "labels",
+              "operator": "contains",
+              "label_name": "main-next-integrate"
+            }
           }
-        ]
+        ],
+        "mergeType": "squash"
       },
       "disabled": false
     },
@@ -1922,6 +1923,31 @@
             }
           }
         ]
+      }
+    },
+    {
+      "taskType": "trigger",
+      "capabilityId": "IssueResponder",
+      "subCapability": "PullRequestCommentResponder",
+      "version": "1.0",
+      "config": {
+        "conditions": {
+          "operator": "and",
+          "operands": []
+        },
+        "eventType": "pull_request",
+        "eventNames": [
+          "issue_comment"
+        ],
+        "actions": [
+          {
+            "name": "approvePullRequest",
+            "parameters": {
+              "comment": "#sign-off"
+            }
+          }
+        ],
+        "taskName": "Approve pull request by adding a comment"
       }
     }
   ],

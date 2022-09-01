@@ -74,7 +74,7 @@ $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version)
-@fluid-tools/version-tools/0.3.2000 win32-x64 node-v14.18.1
+@fluid-tools/version-tools/0.4.3000 linux-x64 node-v14.20.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
@@ -87,6 +87,7 @@ USAGE
 <!-- commands -->
 * [`fluv help [COMMAND]`](#fluv-help-command)
 * [`fluv version VERSION`](#fluv-version-version)
+* [`fluv version latest`](#fluv-version-latest)
 
 ## `fluv help [COMMAND]`
 
@@ -146,9 +147,43 @@ EXAMPLES
   You can use ^ and ~ as a shorthand.
 
     $ fluv version ^1.0.0
+
+  You can use the 'current' bump type to calculate ranges without bumping the version.
+
+    $ fluv version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/version.ts)_
+_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/version.ts)_
+
+## `fluv version latest`
+
+Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+```
+USAGE
+  $ fluv version latest -r <value> [--json] [--prerelease]
+
+FLAGS
+  -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
+                             multiple versions, or a space-delimited list of versions can be provided using a single
+                             argument.
+  --prerelease               Include prerelease versions. By default, prerelease versions are excluded.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+EXAMPLES
+  You can use the --versions (-r) flag multiple times.
+
+    $ fluv version latest -r 2.0.0 -r 2.0.0-internal.1.0.0 -r 1.0.0 -r 0.56.1000
+
+  You can omit the repeated --versions (-r) flag and pass a space-delimited list instead.
+
+    $ fluv version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
+```
 <!-- commandsstop -->
 
 ## Trademark

@@ -203,8 +203,7 @@ export class SummaryManager implements IDisposable {
             // the summarizer at all.
             const shouldSummarizeStateEarlyStage = this.getShouldSummarizeState();
             if (startWithInitialDelay &&
-                shouldSummarizeStateEarlyStage.shouldSummarize === false &&
-                !Summarizer.stopReasonCanRunLastSummary(shouldSummarizeStateEarlyStage.stopReason)) {
+                shouldSummarizeStateEarlyStage.shouldSummarize === false) {
                     return `early exit ${shouldSummarizeStateEarlyStage.stopReason}`;
             }
 
@@ -223,14 +222,16 @@ export class SummaryManager implements IDisposable {
             // the summarizer at all.
             const shouldSummarizeState = this.getShouldSummarizeState();
             if (shouldSummarizeState.shouldSummarize === false) {
-                if (!Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)) {
+                // In order to allow the last summary to run, we not only need a stop reason that would
+                // allow it but also, startWithInitialDelay to be false (start the summarization immediately),
+                // which would happen when we have a high enough number of unsummarized ops.
+                if (startWithInitialDelay || !Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)) {
                     this.state = SummaryManagerState.Starting;
                     summarizer.stop(shouldSummarizeState.stopReason);
                     return `early exit after starting summarizer ${shouldSummarizeState.stopReason}`;
                 }
                 this.logger.sendTelemetryEvent({
                     eventName: "LastAttemptToSummarize",
-                    startWithInitialDelay,
                 });
             }
 

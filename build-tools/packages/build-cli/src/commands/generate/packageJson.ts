@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-    generateMonoRepoInstallPackageJson,
-    isMonoRepoKind,
-    Timer,
-} from "@fluidframework/build-tools";
+import { isMonoRepoKind, Timer } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
+import { generateMonoRepoInstallPackageJson } from "../../genMonoRepoPackageJson";
 
 export class GeneratePackageJson extends BaseCommand<typeof GeneratePackageJson.flags> {
     static description = `Generate mono repo package json`;
@@ -20,7 +17,7 @@ export class GeneratePackageJson extends BaseCommand<typeof GeneratePackageJson.
     };
 
     async run() {
-        const { flags } = await this.parse(GeneratePackageJson);
+        const flags = this.processedFlags;
         const timer = new Timer(flags.timer);
 
         const context = await this.getContext();
@@ -38,7 +35,8 @@ export class GeneratePackageJson extends BaseCommand<typeof GeneratePackageJson.
                 this.error(`release group couldn't be found.`);
             }
 
-            await generateMonoRepoInstallPackageJson(releaseGroup);
+            const logger = this.logger;
+            await generateMonoRepoInstallPackageJson(releaseGroup, logger);
         }
 
         this.error(`release group is not mono repo kind.`);

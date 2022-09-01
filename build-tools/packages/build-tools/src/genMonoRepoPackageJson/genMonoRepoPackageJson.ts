@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @deprecated -- in favor build-tools/packages/build-cli/src/genMonoRepoPackageJson.ts
+ */
+
 import { FluidRepo } from "../common/fluidRepo";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Timer } from "../common/timer";
@@ -190,7 +194,7 @@ function processDevDependencies(repoPackageJson: PackageJson, packageJson: Packa
     return devDepCount++;
 }
 
-export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
+async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
     const packageMap = new Map<string, Package>(monoRepo.packages.map(pkg => [pkg.name, pkg]));
     const repoPackageJson: PackageJson = {
         name: `@fluid-internal/${monoRepo.kind.toLowerCase()}`,

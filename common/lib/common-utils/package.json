@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/common-utils",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Collection of utility functions for Fluid",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -103,7 +103,7 @@
     "@types/sinon": "^7.0.13",
     "benchmark": "^2.1.4",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
     "eslint-config-prettier": "~8.5.0",
     "jest": "^26.6.3",

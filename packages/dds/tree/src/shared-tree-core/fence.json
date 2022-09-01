@@ -1,5 +1,10 @@
 {
     "tags": [ "shared-tree-core" ],
     "exports": ["index"],
-    "imports": ["schema-stored","tree","dependency-tracking","util","rebase","changeset"]
+    "imports": [
+        "change-family",
+        "edit-manager",
+        "tree",
+        "util"
+    ]
 }
