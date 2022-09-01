@@ -231,7 +231,8 @@ const peer1: SessionId = "1";
 const peer2: SessionId = "2";
 
 const NUM_STEPS = 5;
-const NUM_CLIENTS = 3;
+const NUM_PEERS = 2;
+const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1));
 
 type TestCommit = Commit<TestChangeset>;
 
@@ -240,8 +241,10 @@ interface UnitTestPushStep {
     type: "Push";
     /**
      * The future sequence number of the change being pushed.
+     * This information is derived by the `runUnitTestScenario` function, but can be explicitly
+     * provided to make tests easier to read and debug.
      */
-    seq: number;
+    seq?: number;
 }
 
 /** Represents the sequencing of a local change. */
@@ -276,98 +279,6 @@ interface UnitTestPullStep {
 }
 
 type UnitTestScenarioStep = UnitTestPushStep | UnitTestAckStep | UnitTestPullStep;
-
-function runUnitTestScenario(title: string, steps: UnitTestScenarioStep[]): void {
-    it(title, () => {
-        const { manager, anchors } = editManagerFactory();
-        /** Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`) */
-        const localCommits: TestCommit[] = [];
-        /** Ordered list of intentions that the manager has been made aware of (i.e., `pushed ⋃ pulled`). */
-        let knownToLocal: number[] = [];
-        /** Ordered list of intentions that have been sequenced (i.e., `acked ⋃ pulled`) */
-        const trunk: number[] = [];
-        /** The sequence number of the most recent sequenced commit that the manager is aware of */
-        let localRef: number = 0;
-        for (const step of steps) {
-            const { seq, type } = step;
-            switch (type) {
-                case "Push": {
-                    const changeset = TestChangeRebaser.mintChangeset(knownToLocal, seq);
-                    localCommits.push({
-                        sessionId: localSessionId,
-                        seqNumber: brand(seq),
-                        refNumber: brand(localRef),
-                        changeset,
-                    });
-                    knownToLocal.push(seq);
-                    // Local changes should always lead to a delta that is equivalent to the local change.
-                    assert.deepEqual(manager.addLocalChange(changeset), asDelta([seq]));
-                    break;
-                }
-                case "Ack": {
-                    const commit = localCommits.shift();
-                    if (commit === undefined) {
-                        fail("Invalid test scenario: no local commit to acknowledge");
-                    }
-                    if (commit.seqNumber !== seq) {
-                        fail("Invalid test scenario: acknowledged commit does not mach oldest local change");
-                    }
-                    // Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
-                    assert.deepEqual(manager.addSequencedChange(commit), Delta.empty);
-                    trunk.push(seq);
-                    localRef = seq;
-                    break;
-                }
-                case "Pull": {
-                    /** Filter that includes changes that were on the trunk of the issuer of this commit. */
-                    const peerTrunkChangesFilter = (s: UnitTestScenarioStep) =>
-                        s.seq <= step.ref;
-                    /** Filter that includes changes that were local to the issuer of this commit. */
-                    const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
-                        s.seq > step.ref && s.seq < step.seq && s.type === "Pull" && s.from === step.from;
-                    /** Changes that were known to the peer at the time it authored this commit. */
-                    const knownToPeer: number[] = [
-                        ...steps.filter(peerTrunkChangesFilter),
-                        ...steps.filter(peerLocalChangesFilter),
-                    ].map((s) => s.seq);
-                    const commit: TestCommit = {
-                        sessionId: step.from,
-                        seqNumber: brand(seq),
-                        refNumber: brand(step.ref),
-                        changeset: TestChangeRebaser.mintChangeset(knownToPeer, seq),
-                    };
-                    // Ordered list of intentions for local changes
-                    const localIntentions = localCommits.map((c) => c.seqNumber);
-                    // When a peer commit is received we expect the update to be equivalent to the
-                    // retraction of any local changes, followed by the peer changes, followed by the
-                    // updated version of the local changes.
-                    const expected = [
-                        ...localIntentions.map((i) => -i).reverse(),
-                        seq,
-                        ...localIntentions,
-                    ];
-                    assert.deepEqual(manager.addSequencedChange(commit), asDelta(expected));
-                    if (step.expectedDelta !== undefined) {
-                        // Verify that the test case was annotated with the right expectations.
-                        assert.deepEqual(step.expectedDelta, expected);
-                    }
-                    trunk.push(seq);
-                    knownToLocal = [
-                        ...trunk,
-                        ...localCommits.map((c) => c.seqNumber),
-                    ];
-                    localRef = seq;
-                    break;
-                }
-                default: unreachableCase(type);
-            }
-            // Anchors should be kept up to date with the known intentions
-            assert.deepEqual(anchors.intentions, knownToLocal);
-            // The exposed trunk and local changes should reflect what is known to the local client
-            checkChangeList(manager, knownToLocal);
-        }
-    });
-}
 
 describe("EditManager", () => {
     describe("Unit Tests", () => {
@@ -463,168 +374,196 @@ describe("EditManager", () => {
      */
     it("Combinatorial test", () => {
         const meta = {
-            clientData: makeArray(NUM_CLIENTS, () => ({ pulled: 0, numLocal: 0 })),
+            peerRefs: makeArray(NUM_PEERS, () => 0),
             seq: 0,
+            inFlight: 0,
         };
         for (const scenario of buildScenario([], meta)) {
-            // Uncomment the lines below to see which scenario fails first.
-            // const name = scenario.map((step) => `${step.type}${step.client}`).join("-");
-            // console.debug(name);
-            runCombinatorialScenario(scenario);
+            // Uncomment the code below to log the titles of generated scenarios.
+            // This is helpful for creating a unit test out of a generated scenario that fails.
+            // const title = scenario.map((s) => {
+            //     if (s.type === "Pull") {
+            //         return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
+            //     } else if (s.type === "Ack") {
+            //         return `Ack(${s.seq})`;
+            //     }
+            //     return s.type;
+            // }).join("|");
+            // console.debug(title);
+            runUnitTestScenario(undefined, scenario);
         }
     });
 });
 
-type CombinatorialScenarioStep =
-    // Represents a client making a local change
-    | { type: "Mint"; client: number; }
-    // Represents a change from a client being sequenced by the service
-    | { type: "Sequence"; client: number; }
-    // Represents a client receiving a sequenced change
-    | { type: "Receive"; client: number; }
-;
-
 /**
  * State needed by the scenario builder.
  */
-interface CombinatorialScenarioBuilderState {
-    clientData: { pulled: number; numLocal: number; }[];
+interface ScenarioBuilderState {
+    peerRefs: number[];
     seq: number;
+    inFlight: number;
 }
 
 function* buildScenario(
-    scenario: CombinatorialScenarioStep[],
-    meta: CombinatorialScenarioBuilderState,
-): Generator<readonly CombinatorialScenarioStep[]> {
+    scenario: UnitTestScenarioStep[],
+    meta: ScenarioBuilderState,
+): Generator<readonly UnitTestScenarioStep[]> {
     if (scenario.length >= NUM_STEPS) {
         yield scenario;
     } else {
-        // Mint
-        for (let iClient = 0; iClient < NUM_CLIENTS; ++iClient) {
-            meta.clientData[iClient].numLocal += 1;
-            scenario.push({ type: "Mint", client: iClient });
+        // Push
+            meta.inFlight += 1;
+            scenario.push({ type: "Push" });
             for (const built of buildScenario(scenario, meta)) {
                 yield built;
             }
             scenario.pop();
-            meta.clientData[iClient].numLocal -= 1;
-        }
+            meta.inFlight -= 1;
 
-        // Push
-        for (let iClient = 0; iClient < NUM_CLIENTS; ++iClient) {
-            // If there are any local changes
-            if (meta.clientData[iClient].numLocal > 0) {
-                meta.clientData[iClient].numLocal -= 1;
-                meta.seq += 1;
-                scenario.push({ type: "Sequence", client: iClient });
-                for (const built of buildScenario(scenario, meta)) {
-                    yield built;
-                }
-                scenario.pop();
-                meta.seq -= 1;
-                meta.clientData[iClient].numLocal += 1;
+        // Ack (if there are any local changes)
+        if (meta.inFlight > 0) {
+            meta.inFlight -= 1;
+            meta.seq += 1;
+            scenario.push({ type: "Ack", seq: meta.seq });
+            for (const built of buildScenario(scenario, meta)) {
+                yield built;
             }
+            scenario.pop();
+            meta.seq -= 1;
+            meta.inFlight += 1;
         }
 
         // Pull
-        for (let iClient = 1; iClient < NUM_CLIENTS; ++iClient) {
-            // If there are any sequenced changes to catch up on
-            if (meta.clientData[iClient].pulled < meta.seq) {
-                meta.clientData[iClient].pulled += 1;
-                scenario.push({ type: "Receive", client: iClient });
+        meta.seq += 1;
+        for (let iPeer = 0; iPeer < NUM_PEERS; ++iPeer) {
+            const prevRef = meta.peerRefs[iPeer];
+            for (let ref = prevRef; ref < meta.seq; ++ref) {
+                meta.peerRefs[iPeer] = ref;
+                scenario.push({ type: "Pull", seq: meta.seq, ref, from: peers[iPeer] });
                 for (const built of buildScenario(scenario, meta)) {
                     yield built;
                 }
                 scenario.pop();
-                meta.clientData[iClient].pulled -= 1;
             }
+            meta.peerRefs[iPeer] = prevRef;
         }
+        meta.seq -= 1;
     }
 }
 
-interface ClientData {
-    manager: TestEditManager;
-    anchors: TestAnchorSet;
-    /** The local changes in their original form */
-    localChanges: { change: TestChangeset; ref: number; }[];
-    /** The last sequence number received by the client */
-    ref: number;
-    /** Intentions that the client should be aware of */
-    intentions: number[];
-}
-
-function runCombinatorialScenario(scenario: readonly CombinatorialScenarioStep[]): void {
-    const family = changeFamilyFactory();
-    const trunk: Commit<TestChangeset>[] = [];
-    const clientData: ClientData[] = makeArray(NUM_CLIENTS, (iClient) => newClientData(family, iClient));
-    let changeCounter = 0;
-    for (const step of scenario) {
-        // Perform the step
-        {
-            const client = clientData[step.client];
-            if (step.type === "Mint") {
-                const cs = TestChangeRebaser.mintChangeset(client.intentions, ++changeCounter);
-                const delta = client.manager.addLocalChange(cs);
-                assert.deepEqual(delta, asDelta(cs.intentions));
-                client.localChanges.push({ change: cs, ref: client.ref });
-                cs.intentions.forEach((intention) => client.intentions.push(intention));
-            } else if (step.type === "Sequence") {
-                const local = client.localChanges[0] ?? fail("No local changes to sequence");
-                trunk.push({
-                    changeset: local.change,
-                    refNumber: brand(local.ref),
-                    sessionId: step.client.toString(),
-                    seqNumber: brand(trunk.length + 1),
-                });
-            } else { // step.type === "Receive"
-                const commit = trunk[client.ref];
-                const delta = client.manager.addSequencedChange(commit);
-                // If the change came from this client
-                if (commit.sessionId === step.client.toString()) {
-                    assert.deepEqual(delta, Delta.empty);
-                    // Discard the local change
-                    client.localChanges.shift();
-                    // Do not update the intentions
-                } else {
-                    const localIntentions = ([] as number[]).concat(
-                        ...client.localChanges.map((c) => c.change.intentions),
-                    );
-                    const expected = ([] as number[]).concat(
-                        ...localIntentions.map((i) => -i).reverse(),
-                        ...commit.changeset.intentions,
-                        ...localIntentions,
-                    );
-                    assert.deepEqual(delta, asDelta(expected));
-                    // Update the intentions known to this client
-                    client.intentions.splice(
-                        client.intentions.length - client.localChanges.length,
-                        0,
-                        ...commit.changeset.intentions,
-                    );
+function runUnitTestScenario(title: string | undefined, steps: readonly UnitTestScenarioStep[]): void {
+    const run = () => {
+        const { manager, anchors } = editManagerFactory();
+        /** Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`) */
+        const localCommits: TestCommit[] = [];
+        /** Ordered list of intentions that the manager has been made aware of (i.e., `pushed ⋃ pulled`). */
+        let knownToLocal: number[] = [];
+        /** Ordered list of intentions that have been sequenced (i.e., `acked ⋃ pulled`) */
+        const trunk: number[] = [];
+        /** The sequence number of the most recent sequenced commit that the manager is aware of */
+        let localRef: number = 0;
+        /** The sequence number of the last sequenced in the scenario. */
+        const finalSequencedEdit = [...steps].reverse().find((s) => s.type !== "Push")?.seq ?? 0;
+        /** The Ack steps of the scenario */
+        const acks = steps.filter((s) => s.type === "Ack") as readonly UnitTestAckStep[];
+        /** Index of the "Ack" step in `acks` that matches the next encountered "Push" step */
+        let iNextAck = 0;
+        for (const step of steps) {
+            const type = step.type;
+            switch (type) {
+                case "Push": {
+                    let seq = step.seq;
+                    if (seq === undefined) {
+                        if (iNextAck < acks.length) {
+                            seq = acks[iNextAck].seq;
+                        } else {
+                            // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
+                            seq = finalSequencedEdit + 1 + iNextAck - acks.length;
+                        }
+                    }
+                    iNextAck += 1;
+                    const changeset = TestChangeRebaser.mintChangeset(knownToLocal, seq);
+                    localCommits.push({
+                        sessionId: localSessionId,
+                        seqNumber: brand(seq),
+                        refNumber: brand(localRef),
+                        changeset,
+                    });
+                    knownToLocal.push(seq);
+                    // Local changes should always lead to a delta that is equivalent to the local change.
+                    assert.deepEqual(manager.addLocalChange(changeset), asDelta([seq]));
+                    break;
                 }
-                client.ref += 1;
+                case "Ack": {
+                    const seq = step.seq;
+                    const commit = localCommits.shift();
+                    if (commit === undefined) {
+                        fail("Invalid test scenario: no local commit to acknowledge");
+                    }
+                    if (commit.seqNumber !== seq) {
+                        fail("Invalid test scenario: acknowledged commit does not mach oldest local change");
+                    }
+                    // Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
+                    assert.deepEqual(manager.addSequencedChange(commit), Delta.empty);
+                    trunk.push(seq);
+                    localRef = seq;
+                    break;
+                }
+                case "Pull": {
+                    const seq = step.seq;
+                    /** Filter that includes changes that were on the trunk of the issuer of this commit. */
+                    const peerTrunkChangesFilter = (s: UnitTestScenarioStep) =>
+                        s.type !== "Push" && s.seq <= step.ref;
+                    /** Filter that includes changes that were local to the issuer of this commit. */
+                    const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
+                        s.type === "Pull" && s.seq > step.ref && s.seq < step.seq && s.from === step.from;
+                    /** Changes that were known to the peer at the time it authored this commit. */
+                    const knownToPeer: number[] = [
+                        ...steps.filter(peerTrunkChangesFilter),
+                        ...steps.filter(peerLocalChangesFilter),
+                    ].map((s) => s.seq ?? fail("Sequenced changes must all have a seq number"));
+                    const commit: TestCommit = {
+                        sessionId: step.from,
+                        seqNumber: brand(seq),
+                        refNumber: brand(step.ref),
+                        changeset: TestChangeRebaser.mintChangeset(knownToPeer, seq),
+                    };
+                    /** Ordered list of intentions for local changes */
+                    const localIntentions = localCommits.map((c) => c.seqNumber);
+                    // When a peer commit is received we expect the update to be equivalent to the
+                    // retraction of any local changes, followed by the peer changes, followed by the
+                    // updated version of the local changes.
+                    const expected = [
+                        ...localIntentions.map((i) => -i).reverse(),
+                        seq,
+                        ...localIntentions,
+                    ];
+                    assert.deepEqual(manager.addSequencedChange(commit), asDelta(expected));
+                    if (step.expectedDelta !== undefined) {
+                        // Verify that the test case was annotated with the right expectations.
+                        assert.deepEqual(step.expectedDelta, expected);
+                    }
+                    trunk.push(seq);
+                    knownToLocal = [
+                        ...trunk,
+                        ...localCommits.map((c) => c.seqNumber),
+                    ];
+                    localRef = seq;
+                    break;
+                }
+                default: unreachableCase(type);
             }
+            // Anchors should be kept up to date with the known intentions
+            assert.deepEqual(anchors.intentions, knownToLocal);
+            // The exposed trunk and local changes should reflect what is known to the local client
+            checkChangeList(manager, knownToLocal);
         }
-        // Check the validity of the managers
-        for (const client of clientData) {
-            checkChangeList(client.manager, client.intentions);
-            // Check the anchors have been updated if applicable
-            assert.deepEqual(client.anchors.intentions ?? [], client.intentions);
-        }
-    }
-}
-
-function newClientData(family: TestChangeFamily, iClient: number): ClientData {
-    const anchors = new TestAnchorSet();
-    const manager = new EditManager<TestChangeset, TestChangeFamily>(family, anchors);
-    manager.setLocalSessionId(iClient.toString());
-    return {
-        manager,
-        anchors,
-        localChanges: [],
-        ref: 0,
-        intentions: [],
     };
+    if (title !== undefined) {
+        it(title, run);
+    } else {
+        run();
+    }
 }
 
 function checkChangeList(manager: TestEditManager, intentions: number[]): void {
