@@ -190,7 +190,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            this.addClientToQueue(taskId, clientId);
+            // Ignore the volunteer op if we know this task is completed
+            if (!this.pendingCompletedTasks.has(taskId)) {
+                this.addClientToQueue(taskId, clientId);
+            }
         });
 
         this.opWatcher.on("abandon", (taskId: string, clientId: string, local: boolean, messageId: number) => {
