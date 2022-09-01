@@ -2934,9 +2934,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const error = new UsageError("Cannot call getPendingLocalState while the runtime is processing a message batch");
             this.logger.sendErrorEvent({
                   eventName: "getPendingLocalStateDuringBatch",
-                  hasBatchStart: isFirstMessageBatchFirst != null, // or whatever field name is better
-                  firstMessageStartOfBatch: isFirstMessageBatchFirst as boolean, // or whatever field name is better
-                  lastMessageFlush: lastMessage === "flush", // or whatever field name is better
+                  hasBatchStart: isFirstMessageBatchFirst != null,
+                  firstMessageStartOfBatch: isFirstMessageBatchFirst as boolean,
+                  lastMessageFlush: lastMessage === "flush",
               },
               error);
               throw error;
