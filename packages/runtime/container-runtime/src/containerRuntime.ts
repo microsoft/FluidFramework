@@ -2915,21 +2915,32 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (pendingMessages === undefined) {
             return;
         }
+
         const firstMessage = pendingMessages.pendingStates[0] as IPendingMessage;
-        const isFirstMessageBatchFirst = firstMessage.opMetadata?.batch;
+        let isFirstMessageBatchFirst: boolean | unknown;
+        if (firstMessage.opMetadata === undefined || firstMessage.opMetadata.batch === undefined) {
+            // The only way the first message does not have batch property is that is the only one
+            // in the batch. Checking for the message and flush messages
+            if (pendingMessages.pendingStates.length === 2) {
+                isFirstMessageBatchFirst = true;
+            }
+        } else {
+            isFirstMessageBatchFirst = firstMessage.opMetadata.batch;
+        }
+
         const lastMessage = pendingMessages.pendingStates[pendingMessages.pendingStates.length - 1].type;
-        if (isFirstMessageBatchFirst == null) {
-            throw new UsageError("First message must have batch metadata");
+        if (isFirstMessageBatchFirst == null || !isFirstMessageBatchFirst || lastMessage !== "flush") {
+            // eslint-disable-next-line max-len
+            const error = new UsageError("Cannot call getPendingLocalState while the runtime is processing a message batch");
+            this.logger.sendErrorEvent({
+                  eventName: "getPendingLocalStateDuringBatch",
+                  hasBatchStart: isFirstMessageBatchFirst != null, // or whatever field name is better
+                  firstMessageStartOfBatch: isFirstMessageBatchFirst as boolean, // or whatever field name is better
+                  lastMessageFlush: lastMessage === "flush", // or whatever field name is better
+              },
+              error);
+              throw error;
         }
-        if (!isFirstMessageBatchFirst) {
-            throw new UsageError(`First message must be first in batch, opMetadata.batch: ${isFirstMessageBatchFirst}`);
-        }
-        if (lastMessage !== "flush") {
-            throw new UsageError(`"Last message in batch must be flush, type: ${lastMessage}"`);
-        }
-        assert(!!isFirstMessageBatchFirst, "First message must have batch metadata");
-        assert(isFirstMessageBatchFirst === true, "First message must be first in batch");
-        assert(lastMessage === "flush", "Last message in batch must be flush");
     }
 
     public getPendingLocalState(): unknown {

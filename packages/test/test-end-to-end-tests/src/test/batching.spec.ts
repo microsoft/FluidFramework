@@ -385,7 +385,7 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         beforeEach(async () => {
             await setupContainers({ flushMode: FlushMode.TurnBased, enableOfflineLoad: true });
         });
-        it("should not allow incomplete batch during orderSequentially", async () => {
+        it("cannot capture the pending local state during ordersequentially", async () => {
             dataObject1.context.containerRuntime.orderSequentially(() => {
                 dataObject1map1.set("key1", "value1");
                 dataObject1map2.set("key2", "value2");

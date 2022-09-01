@@ -640,6 +640,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         [...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
+        await provider.ensureSynchronized();
         const pendingState = getPendingStateWithoutClose(container);
 
         const container2 = await loader.resolve({ url }, pendingState);
@@ -687,7 +688,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(map2.get(i.toString()), i, `map 2 ${map2.get(i.toString())} !== ${i}`));
     });
 
-    it("can make changes offline and stash them", async function() {
+    it.skip("can make changes offline and stash them", async function() {
         const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
@@ -747,7 +748,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.opProcessingController.pauseProcessing(container2);
         assert(dataStore2.runtime.deltaManager.outbound.paused);
         [...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
-
+        await provider.ensureSynchronized();
         const morePendingOps = getPendingStateWithoutClose(container2);
         assert.ok(morePendingOps);
 
@@ -791,7 +792,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await map2.get("blob handle").get(), "utf8"), "blob contents");
     });
 
-    it("stashed changes with blobs", async function() {
+    it.skip("stashed changes with blobs", async function() {
         const container = await loadOffline(provider, { url });
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
         const map = await dataStore.getSharedObject<SharedMap>(mapId);
@@ -799,7 +800,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         // Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
         const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
         map.set("blob handle 1", handle);
-
         const stashedChanges = container.container.closeAndGetPendingLocalState();
 
         const container3 = await loadOffline(provider, { url }, stashedChanges);

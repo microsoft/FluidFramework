@@ -106,6 +106,9 @@ export class PendingStateManager implements IDisposable {
     public getLocalState(): IPendingLocalState | undefined {
         assert(this.initialStates.isEmpty(), 0x2e9 /* "Must call getLocalState() after applying initial states" */);
         if (this.hasPendingMessages()) {
+            while (this.pendingStates.peekFront()?.type !== "message") {
+                this.pendingStates.removeFront();
+            }
             return {
                 pendingStates: this.pendingStates.toArray().map(
                     // delete localOpMetadata since it may not be serializable
