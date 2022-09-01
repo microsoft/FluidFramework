@@ -25,7 +25,7 @@ export interface FieldChangeHandler<TChangeset> {
 export interface FieldChangeRebaser<TChangeset> {
     /**
      * Compose a collection of changesets into a single one.
-     * See {@link FieldChangeHandler} for requirements.
+     * See {@link ChangeRebaser} for requirements.
      */
      compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
 
