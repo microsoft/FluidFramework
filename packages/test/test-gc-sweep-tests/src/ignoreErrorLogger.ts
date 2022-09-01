@@ -13,6 +13,8 @@ import { ITelemetryBaseEvent, ITelemetryGenericEvent } from "@fluidframework/com
  */
 export class IgnoreErrorLogger extends EventAndErrorTrackingLogger {
     private readonly ignoredEvents: Map<string, ITelemetryGenericEvent> = new Map();
+    public readonly events: ITelemetryBaseEvent[] = [];
+    public readonly inactiveObjectEvents: ITelemetryBaseEvent[] = [];
 
     public ignoreExpectedEventTypes(...anyIgnoredEvents: ITelemetryGenericEvent[]) {
         for (const event of anyIgnoredEvents) {
@@ -21,6 +23,11 @@ export class IgnoreErrorLogger extends EventAndErrorTrackingLogger {
     }
 
     send(event: ITelemetryBaseEvent): void {
+        this.events.push(event);
+        if (event.eventName.includes("InactiveObject")) {
+            this.inactiveObjectEvents.push(event);
+        }
+        // For ignored events, make them generic events.
         if (this.ignoredEvents.has(event.eventName)) {
             let matches = true;
             const ie = this.ignoredEvents.get(event.eventName);

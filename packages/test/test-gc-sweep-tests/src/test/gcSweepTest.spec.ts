@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable max-len */
+import * as fs from "fs";
 import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
@@ -74,12 +75,14 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
         runtimeOptions,
     );
 
-    const sessionExpiryDurationMs = 3000; // 3 seconds
+    // const sessionExpiryDurationMs = 3000; // 3 seconds
+    const inactiveTimeoutMs = 3000; // 3 seconds
 
     // Set settings here, may be useful to put everything in the mockConfigProvider
     const settings = {
-        "Fluid.GarbageCollection.RunSessionExpiry": "true",
-        "Fluid.GarbageCollection.TestOverride.SessionExpiryMs": sessionExpiryDurationMs,
+        // "Fluid.GarbageCollection.RunSessionExpiry": "true",
+        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": inactiveTimeoutMs,
+        // "Fluid.GarbageCollection.TestOverride.SessionExpiryMs": sessionExpiryDurationMs,
     };
     const configProvider = mockConfigProvider(settings);
 
@@ -277,6 +280,19 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
                 handleRecord: handleTracker.handleActionRecord,
             };
 
+            const stats = {
+                ...actionStats,
+                actionCount: actionsList.length,
+                errorCount: errorList.length,
+            };
+
+            fs.mkdirSync(`nyc/testData-${seed}`, { recursive: true });
+            fs.writeFileSync(`nyc/testData-${seed}/events.json`, JSON.stringify(overrideLogger.events));
+            fs.writeFileSync(`nyc/testData-${seed}/inactiveObjectEvents.json`, JSON.stringify(overrideLogger.inactiveObjectEvents));
+            fs.writeFileSync(`nyc/testData-${seed}/actions.json`, JSON.stringify(actionsList));
+            fs.writeFileSync(`nyc/testData-${seed}/stats.json`, JSON.stringify(stats));
+            fs.writeFileSync(`nyc/testData-${seed}/errors.json`, JSON.stringify(errorList));
+
             // Check that we don't have errors and print the debug object
             assert(errorList.length === 0, `Errors occurred!\nDebug: ${JSON.stringify(debugObject)}`);
 
@@ -293,7 +309,6 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
             Object.entries(actionStats).forEach(([name, stat]) => {
                 assert(stat >= minimumExpectedActionsPerActionType, `There are less than ${minimumExpectedActionsPerActionType} calls to ${name}!`);
             });
-
             // TODO: write the whole test to a file so that we can replicate it. For now, running the test with a particular seed will do.
         }).timeout(testTime + 40 * 1000); // Add 40s of leeway
     }
