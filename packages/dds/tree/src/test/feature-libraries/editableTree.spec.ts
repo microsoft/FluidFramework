@@ -212,4 +212,12 @@ describe("editable-tree", () => {
 			delete proxy.address;
 		}, "Not implemented");
 	});
+
+	it("empty forest does not crash", async () => {
+		const emptyTree: JsonableTree = { type: brand("foo") };
+		const proxy = await buildTestProxy(emptyTree);
+		assert.equal(Object.keys(proxy).length, 0);
+		assert.deepEqual(proxy[getTypeSymbol](), { name: "foo" });
+		assert.equal(Object.getOwnPropertyNames(proxy).length, 0);
+	});
 });

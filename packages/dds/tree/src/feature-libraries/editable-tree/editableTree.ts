@@ -47,33 +47,42 @@ export type EditableTreeNode<T> = {
 export type EditableTree<T = any> = EditableTreeSignature<T> & EditableTreeNode<T>;
 
 class ProxyTarget {
-	public cursor: ITreeSubscriptionCursor;
+	private _cursor: ITreeSubscriptionCursor | undefined;
+
 	constructor(
 		public forest: IEditableForest,
 		_cursor?: ITreeSubscriptionCursor,
 	) {
-		if (!_cursor) {
-			this.cursor = forest.allocateCursor();
-			forest.tryMoveCursorTo(forest.root(forest.rootField), this.cursor);
-		} else {
-			this.cursor = _cursor.fork();
+		if (_cursor) {
+			this._cursor = _cursor.fork();
 		}
+	}
+
+	private get cursor(): ITreeSubscriptionCursor | undefined {
+		if (!this._cursor) {
+			const _cursor = this.forest.allocateCursor();
+			const result = this.forest.tryMoveCursorTo(this.forest.root(this.forest.rootField), _cursor);
+			if (result === TreeNavigationResult.Ok) {
+				this._cursor = _cursor;
+			}
+		}
+		return this._cursor;
 	}
 
 	public tryMoveDown = (key: FieldKey):
 		{ result: TreeNavigationResult; isArray: boolean; hasNodes: boolean; } => {
-		if (key !== EmptyKey && this.cursor.length(EmptyKey) && isNaN(Number(key))) {
+		if (key !== EmptyKey && this.length() && isNaN(Number(key))) {
 			return { result: TreeNavigationResult.NotFound, isArray: true, hasNodes: true };
 		}
-		let result = this.cursor.down(key, 0);
+		let result = this.cursor?.down(key, 0) || TreeNavigationResult.NotFound;
 		let isArray = false;
 		if (result === TreeNavigationResult.NotFound) {
 			// reading an array
-			result = this.cursor.down(EmptyKey, Number(key));
+			result = this.cursor?.down(EmptyKey, Number(key)) || TreeNavigationResult.NotFound;
 		} else {
-			isArray = !!this.cursor.length(EmptyKey);
+			isArray = !!this.length();
 		}
-		const hasNodes = !!(this.cursor.keys as string[]).length;
+		const hasNodes = !!(this.cursor?.keys as string[]).length;
 		return { result, isArray, hasNodes };
 	};
 
@@ -87,9 +96,9 @@ class ProxyTarget {
 
 	public getNodeData = <T>(cursor?: ITreeSubscriptionCursor): TreeValue | EditableTree<T> | undefined => {
 		const _cursor = cursor ?? this.cursor;
-		const hasNoNodes = !(_cursor.keys as string[]).length;
-		if (_cursor.value !== undefined || hasNoNodes) {
-			const result: TreeValue = _cursor.value;
+		const hasNoNodes = !(_cursor?.keys as string[]).length;
+		if (_cursor?.value !== undefined || hasNoNodes) {
+			const result: TreeValue = _cursor?.value;
 			return result;
 		}
 		return proxify<T>(this.forest, _cursor);
@@ -97,6 +106,9 @@ class ProxyTarget {
 
 	public getArrayGreedy = <T>() => {
 		const getNodeData = this.getNodeData;
+		if (!this.cursor) {
+			return [];
+		}
 		return mapCursorField(this.cursor, EmptyKey,
 			(cursor: ITreeCursor): TreeValue | EditableTree<T> | undefined => {
 			return getNodeData(cursor as ITreeSubscriptionCursor);
@@ -105,7 +117,9 @@ class ProxyTarget {
 
 	[getTypeSymbol](key?: FieldKey, withSchema: boolean = false): EditableTreeNodeSchema {
 		let name: TreeSchemaIdentifier;
-		if (key === undefined) {
+		if (!this.cursor) {
+			return { name: brand("") };
+		} else if (key === undefined) {
 			name = this.cursor.type;
 		} else {
 			const { result } = this.tryMoveDown(key);
@@ -121,6 +135,18 @@ class ProxyTarget {
 			: { name };
 		return schema;
 	}
+
+	length(): number {
+		return this.cursor?.length(EmptyKey) || 0;
+	}
+
+	up(): void {
+		this.cursor?.up();
+	}
+
+	getKeys(): string[] {
+		return this.cursor?.keys as string[] || [];
+	}
 }
 
 /**
@@ -133,12 +159,12 @@ const handler: ProxyHandler<ProxyTarget> = {
 			const { result, isArray } = target.tryMoveDown(brand(key));
 			if (result === TreeNavigationResult.Ok) {
 				const node = target.getNodeData();
-				target.cursor.up();
+				target.up();
 				return node;
 			} else if (isArray) {
 				switch (key) {
 					case "length":
-						return target.cursor.length(EmptyKey);
+						return target.length();
 					default:
 						return [][key as keyof []];
 				}
@@ -171,17 +197,17 @@ const handler: ProxyHandler<ProxyTarget> = {
 		}
 		const { result } = target.tryMoveDown(brand(key));
 		if (result === TreeNavigationResult.Ok) {
-			target.cursor.up();
+			target.up();
 			return true;
 		}
 		return false;
 	},
 	ownKeys(target: ProxyTarget) {
-		const length = target.cursor.length(EmptyKey);
+		const length = target.length();
 		if (length) {
 			return Object.getOwnPropertyNames(target.getDummyArray(length));
 		}
-		return target.cursor.keys as string[];
+		return target.getKeys();
 	},
 	getOwnPropertyDescriptor(target: ProxyTarget, key: string | symbol) {
 		if (typeof key === "symbol") {
@@ -200,7 +226,7 @@ const handler: ProxyHandler<ProxyTarget> = {
 					value: node,
 					writable: true,
 				};
-				target.cursor.up();
+				target.up();
 				return descriptor;
 			}
 		}
