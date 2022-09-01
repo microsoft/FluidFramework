@@ -4,7 +4,22 @@
  */
 
 import { jsonArray, jsonNumber, jsonObject, jsonString } from "../../domains";
-import { Effects, Transposed as T } from "../../changeset";
+import { ChangesetTag, Effects, Transposed as T } from "../../changeset";
+
+/**
+ * Interface used solely to annotate samples with clarifying information.
+ */
+export interface Transaction extends T.PeerChangeset {
+    /**
+     * The tag of the changeset that this changeset was originally issued after.
+     */
+    ref: ChangesetTag;
+    /**
+     * The tag of the latest changeset that this changeset has been transposed over.
+     * Omitted on changesets that have not been transposed.
+     */
+    newRef?: ChangesetTag;
+}
 
 /**
  * Demonstrates how to represent a change that inserts a root tree.
@@ -149,7 +164,7 @@ export namespace SwapParentChild {
  * Expected outcome: foo=[A] bar=[X D]
  */
 export namespace ScenarioA {
-    export const e1: T.Transaction = {
+    export const e1: Transaction = {
         ref: 0,
         marks: [{
             type: "Modify",
@@ -166,7 +181,7 @@ export namespace ScenarioA {
         }],
     };
 
-    export const e2: T.Transaction = {
+    export const e2: Transaction = {
         ref: 0,
         moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
         marks: [{
@@ -192,7 +207,7 @@ export namespace ScenarioA {
         }],
     };
 
-    export const e3: T.Transaction = {
+    export const e3: Transaction = {
         ref: 0,
         marks: [{
             type: "Modify",
@@ -205,7 +220,7 @@ export namespace ScenarioA {
         }],
     };
 
-    export const e2_r_e1: T.Transaction = {
+    export const e2_r_e1: Transaction = {
         ref: 0,
         newRef: 1,
         moves: [
@@ -248,7 +263,7 @@ export namespace ScenarioA {
         }],
     };
 
-    export const e3_r_e1: T.Transaction = {
+    export const e3_r_e1: Transaction = {
         ref: 0,
         newRef: 1,
         marks: [{
@@ -264,7 +279,7 @@ export namespace ScenarioA {
         }],
     };
 
-    export const e3_r_e2: T.Transaction = {
+    export const e3_r_e2: Transaction = {
         ref: 0,
         newRef: 2,
         moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
@@ -308,7 +323,7 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[W X Y Z]
 //  */
 // export namespace ScenarioB {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -321,7 +336,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -337,7 +352,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -353,7 +368,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -371,7 +386,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -389,7 +404,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -430,7 +445,7 @@ export namespace ScenarioA {
 //  * User 3's edit should be muted.
 //  */
 // export namespace ScenarioC {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -443,7 +458,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -457,7 +472,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -470,49 +485,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
-//         ref: 0,
-//         newRef: 1,
-//         marks: {
-//             modify: [{
-//                 foo: {
-//                     tombs: [{ count: 1, change: 1 }],
-//                     nodes: [
-//                         { type: "Delete", id: 0, count: 1 },
-//                     ],
-//                 },
-//             }],
-//         },
-//     };
-
-//     export const e3_r_e2: T.Transaction = {
-//         ref: 0,
-//         newRef: 2,
-//         marks: {
-//             modify: [{
-//                 foo: {
-//                     nodes: [
-//                         { type: "Delete", id: 0, count: 1 },
-//                     ],
-//                 },
-//             }],
-//         },
-//     };
-
-//     export const e4: T.Transaction = {
-//         ref: 0,
-//         marks: {
-//             modify: [{
-//                 foo: {
-//                     nodes: [
-//                         { type: "Delete", id: 0, count: 1 },
-//                     ],
-//                 },
-//             }],
-//         },
-//     };
-
-//     export const e4_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -527,7 +500,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -541,7 +514,49 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: T.Transaction = {
+//     export const e4: Transaction = {
+//         ref: 0,
+//         marks: {
+//             modify: [{
+//                 foo: {
+//                     nodes: [
+//                         { type: "Delete", id: 0, count: 1 },
+//                     ],
+//                 },
+//             }],
+//         },
+//     };
+
+//     export const e4_r_e1: Transaction = {
+//         ref: 0,
+//         newRef: 1,
+//         marks: {
+//             modify: [{
+//                 foo: {
+//                     tombs: [{ count: 1, change: 1 }],
+//                     nodes: [
+//                         { type: "Delete", id: 0, count: 1 },
+//                     ],
+//                 },
+//             }],
+//         },
+//     };
+
+//     export const e4_r_e2: Transaction = {
+//         ref: 0,
+//         newRef: 2,
+//         marks: {
+//             modify: [{
+//                 foo: {
+//                     nodes: [
+//                         { type: "Delete", id: 0, count: 1 },
+//                     ],
+//                 },
+//             }],
+//         },
+//     };
+
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         marks: {
@@ -568,7 +583,7 @@ export namespace ScenarioA {
 //  * User 2's edit should be muted.
 //  */
 // export namespace ScenarioD {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -584,7 +599,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -598,7 +613,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -631,7 +646,7 @@ export namespace ScenarioA {
 //  * X is deleted (as opposed to inserted in trait bar).
 //  */
 // export namespace ScenarioE {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 0 } }],
 //         marks: {
@@ -651,7 +666,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -668,7 +683,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -696,7 +711,7 @@ export namespace ScenarioA {
 //  * Expected outcome: [r A x y z B]
 //  */
 // export namespace ScenarioF {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -709,7 +724,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -723,7 +738,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -737,7 +752,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -764,7 +779,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -796,7 +811,7 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[M N O] bar=[A X Y B]
 //  */
 // export namespace ScenarioG {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
@@ -819,7 +834,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -838,7 +853,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -852,7 +867,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: T.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -866,7 +881,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: T.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -880,7 +895,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -930,7 +945,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -974,7 +989,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: T.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         marks: {
@@ -1022,7 +1037,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: T.Transaction = {
+//     export const e5_r_e4: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         marks: {
@@ -1063,7 +1078,7 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[] bar=[A X B Y] baz=[U V]
 // */
 // export namespace ScenarioH {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 1 } }],
 //         marks: {
@@ -1086,7 +1101,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { baz: 0 } }],
 //         marks: {
@@ -1108,7 +1123,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -1123,7 +1138,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { baz: 0 } }],
@@ -1150,7 +1165,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [
@@ -1192,7 +1207,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [
@@ -1273,7 +1288,7 @@ export namespace ScenarioA {
 // */
 
 // export namespace ScenarioI {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 1 } }],
 //         marks: {
@@ -1296,7 +1311,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 1 } }],
 //         marks: {
@@ -1342,7 +1357,7 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[] bar=[A W X Y Z C]
 // */
 // export namespace ScenarioJ {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -1356,7 +1371,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
@@ -1379,7 +1394,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -1393,7 +1408,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: T.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -1407,7 +1422,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: T.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 2, // With knowledge with e1 and e2
 //         marks: {
 //             modify: [{
@@ -1424,7 +1439,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
@@ -1449,7 +1464,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -1465,7 +1480,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 1 } }],
@@ -1488,7 +1503,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: T.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -1504,7 +1519,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: T.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 1 } }],
@@ -1527,7 +1542,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: T.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 1 } }],
@@ -1550,7 +1565,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e3: T.Transaction = {
+//     export const e5_r_e3: Transaction = {
 //         ref: 2,
 //         newRef: 3,
 //         marks: {
@@ -1566,7 +1581,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: T.Transaction = {
+//     export const e5_r_e4: Transaction = {
 //         ref: 2,
 //         newRef: 4,
 //         marks: {
@@ -1600,7 +1615,7 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[X Y]
 // */
 // export namespace ScenarioK {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -1613,7 +1628,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { foo: 0 } }],
 //         marks: {
@@ -1634,7 +1649,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -1651,7 +1666,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { foo: 0 } }],
@@ -1674,7 +1689,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -1693,7 +1708,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { foo: 0 } }],
@@ -1751,7 +1766,7 @@ export namespace ScenarioA {
 //  * Expected outcome: qux=[X Y]
 //  */
 // export namespace ScenarioL {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -1764,7 +1779,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
@@ -1786,7 +1801,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         moves: [
 //             { id: 0, src: { bar: 0 }, dst: { baz: 0 } },
@@ -1815,7 +1830,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: T.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { qux: 0 } }],
 //         marks: {
@@ -1837,7 +1852,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: T.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -1851,7 +1866,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6: T.Transaction = {
+//     export const e6: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -1864,7 +1879,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
@@ -1888,7 +1903,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [
@@ -1919,7 +1934,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: T.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { qux: 0 } }],
@@ -1943,7 +1958,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e1: T.Transaction = {
+//     export const e5_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -1959,7 +1974,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e2: T.Transaction = {
+//     export const e5_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 2 }, dst: { bar: 0 } }],
@@ -1987,7 +2002,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e3: T.Transaction = {
+//     export const e5_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { foo: 2 }, hops: [{ bar: 0 }], dst: { baz: 0 } }],
@@ -2020,7 +2035,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: T.Transaction = {
+//     export const e5_r_e4: Transaction = {
 //         ref: 0,
 //         newRef: 4,
 //         moves: [{ id: 0, src: { foo: 2 }, hops: [{ bar: 0 }, { baz: 0 }], dst: { qux: 0 } }],
@@ -2058,7 +2073,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e1: T.Transaction = {
+//     export const e6_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //             marks: {
@@ -2073,7 +2088,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e2: T.Transaction = {
+//     export const e6_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
@@ -2100,7 +2115,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e3: T.Transaction = {
+//     export const e6_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { foo: 0 }, hops: [{ bar: 0 }], dst: { baz: 0 } }],
@@ -2132,7 +2147,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e4: T.Transaction = {
+//     export const e6_r_e4: Transaction = {
 //         ref: 0,
 //         newRef: 4,
 //         moves: [{ id: 0, src: { foo: 0 }, hops: [{ bar: 0 }, { baz: 0 }], dst: { qux: 0 } }],
@@ -2168,7 +2183,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e5: T.Transaction = {
+//     export const e6_r_e5: Transaction = {
 //         ref: 0,
 //         newRef: 5,
 //         moves: [{ id: 0, src: { foo: 0 }, hops: [{ bar: 0 }, { baz: 0 }], dst: { qux: 0 } }],
@@ -2224,7 +2239,7 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[X Y]
 //  */
 // export namespace ScenarioM {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2237,7 +2252,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2251,7 +2266,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2265,7 +2280,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: T.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2279,7 +2294,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -2293,7 +2308,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -2309,7 +2324,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -2325,7 +2340,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: T.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -2341,7 +2356,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: T.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -2357,7 +2372,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: T.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         marks: {
@@ -2409,7 +2424,7 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[A B C] bar=[X Y]
 //  */
 // export namespace ScenarioN {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         moves: [
 //             { id: 0, src: { foo: 1 }, dst: { bar: 0 } },
@@ -2436,7 +2451,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2450,7 +2465,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2464,7 +2479,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [
@@ -2490,7 +2505,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [
@@ -2516,7 +2531,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [
@@ -2566,7 +2581,7 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[] bar=[U X Y]
 //  */
 // export namespace ScenarioO {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2580,7 +2595,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2593,7 +2608,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 1, // Known of 1
 //         marks: {
 //             modify: [{
@@ -2616,7 +2631,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: T.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2630,7 +2645,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: T.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2644,7 +2659,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -2658,7 +2673,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -2683,7 +2698,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: T.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -2698,7 +2713,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: T.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -2714,7 +2729,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: T.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 2 } }],
@@ -2737,7 +2752,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e1: T.Transaction = {
+//     export const e5_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -2753,7 +2768,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e2: T.Transaction = {
+//     export const e5_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -2769,7 +2784,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e3: T.Transaction = {
+//     export const e5_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         marks: {
@@ -2788,7 +2803,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: T.Transaction = {
+//     export const e5_r_e4: Transaction = {
 //         ref: 0,
 //         newRef: 4,
 //         marks: {
@@ -2823,7 +2838,7 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[X Y]
 //  */
 // export namespace ScenarioP {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -2842,7 +2857,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -2861,7 +2876,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2874,7 +2889,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: T.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -2887,7 +2902,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
@@ -2907,7 +2922,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
@@ -2933,7 +2948,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
@@ -2959,7 +2974,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: T.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -2973,7 +2988,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: T.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
@@ -2999,7 +3014,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: T.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
@@ -3046,7 +3061,7 @@ export namespace ScenarioA {
 //  * Expected outcome: qux=[X Y]
 //  */
 // export namespace ScenarioQ {
-//     export const e1: T.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3065,7 +3080,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: T.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3084,7 +3099,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: T.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { qux: 0 } }],
 //             marks: {
@@ -3103,7 +3118,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: T.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -3116,7 +3131,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: T.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -3129,7 +3144,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: T.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
@@ -3149,7 +3164,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: T.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { qux: 0 } }],
@@ -3169,7 +3184,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: T.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { qux: 0 } }],
@@ -3189,7 +3204,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: T.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
@@ -3215,7 +3230,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: T.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
@@ -3241,7 +3256,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: T.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { bar: 0 }, hops: [{ foo: 0 }], dst: { qux: 0 } }],
@@ -3277,7 +3292,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e1: T.Transaction = {
+//     export const e5_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -3291,7 +3306,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e2: T.Transaction = {
+//     export const e5_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
@@ -3317,7 +3332,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e3: T.Transaction = {
+//     export const e5_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { baz: 0 }, hops: [{ foo: 0 }], dst: { qux: 0 } }],
@@ -3353,7 +3368,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: T.Transaction = {
+//     export const e5_r_e4: Transaction = {
 //         ref: 0,
 //         newRef: 4,
 //         moves: [{ id: 0, src: { baz: 0 }, hops: [{ foo: 0 }], dst: { qux: 0 } }],
