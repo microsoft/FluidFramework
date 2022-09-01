@@ -105,7 +105,6 @@ export class Client {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
@@ -163,7 +162,6 @@ export class Client {
     }>;
     // (undocumented)
     localOps: number;
-    // (undocumented)
     localReferencePositionToPosition(lref: ReferencePosition): number;
     // (undocumented)
     localTime: number;
@@ -187,7 +185,6 @@ export class Client {
     posFromRelativePos(relativePos: IRelativePosition): number;
     rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
-    // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
@@ -1041,7 +1038,7 @@ export interface ReferencePosition {
     refType: ReferenceType;
 }
 
-// @public (undocumented)
+// @public
 export enum ReferenceType {
     // (undocumented)
     NestBegin = 2,
@@ -1053,13 +1050,9 @@ export enum ReferenceType {
     RangeEnd = 32,
     // (undocumented)
     Simple = 0,
-    // (undocumented)
     SlideOnRemove = 64,
-    // (undocumented)
     StayOnRemove = 128,
-    // (undocumented)
     Tile = 1,
-    // (undocumented)
     Transient = 256
 }
 

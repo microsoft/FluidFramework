@@ -77,7 +77,6 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 }
 
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
 }
 

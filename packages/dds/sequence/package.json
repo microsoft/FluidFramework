@@ -220,7 +220,8 @@
       },
       "ClassDeclaration_Interval": {
         "backCompat": false
-      }
+      },
+      "InterfaceDeclaration_ISharedIntervalCollection": {"backCompat": false}
     }
   }
 }

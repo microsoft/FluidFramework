@@ -77,7 +77,7 @@ export interface IInterval {
     union(b: IInterval): IInterval;
 }
 
-// @public (undocumented)
+// @public
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
     (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
@@ -145,7 +145,7 @@ export class Interval implements ISerializableInterval {
     union(b: Interval): Interval;
 }
 
-// @public (undocumented)
+// @public
 export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
@@ -164,11 +164,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
     get attached(): boolean;
-    // (undocumented)
+    // @internal (undocumented)
     attachGraph(client: Client, label: string): void;
-    // (undocumented)
     change(id: string, start?: number, end?: number): TInterval | undefined;
-    // (undocumented)
     changeProperties(id: string, props: PropertySet): void;
     // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
@@ -180,11 +178,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
     // (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
-    // (undocumented)
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
     getIntervalById(id: string): TInterval | undefined;
-    // (undocumented)
     map(fn: (interval: TInterval) => void): void;
     // (undocumented)
     nextInterval(pos: number): TInterval | undefined;
@@ -192,7 +188,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     previousInterval(pos: number): TInterval | undefined;
     // @internal (undocumented)
     rebaseLocalInterval(opName: string, serializedInterval: SerializedIntervalDelta, localSeq: number): SerializedIntervalDelta;
-    // (undocumented)
     removeIntervalById(id: string): TInterval | undefined;
     // @internal (undocumented)
     serializeInternal(): ISerializedIntervalCollectionV2;
@@ -280,8 +275,6 @@ export interface ISerializedIntervalCollectionV2 {
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
     // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
-    // (undocumented)
-    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
 }
 
 // @public
@@ -428,18 +421,15 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected applyStashedOp(content: any): unknown;
     // (undocumented)
     protected client: Client;
-    // (undocumented)
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     protected didAttach(): void;
-    // (undocumented)
     getContainingSegment(pos: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
     // (undocumented)
     getCurrentSeq(): number;
-    // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<SequenceInterval>;
     // (undocumented)
     getIntervalCollectionLabels(): IterableIterator<string>;
@@ -460,15 +450,12 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     id: string;
     // (undocumented)
     protected initializeLocalCore(): void;
-    // (undocumented)
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     get loaded(): Promise<void>;
-    // (undocumented)
     protected loadedDeferred: Deferred<void>;
-    // (undocumented)
     localReferencePositionToPosition(lref: ReferencePosition): number;
     // (undocumented)
     protected onConnect(): void;
@@ -478,7 +465,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
-    // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
     removeRange(start: number, end: number): IMergeTreeRemoveMsg;
@@ -492,8 +478,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     submitSequenceMessage(message: IMergeTreeOp): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    // @deprecated (undocumented)
-    waitIntervalCollection(label: string): Promise<IntervalCollection<SequenceInterval>>;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
 }
 
@@ -516,19 +500,15 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
-    // (undocumented)
     findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
         pos: number;
     } | undefined;
     static getFactory(): SharedStringFactory;
-    // (undocumented)
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
     // (undocumented)
     getTextRangeWithMarkers(start: number, end: number): string;
-    // @deprecated (undocumented)
-    getTextRangeWithPlaceholders(start: number, end: number): string;
     getTextWithPlaceholders(start?: number, end?: number): string;
     // (undocumented)
     id: string;
