@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/dds-interceptions",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Distributed Data Structures that support an interception callback",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -62,18 +62,18 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/map": "^1.2.5",
-    "@fluidframework/merge-tree": "^1.2.5",
-    "@fluidframework/runtime-definitions": "^1.2.5",
-    "@fluidframework/sequence": "^1.2.5"
+    "@fluidframework/map": "^1.2.6",
+    "@fluidframework/merge-tree": "^1.2.6",
+    "@fluidframework/runtime-definitions": "^1.2.6",
+    "@fluidframework/sequence": "^1.2.6"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/dds-interceptions-previous": "npm:@fluidframework/dds-interceptions@1.2.1",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^1.2.5",
-    "@fluidframework/test-runtime-utils": "^1.2.5",
+    "@fluidframework/mocha-test-setup": "^1.2.6",
+    "@fluidframework/test-runtime-utils": "^1.2.6",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",

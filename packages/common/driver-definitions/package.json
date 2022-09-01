@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-definitions",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Fluid driver definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^1.2.5",
+    "@fluidframework/core-interfaces": "^1.2.6",
     "@fluidframework/protocol-definitions": "^0.1028.2000"
   },
   "devDependencies": {
