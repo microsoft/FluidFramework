@@ -147,7 +147,7 @@ user.on("active", () => {
 ```
 
 Notes:
-- Connection is established by default whenever container is loaded or attached.
+- Connection is established by default whenever an existing container is loaded or a new container is attached.
 - You likely want to ensure that all pending changes are saved prior to calling `disconnect`.
 See the following section on dirty/saved state for more details on that topic.
 
