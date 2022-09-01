@@ -1880,12 +1880,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * TODO
-     * @param state -
-     * @param readonly -
+     * Set the connected state of the ContainerContext
+     * This controls the "connected" state of the ContainerRuntime as well
+     * @param state - Is the container currently connected?
+     * @param readonly - Is the container in readonly mode?
      */
     private setContextConnectedState(state: boolean, readonly: boolean): void {
         if (this._context?.disposed === false) {
+            /**
+             * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
+             * ops getting through to the DeltaManager.
+             * The ContainerRuntime's "connected" state simply means it is ok to send ops
+             * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
+             */
             this.context.setConnectionState(state && !readonly, this.clientId);
         }
     }
