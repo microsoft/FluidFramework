@@ -69,7 +69,7 @@ Notes:
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
 - It is a good practice to destructure the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example using `services`, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
-A newly created container is in a *detached* state. A detached container is not connected to the Fluid service and no data is shared with other clients.
+A newly created container is in a *detached* state. A detached container is stored on the local client only and therefore no data is shared with other clients yet.
 This is the point where you can create initial data to populate your shared objects if needed.
 This is often useful in scenarios where you want to make sure that all connected clients have a coherent initial state.
 For example, this could mean setting a minimum table size if collaboration involves tables.
@@ -148,6 +148,7 @@ user.on("active", () => {
 
 Notes:
 - Connection is established by default whenever an existing container is loaded or a new container is attached.
+- Also by default, the container will try to reconnect automatically if connection is lost.
 - You likely want to ensure that all pending changes are saved prior to calling `disconnect`.
 See the following section on dirty/saved state for more details on that topic.
 
