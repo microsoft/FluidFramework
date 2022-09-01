@@ -1,0 +1,195 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - main
+    - next
+    - lts
+    - release/*
+  paths:
+    include:
+    - packages
+    - examples
+    - experimental
+    - package.json
+    - package-lock.json
+    - lerna.json
+    - lerna-package-lock.json
+    - tools/benchmark
+    - tools/perf-test-processing
+    - tools/pipelines/test-perf-benchmarks.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+
+parameters:
+- name: taskBuild
+  type: string
+  default: ci:build
+
+- name: poolBuild
+  type: object
+  default: Small
+
+- name: checkoutSubmodules
+  type: boolean
+  default: false
+
+- name: buildNumberInPatch
+  type: string
+  default: "false"
+
+- name: tagName
+  type: string
+  default: client
+
+trigger: none
+
+variables:
+  # We use 'chalk' to colorize output, which auto-detects color support in the
+  # running terminal.  The log output shown in Azure DevOps job runs only has
+  # basic ANSI color support though, so force that in the pipeline
+  - name: FORCE_COLOR
+    value: 1
+  - name: buildDirectory
+    value: "."
+
+
+stages:
+  # Install / Build / Test Stage
+  - stage: build
+    displayName: Run tests
+    jobs:
+      - job: build
+        displayName: Run performance tests
+        pool: ${{ parameters.poolBuild }}
+        variables:
+          releaseBuildVar: $[variables.releaseBuild]
+          toolFolder: ${{ variables.buildDirectory }}/tools/perf-test-processing
+        steps:
+        # Setup
+        - checkout: self
+          clean: true
+          lfs: ${{ parameters.checkoutSubmodules }}
+          submodules: ${{ parameters.checkoutSubmodules }}
+
+        - task: Bash@3
+          displayName: Parameters
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.buildDirectory }}
+            script: |
+              # Show all task group conditions
+
+              echo "
+              Pipeline Variables:
+                releaseBuild=$(releaseBuildVar)
+
+              Tasks Parameters:
+                BuildDir=${{ variables.buildDirectory }}
+                Build=${{ parameters.taskBuild }}"
+
+        # Install
+        - task: UseNode@1
+          displayName: Use Node 14.x
+          inputs:
+            version: 14.x
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'ci --unsafe-perm'
+            customRegistry: 'useNpmrc'
+
+        # Set version
+        - template: templates/include-set-package-version.yml
+          parameters:
+            buildDirectory: ${{ variables.buildDirectory }}
+            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            tagName: ${{ parameters.tagName }}
+
+        # Build
+        - ${{ if ne(parameters.taskBuild, 'false') }}:
+          - task: Npm@1
+            displayName: npm run ${{ parameters.taskBuild }}
+            inputs:
+              command: 'custom'
+              workingDir: ${{ variables.buildDirectory }}
+              customCommand: 'run ${{ parameters.taskBuild }}'
+
+        # Run performance tests
+        # - Add custom npm feeds to the tool's .npmrc file
+        # - Authenticate to the custom npm feeds
+        # - Install the aria-logger package from the custom npm feeds
+        # - Run tests
+        # - Process output files and send telemetry to Kusto
+        - task: Bash@3
+          displayName: 'Add custom feeds to .npmrc'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolFolder)
+            script: |
+              echo "Adding custom npm feeds to .npmrc"
+              cat << EOF >> .npmrc
+                registry=https://registry.npmjs.org
+                always-auth=false
+                @ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+                @microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
+                always-auth=true
+              EOF
+              echo "Contents of .npmrc:"
+              cat .npmrc
+
+        - task: npmAuthenticate@0
+          displayName: 'npm authenticate (internal feed)'
+          inputs:
+            workingFile: $(toolFolder)/.npmrc
+
+        - task: npmAuthenticate@0
+          displayName: 'npm authenticate (office feed)'
+          inputs:
+            workingFile: $(toolFolder)/.npmrc
+            customEndpoint: 'Office Packages - Readonly'
+
+        - task: Npm@1
+          displayName: 'Install @ff-internal/aria-logger'
+          inputs:
+            command: 'custom'
+            workingDir: $(toolFolder)
+            customCommand: 'install @ff-internal/aria-logger'
+            customRegistry: 'useNpmrc'
+
+        - task: Npm@1
+          displayName: 'Run performance benchmarks - runtime'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'run test:benchmark:report'
+
+        - task: Npm@1
+          displayName: 'Consolidate output files - runtime'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'run test:benchmark:copyresults'
+
+        - task: Bash@3
+          displayName: 'Write runtime perf benchmarks to Aria/Kusto'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolFolder)
+            script: |
+              npm i;
+              npm run build:compile;
+              node --require @ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
+
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Benchmark tests output
+          inputs:
+            targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
+            artifactName: 'benchmark-test-outputs'
+            condition: succeededOrFailed()

@@ -340,13 +340,11 @@ export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
     config?: IExternalWriterConfig;
 }
 
-// @public (undocumented)
+// @public
 export interface ISession {
-    // (undocumented)
     historianUrl: string;
-    // (undocumented)
+    isSessionActive: boolean;
     isSessionAlive: boolean;
-    // (undocumented)
     ordererUrl: string;
 }
 
@@ -549,7 +547,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager, blobsShaCache: Map<string, string>, getPreviousFullSnapshot: (parentHandle: string) => Promise<ISnapshotTreeEx | null | undefined>);
     // (undocumented)
     writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
-    }
+}
 
 // @public
 export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;
@@ -571,8 +569,7 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager);
     // (undocumented)
     writeSummaryTree(summaryTree: ISummaryTree, parentHandle: string | undefined, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
-    }
-
+}
 
 // (No @packageDocumentation comment for this package)
 

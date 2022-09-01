@@ -32,6 +32,8 @@ import {
     IRepoManagerParams,
     getLumberjackBasePropertiesFromRepoManagerParams,
     getRepoManagerFromWriteAPI,
+    checkSoftDeleted,
+    getSoftDeletedMarkerPath,
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
@@ -184,14 +186,17 @@ async function deleteSummary(
     const summaryFolderPath = repoManager.path;
     Lumberjack.info(`Deleting summary`, lumberjackProperties);
 
-    if (softDelete) {
-        // Currently, we ignore the softDelete header and always implement hard delete. Soft delete will come next.
-        Lumberjack.info(`Skipping soft delete as it will be implemented later.`, lumberjackProperties);
-        return;
-    }
-
     try {
+        if (softDelete) {
+            const softDeletedMarkerPath = getSoftDeletedMarkerPath(summaryFolderPath);
+            await fileSystemManager.promises.writeFile(softDeletedMarkerPath, "");
+            Lumberjack.info(`Successfully marked summary data as soft-deleted.`, lumberjackProperties);
+            return;
+        }
+
+        // Hard delete
         await fileSystemManager.promises.rm(summaryFolderPath, { recursive: true });
+        Lumberjack.info(`Successfully hard-deleted summary data.`, lumberjackProperties);
     } catch (error: any) {
         if (error?.code === "ENOENT" ||
                 (error instanceof NetworkError &&
@@ -235,14 +240,17 @@ export function create(
             return;
         }
         const resultP = repoManagerFactory.open(repoManagerParams)
-            .then(async (repoManager) => getSummary(
-                repoManager,
-                fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
-                request.params.sha,
-                repoManagerParams,
-                getExternalWriterParams(request.query?.config as string | undefined),
-                persistLatestFullSummary,
-            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return getSummary(
+                    repoManager,
+                    fsManager,
+                    request.params.sha,
+                    repoManagerParams,
+                    getExternalWriterParams(request.query?.config as string | undefined),
+                    persistLatestFullSummary);
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
@@ -260,14 +268,17 @@ export function create(
         }
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
         const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
-            .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
-                repoManager,
-                fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
-                wholeSummaryPayload,
-                repoManagerParams,
-                getExternalWriterParams(request.query?.config as string | undefined),
-                persistLatestFullSummary,
-            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return createSummary(
+                    repoManager,
+                    fsManager,
+                    wholeSummaryPayload,
+                    repoManagerParams,
+                    getExternalWriterParams(request.query?.config as string | undefined),
+                    persistLatestFullSummary);
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
@@ -286,14 +297,17 @@ export function create(
         }
         const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
         const resultP = repoManagerFactory.open(repoManagerParams)
-            .then(async (repoManager) => deleteSummary(
-                repoManager,
-                fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
-                repoManagerParams,
-                softDelete,
-                repoPerDocEnabled,
-                getExternalWriterParams(request.query?.config as string | undefined),
-            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return deleteSummary(
+                    repoManager,
+                    fsManager,
+                    repoManagerParams,
+                    softDelete,
+                    repoPerDocEnabled,
+                    getExternalWriterParams(request.query?.config as string | undefined));
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 204);
     });
 

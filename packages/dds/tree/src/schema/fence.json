@@ -1,5 +1,0 @@
-{
-    "tags": [ "schema" ],
-    "exports": [ "index"],
-    "imports": ["util","dependency-tracking"]
-}

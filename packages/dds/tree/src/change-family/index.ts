@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
- export * from "./changeFamily";
- export * from "./progressiveEditBuilder";
+export * from "./changeEncoder";
+export * from "./changeFamily";
+export * from "./progressiveEditBuilder";
