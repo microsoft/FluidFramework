@@ -399,8 +399,11 @@ describe("EditManager", () => {
  * State needed by the scenario builder.
  */
 interface ScenarioBuilderState {
+    /** The ref number of the last commit made by each peer (0 for peers that have made no commits). */
     peerRefs: number[];
+    /** The sequence number of the last sequenced commit. */
     seq: number;
+    /** The number of local changes that have yet to be acked. */
     inFlight: number;
 }
 
@@ -412,13 +415,13 @@ function* buildScenario(
         yield scenario;
     } else {
         // Push
-            meta.inFlight += 1;
-            scenario.push({ type: "Push" });
-            for (const built of buildScenario(scenario, meta)) {
-                yield built;
-            }
-            scenario.pop();
-            meta.inFlight -= 1;
+        meta.inFlight += 1;
+        scenario.push({ type: "Push" });
+        for (const built of buildScenario(scenario, meta)) {
+            yield built;
+        }
+        scenario.pop();
+        meta.inFlight -= 1;
 
         // Ack (if there are any local changes)
         if (meta.inFlight > 0) {
