@@ -1684,9 +1684,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Both protocol and context should not be undefined if we got so far.
 
         this.setContextConnectedState(state, this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false);
-        if (this._context?.disposed === false) {
-            this.context.setConnectionState(state, this.clientId);
-        }
         this.protocolHandler.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
 
