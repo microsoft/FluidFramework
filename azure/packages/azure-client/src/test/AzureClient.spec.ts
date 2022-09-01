@@ -34,9 +34,6 @@ const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
     });
 };
 
-const delay = async (timeMs: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(() => resolve(), timeMs));
-
 const waitForMyself = async (audience: IAzureAudience): Promise<AzureMember> => {
     return new Promise((resolve) => {
         const handler = (): void => {
@@ -61,58 +58,6 @@ describe("AzureClient", () => {
                 map1: SharedMap,
             },
         };
-    });
-
-    describe("Nack Tests", () => {
-        it("forces nack", async () => {
-            /* (1) Create document & immediately close. Basically create a first doc snapshot with no data. */
-            const { container } = await client.createContainer(schema);
-            const containerId = await container.attach();
-            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-                durationMs: connectTimeoutMs,
-                errorMsg: "container connect() timeout",
-            });
-            container.dispose();
-
-            /* (2) get/dispose container from (1). This should make sure the client does not have enough time to spawn summarizer,
-            but still creates join/leave ops */
-            const { container: containerGet1 } = await client.getContainer(containerId, schema);
-            containerGet1.dispose();
-
-            /* (3) Give some time to service to summarize ops from previous connect/close */
-            await delay(4000);
-
-            /* (4) get/dispose container from (1). This should make sure this client does not have enought time to spawn summarizer,
-            but still creates join/leave ops. Here we will likely cache snapshot from (3)  */
-            const { container: containerGet2 } = await client.getContainer(containerId, schema);
-            containerGet2.dispose();
-
-            /* (5) Give some time to service to summarize ops from previous connect/close */
-            await delay(4000);
-
-            /* (6) get container and inject ops. Allow summarizer to spawn */
-            const { container: containerSet1 } = await client.getContainer(containerId, schema);
-            const initialObjectsCreate = containerSet1.initialObjects;
-            const map1Create = initialObjectsCreate.map1 as SharedMap;
-            map1Create.set("new-key", "new-value");
-
-            /* (7) Summarizer will attempt 4 times, with each attempt failing. Server nack is stating that
-            client is using wrong parent handle: Received summaryNack: Proposed parent summary \"bBwAAAAAHAAAA\"
-            does not match actual parent summary \"bBwYAAAAHAAAA\" */
-            await delay(2 * 60_000);
-            map1Create.set("new-key", "new-value2"); // Avoid innactivity?
-            await delay(2 * 60_000);
-            map1Create.set("new-key", "new-value3"); // Avoid innactivity?
-            await delay(2 * 60_000);
-            map1Create.set("new-key", "new-value4"); // Avoid innactivity?
-            await delay(2 * 60_000);
-            map1Create.set("new-key", "new-value5"); // Avoid innactivity?
-            await delay(2 * 60_000);
-            map1Create.set("new-key", "new-value6"); // Avoid innactivity?
-
-            // Ensure we allow for 4 summary attemps: (immediate, immediate, 2mins, 10mins)
-            await delay(100 * 60_000);
-        }).timeout(110 * 60_000);
     });
 
     describe("Fluid container creation", () => {
