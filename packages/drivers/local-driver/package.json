@@ -62,6 +62,7 @@
     "@fluidframework/driver-base": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluidframework/driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluidframework/driver-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-base": "^0.1037.1000",
     "@fluidframework/protocol-definitions": "^1.0.0",
     "@fluidframework/routerlicious-driver": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluidframework/server-local-server": "^0.1037.1000",
