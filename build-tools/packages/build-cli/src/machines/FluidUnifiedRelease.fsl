@@ -129,3 +129,8 @@ state AskReleaseDetails: {
    background-color : purple;
    text-color       : white;
 };
+
+state ReleaseComplete: {
+   background-color : green;
+   text-color       : black;
+};
