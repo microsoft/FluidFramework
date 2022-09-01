@@ -36,10 +36,13 @@ type policyAction = "handle" | "resolve" | "final";
 
 /**
  * This tool enforces polices across the code base via a series of handlers.
+ * This command supports piping. The flag is modified from s to stdin
+ * i.e. `git ls-files -co --exclude-standard --full-name | flub check policy --stdin --verbose`
  *
  * @remarks
  *
  * This command is equivalent to `fluid-repo-policy-check`.
+ * fluid-repo-policy-check -s is equivalent to flub check policy --stdin
  */
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
@@ -173,17 +176,17 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             const result = runWithPerf(handler.name, "handle", () =>
                 handler.handler(file, CheckPolicy.pathToGitRoot),
             );
+            const resolver = handler.resolver;
 
             if (result === undefined) {
                 return;
             }
 
-            let output = `${newline}file failed policy check: ${file}${newline}${result}`;
-            const resolver = handler.resolver;
-
             if (!this.processedFlags.fix || resolver === undefined) {
                 return this.exit(1);
             }
+
+            let output = `${newline}file failed policy check: ${file}${newline}${result}`;
 
             output += `${newline}attempting to resolve: ${file}`;
             const resolveResult = runWithPerf(handler.name, "resolve", () =>
