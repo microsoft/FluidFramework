@@ -34,7 +34,6 @@ const readStdin: () => Promise<string | undefined> = async () => {
 
 type policyAction = "handle" | "resolve" | "final";
 
-
 /**
  * This tool enforces polices across the code base via a series of handlers.
  *
