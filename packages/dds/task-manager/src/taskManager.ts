@@ -162,6 +162,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly subscribedTasks: Set<string> = new Set();
 
     /**
+     * Tracks tasks that have been completed locally and are pending ack.
+     */
+     private readonly pendingCompletedTasks: Set<string> = new Set();
+
+    /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
      * be provided
      *
@@ -216,7 +221,12 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 }
             }
 
-            if (this.taskQueues.has(taskId)) {
+            // We consider locally completed tasks "pending" until they are ack'd. Once they are ack'd the local client
+            // can remove it from this.pendingCompletedTasks. For all other clients, we need to remove the task from
+            // the queue and emit the proper events.
+            if (this.pendingCompletedTasks.has(taskId)) {
+                this.pendingCompletedTasks.delete(taskId);
+            } else {
                 this.taskQueues.delete(taskId);
                 this.completedWatcher.emit("completed", taskId);
                 this.emit("completed", taskId);
@@ -289,7 +299,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.latestPendingOps.set(taskId, pendingOp);
     }
 
-    private submitCompletedOp(taskId: string) {
+    private submitCompleteOp(taskId: string) {
         const op: ITaskManagerCompletedOperation = {
             type: "complete",
             taskId,
@@ -491,10 +501,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             throw new Error(`Attempted to complete task in disconnected state: ${taskId}`);
         }
 
-        this.submitCompletedOp(taskId);
+        this.submitCompleteOp(taskId);
         this.taskQueues.delete(taskId);
         this.completedWatcher.emit("completed", taskId);
         this.emit("completed", taskId);
+        this.pendingCompletedTasks.add(taskId);
     }
 
     /**

@@ -363,16 +363,49 @@ describe("TaskManager", () => {
                 let taskManager2EventFired = false;
                 taskManager1.once("completed", (completedTaskId: string) => {
                     assert.ok(completedTaskId === taskId, "taskId should match");
+                    assert.ok(!taskManager1EventFired, "Should only fire completed event once on taskManager1");
                     taskManager1EventFired = true;
                 });
                 taskManager2.once("completed", (completedTaskId: string) => {
                     assert.ok(completedTaskId === taskId, "taskId should match");
+                    assert.ok(!taskManager2EventFired, "Should only fire completed event once on taskManager2");
                     taskManager2EventFired = true;
                 });
                 taskManager1.complete(taskId);
                 containerRuntimeFactory.processAllMessages();
                 assert.ok(taskManager1EventFired, "Should have raised completed event on taskManager1");
                 assert.ok(taskManager2EventFired, "Should have raised completed event on taskManager2");
+            });
+
+            it("Can complete a task with a pending volunteer op", async () => {
+                const taskId = "taskId";
+                const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
+
+                containerRuntimeFactory.processAllMessages();
+                await volunteerTaskP1;
+
+                let taskManager1EventFired = false;
+                let taskManager2EventFired = false;
+                taskManager1.on("completed", (completedTaskId: string) => {
+                    assert.ok(completedTaskId === taskId, "taskId should match");
+                    assert.ok(!taskManager1EventFired, "Should only fire completed event once on taskManager1");
+                    taskManager1EventFired = true;
+                });
+                taskManager2.on("completed", (completedTaskId: string) => {
+                    assert.ok(completedTaskId === taskId, "taskId should match");
+                    assert.ok(!taskManager2EventFired, "Should only fire completed event once on taskManager2");
+                    taskManager2EventFired = true;
+                });
+
+                const volunteerTaskP2 = taskManager2.volunteerForTask(taskId);
+                taskManager1.complete(taskId);
+                containerRuntimeFactory.processAllMessages();
+                await volunteerTaskP2;
+
+                assert.ok(taskManager1EventFired, "Should have raised completed event on taskManager1");
+                assert.ok(taskManager2EventFired, "Should have raised completed event on taskManager2");
+                assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
+                assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
             });
         });
     });
