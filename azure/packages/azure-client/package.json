@@ -80,7 +80,7 @@
     "typescript": "~4.5.5"
   },
   "peerDependencies": {
-    "fluid-framework": "^1.2.3"
+    "fluid-framework": "^1.2.5"
   },
   "typeValidation": {
     "version": "1.0.0",
