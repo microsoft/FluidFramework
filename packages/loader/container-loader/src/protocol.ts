@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAudienceOwner } from "@fluidframework/container-definitions";
+import { IAudienceOwner, IConnectionDetails } from "@fluidframework/container-definitions";
 import {
     ILocalSequencedClient,
     IProtocolHandler as IBaseProtocolHandler,
@@ -32,6 +32,7 @@ export type ProtocolHandlerBuilder = (
 export interface IProtocolHandler extends IBaseProtocolHandler {
     readonly audience: IAudienceOwner;
     processSignal(message: ISignalMessage);
+    connectionHandler?(details: IConnectionDetails, opsBehind?: number);
 }
 
 export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandler {

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IAudienceOwner } from "@fluidframework/container-definitions";
+import { IAudienceOwner, IConnectionDetails } from "@fluidframework/container-definitions";
 import { IProtocolHandler, ProtocolHandlerBuilder } from "@fluidframework/container-loader";
 import { IQuorumSnapshot, IScribeProtocolState } from "@fluidframework/protocol-base";
 import {
@@ -142,6 +142,10 @@ class EmptyProtocolHandler implements IProtocolHandler {
             proposals: [],
             values: [],
         };
+    }
+
+    connectionHandler(details: IConnectionDetails, _opsBehind?: number) {
+        this.setConnectionState(true, details.clientId);
     }
 
     setConnectionState(connected: boolean, clientId: string | undefined) {

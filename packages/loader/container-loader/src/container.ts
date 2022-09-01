@@ -1542,7 +1542,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         deltaManager.inboundSignal.pause();
 
-        deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
             if (this._protocolHandler === undefined) {
                 // Store the initial clients so that they can be submitted to the
                 // protocol handler when it is created.
@@ -1561,6 +1561,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true ?
                     this.deltaManager
                     : undefined;
+
+            if (this._protocolHandler?.connectionHandler !== undefined) {
+                this._protocolHandler.connectionHandler(details, opsBehind);
+            }
 
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
