@@ -11,6 +11,12 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { ContainerDataObjectManager } from "./containerDataObjectManager";
 
+/**
+ * Responsible for tracking the lifetime of containers
+ * Responsible for retrieving, creating, and loading containers
+ * A container is connected if it is attached and not closed
+ * A container is closed if container.close is true
+ */
 export class ContainerManager {
     private readonly connectedContainers: IContainer[] = [];
     private readonly closedContainers: IContainer[] = [];
@@ -56,10 +62,6 @@ export class ContainerManager {
 
     public get connectedContainerCount(): number {
         return this.connectedContainers.length;
-    }
-
-    public get disconnectedContainerCount(): number {
-        return this.closedContainers.length;
     }
 
     public async getRandomContainer(random: IRandom): Promise<ContainerDataObjectManager> {
