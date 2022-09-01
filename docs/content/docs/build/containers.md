@@ -7,7 +7,7 @@ editor: tylerbutler
 
 The container is the primary unit of encapsulation in the Fluid Framework.
 It allows a group of clients to access the same set of shared objects and co-author changes on those objects.
-By the same token, it is a permission boundary ensuring visibility and access to a limited set of clients.
+It is also a permission boundary ensuring visibility and access only to permitted clients.
 A container is represented by the `FluidContainer` type and consists of a collection of shared objects and APIs to manage the lifecyle of those objects.
 
 This article will explain:
