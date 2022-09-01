@@ -45,7 +45,7 @@ const singleNodeEncoder: FieldChangeEncoder<FieldChangeMap> = {
 };
 
 const singleNodeRebaser: FieldChangeRebaser<FieldChangeMap> = {
-    compose: (changes, composeChild) => composeChild(...changes),
+    compose: (changes, composeChild) => composeChild(changes),
     invert: (change, invertChild) => invertChild(change),
     rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 };
