@@ -67,7 +67,7 @@ extends:
     buildDirectory: tools/benchmark
     tagName:
     taskBuild: build
-    taskBuildDocs: false
-    taskLint: false
+    taskBuildDocs: true
+    taskLint: true
     taskTest: test
     buildNumberInPatch: true
