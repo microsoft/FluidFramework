@@ -3,45 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
 import { benchmarkMemory } from "@fluid-tools/benchmark";
-import {
-    IJSONSegment, ISegment,
-} from "@fluidframework/merge-tree";
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-
-// import { TestClient } from "@fluidframework/merge-tree/dist/test";
-import { SharedStringFactory } from "../../sequenceFactory";
-import { SubSequence, SharedSequence } from "../../sharedSequence";
-
-// class SubSequenceTestClient extends TestClient {
-//     constructor() {
-//         super(undefined,
-//             (spec) => {
-//                 const subSequence = SubSequence.fromJSONObject(spec);
-//                 return subSequence;
-//             });
-//     }
-// }
-
-class SharedSequenceTest extends SharedSequence<number> {
-    constructor(
-        document: IFluidDataStoreRuntime,
-        public id: string,
-        attributes: IChannelAttributes,
-        specToSegment: (spec: IJSONSegment) => ISegment,
-    ) {
-        super(document, id, attributes, specToSegment);
-    }
-}
-
-function createLocalSharedSequence(id: string) {
-    return new SharedSequenceTest(
-    // return new SharedSequence<number>(
-        new MockFluidDataStoreRuntime(), id, SharedStringFactory.Attributes, SharedStringFactory.segmentFromSpec);
-}
+import { SubSequence } from "../../sharedSequence";
 
 describe("SharedSequence memory usage", () => {
     // IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
@@ -62,28 +25,9 @@ describe("SharedSequence memory usage", () => {
         // See the comment at the top of the test suite for more details.
     });
 
-    benchmarkMemory({
-        title: "Create empty SharedSequence",
-        minSampleCount: 1000,
-        benchmarkFn: async () => {
-            createLocalSharedSequence("testSharedSequence");
-        },
-    });
-
     const numbersOfEntriesForTests = [100, 1000, 10_000];
 
     numbersOfEntriesForTests.forEach((x) => {
-        benchmarkMemory({
-            title: `Insert and remove ${x} subsequences`,
-            benchmarkFn: async () => {
-                const sharedSequence = createLocalSharedSequence("subsequence");
-                for (let i = 0; i < x; i++) {
-                    sharedSequence.insert(0, [i]);
-                    sharedSequence.remove(0, 1);
-                }
-            },
-        });
-
         benchmarkMemory({
             title: `Append and remove ${x} subsequences`,
             benchmarkFn: async () => {
@@ -95,30 +39,35 @@ describe("SharedSequence memory usage", () => {
             },
         });
 
-    //     benchmarkMemory({
-    //         title: `Get text annotation ${x} times`,
-    //         benchmarkFn: async () => {
-    //             const sharedSequence = createLocalSharedSequence("testSharedString");
-
-    //             const text = "hello world";
-    //             const styleProps = { style: "bold" };
-    //             sharedSequence.insert(0, text.split(""), styleProps);
-
-    //             for (let i = 0; i < x; i++) {
-    //                 sharedSequence.getPropertiesAtPosition(i);
-    //             }
-    //         },
-    //     });
-
-    //     benchmarkMemory({
-    //         title: `Get items ${x} times from sequence`,
-    //         benchmarkFn: async () => {
-    //             const sharedSequence = createLocalSharedSequence("testSharedString");
-    //             for (let i = 0; i < x; i++) {
-    //                 sharedSequence.insert(0, "my-test-text".split(""));
-    //                 sharedSequence.getItems(0, 12);
-    //             }
-    //         },
-    //     });
+        // NOTE: This test is commented out because SharedSequence does not exist
+        // as an implementable standalone datastructure. In order to implement the
+        // test for it, we need to define a SharedSequenceFactory and implement the
+        // various functions within it to instantiate and process the different
+        // datatypes within the Sequence. However, as we are depracating
+        // SharedObjectSequence and SharedNumberSequence, and SharedString has it's
+        // own performance tests, it makes little sense to make up and implement a
+        // ShareSequence standalone factory to benchmark performance as is. So we
+        // are leaving this test skipped over for now until there is a reason to
+        // invest more effort into benchmarking it's performance.
+        //
+        //  function createLocalSharedSequence(id: string) {
+        //     return new SharedSequence<number>(
+        //         new MockFluidDataStoreRuntime(),
+        //         id,
+        //         SharedStringFactory.Attributes,
+        //         SharedStringFactory.segmentFromSpec
+        //     );
+        // }
+        // benchmarkMemory.skip({
+        //     title: `Insert and remove ${x} subsequences`,
+        //     benchmarkFn: async () => {
+        //         const sharedSequence = createLocalSharedSequence("subsequence");
+        //         sharedSequence.insert(0, [1]);
+        //         for (let i = 0; i < x; i++) {
+        //             sharedSequence.insert(0, [i]);
+        //             sharedSequence.remove(0, 1);
+        //         }
+        //     },
+        // });
     });
 });
