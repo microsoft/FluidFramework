@@ -47,7 +47,8 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     ) { }
 
     public setLocalSessionId(id: SessionId) {
-        assert(this.localSessionId === undefined || this.localSessionId === id, 0x3a1 /* Local session ID cannot be changed */);
+        assert(this.localSessionId === undefined || this.localSessionId === id,
+            0x3a1 /* Local session ID cannot be changed */);
         this.localSessionId = id;
     }
 
