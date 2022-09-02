@@ -74,8 +74,8 @@ class LocalReference implements LocalReferencePosition {
     public link(segment: ISegment | undefined, offset: number, listNode: ListNode<LocalReference> | undefined) {
         if (listNode !== this.listNode && this.listNode !== undefined) {
             this.segment?.localRefs?.removeLocalRef(this);
-            this.listNode = listNode;
         }
+        this.listNode = listNode;
 
         if (segment !== this.segment) {
             const groups: TrackingGroup[] = [];
@@ -84,6 +84,7 @@ class LocalReference implements LocalReferencePosition {
                     tg.unlink(this);
                     groups.push(tg);
                 });
+
             this.segment = segment;
 
             groups.forEach((tg) => tg.link(this));
@@ -302,7 +303,7 @@ export class LocalReferenceCollection {
             node?.list?.remove(node);
 
             lref.link(
-                lref.getSegment(),
+                undefined,
                 lref.getOffset(),
                 undefined);
             if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
