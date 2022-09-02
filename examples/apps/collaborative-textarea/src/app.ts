@@ -4,6 +4,8 @@
  */
 
 import {
+    ICodeDetailsLoader,
+    IFluidCodeDetails,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import type { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -31,14 +33,14 @@ class TinyliciousService {
     }
 }
 
-const load = async (): Promise<IFluidModuleWithDetails> => {
-    return {
-        module: { fluidExport: new CollaborativeTextContainerRuntimeFactory() },
-        details: { package: "no-dynamic-package", config: {} },
-    };
-};
-
-const demoCodeLoader = { load };
+class DemoCodeLoader implements ICodeDetailsLoader {
+    public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+        return {
+            module: { fluidExport: new CollaborativeTextContainerRuntimeFactory() },
+            details: { package: "no-dynamic-package" },
+        };
+    }
+}
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -49,7 +51,7 @@ async function start() {
     const modelLoader = new ModelLoader<ICollaborativeTextAppModel>({
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
-        codeLoader: demoCodeLoader,
+        codeLoader: new DemoCodeLoader(),
         generateCreateNewRequest: createTinyliciousCreateNewRequest,
     });
 
@@ -57,9 +59,7 @@ async function start() {
     let model: ICollaborativeTextAppModel;
 
     if (location.hash.length === 0) {
-        // Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
-        // Normally we would create with the most-recent version.
-        const createResponse = await modelLoader.createDetached("one");
+        const createResponse = await modelLoader.createDetached("no-dynamic-package");
         model = createResponse.model;
 
         id = await createResponse.attach();
@@ -80,10 +80,6 @@ async function start() {
             contentDiv,
         );
     }
-
-    // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line @typescript-eslint/dot-notation
-    window["fluidStarted"] = true;
 }
 
 start().catch((e) => {
