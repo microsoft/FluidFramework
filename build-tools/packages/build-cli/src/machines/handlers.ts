@@ -232,31 +232,32 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                         );
                     }
 
-                    await CheckPolicy.run([
-                        "--fix",
-                        "--exclusions",
-                        path.join(
-                            context.gitRepo.resolvedRoot,
-                            "build-tools",
-                            "packages",
-                            "build-tools",
-                            "data",
-                            "exclusions.json"
-                        )
-                    ]);
-                    // const r = await exec(
-                    //     `node ${path.join(
+                    // await CheckPolicy.run([
+                    //     "--fix",
+                    //     "--exclusions",
+                    //     path.join(
                     //         context.gitRepo.resolvedRoot,
                     //         "build-tools",
                     //         "packages",
                     //         "build-tools",
-                    //         "dist",
-                    //         "repoPolicyCheck",
-                    //         "repoPolicyCheck.js",
-                    //     )} -r`,
-                    //     context.gitRepo.resolvedRoot,
-                    //     "policy-check:fix failed",
-                    // );
+                    //         "data",
+                    //         "exclusions.json"
+                    //     )
+                    // ]);
+
+                    await exec(
+                        `node ${path.join(
+                            context.gitRepo.resolvedRoot,
+                            "build-tools",
+                            "packages",
+                            "build-tools",
+                            "dist",
+                            "repoPolicyCheck",
+                            "repoPolicyCheck.js",
+                        )} -r`,
+                        context.gitRepo.resolvedRoot,
+                        "policy-check:fix failed",
+                    );
 
                     // check for policy check violation
                     const afterPolicyCheckStatus = await context.gitRepo.getStatus();
