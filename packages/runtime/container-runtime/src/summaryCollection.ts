@@ -310,13 +310,12 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
                 // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
                 if ((op as any).data !== undefined) {
                     op.contents = JSON.parse((op as any).data);
-                    if (op.type === MessageType.SummaryAck) {
-                        return this.handleSummaryAck(op as ISummaryAckMessage);
-                    } else {
-                        return this.handleSummaryNack(op as ISummaryNackMessage);
-                    }
                 }
-                break;
+                if (op.type === MessageType.SummaryAck) {
+                    return this.handleSummaryAck(op as ISummaryAckMessage);
+                } else {
+                    return this.handleSummaryNack(op as ISummaryNackMessage);
+                }
             default: {
                 // If the difference between timestamp of current op and last summary op is greater than
                 // the maxAckWaitTime, then we need to inform summarizer to not wait and summarize
