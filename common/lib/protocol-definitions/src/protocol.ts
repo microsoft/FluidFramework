@@ -5,6 +5,9 @@
 
 export enum MessageType {
     // Empty operation message. Used to send an updated reference sequence number.
+    // Relay service is free to coalesce these messages or fully drop them, if
+    // another op was used to update MSN to a number equal or higher than referenced
+    // sequence number in Noop.
     NoOp = "noop",
 
     // System message sent to indicate a new client has joined the collaboration

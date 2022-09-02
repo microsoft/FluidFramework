@@ -18,6 +18,7 @@ import {
     ISignalMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 
 /**
  * Function to be used for creating a protocol handler.
@@ -68,7 +69,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
                 throw new Error("Remote message's clientId is missing from the quorum");
             }
 
-            if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
+            if (client?.shouldHaveLeft === true && !canBeCoalescedByService(message)) {
                 // pre-0.58 error message: messageClientIdShouldHaveLeft
                 throw new Error("Remote message's clientId already should have left");
             }

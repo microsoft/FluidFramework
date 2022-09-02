@@ -503,8 +503,8 @@ export class MergeTree {
             }
         }
 
-        assert(refSeq !== undefined, "localSeq provided for local length without refSeq");
-        assert(segment.seq !== undefined, "segment with no seq in mergeTree");
+        assert(refSeq !== undefined, 0x398 /* localSeq provided for local length without refSeq */);
+        assert(segment.seq !== undefined, 0x399 /* segment with no seq in mergeTree */);
         const { seq, removedSeq, localRemovedSeq } = segment;
         if (seq !== UnassignedSequenceNumber) {
             // inserted remotely
@@ -515,7 +515,7 @@ export class MergeTree {
             }
             return segment.cachedLength;
         } else {
-            assert(segment.localSeq !== undefined, "unacked segment with undefined localSeq");
+            assert(segment.localSeq !== undefined, 0x39a /* unacked segment with undefined localSeq */);
             // inserted locally, still un-acked
             if (segment.localSeq > localSeq || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq)) {
                 return 0;
@@ -854,7 +854,7 @@ export class MergeTree {
 
     public getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number, localSeq?: number) {
         assert(localSeq === undefined || clientId === this.collabWindow.clientId,
-            "localSeq provided for non-local client");
+            0x39b /* localSeq provided for non-local client */);
         let segment: T | undefined;
         let offset: number | undefined;
 
@@ -2041,11 +2041,11 @@ export class MergeTree {
             }
             for (const segment of pendingSegmentGroup.segments) {
                 const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
-                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+                assert(segmentSegmentGroup === pendingSegmentGroup, 0x39c /* Unexpected segmentGroup in segment */);
 
                 assert(segment.removedClientIds !== undefined
                     && segment.removedClientIds[0] === this.collabWindow.clientId,
-                    "Rollback segment removedClientId does not match local client");
+                    0x39d /* Rollback segment removedClientId does not match local client */);
                 segment.removedClientIds = undefined;
                 segment.removedSeq = undefined;
                 segment.localRemovedSeq = undefined;
@@ -2083,7 +2083,7 @@ export class MergeTree {
             let i = 0;
             for (const segment of pendingSegmentGroup.segments) {
                 const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
-                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+                assert(segmentSegmentGroup === pendingSegmentGroup, 0x39e /* Unexpected segmentGroup in segment */);
 
                 const start = this.findRollbackPosition(segment);
                 if (op.type === MergeTreeDeltaType.INSERT) {
