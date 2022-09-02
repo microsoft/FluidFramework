@@ -5,11 +5,20 @@
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { ChangeEncoder, JsonCompatible, JsonCompatibleReadOnly } from "../change-family";
-import { ChangeRebaser } from "../rebase";
 import { FieldKindIdentifier } from "../schema-stored";
-import { AnchorSet, JsonableTree } from "../tree";
+import { AnchorSet, Delta, JsonableTree } from "../tree";
 import { brand } from "../util";
-import { ChangeHandler, FieldKind, Multiplicity, allowsTreeSchemaIdentifierSuperset } from "./modular-schema";
+import {
+    FieldKind,
+    Multiplicity,
+    allowsTreeSchemaIdentifierSuperset,
+    ToDelta,
+    FieldChangeRebaser,
+    FieldChangeHandler,
+    NodeChangeComposer,
+    NodeChangeInverter,
+    NodeChangeRebaser,
+} from "./modular-schema";
 
 /**
  * Encoder for changesets which carry no information.
@@ -52,7 +61,7 @@ function commutativeRebaser<TChange>(data: {
     compose: (changes: TChange[]) => TChange;
     invert: (changes: TChange) => TChange;
     rebaseAnchors: (anchor: AnchorSet, over: TChange) => void;
-}): ChangeRebaser<TChange> {
+}): FieldChangeRebaser<TChange> {
     return {
         rebase: (change: TChange, over: TChange) => change,
         ...data,
@@ -68,13 +77,11 @@ function commutativeRebaser<TChange>(data: {
 export function lastWriteWinsRebaser<TChange>(data: {
     noop: TChange;
     invert: (changes: TChange) => TChange;
-    rebaseAnchors: (anchor: AnchorSet, over: TChange) => void;
-}): ChangeRebaser<TChange> {
+}): FieldChangeRebaser<TChange> {
     return {
         rebase: (change: TChange, over: TChange) => change,
         compose: (changes: TChange[]) => changes.length >= 0 ? changes[changes.length - 1] : data.noop,
         invert: data.invert,
-        rebaseAnchors: data.rebaseAnchors,
     };
 }
 
@@ -83,18 +90,16 @@ export interface Replacement<T> {
     new: T;
 }
 
-type ReplaceOp<T> = Replacement<T> | 0;
+export type ReplaceOp<T> = Replacement<T> | 0;
 
 /**
  * Picks the last value written.
  *
  * Consistent if used on valid paths with correct old states.
  */
-function replaceRebaser<T>(data: {
-    rebaseAnchors: (anchor: AnchorSet, over: ReplaceOp<T>) => void;
-}): ChangeRebaser<ReplaceOp<T>> {
+export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
     return {
-        rebase: (change: ReplaceOp<T>, over: ReplaceOp<T>) => {
+        rebase: (change: ReplaceOp<T>, over: ReplaceOp<T>, rebaseChild: NodeChangeRebaser) => {
             if (change === 0) {
                 return 0;
             }
@@ -103,7 +108,7 @@ function replaceRebaser<T>(data: {
             }
             return { old: over.new, new: change.new };
         },
-        compose: (changes: ReplaceOp<T>[]) => {
+        compose: (changes: ReplaceOp<T>[], composeChild: NodeChangeComposer) => {
             const f = changes.filter((c): c is Replacement<T> => c !== 0);
             if (f.length === 0) {
                 return 0;
@@ -113,22 +118,23 @@ function replaceRebaser<T>(data: {
             }
             return { old: f[0].old, new: f[f.length - 1].new };
         },
-        invert: (changes: ReplaceOp<T>) => changes === 0 ? 0 : { old: changes.new, new: changes.old },
-        rebaseAnchors: data.rebaseAnchors,
+        invert: (changes: ReplaceOp<T>, invertChild: NodeChangeInverter) => {
+            return changes === 0 ? 0 : { old: changes.new, new: changes.old };
+        },
     };
 }
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
  */
-export const noChangeHandle: ChangeHandler<0> = {
+export const noChangeHandle: FieldChangeHandler<0> = {
     rebaser: {
-        compose: (changes: 0[]) => 0,
-        invert: (changes: 0) => 0,
-        rebase: (change: 0, over: 0) => 0,
-        rebaseAnchors: (anchor: AnchorSet, over: 0) => {},
+        compose: (changes: 0[], composeChild: NodeChangeComposer) => 0,
+        invert: (changes: 0, invertChild: NodeChangeInverter) => 0,
+        rebase: (change: 0, over: 0, rebaseChild: NodeChangeRebaser) => 0,
     },
     encoder: new UnitEncoder(),
+    intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
 };
 
 /**
@@ -140,13 +146,17 @@ export const noChangeHandle: ChangeHandler<0> = {
  * and handling values past Number.MAX_SAFE_INTEGER (ex: via an arbitrarily large integer library)
  * or via modular arithmetic.
  */
-export const counterHandle: ChangeHandler<number> = {
+export const counterHandle: FieldChangeHandler<number> = {
     rebaser: commutativeRebaser({
         compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
         invert: (change: number) => -change,
         rebaseAnchors: (anchor: AnchorSet, over: number) => {},
     }),
     encoder: new ValueEncoder<number>(),
+    intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [{
+        type: Delta.MarkType.Modify,
+        setValue: change,
+    }],
 };
 
 /**
@@ -180,8 +190,9 @@ export const value: FieldKind = new FieldKind(
     brand("Value"),
     Multiplicity.Value,
     {
-        rebaser: replaceRebaser<JsonableTree>({ rebaseAnchors: () => { /* TODO: support anchors */ } }),
+        rebaser: replaceRebaser<JsonableTree>(),
         encoder: new ValueEncoder<JsonableTree & JsonCompatibleReadOnly>(),
+        intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
     },
     (types, other) =>
         (other.kind === sequence.identifier || other.kind === value.identifier || other.kind === optional.identifier)
@@ -196,8 +207,10 @@ export const optional: FieldKind = new FieldKind(
     brand("Optional"),
     Multiplicity.Optional,
     {
-        rebaser: replaceRebaser<JsonableTree | 0>({ rebaseAnchors: () => { /* TODO: support anchors */ } }),
-        encoder: new ValueEncoder<(JsonableTree | 0) & JsonCompatibleReadOnly>() },
+        rebaser: replaceRebaser<JsonableTree | 0>(),
+        encoder: new ValueEncoder<(JsonableTree | 0) & JsonCompatibleReadOnly>(),
+        intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
+    },
     (types, other) =>
         (other.kind === sequence.identifier || other.kind === optional.identifier)
         && allowsTreeSchemaIdentifierSuperset(types, other.types),
@@ -211,8 +224,10 @@ export const sequence: FieldKind = new FieldKind(
     brand("Sequence"),
     Multiplicity.Sequence,
     {
-        rebaser: replaceRebaser<JsonableTree[]>({ rebaseAnchors: () => { /* TODO: support anchors */ } }),
-        encoder: new ValueEncoder<(JsonableTree[]) & JsonCompatibleReadOnly>() },
+        rebaser: replaceRebaser<JsonableTree[]>(),
+        encoder: new ValueEncoder<(JsonableTree[]) & JsonCompatibleReadOnly>(),
+        intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
+    },
     // TODO: is order correct?
     (types, other) =>
         (other.kind === sequence.identifier)
