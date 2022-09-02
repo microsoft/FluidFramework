@@ -4,32 +4,55 @@
  */
 
 import { expect, test } from "@oclif/test";
+import { UnifiedReleaseMachineDefinition } from "../../src/machines";
 
-const test_tags = [
-    "client_v2.0.0-internal.1.0.0",
-    "client_v1.2.4",
-    "client_v1.2.3",
-    "build-tools_v0.5.2002",
-    "build-tools_v0.4.2001",
-    "build-tools_v0.4.2000",
-    "build-tools_v0.4.1000",
-    "build-tools_v0.3.2000",
-];
+describe("release command handles all states", () => {
+    const unhandledStates = ["Init", "Failed"];
+    const machineStates = UnifiedReleaseMachineDefinition.states().filter(s=> !unhandledStates.includes(s));
+    // const machineStates = [
+    //     // "Init",
+    //     // "Failed",
+    //     // "DoChecks",
+    //     // "AskReleaseDetails",
+    //     // "CheckValidReleaseGroup",
+    //     "CheckPolicy",
+    //     "PromptToPRReleasedDepsBump",
+    //     // "foo",
+    // ];
 
-describe("release", () => {
-    test.stdout()
-        .command([
-            "release",
-            "--releaseGroup",
-            "build-tools",
-            "--bumpType",
-            "patch",
-            "--testMode",
-            "--state",
-            "Failed"
-        ])
-        .it("Starts in Failed state and immediately exits", (ctx) => {
-            console.log(ctx.stdout);
-            expect(ctx.stdout).to.contain("version=0.4.0-12345");
-        });
+    for (const state of machineStates) {
+        test.stdout()
+            .command([
+                "release",
+                "--releaseGroup",
+                "build-tools",
+                "--bumpType",
+                "patch",
+                "--testMode",
+                "--state",
+                state,
+            ])
+            .exit(0)
+            .it(`Handles state: '${state}'`, (ctx) => {
+                // expect(ctx.stdout).to.contain("handled:true");
+                // expect(ctx.error).to.exist;
+            });
+    }
+
+    // test.stderr()
+    // .command([
+    //     "release",
+    //     "--releaseGroup",
+    //     "build-tools",
+    //     "--bumpType",
+    //     "patch",
+    //     "--testMode",
+    //     "--state",
+    //     "foo",
+    // ])
+    // // .exit(1)
+    // .it(`Error with unknown state`, (ctx) => {
+    //     expect(ctx.stderr).to.contain("State not found in state machine");
+    //     // expect(ctx.error).to.exist;
+    // });
 });

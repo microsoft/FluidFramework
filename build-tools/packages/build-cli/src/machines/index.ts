@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { UnifiedReleaseMachine } from "./unifiedReleaseMachine";
+import { UnifiedReleaseMachineDefinition } from "./unifiedReleaseMachine";
 
-export { UnifiedReleaseMachine } from "./unifiedReleaseMachine";
+export { UnifiedReleaseMachineDefinition } from "./unifiedReleaseMachine";
 
-export { StateMachine, StateHandler } from "./types";
+export { StateMachineCommand } from "./baseCommand";
+
+export { HandlerData, StateHandlerImpl, UnifiedReleaseHandler } from "./handlers";
+
+export { StateHandler } from "./types";
 
 /**
  * An array of all known machines. Intended for testing.
  *
  * @internal
  * */
-export const allMachines = [UnifiedReleaseMachine];
+export const allMachines = [UnifiedReleaseMachineDefinition];
