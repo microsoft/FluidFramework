@@ -1562,9 +1562,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.deltaManager
                     : undefined;
 
-            if (this._protocolHandler?.connectionHandler !== undefined) {
-                this._protocolHandler.connectionHandler(details, opsBehind);
-            }
+            this._protocolHandler?.connectionHandler?.(details, opsBehind);
 
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
