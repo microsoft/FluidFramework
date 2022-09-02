@@ -9,7 +9,7 @@ import { List, ListNode } from "./collections";
 import {
     ISegment,
 } from "./mergeTreeNodes";
-import { TrackingGroupCollection } from "./mergeTreeTracking";
+import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
@@ -72,13 +72,23 @@ class LocalReference implements LocalReferencePosition {
     }
 
     public link(segment: ISegment | undefined, offset: number, listNode: ListNode<LocalReference> | undefined) {
-        if (listNode !== this.listNode
-            && this.listNode !== undefined) {
+        if (listNode !== this.listNode && this.listNode !== undefined) {
             this.segment?.localRefs?.removeLocalRef(this);
+            this.listNode = listNode;
         }
-        this.segment = segment;
+
+        if (segment !== this.segment) {
+            const groups: TrackingGroup[] = [];
+            this.trackingCollection.trackingGroups.forEach(
+                (tg) => {
+                    tg.unlink(this);
+                    groups.push(tg);
+                });
+            this.segment = segment;
+
+            groups.forEach((tg) => tg.link(this));
+        }
         this.offset = offset;
-        this.listNode = listNode;
     }
 
     public isLeaf() {
@@ -116,7 +126,7 @@ interface IRefsAtOffset {
     after?: List<LocalReference>;
 }
 
-export function assertLocalReferences(
+function assertLocalReferences(
     lref: any,
 ): asserts lref is LocalReference {
     assert(lref instanceof LocalReference, 0x2e0 /* "lref not a Local Reference" */);
@@ -322,6 +332,7 @@ export class LocalReferenceCollection {
         this.hierRefCount += other.hierRefCount;
         this.refCount += other.refCount;
         other.hierRefCount = 0;
+        other.refCount = 0;
         for (const lref of other) {
             assertLocalReferences(lref);
             lref.link(
