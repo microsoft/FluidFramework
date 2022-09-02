@@ -122,14 +122,16 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             const pipeString = await readStdin();
 
             if (pipeString !== undefined) {
-                pipeString
-                    .split("\n")
-                    .map((line: string) =>
-                        this.handleLine(line, handlerRegex, pathRegex, exclusions),
-                    );
+                try {
+                    pipeString
+                        .split("\n")
+                        .map((line: string) =>
+                            this.handleLine(line, handlerRegex, pathRegex, exclusions),
+                        );
+                } finally {
+                    this.onExit();
+                }
             }
-
-            this.onExit();
 
             return;
         }
@@ -150,10 +152,15 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             scriptOutput = `${scriptOutput}${data.toString()}`;
         });
         p.stdout.on("close", () => {
-            scriptOutput
-                .split("\n")
-                .map((line: string) => this.handleLine(line, handlerRegex, pathRegex, exclusions));
-            this.onExit();
+            try {
+                scriptOutput
+                    .split("\n")
+                    .map((line: string) =>
+                        this.handleLine(line, handlerRegex, pathRegex, exclusions),
+                    );
+            } finally {
+                this.onExit();
+            }
         });
     }
 
@@ -228,16 +235,15 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
 
         CheckPolicy.count++;
-        if (exclusions.every((value) => !value.test(line))) {
+        if (!exclusions.every((value) => !value.test(line))) {
             this.log(`Excluded: ${line}`);
             return;
         }
 
         try {
             this.routeToHandlers(filePath, handlerRegex);
-            runPolicyCheck(this.processedFlags.fix);
         } catch {
-            this.logStats();
+            throw new Error("Line error");
         }
 
         CheckPolicy.processed++;
