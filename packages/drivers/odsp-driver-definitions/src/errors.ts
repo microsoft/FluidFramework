@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definitions";
+import { DriverErrorTelemetryProps } from "@fluidframework/driver-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 
 export enum OdspErrorType {
     /**
@@ -76,3 +78,13 @@ export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspEr
 }
 
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
+
+export class OdspRedirectError extends LoggingError {
+    constructor(
+        message: string,
+        readonly redirectionLocation: string | undefined,
+        props: DriverErrorTelemetryProps,
+    ) {
+        super(message, props, new Set(["redirectLocation"]));
+    }
+}

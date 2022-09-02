@@ -14,7 +14,12 @@ import {
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { OdspErrorType, OdspError, IOdspErrorAugmentations } from "@fluidframework/odsp-driver-definitions";
+import {
+    OdspErrorType,
+    OdspError,
+    IOdspErrorAugmentations,
+    OdspRedirectError,
+ } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
@@ -233,7 +238,11 @@ export function createOdspNetworkError(
                 errorMessage, { canRetry: true, retryAfterMs }, driverProps);
             break;
     }
-    enrichOdspError(error, response, facetCodes, undefined, redirectLocation);
+
+    if (redirectLocation !== undefined) {
+        error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
+    }
+    enrichOdspError(error, response, facetCodes, undefined);
     return error;
 }
 
@@ -242,15 +251,10 @@ export function enrichOdspError(
     response?: Response,
     facetCodes?: string[],
     props: ITelemetryProperties = {},
-    redirectLocation?: string,
 ) {
     error.online = OnlineStatus[isOnline()];
     if (facetCodes !== undefined) {
         error.facetCodes = facetCodes;
-    }
-
-    if (redirectLocation !== undefined) {
-        error.redirectLocation = redirectLocation;
     }
 
     if (response) {
