@@ -186,7 +186,7 @@ The 0.50 release contains internal changes to the Framework.
 ### Other notable changes
 
 - [IFluidContainer][]s have a new property,
-  [isDirty]({{< relref "ifluidcontainer-interface.md#isdirty-PropertySignature" >}}), which will be true if
+  [isDirty]({{< relref "ifluidcontainer-interface.md#isdirty-propertysignature" >}}), which will be true if
   the container has outstanding operations that have not been acknowledged by the Fluid service. Using this property
   correctly can help prevent data loss due to service connectivity issues ({{< issue 7891 >}}).
 
