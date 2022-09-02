@@ -14,8 +14,7 @@ DoChecks 'success'
 => CheckHasRemote 'success'
 => CheckBranchUpToDate 'success'
 => CheckNoPrereleaseDependencies 'success'
-=> AskReleaseDetails 'success'
-=> CheckForReleaseType;
+=> AskForReleaseType;
 
 [
 CheckValidReleaseGroup
@@ -25,25 +24,29 @@ CheckBranchUpToDate
 ] 'failure' => Failed;
 
 // ChecksDone
-CheckForReleaseType 'patch'
+AskForReleaseType 'patch'
+// => AskConfirmReleaseReport 'patch'
 => DoPatchRelease;
 
-CheckForReleaseType 'minor'
+AskForReleaseType 'minor'
 => DoMinorRelease;
 
-CheckForReleaseType 'major'
+AskForReleaseType 'major'
 => DoMajorRelease;
 
-[
-DoPatchRelease
-DoMinorRelease
-DoMajorRelease
-] 'success'
+DoMajorRelease 'success'
 => CheckBranchName 'success'
 => CheckMainNextIntegrated 'success'
 => CheckReleaseIsDone 'success'
 => CheckReleaseGroupIsNotBumped 'success'
 => DoReleaseGroupBump;
+
+[
+DoMinorRelease
+DoPatchRelease
+] 'success'
+=> CheckBranchName2 'success'
+=> CheckReleaseIsDone;
 
 CheckMainNextIntegrated 'failure'
 => PromptToIntegrateNext;
@@ -125,7 +128,7 @@ state DoChecks: {
 //   text-color       : black;
 // };
 
-state AskReleaseDetails: {
+state AskForReleaseType: {
    background-color : purple;
    text-color       : white;
 };

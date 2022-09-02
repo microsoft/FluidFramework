@@ -140,7 +140,7 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
     ): Promise<boolean> {
         let superShouldHandle = false;
         switch (state) {
-            case "AskReleaseDetails": {
+            case "AskForReleaseType": {
                 if (testMode) return true;
 
                 const { bumpType: inputBumpType, releaseGroup } = data;
@@ -170,18 +170,15 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                     questions.push(askBumpType);
                     const answers = await inquirer.prompt(questions);
                     bumpType = answers.bumpType;
+                    data.bumpType = bumpType;
                 }
 
                 if (bumpType === undefined) {
                     throw new Error(`bumpType is undefined.`);
                 }
 
-                log.logHr();
-                log.info(`RELEASE PLAN\n`);
-                log.info(`Release group: ${releaseGroup}`);
-                log.info(`Version to be released: ${chalk.greenBright(currentVersion)}`);
-                log.info(`Bump type: ${bumpType}`);
-                log.info(`Version after bump: ${bumpVersionScheme(currentVersion, bumpType)}`);
+                // This state is unique; it uses major/minor/patch as the actions
+                this.machine.action(bumpType);
 
                 this.signalSuccess(state);
                 break;
@@ -337,18 +334,6 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                 break;
             }
 
-            case "CheckForReleaseType": {
-                if (testMode) return true;
-
-                const {bumpType} = data;
-                if (bumpType === undefined) {
-                    throw new Error(`bumpType is undefined.`);
-                }
-
-                this.machine.action(bumpType);
-                break;
-            }
-
             case "DoPatchRelease":
             case "DoMinorRelease":
             case "DoMajorRelease": {
@@ -364,7 +349,8 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                 break;
             }
 
-            case "CheckBranchName": {
+            case "CheckBranchName":
+            case "CheckBranchName2": {
                 if (testMode) return true;
 
                 const { bumpType, shouldCheckBranch } = data;
@@ -508,20 +494,22 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
 
                 const { bumpType, releaseGroup, releaseVersion, shouldInstall } = data;
 
+                assert( bumpType !== undefined, `bumpType is undefined.`);
+
                 const rgRepo = isReleaseGroup(releaseGroup)
                     ? context.repo.releaseGroups.get(releaseGroup)!
                     : context.fullPackageMap.get(releaseGroup!)!;
                 const scheme = detectVersionScheme(releaseVersion!);
-                const newVersion = bumpVersionScheme(releaseVersion, bumpType!, scheme);
+                const newVersion = bumpVersionScheme(releaseVersion, bumpType, scheme);
                 const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
 
                 log.info(
                     `Version ${releaseVersion} of ${releaseGroup} already released, so we can bump to ${newVersion} (${chalk.blue(
-                        bumpType!,
+                        bumpType,
                     )} bump)!`,
                 );
 
-                const bumpResults = await bumpReleaseGroup(context, bumpType!, rgRepo, scheme);
+                const bumpResults = await bumpReleaseGroup(context, bumpType, rgRepo, scheme);
                 log.verbose(`Raw bump results:`);
                 log.verbose(bumpResults);
 
@@ -585,7 +573,7 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
             case "DoBumpReleasedDependencies": {
                 if (testMode) return true;
 
-                const { releaseGroup, releaseVersion } = data;
+                const { releaseGroup } = data;
 
                 const { releaseGroups, packages, isEmpty } = await getPreReleaseDependencies(
                     context,
@@ -770,7 +758,7 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                     this.signalSuccess(state);
                 }
 
-                assert(isReleaseGroup(releaseGroup));
+                assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
                 const branchName = generateBumpDepsBranchName(releaseGroup, "releasedDeps");
                 await context.gitRepo.createBranch(branchName);
 
@@ -890,11 +878,6 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
             }
         }
 
-        // if (this.machine.state_is_final(state)) {
-        //     log.verbose(`Exiting. Final state: ${state}`);
-        //     this.exit();
-        // }
-
         // if (testMode && localHandled !== true) {
         //     return false;
         // }
@@ -909,6 +892,12 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                 data,
             );
             return superHandled;
+        }
+
+        if (this.machine.state_is_final(state)) {
+            log.verbose(`Exiting. Final state: ${state}`);
+            // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
+            process.exit();
         }
 
         return true;

@@ -77,5 +77,6 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
         this.data.shouldCommit = flags.commit && !flags.skipChecks;
         this.data.shouldInstall = flags.install && !flags.skipChecks;
         this.data.shouldCheckBranchUpdate = flags.updateCheck && !flags.skipChecks;
+        this.data.command = this;
     }
 }

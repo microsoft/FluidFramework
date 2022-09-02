@@ -1,4 +1,5 @@
 import { Flags } from "@oclif/core";
+import chalk from "chalk";
 import { Machine } from "jssm";
 import { BaseCommand } from "../base";
 import { HandlerData } from "./handlers";
@@ -66,8 +67,6 @@ export abstract class StateMachineCommand<
                 if (!machineStates.includes(flags.state)) {
                     throw new Error(`State not found in state machine`);
                 }
-                // const result = this.machine.force_transition(flags.state);
-                // assert(result === true, `Couldn't force transitions to ${flags.state}`);
 
                 const handled = await this.handler?.handleState(
                     context,
@@ -77,7 +76,7 @@ export abstract class StateMachineCommand<
                     this.logger,
                     this.data,
                 );
-                // this.log(`handled:${handled}`);
+
                 if (handled === true) {
                     this.exit(0);
                 } else {
@@ -88,7 +87,6 @@ export abstract class StateMachineCommand<
             do {
                 const state = this.machine.state();
 
-                this.log(`Handling state: ${state}`);
                 // eslint-disable-next-line no-await-in-loop
                 const handled = await this.handler?.handleState(
                     context,
@@ -99,7 +97,7 @@ export abstract class StateMachineCommand<
                     this.data,
                 );
                 if (handled !== true) {
-                    this.error(`Unhandled state: ${state}`);
+                    this.error(chalk.red(`Unhandled state: ${state}`));
                 }
                 // eslint-disable-next-line no-constant-condition
             } while (true);
