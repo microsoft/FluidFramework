@@ -8,9 +8,11 @@ import {
 	IEditableForest, TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState,
 } from "../../forest";
 import { brand } from "../../util";
-import { TreeSchema, FieldSchema, rootFieldKey } from "../../schema-stored";
+import { TreeSchema, FieldSchema, rootFieldKey, LocalFieldKey } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
+    AdaptingProxyHandler,
+    adaptWithProxy,
     getFieldKind, getFieldSchema, getPrimaryField, isPrimitive, isPrimitiveValue, PrimitiveValue,
 } from "./utilities";
 
@@ -36,6 +38,10 @@ export const value: unique symbol = Symbol("editable-tree value");
  *
  * TODO: support editing.
  * TODO: `extends Iterable<EditableField>`
+ * TODO: use proxies for array fields not just raw arrays (will be needed for laziness and editing).
+ * TODO: provide non-schema impacted APIs for getting fields and nodes without unwrapping
+ * (useful for generic code, and when references to these actual fields and nodes are required,
+ * for example creating anchors and editing).
  */
 export interface EditableTree {
     /**
@@ -49,7 +55,7 @@ export interface EditableTree {
      */
     readonly [value]: Value;
 
-    readonly [proxySymbol]: unknown;
+    readonly [proxySymbol]: object;
 
     /**
      * Fields of this node, indexed by their field keys (as strings).
@@ -145,7 +151,6 @@ class ProxyTarget {
 		cursor: ITreeSubscriptionCursor,
 	) {
 		this.lazyCursor = cursor.fork();
-        this.anchor = cursor.buildAnchor();
 	}
 
     public free(): void {
@@ -194,58 +199,30 @@ class ProxyTarget {
 	}
 
     /**
-     * @returns the length, if any, of the primary field if it's a sequence.
+     * @returns the key, if any, of the primary array field.
      */
-    public getPrimaryArrayLength(): number | undefined {
+    public getPrimaryArrayKey(): LocalFieldKey | undefined {
         const nodeType = this.type;
         const primary = getPrimaryField(nodeType);
         if (primary === undefined) {
             return undefined;
         }
-        const fieldKind = getFieldKind(primary.schema);
-        if (fieldKind.multiplicity === Multiplicity.Sequence) {
+        const kind = getFieldKind(primary.schema);
+        if (kind.multiplicity === Multiplicity.Sequence) {
             // TODO: this could have issues if there are non-primary keys
             // that can collide with the array APIs (length or integers).
-            return this.cursor.length(primary.key);
+            return primary.key;
         }
+        return undefined;
     }
-}
 
-function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
-    if (isPrimitive(target.type)) {
-        const nodeValue = target.cursor.value;
-        if (isPrimitiveValue(nodeValue)) {
-            return nodeValue;
-        }
+    public proxifyField(key: string): UnwrappedEditableField {
+        // Lookup the schema:
+        const fieldKind = this.lookupFieldKind(key);
+        // Make the childTargets:
+        const childTargets = mapCursorField(this.cursor, brand(key), (c) => new ProxyTarget(this.context, c));
+        return proxifyField(fieldKind, childTargets);
     }
-    return adaptWithProxy(target, handler);
-}
-
-/**
- * Variant of ProxyHandler covering when the type of the target and implemented interface are different.
- * Only the parts needed so far are included.
- */
-interface AdaptingProxyHandler<T extends object, TImplements extends object> {
-    // apply?(target: T, thisArg: any, argArray: any[]): any;
-    // construct?(target: T, argArray: any[], newTarget: Function): object;
-    // defineProperty?(target: T, p: string | symbol, attributes: PropertyDescriptor): boolean;
-    deleteProperty?(target: T, p: keyof TImplements): boolean;
-    get?(target: T, p: keyof TImplements, receiver: unknown): unknown;
-    getOwnPropertyDescriptor?(target: T, p: keyof TImplements): PropertyDescriptor | undefined;
-    // getPrototypeOf?(target: T): object | null;
-    has?(target: T, p: keyof TImplements): boolean;
-    // isExtensible?(target: T): boolean;
-    ownKeys?(target: T): ArrayLike<keyof TImplements>;
-    // preventExtensions?(target: T): boolean;
-    set?(target: T, p: keyof TImplements, value: unknown, receiver: unknown): boolean;
-    // setPrototypeOf?(target: T, v: object | null): boolean;
-}
-
-function adaptWithProxy<From extends object, To extends object>(
-    target: From, proxyHandler: AdaptingProxyHandler<From, To>): To {
-    // Proxy constructor assumes handler emulates target's interface.
-    // Ours does not, so this cast is required.
-    return new Proxy<From>(target, proxyHandler as ProxyHandler<From>) as unknown as To;
 }
 
 /**
@@ -253,35 +230,28 @@ function adaptWithProxy<From extends object, To extends object>(
  * by means of the cursors.
  */
 const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
-	get: (target: ProxyTarget, key: keyof EditableTree): unknown => {
+	get: (target: ProxyTarget, key: string | symbol): unknown => {
 		if (typeof key === "string") {
-            // All string keys are fields which should be unwrapped.
-
-            // Lookup the schema:
-            const fieldKind = target.lookupFieldKind(key);
-
-            // Make the childTargets:
-            const childTargets = mapCursorField(target.cursor, brand(key), (c) => new ProxyTarget(target.context, c));
-
-            return proxifyField(fieldKind, childTargets);
+            // All string keys are fields
+            return target.proxifyField(key);
         }
 		if (key === type) {
 			return target.type;
 		} else if (key === value) {
             return target.value;
+        } else if (key === proxySymbol) {
+            return target;
         }
 		return undefined;
 	},
-	set: (target: ProxyTarget, key: keyof EditableTree, setValue: unknown, receiver: ProxyTarget): boolean => {
+	set: (target: ProxyTarget, key: string | symbol, setValue: unknown, receiver: ProxyTarget): boolean => {
 		throw new Error("Not implemented.");
 	},
-	deleteProperty: (target: ProxyTarget, key: string): boolean => {
+	deleteProperty: (target: ProxyTarget, key: string | symbol): boolean => {
 		throw new Error("Not implemented.");
 	},
-	has: (target: ProxyTarget, key: keyof EditableTree): boolean => {
-        // For some reason `keyof EditableTree` allows number. It can't occur here, but assert to narrow the type.
-        assert(typeof key !== "number", "invalid key");
-
+    // Include documented symbols (except value when value is undefined) and all non-empty fields.
+	has: (target: ProxyTarget, key: string | symbol): boolean => {
         if (typeof key === "symbol") {
 			switch (key) {
 				case proxySymbol:
@@ -297,8 +267,6 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
 					return false;
 			}
 		}
-        // Lookup the schema:
-        const fieldKind = target.lookupFieldKind(key);
 
         // For now primary array fields are handled by just returning the array, so we don't need this:
         // const length = target.getPrimaryArrayLength();
@@ -315,55 +283,75 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         //     }
         // }
 
-        if (fieldKind.multiplicity === Multiplicity.Value || fieldKind.multiplicity === Multiplicity.Sequence) {
-            return true;
-        }
-
-        // Make optional fields present only if non-empty. Also handles Multiplicity.FoForbidden.
+        // Make fields present only if non-empty.
 		return target.cursor.length(brand(key)) !== 0;
 	},
+    // Includes all non-empty fields, which are the enumerable fields.
 	ownKeys: (target: ProxyTarget): string[] => {
-        // For now primary array fields are handled by just returning the array, so we don't need this:
-		// const length = target.getPrimaryArrayLength();
-        // const keys = length === undefined ? [] : getArrayOwnKeys(length);
-        // TODO:
-        // Extend by all sequence fields (maybe skip empty since its impossible to include include empty extra fields).
         // For now this is an approximation:
-        return [...target.cursor.keys as Iterable<string>];
+        const keys: string[] = [];
+        for (const key of target.cursor.keys) {
+            // TODO: with new cursor API, field iteration will skip empty fields and this check can be removed.
+            if (target.cursor.length(key) !== 0) {
+                keys.push(key as string);
+            }
+        }
+        return keys;
 	},
-	getOwnPropertyDescriptor: (target: ProxyTarget, key: keyof EditableTree): PropertyDescriptor | undefined => {
-        // For some reason `keyof EditableTree` allows number. It can't occur here, but assert to narrow the type.
-        assert(typeof key !== "number", "invalid key");
+	getOwnPropertyDescriptor: (target: ProxyTarget, key: string | symbol): PropertyDescriptor | undefined => {
+		// We generally don't want to allow users of the proxy to reconfigure all the properties,
+        // but it is an TypeError to return non-configurable for properties that do not exist on target,
+        // so they must return true.
 
-		if (typeof key === "symbol") {
+        if (typeof key === "symbol") {
 			if (key === proxySymbol) {
-                // TODO: shouldn't this not be enumerable or configurable?
-				return { configurable: true, enumerable: true, value: target, writable: false };
+				return { configurable: true, enumerable: false, value: target, writable: false };
 			} else if (key === type) {
-                // TODO: shouldn't this not be enumerable or configurable?
-				return { configurable: true, enumerable: true, value: target.type, writable: false };
+				return { configurable: true, enumerable: false, value: target.type, writable: false };
 			}
 		} else {
-            // TODO: shouldn't this not be configurable for now?
 			const length = target.cursor.length(brand(key));
 			if (length !== 0) {
-				const descriptor = {
+				return {
 					configurable: true,
 					enumerable: true,
-					value: {}, // TODO
-					writable: true,
+					value: target.proxifyField(key),
+					writable: false,
 				};
-				return descriptor;
 			}
 		}
 		return undefined;
 	},
 };
 
+/**
+ * See {@link UnwrappedEditableTree} for documentation on what unwrapping this perform.
+ */
+function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
+    if (isPrimitive(target.type)) {
+        const nodeValue = target.cursor.value;
+        if (isPrimitiveValue(nodeValue)) {
+            return nodeValue;
+        }
+    }
+    const primary = target.getPrimaryArrayKey();
+    if (primary !== undefined) {
+        const childTargets = mapCursorField(target.cursor, primary, (c) => new ProxyTarget(target.context, c));
+        return childTargets.map(inProxyOrUnwrap);
+    }
+    return adaptWithProxy(target, handler);
+}
+
+/**
+ * @param fieldKind - determines how return value should be typed. See {@link UnwrappedEditableField}.
+ * @param childTargets - targets for the children of the field.
+ */
 function proxifyField(fieldKind: FieldKind, childTargets: ProxyTarget[]): UnwrappedEditableField {
     if (fieldKind.multiplicity === Multiplicity.Sequence) {
+        // Return array for sequence fields
         return childTargets.map(inProxyOrUnwrap);
     } else {
+        // Avoid wrapping non-sequence fields in arrays
         assert(childTargets.length <= 1, "invalid non sequence");
         if (childTargets.length === 1) {
             return inProxyOrUnwrap(childTargets[0]);
@@ -383,11 +371,14 @@ function proxifyField(fieldKind: FieldKind, childTargets: ProxyTarget[]): Unwrap
  * for (const key of Object.keys(data)) { ... }
  * // OR
  * if ("foo" in data) { ... }
+ * context.free();
  * ```
  *
  * Not (yet) supported: create properties, set values and delete properties.
  *
  * @returns {@link EditableTree} for the given {@link IEditableForest}.
+ * Also returns an {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
+ * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField] {
 	const context = new ProxyContext(forest);

@@ -60,19 +60,19 @@ export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
  * Variant of ProxyHandler covering when the type of the target and implemented interface are different.
  * Only the parts needed so far are included.
  */
-export interface AdaptingProxyHandler<T extends object, TImplements extends object> {
+ export interface AdaptingProxyHandler<T extends object, TImplements extends object> {
     // apply?(target: T, thisArg: any, argArray: any[]): any;
     // construct?(target: T, argArray: any[], newTarget: Function): object;
     // defineProperty?(target: T, p: string | symbol, attributes: PropertyDescriptor): boolean;
-    deleteProperty?(target: T, p: keyof TImplements): boolean;
-    get?(target: T, p: keyof TImplements, receiver: unknown): unknown;
-    getOwnPropertyDescriptor?(target: T, p: keyof TImplements): PropertyDescriptor | undefined;
+    deleteProperty?(target: T, p: string | symbol): boolean;
+    get?(target: T, p: string | symbol, receiver: unknown): unknown;
+    getOwnPropertyDescriptor?(target: T, p: string | symbol): PropertyDescriptor | undefined;
     // getPrototypeOf?(target: T): object | null;
-    has?(target: T, p: keyof TImplements): boolean;
+    has?(target: T, p: string | symbol): boolean;
     // isExtensible?(target: T): boolean;
     ownKeys?(target: T): ArrayLike<keyof TImplements>;
     // preventExtensions?(target: T): boolean;
-    // set?(target: T, p: TKey, value: keyof TImplements, receiver: unknown): boolean;
+    set?(target: T, p: string | symbol, value: unknown, receiver: unknown): boolean;
     // setPrototypeOf?(target: T, v: object | null): boolean;
 }
 
