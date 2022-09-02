@@ -2,17 +2,18 @@
 {{/* Parameters: */}}
 {{/* - name: The API member name. Note that this must be an item for which a document is rendered. */}}
 {{/*   This includes classes, interfaces, and namespaces. */}}
+{{/* - kind: The kind of API item (must be "class", "interface", or "namespace"). */}}
 {{/* - (optional) unscopedPackageName: The *unscoped* name of the package to which the API member belongs. */}}
 {{/*   default value: "fluid-framework" */}}
-{{/* - (optional) headingId: The ID of a heading on the page to link to. */}}
-{{/*   This can be used to link directly to properties, methods, etc. on a parent type's page. */}}
-{{/*   default value: "" */}}
-
 
 {{- $name := default "index" (.Get 0) -}}
-{{- $unscopedPackageName := default "fluid-framework" (.Get 1) -}}
-{{- $fileName := delimit (slice (lower $name) ".md") "" -}}
-{{- $path := delimit (slice "/docs/apis/" $unscopedPackageName "/" $fileName ) "" -}}
+{{- $kind := default "index" (.Get 1) -}}
+{{- $unscopedPackageName := default "fluid-framework" (.Get 2) -}}
+
+{{- $fileNameWithoutExtension := lower (delimit (slice $name $kind) "-") -}}
+{{- $fileName := delimit (slice $fileNameWithoutExtension ".md") "" -}}
+
+{{- $path := delimit (slice "/docs/apis/" $unscopedPackageName "/" $fileName) "" -}}
 
 <a href="{{ relref . $path }}"><code>{{ $name }}</code></a>
 

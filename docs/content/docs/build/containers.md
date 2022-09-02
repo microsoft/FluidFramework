@@ -286,10 +286,10 @@ references to useful services you can use to build richer apps. An example of a 
 [@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
 [@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
 
-[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient.md" >}}
-[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient.md" >}}
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
 
-[FluidContainer]: {{< relref "/docs/apis/fluid-framework/fluidcontainer.md" >}}
-[IFluidContainer]: {{< relref "/docs/apis/fluid-framework/ifluidcontainer.md" >}}
+[FluidContainer]: {{< relref "/docs/apis/fluid-framework/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-framework/ifluidcontainer-interface.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

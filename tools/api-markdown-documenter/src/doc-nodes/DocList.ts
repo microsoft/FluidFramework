@@ -27,7 +27,7 @@ export interface IDocListParameters extends IDocNodeContainerParameters {
 }
 
 /**
- * Represents a section header similar to an HTML `<h1>` or `<h2>` element.
+ * Represents a list similar to an HTML `<ul>` element.
  */
 export class DocList extends DocNodeContainer {
     /**
