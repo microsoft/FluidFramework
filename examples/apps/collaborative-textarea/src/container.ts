@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { makeModelRequestHandler, ModelMakerCallback } from "@fluid-example/example-utils";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { CollaborativeText } from "./fluid-object/";
-import { makeModelRequestHandler, ModelMakerCallback } from "./modelLoader";
+
+import { CollaborativeText } from "./fluid-object";
 
 export interface ICollaborativeTextAppModel {
     collaborativeText: CollaborativeText;

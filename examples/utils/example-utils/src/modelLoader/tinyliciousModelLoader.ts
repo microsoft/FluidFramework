@@ -11,7 +11,7 @@ import {
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-
+import { IModelLoader } from "./interfaces";
 import { ModelLoader } from "./modelLoader";
 
 class TinyliciousService {
@@ -25,7 +25,7 @@ class TinyliciousService {
     }
 }
 
-export class TinyliciousModelLoader<ModelType> {
+export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType> {
     private readonly tinyliciousService = new TinyliciousService();
     private readonly modelLoader = new ModelLoader<ModelType>({
         urlResolver: this.tinyliciousService.urlResolver,
@@ -35,6 +35,10 @@ export class TinyliciousModelLoader<ModelType> {
     });
 
     public constructor(private readonly codeLoader: ICodeDetailsLoader) { }
+
+    public async supportsVersion(version: string): Promise<boolean> {
+        return this.modelLoader.supportsVersion(version);
+    }
 
     public async createDetached(version: string) {
         return this.modelLoader.createDetached(version);

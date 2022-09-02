@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TinyliciousModelLoader } from "@fluid-example/example-utils";
 import {
     ICodeDetailsLoader,
     IFluidCodeDetails,
@@ -12,7 +13,6 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
-import { TinyliciousModelLoader } from "./modelLoader";
 import { CollaborativeTextView } from "./view";
 
 const v1Factory = new CollaborativeTextContainerRuntimeFactory();
