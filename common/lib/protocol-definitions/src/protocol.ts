@@ -22,9 +22,6 @@ export enum MessageType {
     // Message used to reject a pending proposal
     Reject = "reject",
 
-    // Message send by client accepting proposal
-    Accept = "accept",
-
     // Summary op
     Summarize = "summarize",
 
