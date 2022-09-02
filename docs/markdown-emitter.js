@@ -1,21 +1,14 @@
-const {
-    emitMarkdown,
-    getLinkUrlForApiItem,
-    getUnscopedPackageName,
-    loadModel,
-    markdownDocumenterConfigurationWithDefaults,
-    MarkdownEmitter,
-    renderDocuments,
-    DefaultPolicies
-} = require("@fluid-tools/api-markdown-documenter");
-const { StringBuilder } = require("@microsoft/tsdoc");
-const { ApiItemKind } = require("@microsoft/api-extractor-model");
-const fs = require("fs-extra");
-const path = require("path");
-const os = require("os");
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+const { MarkdownEmitter } = require("@fluid-tools/api-markdown-documenter");
 
 /**
- * Custom {@link MarkdownEmitter} that generates HTML tables
+ * Custom {@link MarkdownEmitter} that generates HTML tables.
+ *
+ * @remarks Used by `./api-markdown-documenter.js`.
  */
 class HugoMarkdownEmitter extends MarkdownEmitter {
     constructor(apiModel) {

@@ -186,7 +186,14 @@ export function getLinkUrlForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
 ): string {
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    const documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
+    let documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
+
+    // Omit "index" file name from path generated in links.
+    // This can be considered an optimization in most cases, but some documentation systems also special-case
+    // "index" files, so this can also prevent issues in some cases.
+    if (documentPath === "index" || documentPath.endsWith("/index")) {
+        documentPath = documentPath.slice(0, documentPath.length - "index".length);
+    }
 
     // Don't bother with heading ID if we are linking to the root item of a document
     let headingPostfix = "";

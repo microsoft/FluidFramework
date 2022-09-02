@@ -1,6 +1,6 @@
 # TestAbstractClass
 
-[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestAbstractClass](./simple-suite-test/testabstractclass-class)
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestAbstractClass](./simple-suite-test/testabstractclass-class)
 
 A test abstract class.
 
