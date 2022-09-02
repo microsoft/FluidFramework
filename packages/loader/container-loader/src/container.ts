@@ -1416,7 +1416,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const protocol = protocolHandlerBuilder(
             attributes,
             quorumSnapshot,
-            (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+            (key, value) => this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
             this._initialClients ?? [],
         );
 
@@ -1719,10 +1719,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     { messageType: type }));
                 return -1;
         }
-        return this.submitMessage(type, contents, batch, metadata);
+        return this.submitMessage(type, JSON.stringify(contents), batch, metadata);
     }
 
-    private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
+    private submitMessage(type: MessageType, contents?: string, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
@@ -1767,10 +1767,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.serviceConfiguration !== undefined,
                     0x2e4 /* "there should be service config for active connection" */);
                 this.collabWindowTracker = new CollabWindowTracker(
-                    (type, contents) => {
+                    (type) => {
                         assert(this.activeConnection(),
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
-                        this.submitMessage(type, contents);
+                        this.submitMessage(type);
                     },
                     this.serviceConfiguration.noopTimeFrequency,
                     this.serviceConfiguration.noopCountFrequency,

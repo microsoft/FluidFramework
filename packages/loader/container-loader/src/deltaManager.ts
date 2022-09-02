@@ -199,12 +199,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
-    public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
+    public submit(type: MessageType, contents?: string, batch = false, metadata?: any) {
         if (this.currentlyProcessingOps && this.preventConcurrentOpSend) {
             this.close(new UsageError("Making changes to data model is disallowed while processing ops."));
         }
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
-            contents: JSON.stringify(contents),
+            contents,
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
             type,
@@ -218,7 +218,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             return -1;
         }
 
-        this.opsSize += message.contents.length;
+        if (contents !== undefined) {
+            this.opsSize += contents.length;
+        }
 
         this.messageBuffer.push(message);
 
