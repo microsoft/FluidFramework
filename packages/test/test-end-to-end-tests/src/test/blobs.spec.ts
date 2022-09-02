@@ -93,14 +93,15 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     it("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
 
-        const blobOpP = new Promise<void>((resolve, reject) => container.on("op", (op) => {
-            if (op.contents?.type === ContainerMessageType.BlobAttach) {
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+
+        const blobOpP = new Promise<void>((resolve, reject) => dataStore._context.containerRuntime.on("op", (op) => {
+            if (op.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
 
-        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
         const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
 
         dataStore._root.set("my blob", blob);
