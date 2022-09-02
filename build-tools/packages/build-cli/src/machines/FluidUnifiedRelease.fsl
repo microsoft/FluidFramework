@@ -41,11 +41,12 @@ DoMajorRelease 'success'
 => CheckReleaseGroupIsNotBumped 'success'
 => DoReleaseGroupBump;
 
-[
-DoMinorRelease
-DoPatchRelease
-] 'success'
+DoMinorRelease 'success'
 => CheckBranchName2 'success'
+=> CheckReleaseIsDone;
+
+DoPatchRelease 'success'
+=> CheckBranchName3 'success'
 => CheckReleaseIsDone;
 
 CheckMainNextIntegrated 'failure'

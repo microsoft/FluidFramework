@@ -24,6 +24,8 @@ import {
 } from "../lib";
 import { CommandLogger } from "../logging";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+// eslint-disable-next-line import/no-internal-modules
+import { CheckPolicy } from "../commands/check/policy";
 import { StateHandler } from "./types";
 
 interface InstructionalPrompt {
@@ -58,7 +60,7 @@ export abstract class StateHandlerImpl implements StateHandler {
         // protected readonly context: Context,
         protected readonly machine: Machine<unknown>,
         protected readonly log: CommandLogger, // public readonly testMode: boolean,
-    ) {}
+    ) { }
 
     // eslint-disable-next-line max-params
     async handleState(
@@ -230,22 +232,31 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                         );
                     }
 
-                    // TODO: Call new check policy command
-                    // await CheckPolicy.run(["--fix", "--exclusions",
-                    // "build-tools/packages/build-tools/data/exclusions.json"]);
-                    const r = await exec(
-                        `node ${path.join(
+                    await CheckPolicy.run([
+                        "--fix",
+                        "--exclusions",
+                        path.join(
                             context.gitRepo.resolvedRoot,
                             "build-tools",
                             "packages",
                             "build-tools",
-                            "dist",
-                            "repoPolicyCheck",
-                            "repoPolicyCheck.js",
-                        )} -r`,
-                        context.gitRepo.resolvedRoot,
-                        "policy-check:fix failed",
-                    );
+                            "data",
+                            "exclusions.json"
+                        )
+                    ]);
+                    // const r = await exec(
+                    //     `node ${path.join(
+                    //         context.gitRepo.resolvedRoot,
+                    //         "build-tools",
+                    //         "packages",
+                    //         "build-tools",
+                    //         "dist",
+                    //         "repoPolicyCheck",
+                    //         "repoPolicyCheck.js",
+                    //     )} -r`,
+                    //     context.gitRepo.resolvedRoot,
+                    //     "policy-check:fix failed",
+                    // );
 
                     // check for policy check violation
                     const afterPolicyCheckStatus = await context.gitRepo.getStatus();
@@ -350,7 +361,8 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
             }
 
             case "CheckBranchName":
-            case "CheckBranchName2": {
+            case "CheckBranchName2":
+            case "CheckBranchName3": {
                 if (testMode) return true;
 
                 const { bumpType, shouldCheckBranch } = data;
@@ -494,7 +506,7 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
 
                 const { bumpType, releaseGroup, releaseVersion, shouldInstall } = data;
 
-                assert( bumpType !== undefined, `bumpType is undefined.`);
+                assert(bumpType !== undefined, `bumpType is undefined.`);
 
                 const rgRepo = isReleaseGroup(releaseGroup)
                     ? context.repo.releaseGroups.get(releaseGroup)!
@@ -670,9 +682,8 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                     sections: [
                         {
                             title: "FIRST",
-                            message: `Push and create a PR for branch ${await context.gitRepo.getCurrentBranchName()} targeting the ${
-                                context.originalBranchName
-                            } branch.`,
+                            message: `Push and create a PR for branch ${await context.gitRepo.getCurrentBranchName()} targeting the ${context.originalBranchName
+                                } branch.`,
                         },
                         {
                             title: "NEXT",
