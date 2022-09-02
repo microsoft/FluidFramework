@@ -189,6 +189,9 @@ export function getAncestralHierarchy(apiItem: ApiItem, includePredecate: (apiIt
 export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
+export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
+
+// @public
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
@@ -256,6 +259,9 @@ export type IDocHeadingParameters = IDocNodeParameters & Heading;
 export interface IDocListParameters extends IDocNodeContainerParameters {
     listKind?: ListKind;
 }
+
+// @public
+export function isDeprecated(apiItem: ApiItem): boolean;
 
 // @public
 export function isOptional(apiItem: ApiItem): boolean;

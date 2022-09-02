@@ -34,6 +34,7 @@ import {
     doesItemKindRequireOwnDocument,
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
+    getDeprecatedBlock,
     getExampleBlocks,
     getHeadingForApiItem,
     getLinkForApiItem,
@@ -532,24 +533,21 @@ export function renderThrowsSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-        const throwsBlocks = getThrowsBlocks(apiItem);
-        if (throwsBlocks === undefined || throwsBlocks.length === 0) {
-            return undefined;
-        }
-
-        return new DocSection({ configuration: config.tsdocConfiguration }, [
-            renderHeading(
-                {
-                    title: "Throws",
-                    id: `${getQualifiedApiItemName(apiItem)}-throws`,
-                },
-                config,
-            ),
-            ...throwsBlocks,
-        ]);
+    const throwsBlocks = getThrowsBlocks(apiItem);
+    if (throwsBlocks === undefined || throwsBlocks.length === 0) {
+        return undefined;
     }
-    return undefined;
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        renderHeading(
+            {
+                title: "Throws",
+                id: `${getQualifiedApiItemName(apiItem)}-throws`,
+            },
+            config,
+        ),
+        ...throwsBlocks,
+    ]);
 }
 
 /**
@@ -567,20 +565,19 @@ export function renderDeprecationNoticeSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    if (
-        apiItem instanceof ApiDocumentedItem &&
-        apiItem.tsdocComment?.deprecatedBlock !== undefined
-    ) {
-        return new DocSection({ configuration: config.tsdocConfiguration }, [
-            new DocNoteBox(
-                {
-                    configuration: config.tsdocConfiguration,
-                },
-                [...apiItem.tsdocComment.deprecatedBlock.content.nodes],
-            ),
-        ]);
+    const deprecatedBlock = getDeprecatedBlock(apiItem);
+    if (deprecatedBlock === undefined) {
+        return undefined;
     }
-    return undefined;
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        new DocNoteBox(
+            {
+                configuration: config.tsdocConfiguration,
+            },
+            [...deprecatedBlock.nodes],
+        ),
+    ]);
 }
 
 /**
