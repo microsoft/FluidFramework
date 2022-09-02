@@ -10,7 +10,7 @@ import { fail, strict as assert } from "assert";
 import { NamedTreeSchema, StoredSchemaRepository, namedTreeSchema, ValueSchema, fieldSchema, SchemaData, TreeSchemaIdentifier, rootFieldKey } from "../../schema-stored";
 import { IEditableForest, initializeForest } from "../../forest";
 import { JsonableTree, EmptyKey, Value } from "../../tree";
-import { brand, Brand } from "../../util";
+import { brand, Brand, clone } from "../../util";
 import {
     defaultSchemaPolicy, getEditableTree, EditableTree, buildForest, typeSymbol, UnwrappedEditableField,
     proxySymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive,
@@ -114,12 +114,12 @@ const fullSchemaData: SchemaData = {
 type Int32 = Brand<number, "Int32">;
 const newAge: Int32 = brand(55);
 
-type ComplexPhoneType = {
+type ComplexPhoneType = EditableTree & {
     number: string;
     prefix: string;
 };
 
-type AddressType = {
+type AddressType = EditableTree & {
     street: string;
     zip: string;
     phones: (number | string | ComplexPhoneType)[];
@@ -139,8 +139,8 @@ const person: JsonableTree = {
         name: [{ value: "Adam", type: stringSchema.name }],
         age: [{ value: 35, type: int32Schema.name }],
         salary: [{ value: 10420.2, type: float32Schema.name }],
-        friends: [{ value: {
-            Mat: "Mat",
+        friends: [{ fields: {
+            Mat: [{ type: stringSchema.name, value: "Mat" }],
         }, type: mapStringSchema.name }],
         address: [{
             fields: {
@@ -235,15 +235,14 @@ function expectTreeSequence(field: UnwrappedEditableField, expected: JsonableTre
 }
 
 describe.only("editable-tree", () => {
-    // it("proxified forest", () => {
-    // 	const proxy = buildTestPerson();
-    // 	assert.ok(proxy);
-    // 	assert.equal(Object.keys(proxy).length, 5);
-    // 	assert.equal(proxy[typeSymbol], personSchema);
-    // 	assert.deepEqual(proxy[typeSymbol](brand("age")), { name: "Int32" });
-    // 	assert.deepEqual(proxy.address![typeSymbol](), { name: "Test:Address-1.0.0" });
-    // 	assert.deepEqual((proxy.address!.phones![2] as EditableTree<ComplexPhoneType>)[typeSymbol](), { name: "Test:Phone-1.0.0" });
-    // });
+    it("proxified forest", () => {
+        const proxy = buildTestPerson();
+        assert.ok(proxy);
+        assert.equal(Object.keys(proxy).length, 5);
+        assert.strictEqual(proxy[typeSymbol], personSchema);
+        assert.strictEqual(proxy.address[typeSymbol], addressSchema);
+        assert.strictEqual((proxy.address.phones[2] as ComplexPhoneType)[typeSymbol], complexPhoneSchema);
+    });
 
     it("traverse a complete tree", () => {
         const typedProxy = buildTestPerson();
@@ -404,7 +403,7 @@ describe.only("editable-tree", () => {
             configurable: true,
             enumerable: true,
             value: "Adam",
-            writable: true,
+            writable: false,
         });
     });
 
@@ -420,7 +419,8 @@ describe.only("editable-tree", () => {
         assert.equal(proxy.name, "Adam");
         assert.equal(proxy.age, 35);
         assert.equal(proxy.salary, 10420.2);
-        assert.deepEqual(proxy.friends, { Mat: "Mat" });
+        const cloned = clone(proxy.friends);
+        assert.deepEqual(cloned, { Mat: "Mat" });
         assert.deepEqual(Object.keys(proxy.address!), ["street", "zip", "phones"]);
         assert.equal(proxy.address?.street, "treeStreet");
     });
@@ -486,18 +486,10 @@ describe.only("editable-tree", () => {
         assert.throws(() => (proxy.address!.zip = "999"), "Not implemented");
     });
 
-    // it("delete property", () => {
-    // 	const proxy = buildTestPerson();
-    // 	assert.throws(() => {
-    // 		delete proxy.address;
-    // 	}, "Not implemented");
-    // });
-
-    // it("empty forest does not crash", () => {
-    // 	const emptyTree: JsonableTree = { type: brand("foo") };
-    // 	const proxy = buildTestProxy(emptyTree); // TODO: this does not make an empty forest. It inserts one "foo" node.
-    // 	assert.equal(Object.keys(proxy).length, 0);
-    // 	assert.deepEqual(proxy[typeSymbol](), { name: "foo" });
-    // 	assert.equal(Object.getOwnPropertyNames(proxy).length, 0);
-    // });
+    it("delete property", () => {
+        const proxy = buildTestProxy(emptyNode) as { child?: unknown; };
+        assert.throws(() => {
+            delete proxy.child;
+        }, "Not implemented");
+    });
 });
