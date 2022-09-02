@@ -19,7 +19,6 @@ export enum MessageType {
     // Proposes a new consensus value
     Propose = "propose",
 
-
     // Message sent by client accepting proposal
     Accept = "accept",
 
