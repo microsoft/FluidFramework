@@ -109,7 +109,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
     (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
-    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage: boolean) => void): any;
+    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
     // (undocumented)
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)

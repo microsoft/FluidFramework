@@ -86,7 +86,7 @@ export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityStat
 
 export interface IContainerRuntimeBaseEvents extends IEvent{
     (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
-    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage: boolean) => void);
+    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
