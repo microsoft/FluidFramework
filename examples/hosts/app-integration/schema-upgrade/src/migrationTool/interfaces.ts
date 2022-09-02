@@ -16,6 +16,6 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
     proposedVersion: string | undefined;
     acceptedVersion: string | undefined;
     proposeVersion(newVersion: string): Promise<void>;
-    volunteerForMigration(): Promise<void>;
+    volunteerForMigration(): Promise<boolean>;
     haveMigrationTask(): boolean;
 }
