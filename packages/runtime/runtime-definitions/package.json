@@ -79,8 +79,13 @@
         "backCompat": false,
         "forwardCompat": false
       },
+      "InterfaceDeclaration_ISummarizerNode": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
       "InterfaceDeclaration_ISummarizerNodeWithGC": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }

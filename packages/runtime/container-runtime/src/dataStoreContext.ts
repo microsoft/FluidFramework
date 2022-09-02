@@ -138,7 +138,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 
 /** Properties necessary for creating a remote FluidDataStoreContext */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-    readonly snapshotTree: ISnapshotTree | string | undefined;
+    readonly snapshotTree: ISnapshotTree | undefined;
     readonly getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase | undefined>;
 }
 
@@ -761,7 +761,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 }
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
-    private readonly initSnapshotValue: ISnapshotTree | string | undefined;
+    private readonly initSnapshotValue: ISnapshotTree | undefined;
     private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
     constructor(props: IRemoteFluidDataStoreContextProps) {
@@ -778,28 +778,20 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
             return (await props.getBaseGCDetails()) ?? {};
         });
+
+        if (props.snapshotTree !== undefined) {
+            this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
+        }
     }
 
     private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
-        let tree: ISnapshotTree | undefined;
+        let tree = this.initSnapshotValue;
         let isRootDataStore = true;
-
-        if (typeof this.initSnapshotValue === "string") {
-            const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
-            tree = await this.storage.getSnapshotTree(commit) ?? undefined;
-        } else {
-            tree = this.initSnapshotValue;
-        }
-
-        const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        if (tree) {
-            tree = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
-        }
 
         if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
             // Need to get through snapshot and use that to populate extraBlobs
             const attributes =
-                await localReadAndParse<ReadFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
+                await readAndParse<ReadFluidDataStoreAttributes>(this.storage, tree.blobs[dataStoreAttributesBlobName]);
 
             let pkgFromSnapshot: string[];
             // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
