@@ -209,10 +209,7 @@ export interface FieldChangeHandler<TChangeset> {
 }
 
 // @public (undocumented)
-export interface FieldChangeMap {
-    // (undocumented)
-    [key: string]: FieldChange;
-}
+export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @public (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
