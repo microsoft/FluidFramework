@@ -235,7 +235,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
 
         CheckPolicy.count++;
-        if (!(exclusions.every((value) => !value.test(line)))) {
+        if (!exclusions.every((value) => !value.test(line))) {
             this.log(`Excluded: ${line}`);
             return;
         }
