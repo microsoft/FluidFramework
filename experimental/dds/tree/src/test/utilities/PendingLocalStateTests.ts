@@ -82,7 +82,6 @@ export function runPendingLocalStateTests(
 			expect(editLog.getEditLogSummary().editChunks.length).to.equal(2);
 		});
 
-        // TODO: remove skip after solving https://dev.azure.com/fluidframework/internal/_workitems/edit/1788
 		it.skip('applies and submits ops from 0.0.2 in 0.0.2', async () =>
 			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_0_2));
 		it('applies and submits ops from 0.0.2 in 0.1.1', async () =>
