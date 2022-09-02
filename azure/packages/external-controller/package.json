@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/app-integration-external-controller",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
   "homepage": "https://fluidframework.com",
@@ -39,7 +39,7 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluidframework/azure-client": "^1.0.3",
+    "@fluidframework/azure-client": "^1.0.4",
     "@fluidframework/common-definitions": "^0.20.1",
     "fluid-framework": "^1.2.5"
   },
