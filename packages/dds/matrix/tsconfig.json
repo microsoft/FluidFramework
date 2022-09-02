@@ -6,8 +6,9 @@
         "composite": true,
     },
     "include": [
-        "src/**/*"
-, "src/test/memory/.mocharc.js"    ],
+        "src/**/*",
+        "src/test/memory/.mocharc.js",
+    ],
     "exclude": [
         "src/test/**/*"
     ]

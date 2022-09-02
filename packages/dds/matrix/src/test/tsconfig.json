@@ -12,8 +12,9 @@
         "skipLibCheck": true
     },
     "include": [
-        "./**/*"
-, "memory/.mocharc.js"    ],
+        "./**/*",
+        "memory/.mocharc.js",
+    ],
     "references": [
         {
             "path": "../.."
