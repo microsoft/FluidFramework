@@ -50,8 +50,6 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
-    isRuntimeMessage,
-    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -1745,16 +1743,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
         }
 
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
-            this.mc.logger.sendTelemetryEvent(
-                { eventName: "UnpackedRuntimeMessage", type: message.type });
-        }
-        // Forward non system messages to the loaded runtime for processing
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
-            this.context.process(message, local, undefined);
-        }
+        // Forward messages to the loaded runtime for processing
+        this.context.process(message, local, undefined);
 
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {

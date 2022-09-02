@@ -84,8 +84,9 @@ export const VisibilityState = {
 };
 export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
-export interface IContainerRuntimeBaseEvents extends IEvent {
-    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
+export interface IContainerRuntimeBaseEvents extends IEvent{
+    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
+    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage: boolean) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
