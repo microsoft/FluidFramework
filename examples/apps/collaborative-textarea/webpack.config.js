@@ -4,9 +4,10 @@
  */
 
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
-const { merge } = require("webpack-merge");
 const webpack = require("webpack");
+const { merge } = require("webpack-merge");
 
 module.exports = env => {
     const isProduction = env && env.production;
@@ -45,6 +46,9 @@ module.exports = env => {
             new webpack.ProvidePlugin({
                 process: 'process/browser'
             }),
+            new HtmlWebpackPlugin({
+                template: "./src/index.html",
+            }),
         ],
         // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
         // This should be configurable under devServer.static.watch
@@ -55,6 +59,5 @@ module.exports = env => {
         }
     }, isProduction
         ? require("./webpack.prod")
-        : require("./webpack.dev"),
-    fluidRoute.devServerConfig(__dirname, env));
+        : require("./webpack.dev"));
 };
