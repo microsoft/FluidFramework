@@ -33,12 +33,36 @@ class TinyliciousService {
     }
 }
 
-class DemoCodeLoader implements ICodeDetailsLoader {
-    public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
-        return {
-            module: { fluidExport: new CollaborativeTextContainerRuntimeFactory() },
-            details: { package: "no-dynamic-package" },
-        };
+class TinyliciousModelLoader {
+    private readonly tinyliciousService = new TinyliciousService();
+    private readonly modelLoader = new ModelLoader<ICollaborativeTextAppModel>({
+        urlResolver: this.tinyliciousService.urlResolver,
+        documentServiceFactory: this.tinyliciousService.documentServiceFactory,
+        codeLoader: this.codeLoader,
+        generateCreateNewRequest: createTinyliciousCreateNewRequest,
+    });
+
+    public constructor(private readonly codeLoader: ICodeDetailsLoader) { }
+
+    public async createDetached(version: string) {
+        return this.modelLoader.createDetached(version);
+    }
+    public async loadExisting(id: string) {
+        return this.modelLoader.loadExisting(id);
+    }
+}
+
+const v1Factory = new CollaborativeTextContainerRuntimeFactory();
+
+class AppCodeLoader implements ICodeDetailsLoader {
+    public async load(details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+        if (details.package === "1.0") {
+            return {
+                module: { fluidExport: v1Factory },
+                details,
+            };
+        }
+        throw new Error("Unknown version");
     }
 }
 
@@ -47,25 +71,18 @@ class DemoCodeLoader implements ICodeDetailsLoader {
  * requires making async calls.
  */
 async function start() {
-    const tinyliciousService = new TinyliciousService();
-    const modelLoader = new ModelLoader<ICollaborativeTextAppModel>({
-        urlResolver: tinyliciousService.urlResolver,
-        documentServiceFactory: tinyliciousService.documentServiceFactory,
-        codeLoader: new DemoCodeLoader(),
-        generateCreateNewRequest: createTinyliciousCreateNewRequest,
-    });
+    const tinyliciousModelLoader = new TinyliciousModelLoader(new AppCodeLoader());
 
     let id: string;
     let model: ICollaborativeTextAppModel;
 
     if (location.hash.length === 0) {
-        const createResponse = await modelLoader.createDetached("no-dynamic-package");
+        const createResponse = await tinyliciousModelLoader.createDetached("1.0");
         model = createResponse.model;
-
         id = await createResponse.attach();
     } else {
         id = location.hash.substring(1);
-        model = await modelLoader.loadExisting(id);
+        model = await tinyliciousModelLoader.loadExisting(id);
     }
 
     // update the browser URL and the window title with the actual container ID
