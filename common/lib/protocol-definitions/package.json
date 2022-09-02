@@ -82,6 +82,9 @@
       },
       "EnumDeclaration_MessageType": {
         "backCompat": false
+      },
+      "EnumDeclaration_MessageType": {
+        "forwardCompat": false
       }
     }
   }

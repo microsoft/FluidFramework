@@ -1501,6 +1501,7 @@ declare function get_old_EnumDeclaration_MessageType():
 declare function use_current_EnumDeclaration_MessageType(
     use: TypeOnly<current.MessageType>);
 use_current_EnumDeclaration_MessageType(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_MessageType());
 
 /*
@@ -1513,7 +1514,6 @@ declare function get_current_EnumDeclaration_MessageType():
 declare function use_old_EnumDeclaration_MessageType(
     use: TypeOnly<old.MessageType>);
 use_old_EnumDeclaration_MessageType(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_MessageType());
 
 /*
