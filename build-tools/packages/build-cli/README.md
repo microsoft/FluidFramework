@@ -103,6 +103,7 @@ USAGE
 <!-- commands -->
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
+* [`flub check policy`](#flub-check-policy)
 * [`flub commands`](#flub-commands)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate packageJson`](#flub-generate-packagejson)
@@ -176,6 +177,27 @@ FLAGS
 
 DESCRIPTION
   Checks that the dependencies between Fluid Framework packages are properly layered.
+```
+
+## `flub check policy`
+
+Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.
+
+```
+USAGE
+  $ flub check policy -e <value> [-f] [-d <value>] [-p <value>] [--stdin] [-v]
+
+FLAGS
+  -d, --handler=<value>     Filter handler names by <regex>
+  -e, --exclusions=<value>  (required) Path to the exclusions.json file
+  -f, --fix                 Fix errors if possible
+  -p, --path=<value>        Filter file paths by <regex>
+  -v, --verbose             Verbose logging.
+  --stdin                   Get file from stdin
+
+DESCRIPTION
+  Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files,
+  assert tagging, etc.
 ```
 
 ## `flub commands`
