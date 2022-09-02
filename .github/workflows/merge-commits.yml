@@ -45,12 +45,14 @@ jobs:
     needs: [ check-pr ]
     if: needs.check-pr.outputs.EXISTS == 'false'
     steps:
-      - run: npm install @azure/storage-queue
+      - run: npm install @azure/storage-queue @octokit/core
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         id: dequeue-message
         with:
           script: |
-            const octokit = new Octokit({ auth: `${{ secrets.GITHUB_TOKEN }}` });
+            const { Octokit } = require("@octokit/core");
+            const token = `${{ secrets.GITHUB_TOKEN }}`;
+            const octokit = new Octokit({ auth: token });
             const { QueueClient, QueueServiceClient } = require('@azure/storage-queue')
             const connectionString = `${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}`;
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
