@@ -372,6 +372,8 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
         // Don't log this list itself, or the private _errorInstanceId
         omitPropsFromLogging.add("omitPropsFromLogging");
         omitPropsFromLogging.add("_errorInstanceId");
+        // Don't log URL from redirect errors as it may contain private info
+        omitPropsFromLogging.add("redirectLocation");
 
         if (props) {
             this.addTelemetryProperties(props);
