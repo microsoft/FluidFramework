@@ -575,7 +575,19 @@ export function renderDeprecationNoticeSection(
             {
                 configuration: config.tsdocConfiguration,
             },
-            [...deprecatedBlock.nodes],
+            [
+                new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                    new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
+                        new DocPlainText({
+                            configuration: config.tsdocConfiguration,
+                            text: "DEPRECATED",
+                        }),
+                    ]),
+                ]),
+                new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                    ...deprecatedBlock.nodes,
+                ]),
+            ],
         ),
     ]);
 }

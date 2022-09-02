@@ -408,6 +408,9 @@ function renderDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiIt
 function renderDefaultValueCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
+function renderDeprecatedCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
+
+// @public
 function renderDeprecationNoticeSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
@@ -483,6 +486,7 @@ declare namespace RenderingHelpers {
         renderApiTitleCell,
         renderModifiersCell,
         renderDefaultValueCell,
+        renderDeprecatedCell,
         renderPropertyTypeCell,
         renderParameterTitleCell,
         renderParameterTypeCell,
