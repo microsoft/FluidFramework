@@ -14,11 +14,19 @@ import { ISharedCounter } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**
- * The factory that defines the counter
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedCounter}.
+ *
+ * @sealed
  */
 export class CounterFactory implements IChannelFactory {
+    /**
+     * Static value for {@link CounterFactory."type"}.
+     */
     public static readonly Type = "https://graph.microsoft.com/types/counter";
 
+    /**
+     * Static value for {@link CounterFactory.attributes}.
+     */
     public static readonly Attributes: IChannelAttributes = {
         type: CounterFactory.Type,
         snapshotFormatVersion: "0.1",

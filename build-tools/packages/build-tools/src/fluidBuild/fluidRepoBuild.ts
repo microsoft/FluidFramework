@@ -11,9 +11,11 @@ import { MonoRepoKind } from "../common/monoRepo";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { BuildGraph } from "./buildGraph";
-import { logVerbose } from "../common/logging";
+import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import * as path from "path";
+
+const {verbose} = defaultLogger;
 
 export interface IPackageMatchedOptions {
     match: string[];
@@ -101,7 +103,7 @@ export class FluidRepoBuild extends FluidRepo {
         for (const pkg of this.packages.packages) {
             // TODO: Make this configurable and/or teach fluid-build about new scripts
             if(uncheckedPackages.includes( pkg.name)) {
-                logVerbose(`Skipping ${pkg.nameColored} because it's ignored.`);
+                verbose(`Skipping ${pkg.nameColored} because it's ignored.`);
                 continue;
             }
             if (FluidPackageCheck.checkScripts(pkg, fix)) {
@@ -150,7 +152,7 @@ export class FluidRepoBuild extends FluidRepo {
         let matched = false;
         this.packages.packages.forEach((pkg) => {
             if (!pkg.matched && callback(pkg)) {
-                logVerbose(`${pkg.nameColored}: matched`);
+                verbose(`${pkg.nameColored}: matched`);
                 pkg.setMatched();
                 matched = true;
             }

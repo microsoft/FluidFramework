@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
@@ -26,6 +25,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -214,8 +214,6 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
         let dataObject: ITestFluidObject & IFluidLoadable;
 
         const assertIntervals = (expected: readonly { start: number; end: number; }[]) => {
-            // Make sure all ops have been sent before actually asserting
-            (dataObject.context.containerRuntime as IContainerRuntime).flush();
             assertIntervalsHelper(sharedString, intervals, expected);
         };
 
@@ -224,6 +222,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
             const testContainerConfig: ITestContainerConfig = {
                 fluidDataObjectType: DataObjectFactoryType.Test,
                 registry,
+                runtimeOptions: {
+                    flushMode: FlushMode.Immediate,
+                },
             };
             const container = await provider.makeTestContainer(testContainerConfig);
             dataObject = await requestFluidObject<ITestFluidObject>(container, "default");

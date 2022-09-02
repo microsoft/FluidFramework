@@ -205,7 +205,7 @@ export interface IChannelServices {
  * appropriate in-memory object.
  *
  * @example If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
- * a the collaborating clients will need to have access to a factory that can produce the `SharedMap` obect.
+ * the collaborating clients will need to have access to a factory that can produce the `SharedMap` obect.
  *
  * @remarks Factories follow a common model but enable custom behavior.
  */

@@ -84,13 +84,11 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     const containerError = async (container: IContainer) =>
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
 
-    itExpects("A large op will close the container with chunking disabled", [
+    itExpects("A large op will close the container", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpTooLarge" },
     ], async () => {
-        const maxMessageSizeInBytes = 20000;
-        await setupContainers(testContainerConfig, {
-            "Fluid.ContainerRuntime.MaxOpSizeInBytes": maxMessageSizeInBytes,
-        });
+        const maxMessageSizeInBytes = 768000;  // defaultMaxOpSizeInBytes
+        await setupContainers(testContainerConfig, { });
         const errorEvent = containerError(container1);
 
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
@@ -103,27 +101,11 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assert.deepEqual(error.getTelemetryProperties().limit, maxMessageSizeInBytes);
     });
 
-    it("Small ops will pass with chunking disabled", async () => {
-        const maxMessageSizeInBytes = 20000;
-        await setupContainers(testContainerConfig, {
-            "Fluid.ContainerRuntime.MaxOpSizeInBytes": maxMessageSizeInBytes,
-        });
+    it("Small ops will pass", async () => {
+        const maxMessageSizeInBytes = 768000; // defaultMaxOpSizeInBytes
+        await setupContainers(testContainerConfig, { });
         const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
         const messageCount = 10;
-        setMapKeys(dataObject1map, messageCount, largeString);
-        await provider.ensureSynchronized();
-
-        assertMapValues(dataObject2map, messageCount, largeString);
-    });
-
-    it("Large ops pass with chunking enabled", async () => {
-        const maxMessageSizeInBytes = 20000;
-        await setupContainers(testContainerConfig, {
-            "Fluid.ContainerRuntime.MaxOpSizeInBytes": -1,
-        });
-        // Server max op size should be at around 16000, therefore the runtime will chunk all ops.
-        const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
-        const messageCount = 5;
         setMapKeys(dataObject1map, messageCount, largeString);
         await provider.ensureSynchronized();
 
