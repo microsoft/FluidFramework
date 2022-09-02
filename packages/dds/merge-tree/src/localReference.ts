@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { List, ListMakeHead, ListRemoveEntry } from "./collections";
+import { List, ListNode } from "./collections";
 import {
     ISegment,
 } from "./mergeTreeNodes";
@@ -51,7 +51,7 @@ class LocalReference implements LocalReferencePosition {
 
     private segment: ISegment | undefined;
     private offset: number = 0;
-    private listNode: List<LocalReference> | undefined;
+    private listNode: ListNode<LocalReference> | undefined;
 
     public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
 
@@ -63,7 +63,7 @@ class LocalReference implements LocalReferencePosition {
         this.properties = properties;
     }
 
-    public link(segment: ISegment | undefined, offset: number, listNode: List<LocalReference> | undefined) {
+    public link(segment: ISegment | undefined, offset: number, listNode: ListNode<LocalReference> | undefined) {
         if (listNode !== this.listNode
             && this.listNode !== undefined) {
             this.segment?.localRefs?.removeLocalRef(this);
@@ -160,7 +160,7 @@ export class LocalReferenceCollection {
      * @internal
      */
     public [Symbol.iterator]() {
-        const subiterators: IterableIterator<LocalReferencePosition>[] = [];
+        const subiterators: IterableIterator<ListNode<LocalReferencePosition>>[] = [];
         for (const refs of this.refsByOffset) {
             if (refs) {
                 if (refs.before) {
@@ -182,7 +182,7 @@ export class LocalReferenceCollection {
                     if (next.done === true) {
                         subiterators.shift();
                     } else {
-                        return next;
+                        return { done: next.done, value: next.value.data };
                     }
                 }
 
@@ -205,7 +205,7 @@ export class LocalReferenceCollection {
         const detachSegments = (refs: List<LocalReference> | undefined) => {
             if (refs) {
                 for (const r of refs) {
-                    this.removeLocalRef(r);
+                    this.removeLocalRef(r.data);
                 }
             }
         };
@@ -259,12 +259,12 @@ export class LocalReferenceCollection {
         assert(offset < this.segment.cachedLength, 0x348 /* offset cannot be beyond segment length */);
         const refsAtOffset = this.refsByOffset[offset] =
             this.refsByOffset[offset]
-            ?? { at: ListMakeHead() };
+            ?? { at: new List() };
         const atRefs = refsAtOffset.at =
             refsAtOffset.at
-            ?? ListMakeHead();
+            ?? new List();
 
-        lref.link(this.segment, offset, atRefs.enqueue(lref));
+        lref.link(this.segment, offset, atRefs.push(lref).last);
 
         if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
             this.hierRefCount++;
@@ -279,8 +279,10 @@ export class LocalReferenceCollection {
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         if (this.has(lref)) {
             assertLocalReferences(lref);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ListRemoveEntry(lref.getListNode()!);
+
+            const node = lref.getListNode();
+            node?.list?.remove(node);
+
             lref.link(
                 lref.getSegment(),
                 lref.getOffset(),
@@ -343,22 +345,11 @@ export class LocalReferenceCollection {
         if (listNode === undefined) {
             return false;
         }
-        let prev = listNode;
-        let next = listNode;
-        while (prev?.isHead !== true && next?.isHead !== true) {
-            prev = prev?.prev;
-            next = next?.next;
-        }
-
-        const headNode = prev?.isHead === true ? prev : next;
-        if (headNode?.isHead !== true || headNode.empty()) {
-            return false;
-        }
         const offset = lref.getOffset();
         const refsAtOffset = this.refsByOffset[offset];
-        if (refsAtOffset?.before === headNode
-            || refsAtOffset?.at === headNode
-            || refsAtOffset?.after === headNode) {
+        if (refsAtOffset?.before?.includes(listNode)
+            || refsAtOffset?.at?.includes(listNode)
+            || refsAtOffset?.after?.includes(listNode)) {
                 return true;
             }
         return false;
@@ -404,7 +395,7 @@ export class LocalReferenceCollection {
     }
 
     public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]) {
-        const beforeRefs = this.refsByOffset[0]?.before ?? ListMakeHead();
+        const beforeRefs = this.refsByOffset[0]?.before ?? new List();
 
         if (this.refsByOffset[0]?.before === undefined) {
             const refsAtOffset = this.refsByOffset[0] ??= { before: beforeRefs };
@@ -417,7 +408,7 @@ export class LocalReferenceCollection {
                 if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                     lref.callbacks?.beforeSlide?.();
                     beforeRefs.unshift(lref);
-                    lref.link(this.segment, 0, beforeRefs.next);
+                    lref.link(this.segment, 0, beforeRefs.first);
                     if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount++;
                     }
@@ -432,7 +423,7 @@ export class LocalReferenceCollection {
 
     public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]) {
         const lastOffset = this.segment.cachedLength - 1;
-        const afterRefs = this.refsByOffset[lastOffset]?.after ?? ListMakeHead();
+        const afterRefs = this.refsByOffset[lastOffset]?.after ?? new List();
 
         if (this.refsByOffset[lastOffset]?.after === undefined) {
             const refsAtOffset = this.refsByOffset[lastOffset] ??= { after: afterRefs };
@@ -444,8 +435,8 @@ export class LocalReferenceCollection {
                 assertLocalReferences(lref);
                 if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                     lref.callbacks?.beforeSlide?.();
-                    afterRefs.enqueue(lref);
-                    lref.link(this.segment, lastOffset, afterRefs.prev);
+                    afterRefs.push(lref);
+                    lref.link(this.segment, lastOffset, afterRefs.last);
                     if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount++;
                     }
