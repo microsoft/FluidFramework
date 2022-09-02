@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { TransactionResult } from "../../transaction";
 import { singleTextCursor } from "../../feature-libraries";
 import { brand } from "../../util";
 import { detachedFieldAsKey } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { SharedTree } from "../../shared-tree";
+import { TransactionResult } from "../../checkout";
 
 describe("SharedTree", () => {
     it("can be connected to another tree", async () => {

@@ -12,14 +12,17 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "scripts": {
-    "build": "npm run build:api-rollup && concurrently npm:build:md-magic npm:build:api-documenter && npm run hugo",
+    "build": "npm run build:api && npm run build:md-magic && npm run hugo",
     "build:api": "npm run build:api-rollup && npm run build:api-documenter",
     "build:api-documenter": "run-script-os",
     "build:api-documenter:default": "[ -e ../_api-extractor-temp/doc-models ] && api-documenter generate --config api-documenter.json --input-folder ./_api-extractor-temp/_build --output-folder content/docs/apis/; exit 0",
     "build:api-documenter:win32": "if exist ../_api-extractor-temp/doc-models api-documenter generate --config api-documenter.json --input-folder ./_api-extractor-temp/_build --output-folder content/docs/apis/",
     "build:api-rollup": "rimraf ./_api-extractor-temp && node ./rollup-api-json.js ../_api-extractor-temp/doc-models/ ./_api-extractor-temp/",
-    "build:fast": "npm run build:api-rollup && concurrently npm:build:md-magic npm:build:api-documenter && npm run hugo",
-    "build:md-magic": "node md.js",
+    "build:md-magic": "concurrently npm:build:md-magic:code npm:build:md-magic:website",
+    "build:md-magic:code": "node markdown-magic-code.js",
+    "build:md-magic:website": "node markdown-magic-website.js",
+    "build:repo-docs": "npm run build:md-magic:code",
+    "build:website": "npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documenter && npm run hugo",
     "ci:build": "npm run download && npm run build",
     "clean": "rimraf public content/docs/apis _api-extractor-temp",
     "download": "npm run download:api && npm run build:api-documenter",
@@ -29,7 +32,7 @@
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
-    "start": "npm run build:md-magic && hugo server"
+    "start": "hugo server"
   },
   "dependencies": {
     "@tylerbu/custom-api-documenter": "~0.3.4-7",
@@ -37,7 +40,7 @@
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.28",
     "broken-link-checker": "^0.7.8",
-    "colors": "^1.2.1",
+    "chalk": "^2.4.2",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "cpy": "^8.1.2",

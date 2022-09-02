@@ -338,13 +338,23 @@ When you make changes to the code the project will automatically rebuild and the
 
 [Fluid container]: {{< relref "containers.md" >}}
 
-<!-- Classes and interfaces -->
+<!-- Distributed Data Structures -->
+
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+
+<!-- API links -->
+
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
+[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient.md" >}}
 
 [FluidContainer]: {{< relref "/docs/apis/fluid-framework/fluidcontainer.md" >}}
 [IFluidContainer]: {{< relref "/docs/apis/fluid-framework/ifluidcontainer.md" >}}
-[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
-[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "sequences.md" >}}
-[SharedString]: {{< relref "string.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

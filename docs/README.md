@@ -2,9 +2,11 @@
 
 This is the code and content for <https://fluidframework.com>.
 
-## Previewing the documentation site locally
+The site is generated using [Hugo](https://gohugo.io/).
 
-Open the docs folder in a terminal and install the dependencies using npm.
+## Website quick start
+
+To quickly get started previewing the website's contents locally, open the docs folder in a terminal and install the dependencies using npm.
 
 ```bash
 cd docs
@@ -21,106 +23,157 @@ Open <http://localhost:1313> to preview the site.
 
 ### API documentation and Playground
 
-The steps above won't include API documentation (the TSDoc JSON files) or the Playground by default.  You can
-download the latest API docs and Playground files with the `download` script.
+The steps above won't include API documentation (the TSDoc JSON files) or the Playground by default.
+
+To include generated API documentation in your local preview, you can run a complete build from the repo root.
+Then run the `build:api` script from this directory.
+
+```bash
+npm run build:api
+```
+
+Alternatively, you can skip the complete repo build by downloading the latest API docs and Playground files with the `download` script.
 
 ```bash
 npm run download
 ```
 
-Note that this script will **overwrite any locally built API docs.**
+> Note that the `download` script will **overwrite any locally built API docs.**
 
 ## Building the documentation
 
-Run the `build` script to build the site. The output will be in the `public/` folder.
+To build the website and run other repo-wide documentation generation, run the `build` script.
+The output will be in the `public/` folder.
 
 ```bash
 npm run build
 ```
 
-### Drafts and future content
-
-By default the `build` script won't build content with a future published date or draft flag.
-To build this content, use the `--buildDrafts` and `--buildFuture` flags.
+To strictly build the website (and omit documentation generation steps elsewhere in the repo), you can instead run the `build:website` script.
 
 ```bash
-npm run build -- --buildDrafts --buildFuture
+npm run build:website
 ```
 
-Content with a future published date won't automatically publish on that date.  You'll
-need to run the build process.
+To strictly run documentation generation for the remainder of the repo (everything not under `/docs`), you can instead run the `build:repo-docs` script.
+
+```bash
+npm run build:repo-docs
+```
+
+### Drafts
+
+Work-in-progress documents that are not ready for public consumption can be safely added by annotatting them with the `draft` flag in their frontmatter.
+
+Example:
+
+```markdown
+---
+title: "Foo"
+draft: true
+---
+```
+
+Such documents will be disregarded by the build (by default) and will not be published.
+
+Drafts are a good option for making incremental progress on a document via pull requests before being ready to actually publish for the world to see.
+
+For more documentation on this Hugo feature, see [here](https://gohugo.io/getting-started/usage/#draft-future-and-expired-content).
+
+#### Previewing drafts locally
+
+As noted above, the `build` script won't build `draft` content.
+To build this content and preview it locally, you can run the build with the `--buildDrafts` flag.
+
+```bash
+npm run build -- --buildDrafts
+```
+
+### Future Content
+
+Hugo also supports creating content to be published at some future, pre-defined date and time.
+
+> Note: we currently do not have a workflow for pre-publishing website content.
+> These docs are here as a placeholder until we enable such functionality.
+
+For more documentation on this Hugo feature, see [here](https://gohugo.io/getting-started/usage/#draft-future-and-expired-content).
+
+#### Previewing future content locally
+
+To build content and preview future content locally, you can run the build with the `--buildFuture` flag.
+
+```bash
+npm run build -- --buildFuture
+```
 
 ### API documentation
 
 Building API documentation locally requires an extra step to generate the content from the source.
 
-From the root of the repository:
+To build everything, you can use [fluid-build](../build-tools/packages/build-cli/README.md#running-these-tools-command-line) from the repository root, and specify `-s build:docs`.
+
+E.g.
 
 ```bash
-npm install
-npm run build:fast -- --symlink:full --install --all
-npm run build:fast -- -s build -s build:docs --nolint --all
-```
-
-You can then build or preview the docs using the steps described earlier.
-
-Note that this will leave the fluid-build tool in full-symlink mode.  To return to the default isolated
-mode (e.g. for typical development) run:
-
-```bash
-npm run build:fast -- --symlink
+fluid-build -s build -s build:docs --all
 ```
 
 ### Understanding the API documentation build pipeline
 
-If you encounter problems updating or building the API docs, it can be helpful to have a high-level
-understanding of how it gets built. The steps are as follows:
+If you encounter problems updating or building the API docs, it can be helpful to have a high-level understanding of how it gets built.
+The steps are as follows:
 
 1. Root: `build:fast`
     1. Compile the code, generating TypeScript definitions, etc.
 1. Root: `build:docs`
-    1. Run the @microsoft/api-extractor (using Lerna) in each package to extract documentation info in a JSON format.
-       The output is placed in a folder `_api-extractor-temp` in each package's directory.
-    1. The JSON is also copied from each package up to a shared `_api-extractor-temp` directory under the repository
-       root.
+    1. Run [API-Extractor](https://api-extractor.com/) in each package to extract documentation info in a `JSON` format.
+       * The output is placed in a folder `_api-extractor-temp` in each package's directory.
+    1. The `JSON` is also copied from each package up to a shared `_api-extractor-temp` directory under the repository root.
 1. `/docs`: `build`
-    1. Run markdown-magic to update some shared content in the source Markdown files.
-    1. Run the @mattetti/api-extractor tool to transform the JSON format into Markdown.  The generated Markdown is
-       placed at `/docs/content/apis`. We maintain this fork of @microsoft/api-extractor
-       [here](https://github.com/mattetti/custom-api-documenter).
-    1. Run hugo to build the site itself. The generated output is placed at `/docs/public/apis`.
+    1. Run [markdown-magic](#markdown-magic) to update some shared content in the source `Markdown` files (both in the `docs` directory and throughout the rest of the repo).
+    1. Run [api-documenter](#api-documenter) to transform `JSON`-formatted API reports generated by `API-Extractor` into `Markdown`-formatted documentation.
+       * The generated `Markdown` is placed under `/docs/content/apis`.
+    1. Run `Hugo` to build the site itself. The generated output is placed at `/docs/public/apis`.
 1. `/docs`: `start`
-    1. Run the hugo server to host the site at <http://localhost:1313>.
+    1. Run the `Hugo` server to host the site at <http://localhost:1313>.
 
-To investigate incorrect output, you can check the intermediate outputs (JSON, Markdown, HTML) at these locations
-to narrow down where the error is occurring.
+To investigate incorrect output, you can check the intermediate outputs (`JSON`, `Markdown`, `HTML`) at these locations to narrow down where the error is occurring.
+
+## Tools
+
+The following are tools used by this package.
+
+### Markdown Magic
+
+We use a tool called [markdown-magic](https://github.com/DavidWells/markdown-magic/) to generate and embed contents in `Markdown` content throughout our repo.
+This includes website contents, package READMEs, etc.
+
+This tool is highly extensible, and new functionality can be added pretty simply by modifying `./md-magic.config.js`.
+
+### API-Documenter
+
+We maintain this fork of `@microsoft/api-documenter` [here](https://github.com/tylerbutler/custom-api-documenter/tree/dev), which we use to process API reports generated by `API Extractor` to generate `Markdown`-formatted API documentation.
+
+The configuration for this tool is `./api-documenter.json`.
+
+> Note: we are in the process of replacing this library fork with a new library maintained in this repository.
+> See [@fluid-tools/api-markdown-documenter](../tools/api-markdown-documenter/README.md).
 
 ## Creating new content
 
-You need to generate new content manually by creating new files by hand or by
-generating them using the `hugo` command as shown below:
+In order to create new documentation content, you will need to either generate new content manually by creating new files, or by generating them using the `hugo` command as shown below:
 
-### Static doc
-
-```bash
-npm run hugo -- new docs/concepts/flux-capacitor.md
-```
-
-### Blog post
-
-```bash
-npm run hugo -- new posts/fluid-everywhere.md
-```
+* Static `Markdown` document: `npm run hugo -- new docs/concepts/flux-capacitor.md`
+* Blog post: `npm run hugo -- new posts/fluid-everywhere.md`
 
 ### Content guidelines
 
-Try to use Markdown as much as possible. You can embed HTML in Markdown, but we
-recommended sticking to Markdown and shortcodes/partials.
+Try to use `Markdown` as much as possible.
+You can embed `HTML` in `Markdown`, but we recommended sticking to `Markdown` and [shortcodes](#shortcodes)/partials.
 
 ## Menus
 
-Menus are mainly managed in `config.yml` but depending on the menu, the sub
-headers might be driven by the content in the repo (pages or data files).
+Menus are mainly managed in `config.yml` but depending on the menu, the sub headers might be driven by the content in the repo (pages or data files).
 
 ### Main menu (top menu)
 
@@ -142,9 +195,7 @@ menu:
 
 ### Docs menu
 
-The docs menu is implemented in the theme's `_partial/docNav.html` and is using the
-`config.yml` to find the headers and then uses the area attribute of each sub section (sub
-folders in the content folder) to populate the pages displayed in the menu.
+The docs menu is implemented in the theme's `_partial/docNav.html` and is using the `config.yml` to find the headers and then uses the area attribute of each sub section (sub folders in the content folder) to populate the pages displayed in the menu.
 
 Here is an example of what `config.yml` could contain:
 
@@ -163,34 +214,110 @@ menu:
     weight: -100
 ```
 
-Those are headers for the Docs menu, they each have a `name` field which is used to
-display the header in the menu. They also have an `identifier` key which is used to map
-content with matching `area` field (often set to cascade within a sub folder). Finally,
-you have a `weight` field that is used to decide the positioning of each item in the menu.
+Those are headers for the Docs menu, they each have a `name` field which is used to display the header in the menu.
+They also have an `identifier` key which is used to map content with matching `area` field (often set to cascade within a sub folder).
+Finally, you have a `weight` field that is used to decide the positioning of each item in the menu.
 The lighter an item is, the higher it goes in order (closer to the top).
 
 ### API menu
 
-The API menu is a bit more complex since it's driven by content. The left menu (API
-overview) is a list of grouped packages, the grouping comes from a yaml file in the `data`
-folder (`packages.yaml`). The API documentation is being generated with metadata which
-allows the template to link pages and load the right information.
+The API menu is a bit more complex since it's driven by content.
+The left menu (API overview) is a list of grouped packages, the grouping comes from a yaml file in the `data` folder (`packages.yaml`).
+The API documentation is generated with metadata which allows the template to link pages and load the right information.
 
 ### Table of Contents
 
-Some template pages include a TOC of the page. This is generated on the fly by reading the
-headers.
+Some template pages include a table of contents (TOC) of the page.
+This is generated automatically by reading the headers.
 
 ### Social action
 
-There is a menu with actions such as tweeting the page, subscribing to the feed, asking
-questions etc... This is driven from the theme and the information for the accounts should
-be in the config.
+There is a menu with actions such as tweeting the page, subscribing to the feed, asking questions etc...
+This is driven from the theme and the information for the accounts should be in the config.
+
+## Writing Markdown content
+
+Please refer to the following guidelines when writing new `Markdown` content for the website.
+
+> Remember that we prefer `Markdown` over `HTML` contents whenever possible, but you may embed `HTML` in your `Markdown` contents as needed.
+
+### Linking to other documents
+
+Standard [Markdown links](https://www.markdownguide.org/basic-syntax#links) are supported in our `Hugo` ecosystem.
+When linking to external webpages, this is the syntax we recommend.
+
+When linking to other documents on the website, however, we recommend either using the built-in [`relref`](#relref) shortcode, or one of our [custom shortcode templates](#custom-shortcode-templates).
+These are designed to reduce boilerplate and be more tolerant to future changes to the website.
 
 ## Shortcodes
 
-[Shortcodes](https://gohugo.io/content-management/shortcodes/) are custom functions that
-can be called from within the Markdown to insert specific content.
+[Shortcodes](https://gohugo.io/content-management/shortcodes/) are custom functions that can be called from within the `Markdown` or `HTML` to insert specific content.
+
+### Built-in shortcode templates
+
+`Hugo` comes with a large suite of built-in shortcode templates that can be used when writing documentation.
+The complete list can be found [here](https://gohugo.io/content-management/shortcodes/#use-hugos-built-in-shortcodes).
+
+We will call out a few here in more detail because we recommend using them, and expect them to be used frequently.
+
+#### `relref`
+
+The [`relref` shortcode](https://gohugo.io/content-management/shortcodes/#ref-and-relref) is useful for linking to other pages on the website.
+It accepts a file-name / partial file-path (and optional heading ID), and generates a relative path link to that document.
+
+> Note: we recommend using `relref` over `ref`, as `ref` will generate an absolute url link, and won't work nicely when previewing the site locally.
+
+Using `relref` is a great option when adding links between documents on the website, as it is more tolerant of file-wise changes made over time.
+
+##### `relref` example
+
+`Markdown` like the following:
+https://fluidframework.com/docs/build/containers/
+```markdown
+For more details, see [Creating a container]({{< relref "containers.md#creating-a-container" >}}).
+```
+
+will generate something like:
+
+```markdown
+For more details, see <a href="/docs/build/containers/#creating-a-container">Creating a container</a>.
+```
+
+### Custom shortcode templates
+
+We have a series of premade shortcode templates that we use throughout our website content.
+These can be found under `layouts/shortcodes`.
+
+#### `apiref`
+
+When linking to the API docs for a class, interface, etc., we recommend using our `apiref` shortcode, rather than writing a manual link.
+
+This has a few of benefits:
+
+1. The shortcode is configured to understand our API documentation configuration, so it is better equipped to deal with file paths, etc.
+1. The generated link is formatted as a `<code>` block automatically.
+1. It reduces boilerplate.
+
+The shortcode accepts a single argument: the name of the API item being referenced.
+
+> Note that this will only work correctly for `package`, `class`, `interface`, and `namespace`/`module` items, as they are the only items for which individual `.md` files are generated for.
+> Contents like `paramters`, `methods`, etc. are rendered as sub-headings in their parent item's documents.
+
+This shortcode can be found in `layouts/shortcodes/apiref.html`.
+
+##### `apiref` example
+
+`Markdown` like the following:
+
+```markdown
+The {{< apiref FluidContainer >}} class can be used to...
+```
+
+will generate something like:
+
+```markdown
+The <a href="{{ relref /docs/apis/fluid-static/fluidcontainer.md }}"><code>FluidContainer</code></a> class can be used to...
+```
 
 ## Working on the template
 
@@ -198,23 +325,28 @@ The site theme/template lives in `themes/thxvscode`.
 
 ## Scripts
 
+The following npm scripts are supported in this directory:
+
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
-| `build:api` | `npm run build:uber-package && npm run build:api-documenter` |
+| `build:api` | `npm run build:api-rollup && npm run build:api-documenter` |
 | `build:api-documenter` | Convert API JSON into Markdown. |
 | `build:api-documenter:default` | --- |
 | `build:api-documenter:win32` | --- |
 | `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
-| `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
+| `build:md-magic:code` | `node markdown-magic-code.js` |
+| `build:md-magic:website` | `node markdown-magic-website.js` |
+| `build:repo-docs` | `npm run build:md-magic:code` |
+| `build:website` | `npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documenter && npm run hugo` |
 | `ci:build` | `npm run download && npm run build` |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `hugo` | Run the local copy of Hugo. |
-| `linkcheck` | `npm run linkcheck:site` |
+| `linkcheck` | `npm run linkcheck:fast -- --external` |
 | `linkcheck:fast` | `linkcheck http://localhost:1313 --skip-file skipped-urls.txt` |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
