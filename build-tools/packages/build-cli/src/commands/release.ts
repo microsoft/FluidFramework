@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+import path from "path";
 import {
     bumpVersionScheme,
     detectVersionScheme,
     VersionBumpType,
     VersionScheme,
 } from "@fluid-tools/version-tools";
-import { FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
+import { exec, FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { StateMachineCommand } from "../base";
@@ -35,6 +36,8 @@ import {
 } from "../lib";
 import { StateHandler, UnifiedReleaseMachine } from "../machines";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+// eslint-disable-next-line import/no-internal-modules
+import { CheckPolicy } from "./check/policy";
 
 interface InstructionalPrompt {
     title: string;
@@ -193,11 +196,40 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags>
             }
 
             case "CheckPolicy": {
-                // TODO: run policy check before releasing a version.
                 if (this.shouldCheckPolicy) {
-                    this.warn(chalk.red(`Automated policy check not yet implemented.`));
-                    this.warn(`Run policy check manually and check in all fixes.`);
-                    // await runPolicyCheckWithFix(context);
+                    if (context.originalBranchName !== "main") {
+                        this.warn(
+                            "WARNING: Policy check fixes are not expected outside of main branch!  Make sure you know what you are doing.",
+                        );
+                    }
+
+                    // TODO: Call new check policy command
+                    // await CheckPolicy.run(["--fix", "--exclusions",
+                    // "build-tools/packages/build-tools/data/exclusions.json"]);
+                    const r = await exec(
+                        `node ${path.join(
+                            context.gitRepo.resolvedRoot,
+                            "build-tools",
+                            "packages",
+                            "build-tools",
+                            "dist",
+                            "repoPolicyCheck",
+                            "repoPolicyCheck.js",
+                        )} -r`,
+                        context.gitRepo.resolvedRoot,
+                        "policy-check:fix failed",
+                    );
+
+                    // check for policy check violation
+                    const afterPolicyCheckStatus = await context.gitRepo.getStatus();
+                    if (afterPolicyCheckStatus !== "" && afterPolicyCheckStatus !== "") {
+                        this.logHr();
+                        this.errorLog(
+                            `Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`,
+                        );
+                        this.machine.action("failure");
+                        break;
+                    }
                 } else {
                     this.warn("Skipping policy check.");
                 }
