@@ -21,6 +21,7 @@
     "build:md-magic": "concurrently npm:build:md-magic:code npm:build:md-magic:website",
     "build:md-magic:code": "node markdown-magic-code.js",
     "build:md-magic:website": "node markdown-magic-website.js",
+    "build:repo-docs": "npm run build:md-magic:code",
     "build:website": "npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documenter && npm run hugo",
     "ci:build": "npm run download && npm run build",
     "clean": "rimraf public content/docs/apis _api-extractor-temp",
