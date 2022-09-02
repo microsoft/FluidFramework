@@ -93,6 +93,7 @@ export class CollabWindowTracker {
 
     private submitNoop(immediate: boolean) {
         // Anything other than null is immediate noop
+        // ADO:1385: Remove cast and use MessageType once definition changes propagate
         this.submit(immediate ? (MessageType2.Accept as unknown as MessageType) : MessageType.NoOp);
         assert(this.opsCountSinceNoop === 0,
             0x243 /* "stopSequenceNumberUpdate should be called as result of sending any op!" */);

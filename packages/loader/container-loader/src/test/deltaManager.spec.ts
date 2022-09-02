@@ -104,7 +104,7 @@ describe("Loader", () => {
                 } as any as ISequencedDocumentMessage;
             }
 
-            async function emitSequentialOps(type: MessageType = MessageType.Operation, count = 1) {
+            async function emitSequentialOps(count: number) {
                 for (let num = 0; num < count; ++num) {
                     assert(!deltaConnection.disposed, "disposed");
                     deltaConnection.emitOp(docId, [generateOp()]);
@@ -225,14 +225,14 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await emitSequentialOps(noopCountFrequency - 1);
                     await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 0);
 
-                    await emitSequentialOps(MessageType.Operation, 1);
+                    await emitSequentialOps(1);
                     assert.strictEqual(runCount, 1);
 
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await emitSequentialOps(noopCountFrequency - 1);
                     await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 1);
                 });
@@ -246,7 +246,7 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await emitSequentialOps(noopCountFrequency - 1);
                     await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 0);
 
@@ -256,7 +256,7 @@ describe("Loader", () => {
 
                     // Now timeout again should not cause noop
                     await tickClock(expectedTimeout);
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await emitSequentialOps(noopCountFrequency - 1);
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -267,7 +267,7 @@ describe("Loader", () => {
                         assert.fail("Should not send no-op.");
                     });
 
-                    await emitSequentialOps(MessageType.NoOp, noopCountFrequency + 1);
+                    await emitSequentialOps(noopCountFrequency + 1);
                     await tickClock(expectedTimeout);
                 });
 
@@ -281,7 +281,7 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    await emitSequentialOps(MessageType.NoOp);
+                    await emitSequentialOps(1);
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -305,7 +305,7 @@ describe("Loader", () => {
                         assert.fail("Should not send no-op.");
                     });
 
-                    await emitSequentialOps();
+                    await emitSequentialOps(1);
                     await tickClock(expectedTimeout - 1);
                     deltaManager.submit(MessageType.Operation, ignoreContent);
                     await tickClock(1);
