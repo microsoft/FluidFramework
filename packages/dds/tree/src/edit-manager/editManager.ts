@@ -47,7 +47,8 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     ) { }
 
     public setLocalSessionId(id: SessionId) {
-        assert(this.localSessionId === undefined || this.localSessionId === id, "Local session ID cannot be changed");
+        assert(this.localSessionId === undefined || this.localSessionId === id,
+            0x3a1 /* Local session ID cannot be changed */);
         this.localSessionId = id;
     }
 
@@ -68,7 +69,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             const lastSeqNumber = this.trunk[this.trunk.length - 1].seqNumber;
             assert(
                 newCommit.seqNumber > lastSeqNumber,
-                "Incoming remote op sequence# <= local collabWindow's currentSequence#",
+                0x3a2 /* Incoming remote op sequence# <= local collabWindow's currentSequence# */,
             );
         }
         if (newCommit.sessionId === this.localSessionId) {
@@ -159,7 +160,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     private updateBranch(branch: Branch<TChangeset>, newRef: SeqNumber) {
         const trunkChanges = this.getCommitsAfterAndUpToInclusive(branch.refSeq, newRef);
         if (trunkChanges.length === 0) {
-            assert(branch.refSeq === newRef, "Expected trunk changes");
+            assert(branch.refSeq === newRef, 0x3a3 /* Expected trunk changes */);
             // This early return avoids rebasing the branch changes over an empty sandwich.
             return;
         }
