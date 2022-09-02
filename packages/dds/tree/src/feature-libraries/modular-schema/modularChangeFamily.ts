@@ -135,7 +135,11 @@ function getChangeHandler(
     kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
     const fieldKind = fieldKinds.get(kind);
+<<<<<<< HEAD
     assert(fieldKind !== undefined, "Unknown field kind");
+=======
+    assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
+>>>>>>> use-api-markdown-documenter
     return fieldKind.changeHandler;
 }
 

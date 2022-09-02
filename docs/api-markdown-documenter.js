@@ -15,6 +15,7 @@ const {
 } = require("@fluid-tools/api-markdown-documenter");
 const { StringBuilder } = require("@microsoft/tsdoc");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
+const chalk = require("chalk");
 const fs = require("fs-extra");
 const path = require("path");
 const os = require("os");
@@ -114,8 +115,11 @@ async function main() {
     await fs.emptyDir(apiDocsDirectoryPath);
 
     // Process API reports
-    console.log("Generating API model...");
+    console.group();
+
     const apiModel = await loadModel(apiReportsDirectoryPath);
+
+    console.groupEnd();
 
     const config = markdownDocumenterConfigurationWithDefaults({
         apiModel,
@@ -130,6 +134,8 @@ async function main() {
     });
 
     console.log("Generating API docs...");
+    console.group();
+
     let documents;
     try {
         documents = renderDocuments(config);
@@ -139,12 +145,13 @@ async function main() {
         throw error;
     }
 
+    console.groupEnd();
+
     console.log("Writing API docs...");
+    console.group();
 
     await Promise.all(documents.map(async (document) => {
         let filePath = path.join(apiDocsDirectoryPath, document.path);
-
-        console.log(`Writing document for "${document.apiItem.displayName}"...`);
 
         // Emit markdown for API docs
         const markdownEmitter = new HugoMarkdownEmitter(config.apiModel);
@@ -189,10 +196,12 @@ async function main() {
             throw error;
         }
     }));
+
+    console.groupEnd();
 }
 
 main().then(() => {
-    console.log("API docs written!");
+    console.log(chalk.green("API docs written!"));
     return 0;
 }, (error) => {
     console.error("API docs could not be written due to an error:");

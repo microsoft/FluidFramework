@@ -1500,7 +1500,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         // we know we must be using `SequenceInterval` because `this.client` exists
         assert(
             localInterval instanceof SequenceInterval,
-            "localInterval must be `SequenceInterval` when used with client",
+            0x3a0 /* localInterval must be `SequenceInterval` when used with client */,
         );
 
         const startSegment = this.getSlideToSegment(localInterval.start);
