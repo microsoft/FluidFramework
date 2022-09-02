@@ -162,26 +162,25 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @public
-export type EditableTree<T = any> = EditableTreeSignature<T> & EditableTreeNode<T>;
-
-// @public
-export type EditableTreeNode<T> = {
-    [P in keyof T]?: T[P] extends number | string | boolean ? TreeValue : EditableTree<T[P]> | undefined;
-};
+export interface EditableTree {
+    // (undocumented)
+    readonly [editableTreeProxySymbol]: unknown;
+    readonly [typeSymbol]: TreeSchema;
+    readonly [value_2]: Value;
+    readonly [key: string]: UnwrappedEditableField;
+}
 
 // @public (undocumented)
-export type EditableTreeNodeSchema = Partial<NamedTreeSchema>;
+export interface EditableTreeContext {
+    free(): void;
+    prepareForEdit(): void;
+}
+
+// @public
+export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 
 // @public (undocumented)
 export const editableTreeProxySymbol: unique symbol;
-
-// @public
-export interface EditableTreeSignature<T> {
-    // (undocumented)
-    readonly [getTypeSymbol]: (key?: FieldKey, withSchema?: boolean) => EditableTreeNodeSchema;
-    // (undocumented)
-    [key: string]: T extends number | string | boolean ? TreeValue : EditableTree<T> | undefined;
-}
 
 // @public (undocumented)
 const empty: Root;
@@ -190,7 +189,7 @@ const empty: Root;
 export const emptyField: FieldSchema;
 
 // @public
-export const EmptyKey: FieldKey;
+export const EmptyKey: LocalFieldKey;
 
 // @public
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
@@ -285,10 +284,7 @@ export interface GenericTreeNode<TChild> extends NodeData {
 }
 
 // @public
-export function getEditableTree<T = any>(forest: IEditableForest): EditableTree<T>;
-
-// @public
-export const getTypeSymbol: unique symbol;
+export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField];
 
 // @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
@@ -629,6 +625,9 @@ type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndD
 // @public
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
+// @public (undocumented)
+export type PrimitiveValue = string | boolean | number;
+
 // @public
 type ProtoNode = JsonableTree;
 
@@ -817,6 +816,9 @@ export interface TreeValue extends Serializable {
 }
 
 // @public
+export const typeSymbol: unique symbol;
+
+// @public
 class UnitEncoder extends ChangeEncoder<0> {
     // (undocumented)
     decodeBinary(formatVersion: number, change: IsoBuffer): 0;
@@ -827,6 +829,12 @@ class UnitEncoder extends ChangeEncoder<0> {
     // (undocumented)
     encodeForJson(formatVersion: number, change: 0): JsonCompatible;
 }
+
+// @public
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
+
+// @public
+export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly UnwrappedEditableTree[];
 
 // @public
 export interface UpPath {

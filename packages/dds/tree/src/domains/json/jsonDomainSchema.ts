@@ -21,6 +21,7 @@ import {
     emptySet,
     fieldSchema,
 } from "../../schema-stored";
+import { EmptyKey } from "../../tree";
 import { brand } from "../../util";
 
 export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
@@ -45,7 +46,7 @@ export const jsonArray: NamedTreeSchema = {
     extraGlobalFields: false,
     localFields: new Map([
         [
-            brand("items"),
+            EmptyKey,
             fieldSchema(FieldKinds.sequence, jsonTypes),
         ],
     ]),
