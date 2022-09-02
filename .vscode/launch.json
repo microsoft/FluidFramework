@@ -21,15 +21,17 @@
         {
             "name": "flub",
             "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+            "cwd": "/home/tylerbu/code/release-3/",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node",
             "args": [
-                "info",
+                "release",
                 "-g",
-                "build-tools",
+                "client",
+                "-v",
             ],
         },
         {

@@ -340,8 +340,12 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
             case "CheckForReleaseType": {
                 if (testMode) return true;
 
-                // todo: remove this state
-                this.signalSuccess(state);
+                const {bumpType} = data;
+                if (bumpType === undefined) {
+                    throw new Error(`bumpType is undefined.`);
+                }
+
+                this.machine.action(bumpType);
                 break;
             }
 
