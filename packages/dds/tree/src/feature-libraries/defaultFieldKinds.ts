@@ -114,7 +114,7 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
                 return 0;
             }
             for (let index = 1; index < f.length; index++) {
-                assert(f[index - 1].new === f[index].old, "adjacent replaces must match");
+                assert(f[index - 1].new === f[index].old, 0x3a4 /* adjacent replaces must match */);
             }
             return { old: f[0].old, new: f[f.length - 1].new };
         },

@@ -778,7 +778,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
-        assert(!this.currentlyProcessingOps, "Already processing ops.");
+        assert(!this.currentlyProcessingOps, 0x3af /* Already processing ops. */);
         this.currentlyProcessingOps = true;
         this.lastProcessedMessage = message;
 

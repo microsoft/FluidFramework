@@ -74,7 +74,7 @@ export class CollabWindowTracker {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Promise.resolve().then(() => {
                 assert(this.opsCountSinceNoop >= this.NoopCountFrequency,
-                    "not enough ops were sent to reach the noop frequency");
+                    0x3ae /* not enough ops were sent to reach the noop frequency */);
                 this.submitNoop(false /* immediate */);
                 // reset count now that all ops are processed
                 this.opsCountSinceNoop = 0;
