@@ -79,12 +79,13 @@ describe("Matrix memory usage", () => {
         });
 
         benchmarkMemory({
-            title: `Insert and remove ${x} columns`,
+            title: `Set ${x} cells`,
             benchmarkFn: async () => {
                 const localMatrix = createLocalMatrix("testLocalMatrix");
+                localMatrix.insertCols(0, x);
+                localMatrix.insertRows(0, x);
                 for (let i = 0; i < x; i++) {
-                    localMatrix.insertCols(0, 100);
-                    localMatrix.insertCols(0, 100);
+                    localMatrix.setCell(0, i, "a");
                 }
             },
         });
