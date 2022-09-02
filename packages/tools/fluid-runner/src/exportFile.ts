@@ -13,6 +13,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getArgsValidationError } from "./getArgsValidationError";
 import { IFluidFileConverter, isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
+import { isJsonSnapshot } from "./utils";
 
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
@@ -60,7 +61,12 @@ export async function exportFile(
             }
 
             // TODO: read file stream
-            const inputFileContent = fs.readFileSync(inputFile, { encoding: "utf-8" });
+            let inputFileContent: string | Uint8Array;
+            if (isJsonSnapshot(inputFile)) {
+                inputFileContent = fs.readFileSync(inputFile, { encoding: "utf-8" });
+            } else {
+                inputFileContent = fs.readFileSync(inputFile);
+            }
 
             const results = await createContainerAndExecute(
                 inputFileContent,
@@ -83,7 +89,7 @@ export async function exportFile(
 }
 
 export async function createContainerAndExecute(
-    localOdspSnapshot: string,
+    localOdspSnapshot: string | Uint8Array,
     fluidFileConverter: IFluidFileConverter,
     scenario: string,
     logger: ITelemetryLogger,
