@@ -37,12 +37,6 @@ const memberCombineInstructions = [
         ])
     },
     {
-        package: "@fluidframework/container-definitions",
-        sourceImports: new Map([
-            ["@fluidframework/container-definitions", ["AttachState"]],
-        ])
-    },
-    {
         package: "@fluidframework/test-client-utils",
         sourceImports: new Map([
             ["@fluidframework/test-runtime-utils", ["InsecureTokenProvider"]],
