@@ -242,13 +242,13 @@ export class UnreferencedStateTracker {
     ) {
         if (this.sweepTimeoutMs !== undefined) {
             assert(this.inactiveTimeoutMs <= this.sweepTimeoutMs,
-                "inactive timeout must not be greater than the sweep timeout");
+                0x3b0 /* inactive timeout must not be greater than the sweep timeout */);
         }
 
         this.sweepTimer = new TimerWithNoDefaultTimeout(
             () => {
                 this._state = UnreferencedState.SweepReady;
-                assert(!this.inactiveTimer.hasTimer, "inactiveTimer still running after sweepTimer fired!");
+                assert(!this.inactiveTimer.hasTimer, 0x3b1 /* inactiveTimer still running after sweepTimer fired! */);
             },
         );
 

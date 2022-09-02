@@ -87,7 +87,7 @@ For an example of how to create one, please see our workflow examples for [Share
 
 ### Incrementing / decrementing the value
 
-Once you have created your `SharedCounter`, you can change its value using the [increment]({{< relref "isharedcounter-interface.md#increment-MethodSignature" >}}) method.
+Once you have created your `SharedCounter`, you can change its value using the [increment]({{< relref "isharedcounter-interface.md#increment-methodsignature" >}}) method.
 This method accepts a positive or negative *integer* to be applied to the shared value.
 
 
@@ -98,7 +98,7 @@ sharedCounter.increment(-5); // Subtracts 5 from the current value
 
 ### `incremented` event
 
-The [incremented]({{< relref "isharedcounterevents-interface.md#_call_-CallSignature" >}}) event is sent when a client in the collaborative session changes the counter value via the `increment` method.
+The [incremented]({{< relref "isharedcounterevents.md#_call_-CallSignature" >}}) event is sent when a client in the collaborative session changes the counter value via the `increment` method.
 
 Signature:
 

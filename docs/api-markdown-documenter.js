@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const {
     emitMarkdown,
     getLinkUrlForApiItem,
@@ -10,6 +15,7 @@ const {
 } = require("@fluid-tools/api-markdown-documenter");
 const { StringBuilder } = require("@microsoft/tsdoc");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
+const chalk = require("chalk");
 const fs = require("fs-extra");
 const path = require("path");
 const os = require("os");
@@ -109,8 +115,11 @@ async function main() {
     await fs.emptyDir(apiDocsDirectoryPath);
 
     // Process API reports
-    console.log("Generating API model...");
+    console.group();
+
     const apiModel = await loadModel(apiReportsDirectoryPath);
+
+    console.groupEnd();
 
     const config = markdownDocumenterConfigurationWithDefaults({
         apiModel,
@@ -119,12 +128,14 @@ async function main() {
         includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
         fileNamePolicy: (apiItem) => {
             return apiItem.kind === ApiItemKind.Model
-                ? "_index" // Hugo syntax for a page with content sub-directories
+                ? "index"
                 : DefaultPolicies.defaultFileNamePolicy(apiItem);
-        }
+        },
     });
 
     console.log("Generating API docs...");
+    console.group();
+
     let documents;
     try {
         documents = renderDocuments(config);
@@ -134,14 +145,13 @@ async function main() {
         throw error;
     }
 
+    console.groupEnd();
+
     console.log("Writing API docs...");
+    console.group();
 
     await Promise.all(documents.map(async (document) => {
-        const filePath = path.join(apiDocsDirectoryPath, document.path);
-
-        await fs.ensureFile(filePath);
-
-        console.log(`Writing document for "${document.apiItem.displayName}"...`);
+        let filePath = path.join(apiDocsDirectoryPath, document.path);
 
         // Emit markdown for API docs
         const markdownEmitter = new HugoMarkdownEmitter(config.apiModel);
@@ -170,6 +180,15 @@ async function main() {
         const fileContents = [frontMatter, generatedContentNotice, generatedMarkdown].join(`${os.EOL}${os.EOL}`).trim();
 
         try {
+            // Hugo uses a special file-naming syntax to represent documents with "child" documents in the same
+            // directory. Namely, "_index.md". However, the resulting html names these modules "index", rather than
+            // "_index", so we cannot use the "_index" convention when generating the docs and the links between them.
+            // To accommodate this, we will match on "index.md" files and adjust the file name accordingly.
+            if(filePath.endsWith("index.md")) {
+                filePath = filePath.replace("index.md", "_index.md");
+            }
+
+            await fs.ensureFile(filePath);
             await fs.writeFile(filePath, fileContents);
         } catch (error) {
             console.error(`Encountered error while writing file output for "${document.apiItem.displayName}":`);
@@ -177,10 +196,12 @@ async function main() {
             throw error;
         }
     }));
+
+    console.groupEnd();
 }
 
 main().then(() => {
-    console.log("API docs written!");
+    console.log(chalk.green("API docs written!"));
     return 0;
 }, (error) => {
     console.error("API docs could not be written due to an error:");

@@ -1,6 +1,6 @@
 # TestInterfaceExtendingOtherInterfaces
 
-[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface)
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface)
 
 Test interface that extends other interfaces
 
