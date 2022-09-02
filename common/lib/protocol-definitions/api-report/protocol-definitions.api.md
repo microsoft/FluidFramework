@@ -555,6 +555,8 @@ export interface IVersion {
 // @public (undocumented)
 export enum MessageType {
     // (undocumented)
+    Accept = "accept",
+    // (undocumented)
     ClientJoin = "join",
     // (undocumented)
     ClientLeave = "leave",
