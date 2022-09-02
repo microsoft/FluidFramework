@@ -6,13 +6,16 @@
 /* eslint-disable no-bitwise */
 import { assert } from "@fluidframework/common-utils";
 
-export function computeOrdinal(
+export function computeHierarchicalOrdinal(
     maxCount: number,
-    count: number,
+    actualCount: number,
     parentOrdinal: string,
     previousOrdinal: string | undefined) {
-    const ordinalWidth = 1 << (maxCount - (count + 1));
+    assert(
+        maxCount <= 16 && actualCount <= maxCount,
+        "count must be less than max, and max must be 16 or less");
 
+    const ordinalWidth = 1 << (maxCount - actualCount);
     let ordinal: string;
      if (previousOrdinal === undefined) {
         ordinal = parentOrdinal + String.fromCharCode(ordinalWidth - 1);
@@ -20,9 +23,13 @@ export function computeOrdinal(
         const prevOrdCode = previousOrdinal.charCodeAt(previousOrdinal.length - 1);
         const localOrdinal = prevOrdCode + ordinalWidth;
         ordinal = parentOrdinal + String.fromCharCode(localOrdinal);
-        assert(ordinal > previousOrdinal, 0x042 /* "Child ordinal <= previous sibling ordinal!" */);
      }
 
-    assert(ordinal.length === (parentOrdinal.length + 1), 0x041 /* "Unexpected child ordinal length!" */);
     return ordinal;
+}
+
+export function computeNumericOrdinal(index: number) {
+    const prefixLen = Math.floor(index / 0xFFFF);
+    const prefix = String.fromCharCode(0xFFFF).repeat(prefixLen);
+    return `${prefix}${String.fromCharCode(index - (prefixLen * 0xFFFF))}`;
 }

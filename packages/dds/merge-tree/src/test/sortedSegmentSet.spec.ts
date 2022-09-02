@@ -9,7 +9,7 @@ import { ISegment } from "../mergeTreeNodes";
 import { LocalReferencePosition } from "../localReference";
 import { ReferenceType } from "../ops";
 import { TestClient } from "./testClient";
-const segmentCount = 100;
+const segmentCount = 1000;
 
 function validateSorted<T extends SortedSegmentSetItem>(
     set: SortedSegmentSet<T>, getOrdinal: (item: T) => string | undefined, prefix: string) {
@@ -47,7 +47,9 @@ describe("SortedSegmentSet", () => {
     beforeEach(() => {
         client = new TestClient();
         for (let i = 0; i < segmentCount; i++) {
-            client.insertTextLocal(client.getLength(), `${i} `);
+            client.insertTextLocal(
+                client.getLength(),
+                i.toString()[0].repeat(i + 1));
         }
         client.startOrUpdateCollaboration(localUserLongId);
     });

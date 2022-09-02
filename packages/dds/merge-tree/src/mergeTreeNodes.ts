@@ -28,7 +28,7 @@ import {
     MergeTreeDeltaType,
     ReferenceType,
 } from "./ops";
-import { computeOrdinal } from "./ordinal";
+import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
 import {
     clone,
@@ -343,12 +343,10 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
     }
 
     public setOrdinal(child: IMergeNode, index: number) {
-        let childCount = this.childCount;
-        if (childCount === 8) {
-            childCount = 7;
-        }
-        assert((childCount >= 1) && (childCount <= 7), 0x040 /* "Child count is not within [1,7] range!" */);
-        child.ordinal = computeOrdinal(
+        const childCount = this.childCount;
+        assert((childCount >= 1) && (childCount <= MaxNodesInBlock),
+            0x040 /* "Child count is not within [1,8] range!" */);
+        child.ordinal = computeHierarchicalOrdinal(
             MaxNodesInBlock,
             childCount,
             this.ordinal,
