@@ -7,8 +7,10 @@ import { expect, test } from "@oclif/test";
 import { UnifiedReleaseMachineDefinition } from "../../src/machines";
 
 describe("release command handles all states", () => {
-    const unhandledStates = ["Init", "Failed"];
-    const machineStates = UnifiedReleaseMachineDefinition.states().filter(s=> !unhandledStates.includes(s));
+    const unhandledStates: string[] = [];
+    const machineStates = UnifiedReleaseMachineDefinition.states().filter(
+        (s) => !unhandledStates.includes(s),
+    );
     // const machineStates = [
     //     // "Init",
     //     // "Failed",

@@ -1,8 +1,8 @@
 import { Flags } from "@oclif/core";
 import { Machine } from "jssm";
 import { BaseCommand } from "../base";
-import { HandlerData, StateHandlerImpl, UnifiedReleaseHandler } from "./handlers";
-import { StateHandler, StateHandlerFunction } from "./types";
+import { HandlerData } from "./handlers";
+import { StateHandler } from "./types";
 
 /**
  * A base command that uses an internal state machine to govern its behavior.
@@ -87,6 +87,8 @@ export abstract class StateMachineCommand<
         } else {
             do {
                 const state = this.machine.state();
+
+                this.log(`Handling state: ${state}`);
                 // eslint-disable-next-line no-await-in-loop
                 const handled = await this.handler?.handleState(
                     context,

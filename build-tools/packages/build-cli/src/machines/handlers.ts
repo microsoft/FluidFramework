@@ -1,11 +1,12 @@
 import { strict as assert } from "assert";
+import path from "path";
 import {
     bumpVersionScheme,
     detectVersionScheme,
     VersionBumpType,
     VersionScheme,
 } from "@fluid-tools/version-tools";
-import { Context, FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
+import { Context, exec, FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
 import { Command } from "@oclif/core";
 import chalk from "chalk";
 import inquirer from "inquirer";
@@ -56,11 +57,8 @@ export abstract class StateHandlerImpl implements StateHandler {
     public constructor(
         // protected readonly context: Context,
         protected readonly machine: Machine<unknown>,
-        protected readonly log: CommandLogger,
-    ) // public readonly testMode: boolean,
-    {
-
-    }
+        protected readonly log: CommandLogger, // public readonly testMode: boolean,
+    ) {}
 
     // eslint-disable-next-line max-params
     async handleState(
@@ -140,7 +138,7 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
         log: CommandLogger,
         data: HandlerData,
     ): Promise<boolean> {
-        let localHandled: boolean | undefined;
+        let superShouldHandle = false;
         switch (state) {
             case "AskReleaseDetails": {
                 if (testMode) return true;
@@ -227,13 +225,41 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
             case "CheckPolicy": {
                 if (testMode) return true;
 
-                // TODO: run policy check before releasing a version.
                 const { shouldCheckPolicy } = data;
-
                 if (shouldCheckPolicy === true) {
-                    log.warning(chalk.red(`Automated policy check not yet implemented.`));
-                    log.warning(`Run policy check manually and check in all fixes.`);
-                    // await runPolicyCheckWithFix(context);
+                    if (context.originalBranchName !== "main") {
+                        log.warning(
+                            "WARNING: Policy check fixes are not expected outside of main branch!  Make sure you know what you are doing.",
+                        );
+                    }
+
+                    // TODO: Call new check policy command
+                    // await CheckPolicy.run(["--fix", "--exclusions",
+                    // "build-tools/packages/build-tools/data/exclusions.json"]);
+                    const r = await exec(
+                        `node ${path.join(
+                            context.gitRepo.resolvedRoot,
+                            "build-tools",
+                            "packages",
+                            "build-tools",
+                            "dist",
+                            "repoPolicyCheck",
+                            "repoPolicyCheck.js",
+                        )} -r`,
+                        context.gitRepo.resolvedRoot,
+                        "policy-check:fix failed",
+                    );
+
+                    // check for policy check violation
+                    const afterPolicyCheckStatus = await context.gitRepo.getStatus();
+                    if (afterPolicyCheckStatus !== "" && afterPolicyCheckStatus !== "") {
+                        log.logHr();
+                        log.errorLog(
+                            `Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`,
+                        );
+                        this.signalFailure(state);
+                        break;
+                    }
                 } else {
                     log.warning("Skipping policy check.");
                 }
@@ -652,8 +678,9 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                     sections: [
                         {
                             title: "FIRST",
-                            message: `Push and create a PR for branch ${await context.gitRepo.getCurrentBranchName()} targeting the ${context.originalBranchName
-                                } branch.`,
+                            message: `Push and create a PR for branch ${await context.gitRepo.getCurrentBranchName()} targeting the ${
+                                context.originalBranchName
+                            } branch.`,
                         },
                         {
                             title: "NEXT",
@@ -847,15 +874,15 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                 break;
             }
 
-            // case "PromptToPRReleasedDepsBump": {
-            //     if (testMode) return true;
+            case "PromptToPRReleasedDepsBump": {
+                if (testMode) return true;
 
-            //     log.errorLog(`Not yet implemented`);
-            //     break;
-            // }
+                log.errorLog(`Not yet implemented`);
+                break;
+            }
 
             default: {
-                localHandled = false;
+                superShouldHandle = true;
             }
         }
 
@@ -864,15 +891,22 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
         //     this.exit();
         // }
 
-        if (testMode && localHandled !== true) {
-            return false;
+        // if (testMode && localHandled !== true) {
+        //     return false;
+        // }
+
+        if (superShouldHandle === true) {
+            const superHandled = await super.handleState(
+                context,
+                state,
+                machine,
+                testMode,
+                log,
+                data,
+            );
+            return superHandled;
         }
 
-        if (localHandled === true) {
-            return true;
-        }
-
-        const superHandled = await super.handleState(context, state, machine, testMode, log, data);
-        return superHandled;
+        return true;
     }
 }
