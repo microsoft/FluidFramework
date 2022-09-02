@@ -4,30 +4,12 @@
  */
 
 import { TinyliciousModelLoader } from "@fluid-example/example-utils";
-import {
-    ICodeDetailsLoader,
-    IFluidCodeDetails,
-    IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
+import { AppCodeLoader } from "./codeLoader";
+import { ICollaborativeTextAppModel } from "./container";
 import { CollaborativeTextView } from "./view";
-
-const v1Factory = new CollaborativeTextContainerRuntimeFactory();
-
-class AppCodeLoader implements ICodeDetailsLoader {
-    public async load(details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
-        if (details.package === "1.0") {
-            return {
-                module: { fluidExport: v1Factory },
-                details,
-            };
-        }
-        throw new Error("Unknown version");
-    }
-}
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
