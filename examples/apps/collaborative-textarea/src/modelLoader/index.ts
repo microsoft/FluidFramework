@@ -5,3 +5,4 @@
 
 export * from "./interfaces";
 export * from "./modelLoader";
+export * from "./tinyliciousModelLoader";
