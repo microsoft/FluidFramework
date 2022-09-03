@@ -77,12 +77,31 @@ class HugoMarkdownEmitter extends MarkdownEmitter {
      *
      * @override
      */
+     writeAlert(docAlert, context) {
+        const writer = context.writer;
+
+        writer.ensureNewLine();
+
+        writer.writeLine(`{{% callout ${docAlert.type ?? 'note'} ${docAlert.title ?? ''} %}}`);
+
+        this.writeNode(docAlert.content, context, false);
+        writer.ensureNewLine();
+
+        writer.writeLine('{{% /callout %}}');
+        writer.writeLine();
+    }
+
+    /**
+     * Override base logic to make use of Hugo callouts for note boxes
+     *
+     * @override
+     */
     writeNoteBox(docNoteBox, context) {
         const writer = context.writer;
 
         writer.ensureNewLine();
 
-        writer.writeLine(`{{% callout ${docNoteBox.type ?? "tip"} ${docNoteBox.title ? docNoteBox.title : ""} %}}`);
+        writer.writeLine('{{% callout note %}}');
 
         this.writeNode(docNoteBox.content, context, false);
         writer.ensureNewLine();
