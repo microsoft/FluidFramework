@@ -672,6 +672,31 @@ export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
 }
 
 /**
+ * Gets the {@link https://tsdoc.org/pages/tags/deprecated/ | @deprecated} comment block from the API item if it has
+ * one.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@deprecated` comment block section, if the API item has one. Otherwise, `undefined`.
+ */
+export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
+    return apiItem instanceof ApiDocumentedItem &&
+        apiItem.tsdocComment?.deprecatedBlock !== undefined
+        ? apiItem.tsdocComment.deprecatedBlock.content
+        : undefined;
+}
+
+/**
+ * Returns whether or not the provided API item is of a kind that can be marked as optional, and if it is
+ * indeed optional.
+ */
+export function isDeprecated(apiItem: ApiItem): boolean {
+    return (
+        apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.deprecatedBlock !== undefined
+    );
+}
+
+/**
  * Returns whether or not the provided API item is of a kind that can be marked as optional, and if it is
  * indeed optional.
  */

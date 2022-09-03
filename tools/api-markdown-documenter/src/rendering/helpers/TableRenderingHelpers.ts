@@ -25,6 +25,7 @@ import {
     getDefaultValueBlock,
     getLinkForApiItem,
     getModifiers,
+    isDeprecated,
     mergeSections,
 } from "../../utilities";
 import { renderExcerptWithHyperlinks, renderHeading, renderLink } from "./RenderingHelpers";
@@ -191,12 +192,18 @@ export function renderDefaultSummaryTable(
         return undefined;
     }
 
+    // Only display "Alerts" column if there are any deprecated items in the list.
+    const hasDeprecated = apiItems.some(isDeprecated);
+
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiItems.some(
         (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
     );
 
     const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
+    if (hasDeprecated) {
+        headerTitles.push("Alerts");
+    }
     if (hasModifiers) {
         headerTitles.push("Modifiers");
     }
@@ -205,6 +212,9 @@ export function renderDefaultSummaryTable(
     const tableRows: DocTableRow[] = [];
     for (const apiItem of apiItems) {
         const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
+        if (hasDeprecated) {
+            rowCells.push(renderDeprecatedCell(apiItem, config));
+        }
         if (hasModifiers) {
             rowCells.push(renderModifiersCell(apiItem, config, options?.modifiersToOmit));
         }
@@ -290,6 +300,9 @@ export function renderFunctionLikeSummaryTable(
         return undefined;
     }
 
+    // Only display "Alerts" column if there are any deprecated items in the list.
+    const hasDeprecated = apiItems.some(isDeprecated);
+
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiItems.some(
         (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
@@ -297,6 +310,9 @@ export function renderFunctionLikeSummaryTable(
     const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
 
     const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
+    if (hasDeprecated) {
+        headerTitles.push("Alerts");
+    }
     if (hasModifiers) {
         headerTitles.push("Modifiers");
     }
@@ -308,6 +324,9 @@ export function renderFunctionLikeSummaryTable(
     const tableRows: DocTableRow[] = [];
     for (const apiItem of apiItems) {
         const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
+        if (hasDeprecated) {
+            rowCells.push(renderDeprecatedCell(apiItem, config));
+        }
         if (hasModifiers) {
             rowCells.push(renderModifiersCell(apiItem, config, options?.modifiersToOmit));
         }
@@ -332,8 +351,7 @@ export function renderFunctionLikeSummaryTable(
  * Renders a simple summary table for a series of properties.
  * Displays each property's name, modifiers, type, and description (summary) comment.
  *
- * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
- * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param apiProperties - The `Property` items to be rendered.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  * @param options - Table content / formatting options.
  */
@@ -346,6 +364,9 @@ export function renderPropertiesTable(
         return undefined;
     }
 
+    // Only display "Alerts" column if there are any deprecated items in the list.
+    const hasDeprecated = apiProperties.some(isDeprecated);
+
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiProperties.some(
         (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
@@ -355,6 +376,9 @@ export function renderPropertiesTable(
     );
 
     const headerTitles: string[] = ["Property"];
+    if (hasDeprecated) {
+        headerTitles.push("Alerts");
+    }
     if (hasModifiers) {
         headerTitles.push("Modifiers");
     }
@@ -367,6 +391,9 @@ export function renderPropertiesTable(
     const tableRows: DocTableRow[] = [];
     for (const apiProperty of apiProperties) {
         const rowCells: DocTableCell[] = [renderApiTitleCell(apiProperty, config)];
+        if (hasDeprecated) {
+            rowCells.push(renderDeprecatedCell(apiProperty, config));
+        }
         if (hasModifiers) {
             rowCells.push(renderModifiersCell(apiProperty, config, options?.modifiersToOmit));
         }
@@ -393,8 +420,7 @@ export function renderPropertiesTable(
  * Displays each package's name and description
  * ({@link https://tsdoc.org/pages/tags/packagedocumentation/ | @packageDocumentation}) comment.
  *
- * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
- * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param apiPackages - The package items to be rendered.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderPackagesTable(
@@ -405,14 +431,25 @@ export function renderPackagesTable(
         return undefined;
     }
 
-    const headerTitles = ["Package", "Description"];
-    const tableRows: DocTableRow[] = apiPackages.map(
-        (apiPackage) =>
-            new DocTableRow({ configuration: config.tsdocConfiguration }, [
-                renderApiTitleCell(apiPackage, config),
-                renderApiSummaryCell(apiPackage, config),
-            ]),
-    );
+    // Only display "Alerts" column if there are any deprecated items in the list.
+    const hasDeprecated = apiPackages.some(isDeprecated);
+
+    const headerTitles: string[] = ["Package"];
+    if (hasDeprecated) {
+        headerTitles.push("Alerts");
+    }
+    headerTitles.push("Description");
+
+    const tableRows: DocTableRow[] = [];
+    for (const apiPackage of apiPackages) {
+        const rowCells: DocTableCell[] = [renderApiTitleCell(apiPackage, config)];
+        if (hasDeprecated) {
+            rowCells.push(renderDeprecatedCell(apiPackage, config));
+        }
+        rowCells.push(renderApiSummaryCell(apiPackage, config));
+
+        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+    }
 
     return new DocTable(
         {
@@ -567,6 +604,34 @@ export function renderDefaultValueCell(
     }
 
     return new DocTableCell({ configuration: config.tsdocConfiguration }, [defaultValueSection]);
+}
+
+/**
+ * Renders a table cell noting that the item is deprecated if it is annotated with an `@deprecated` comment.
+ * Will render an empty table cell otherwise.
+ *
+ * @param apiItem - The API item for which the deprecation notice will be displayed if appropriate.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderDeprecatedCell(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocTableCell {
+    return isDeprecated(apiItem)
+        ? new DocTableCell({ configuration: config.tsdocConfiguration }, [
+              new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                  new DocEmphasisSpan(
+                      { configuration: config.tsdocConfiguration, bold: true, italic: true },
+                      [
+                          new DocPlainText({
+                              configuration: config.tsdocConfiguration,
+                              text: "DEPRECATED",
+                          }),
+                      ],
+                  ),
+              ]),
+          ])
+        : renderEmptyTableCell(config);
 }
 
 /**
