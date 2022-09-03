@@ -78,9 +78,10 @@ const foo = bar;
 
 ## Variables
 
-|  Variable | Modifiers | Description |
-|  --- | --- | --- |
-|  [testConst](docs/simple-suite-test/testconst-variable) | <code>readonly</code> | Test Constant |
+|  Variable | Alerts | Modifiers | Description |
+|  --- | --- | --- | --- |
+|  [testConst](docs/simple-suite-test/testconst-variable) | 📝 | <code>readonly</code> | Test Constant |
+|  [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test/testconstwithemptydeprecatedblock-variable) | <b><i>DEPRECATED</i></b> | <code>readonly</code> | I have a <code>@deprecated</code> tag with an empty comment block. |
 
 ## Namespaces
 
