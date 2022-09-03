@@ -82,7 +82,7 @@ class HugoMarkdownEmitter extends MarkdownEmitter {
 
         writer.ensureNewLine();
 
-        writer.writeLine(`{{% callout ${docNoteBox.type} ${docNoteBox.title ? docNoteBox.title : ""} %}}`);
+        writer.writeLine(`{{% callout ${docNoteBox.type ?? "tip"} ${docNoteBox.title ? docNoteBox.title : ""} %}}`);
 
         this.writeNode(docNoteBox.content, context, false);
         writer.ensureNewLine();
