@@ -484,22 +484,23 @@ export class UnifiedReleaseHandler extends StateHandlerImpl {
                 break;
             }
 
-            case "CheckReleaseGroupIsNotBumped": {
+            case "CheckReleaseGroupIsBumped": {
                 if (testMode) return true;
 
                 const { releaseGroup, releaseVersion } = data;
 
                 const rgVersion = context.getVersion(releaseGroup!);
                 if (rgVersion === releaseVersion) {
-                    this.signalSuccess(state);
+                    log.warning(
+                        `Release group ${releaseGroup} has not yet been bumped. It is at version ${rgVersion}; current released version ${releaseVersion}`,
+                    );
+                    this.signalFailure(state);
                     break;
                 }
 
-                log.warning(
-                    `Release group ${releaseGroup} has already been bumped. It is at version ${rgVersion}; current released version ${releaseVersion}`,
-                );
-                this.signalFailure(state);
+                this.signalSuccess(state);
                 break;
+
             }
 
             case "DoReleaseGroupBump": {

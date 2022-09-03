@@ -37,17 +37,17 @@ AskForReleaseType 'major'
 DoMajorRelease 'success'
 => CheckBranchName 'success'
 => CheckMainNextIntegrated 'success'
+=> CheckReleaseGroupIsBumped 'success'
 => CheckReleaseIsDone 'success'
-=> CheckReleaseGroupIsNotBumped 'success'
-=> DoReleaseGroupBump;
+=> CheckNoPrereleaseDependencies;
 
 DoMinorRelease 'success'
 => CheckBranchName2 'success'
-=> CheckReleaseIsDone;
+=> CheckReleaseGroupIsBumped;
 
 DoPatchRelease 'success'
 => CheckBranchName3 'success'
-=> CheckReleaseIsDone;
+=> CheckReleaseGroupIsBumped;
 
 CheckMainNextIntegrated 'failure'
 => PromptToIntegrateNext;
@@ -55,12 +55,18 @@ CheckMainNextIntegrated 'failure'
 CheckReleaseIsDone 'failure'
 => PromptToRelease;
 
-CheckReleaseGroupIsNotBumped 'failure'
-=> CheckNoPrereleaseDependencies3;
+CheckReleaseGroupIsBumped 'failure'
+=> DoReleaseGroupBump;
 
-CheckBranchName 'failure'
+[
+CheckBranchName
+CheckBranchName3
+] 'failure'
 => CheckReleaseBranchDoesNotExist 'success' // No release branch found
 => PromptToRelease;
+
+CheckBranchName2 'failure'
+=> Failed;
 
 CheckReleaseBranchDoesNotExist 'failure'
 => Failed;
