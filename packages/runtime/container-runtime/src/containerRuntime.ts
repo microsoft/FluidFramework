@@ -1553,6 +1553,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._perfSignalData.signalsLost = 0;
             this._perfSignalData.signalTimestamp = 0;
             this._perfSignalData.trackingSignalSequenceNumber = undefined;
+        } else {
+            assert(this.attachState === AttachState.Attached,
+                "Connection is possible only if container exists in storage");
         }
 
         // Fail while disconnected
@@ -2489,6 +2492,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private updateDocumentDirtyState(dirty: boolean) {
+        if (this.attachState !== AttachState.Attached) {
+            assert(dirty, "Non-attached container is dirty");
+        } else {
+            // Other way is not true = see this.isContainerMessageDirtyable()
+            assert(!dirty || this.pendingStateManager.hasPendingMessages(),
+                "if doc is dirty, there has to be pending ops");
+        }
+
         if (this.dirtyContainer === dirty) {
             return;
         }
@@ -2890,6 +2901,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // we may not have seen every sequence number (because of system ops) so apply everything once we
         // don't have any more saved ops
         await this.pendingStateManager.applyStashedOpsAt();
+
+        // If it's not the case, we should take it into account when calculating dirty state.
+        assert(this.context.attachState === AttachState.Attached,
+            "this function is called for attached containers only");
+        if (!this.pendingStateManager.hasPendingMessages()) {
+            this.updateDocumentDirtyState(false);
+        }
     }
 
     private validateSummaryHeuristicConfiguration(configuration: ISummaryConfigurationHeuristics) {
