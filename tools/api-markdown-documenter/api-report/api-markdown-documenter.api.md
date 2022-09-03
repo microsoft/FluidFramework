@@ -416,7 +416,7 @@ function renderApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumen
 function renderApiTitleCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
-function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocAlert;
+function renderBetaAlert(config: Required<MarkdownDocumenterConfiguration>): DocAlert;
 
 // @public
 function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
@@ -491,7 +491,7 @@ declare namespace RenderingHelpers {
         renderBreadcrumb,
         renderHeadingForApiItem,
         renderHeading,
-        renderBetaWarning,
+        renderBetaAlert,
         renderSummarySection,
         renderRemarksSection,
         renderThrowsSection,

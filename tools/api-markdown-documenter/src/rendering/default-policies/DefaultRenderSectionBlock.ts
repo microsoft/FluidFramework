@@ -48,9 +48,7 @@ export function renderChildrenSection(
     // Render beta warning if applicable
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
         docSections.push(
-            new DocSection({ configuration: config.tsdocConfiguration }, [
-                renderBetaAlert(config),
-            ]),
+            new DocSection({ configuration: config.tsdocConfiguration }, [renderBetaAlert(config)]),
         );
     }
 

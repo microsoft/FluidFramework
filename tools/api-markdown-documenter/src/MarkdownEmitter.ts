@@ -381,7 +381,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             headerText.push(docAlert.title);
         }
 
-        writer.writeLine(`**${headerText.join("")}**`);
+        this.writePlainText(headerText.join(""), { ...context, boldRequested: true });
         writer.ensureSkippedLine();
 
         this.writeNode(docAlert.content, context, docNodeSiblings);
