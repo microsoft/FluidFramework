@@ -471,7 +471,7 @@ export function renderHeading(
  *
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocAlert {
+export function renderBetaAlert(config: Required<MarkdownDocumenterConfiguration>): DocAlert {
     const betaWarning: string =
         "This API is provided as a preview for developers and may change" +
         " based on feedback that we receive. Do not use this API in a production environment.";

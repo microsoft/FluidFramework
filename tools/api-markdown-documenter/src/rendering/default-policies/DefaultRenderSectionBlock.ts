@@ -8,7 +8,7 @@ import { DocSection } from "@microsoft/tsdoc";
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { doesItemRequireOwnDocument, mergeSections } from "../../utilities";
 import {
-    renderBetaWarning,
+    renderBetaAlert,
     renderDeprecationNoticeSection,
     renderExamplesSection,
     renderHeadingForApiItem,
@@ -49,7 +49,7 @@ export function renderChildrenSection(
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
         docSections.push(
             new DocSection({ configuration: config.tsdocConfiguration }, [
-                renderBetaWarning(config),
+                renderBetaAlert(config),
             ]),
         );
     }
