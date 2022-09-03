@@ -28,7 +28,14 @@ import {
 import { Heading } from "../../Heading";
 import { Link } from "../../Link";
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocHeading, DocList, DocNoteBox, ListKind } from "../../doc-nodes";
+import {
+    DocAlert,
+    DocAlertType,
+    DocEmphasisSpan,
+    DocHeading,
+    DocList,
+    ListKind,
+} from "../../doc-nodes";
 import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,
@@ -464,19 +471,20 @@ export function renderHeading(
  *
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox {
+export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocAlert {
     const betaWarning: string =
         "This API is provided as a preview for developers and may change" +
         " based on feedback that we receive. Do not use this API in a production environment.";
 
-    return new DocNoteBox({ configuration: config.tsdocConfiguration }, [
+    return new DocAlert(
+        { configuration: config.tsdocConfiguration, type: DocAlertType.Danger },
         new DocParagraph({ configuration: config.tsdocConfiguration }, [
             new DocPlainText({
                 configuration: config.tsdocConfiguration,
                 text: betaWarning,
             }),
         ]),
-    ]);
+    );
 }
 
 /**
@@ -571,23 +579,15 @@ export function renderDeprecationNoticeSection(
     }
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
-        new DocNoteBox(
+        new DocAlert(
             {
                 configuration: config.tsdocConfiguration,
+                type: DocAlertType.Warning,
+                title: "Deprecated",
             },
-            [
-                new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                    new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
-                        new DocPlainText({
-                            configuration: config.tsdocConfiguration,
-                            text: "DEPRECATED",
-                        }),
-                    ]),
-                ]),
-                new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                    ...deprecatedBlock.nodes,
-                ]),
-            ],
+            new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                ...deprecatedBlock.nodes,
+            ]),
         ),
     ]);
 }

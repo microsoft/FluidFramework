@@ -113,6 +113,30 @@ export { DefaultRenderingPolicies }
 // @public
 export const defaultRenderingPolicies: Required<RenderingPolicies>;
 
+// @public
+export class DocAlert extends DocNode {
+    constructor(parameters: IDocAlertParameters, content: DocNode);
+    readonly content: DocNode;
+    // @override (undocumented)
+    get kind(): string;
+    readonly title: string | undefined;
+    readonly type: DocAlertType | undefined;
+}
+
+// @public
+export enum DocAlertType {
+    // (undocumented)
+    Danger = "Danger",
+    // (undocumented)
+    Important = "Important",
+    // (undocumented)
+    Note = "Note",
+    // (undocumented)
+    Tip = "Tip",
+    // (undocumented)
+    Warning = "Warning"
+}
+
 export { DocEmphasisSpan }
 
 // @public
@@ -253,6 +277,12 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 export type HierarchyBoundaries = ApiMemberKind[];
 
 // @public
+export interface IDocAlertParameters extends IDocNodeParameters {
+    title?: string;
+    type?: DocAlertType;
+}
+
+// @public
 export type IDocHeadingParameters = IDocNodeParameters & Heading;
 
 // @public
@@ -317,6 +347,8 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
     protected readonly apiModel: ApiModel;
     // @virtual @override
     emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string;
+    // @virtual
+    protected writeAlert(docAlert: DocAlert, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual
     protected writeEmphasisSpan(docEmphasisSpan: DocEmphasisSpan, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual
@@ -384,7 +416,7 @@ function renderApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumen
 function renderApiTitleCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
-function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox;
+function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocAlert;
 
 // @public
 function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;

@@ -888,7 +888,7 @@ An inline type
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
-> <b>DEPRECATED</b>
+> **[Warning]: Deprecated**
 > 
 > This is a test deprecation notice. Here is a [link](docs/simple-suite-test#testfunctionreturninguniontype-function) to something else!
 > 
@@ -942,7 +942,7 @@ Here are some remarks about the variable
 
 ### testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
 
-> <b>DEPRECATED</b>
+> **[Warning]: Deprecated**
 > 
 > 
 > 

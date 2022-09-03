@@ -22,6 +22,8 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
 import {
+    CustomDocNodeKind,
+    DocAlert,
     DocEmphasisSpan,
     DocHeading,
     DocList,
@@ -30,7 +32,6 @@ import {
     DocTableCell,
     ListKind,
 } from "./doc-nodes";
-import { CustomDocNodeKind } from "./doc-nodes/CustomDocNodeKind";
 import { getLinkUrlForApiItem } from "./utilities";
 
 /**
@@ -118,6 +119,10 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                     contextWithIncrementedHeadingLevel(context),
                     docNodeSiblings,
                 );
+                break;
+            }
+            case CustomDocNodeKind.Alert: {
+                this.writeAlert(docNode as DocAlert, context, docNodeSiblings);
                 break;
             }
             case CustomDocNodeKind.Heading: {
@@ -341,6 +346,45 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         writer.increaseIndent("> ");
 
         this.writeNode(docNoteBox.content, context, docNodeSiblings);
+
+        writer.decreaseIndent();
+
+        writer.ensureSkippedLine();
+    }
+
+    /**
+     * Writes Markdown content for the provided `docAlert`.
+     *
+     * @virtual
+     */
+    protected writeAlert(
+        docAlert: DocAlert,
+        context: EmitterContext,
+        docNodeSiblings: boolean,
+    ): void {
+        const writer: IndentedWriter = context.writer;
+
+        writer.ensureSkippedLine();
+
+        writer.increaseIndent("> ");
+
+        let headerText: string[] = [];
+        if (docAlert.type !== undefined) {
+            headerText.push(`[${docAlert.type}]`);
+        }
+
+        if (docAlert.type !== undefined && docAlert.title !== undefined) {
+            headerText.push(": ");
+        }
+
+        if (docAlert.title !== undefined) {
+            headerText.push(docAlert.title);
+        }
+
+        writer.writeLine(`**${headerText.join("")}**`);
+        writer.ensureSkippedLine();
+
+        this.writeNode(docAlert.content, context, docNodeSiblings);
 
         writer.decreaseIndent();
 
