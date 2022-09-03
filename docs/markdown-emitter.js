@@ -83,7 +83,7 @@ class HugoMarkdownEmitter extends MarkdownEmitter {
         writer.ensureNewLine();
 
         const title = docNoteBox.title ?? "";
-        const type = title.toLowerCase() === "deprecated" ? "warning" : "tip";
+        const type = title.toLowerCase() === "deprecated" ? "warning" : "note";
 
         writer.writeLine(`{{% callout ${type} ${title} %}}`);
 
