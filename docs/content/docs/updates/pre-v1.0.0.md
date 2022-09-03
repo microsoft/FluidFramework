@@ -236,7 +236,7 @@ better reflect their experimental state. If you use these classes, you can add a
 
 ### Other notable changes
 
-- The published {{< apiref "fluid-framework" >}} package now publishes ESNext modules ({{< issue 7474 >}}).
-- Various APIs in the {{< apiref "azure-client" >}} and {{< apiref "tinylicious-client" >}} now return {{< apiref
-  "IFluidContainer" >}}s instead of {{< apiref "FluidContainer" >}}s. This change should have no effect to developers
-  since the runtime object is the same ({{< issue 7457 >}}).
+- The published {{< packageref "fluid-framework" >}} package now publishes ESNext modules ({{< issue 7474 >}}).
+- Various APIs in the {{< packageref "azure-client" >}} and {{< packageref "tinylicious-client" >}} now return {{< apiref
+  "IFluidContainer" "interface" >}}s instead of {{< apiref "FluidContainer" "class" >}}s.
+  This change should have no effect to developers since the runtime object is the same ({{< issue 7457 >}}).

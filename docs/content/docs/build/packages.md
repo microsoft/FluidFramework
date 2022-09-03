@@ -25,9 +25,9 @@ contained within itself, as well as to inspect the state of the collaboration se
 You'll use one or more shared objects in your container to model your collaborative data. The `fluid-framework` package includes
 three data structures that cover a broad range of scenarios:
 
-1. [SharedMap]({{< relref "/docs/data-structures/map.md" >}}), a map-like data structure for storing key/value pair data.
-2. [SharedDirectory]({{< relref "shareddirectory-class.md" >}}), a map-like data structure with ability to organize keys into subdirectories.
-3. [SharedString]({{< relref "string.md" >}}), a data structure for string data.
+1. [SharedMap][], a map-like data structure for storing key/value pair data.
+2. [SharedDirectory]({{< relref "/docs/apis/fluid-framework/shareddirectory-class.md" >}}), a map-like data structure with ability to organize keys into subdirectories.
+3. [SharedString][], a data structure for string data.
 
 ## Package scopes
 
