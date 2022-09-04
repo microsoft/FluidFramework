@@ -104,6 +104,11 @@ export interface IRuntime extends IDisposable {
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 }
 
+export interface IBatchMessage {
+    contents: string;
+    metadata: Record<string, unknown> | undefined;
+}
+
 /**
  * The ContainerContext is a proxy standing between the Container and the Container's IRuntime.
  * This allows the Container to terminate the connection to the IRuntime.
@@ -120,8 +125,9 @@ export interface IContainerContext extends IDisposable {
     readonly storage: IDocumentStorageService;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly submitFn: (type: MessageType, contents: string, batch: boolean, appData?: any) => number;
+    readonly submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: any) => number;
     readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
+    readonly submitBatchFn: (batch: IBatchMessage[]) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

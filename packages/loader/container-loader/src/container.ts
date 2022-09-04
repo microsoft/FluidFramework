@@ -29,6 +29,7 @@ import {
     IContainerLoadMode,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -1694,16 +1695,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         switch (type) {
             case MessageType.Operation:
                 return this.submitMessage(
                     type,
-                    // back-compat: ADO #1385: pass content as-is in future.
-                    typeof contents === "string" ? contents : JSON.stringify(contents),
+                    JSON.stringify(contents),
                     batch,
                     metadata);
-            // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
             case MessageType.Summarize:
                 return this.submitSummaryMessage(contents as unknown as ISummaryContent);
             default:
@@ -1712,6 +1712,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     { messageType: type }));
                 return -1;
         }
+    }
+
+    private submitBatch(batch: IBatchMessage[]): number {
+        let clientSequenceNumber = -1;
+        for (const message of batch) {
+            clientSequenceNumber = this.submitMessage(
+                MessageType.Operation,
+                message.contents,
+                true, // batch
+                message.metadata);
+        }
+        this._deltaManager.flush();
+        return clientSequenceNumber;
     }
 
     private submitSummaryMessage(summary: ISummaryContent) {
@@ -1863,6 +1876,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
+            (batch: IBatchMessage[]) => this.submitBatch(batch),
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,

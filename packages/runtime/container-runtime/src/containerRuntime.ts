@@ -23,6 +23,7 @@ import {
     ILoaderOptions,
     LoaderHeader,
     ISnapshotTreeWithBlobContents,
+    IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
@@ -195,6 +196,9 @@ export interface ContainerRuntimeMessage {
     contents: any;
     type: ContainerMessageType;
 }
+
+type BatchMessage = IBatchMessage & { localOpMetadata: unknown; deserializedContent: ContainerRuntimeMessage; };
+
 export interface ISummaryBaseConfiguration {
     /**
      *  Delay before first attempt to spawn summarizing container.
@@ -774,8 +778,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
-    private needsFlush = false;
     private flushTrigger = false;
+
+    private readonly pendingBatch: BatchMessage [] = [];
 
     private _connected: boolean;
 
@@ -1752,30 +1757,59 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
-        if (!this.deltaSender) {
-            return;
-        }
-
-        // Let the PendingStateManager know that there was an attempt to flush messages.
-        // Note that this should happen before the `this.needsFlush` check below because in the scenario where we are
-        // not connected, `this.needsFlush` will be false but the PendingStateManager might have pending messages and
-        // hence needs to track this.
-        this.pendingStateManager.onFlush();
-
         // If flush has already been called then exit early
-        if (!this.needsFlush) {
-            return;
+        const length = this.pendingBatch.length;
+
+        if (length > 1) {
+            this.pendingBatch[0].metadata = { ...this.pendingBatch[0].metadata, batch: true };
+            this.pendingBatch[length - 1].metadata = { ...this.pendingBatch[length - 1].metadata, batch: false };
         }
 
-        this.needsFlush = false;
+        const refSeqNumber = this.deltaManager.lastSequenceNumber;
+        let clientSequenceNumber: number = -1;
 
         // Did we disconnect in the middle of turn-based batch?
         // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
-        if (!this.canSendOps()) {
-            return;
+        if (this.canSendOps()) {
+            if (this.context.submitBatchFn !== undefined) {
+                const batch: IBatchMessage[] = [];
+                for (const message of this.pendingBatch) {
+                    batch.push({ contents: message.contents, metadata: message.metadata });
+                }
+                clientSequenceNumber = this.context.submitBatchFn(batch);
+            } else {
+                for (const message of this.pendingBatch) {
+                    clientSequenceNumber = this.context.submitFn(
+                        MessageType.Operation,
+                        message.deserializedContent,
+                        true, // batch
+                        message.metadata);
+                }
+
+                this.deltaSender.flush();
+            }
         }
 
-        return this.deltaSender.flush();
+        clientSequenceNumber -= this.pendingBatch.length - 1;
+
+        // Let the PendingStateManager know that a message was submitted.
+        // In future, need to shift toward keeping this.pendingBatch as a whole!
+        for (const message of this.pendingBatch) {
+            this.pendingStateManager.onSubmitMessage(
+                message.deserializedContent.type,
+                clientSequenceNumber,
+                refSeqNumber,
+                message.deserializedContent.contents,
+                message.localOpMetadata,
+                message.metadata,
+            );
+            clientSequenceNumber++;
+        }
+
+        assert(this.pendingBatch.length === length, "reentrancy");
+        this.pendingBatch.length = 0;
+
+        this.pendingStateManager.onFlush();
     }
 
     public orderSequentially(callback: () => void): void {
@@ -2511,108 +2545,68 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private submit(
         type: ContainerMessageType,
-        content: any,
+        contents: any,
         localOpMetadata: unknown = undefined,
-        opMetadata: Record<string, unknown> | undefined = undefined,
+        metadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
 
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
 
-        let clientSequenceNumber: number = -1;
-        let opMetadataInternal = opMetadata;
+        const deserializedContent: ContainerRuntimeMessage = { type, contents };
+        const serializedContent = JSON.stringify(deserializedContent);
 
-        if (this.canSendOps()) {
-            const serializedContent = JSON.stringify(content);
-
-            // If in TurnBased flush mode we will trigger a flush at the next turn break
-            if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
-                opMetadataInternal = {
-                    ...opMetadata,
-                    batch: true,
-                };
-                this.needsFlush = true;
-
-                // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                if (!this.flushTrigger) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flushTrigger = false;
-                        this.flush();
-                    });
-                }
-            }
-
-            if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
-                clientSequenceNumber = this.submitRuntimeMessage(type,
-                    content, this._flushMode === FlushMode.TurnBased /* batch */, opMetadataInternal);
-            } else {
-                // If the content length is larger than the client configured message size
-                // instead of splitting the content, we will fail by explicitly closing the container
-                this.closeFn(new GenericError(
-                    "OpTooLarge",
-                    /* error */ undefined,
-                    {
-                        length: serializedContent.length,
-                        limit: defaultMaxOpSizeInBytes,
-                    }));
-                clientSequenceNumber = -1;
+        if (serializedContent.length > defaultMaxOpSizeInBytes) {
+            // If the content length is larger than the client configured message size
+            // instead of splitting the content, we will fail by explicitly closing the container
+            this.closeFn(new GenericError(
+                "OpTooLarge",
+                /* error */ undefined,
+                {
+                    length: serializedContent.length,
+                    limit: defaultMaxOpSizeInBytes,
+                }));
+        } else {
+            this.pendingBatch.push({
+                contents: serializedContent,
+                deserializedContent,
+                metadata,
+                localOpMetadata,
+            });
+            if (this._flushMode !== FlushMode.TurnBased) {
+                this.flush();
+            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
+            } else if (!this.flushTrigger) {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flushTrigger = false;
+                    this.flush();
+                });
             }
         }
 
-        // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(
-            type,
-            clientSequenceNumber,
-            this.deltaManager.lastSequenceNumber,
-            content,
-            localOpMetadata,
-            opMetadataInternal,
-        );
-        if (this.isContainerMessageDirtyable(type, content)) {
+        if (this.isContainerMessageDirtyable(type, contents)) {
             this.updateDocumentDirtyState(true);
         }
     }
 
-    private submitMessageCore(type: MessageType, contents: any, batch: boolean, metaData?: any) {
+    private submitSummaryMessage(contents: ISummaryContent) {
         this.verifyNotClosed();
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
-        return this.context.submitFn(
-            type,
-            // back-compat: ADO #1385: remove this check in future and make unconditional
-            this.context.submitSummaryFn === undefined ? contents : JSON.stringify(contents),
-            batch,
-            metaData);
-    }
-
-    private submitSummaryMessage(contents: ISummaryContent) {
         // System message should not be sent in the middle of the batch.
-        assert(this.flushMode !== FlushMode.TurnBased || !this.needsFlush, "System op in the middle of a batch");
+        assert(this.pendingBatch.length === 0, "System op in the middle of a batch");
+
         // back-compat: ADO #1385: Make this call unconditional in the future
         if (this.context.submitSummaryFn !== undefined) {
             return this.context.submitSummaryFn(contents);
         } else {
-            return this.submitMessageCore(
+            return this.context.submitFn(
                 MessageType.Summarize,
                 contents,
                 false); // batch
             }
-    }
-
-    private submitRuntimeMessage(
-        type: ContainerMessageType,
-        contents: any,
-        batch: boolean,
-        metaData?: any,
-    ) {
-        const payload: ContainerRuntimeMessage = { type, contents };
-        return this.submitMessageCore(
-            MessageType.Operation,
-            payload,
-            batch,
-            metaData);
     }
 
     /**

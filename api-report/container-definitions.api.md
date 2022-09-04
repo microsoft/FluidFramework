@@ -83,6 +83,14 @@ export interface IAudienceOwner extends IAudience {
     removeMember(clientId: string): boolean;
 }
 
+// @public (undocumented)
+export interface IBatchMessage {
+    // (undocumented)
+    contents: string;
+    // (undocumented)
+    metadata: Record<string, unknown> | undefined;
+}
+
 // @public
 export interface ICodeAllowList {
     // (undocumented)
@@ -180,7 +188,9 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
-    readonly submitFn: (type: MessageType, contents: string, batch: boolean, appData?: any) => number;
+    readonly submitBatchFn: (batch: IBatchMessage[]) => number;
+    // (undocumented)
+    readonly submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
