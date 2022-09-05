@@ -174,7 +174,7 @@ class ProxyTarget {
 
 	public get cursor(): ITreeSubscriptionCursor {
 		if (this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared) {
-            assert(this.anchor !== undefined, "EditableTree should have anchor it it does not have a cursor");
+            assert(this.anchor !== undefined, "EditableTree should have an anchor if it does not have a cursor");
 			const result = this.context.forest.tryMoveCursorTo(this.anchor, this.lazyCursor);
 			assert(result === TreeNavigationResult.Ok,
                 "It is invalid to access an EditableTree node which no longer exists");
@@ -330,7 +330,8 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
 function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
     if (isPrimitive(target.type)) {
         const nodeValue = target.cursor.value;
-        if (isPrimitiveValue(nodeValue)) {
+        // see `isPrimitive` doc for `undefined` case
+        if (isPrimitiveValue(nodeValue) && nodeValue !== undefined) {
             return nodeValue;
         }
     }
