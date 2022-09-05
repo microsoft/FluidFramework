@@ -17,4 +17,5 @@ export {
 } from "./editableTree";
 export {
     PrimitiveValue,
+    isPrimitiveValue,
 } from "./utilities";

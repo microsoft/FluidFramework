@@ -84,6 +84,7 @@ export {
     EditableTreeOrPrimitive,
     EditableTree,
     getEditableTree,
+    isPrimitiveValue,
     typeSymbol,
     proxySymbol as editableTreeProxySymbol,
     defaultSchemaPolicy,

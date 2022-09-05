@@ -351,6 +351,9 @@ export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : fa
 // @public (undocumented)
 export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
 
+// @public (undocumented)
+export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
+
 // @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {
     down(key: FieldKey, index: number): TResult;

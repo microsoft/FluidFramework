@@ -3,7 +3,6 @@
 * Licensed under the MIT License.
 */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable max-len */
 import { fail, strict as assert } from "assert";
@@ -13,11 +12,11 @@ import { JsonableTree, EmptyKey, Value } from "../../tree";
 import { brand, Brand, clone } from "../../util";
 import {
     defaultSchemaPolicy, getEditableTree, EditableTree, buildForest, typeSymbol, UnwrappedEditableField,
-    proxySymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive,
+    proxySymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive, UnwrappedEditableTree, isPrimitiveValue,
 } from "../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
-import { getFieldKind, getFieldSchema, getPrimaryField, isPrimitive, isPrimitiveValue } from "../../feature-libraries/editable-tree/utilities";
+import { getFieldKind, getFieldSchema, getPrimaryField, isPrimitive } from "../../feature-libraries/editable-tree/utilities";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
 
@@ -125,7 +124,7 @@ type AddressType = EditableTree & {
     phones: (number | string | ComplexPhoneType)[];
 };
 
-type PersonType = {
+type PersonType = EditableTree & {
     name: string;
     age: Int32;
     salary: number;
@@ -180,22 +179,13 @@ function buildTestProxy(data: JsonableTree): UnwrappedEditableField {
     return field;
 }
 
-function buildTestPerson(): EditableTree & PersonType {
+function buildTestPerson(): PersonType {
     const proxy = buildTestProxy(person);
-    return proxy as EditableTree & PersonType;
+    return proxy as PersonType;
 }
 
 function expectTreeEquals(inputField: UnwrappedEditableField, expected: JsonableTree): void {
     assert(inputField !== undefined);
-    const expectedType = schemaMap.get(expected.type) ?? fail("missing type");
-    const primary = getPrimaryField(expectedType);
-    if (primary !== undefined) {
-        // Handle inlined primary fields
-        const expectedField = expected.fields?.[primary.key];
-        assert(expectedField !== undefined);
-        return expectTreeSequence(inputField, expectedField);
-    }
-
     assert(!Array.isArray(inputField));
     // Above assert fails to narrow type to exclude readonly arrays, so cast manually here:
     const node = inputField as EditableTreeOrPrimitive;
@@ -209,16 +199,29 @@ function expectTreeEquals(inputField: UnwrappedEditableField, expected: Jsonable
     assert(node[proxySymbol] !== undefined);
     assert.equal(node[valueSymbol], expected.value);
     const type = node[typeSymbol];
+    const expectedType = schemaMap.get(expected.type) ?? fail("missing type");
     assert.equal(type, expectedType);
     for (const key of Object.keys(node)) {
-        const subNode = node[key];
+        const subNode: UnwrappedEditableField = node[key];
         assert(subNode !== undefined, key);
         const fields = expected.fields ?? {};
         assert.equal(key in fields, true);
         const field: JsonableTree[] = fields[key];
         const isSequence = getFieldKind(getFieldSchema(type, key)).multiplicity;
+        // implicit sequence
         if (isSequence) {
             expectTreeSequence(subNode, field);
+        // explicit array
+        } else if (Array.isArray(subNode)) {
+            // That's actually not needed, as normally tree "users" would just recognize an array,
+            // but it might be a good memo for the primary field topic + see "TODO" in `getPrimaryField`
+            const primary = getPrimaryField(schemaMap.get(field[0].type) ?? fail("missing type"));
+            if (primary !== undefined) {
+                // Handle inlined primary fields
+                const expectedField = field[0].fields?.[primary.key];
+                assert(expectedField !== undefined);
+                expectTreeSequence(subNode, expectedField);
+            }
         } else {
             assert.equal(field.length, 1);
             expectTreeEquals(subNode, field[0]);
@@ -228,6 +231,7 @@ function expectTreeEquals(inputField: UnwrappedEditableField, expected: Jsonable
 
 function expectTreeSequence(field: UnwrappedEditableField, expected: JsonableTree[]): void {
     assert(Array.isArray(field));
+    assert(Array.isArray(expected));
     assert.equal(field.length, field.length);
     for (let index = 0; index < field.length; index++) {
         expectTreeEquals(field[index], expected[index]);
@@ -423,6 +427,7 @@ describe.only("editable-tree", () => {
         assert.deepEqual(cloned, { Mat: "Mat" });
         assert.deepEqual(Object.keys(proxy.address!), ["street", "zip", "phones"]);
         assert.equal(proxy.address?.street, "treeStreet");
+        assert.equal(proxy.address?.phones![1], 123456879);
     });
 
     it("read upwards", () => {
@@ -449,28 +454,22 @@ describe.only("editable-tree", () => {
         let i = 0;
         for (const phone of proxy.address!.phones!) {
             const expectedPhone: Value = expectedPhones[i++];
-            if (!expectedPhone) {
-                continue;
-            }
-            if (typeof phone === "string" || typeof phone === "number") {
+            if (isPrimitiveValue(phone)) {
                 assert.equal(phone, expectedPhone);
-            } else if (phone) {
-                assert.equal(phone.number, expectedPhone.number);
-                assert.equal(phone.prefix, expectedPhone.prefix);
+            } else {
+                const cloned = clone(phone);
+                assert.deepEqual(cloned, expectedPhone);
             }
         }
         assert.equal(proxy.address!.phones![0], "+49123456778");
         assert.deepEqual(Object.keys(proxy.address!.phones!), ["0", "1", "2"]);
         assert.deepEqual(Object.getOwnPropertyNames(proxy.address!.phones), ["0", "1", "2", "length"]);
-        const act = proxy.address!.phones!.map((phone: Value): unknown => {
-            if (typeof phone === "string" || typeof phone === "number") {
-                return phone as Value;
-            } else if (phone) {
-                const res: Value = {};
-                for (const key of Object.keys(phone)) {
-                    res[key] = phone[key];
-                }
-                return res;
+        const act = proxy.address!.phones!.map((phone: EditableTreeOrPrimitive): Value | UnwrappedEditableField => {
+            if (isPrimitiveValue(phone)) {
+                return phone;
+            } else {
+                const cloned = clone(phone);
+                return cloned;
             }
         });
         assert.deepEqual(act, expectedPhones);

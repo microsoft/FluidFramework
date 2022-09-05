@@ -12,11 +12,11 @@ import { fieldKinds } from "../defaultFieldKinds";
 import { FieldKind } from "../modular-schema";
 
 /**
- * @returns true iff `schema` trees should default to being viewed as just their value when possible.
+ * @returns true if `schema` trees should default to being viewed as just their value when possible.
  *
  * Note that this may return true for some types which can not be unwrapped to just their value,
- * since EditableTree avoids ever unwrapping primitives that are objects so users
- * checking for primitives by type win't be broken.
+ * since EditableTree avoids ever unwrapping primitives that are objects
+ * so users checking for primitives by type won't be broken.
  * Checking for this object case is done elsewhere.
  */
 export function isPrimitive(schema: TreeSchema): boolean {
