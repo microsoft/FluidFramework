@@ -168,7 +168,7 @@ class ProxyTarget {
             this.anchor = this.lazyCursor.buildAnchor();
             this.context.withAnchors.add(this);
         }
-        this.lazyCursor.free();
+        this.lazyCursor.clear();
         this.context.withCursors.delete(this);
     }
 
