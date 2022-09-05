@@ -37,8 +37,9 @@ export interface IFluidModuleWithDetails {
     module: IFluidModule;
     /**
      * Code details associated with the module. Represents a document schema this module supports.
-     * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
-     * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+     * If the code loader implements the {@link @fluidframework/core-interfaces#(IFluidCodeDetailsComparer:interface)}
+     * interface, it'll be called to determine whether the module code details satisfy the new code proposal in the
+     * quorum.
      */
     details: IFluidCodeDetails;
 }

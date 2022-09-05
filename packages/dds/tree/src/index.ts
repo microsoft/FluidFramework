@@ -49,7 +49,13 @@ export {
     NameFromBranded,
 } from "./util";
 
-export { ChangeEncoder, JsonCompatibleReadOnly, JsonCompatible } from "./change-family";
+export {
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    JsonCompatibleReadOnly,
+    JsonCompatible,
+} from "./change-family";
 
 export {
     Rebaser,
@@ -73,7 +79,20 @@ export {
     emptyField,
     neverTree,
     FieldKinds,
-    ChangeHandler,
+    ModularChangeFamily,
+    ModularEditBuilder,
+    FieldChangeHandler,
+    FieldChangeRebaser,
+    FieldChangeEncoder,
+    FieldChangeMap,
+    FieldChangeset,
+    FieldChange,
+    ToDelta,
+    NodeChangeComposer,
+    NodeChangeInverter,
+    NodeChangeRebaser,
+    NodeChangeEncoder,
+    NodeChangeDecoder,
     FieldKind,
     Multiplicity,
     isNeverField,

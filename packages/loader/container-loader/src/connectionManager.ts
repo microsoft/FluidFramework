@@ -31,7 +31,7 @@ import {
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
     logNetworkFailure,
-    // isRuntimeMessage,
+    isRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -168,7 +168,7 @@ export class ConnectionManager implements IConnectionManager {
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
     /** Counts the number of noops sent by the client which may not be acked. */
-    private trailingNoopCount = 0;
+    private localOpsToIgnore = 0;
 
     /** track clientId used last time when we sent any ops */
     private lastSubmittedClientId: string | undefined;
@@ -247,7 +247,7 @@ export class ConnectionManager implements IConnectionManager {
 
     public shouldJoinWrite(): boolean {
         // We don't have to wait for ack for topmost NoOps. So subtract those.
-        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);
+        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.localOpsToIgnore);
     }
 
     /**
@@ -819,10 +819,10 @@ export class ConnectionManager implements IConnectionManager {
             this.clientSequenceNumberObserved = 0;
         }
 
-        if (message.type === MessageType.NoOp) {
-            this.trailingNoopCount++;
+        if (!isRuntimeMessage(message)) {
+            this.localOpsToIgnore++;
         } else {
-            this.trailingNoopCount = 0;
+            this.localOpsToIgnore = 0;
         }
 
         return {
