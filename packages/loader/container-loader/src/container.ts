@@ -32,8 +32,6 @@ import {
     IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
-    DataCorruptionError,
-    extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
 } from "@fluidframework/container-utils";
@@ -62,7 +60,6 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
-    IProcessMessageResult,
     IProtocolState,
     IQuorumClients,
     IQuorumProposals,
@@ -1751,25 +1748,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
+    private processRemoteMessage(message: ISequencedDocumentMessage) {
         const local = this.clientId === message.clientId;
 
         // Allow the protocol handler to process the message
-        let result: IProcessMessageResult = { immediateNoOp: false };
-        try {
-            result = this.protocolHandler.processMessage(message, local);
-        } catch (error) {
-            this.close(wrapError(error, (errorMessage) =>
-                new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
-        }
+        const result = this.protocolHandler.processMessage(message, local);
 
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
             this.mc.logger.sendTelemetryEvent(
                 { eventName: "UnpackedRuntimeMessage", type: message.type });
         }
         // Forward non system messages to the loaded runtime for processing
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
             this.context.process(message, local, undefined);
         }
@@ -1798,8 +1787,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.emit("op", message);
-
-        return result;
     }
 
     private submitSignal(message: any) {
