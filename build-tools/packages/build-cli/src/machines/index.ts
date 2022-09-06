@@ -13,5 +13,5 @@ export { StateMachine, StateHandler } from "./types";
  * An array of all known machines. Intended for testing.
  *
  * @internal
- * */
+ */
 export const allMachines = [UnifiedReleaseMachine];
