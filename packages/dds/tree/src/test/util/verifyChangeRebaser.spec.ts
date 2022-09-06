@@ -25,7 +25,7 @@ const counterRebaser = commutativeRebaser({
     rebaseAnchors: (anchor: AnchorSet, over: number) => {},
 });
 
-describe("testChangeRebaser", () => {
+describe("verifyChangeRebaser", () => {
     it("test counter with safe integers", () => {
         const output = verifyChangeRebaser(counterRebaser, new Set([-1, 2, 3, 0, -2, 4]), (a, b) => a === b);
         assert.equal(output.rebaseLeftDistributivity, "PASSED");
