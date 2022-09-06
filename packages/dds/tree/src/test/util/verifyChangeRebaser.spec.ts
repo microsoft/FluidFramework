@@ -8,22 +8,12 @@ import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { verifyChangeRebaser } from "../../util";
 
-function commutativeRebaser<TChange>(data: {
-    compose: (changes: TChange[]) => TChange;
-    invert: (changes: TChange) => TChange;
-    rebaseAnchors: (anchor: AnchorSet, over: TChange) => void;
-}): ChangeRebaser<TChange> {
-    return {
-        rebase: (change: TChange, over: TChange) => change,
-        ...data,
-    };
-}
-
-const counterRebaser = commutativeRebaser({
+const counterRebaser: ChangeRebaser<number> = {
     compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
     invert: (change: number) => -change,
+    rebase: (change: number, over: number) => change,
     rebaseAnchors: (anchor: AnchorSet, over: number) => {},
-});
+};
 
 describe("verifyChangeRebaser", () => {
     it("test counter with safe integers", () => {
