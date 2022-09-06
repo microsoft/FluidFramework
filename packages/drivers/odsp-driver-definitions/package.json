@@ -37,7 +37,6 @@
   },
   "dependencies": {
     "@fluidframework/driver-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/driver-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
