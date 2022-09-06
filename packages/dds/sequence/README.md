@@ -156,7 +156,7 @@ specified range. Setting a property key to null will remove that property from t
 ### Sequence delta event
 
 Whenever an operation is performed on a sequence a *sequenceDelta* event will be raised. This event provides the ranges
-affected by the operation, the type of the operation, and the properties that were changes by the operation.
+affected by the operation, the type of the operation, and the properties that were changed by the operation.
 
 ```typescript
 sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
