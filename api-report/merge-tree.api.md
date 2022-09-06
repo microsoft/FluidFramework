@@ -1167,8 +1167,6 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
     min(): Property<TKey, TData> | undefined;
 }
 
-// Warning: (ae-forgotten-export) The symbol "SortedSet" needs to be exported by the entry point index.d.ts
-//
 // @public
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<T, string> {
     // (undocumented)
@@ -1179,6 +1177,24 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 export type SortedSegmentSetItem = ISegment | {
     readonly segment: ISegment;
 };
+
+// @public (undocumented)
+export abstract class SortedSet<T, U extends string | number> {
+    // (undocumented)
+    addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void;
+    // (undocumented)
+    protected abstract getKey(t: T): U;
+    // (undocumented)
+    has(item: T): boolean;
+    // (undocumented)
+    get items(): readonly T[];
+    // (undocumented)
+    protected readonly keySortedItems: T[];
+    // (undocumented)
+    remove(item: T): boolean;
+    // (undocumented)
+    get size(): number;
+}
 
 // @public (undocumented)
 export class Stack<T> {

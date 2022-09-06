@@ -16,7 +16,7 @@ import {
 } from "./mergeTreeNodes";
 import { SortedSet } from "./sortedSet";
 
-export class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
+class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
     protected getKey(item: PartialSequenceLength): number {
         return item.seq;
     }
