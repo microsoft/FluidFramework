@@ -273,6 +273,12 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
                 errorCount: errorList.length,
             };
 
+            const runData = {
+                stats,
+                actions: actionsList,
+                errors: errorList,
+            };
+
             fs.mkdirSync(`nyc/testData-${seed}`, { recursive: true });
             fs.writeFileSync(`nyc/testData-${seed}/events.json`, JSON.stringify(overrideLogger.events));
             fs.writeFileSync(`nyc/testData-${seed}/inactiveObjectEvents.json`, JSON.stringify(overrideLogger.inactiveObjectEvents));
@@ -281,6 +287,7 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
             fs.writeFileSync(`nyc/testData-${seed}/actions.json`, JSON.stringify(actionsList));
             fs.writeFileSync(`nyc/testData-${seed}/stats.json`, JSON.stringify(stats));
             fs.writeFileSync(`nyc/testData-${seed}/errors.json`, JSON.stringify(errorList));
+            fs.writeFileSync(`nyc/testData-${seed}/runData.json`, JSON.stringify(runData));
 
             // Check that we don't have errors and print the debug object
             assert(errorList.length === 0, `${errorList.length} errors occurred! Check the nyc/testData-${seed}/errors.json`);
