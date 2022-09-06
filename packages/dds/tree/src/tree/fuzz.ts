@@ -6,6 +6,12 @@
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ChangeRebaser } from "../rebase";
 
+const operations = {
+    rebase: "rebase",
+    invert: "invert",
+    compose: "compose",
+};
+
 /**
  *
  * @param rebaser - `ChangeRebaser` instance used to combine generated changes
@@ -20,6 +26,7 @@ import { ChangeRebaser } from "../rebase";
     changeGenerator: (seed: number) => TChange,
     seed: number,
     maxCombinations: number): TChange {
+    const random = makeRandom(seed);
     const rebase = rebaser.rebase.bind(rebaser);
     const compose = rebaser.compose.bind(rebaser);
     const invert = rebaser.invert.bind(rebaser);
@@ -27,18 +34,15 @@ import { ChangeRebaser } from "../rebase";
     let change = changeGenerator(seed);
     const changes = [change];
 
-    const operations = ["rebase", "invert", "compose"];
-
     for (let i = 1; i < (seed % maxCombinations); i++) {
-        const random = makeRandom(seed + i).integer(1, 10000000);
-        const operation = operations[random % operations.length];
+        const operation = random.pick(Object.keys(operations));
         if (operation === "rebase") {
-            change = rebase(changeGenerator(random), change);
+            change = rebase(changeGenerator(random.integer(1, 10000000)), change);
         } else if (operation === "compose") {
-            change = compose([change, changeGenerator(random)]);
+            change = compose([change, changeGenerator(random.integer(1, 10000000))]);
         } else {
             // get a random previous change to invert
-            const inverseChange = invert(changes[random % changes.length]);
+            const inverseChange = invert(random.pick(changes));
             change = compose([change, inverseChange]);
         }
         changes.push(change);

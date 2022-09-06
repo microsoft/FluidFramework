@@ -56,11 +56,11 @@ function getRandomParent(parentSet: Set<UpPath>, seed: number): UpPath {
     return parents[randomIndex % parents.length];
 }
 
-enum operations {
-    setValue,
-    delete,
-    insert,
-}
+const operations = {
+    setValue: "setValue",
+    delete: "delete",
+    insert: "insert",
+};
 
 /**
  *
@@ -73,12 +73,12 @@ export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.Loca
     const builder = new SequenceEditBuilder(() => {}, new AnchorSet());
     const nodeX = { type: jsonString.name, value: "X" };
     const currOperation = random.pick(Object.keys(operations));
-    if (currOperation === "setValue") {
+    if (currOperation === operations.setValue) {
         builder.setValue(
             getRandomParent(upPaths, random.integer(1, 10000000)),
             random.integer(1, 10000000),
         );
-    } else if (currOperation === "insert") {
+    } else if (currOperation === operations.insert) {
         builder.insert(getRandomParent(
             upPaths, random.integer(1, 10000000)),
             singleTextCursor(nodeX),
