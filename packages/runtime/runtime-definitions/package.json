@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/runtime-definitions",
-  "version": "2.0.0-internal.1.1.0",
+  "version": "2.0.0-internal.1.2.0",
   "description": "Fluid Runtime definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,9 +34,9 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/container-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/protocol-definitions": "^1.0.0",
     "@types/node": "^14.18.0"
   },
@@ -48,7 +48,7 @@
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",

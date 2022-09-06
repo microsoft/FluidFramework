@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/debugger",
-  "version": "2.0.0-internal.1.1.0",
+  "version": "2.0.0-internal.1.2.0",
   "description": "Fluid Debugger - a tool to play through history of a file",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,10 +34,10 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/driver-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/protocol-definitions": "^1.0.0",
-    "@fluidframework/replay-driver": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/replay-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "jsonschema": "^1.2.6"
   },
   "devDependencies": {
@@ -50,7 +50,7 @@
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
     "mocha": "^10.0.0",
     "rimraf": "^2.6.2",

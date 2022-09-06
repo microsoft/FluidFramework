@@ -13,20 +13,6 @@ import { JsonableTree } from "../tree";
  * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
 export namespace Transposed {
-	export interface Transaction extends PeerChangeset {
-		/**
-		 * The reference sequence number of the transaction that this transaction was originally
-		 * issued after.
-		 */
-		ref: SeqNumber;
-		/**
-		 * The reference sequence number of the transaction that this transaction has been
-		 * transposed over.
-		 * Omitted on changesets that have not been transposed.
-		 */
-		newRef?: SeqNumber;
-	}
-
 	/**
 	 * Represents changes to a document forest.
 	 */
@@ -53,41 +39,41 @@ export namespace Transposed {
 	export type MarkList<TMark = Mark> = TMark[];
 
 	export type Mark =
+		| SizedMark
+		| Attach;
+
+	export type ObjectMark =
+		| SizedObjectMark
+		| Attach;
+
+	export type SizedMark =
 		| Skip
+		| SizedObjectMark;
+
+	export type SizedObjectMark =
 		| Tomb
 		| Modify
 		| Detach
 		| Reattach
 		| ModifyReattach
 		| ModifyDetach
-		| GapEffectSegment
-		| AttachGroup;
-
-	export type AttachGroup = Attach[];
+		| GapEffectSegment;
 
 	export interface Tomb {
 		type: "Tomb";
-		seq: SeqNumber;
+		change: ChangesetTag;
 		count: number;
 	}
 
-	export type ValueMark = SetValue | RevertValue;
-
-	export interface SetValue {
-		type: "Set";
+	export interface SetValue extends HasOpId {
 		/** Can be left unset to represent the value being cleared. */
 		value?: Value;
 	}
 
-	export interface RevertValue {
-		type: "Revert";
-		seq: SeqNumber;
-	}
-
 	export interface Modify {
 		type: "Modify";
-		tomb?: SeqNumber;
-		value?: ValueMark;
+		tomb?: ChangesetTag;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
@@ -155,7 +141,7 @@ export namespace Transposed {
 	export interface ModifyInsert extends HasOpId, HasPlaceFields {
 		type: "MInsert";
 		content: ProtoNode;
-		value?: ValueMark;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
@@ -177,9 +163,9 @@ export namespace Transposed {
 	}
 
 	/**
-	 * Represents the precise location of a concurrent slice-move-in.
+	 * Represents the precise location of a concurrent slice-move-in within the same gap.
 	 * This is needed so we can tell where concurrent sliced-inserts (that this changeset has yet to be rebased over)
-	 * may land in the field. Without this, we would need to be able to retain information about the relative order in
+	 * may land in the gap. Without this, we would need to be able to retain information about the relative order in
 	 * time of any number of concurrent slice-moves. See scenario N.
 	 */
 	export interface Intake extends PriorOp {
@@ -196,7 +182,7 @@ export namespace Transposed {
 
 	export interface ModifyMoveIn extends HasOpId, HasPlaceFields {
 		type: "MMoveIn";
-		value?: ValueMark;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
@@ -207,7 +193,7 @@ export namespace Transposed {
 	export type GapEffectType = GapEffect["type"];
 
 	export interface GapEffectSegment {
-		tombs?: SeqNumber;
+		tomb?: ChangesetTag;
 		type: "Gap";
 		count: GapCount;
 		/**
@@ -235,7 +221,7 @@ export namespace Transposed {
 	export type NodeMark = Detach | Reattach;
 
 	export interface Detach extends HasOpId {
-		tomb?: SeqNumber;
+		tomb?: ChangesetTag;
 		gaps?: GapEffect[];
 		type: "Delete" | "MoveOut";
 		count: NodeCount;
@@ -243,20 +229,20 @@ export namespace Transposed {
 
 	export interface ModifyDetach extends HasOpId {
 		type: "MDelete" | "MMoveOut";
-		tomb?: SeqNumber;
-		value?: ValueMark;
+		tomb?: ChangesetTag;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
 	export interface Reattach extends HasOpId {
 		type: "Revive" | "Return";
-		tomb: SeqNumber;
+		tomb: ChangesetTag;
 		count: NodeCount;
 	}
 	export interface ModifyReattach extends HasOpId {
 		type: "MRevive" | "MReturn";
-		tomb: SeqNumber;
-		value?: ValueMark;
+		tomb: ChangesetTag;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
@@ -271,29 +257,12 @@ export namespace Transposed {
 	 */
 	export interface Tombstones {
 		count: NodeCount;
-		seq: PriorSeq;
+		change: ChangesetTag;
 	}
 
 	export interface PriorOp {
-		seq: PriorSeq;
+		change: ChangesetTag;
 		id: OpId;
-	}
-
-	/**
-	 * The sequence number of the edit that caused the nodes to be detached.
-	 *
-	 * When the nodes were detached as the result of learning of a prior concurrent change
-	 * that preceded a prior change that the current change depends on, a pair of sequence
-	 * numbers is used instead were `seq[0]` is the earlier change whose effect on `seq[1]`
-	 * these tombstones represent. This can be read as "tombstones from the effect of `seq[0]`
-	 * on `seq[1]`".
-	 */
-	export type PriorSeq = SeqNumber | [SeqNumber, SeqNumber];
-}
-
-export namespace Sequenced {
-	export interface Transaction extends Transposed.Transaction {
-		seq: SeqNumber;
 	}
 }
 
@@ -318,19 +287,11 @@ export enum RangeType {
 /**
  * A monotonically increasing positive integer assigned to each change within the changeset.
  * OpIds are scoped to a single changeset, so referring to OpIds across changesets requires
- * qualifying them by sequence/commit number.
+ * qualifying them by change tag.
  *
  * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */
 export type OpId = number;
-
-export interface HasSeqNumber {
-	/**
-	 * Included in a mark to indicate the transaction it was part of.
-	 * This number is assigned by the Fluid service.
-	 */
-	seq: SeqNumber;
-}
 
 export interface HasOpId {
 	/**
@@ -347,7 +308,7 @@ export type ProtoNode = JsonableTree;
 export type NodeCount = number;
 export type GapCount = number;
 export type Skip = number;
-export type SeqNumber = number;
+export type ChangesetTag = number | string;
 export type Value = number | string | boolean;
 export type ClientId = number;
 export enum Tiebreak { Left, Right }

@@ -368,14 +368,6 @@ export interface ISummaryRuntimeOptions {
     summaryConfigOverrides?: ISummaryConfiguration;
 
     /**
-     *  @deprecated - this option will not be supported on the next versions.
-     * Flag that disables putting channels in isolated subtrees for each data store
-     * and the root node when generating a summary if set to true.
-     * Defaults to FALSE (enabled) for now.
-     */
-    disableIsolatedChannels?: boolean;
-
-    /**
      *  @deprecated - use `summaryConfigOverrides.initialSummarizerDelayMs` instead.
      *  Delay before first attempt to spawn summarizing container.
     */
@@ -500,11 +492,6 @@ interface IPendingRuntimeState {
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
-
-// Feature gate for the max op size. If the value is negative, chunking is enabled
-// and all ops over 16k would be chunked. If the value is positive, all ops with
-// a size strictly larger will be rejected and the container closed with an error.
-const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
 
 // By default, we should reject any op larger than 768KB,
 // in order to account for some extra overhead from serialization
@@ -781,10 +768,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
-    private readonly _maxOpSizeInBytes: number;
 
     private readonly maxConsecutiveReconnects: number;
-    private readonly defaultMaxConsecutiveReconnects = 15;
+    private readonly defaultMaxConsecutiveReconnects = 7;
 
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
@@ -844,12 +830,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly dataStores: DataStores;
 
-    /**
-     * True if generating summaries with isolated channels is
-     * explicitly disabled. This only affects how summaries are written,
-     * and is the single source of truth for this container.
-     */
-    public readonly disableIsolatedChannels: boolean;
     /** The last message processed at the time of the last summary. */
     private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
@@ -953,9 +933,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         super();
         this.messageAtLastSummary = metadata?.message;
 
-        // Default to false (enabled).
-        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
-
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
 
@@ -974,7 +951,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
-        this._maxOpSizeInBytes = (this.mc.config.getNumber(maxOpSizeInBytesKey) ?? defaultMaxOpSizeInBytes);
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
@@ -1394,7 +1370,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Increment the summary number for the next summary that will be generated.
             summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
-            disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             ...this.garbageCollector.getMetadata(),
             // The last message processed at the time of summary. If there are no new messages, use the message from the
             // last summary.
@@ -1564,7 +1539,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // There might be no change of state due to Container calling this API after loading runtime.
         const changeOfState = this._connected !== connected;
-        const reconnection = changeOfState && connected;
+        const reconnection = changeOfState && !connected;
         this._connected = connected;
 
         if (!connected) {
@@ -1573,6 +1548,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._perfSignalData.trackingSignalSequenceNumber = undefined;
         }
 
+        // Fail while disconnected
         if (reconnection) {
             this.consecutiveReconnects++;
 
@@ -1992,10 +1968,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const summarizeResult = this.dataStores.createSummary(telemetryContext);
-        if (!this.disableIsolatedChannels) {
-            // Wrap data store summaries in .channels subtree.
-            wrapSummaryInChannelsTree(summarizeResult);
-        }
+        // Wrap data store summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
+
         this.addContainerStateToSummary(
             summarizeResult,
             true /* fullTree */,
@@ -2021,13 +1996,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.dataStores.summarize(fullTree, trackState, telemetryContext);
-        let pathPartsForChildren: string[] | undefined;
 
-        if (!this.disableIsolatedChannels) {
-            // Wrap data store summaries in .channels subtree.
-            wrapSummaryInChannelsTree(summarizeResult);
-            pathPartsForChildren = [channelsTreeName];
-        }
+        // Wrap data store summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
+        const pathPartsForChildren = [channelsTreeName];
+
         this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
         return {
             ...summarizeResult,
@@ -2353,7 +2326,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Counting dataStores and handles
             // Because handles are unchanged dataStores in the current logic,
             // summarized dataStore count is total dataStore count minus handle count
-            const dataStoreTree = this.disableIsolatedChannels ? summaryTree : summaryTree.tree[channelsTreeName];
+            const dataStoreTree = summaryTree.tree[channelsTreeName];
 
             assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
             const handleCount = Object.values(dataStoreTree.tree).filter(
@@ -2552,7 +2525,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
-            const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in TurnBased flush mode we will trigger a flush at the next turn break
             if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
@@ -2572,13 +2544,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             }
 
-            clientSequenceNumber = this.submitMaybeChunkedMessages(
-                type,
-                content,
-                serializedContent,
-                maxOpSize,
-                this._flushMode === FlushMode.TurnBased,
-                opMetadataInternal);
+            if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
+                clientSequenceNumber = this.submitRuntimeMessage(type,
+                    content, this._flushMode === FlushMode.TurnBased /* batch */, opMetadataInternal);
+            } else {
+                // If the content length is larger than the client configured message size
+                // instead of splitting the content, we will fail by explicitly closing the container
+                this.closeFn(new GenericError(
+                    "OpTooLarge",
+                    /* error */ undefined,
+                    {
+                        length: serializedContent.length,
+                        limit: defaultMaxOpSizeInBytes,
+                    }));
+                clientSequenceNumber = -1;
+            }
         }
 
         // Let the PendingStateManager know that a message was submitted.
@@ -2593,63 +2573,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
-    }
-
-    private submitMaybeChunkedMessages(
-        type: ContainerMessageType,
-        content: any,
-        serializedContent: string,
-        serverMaxOpSize: number,
-        batch: boolean,
-        opMetadataInternal: unknown = undefined,
-    ): number {
-        if (this._maxOpSizeInBytes >= 0) {
-            // Chunking disabled
-            if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
-                return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
-            }
-
-            // When chunking is disabled, we ignore the server max message size
-            // and if the content length is larger than the client configured message size
-            // instead of splitting the content, we will fail by explicitly close the container
-            this.closeFn(new GenericError(
-                "OpTooLarge",
-                /* error */ undefined,
-                {
-                    length: serializedContent.length,
-                    limit: this._maxOpSizeInBytes,
-                }));
-            return -1;
-        }
-
-        // Chunking enabled, fallback on the server's max message size
-        // and split the content accordingly
-        if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
-            return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
-        }
-
-        return this.submitChunkedMessage(type, serializedContent, serverMaxOpSize);
-    }
-
-    private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
-        const contentLength = content.length;
-        const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
-        let offset = 0;
-        let clientSequenceNumber: number = 0;
-        for (let i = 1; i <= chunkN; i = i + 1) {
-            const chunkedOp: IChunkedOp = {
-                chunkId: i,
-                contents: content.substr(offset, maxOpSize),
-                originalType: type,
-                totalChunks: chunkN,
-            };
-            offset += maxOpSize;
-            clientSequenceNumber = this.submitRuntimeMessage(
-                ContainerMessageType.ChunkedOp,
-                chunkedOp,
-                false);
-        }
-        return clientSequenceNumber;
     }
 
     private submitSystemMessage(

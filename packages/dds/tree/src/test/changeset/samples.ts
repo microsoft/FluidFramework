@@ -4,14 +4,29 @@
  */
 
 import { jsonArray, jsonNumber, jsonObject, jsonString } from "../../domains";
-import { Effects, Transposed as T, Sequenced as S } from "../../changeset";
+import { ChangesetTag, Effects, Transposed as T } from "../../changeset";
+
+/**
+ * Interface used solely to annotate samples with clarifying information.
+ */
+export interface Transaction extends T.PeerChangeset {
+    /**
+     * The tag of the changeset that this changeset was originally issued after.
+     */
+    ref: ChangesetTag;
+    /**
+     * The tag of the latest changeset that this changeset has been transposed over.
+     * Omitted on changesets that have not been transposed.
+     */
+    newRef?: ChangesetTag;
+}
 
 /**
  * Demonstrates how to represent a change that inserts a root tree.
  */
 export namespace InsertRoot {
     export const e1: T.MarkList = [
-        [{
+        {
             type: "Insert",
             id: 0, // ID of the insert operation
             content: [ // Serialized trees
@@ -38,7 +53,7 @@ export namespace InsertRoot {
                     },
                 },
             ],
-        }],
+        },
     ];
 }
 
@@ -58,11 +73,11 @@ export namespace SwapCousins {
             fields: {
                 foo: [
                     { type: "MoveOut", id: 0, count: 1 },
-                    [{ type: "MoveIn", id: 1, count: 1 }],
+                    { type: "MoveIn", id: 1, count: 1 },
                 ],
                 bar: [
                     { type: "MoveOut", id: 1, count: 1 },
-                    [{ type: "MoveIn", id: 0, count: 1 }],
+                    { type: "MoveIn", id: 0, count: 1 },
                 ],
             },
         }],
@@ -107,27 +122,27 @@ export namespace SwapParentChild {
                             }],
                         },
                     },
-                    [{
+                    {
                         type: "MMoveIn",
                         id: 1,
                         fields: {
                             bar: [
-                                [{
+                                {
                                     type: "MMoveIn",
                                     id: 0,
                                     fields: {
                                         baz: [
-                                            [{
+                                            {
                                                 type: "MoveIn",
                                                 id: 2,
                                                 count: 1,
-                                            }],
+                                            },
                                         ],
                                     },
-                                }],
+                                },
                             ],
                         },
-                    }],
+                    },
                 ],
             },
         }],
@@ -149,9 +164,8 @@ export namespace SwapParentChild {
  * Expected outcome: foo=[A] bar=[X D]
  */
 export namespace ScenarioA {
-    export const e1: S.Transaction = {
+    export const e1: Transaction = {
         ref: 0,
-        seq: 1,
         marks: [{
             type: "Modify",
             fields: {
@@ -167,9 +181,8 @@ export namespace ScenarioA {
         }],
     };
 
-    export const e2: S.Transaction = {
+    export const e2: Transaction = {
         ref: 0,
-        seq: 2,
         moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
         marks: [{
             type: "Modify",
@@ -184,32 +197,30 @@ export namespace ScenarioA {
                     },
                 ],
                 bar: [
-                    [{
+                    {
                         type: "MoveIn",
                         id: 0,
                         count: 3, // B C D
-                    }],
+                    },
                 ],
             },
         }],
     };
 
-    export const e3: S.Transaction = {
+    export const e3: Transaction = {
         ref: 0,
-        seq: 3,
         marks: [{
             type: "Modify",
             fields: {
                 foo: [
                     2,
-                    [{ type: "Insert", id: 0, content: [nodeX], heed: Effects.All }],
+                    { type: "Insert", id: 0, content: [nodeX], heed: Effects.All },
                 ],
             },
         }],
     };
 
-    export const e2_r_e1: S.Transaction = {
-        seq: 2,
+    export const e2_r_e1: Transaction = {
         ref: 0,
         newRef: 1,
         moves: [
@@ -242,18 +253,15 @@ export namespace ScenarioA {
                     },
                 ],
                 bar: [
-                    [
-                        { type: "MoveIn", id: 0, count: 0 }, // B C
-                        { type: "MoveIn", id: 1, count: 0 }, // C-D
-                        { type: "MoveIn", id: 2, count: 1 }, // D
-                    ],
+                    { type: "MoveIn", id: 0, count: 0 }, // B C
+                    { type: "MoveIn", id: 1, count: 0 }, // C-D
+                    { type: "MoveIn", id: 2, count: 1 }, // D
                 ],
             },
         }],
     };
 
-    export const e3_r_e1: S.Transaction = {
-        seq: 3,
+    export const e3_r_e1: Transaction = {
         ref: 0,
         newRef: 1,
         marks: [{
@@ -261,16 +269,15 @@ export namespace ScenarioA {
             fields: {
                 foo: [
                     1,
-                    { type: "Tomb", seq: 1, count: 1 }, // B
-                    [{ type: "Insert", id: 0, content: [nodeX], heed: Effects.All }],
-                    { type: "Tomb", seq: 1, count: 1 }, // C
+                    { type: "Tomb", change: 1, count: 1 }, // B
+                    { type: "Insert", id: 0, content: [nodeX], heed: Effects.All },
+                    { type: "Tomb", change: 1, count: 1 }, // C
                 ],
             },
         }],
     };
 
-    export const e3_r_e2: S.Transaction = {
-        seq: 3,
+    export const e3_r_e2: Transaction = {
         ref: 0,
         newRef: 2,
         moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
@@ -279,22 +286,20 @@ export namespace ScenarioA {
             fields: {
                 foo: [
                     1,
-                    { type: "Tomb", seq: 1, count: 1 }, // B
-                    [{ type: "Bounce", id: 0, heed: Effects.All }],
-                    { type: "Tomb", seq: 1, count: 1 }, // C
+                    { type: "Tomb", change: 1, count: 1 }, // B
+                    { type: "Bounce", id: 0, heed: Effects.All },
+                    { type: "Tomb", change: 1, count: 1 }, // C
                 ],
                 bar: [
-                    [
-                        {
-                            type: "Insert",
-                            id: 0,
-                            content: [nodeX],
-                            heed: Effects.All,
-                            src: { seq: 2, id: 0 },
-                        },
-                        { type: "Intake", seq: 2, id: 1 },
-                        { type: "Intake", seq: 2, id: 2 },
-                    ],
+                    {
+                        type: "Insert",
+                        id: 0,
+                        content: [nodeX],
+                        heed: Effects.All,
+                        src: { change: 2, id: 0 },
+                    },
+                    { type: "Intake", change: 2, id: 1 },
+                    { type: "Intake", change: 2, id: 2 },
                 ],
             },
         }],
@@ -314,9 +319,8 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[W X Y Z]
 //  */
 // export namespace ScenarioB {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -328,9 +332,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -345,9 +348,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -362,14 +364,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 5, seq: 1 }],
+//                     tombs: [{ count: 5, change: 1 }],
 //                     attach: [
 //                         1,
 //                         [{ type: "Insert", id: 0, content: [{ id: "W" }] }],
@@ -381,14 +382,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 5, seq: 1 }],
+//                     tombs: [{ count: 5, change: 1 }],
 //                     attach: [
 //                         2,
 //                         [{ type: "Insert", id: 0, content: [{ id: "X" }] }],
@@ -400,19 +400,18 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
 //                     tombs: [
-//                         { count: 1, seq: 1 },
+//                         { count: 1, change: 1 },
 //                         1, // W
-//                         { count: 2, seq: 1 },
+//                         { count: 2, change: 1 },
 //                         1, // Y
-//                         { count: 1, seq: 1 },
+//                         { count: 1, change: 1 },
 //                     ],
 //                     attach: [
 //                         3, // [-A-W-B
@@ -442,9 +441,8 @@ export namespace ScenarioA {
 //  * User 3's edit should be muted.
 //  */
 // export namespace ScenarioC {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -456,13 +454,12 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 1, seq: 1 }],
+//                     tombs: [{ count: 1, change: 1 }],
 //                     nodes: [
 //                         { type: "Revive", id: 0, count: 1 },
 //                     ],
@@ -471,9 +468,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -485,14 +481,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 1, seq: 1 }],
+//                     tombs: [{ count: 1, change: 1 }],
 //                     nodes: [
 //                         { type: "Delete", id: 0, count: 1 },
 //                     ],
@@ -501,9 +496,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
@@ -516,9 +510,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: S.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -530,14 +523,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: S.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 1, seq: 1 }],
+//                     tombs: [{ count: 1, change: 1 }],
 //                     nodes: [
 //                         { type: "Delete", id: 0, count: 1 },
 //                     ],
@@ -546,9 +538,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: S.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
@@ -561,14 +552,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: S.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 1, seq: 1 }],
+//                     tombs: [{ count: 1, change: 1 }],
 //                     nodes: [
 //                         { type: "Delete", id: 0, count: 1 },
 //                     ],
@@ -589,9 +579,8 @@ export namespace ScenarioA {
 //  * User 2's edit should be muted.
 //  */
 // export namespace ScenarioD {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -606,9 +595,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -621,17 +609,16 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         1,
-//                         [{ type: "Insert", id: 0, content: [{ id: "X" }], scorch: { seq: 1, id: 0 } }],
+//                         [{ type: "Insert", id: 0, content: [{ id: "X" }], scorch: { change: 1, id: 0 } }],
 //                     ],
 //                 },
 //             }],
@@ -655,8 +642,7 @@ export namespace ScenarioA {
 //  * X is deleted (as opposed to inserted in trait bar).
 //  */
 // export namespace ScenarioE {
-//     export const e1: S.Transaction = {
-//         seq: 1,
+//     export const e1: Transaction = {
 //         ref: 0,
 //         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 0 } }],
 //         marks: {
@@ -676,8 +662,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
-//         seq: 2,
+//     export const e2: Transaction = {
 //         ref: 0,
 //         marks: {
 //             modify: [{
@@ -694,8 +679,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
-//         seq: 2,
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -723,9 +707,8 @@ export namespace ScenarioA {
 //  * Expected outcome: [r A x y z B]
 //  */
 // export namespace ScenarioF {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -737,9 +720,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -752,9 +734,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -767,8 +748,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
-//         seq: 2,
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
@@ -795,8 +775,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
-//         seq: 3,
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
@@ -828,9 +807,8 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[M N O] bar=[A X Y B]
 //  */
 // export namespace ScenarioG {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
@@ -852,9 +830,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -872,9 +849,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -887,9 +863,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: S.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -902,9 +877,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: S.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -917,14 +891,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
-//         seq: 2,
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         1,
 //                         [{ type: "Bounce", id: 0, heed: Effects.Move }],
@@ -937,7 +910,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }, { id: "Y" }],
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             heed: Effects.Move,
 //                         }],
 //                     ],
@@ -968,17 +941,16 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
-//         seq: 3,
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
 //                     tombs: [
-//                         { count: 1, seq: 1 }, // A
-//                         { count: 2, seq: [1, 2] }, // X Y
-//                         { count: 1, seq: 1 }, // B
+//                         { count: 1, change: 1 }, // A
+//                         { count: 2, change: 2 }, // X Y
+//                         { count: 1, change: 1 }, // B
 //                     ],
 //                     attach: [
 //                         2,
@@ -1013,19 +985,18 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: S.Transaction = {
-//         seq: 4,
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
 //                     tombs: [
-//                         { count: 1, seq: 1 }, // A
-//                         { count: 1, seq: [1, 2] }, // X
+//                         { count: 1, change: 1 }, // A
+//                         { count: 1, change: 2 }, // X
 //                         1, // N
-//                         { count: 1, seq: [1, 2] }, // Y
-//                         { count: 1, seq: 1 }, // B
+//                         { count: 1, change: 2 }, // Y
+//                         { count: 1, change: 1 }, // B
 //                     ],
 //                     attach: [
 //                         1, // [-A
@@ -1062,20 +1033,19 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: S.Transaction = {
-//         seq: 5,
+//     export const e5_r_e4: Transaction = {
 //         ref: 0,
 //         newRef: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
 //                     tombs: [
-//                         { count: 1, seq: 1 }, // A
+//                         { count: 1, change: 1 }, // A
 //                         1, // M
-//                         { count: 1, seq: [1, 2] }, // X
+//                         { count: 1, change: 2 }, // X
 //                         1, // N
-//                         { count: 1, seq: [1, 2] }, // Y
-//                         { count: 1, seq: 1 }, // B
+//                         { count: 1, change: 2 }, // Y
+//                         { count: 1, change: 1 }, // B
 //                     ],
 //                     attach: [
 //                         5,
@@ -1104,9 +1074,8 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[] bar=[A X B Y] baz=[U V]
 // */
 // export namespace ScenarioH {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 1 } }],
 //         marks: {
 //             modify: [{
@@ -1128,9 +1097,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { baz: 0 } }],
 //         marks: {
 //             modify: [{
@@ -1151,9 +1119,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -1167,9 +1134,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { baz: 0 } }],
 //         marks: {
@@ -1195,9 +1161,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 1,
 //         moves: [
 //             { id: 0, src: { foo: 1 }, dst: { bar: 2 } },
@@ -1207,7 +1172,7 @@ export namespace ScenarioA {
 //             modify: [{
 //                 foo: {
 //                     tombs: [
-//                         { count: 2, seq: 1 },
+//                         { count: 2, change: 1 },
 //                     ],
 //                     attach: [
 //                         1, // [-A
@@ -1222,14 +1187,14 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             heed: Effects.None,
 //                         }],
 //                         [{ // B-V
 //                             type: "Insert",
 //                             id: 1,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             heed: Effects.None,
 //                         }],
 //                     ],
@@ -1238,9 +1203,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         moves: [
 //             { id: 0, src: { foo: 1 }, dst: { bar: 1 } },
@@ -1250,7 +1214,7 @@ export namespace ScenarioA {
 //             modify: [{
 //                 foo: {
 //                     tombs: [
-//                         { count: 2, seq: 1 },
+//                         { count: 2, change: 1 },
 //                     ],
 //                     attach: [
 //                         1, // [-A
@@ -1260,9 +1224,9 @@ export namespace ScenarioA {
 //                 },
 //                 bar: {
 //                     tombs: [
-//                         { count: 1, seq: 2 }, // U
+//                         { count: 1, change: 2 }, // U
 //                         2, // A B
-//                         { count: 1, seq: 2 }, // V
+//                         { count: 1, change: 2 }, // V
 //                     ],
 //                     attach: [
 //                         2, // [-U-A
@@ -1270,14 +1234,14 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             heed: Effects.None,
 //                         }],
 //                         [{ // B-V
 //                             type: "Insert",
 //                             id: 1,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             heed: Effects.None,
 //                         }],
 //                     ],
@@ -1320,9 +1284,8 @@ export namespace ScenarioA {
 // */
 
 // export namespace ScenarioI {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 1 } }],
 //         marks: {
 //             modify: [{
@@ -1344,9 +1307,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 1 } }],
 //         marks: {
 //             modify: [{
@@ -1391,9 +1353,8 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[] bar=[A W X Y Z C]
 // */
 // export namespace ScenarioJ {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -1406,9 +1367,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
@@ -1430,9 +1390,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -1445,9 +1404,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: S.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -1460,9 +1418,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: S.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 2, // With knowledge with e1 and e2
-//         seq: 5,
 //         marks: {
 //             modify: [{
 //                 bar: {
@@ -1478,15 +1435,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [1, { count: 1, seq: 1 }],
+//                     tombs: [1, { count: 1, change: 1 }],
 //                     nodes: [
 //                         { type: "Move", id: 0, count: 3 },
 //                     ],
@@ -1504,14 +1460,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [1, { count: 1, seq: 1 }],
+//                     tombs: [1, { count: 1, change: 1 }],
 //                     attach: [
 //                         2,
 //                         [{ type: "Insert", id: 0, content: [{ id: "Y" }], tiebreak: Tiebreak.Left }],
@@ -1521,15 +1476,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 1 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [1, { count: 1, seq: 1 }],
+//                     tombs: [1, { count: 1, change: 1 }],
 //                     attach: [
 //                         2,
 //                         [{ type: "Bounce", id: 0, tiebreak: Tiebreak.Left }],
@@ -1545,14 +1499,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: S.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [1, { count: 1, seq: 1 }],
+//                     tombs: [1, { count: 1, change: 1 }],
 //                     attach: [
 //                         1,
 //                         [{ type: "Insert", id: 0, content: [{ id: "X" }] }],
@@ -1562,15 +1515,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: S.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 1 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [1, { count: 1, seq: 1 }],
+//                     tombs: [1, { count: 1, change: 1 }],
 //                     attach: [
 //                         1,
 //                         [{ type: "Bounce", id: 0 }],
@@ -1586,15 +1538,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: S.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 1 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [1, { count: 1, seq: 1 }],
+//                     tombs: [1, { count: 1, change: 1 }],
 //                     attach: [
 //                         1,
 //                         [{ type: "Bounce", id: 0 }],
@@ -1610,9 +1561,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e3: S.Transaction = {
+//     export const e5_r_e3: Transaction = {
 //         ref: 2,
-//         seq: 5,
 //         newRef: 3,
 //         marks: {
 //             modify: [{
@@ -1627,9 +1577,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: S.Transaction = {
+//     export const e5_r_e4: Transaction = {
 //         ref: 2,
-//         seq: 5,
 //         newRef: 4,
 //         marks: {
 //             modify: [{
@@ -1662,9 +1611,8 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[X Y]
 // */
 // export namespace ScenarioK {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -1676,9 +1624,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { foo: 0 } }],
 //         marks: {
 //             modify: [{
@@ -1698,9 +1645,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -1716,15 +1662,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { foo: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 1, seq: 1 }],
+//                     tombs: [{ count: 1, change: 1 }],
 //                     nodes: [
 //                         { type: "Move", id: 0, count: 1 },
 //                     ],
@@ -1740,14 +1685,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 1, seq: 1 }],
+//                     tombs: [{ count: 1, change: 1 }],
 //                     attach: [
 //                         1,
 //                         [
@@ -1760,16 +1704,15 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { foo: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
 //                     tombs: [
-//                         { count: 1, seq: 1 },
+//                         { count: 1, change: 1 },
 //                     ],
 //                     attach: [
 //                         [
@@ -1777,7 +1720,7 @@ export namespace ScenarioA {
 //                                 type: "Insert",
 //                                 id: 0,
 //                                 content: [{ id: "X" }],
-//                                 src: { seq: 2, id: 0 },
+//                                 src: { change: 2, id: 0 },
 //                             },
 //                         ],
 //                         [
@@ -1819,9 +1762,8 @@ export namespace ScenarioA {
 //  * Expected outcome: qux=[X Y]
 //  */
 // export namespace ScenarioL {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -1833,9 +1775,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
@@ -1856,9 +1797,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         moves: [
 //             { id: 0, src: { bar: 0 }, dst: { baz: 0 } },
 //             { id: 1, src: { bar: 1 }, dst: { baz: 0 } },
@@ -1886,9 +1826,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: S.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { qux: 0 } }],
 //         marks: {
 //             modify: [{
@@ -1909,9 +1848,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: S.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -1924,9 +1862,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6: S.Transaction = {
+//     export const e6: Transaction = {
 //         ref: 0,
-//         seq: 6,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -1938,15 +1875,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     nodes: [
 //                         { type: "Move", id: 0, count: 2 },
 //                     ],
@@ -1963,9 +1899,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 1,
 //         moves: [
 //             { id: 0, src: { bar: 0 }, dst: { baz: 0 } },
@@ -1974,7 +1909,7 @@ export namespace ScenarioA {
 //         marks: {
 //             modify: [{
 //                 bar: {
-//                     tombs: [{ count: 2, seq: [1, 2] }],
+//                     tombs: [{ count: 2, change: 2 }],
 //                     nodes: [
 //                         { type: "Move", id: 0, count: 1 },
 //                         { type: "Move", id: 1, count: 1 },
@@ -1995,15 +1930,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: S.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { qux: 0 } }],
 //         marks: {
 //             modify: [{
 //                 baz: {
-//                     tombs: [{ count: 2, seq: [1, 3] }],
+//                     tombs: [{ count: 2, change: [1, 3] }],
 //                     nodes: [
 //                         { type: "Move", id: 0, count: 2 },
 //                     ],
@@ -2020,14 +1954,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e1: S.Transaction = {
+//     export const e5_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         2,
 //                         [{ type: "Insert", id: 0, content: [{ id: "X" }], tiebreak: Tiebreak.Left }],
@@ -2037,15 +1970,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e2: S.Transaction = {
+//     export const e5_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 2 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         2,
 //                         [{ type: "Bounce", id: 0, tiebreak: Tiebreak.Left }],
@@ -2057,7 +1989,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 2, id: 0 },
+//                             src: { change: 2, id: 0 },
 //                             tiebreak: Tiebreak.Left,
 //                         }],
 //                     ],
@@ -2066,15 +1998,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e3: S.Transaction = {
+//     export const e5_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { foo: 2 }, hops: [{ bar: 0 }], dst: { baz: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         2,
 //                         [{ type: "Bounce", id: 0, tiebreak: Tiebreak.Left }],
@@ -2082,7 +2013,7 @@ export namespace ScenarioA {
 //                 },
 //                 bar: {
 //                     attach: [
-//                         [{ type: "Bounce", id: 0, src: { seq: 2, id: 0 }, tiebreak: Tiebreak.Left }],
+//                         [{ type: "Bounce", id: 0, src: { change: 2, id: 0 }, tiebreak: Tiebreak.Left }],
 //                     ],
 //                 },
 //                 baz: {
@@ -2091,7 +2022,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 3, id: 1 },
+//                             src: { change: 3, id: 1 },
 //                             tiebreak: Tiebreak.Left,
 //                         }],
 //                     ],
@@ -2100,15 +2031,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: S.Transaction = {
+//     export const e5_r_e4: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 4,
 //         moves: [{ id: 0, src: { foo: 2 }, hops: [{ bar: 0 }, { baz: 0 }], dst: { qux: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         2,
 //                         [{ type: "Bounce", id: 0, tiebreak: Tiebreak.Left }],
@@ -2116,12 +2046,12 @@ export namespace ScenarioA {
 //                 },
 //                 bar: {
 //                     attach: [
-//                         [{ type: "Bounce", id: 0, src: { seq: 2, id: 0 }, tiebreak: Tiebreak.Left }],
+//                         [{ type: "Bounce", id: 0, src: { change: 2, id: 0 }, tiebreak: Tiebreak.Left }],
 //                     ],
 //                 },
 //                 baz: {
 //                     attach: [
-//                         [{ type: "Bounce", id: 0, src: { seq: 3, id: 1 }, tiebreak: Tiebreak.Left }],
+//                         [{ type: "Bounce", id: 0, src: { change: 3, id: 1 }, tiebreak: Tiebreak.Left }],
 //                     ],
 //                 },
 //                 qux: {
@@ -2130,7 +2060,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 4, id: 0 },
+//                             src: { change: 4, id: 0 },
 //                             tiebreak: Tiebreak.Left,
 //                         }],
 //                     ],
@@ -2139,14 +2069,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e1: S.Transaction = {
+//     export const e6_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 6,
 //         newRef: 1,
 //             marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         [{ type: "Insert", id: 0, content: [{ id: "Y" }], tiebreak: Tiebreak.Right }],
 //                     ],
@@ -2155,15 +2084,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e2: S.Transaction = {
+//     export const e6_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 6,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         [{ type: "Bounce", id: 0, tiebreak: Tiebreak.Right }],
 //                     ],
@@ -2174,7 +2102,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 2, id: 0 },
+//                             src: { change: 2, id: 0 },
 //                             tiebreak: Tiebreak.Left,
 //                         }],
 //                     ],
@@ -2183,22 +2111,21 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e3: S.Transaction = {
+//     export const e6_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 6,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { foo: 0 }, hops: [{ bar: 0 }], dst: { baz: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         [{ type: "Bounce", id: 0, tiebreak: Tiebreak.Right }],
 //                     ],
 //                 },
 //                 bar: {
 //                     attach: [
-//                         [{ type: "Bounce", id: 0, src: { seq: 2, id: 0 }, tiebreak: Tiebreak.Left }],
+//                         [{ type: "Bounce", id: 0, src: { change: 2, id: 0 }, tiebreak: Tiebreak.Left }],
 //                     ],
 //                 },
 //                 baz: {
@@ -2207,7 +2134,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 3, id: 0 },
+//                             src: { change: 3, id: 0 },
 //                             tiebreak: Tiebreak.Right,
 //                         }],
 //                     ],
@@ -2216,27 +2143,26 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e4: S.Transaction = {
+//     export const e6_r_e4: Transaction = {
 //         ref: 0,
-//         seq: 6,
 //         newRef: 4,
 //         moves: [{ id: 0, src: { foo: 0 }, hops: [{ bar: 0 }, { baz: 0 }], dst: { qux: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         [{ type: "Bounce", id: 0, tiebreak: Tiebreak.Right }],
 //                     ],
 //                 },
 //                 bar: {
 //                     attach: [
-//                         [{ type: "Bounce", id: 0, src: { seq: 2, id: 0 }, tiebreak: Tiebreak.Left }],
+//                         [{ type: "Bounce", id: 0, src: { change: 2, id: 0 }, tiebreak: Tiebreak.Left }],
 //                     ],
 //                 },
 //                 baz: {
 //                     attach: [
-//                         [{ type: "Bounce", id: 0, src: { seq: 3, id: 0 }, tiebreak: Tiebreak.Right }],
+//                         [{ type: "Bounce", id: 0, src: { change: 3, id: 0 }, tiebreak: Tiebreak.Right }],
 //                     ],
 //                 },
 //                 qux: {
@@ -2244,7 +2170,7 @@ export namespace ScenarioA {
 //                         [{
 //                             type: "Insert", id: 0,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 4, id: 0 },
+//                             src: { change: 4, id: 0 },
 //                             tiebreak: Tiebreak.Left,
 //                         }],
 //                     ],
@@ -2253,27 +2179,26 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e6_r_e5: S.Transaction = {
+//     export const e6_r_e5: Transaction = {
 //         ref: 0,
-//         seq: 6,
 //         newRef: 5,
 //         moves: [{ id: 0, src: { foo: 0 }, hops: [{ bar: 0 }, { baz: 0 }], dst: { qux: 0 } }],
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         [{ type: "Bounce", id: 0, tiebreak: Tiebreak.Right }],
 //                     ],
 //                 },
 //                 bar: {
 //                     attach: [
-//                         [{ type: "Bounce", id: 0, src: { seq: 2, id: 0 }, tiebreak: Tiebreak.Left }],
+//                         [{ type: "Bounce", id: 0, src: { change: 2, id: 0 }, tiebreak: Tiebreak.Left }],
 //                     ],
 //                 },
 //                 baz: {
 //                     attach: [
-//                         [{ type: "Bounce", id: 0, src: { seq: 3, id: 0 }, tiebreak: Tiebreak.Right }],
+//                         [{ type: "Bounce", id: 0, src: { change: 3, id: 0 }, tiebreak: Tiebreak.Right }],
 //                     ],
 //                 },
 //                 qux: {
@@ -2283,7 +2208,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 4, id: 0 },
+//                             src: { change: 4, id: 0 },
 //                             tiebreak: Tiebreak.Left,
 //                         }],
 //                     ],
@@ -2310,9 +2235,8 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[X Y]
 //  */
 // export namespace ScenarioM {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -2324,9 +2248,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -2339,9 +2262,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -2354,9 +2276,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: S.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -2369,9 +2290,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
@@ -2384,14 +2304,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         1,
 //                         [{ type: "Insert", id: 0, content: [{ id: "X" }] }],
@@ -2401,14 +2320,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }, { count: 2, seq: 2 }],
+//                     tombs: [{ count: 2, change: 1 }, { count: 2, change: 2 }],
 //                     attach: [
 //                         1,
 //                         [{ type: "Insert", id: 0, content: [{ id: "X" }] }],
@@ -2418,14 +2336,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: S.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }],
+//                     tombs: [{ count: 2, change: 1 }],
 //                     attach: [
 //                         3,
 //                         [{ type: "Insert", id: 0, content: [{ id: "Y" }] }],
@@ -2435,14 +2352,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: S.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 1 }, { count: 2, seq: 2 }],
+//                     tombs: [{ count: 2, change: 1 }, { count: 2, change: 2 }],
 //                     attach: [
 //                         3,
 //                         [{ type: "Insert", id: 0, content: [{ id: "Y" }] }],
@@ -2452,18 +2368,17 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: S.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
 //                     tombs: [
-//                         { count: 1, seq: 1 },
+//                         { count: 1, change: 1 },
 //                         1, // X
-//                         { count: 1, seq: 1 },
-//                         { count: 1, seq: 2 },
+//                         { count: 1, change: 1 },
+//                         { count: 1, change: 2 },
 //                     ],
 //                     attach: [
 //                         4, // [-A-X-B-C
@@ -2505,9 +2420,8 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[A B C] bar=[X Y]
 //  */
 // export namespace ScenarioN {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         moves: [
 //             { id: 0, src: { foo: 1 }, dst: { bar: 0 } },
 //             { id: 1, src: { foo: 2 }, dst: { bar: 0 } },
@@ -2533,9 +2447,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -2548,9 +2461,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -2563,9 +2475,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         moves: [
 //             { id: 0, src: { foo: 2 }, dst: { bar: 0 } },
@@ -2581,8 +2492,8 @@ export namespace ScenarioA {
 //                 bar: {
 //                     attach: [
 //                         [
-//                             { type: "Intake", seq: 1, id: 0 },
-//                             { type: "Insert", id: 0, content: [{ id: "Y" }], src: { seq: 1, id: 1 } },
+//                             { type: "Intake", change: 1, id: 0 },
+//                             { type: "Insert", id: 0, content: [{ id: "Y" }], src: { change: 1, id: 1 } },
 //                         ],
 //                     ],
 //                 },
@@ -2590,9 +2501,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 1,
 //         moves: [
 //             { id: 0, src: { foo: 1 }, dst: { bar: 0 } },
@@ -2608,8 +2518,8 @@ export namespace ScenarioA {
 //                 bar: {
 //                     attach: [
 //                         [
-//                             { type: "Insert", id: 0, content: [{ id: "X" }], src: { seq: 1, id: 0 } },
-//                             { type: "Intake", seq: 1, id: 1 },
+//                             { type: "Insert", id: 0, content: [{ id: "X" }], src: { change: 1, id: 0 } },
+//                             { type: "Intake", change: 1, id: 1 },
 //                         ],
 //                     ],
 //                 },
@@ -2617,9 +2527,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         moves: [
 //             { id: 0, src: { foo: 1 }, dst: { bar: 0 } },
@@ -2635,8 +2544,8 @@ export namespace ScenarioA {
 //                 bar: {
 //                     attach: [
 //                         [
-//                             { type: "Insert", id: 0, content: [{ id: "X" }], src: { seq: 1, id: 0 } },
-//                             { type: "Intake", seq: 1, id: 1 },
+//                             { type: "Insert", id: 0, content: [{ id: "X" }], src: { change: 1, id: 0 } },
+//                             { type: "Intake", change: 1, id: 1 },
 //                         ],
 //                     ],
 //                 },
@@ -2668,9 +2577,8 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[] bar=[U X Y]
 //  */
 // export namespace ScenarioO {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         marks: {
 //             modify: [{
 //                 bar: {
@@ -2683,9 +2591,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -2697,9 +2604,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 1, // Known of 1
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -2721,9 +2627,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: S.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -2736,9 +2641,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: S.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         marks: {
 //             modify: [{
 //                 bar: {
@@ -2751,9 +2655,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
@@ -2766,14 +2669,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 2 }],
+//                     tombs: [{ count: 2, change: 2 }],
 //                     nodes: [
 //                         { type: "Move", id: 0, count: 2 },
 //                     ],
@@ -2792,9 +2694,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: S.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
@@ -2808,14 +2709,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: S.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 2 }],
+//                     tombs: [{ count: 2, change: 2 }],
 //                     attach: [
 //                         1,
 //                         [{ type: "Insert", id: 0, content: [{ id: "X" }], tiebreak: Tiebreak.Left }],
@@ -2825,15 +2725,14 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: S.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 2 } }],
 //             marks: {
 //             modify: [{
 //                 foo: {
-//                     tombs: [{ count: 2, seq: 2 }],
+//                     tombs: [{ count: 2, change: 2 }],
 //                     attach: [
 //                         1,
 //                         [{ type: "Bounce", id: 0, tiebreak: Tiebreak.Left }],
@@ -2849,14 +2748,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e1: S.Transaction = {
+//     export const e5_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
 //                 bar: {
-//                     tombs: [1, { count: 1, seq: 1 }],
+//                     tombs: [1, { count: 1, change: 1 }],
 //                     attach: [
 //                         2,
 //                         [{ type: "Insert", id: 0, content: [{ id: "Y" }], tiebreak: Tiebreak.Left }],
@@ -2866,14 +2764,13 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e2: S.Transaction = {
+//     export const e5_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 2,
 //         marks: {
 //             modify: [{
 //                 bar: {
-//                     tombs: [1, { count: 1, seq: 1 }],
+//                     tombs: [1, { count: 1, change: 1 }],
 //                     attach: [
 //                         2,
 //                         [{ type: "Insert", id: 0, content: [{ id: "Y" }], tiebreak: Tiebreak.Left }],
@@ -2883,16 +2780,15 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e3: S.Transaction = {
+//     export const e5_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 3,
 //         marks: {
 //             modify: [{
 //                 bar: {
 //                     tombs: [
 //                         1,
-//                         { count: 1, seq: 1 }, // V
+//                         { count: 1, change: 1 }, // V
 //                     ],
 //                     attach: [
 //                         2, // [-U-V
@@ -2903,16 +2799,15 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: S.Transaction = {
+//     export const e5_r_e4: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 4,
 //         marks: {
 //             modify: [{
 //                 bar: {
 //                     tombs: [
 //                         2, // U X
-//                         { count: 1, seq: 1 }, // V
+//                         { count: 1, change: 1 }, // V
 //                     ],
 //                     attach: [
 //                         3, // [-U-X-V
@@ -2939,9 +2834,8 @@ export namespace ScenarioA {
 //  * Expected outcome: foo=[X Y]
 //  */
 // export namespace ScenarioP {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
 //             marks: {
 //             modify: [{
@@ -2959,9 +2853,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
 //             marks: {
 //             modify: [{
@@ -2979,9 +2872,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         marks: {
 //             modify: [{
 //                 bar: {
@@ -2993,9 +2885,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: S.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         marks: {
 //             modify: [{
 //                 baz: {
@@ -3007,9 +2898,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3028,9 +2918,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3046,7 +2935,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             tiebreak: Tiebreak.Left, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3055,9 +2944,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3073,7 +2961,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             tiebreak: Tiebreak.Left, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3082,9 +2970,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: S.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
@@ -3097,9 +2984,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: S.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3115,7 +3001,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 2, id: 0 },
+//                             src: { change: 2, id: 0 },
 //                             tiebreak: Tiebreak.Right, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3124,9 +3010,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: S.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3143,7 +3028,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 2, id: 0 },
+//                             src: { change: 2, id: 0 },
 //                             tiebreak: Tiebreak.Right, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3172,9 +3057,8 @@ export namespace ScenarioA {
 //  * Expected outcome: qux=[X Y]
 //  */
 // export namespace ScenarioQ {
-//     export const e1: S.Transaction = {
+//     export const e1: Transaction = {
 //         ref: 0,
-//         seq: 1,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
 //             marks: {
 //             modify: [{
@@ -3192,9 +3076,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2: S.Transaction = {
+//     export const e2: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
 //             marks: {
 //             modify: [{
@@ -3212,9 +3095,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3: S.Transaction = {
+//     export const e3: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { qux: 0 } }],
 //             marks: {
 //             modify: [{
@@ -3232,9 +3114,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4: S.Transaction = {
+//     export const e4: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         marks: {
 //             modify: [{
 //                 bar: {
@@ -3246,9 +3127,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5: S.Transaction = {
+//     export const e5: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         marks: {
 //             modify: [{
 //                 baz: {
@@ -3260,9 +3140,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e2_r_e1: S.Transaction = {
+//     export const e2_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 2,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3281,9 +3160,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e1: S.Transaction = {
+//     export const e3_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { qux: 0 } }],
 //             marks: {
@@ -3302,9 +3180,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e3_r_e2: S.Transaction = {
+//     export const e3_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 3,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { qux: 0 } }],
 //             marks: {
@@ -3323,9 +3200,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e1: S.Transaction = {
+//     export const e4_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 1,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3341,7 +3217,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             tiebreak: Tiebreak.Left, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3350,9 +3226,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e2: S.Transaction = {
+//     export const e4_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { bar: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3368,7 +3243,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             tiebreak: Tiebreak.Left, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3377,9 +3252,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e4_r_e3: S.Transaction = {
+//     export const e4_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 4,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { bar: 0 }, hops: [{ foo: 0 }], dst: { qux: 0 } }],
 //             marks: {
@@ -3394,7 +3268,7 @@ export namespace ScenarioA {
 //                         [{
 //                             type: "Bounce",
 //                             id: 0,
-//                             src: { seq: 1, id: 0 },
+//                             src: { change: 1, id: 0 },
 //                             tiebreak: Tiebreak.Left, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3405,7 +3279,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "X" }],
-//                             src: { seq: 3, id: 0 },
+//                             src: { change: 3, id: 0 },
 //                             tiebreak: Tiebreak.Right, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3414,9 +3288,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e1: S.Transaction = {
+//     export const e5_r_e1: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 1,
 //         marks: {
 //             modify: [{
@@ -3429,9 +3302,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e2: S.Transaction = {
+//     export const e5_r_e2: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 2,
 //         moves: [{ id: 0, src: { baz: 0 }, dst: { foo: 0 } }],
 //             marks: {
@@ -3447,7 +3319,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 2, id: 0 },
+//                             src: { change: 2, id: 0 },
 //                             tiebreak: Tiebreak.Right, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3456,9 +3328,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e3: S.Transaction = {
+//     export const e5_r_e3: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 3,
 //         moves: [{ id: 0, src: { baz: 0 }, hops: [{ foo: 0 }], dst: { qux: 0 } }],
 //             marks: {
@@ -3473,7 +3344,7 @@ export namespace ScenarioA {
 //                         [{
 //                             type: "Bounce",
 //                             id: 0,
-//                             src: { seq: 2, id: 0 },
+//                             src: { change: 2, id: 0 },
 //                             tiebreak: Tiebreak.Right, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3484,7 +3355,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 3, id: 0 },
+//                             src: { change: 3, id: 0 },
 //                             tiebreak: Tiebreak.Right, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3493,9 +3364,8 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e5_r_e4: S.Transaction = {
+//     export const e5_r_e4: Transaction = {
 //         ref: 0,
-//         seq: 5,
 //         newRef: 4,
 //         moves: [{ id: 0, src: { baz: 0 }, hops: [{ foo: 0 }], dst: { qux: 0 } }],
 //             marks: {
@@ -3510,7 +3380,7 @@ export namespace ScenarioA {
 //                         [{
 //                             type: "Bounce",
 //                             id: 0,
-//                             src: { seq: 2, id: 0 },
+//                             src: { change: 2, id: 0 },
 //                             tiebreak: Tiebreak.Right, // Move Tiebreak
 //                         }],
 //                     ],
@@ -3522,7 +3392,7 @@ export namespace ScenarioA {
 //                             type: "Insert",
 //                             id: 0,
 //                             content: [{ id: "Y" }],
-//                             src: { seq: 3, id: 0 },
+//                             src: { change: 3, id: 0 },
 //                             tiebreak: Tiebreak.Right, // Move Tiebreak
 //                         }],
 //                     ],

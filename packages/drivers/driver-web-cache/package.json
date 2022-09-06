@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-web-cache",
-  "version": "2.0.0-internal.1.1.0",
+  "version": "2.0.0-internal.1.2.0",
   "description": "Implementation of the driver caching API for a web browser",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,8 +38,8 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "idb": "^6.1.2"
   },
   "devDependencies": {
@@ -52,7 +52,7 @@
     "@types/jest": "22.2.3",
     "@types/node": "^14.18.0",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
     "fake-indexeddb": "3.1.4",
     "jest": "^26.6.3",
