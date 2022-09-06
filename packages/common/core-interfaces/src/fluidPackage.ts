@@ -125,7 +125,7 @@ export interface IProvideFluidCodeDetailsComparer {
 }
 
 /**
- * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetailsComparer}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsComparer}
  * to have code loading modules in same package.
  * Provides capability to compare Fluid code details.
  */
