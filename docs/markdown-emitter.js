@@ -92,7 +92,7 @@ class HugoMarkdownEmitter extends MarkdownEmitter {
     }
 
     /**
-     * Override base logic to make use of Hugo callouts for note boxes
+     * Override base logic to make use of Hugo callouts for note boxes.
      *
      * @override
      */
