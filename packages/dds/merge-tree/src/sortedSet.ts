@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export abstract class SortedSet<T, U extends string | number> {
     protected abstract getKey(t: T): U;
 
