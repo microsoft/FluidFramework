@@ -229,8 +229,8 @@ export class ContainerContext implements IContainerContext {
         runtime.setConnectionState(connected, clientId);
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        this.runtime.process(message, local, context);
+    public process(message: ISequencedDocumentMessage, local: boolean) {
+        this.runtime.process(message, local);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
