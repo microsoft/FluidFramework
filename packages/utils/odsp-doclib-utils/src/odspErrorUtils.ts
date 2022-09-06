@@ -5,10 +5,11 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IFluidErrorBase, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, TelemetryLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     AuthorizationError,
     createGenericNetworkError,
+    DriverErrorTelemetryProps,
     isOnline,
     RetryableError,
     NonRetryableError,
@@ -18,7 +19,6 @@ import {
     OdspErrorType,
     OdspError,
     IOdspErrorAugmentations,
-    OdspRedirectError,
  } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
@@ -99,6 +99,19 @@ export interface OdspErrorResponse {
     error: OdspErrorResponseInnerError & {
         message: string;
     };
+}
+
+export class OdspRedirectError extends LoggingError {
+    readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
+    readonly canRetry = false;
+
+    constructor(
+        message: string,
+        readonly redirectionLocation: string | undefined,
+        props: DriverErrorTelemetryProps,
+    ) {
+        super(message, props, new Set(["redirectLocation"]));
+    }
 }
 
 /** Empirically-based type guard for error responses from ODSP */
