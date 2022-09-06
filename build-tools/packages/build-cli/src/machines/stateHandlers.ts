@@ -1,4 +1,3 @@
-import { Context } from "@fluidframework/build-tools";
 import type { Machine } from "jssm";
 import { CommandLogger } from "../logging";
 import { InstructionalPromptWriter } from "../instructionalPromptWriter";
@@ -9,7 +8,6 @@ import { MachineState } from "./machineState";
  * subclasses.
  */
 export type StateHandlerFunction = (
-    context: Context,
     state: MachineState,
     machine: Machine<unknown>,
     testMode: boolean,
@@ -31,7 +29,6 @@ export interface StateHandler {
  */
 export abstract class BaseStateHandler extends InstructionalPromptWriter implements StateHandler {
     abstract handleState(
-        context: Context,
         state: MachineState,
         machine: Machine<unknown>,
         testMode: boolean,
@@ -47,24 +44,26 @@ export abstract class BaseStateHandler extends InstructionalPromptWriter impleme
     }
 
     /**
-     * Sends the "success" action to the handler's state machine. Throws an error if the state transition fails.
+     * Sends the "success" action to a state machine. Throws an error if the state transition fails.
      *
+     * @param machine - The state machine.
      * @param state - The state from which to transition. Only used for logging.
      */
-    protected signalSuccess(state: MachineState) {
-        const transitioned = this.machine.action("success");
+    static signalSuccess(machine: Machine<unknown>, state: MachineState) {
+        const transitioned = machine.action("success");
         if (!transitioned) {
             throw new Error(`Failed when signaling success from state: ${state}`);
         }
     }
 
     /**
-     * Sends the "failure" action to the handler's state machine. Throws an error if the state transition fails.
+     * Sends the "failure" action to a state machine. Throws an error if the state transition fails.
      *
+     * @param machine - The state machine.
      * @param state - The state from which to transition. Only used for logging.
      */
-    protected signalFailure(state: MachineState) {
-        const transitioned = this.machine.action("failure");
+    static signalFailure(machine: Machine<unknown>, state: MachineState) {
+        const transitioned = machine.action("failure");
         if (!transitioned) {
             throw new Error(`Failed when signaling failure from state: ${state}`);
         }
@@ -73,13 +72,12 @@ export abstract class BaseStateHandler extends InstructionalPromptWriter impleme
 
 /**
  * A base class that handles the "Init" and "Failed" states in a state machine. These states are commonly used in state
- * machines so this class can serve as a base class for machine-specific handlers.
+ * machines so this class serves as a base class for machine-specific handlers.
  */
 export abstract class InitFailedStateHandler extends BaseStateHandler {
     /* eslint-disable @typescript-eslint/no-unused-vars */
     // eslint-disable-next-line max-params
     async handleState(
-        context: Context,
         state: MachineState,
         machine: Machine<unknown>,
         testMode: boolean,
@@ -93,7 +91,7 @@ export abstract class InitFailedStateHandler extends BaseStateHandler {
                     return true;
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 

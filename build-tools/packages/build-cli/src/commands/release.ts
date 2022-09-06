@@ -4,7 +4,6 @@
  */
 
 import { VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
-import { Command } from "@oclif/core";
 import {
     bumpTypeFlag,
     checkFlags,
@@ -16,29 +15,26 @@ import {
 import {
     StateHandler,
     StateMachineCommand,
-    UnifiedReleaseMachineDefinition,
-    UnifiedReleaseHandler,
+    FluidReleaseMachineDefinition,
+    FluidReleaseStateHandler,
+    FluidReleaseStateHandlerData,
 } from "../machines";
 
 /**
- * Releases a release group recursively.
- *
- * @remarks
- *
- * First the release group's dependencies are checked. If any of the dependencies are also in the repo, then they're
- * checked for the latest release version. If the dependencies have not yet been released, then the command prompts to
- * perform the release of the dependency, then run the releae command again.
- *
- * This process is continued until all the dependencies have been released, after which the release group itself is
- * released.
+ * Releases a package or release group. Most of the logic for handling the release is contained in the
+ * {@link FluidReleaseStateHandler}.
  */
 
 export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends StateMachineCommand<T> {
-    machine = UnifiedReleaseMachineDefinition;
-    data: HandlerData = {};
+    machine = FluidReleaseMachineDefinition;
+    data: FluidReleaseStateHandlerData = {};
     handler: StateHandler | undefined;
 
-    static description = "";
+    static summary = "Releases a package or release group.";
+    static description = `First the release group's dependencies are checked. If any of the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have not yet been released, then the command prompts to perform the release of the dependency, then run the releae command again.
+
+    This process is continued until all the dependencies have been released, after which the release group itself is
+    released.`;
 
     static flags = {
         releaseGroup: releaseGroupFlag({
@@ -63,11 +59,11 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
     async init() {
         await super.init();
 
-        const context = await this.getContext();
-        await this.initMachineHooks();
+        const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);
         const flags = this.processedFlags;
-        this.handler = new UnifiedReleaseHandler(this.machine, this.logger);
+        this.handler = new FluidReleaseStateHandler(this.machine, this.logger);
 
+        this.data.context = context;
         this.data.releaseGroup = flags.releaseGroup ?? flags.package!;
         this.data.releaseVersion = context.getVersion(this.data.releaseGroup);
         this.data.bumpType = flags.bumpType as VersionBumpType;

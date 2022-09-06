@@ -6,22 +6,15 @@
 import { strict as assert } from "assert";
 import path from "path";
 import { Context, exec, FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
-import {
-    VersionScheme,
-    VersionBumpType,
-    bumpVersionScheme,
-    detectVersionScheme,
-} from "@fluid-tools/version-tools";
-import { Command } from "@oclif/core";
+import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 import { FileSystem as fs } from "@rushstack/node-core-library";
-import { from as createStateMachine, Machine } from "jssm";
 import chalk from "chalk";
 import inquirer from "inquirer";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+import { from as createStateMachine, Machine } from "jssm";
+import { isReleaseGroup } from "../releaseGroups";
 import { CommandLogger } from "../logging";
 import { InstructionalPrompt } from "../instructionalPromptWriter";
 import {
-    getDefaultBumpTypeForBranch,
     getPreReleaseDependencies,
     isReleased,
     bumpReleaseGroup,
@@ -32,10 +25,12 @@ import {
     generateBumpDepsBranchName,
 } from "../lib";
 import { MachineState } from "./machineState";
-import { InitFailedStateHandler } from "./handlers";
+import { BaseStateHandler, InitFailedStateHandler } from "./stateHandlers";
+import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandlerData";
+import { askForReleaseType, checkPolicy, checkShouldRunOptionalChecks } from "./handlerFunctions";
 
 // eslint-disable-next-line unicorn/prefer-module
-const machineDefinitionFile = path.join(__dirname, "FluidUnifiedRelease.fsl");
+const machineDefinitionFile = path.join(__dirname, "FluidRelease.fsl");
 const fsl = fs.readFile(machineDefinitionFile).toString();
 
 /**
@@ -43,95 +38,44 @@ const fsl = fs.readFile(machineDefinitionFile).toString();
  *
  * @alpha
  */
-export const UnifiedReleaseMachineDefinition = createStateMachine(fsl);
+export const FluidReleaseMachineDefinition = createStateMachine(fsl);
 
-export interface HandlerData {
-    releaseGroup?: ReleaseGroup | ReleasePackage;
-    versionScheme?: VersionScheme;
-    bumpType?: VersionBumpType;
-    releaseVersion?: string;
-    shouldSkipChecks?: boolean;
-    shouldCheckPolicy?: boolean;
-    shouldCheckBranch?: boolean;
-    shouldCheckBranchUpdate?: boolean;
-    shouldCommit?: boolean;
-    shouldInstall?: boolean;
-    shouldCheckMainNextIntegrated?: boolean;
-    command?: Command;
-}
-
-export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
-    // eslint-disable-next-line complexity, max-params
-    async handleState(
+export class FluidReleaseStateHandler extends InitFailedStateHandler {
+    private static async succeedAndContinue(
         context: Context,
         state: MachineState,
         machine: Machine<unknown>,
         testMode: boolean,
         log: CommandLogger,
-        data: HandlerData,
+        data: FluidReleaseStateHandlerData,
     ): Promise<boolean> {
+        if (testMode) return true;
+
+        BaseStateHandler.signalSuccess(machine, state);
+        return true;
+    }
+
+    // eslint-disable-next-line complexity, max-params
+    async handleState(
+        state: MachineState,
+        machine: Machine<unknown>,
+        testMode: boolean,
+        log: CommandLogger,
+        data: FluidReleaseStateHandlerData,
+    ): Promise<boolean> {
+        const { context } = data;
+        assert(context !== undefined, "Context is undefined.");
+
         let superShouldHandle = false;
+
         switch (state) {
             case "AskForReleaseType": {
-                if (testMode) return true;
-
-                const { bumpType: inputBumpType, releaseGroup } = data;
-
-                const currentBranch = await context.gitRepo.getCurrentBranchName();
-                const currentVersion = context.getVersion(releaseGroup!);
-                const bumpedMajor = bumpVersionScheme(currentVersion, "major");
-                const bumpedMinor = bumpVersionScheme(currentVersion, "minor");
-                const bumpedPatch = bumpVersionScheme(currentVersion, "patch");
-
-                const questions: inquirer.Question[] = [];
-
-                let bumpType = getDefaultBumpTypeForBranch(currentBranch) ?? inputBumpType;
-                if (inputBumpType === undefined) {
-                    const choices = [
-                        { value: "major", name: `major (${currentVersion} => ${bumpedMajor})` },
-                        { value: "minor", name: `minor (${currentVersion} => ${bumpedMinor})` },
-                        { value: "patch", name: `patch  (${currentVersion} => ${bumpedPatch})` },
-                    ];
-                    const askBumpType: inquirer.ListQuestion = {
-                        type: "list",
-                        name: "bumpType",
-                        choices,
-                        default: bumpType,
-                        message: `The current branch is '${currentBranch}'. The default bump type for that branch is '${bumpType}', but you can change it now if needed.`,
-                    };
-                    questions.push(askBumpType);
-                    const answers = await inquirer.prompt(questions);
-                    bumpType = answers.bumpType;
-                    data.bumpType = bumpType;
-                }
-
-                if (bumpType === undefined) {
-                    throw new Error(`bumpType is undefined.`);
-                }
-
-                // This state is unique; it uses major/minor/patch as the actions
-                this.machine.action(bumpType);
-
-                this.signalSuccess(state);
-                break;
-            }
-
-            case "DoChecks": {
-                if (testMode) return true;
-
-                this.signalSuccess(state);
+                await askForReleaseType(state, machine, testMode, log, data);
                 break;
             }
 
             case "CheckShouldRunOptionalChecks": {
-                if (testMode) return true;
-
-                const { shouldSkipChecks } = data;
-                if (shouldSkipChecks === true) {
-                    this.signalFailure(state);
-                }
-
-                this.signalSuccess(state);
+                await checkShouldRunOptionalChecks(state, machine, testMode, log, data);
                 break;
             }
 
@@ -140,70 +84,19 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
 
                 const { releaseGroup } = data;
                 if (isReleaseGroup(releaseGroup)) {
-                    this.signalSuccess(state);
+                    BaseStateHandler.signalSuccess(machine, state);
                     // eslint-disable-next-line no-negated-condition
                 } else if (context.fullPackageMap.get(releaseGroup!) !== undefined) {
-                    this.signalSuccess(state);
+                    BaseStateHandler.signalSuccess(machine, state);
                 } else {
-                    this.signalFailure(state);
+                    BaseStateHandler.signalFailure(machine, state);
                 }
 
                 break;
             }
 
             case "CheckPolicy": {
-                if (testMode) return true;
-
-                const { shouldCheckPolicy } = data;
-                if (shouldCheckPolicy === true) {
-                    if (context.originalBranchName !== "main") {
-                        log.warning(
-                            "WARNING: Policy check fixes are not expected outside of main branch!  Make sure you know what you are doing.",
-                        );
-                    }
-
-                    // await CheckPolicy.run([
-                    //     "--fix",
-                    //     "--exclusions",
-                    //     path.join(
-                    //         context.gitRepo.resolvedRoot,
-                    //         "build-tools",
-                    //         "packages",
-                    //         "build-tools",
-                    //         "data",
-                    //         "exclusions.json"
-                    //     )
-                    // ]);
-
-                    await exec(
-                        `node ${path.join(
-                            context.gitRepo.resolvedRoot,
-                            "build-tools",
-                            "packages",
-                            "build-tools",
-                            "dist",
-                            "repoPolicyCheck",
-                            "repoPolicyCheck.js",
-                        )} -r`,
-                        context.gitRepo.resolvedRoot,
-                        "policy-check:fix failed",
-                    );
-
-                    // check for policy check violation
-                    const afterPolicyCheckStatus = await context.gitRepo.getStatus();
-                    if (afterPolicyCheckStatus !== "" && afterPolicyCheckStatus !== "") {
-                        log.logHr();
-                        log.errorLog(
-                            `Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`,
-                        );
-                        this.signalFailure(state);
-                        break;
-                    }
-                } else {
-                    log.warning("Skipping policy check.");
-                }
-
-                this.signalSuccess(state);
+                await checkPolicy(state, machine, testMode, log, data);
                 break;
             }
 
@@ -212,11 +105,11 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
 
                 const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
                 if (remote === undefined) {
-                    this.signalFailure(state);
+                    BaseStateHandler.signalFailure(machine, state);
                     log.errorLog(`Unable to find remote for '${context.originRemotePartialUrl}'`);
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -231,16 +124,16 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
                 );
                 if (shouldCheckBranchUpdate === true) {
                     if (!isBranchUpToDate) {
-                        this.signalFailure(state);
+                        BaseStateHandler.signalFailure(machine, state);
                         log.errorLog(
                             `Local '${context.originalBranchName}' branch not up to date with remote. Please pull from '${remote}'.`,
                         );
                     }
 
-                    this.signalSuccess(state);
+                    BaseStateHandler.signalSuccess(machine, state);
                 } else {
                     log.warning("Not checking if the branch is up-to-date with the remote.");
-                    this.signalSuccess(state);
+                    BaseStateHandler.signalSuccess(machine, state);
                 }
 
                 break;
@@ -249,30 +142,6 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
             case "CheckNoPrereleaseDependencies3":
             case "CheckNoPrereleaseDependencies2":
             case "CheckNoPrereleaseDependencies": {
-                if (testMode) return true;
-
-                const { releaseGroup } = data;
-
-                const { releaseGroups, packages, isEmpty } = await getPreReleaseDependencies(
-                    context,
-                    releaseGroup!,
-                );
-
-                // assert(!isEmpty, `No prereleases found in ${state} state.`);
-
-                const packagesToBump = new Set(packages.keys());
-                for (const rg of releaseGroups.keys()) {
-                    for (const p of context.packagesInReleaseGroup(rg)) {
-                        packagesToBump.add(p.name);
-                    }
-                }
-
-                if (isEmpty) {
-                    this.signalSuccess(state);
-                } else {
-                    this.signalFailure(state);
-                }
-
                 break;
             }
 
@@ -284,10 +153,10 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
                 const { bumpType } = data;
 
                 if (bumpType === undefined) {
-                    this.signalFailure(state);
+                    BaseStateHandler.signalFailure(machine, state);
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -308,7 +177,7 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
                                 log.warning(
                                     `Patch release should only be done on 'release/*' branches, but current branch is '${context.originalBranchName}'.\nYou can skip this check with --no-branchCheck.'`,
                                 );
-                                this.signalFailure(state);
+                                BaseStateHandler.signalFailure(machine, state);
                             }
 
                             break;
@@ -323,7 +192,7 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
                                 log.warning(
                                     `Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${context.originalBranchName}'.`,
                                 );
-                                this.signalFailure(state);
+                                BaseStateHandler.signalFailure(machine, state);
                             }
                         }
                     }
@@ -333,7 +202,7 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
                     );
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -355,13 +224,13 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
                     const ret = await buildToolsMonoRepo.install();
                     if (ret.error) {
                         log.errorLog("Install failed.");
-                        this.signalFailure(state);
+                        BaseStateHandler.signalFailure(machine, state);
                     }
                 } else {
                     log.warning(`Skipping installation.`);
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -388,14 +257,14 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
 
                         const answers = await inquirer.prompt(confirmIntegratedQuestion);
                         if (answers.integrated !== true) {
-                            this.signalFailure(state);
+                            BaseStateHandler.signalFailure(machine, state);
                         }
                     } else {
                         log.warning("Skipping main/next integration check.");
                     }
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -406,9 +275,9 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
 
                 const wasReleased = await isReleased(context, releaseGroup!, releaseVersion!);
                 if (wasReleased) {
-                    this.signalSuccess(state);
+                    BaseStateHandler.signalSuccess(machine, state);
                 } else {
-                    this.signalFailure(state);
+                    BaseStateHandler.signalFailure(machine, state);
                 }
 
                 break;
@@ -424,11 +293,11 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
                     log.warning(
                         `Release group ${releaseGroup} has not yet been bumped. It is at version ${rgVersion}; current released version ${releaseVersion}`,
                     );
-                    this.signalFailure(state);
+                    BaseStateHandler.signalFailure(machine, state);
                     break;
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -458,10 +327,10 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
 
                 if (shouldInstall === true && !(await FluidRepo.ensureInstalled(packages, false))) {
                     log.errorLog("Install failed.");
-                    this.signalFailure(state);
+                    BaseStateHandler.signalFailure(machine, state);
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -575,12 +444,12 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
 
                 if (updatedPackages.length > 0) {
                     // There were updates, which is considered a failure.
-                    this.signalFailure(state);
+                    BaseStateHandler.signalFailure(machine, state);
                     context.repo.reload();
                     break;
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -595,11 +464,11 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
 
                 const commit = await context.gitRepo.getShaForBranch(releaseBranch);
                 if (commit !== undefined) {
-                    this.signalFailure(state);
+                    BaseStateHandler.signalFailure(machine, state);
                     log.errorLog(`${releaseBranch} already exists`);
                 }
 
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -669,7 +538,7 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
                 const { bumpType, shouldCommit, releaseGroup, releaseVersion } = data;
 
                 if (shouldCommit !== true) {
-                    this.signalFailure(state);
+                    BaseStateHandler.signalFailure(machine, state);
                     break;
                 }
 
@@ -688,7 +557,7 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
 
                 const commitMsg = `[bump] ${releaseGroup}: ${version} => ${newVersion} (${bumpType})\n\nPost-release ${bumpType} bump of ${releaseGroup}.`;
                 await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -698,7 +567,7 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
                 const { releaseGroup, shouldCommit } = data;
 
                 if (shouldCommit !== true) {
-                    this.signalSuccess(state);
+                    BaseStateHandler.signalSuccess(machine, state);
                 }
 
                 assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
@@ -712,7 +581,7 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
 
                 const commitMsg = `[bump] ${releaseGroup}: update prerelease dependencies to release versions`;
                 await context.gitRepo.commit(commitMsg, `Error committing to ${branchName}`);
-                this.signalSuccess(state);
+                BaseStateHandler.signalSuccess(machine, state);
                 break;
             }
 
@@ -826,14 +695,7 @@ export class FluidUnifiedReleaseHandler extends InitFailedStateHandler {
         // }
 
         if (superShouldHandle === true) {
-            const superHandled = await super.handleState(
-                context,
-                state,
-                machine,
-                testMode,
-                log,
-                data,
-            );
+            const superHandled = await super.handleState(state, machine, testMode, log, data);
             return superHandled;
         }
 

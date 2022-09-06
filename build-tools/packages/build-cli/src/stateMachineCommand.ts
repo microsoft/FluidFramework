@@ -93,7 +93,6 @@ export abstract class StateMachineCommand<
                 }
 
                 const handled = await this.handler?.handleState(
-                    context,
                     flags.state,
                     this.machine,
                     this.processedFlags.testMode,
@@ -113,7 +112,6 @@ export abstract class StateMachineCommand<
 
                 // eslint-disable-next-line no-await-in-loop
                 const handled = await this.handler?.handleState(
-                    context,
                     state,
                     this.machine,
                     this.processedFlags.testMode,

@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { UnifiedReleaseMachineDefinition, FluidUnifiedReleaseHandler } from "./fluidUnifiedReleaseMachine";
+export type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandlerData";
+export { FluidReleaseMachineDefinition, FluidReleaseStateHandler } from "./fluidReleaseMachine";
 
 export { StateMachineCommand } from "../stateMachineCommand";
 
-export {
-    StateHandler,
-    InitFailedStateHandler,
-} from "./handlers";
+export { BaseStateHandler, type StateHandler, InitFailedStateHandler } from "./stateHandlers";
 
-export { MachineState } from "./machineState";
+export type { MachineState } from "./machineState";
