@@ -3,21 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { ArrayProperty, NodeProperty, PropertyFactory } from "@fluid-experimental/property-properties";
+import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { Tooltip } from '@material-ui/core';
-import { ReactWrapper } from 'enzyme';
+import { ReactWrapper } from "enzyme";
 import React from 'react';
+import { useFakeTimers } from 'sinon';
 import { InspectorMessages } from '../src/constants';
 import { Empty } from '../src/Empty';
-import { fetchRegisteredTemplates } from '../src/PropertyDataCreationHandlers';
 import { IDataGetterParameter } from '../src/InspectorTableTypes';
 import { NameCell } from '../src/NameCell';
-import { BooleanView } from '../src/PropertyViews/Boolean';
-import { EnumView } from '../src/PropertyViews/Enum';
-import { NumberView } from '../src/PropertyViews/Number';
-import { StringView } from '../src/PropertyViews/String';
-import { useFakeTimers } from 'sinon';
+import { fetchRegisteredTemplates } from '../src/PropertyDataCreationHandlers';
+import { BooleanView, EnumView, NumberView, StringView } from '../src/PropertyViews';
 import {
   coordinateSystem3DSchema,
   enumUnoDosTresSchema,
@@ -27,7 +24,7 @@ import {
   primitiveCollectionsNodeSchema,
   primitiveCollectionsSchema,
   sampleConstCollectionSchema,
-  sampleConstSchema,
+  sampleConstSchema
 } from './schemas';
 import {
   addProperty,
@@ -46,7 +43,7 @@ import {
   toggleEditableValueCellBoolSwitch,
   typeNewName,
   updateEditableValueCellSelectValue,
-  updateEditableValueCellValue,
+  updateEditableValueCellValue
 } from './testUtils';
 
 const changeSearchInput = (wrapper, value, clock?) => {
@@ -100,7 +97,8 @@ describe('InspectorTable', () => {
         expect(wrapper.find(Empty).props().description).toEqual(InspectorMessages.EMPTY_WORKSPACE);
       });
 
-    it('should show empty data panel if orphan property is passed',
+    // skipping the test since currently orphaned properties its not relevant with the new PropertyTree.
+    it.skip('should show empty data panel if orphan property is passed',
       () => {
         // Mount table with empty workspace and data creation disabled
         const newProperty = PropertyFactory.create('NodeProperty') as NodeProperty;

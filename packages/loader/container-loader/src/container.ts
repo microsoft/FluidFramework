@@ -800,12 +800,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
         // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
-
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
         assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
-        assert(this._protocolHandler.attributes.term !== undefined, "Must have a valid protocol handler instance");
+        assert(this._protocolHandler.attributes.term !== undefined,
+            0x37e /* Must have a valid protocol handler instance */);
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -813,6 +813,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             term: this._protocolHandler.attributes.term,
             clientId: this.clientId,
         };
+
+        this.mc.logger.sendTelemetryEvent({ eventName: "CloseAndGetPendingLocalState" });
 
         this.close();
 
@@ -1414,7 +1416,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const protocol = protocolHandlerBuilder(
             attributes,
             quorumSnapshot,
-            (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+            (key, value) => this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
             this._initialClients ?? [],
         );
 
@@ -1717,10 +1719,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     { messageType: type }));
                 return -1;
         }
-        return this.submitMessage(type, contents, batch, metadata);
+        return this.submitMessage(type, JSON.stringify(contents), batch, metadata);
     }
 
-    private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
+    private submitMessage(type: MessageType, contents?: string, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
@@ -1765,10 +1767,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.serviceConfiguration !== undefined,
                     0x2e4 /* "there should be service config for active connection" */);
                 this.collabWindowTracker = new CollabWindowTracker(
-                    (type, contents) => {
+                    (type) => {
                         assert(this.activeConnection(),
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
-                        this.submitMessage(type, contents);
+                        this.submitMessage(type);
                     },
                     this.serviceConfiguration.noopTimeFrequency,
                     this.serviceConfiguration.noopCountFrequency,

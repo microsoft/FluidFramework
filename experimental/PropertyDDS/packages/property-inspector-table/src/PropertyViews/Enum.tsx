@@ -7,10 +7,9 @@ import { ContainerProperty } from "@fluid-experimental/property-properties";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select, { SelectProps } from "@material-ui/core/Select";
 import * as React from "react";
-import { IEditableValueCellProps } from "../EditableValueCell";
-import { IInspectorRow } from "../InspectorTableTypes";
+import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes";
 import { Utils } from "../typeUtils";
-import { getPropertyValue } from "../utils";
+import { getPropertyValue } from "../propertyInspectorUtils";
 
 type ValType = string | number | boolean;
 

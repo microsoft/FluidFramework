@@ -29,11 +29,11 @@ import {
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
-     convertSnapshotTreeToSummaryTree,
-     convertToSummaryTree,
-     create404Response,
-     responseToException,
-     SummaryTreeBuilder,
+    convertSnapshotTreeToSummaryTree,
+    convertToSummaryTree,
+    create404Response,
+    responseToException,
+    SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -56,10 +56,10 @@ import { GCNodeType } from "./garbageCollection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
- /**
-  * This class encapsulates data store handling. Currently it is only used by the container runtime,
-  * but eventually could be hosted on any channel once we formalize the channel api boundary.
-  */
+/**
+ * This class encapsulates data store handling. Currently it is only used by the container runtime,
+ * but eventually could be hosted on any channel once we formalize the channel api boundary.
+ */
 export class DataStores implements IDisposable {
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -143,7 +143,6 @@ export class DataStores implements IDisposable {
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ),
                     writeGCDataAtRoot: this.writeGCDataAtRoot,
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             } else {
                 if (typeof value !== "object") {
@@ -164,7 +163,6 @@ export class DataStores implements IDisposable {
                     snapshotTree,
                     isRootDataStore: undefined,
                     writeGCDataAtRoot: this.writeGCDataAtRoot,
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -202,7 +200,7 @@ export class DataStores implements IDisposable {
             return;
         }
 
-         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
+        // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.alreadyProcessed(attachMessage.id)) {
             // TODO: dataStoreId may require a different tag from PackageData #7488
             const error = new DataCorruptionError(
@@ -245,13 +243,11 @@ export class DataStores implements IDisposable {
                         entries: [createAttributesBlob(
                             pkg,
                             true /* isRootDataStore */,
-                            this.runtime.disableIsolatedChannels,
                         )],
                     },
                 },
             ),
             writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             pkg,
         });
 
@@ -356,13 +352,12 @@ export class DataStores implements IDisposable {
             snapshotTree: undefined,
             isRootDataStore: isRoot,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
         });
         this.contexts.addUnbound(context);
         return context;
     }
 
-    public _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
+    public _createFluidDataStoreContext(pkg: string[], id: string, props?: any) {
         assert(!id.includes("/"), 0x30d /* Id cannot contain slashes */);
         const context = new LocalFluidDataStoreContext({
             id,
@@ -376,9 +371,8 @@ export class DataStores implements IDisposable {
             ),
             makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
-            isRootDataStore: isRoot,
+            isRootDataStore: false,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             createProps: props,
         });
         this.contexts.addUnbound(context);
@@ -481,7 +475,7 @@ export class DataStores implements IDisposable {
         } else {
             eventName = "attached";
         }
-        for (const [,context] of this.contexts) {
+        for (const [, context] of this.contexts) {
             // Fire only for bounded stores.
             if (!this.contexts.isNotBound(context.id)) {
                 context.emit(eventName);

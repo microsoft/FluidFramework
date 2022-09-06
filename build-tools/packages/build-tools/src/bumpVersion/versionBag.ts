@@ -56,8 +56,8 @@ export class VersionBag {
 }
 
 /**
- * Keep track of all the dependency version information and detect conflicting dependencies.
- * Provide functionality to collect the dependencies information from published package as well.
+ * A specialized {@link VersionBag} that tracks dependency version information about packages and detects conflicting
+ * dependencies. It can also be used to collect dependency information from packages published to npm.
  */
 export class ReferenceVersionBag extends VersionBag {
     private readonly referenceData = new Map<string, { reference: string, published: boolean }>();
@@ -65,13 +65,18 @@ export class ReferenceVersionBag extends VersionBag {
     private readonly publishedPackage = new Set<string>();
     private readonly publishedPackageRange = new Set<string>();
 
-    constructor(private readonly repoRoot: string, private readonly fullPackageMap: Map<string, Package>, public readonly repoVersions: VersionBag) {
+    constructor(
+        private readonly repoRoot: string,
+        private readonly fullPackageMap: Map<string, Package>,
+        public readonly repoVersions: VersionBag
+    ) {
         super();
     }
 
     /**
-     * Add package and version to the version bag, with option reference to indicate where the reference comes from
-     * Will error if there is a conflicting dependency versions, if the references are from the local repo, other wise warn.
+     * Add package and version to the version bag, with optional reference to indicate where the reference comes from.
+     * Will error if there is a conflicting dependency versions, if the references are from the local repo, otherwise
+     * warn.
      *
      * @param pkg
      * @param version

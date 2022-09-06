@@ -22,17 +22,21 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 
 trigger:
   branches:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - build-tools
     - tools/pipelines/build-build-tools.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -45,12 +49,12 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
     - build-tools
     - tools/pipelines/build-build-tools.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -60,12 +64,13 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: build-tools
     tagName: build-tools
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskTest: test
+    taskTest: ci:test
     poolBuild: Large
     cgSubDirectory: packages
     checkoutSubmodules: true
@@ -85,10 +90,10 @@ extends:
         workingDir: '$(Build.SourcesDirectory)/build-tools'
     # Build the build-tools locally so it can be used to generate the monorepo package.json
     - task: Npm@1
-      displayName: 'npm run build:compile'
+      displayName: 'npm run build:full'
       inputs:
         command: 'custom'
-        customCommand: 'run build:compile'
+        customCommand: 'run build:full'
         workingDir: '$(Build.SourcesDirectory)/build-tools'
     - task: Bash@3
       displayName: 'Generate Mono repo package json'
