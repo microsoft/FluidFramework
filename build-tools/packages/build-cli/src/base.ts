@@ -14,8 +14,10 @@ import { Command, Flags } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
+import { Machine } from "jssm";
 import { rootPathFlag } from "./flags";
 import { CommandLogger } from "./logging";
+import { StateHandler } from "./machines";
 
 // This is needed to get type safety working in derived classes.
 // https://github.com/oclif/oclif.github.io/pull/142
@@ -157,8 +159,8 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     }
 
     /** Logs a warning. */
-    public warning(message: string | Error): string | Error {
-        this.warn(chalk.yellow(`WARNING: ${message}`));
+    public warn(message: string | Error): string | Error {
+        this.log(chalk.yellow(`WARNING: ${message}`));
         return message;
     }
 
@@ -173,5 +175,80 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         }
 
         return message;
+    }
+}
+
+/**
+ * A base command that uses an internal state machine to govern its behavior.
+ */
+export abstract class StateMachineCommand<T extends typeof StateMachineCommand.flags>
+    extends BaseCommand<T>
+    implements StateHandler
+{
+    static flags = {
+        ...BaseCommand.flags,
+    };
+
+    abstract get machine(): Machine<unknown>;
+
+    async init(): Promise<void> {
+        await super.init();
+        await this.initMachineHooks();
+    }
+
+    /** Wires up some hooks on the machine to do logging */
+    protected async initMachineHooks() {
+        for (const state of this.machine.states()) {
+            if (this.machine.state_is_terminal(state) === true) {
+                this.machine.hook_entry(state, (o: any) => {
+                    const { from, action } = o;
+                    this.verbose(`${state}: ${action} from ${from}`);
+                });
+            }
+        }
+
+        this.machine.hook_any_transition((t: any) => {
+            const { action, from, to } = t;
+            this.verbose(`STATE MACHINE: ${from} [${action}] ==> ${to}`);
+        });
+    }
+
+    async handleState(state: string): Promise<boolean> {
+        switch (state) {
+            case "Init": {
+                this.machine.action("success");
+                break;
+            }
+
+            case "Failed": {
+                this.verbose("Failed state!");
+                this.exit();
+                break;
+            }
+
+            default: {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** Loops over the state machine and calls handleState for each machine state. Subclasses should call this at the
+     * end of their `run` method. */
+    protected async stateLoop(): Promise<void> {
+        do {
+            const state = this.machine.state();
+            // eslint-disable-next-line no-await-in-loop
+            const handled = await this.handleState(state);
+            if (!handled) {
+                this.error(`Unhandled state: ${state}`);
+            }
+            // eslint-disable-next-line no-constant-condition
+        } while (true);
+    }
+
+    async run(): Promise<void> {
+        await this.stateLoop();
     }
 }
