@@ -107,7 +107,7 @@ export class OdspRedirectError extends LoggingError {
 
     constructor(
         message: string,
-        readonly redirectionLocation: string | undefined,
+        readonly redirectLocation: string | undefined,
         props: DriverErrorTelemetryProps,
     ) {
         super(message, props, new Set(["redirectLocation"]));
