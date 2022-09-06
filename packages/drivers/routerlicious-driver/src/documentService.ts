@@ -49,7 +49,7 @@ export class DocumentService implements api.IDocumentService {
         private _resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,
         private deltaStorageUrl: string,
-        private readonly deltaStreamUrl: string,
+        private deltaStreamUrl: string,
         private storageUrl: string,
         private readonly logger: ITelemetryLogger,
         protected tokenProvider: ITokenProvider,
@@ -242,6 +242,7 @@ export class DocumentService implements api.IDocumentService {
         this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || this.ordererUrl;
         this.lastDiscoveredAt = Date.now();
     }
 
