@@ -28,22 +28,22 @@ const counterRebaser = commutativeRebaser({
 describe("verifyChangeRebaser", () => {
     it("test counter with safe integers", () => {
         const output = verifyChangeRebaser(counterRebaser, new Set([-1, 2, 3, 0, -2, 4]), (a, b) => a === b);
-        assert.equal(output.rebaseLeftDistributivity, "PASSED");
-        assert.equal(output.composeAssociativity, "PASSED");
-        assert.equal(output.rebaseRightDistributivity, "PASSED");
-        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "PASSED");
-        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "PASSED");
-        assert.equal(output.composeWithInverseIsNoOp, "PASSED");
+        assert.equal(output.rebaseLeftDistributivity, "Passed");
+        assert.equal(output.composeAssociativity, "Passed");
+        assert.equal(output.rebaseRightDistributivity, "Passed");
+        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "Passed");
+        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
+        assert.equal(output.composeWithInverseIsNoOp, "Passed");
     });
 
     it("test counter with unsafe integers", () => {
         const output = verifyChangeRebaser(counterRebaser, new Set([Number.MAX_SAFE_INTEGER, -10, 2]), (a, b) => a === b);
-        assert.equal(output.rebaseLeftDistributivity, "PASSED");
-        assert.notEqual(output.composeAssociativity, "PASSED");
-        assert.equal(output.rebaseRightDistributivity, "PASSED");
-        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "PASSED");
-        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "PASSED");
-        assert.equal(output.composeWithInverseIsNoOp, "PASSED");
+        assert.equal(output.rebaseLeftDistributivity, "Passed");
+        assert.notEqual(output.composeAssociativity, "Passed");
+        assert.equal(output.rebaseRightDistributivity, "Passed");
+        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "Passed");
+        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
+        assert.equal(output.composeWithInverseIsNoOp, "Passed");
     });
 
     // This test case contains all the different "edge case" numbers
@@ -61,11 +61,11 @@ describe("verifyChangeRebaser", () => {
             ]),
             (a, b) => a === b,
         );
-        assert.notEqual(output.rebaseLeftDistributivity, "PASSED");
-        assert.notEqual(output.composeAssociativity, "PASSED");
-        assert.notEqual(output.rebaseRightDistributivity, "PASSED");
-        assert.notEqual(output.rebaseOverDoUndoPairIsNoOp, "PASSED");
-        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "PASSED");
-        assert.notEqual(output.composeWithInverseIsNoOp, "PASSED");
+        assert.notEqual(output.rebaseLeftDistributivity, "Passed");
+        assert.notEqual(output.composeAssociativity, "Passed");
+        assert.notEqual(output.rebaseRightDistributivity, "Passed");
+        assert.notEqual(output.rebaseOverDoUndoPairIsNoOp, "Passed");
+        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
+        assert.notEqual(output.composeWithInverseIsNoOp, "Passed");
     });
 });
