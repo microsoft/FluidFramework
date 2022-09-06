@@ -75,9 +75,7 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
-  "dependencies": {
-    "socket.io": "^4.5.2"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@fluidframework/build-tools": "^0.3.0-0",
     "@microsoft/api-documenter": "^7.17.9",
@@ -85,7 +83,6 @@
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "lerna": "^4.0.0",
-    "lerna-update-wizard": "^1.1.2",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",
