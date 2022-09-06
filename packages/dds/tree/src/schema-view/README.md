@@ -1,4 +1,4 @@
-# Schema-View
+# schema-view
 
 This folder extends "Schema-Stored", adding APIs for applications to view and interact with documents which use stored-schema.
 Included are utilities for declaring schema with strong typescript types,
