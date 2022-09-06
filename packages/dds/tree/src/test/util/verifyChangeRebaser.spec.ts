@@ -69,10 +69,10 @@ describe("verifyChangeRebaser", () => {
             ]),
             (a, b) => a === b || (isNaN(a) && isNaN(b)),
         );
-        assert.notEqual(output.rebaseLeftDistributivity, "Passed");
+        assert.equal(output.rebaseLeftDistributivity, "Passed");
         assert.notEqual(output.composeAssociativity, "Passed");
-        assert.notEqual(output.rebaseRightDistributivity, "Passed");
-        assert.notEqual(output.rebaseOverDoUndoPairIsNoOp, "Passed");
+        assert.equal(output.rebaseRightDistributivity, "Passed");
+        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "Passed");
         assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
         assert.notEqual(output.composeWithInverseIsNoOp, "Passed");
     });
