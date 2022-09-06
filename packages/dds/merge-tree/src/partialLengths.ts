@@ -17,7 +17,7 @@ import {
 import { SortedSet } from "./sortedSet";
 
 export class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
-    protected getOrdinal(item: PartialSequenceLength): number {
+    protected getKey(item: PartialSequenceLength): number {
         return item.seq;
     }
 
@@ -33,7 +33,7 @@ export class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, 
         }
 
         // update the len of all following elements
-        for (const e of this.ordinalSortedItems) {
+        for (const e of this.keySortedItems) {
             if (e.seq <= newItem.seq) {
                 continue;
             }
@@ -65,11 +65,11 @@ export class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, 
     firstGte(key: number): PartialSequenceLength | undefined {
         let indexFirstGTE = 0;
         for (; indexFirstGTE < this.size; indexFirstGTE++) {
-            if (this.ordinalSortedItems[indexFirstGTE].seq >= key) {
+            if (this.keySortedItems[indexFirstGTE].seq >= key) {
                 break;
             }
         }
-        return this.ordinalSortedItems[indexFirstGTE];
+        return this.keySortedItems[indexFirstGTE];
     }
 
     private latestLeqIndex(key: number): number {
@@ -94,17 +94,17 @@ export class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, 
         const mindex = this.latestLeqIndex(minSeq);
         let minLength = 0;
         if (mindex >= 0) {
-            minLength = this.ordinalSortedItems[mindex].len;
+            minLength = this.keySortedItems[mindex].len;
             const seqCount = this.size;
             if (mindex <= (seqCount - 1)) {
                 // Still some entries remaining
                 const remainingCount = (seqCount - mindex) - 1;
                 // Copy down
                 for (let i = 0; i < remainingCount; i++) {
-                    this.ordinalSortedItems[i] = this.ordinalSortedItems[i + mindex + 1];
-                    this.ordinalSortedItems[i].len -= minLength;
+                    this.keySortedItems[i] = this.keySortedItems[i + mindex + 1];
+                    this.keySortedItems[i].len -= minLength;
                 }
-                this.ordinalSortedItems.length = remainingCount;
+                this.keySortedItems.length = remainingCount;
             }
         }
         return minLength;

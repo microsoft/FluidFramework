@@ -20,7 +20,7 @@ export type SortedSegmentSetItem = ISegment | { readonly segment: ISegment; };
  */
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment>
     extends SortedSet<T, string> {
-    protected getOrdinal(item: T): string {
+    protected getKey(item: T): string {
         const maybeObject = item as { readonly segment: ISegment; };
         if (maybeObject?.segment) {
             return maybeObject.segment.ordinal;

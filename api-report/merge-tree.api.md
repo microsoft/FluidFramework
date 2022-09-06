@@ -1172,7 +1172,7 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 // @public
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<T, string> {
     // (undocumented)
-    protected getOrdinal(item: T): string;
+    protected getKey(item: T): string;
 }
 
 // @public (undocumented)
