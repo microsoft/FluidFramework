@@ -12,7 +12,7 @@ import { fieldKinds } from "../defaultFieldKinds";
 import { FieldKind } from "../modular-schema";
 
 /**
- * @returns true if `schema` trees should default to being viewed as just their value when possible.
+ * @returns true iff `schema` trees should default to being viewed as just their value when possible.
  *
  * Note that this may return true for some types which can not be unwrapped to just their value,
  * since EditableTree avoids ever unwrapping primitives that are objects
