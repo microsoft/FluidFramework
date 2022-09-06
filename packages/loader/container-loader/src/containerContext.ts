@@ -107,8 +107,9 @@ export class ContainerContext implements IContainerContext {
         return this.container.clientDetails;
     }
 
+    private _connected: boolean;
     public get connected(): boolean {
-        return this.container.connected;
+        return this._connected;
     }
 
     public get canSummarize(): boolean {
@@ -174,6 +175,7 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
+        this._connected = this.container.connected;
         this._quorum = quorum;
         this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
@@ -223,6 +225,7 @@ export class ContainerContext implements IContainerContext {
 
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
+        this._connected = connected;
         runtime.setConnectionState(connected, clientId);
     }
 
