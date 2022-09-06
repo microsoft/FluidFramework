@@ -46,20 +46,6 @@ describe("verifyChangeRebaser", () => {
         assert.equal(output.composeWithInverseIsNoOp, "PASSED");
     });
 
-    it("test counter of floats with varying number of digits", () => {
-        const output = verifyChangeRebaser(
-            counterRebaser,
-            new Set([1.0, 1.22, -1.222]),
-            (a, b) => a === b,
-        );
-        assert.equal(output.rebaseLeftDistributivity, "PASSED");
-        assert.notEqual(output.composeAssociativity, "PASSED");
-        assert.equal(output.rebaseRightDistributivity, "PASSED");
-        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "PASSED");
-        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "PASSED");
-        assert.equal(output.composeWithInverseIsNoOp, "PASSED");
-    });
-
     // This test case contains all the different "edge case" numbers
     it("test counter with special number types", () => {
         const output = verifyChangeRebaser(
