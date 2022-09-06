@@ -45,17 +45,17 @@ export interface OutputType<TChange> {
      composeWithNoOpIsSelf: Passed | TChange;
      /**
      * "Passed" iff `(A ↷ ε) = A`,
-     * otherwise a pair that violates the axiom.
+     * otherwise a change that violates the axiom.
      */
     rebaseSelfOverNoOpIsSelf: Passed | TChange;
     /**
      * "Passed" iff `(ε ↷ A) = ε`,
-     * otherwise a pair that violates the axiom.
+     * otherwise a change that violates the axiom.
      */
      rebaseNoOpOverSelfIsNoOp: Passed | TChange;
      /**
      * "Passed" iff `ε⁻¹ = ε`,
-     * otherwise a pair that violates the axiom.
+     * otherwise a change that violates the axiom.
      */
     noOpInverseNoOp: Passed | TChange;
 
