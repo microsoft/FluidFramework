@@ -104,6 +104,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
     enableDiscovery?: boolean;
+    enableInternalSummaryCaching: boolean;
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
@@ -120,9 +121,7 @@ export interface ITokenProvider {
 
 // @public (undocumented)
 export interface ITokenResponse {
-    // (undocumented)
     fromCache?: boolean;
-    // (undocumented)
     jwt: string;
 }
 

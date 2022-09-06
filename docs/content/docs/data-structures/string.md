@@ -1,6 +1,6 @@
 ---
 title: SharedString
-menuPosition: 8
+menuPosition: 4
 ---
 
 ## Introduction

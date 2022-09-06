@@ -239,7 +239,7 @@ export class RunningSummarizer implements IDisposable {
     public handleOp(op: ISequencedDocumentMessage) {
         this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
-        if (op.type !== MessageType.Summarize && isRuntimeMessage(op)) {
+        if (isRuntimeMessage(op)) {
             this.heuristicData.numRuntimeOps++;
         } else {
             this.heuristicData.numNonRuntimeOps++;
@@ -343,7 +343,7 @@ export class RunningSummarizer implements IDisposable {
      */
     public async lockedRefreshSummaryAckAction<T>(action: () => Promise<T>) {
         assert(this.refreshSummaryAckLock === undefined,
-            "Refresh Summary Ack - Caller is responsible for checking lock");
+            0x396 /* Refresh Summary Ack - Caller is responsible for checking lock */);
 
         const refreshSummaryAckLock = new Deferred<void>();
         this.refreshSummaryAckLock = refreshSummaryAckLock.promise;

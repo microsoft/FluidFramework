@@ -800,12 +800,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
         // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
-
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
         assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
-        assert(this._protocolHandler.attributes.term !== undefined, "Must have a valid protocol handler instance");
+        assert(this._protocolHandler.attributes.term !== undefined,
+            0x37e /* Must have a valid protocol handler instance */);
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -813,6 +813,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             term: this._protocolHandler.attributes.term,
             clientId: this.clientId,
         };
+
+        this.mc.logger.sendTelemetryEvent({ eventName: "CloseAndGetPendingLocalState" });
 
         this.close();
 
@@ -1414,7 +1416,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const protocol = protocolHandlerBuilder(
             attributes,
             quorumSnapshot,
-            (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+            (key, value) => this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
             this._initialClients ?? [],
         );
 
@@ -1693,34 +1695,39 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
-        const outboundMessageType: string = type;
-        switch (outboundMessageType) {
+        switch (type) {
             case MessageType.Operation:
-            case MessageType.RemoteHelp:
-                break;
-            case MessageType.Summarize: {
-                // github #6451: this is only needed for staging so the server
-                // know when the protocol tree is included
-                // this can be removed once all clients send
-                // protocol tree by default
-                const summary = contents as ISummaryContent;
-                if (summary.details === undefined) {
-                    summary.details = {};
-                }
-                summary.details.includesProtocolTree =
-                    this.options.summarizeProtocolTree === true;
-                break;
-            }
+                return this.submitMessage(
+                    type,
+                    // back-compat: ADO #1385: pass content as-is in future.
+                    typeof contents === "string" ? contents : JSON.stringify(contents),
+                    batch,
+                    metadata);
+            // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
+            case MessageType.Summarize:
+                return this.submitSummaryMessage(contents as unknown as ISummaryContent);
             default:
                 this.close(new GenericError("invalidContainerSubmitOpType",
                     undefined /* error */,
                     { messageType: type }));
                 return -1;
         }
-        return this.submitMessage(type, contents, batch, metadata);
     }
 
-    private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
+    private submitSummaryMessage(summary: ISummaryContent) {
+        // github #6451: this is only needed for staging so the server
+        // know when the protocol tree is included
+        // this can be removed once all clients send
+        // protocol tree by default
+        if (summary.details === undefined) {
+            summary.details = {};
+        }
+        summary.details.includesProtocolTree =
+            this.options.summarizeProtocolTree === true;
+        return this.submitMessage(MessageType.Summarize, JSON.stringify(summary), false /* batch */);
+    }
+
+    private submitMessage(type: MessageType, contents?: string, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
@@ -1765,10 +1772,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.serviceConfiguration !== undefined,
                     0x2e4 /* "there should be service config for active connection" */);
                 this.collabWindowTracker = new CollabWindowTracker(
-                    (type, contents) => {
+                    (type) => {
                         assert(this.activeConnection(),
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
-                        this.submitMessage(type, contents);
+                        this.submitMessage(type);
                     },
                     this.serviceConfiguration.noopTimeFrequency,
                     this.serviceConfiguration.noopCountFrequency,
@@ -1855,6 +1862,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new QuorumProxy(this.protocolHandler.quorum),
             loader,
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
+            (summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,

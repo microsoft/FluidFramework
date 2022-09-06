@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+export {
+    getSimpleVersion,
+    getVersionsFromStrings,
+    getIsLatest,
+} from "./buildVersion/buildVersionLib";
 export { bumpDependencies, cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
 export {
     bumpRepo
@@ -25,7 +30,8 @@ export {
 export {
     Package
 } from "./common/npmPackage";
-export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/genMonoRepoPackageJson";
 export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
 export { execAsync, execWithErrorAsync, readJsonAsync, readFileAsync, writeFileAsync } from "./common/utils";
+export { Handler } from "./repoPolicyCheck/common";
+export { policyHandlers } from "./repoPolicyCheck/handlers";

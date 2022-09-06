@@ -120,6 +120,7 @@ export class DocumentStorage implements IDocumentStorage {
         initialHash: string,
         ordererUrl: string,
         historianUrl: string,
+        deltaStreamUrl: string,
         values: [string, ICommittedProposal][],
         enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
@@ -194,7 +195,9 @@ export class DocumentStorage implements IDocumentStorage {
         const session: ISession = {
             ordererUrl,
             historianUrl,
+            deltaStreamUrl,
             isSessionAlive: true,
+            isSessionActive: false,
         };
 
         const message: string = `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`;

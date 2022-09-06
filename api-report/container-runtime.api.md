@@ -41,7 +41,6 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -104,7 +103,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly disableIsolatedChannels: boolean;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
@@ -125,7 +123,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(): IPendingRuntimeState;
+    getPendingLocalState(): unknown;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
@@ -445,15 +443,6 @@ export interface IPendingMessage {
     type: "message";
 }
 
-// @public
-export interface IPendingRuntimeState {
-    baseSnapshot: ISnapshotTree;
-    pending?: IPendingLocalState;
-    savedOps: ISequencedDocumentMessage[];
-    // Warning: (ae-forgotten-export) The symbol "ISerializedBaseSnapshotBlobs" needs to be exported by the entry point index.d.ts
-    snapshotBlobs: ISerializedBaseSnapshotBlobs;
-}
-
 // @public (undocumented)
 export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 
@@ -630,8 +619,6 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
-    // @deprecated (undocumented)
-    disableIsolatedChannels?: boolean;
     // @deprecated (undocumented)
     disableSummaries?: boolean;
     // @deprecated (undocumented)

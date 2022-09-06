@@ -35,7 +35,6 @@ declare function get_current_TypeAliasDeclaration_DriverError():
 declare function use_old_TypeAliasDeclaration_DriverError(
     use: TypeOnly<old.DriverError>);
 use_old_TypeAliasDeclaration_DriverError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_DriverError());
 
 /*
@@ -60,7 +59,6 @@ declare function get_current_EnumDeclaration_DriverErrorType():
 declare function use_old_EnumDeclaration_DriverErrorType(
     use: TypeOnly<old.DriverErrorType>);
 use_old_EnumDeclaration_DriverErrorType(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_DriverErrorType());
 
 /*
@@ -133,7 +131,6 @@ declare function get_current_InterfaceDeclaration_IAuthorizationError():
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
     use: TypeOnly<old.IAuthorizationError>);
 use_old_InterfaceDeclaration_IAuthorizationError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAuthorizationError());
 
 /*
@@ -423,7 +420,6 @@ declare function get_current_InterfaceDeclaration_IDriverBasicError():
 declare function use_old_InterfaceDeclaration_IDriverBasicError(
     use: TypeOnly<old.IDriverBasicError>);
 use_old_InterfaceDeclaration_IDriverBasicError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverBasicError());
 
 /*
@@ -448,7 +444,6 @@ declare function get_current_InterfaceDeclaration_IDriverErrorBase():
 declare function use_old_InterfaceDeclaration_IDriverErrorBase(
     use: TypeOnly<old.IDriverErrorBase>);
 use_old_InterfaceDeclaration_IDriverErrorBase(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverErrorBase());
 
 /*
@@ -521,8 +516,31 @@ declare function get_current_InterfaceDeclaration_IGenericNetworkError():
 declare function use_old_InterfaceDeclaration_IGenericNetworkError(
     use: TypeOnly<old.IGenericNetworkError>);
 use_old_InterfaceDeclaration_IGenericNetworkError(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericNetworkError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILocationRedirectionError": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ILocationRedirectionError():
+    TypeOnly<old.ILocationRedirectionError>;
+declare function use_current_InterfaceDeclaration_ILocationRedirectionError(
+    use: TypeOnly<current.ILocationRedirectionError>);
+use_current_InterfaceDeclaration_ILocationRedirectionError(
+    get_old_InterfaceDeclaration_ILocationRedirectionError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILocationRedirectionError": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ILocationRedirectionError():
+    TypeOnly<current.ILocationRedirectionError>;
+declare function use_old_InterfaceDeclaration_ILocationRedirectionError(
+    use: TypeOnly<old.ILocationRedirectionError>);
+use_old_InterfaceDeclaration_ILocationRedirectionError(
+    get_current_InterfaceDeclaration_ILocationRedirectionError());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -666,7 +684,6 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: TypeOnly<old.IThrottlingWarning>);
 use_old_InterfaceDeclaration_IThrottlingWarning(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*

@@ -168,8 +168,8 @@ export class RootedTextCursor extends TextCursor {
 
         let path: UpPath | undefined;
         const length = this.indexStack.length;
-        assert(this.siblingStack.length === length, "Unexpected siblingStack.length");
-        assert(this.keyStack.length === length + 1, "Unexpected keyStack.length");
+        assert(this.siblingStack.length === length, 0x34c /* Unexpected siblingStack.length */);
+        assert(this.keyStack.length === length + 1, 0x34d /* Unexpected keyStack.length */);
         for (let height = 0; height < length; height++) {
             path = {
                 parent: path,
