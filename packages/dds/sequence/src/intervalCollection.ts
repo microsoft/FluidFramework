@@ -1681,7 +1681,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             }
 
             // `interval`'s endpoints will get modified in-place, so clone it prior to doing so for event emission.
-            const oldInterval = interval.clone();
+            const oldInterval = interval.clone() as TInterval & SequenceInterval;
 
             // In this case, where we change the start or end of an interval,
             // it is necessary to remove and re-add the interval listeners.
@@ -1693,19 +1693,31 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
             if (needsStartUpdate) {
                 const props = interval.start.properties;
-                this.client.removeLocalReferencePosition(interval.start);
                 interval.start = createPositionReferenceFromSegoff(this.client, newStart, interval.start.refType, op);
                 if (props) {
                     interval.start.addProperties(props);
                 }
+                const oldSeg = oldInterval.start.getSegment();
+                // remove and rebuild start interval as transient for event
+                this.client.removeLocalReferencePosition(oldInterval.start);
+                oldInterval.start.refType = ReferenceType.Transient;
+                oldSeg?.localRefs?.addLocalRef(
+                    oldInterval.start,
+                    oldInterval.start.getOffset());
             }
             if (needsEndUpdate) {
                 const props = interval.end.properties;
-                this.client.removeLocalReferencePosition(interval.end);
                 interval.end = createPositionReferenceFromSegoff(this.client, newEnd, interval.end.refType, op);
                 if (props) {
                     interval.end.addProperties(props);
                 }
+                // remove and rebuild end interval as transient for event
+                const oldSeg = oldInterval.end.getSegment();
+                this.client.removeLocalReferencePosition(oldInterval.end);
+                oldInterval.end.refType = ReferenceType.Transient;
+                oldSeg?.localRefs?.addLocalRef(
+                    oldInterval.end,
+                    oldInterval.end.getOffset());
             }
             this.localCollection.add(interval);
             this.emitChange(interval, oldInterval as TInterval, true, op);
