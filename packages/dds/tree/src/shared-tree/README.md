@@ -1,4 +1,4 @@
-# Shared Tree
+# shared-tree
 
 Provides a SharedObject for a tree.
 
