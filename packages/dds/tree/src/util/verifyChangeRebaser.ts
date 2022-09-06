@@ -38,6 +38,27 @@ export interface OutputType<TChange> {
      * otherwise a change that violates the axiom.
      */
     composeWithInverseIsNoOp: Passed | TChange;
+    /**
+     * "Passed" iff `A ○ ε` is equal to `ε ○ A` which equals to `A` where `ε` is the empty change,
+     * otherwise a change that violates the axiom.
+     */
+     composeWithNoOpIsSelf: Passed | TChange;
+     /**
+     * "Passed" iff `(A ↷ ε) = A`,
+     * otherwise a pair that violates the axiom.
+     */
+    rebaseSelfOverNoOpIsSelf: Passed | TChange;
+    /**
+     * "Passed" iff `(ε ↷ A) = ε`,
+     * otherwise a pair that violates the axiom.
+     */
+     rebaseNoOpOverSelfIsNoOp: Passed | TChange;
+     /**
+     * "Passed" iff `ε⁻¹ = ε`,
+     * otherwise a pair that violates the axiom.
+     */
+    noOpInverseNoOp: Passed | TChange;
+
 }
 
 /**
@@ -62,11 +83,27 @@ export function verifyChangeRebaser<TChange>(
         rebaseOverDoUndoPairIsNoOp: "Passed",
         rebaseOverUndoRedoPairIsNoOp: "Passed",
         composeWithInverseIsNoOp: "Passed",
+        composeWithNoOpIsSelf: "Passed",
+        rebaseSelfOverNoOpIsSelf: "Passed",
+        rebaseNoOpOverSelfIsNoOp: "Passed",
+        noOpInverseNoOp: "Passed",
     };
 
     for (const changeA of changes) {
         if (!isComposeWithInverseNoOp(changeA)) {
             output.composeWithInverseIsNoOp = changeA;
+        }
+        if (!isComposeWithNoOpIsSelf(changeA)) {
+            output.composeWithNoOpIsSelf = changeA;
+        }
+        if (!isRebaseSelfOverNoOpIsSelf(changeA)) {
+            output.rebaseSelfOverNoOpIsSelf = changeA;
+        }
+        if (!isRebaseNoOpOverSelfIsNoOp(changeA)) {
+            output.rebaseNoOpOverSelfIsNoOp = changeA;
+        }
+        if (!isNoOpInverseNoOp(changeA)) {
+            output.noOpInverseNoOp = changeA;
         }
         for (const changeB of changes) {
             if (!isRebaseOverDoUndoPairNoOp(changeA, changeB)) {
@@ -161,5 +198,34 @@ export function verifyChangeRebaser<TChange>(
             invert(changeA),
         ]);
         return isEquivalent(changeset, compose([]));
+    }
+
+    // compose([ε, A]) => A && compose([A, ε]) => A
+    function isComposeWithNoOpIsSelf(changeA: TChange) {
+        const noOp = compose([]);
+        const changeset1 = compose([changeA, noOp]);
+        const changeset2 = compose([noOp, changeA]);
+        return isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeA);
+    }
+
+    // rebase(A, ε) => A
+    function isRebaseSelfOverNoOpIsSelf(changeA: TChange) {
+        const noOp = compose([]);
+        const changeset = rebase(changeA, noOp);
+        return isEquivalent(changeset, changeA);
+    }
+
+    // rebase(ε, A) => ε
+    function isRebaseNoOpOverSelfIsNoOp(changeA: TChange) {
+        const noOp = compose([]);
+        const changeset = rebase(noOp, changeA);
+        return isEquivalent(changeset, noOp);
+    }
+
+    // invert(ε) => ε
+    function isNoOpInverseNoOp(changeA: TChange) {
+        const noOp = compose([]);
+        const changeset = invert(noOp);
+        return isEquivalent(changeset, noOp);
     }
 }
