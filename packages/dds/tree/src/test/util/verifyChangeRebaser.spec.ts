@@ -27,7 +27,7 @@ describe("verifyChangeRebaser", () => {
         const output = verifyChangeRebaser(
             counterRebaser,
             new Set([-1, 2, 3, 0, -2, 4]),
-            (a, b) => a === b || (isNaN(a) && isNaN(b)),
+            isEquivalent,
         );
         assert.equal(output.rebaseLeftDistributivity, "Passed");
         assert.equal(output.composeAssociativity, "Passed");
@@ -35,17 +35,17 @@ describe("verifyChangeRebaser", () => {
         assert.equal(output.rebaseOverDoUndoPairIsNoOp, "Passed");
         assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
         assert.equal(output.composeWithInverseIsNoOp, "Passed");
-        assert.equal(output.composeWithNoOpIsSelf, "Passed");
-        assert.equal(output.rebaseSelfOverNoOpIsSelf, "Passed");
-        assert.equal(output.rebaseNoOpOverSelfIsNoOp, "Passed");
-        assert.equal(output.noOpInverseNoOp, "Passed");
+        assert.equal(output.composeWithEmptyIsNoOp, "Passed");
+        assert.equal(output.rebaseOverEmptyIsNoOp, "Passed");
+        assert.equal(output.rebaseEmptyIsEmpty, "Passed");
+        assert.equal(output.emptyInverseIsEmpty, "Passed");
     });
 
     it("test counter with unsafe integers", () => {
         const output = verifyChangeRebaser(
             counterRebaser,
             new Set([Number.MAX_SAFE_INTEGER, -10, 2]),
-            (a, b) => a === b || (isNaN(a) && isNaN(b)),
+            isEquivalent,
         );
         assert.equal(output.rebaseLeftDistributivity, "Passed");
         assert.notEqual(output.composeAssociativity, "Passed");
@@ -53,51 +53,17 @@ describe("verifyChangeRebaser", () => {
         assert.equal(output.rebaseOverDoUndoPairIsNoOp, "Passed");
         assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
         assert.equal(output.composeWithInverseIsNoOp, "Passed");
-        assert.equal(output.composeWithNoOpIsSelf, "Passed");
-        assert.equal(output.rebaseSelfOverNoOpIsSelf, "Passed");
-        assert.equal(output.rebaseNoOpOverSelfIsNoOp, "Passed");
-        assert.equal(output.noOpInverseNoOp, "Passed");
+        assert.equal(output.composeWithEmptyIsNoOp, "Passed");
+        assert.equal(output.rebaseOverEmptyIsNoOp, "Passed");
+        assert.equal(output.rebaseEmptyIsEmpty, "Passed");
+        assert.equal(output.emptyInverseIsEmpty, "Passed");
     });
 
-    it("test counter with special number types", () => {
-        const output = verifyChangeRebaser(
-            counterRebaser,
-            new Set([
-                Number.NaN,
-                Number.MAX_VALUE,
-                Number.MIN_VALUE,
-                Number.POSITIVE_INFINITY,
-                Number.NEGATIVE_INFINITY,
-                Number.MIN_SAFE_INTEGER,
-                Number.MAX_SAFE_INTEGER,
-            ]),
-            (a, b) => a === b || (isNaN(a) && isNaN(b)),
-        );
-        assert.equal(output.rebaseLeftDistributivity, "Passed");
-        assert.notEqual(output.composeAssociativity, "Passed");
-        assert.equal(output.rebaseRightDistributivity, "Passed");
-        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "Passed");
-        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
-        assert.notEqual(output.composeWithInverseIsNoOp, "Passed");
-        assert.equal(output.composeWithNoOpIsSelf, "Passed");
-        assert.equal(output.rebaseSelfOverNoOpIsSelf, "Passed");
-        assert.equal(output.rebaseNoOpOverSelfIsNoOp, "Passed");
-        assert.equal(output.noOpInverseNoOp, "Passed");
-    });
-
-    it("test incorrect counter with special number types", () => {
+    it("test incorrect counter with safe integers", () => {
         const output = verifyChangeRebaser(
             incorrectCounterRebaser,
-            new Set([
-                Number.NaN,
-                Number.MAX_VALUE,
-                Number.MIN_VALUE,
-                Number.POSITIVE_INFINITY,
-                Number.NEGATIVE_INFINITY,
-                Number.MIN_SAFE_INTEGER,
-                Number.MAX_SAFE_INTEGER,
-            ]),
-            (a, b) => a === b || (isNaN(a) && isNaN(b)),
+            new Set([-1, 2, 3, 0, -2, 4]),
+            isEquivalent,
         );
         assert.notEqual(output.rebaseLeftDistributivity, "Passed");
         assert.notEqual(output.composeAssociativity, "Passed");
@@ -105,9 +71,13 @@ describe("verifyChangeRebaser", () => {
         assert.notEqual(output.rebaseOverDoUndoPairIsNoOp, "Passed");
         assert.notEqual(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
         assert.notEqual(output.composeWithInverseIsNoOp, "Passed");
-        assert.notEqual(output.composeWithNoOpIsSelf, "Passed");
-        assert.notEqual(output.rebaseSelfOverNoOpIsSelf, "Passed");
-        assert.notEqual(output.rebaseNoOpOverSelfIsNoOp, "Passed");
-        assert.notEqual(output.noOpInverseNoOp, "Passed");
+        assert.notEqual(output.composeWithEmptyIsNoOp, "Passed");
+        assert.notEqual(output.rebaseOverEmptyIsNoOp, "Passed");
+        assert.notEqual(output.rebaseEmptyIsEmpty, "Passed");
+        assert.notEqual(output.emptyInverseIsEmpty, "Passed");
     });
 });
+
+function isEquivalent(a: number, b: number): boolean {
+    return a === b || (isNaN(a) && isNaN(b));
+}

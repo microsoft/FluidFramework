@@ -42,22 +42,22 @@ export interface OutputType<TChange> {
      * "Passed" iff `A ○ ε` is equal to `ε ○ A` which equals to `A` where `ε` is the empty change,
      * otherwise a change that violates the axiom.
      */
-     composeWithNoOpIsSelf: Passed | TChange;
+    composeWithEmptyIsNoOp: Passed | TChange;
      /**
      * "Passed" iff `(A ↷ ε) = A`,
      * otherwise a change that violates the axiom.
      */
-    rebaseSelfOverNoOpIsSelf: Passed | TChange;
+    rebaseOverEmptyIsNoOp: Passed | TChange;
     /**
      * "Passed" iff `(ε ↷ A) = ε`,
      * otherwise a change that violates the axiom.
      */
-     rebaseNoOpOverSelfIsNoOp: Passed | TChange;
+    rebaseEmptyIsEmpty: Passed | TChange;
      /**
      * "Passed" iff `ε⁻¹ = ε`,
      * otherwise a change that violates the axiom.
      */
-    noOpInverseNoOp: Passed | TChange;
+    emptyInverseIsEmpty: Passed | TChange;
 
 }
 
@@ -83,27 +83,27 @@ export function verifyChangeRebaser<TChange>(
         rebaseOverDoUndoPairIsNoOp: "Passed",
         rebaseOverUndoRedoPairIsNoOp: "Passed",
         composeWithInverseIsNoOp: "Passed",
-        composeWithNoOpIsSelf: "Passed",
-        rebaseSelfOverNoOpIsSelf: "Passed",
-        rebaseNoOpOverSelfIsNoOp: "Passed",
-        noOpInverseNoOp: "Passed",
+        composeWithEmptyIsNoOp: "Passed",
+        rebaseOverEmptyIsNoOp: "Passed",
+        rebaseEmptyIsEmpty: "Passed",
+        emptyInverseIsEmpty: "Passed",
     };
 
     for (const changeA of changes) {
-        if (!isComposeWithInverseNoOp(changeA)) {
+        if (!isComposeWithInverseEqualsEmpty(changeA)) {
             output.composeWithInverseIsNoOp = changeA;
         }
-        if (!isComposeWithNoOpIsSelf(changeA)) {
-            output.composeWithNoOpIsSelf = changeA;
+        if (!isComposeWithEmptyNoOp(changeA)) {
+            output.composeWithEmptyIsNoOp = changeA;
         }
-        if (!isRebaseSelfOverNoOpIsSelf(changeA)) {
-            output.rebaseSelfOverNoOpIsSelf = changeA;
+        if (!isRebaseOverEmptyNoOp(changeA)) {
+            output.rebaseOverEmptyIsNoOp = changeA;
         }
-        if (!isRebaseNoOpOverSelfIsNoOp(changeA)) {
-            output.rebaseNoOpOverSelfIsNoOp = changeA;
+        if (!isRebaseEmptyEmpty(changeA)) {
+            output.rebaseEmptyIsEmpty = changeA;
         }
-        if (!isNoOpInverseNoOp(changeA)) {
-            output.noOpInverseNoOp = changeA;
+        if (!isEmptyInverseEmpty(changeA)) {
+            output.emptyInverseIsEmpty = changeA;
         }
         for (const changeB of changes) {
             if (!isRebaseOverDoUndoPairNoOp(changeA, changeB)) {
@@ -192,7 +192,7 @@ export function verifyChangeRebaser<TChange>(
     }
 
     // requirement for compose of a change with it's inverse.
-    function isComposeWithInverseNoOp(changeA: TChange) {
+    function isComposeWithInverseEqualsEmpty(changeA: TChange) {
         const changeset = compose([
             changeA,
             invert(changeA),
@@ -201,7 +201,7 @@ export function verifyChangeRebaser<TChange>(
     }
 
     // compose([ε, A]) => A && compose([A, ε]) => A
-    function isComposeWithNoOpIsSelf(changeA: TChange) {
+    function isComposeWithEmptyNoOp(changeA: TChange) {
         const noOp = compose([]);
         const changeset1 = compose([changeA, noOp]);
         const changeset2 = compose([noOp, changeA]);
@@ -209,21 +209,21 @@ export function verifyChangeRebaser<TChange>(
     }
 
     // rebase(A, ε) => A
-    function isRebaseSelfOverNoOpIsSelf(changeA: TChange) {
+    function isRebaseOverEmptyNoOp(changeA: TChange) {
         const noOp = compose([]);
         const changeset = rebase(changeA, noOp);
         return isEquivalent(changeset, changeA);
     }
 
     // rebase(ε, A) => ε
-    function isRebaseNoOpOverSelfIsNoOp(changeA: TChange) {
+    function isRebaseEmptyEmpty(changeA: TChange) {
         const noOp = compose([]);
         const changeset = rebase(noOp, changeA);
         return isEquivalent(changeset, noOp);
     }
 
     // invert(ε) => ε
-    function isNoOpInverseNoOp(changeA: TChange) {
+    function isEmptyInverseEmpty(changeA: TChange) {
         const noOp = compose([]);
         const changeset = invert(noOp);
         return isEquivalent(changeset, noOp);
