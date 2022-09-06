@@ -68,13 +68,21 @@ export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.Loca
     const operations = ["setValue", "delete", "insert"];
     const nodeX = { type: jsonString.name, value: "X" };
     const currOperation = random.pick(operations);
-    const randomIndex = random.integer(1, 10000000);
     if (currOperation === "setValue") {
-        builder.setValue(getRandomParent(upPaths, randomIndex), randomIndex);
+        builder.setValue(
+            getRandomParent(upPaths, random.integer(1, 10000000)),
+            random.integer(1, 10000000),
+        );
     } else if (currOperation === "insert") {
-        builder.insert(getRandomParent(upPaths, randomIndex), singleTextCursor(nodeX));
+        builder.insert(getRandomParent(
+            upPaths, random.integer(1, 10000000)),
+            singleTextCursor(nodeX),
+        );
     } else {
-        builder.delete(getRandomParent(upPaths, randomIndex), random.integer(1, upPaths.size));
+        builder.delete(
+            getRandomParent(upPaths, random.integer(1, 10000000)),
+            random.integer(1, upPaths.size),
+        );
     }
 
     return builder.getChanges()[0];
