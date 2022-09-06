@@ -228,13 +228,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 // Remove complete op from this.pendingCompletedTasks
                 const pendingIds = this.pendingCompletedTasks.get(taskId);
                 assert(pendingIds !== undefined && pendingIds.length > 0, "pendingIds is empty");
-                if (pendingIds.length === 1) {
-                    this.pendingCompletedTasks.delete(taskId);
-                } else {
-                    const index = pendingIds.indexOf(pendingOp.messageId);
-                    assert((index !== undefined) && index > -1, "Unable to find complete op id");
-                    this.pendingCompletedTasks.get(taskId)?.splice(index, 1);
-                }
+                const removed = pendingIds.shift();
+                assert(removed === pendingOp.messageId, "Removed complete op id does not match");
             }
 
             // For clients in queue, we need to remove them from the queue and raise the proper events.
