@@ -4,13 +4,14 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { ChangeRebaser } from "../../rebase";
 
-const operations = {
-    rebase: "rebase",
-    invert: "invert",
-    compose: "compose",
-};
+enum Operation {
+    Rebase = 0,
+    Compose = 1,
+    Invert = 2,
+}
 
 /**
  *
@@ -32,20 +33,27 @@ const operations = {
     const invert = rebaser.invert.bind(rebaser);
 
     let change = changeGenerator(seed);
-    const changes = [change];
 
-    for (let i = 1; i < (seed % maxCombinations); i++) {
-        const operation = random.pick(Object.keys(operations));
-        if (operation === "rebase") {
-            change = rebase(changeGenerator(random.integer(1, 10000000)), change);
-        } else if (operation === "compose") {
-            change = compose([change, changeGenerator(random.integer(1, 10000000))]);
-        } else {
-            // get a random previous change to invert
-            const inverseChange = invert(random.pick(changes));
-            change = compose([change, inverseChange]);
+    // Rules for combining changes:
+    // - We must not combine a change with itself
+    // - We must not rebase a change over itself
+    // - We must not rebase a change over its inverse
+    // - We can only combine a change with its inverse if the inverse comes after the original
+    // - We can only combine a change with its inverse if it hasn't already been combined with its inverse
+    for (let i = random.integer(0, maxCombinations); i > 0; --i) {
+        const operation = random.integer(Operation.Rebase, Operation.Invert) as Operation;
+        switch (operation) {
+            case Operation.Rebase:
+                change = rebase(change, changeGenerator(random.real()));
+                break;
+            case Operation.Compose:
+                change = compose([change, changeGenerator(random.real())]);
+                break;
+            case Operation.Invert:
+                change = invert(change);
+                break;
+            default: unreachableCase(operation);
         }
-        changes.push(change);
     }
     return change;
 }

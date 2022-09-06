@@ -22,8 +22,8 @@ function generateRandomCounterChange(seed: number) {
     return makeRandom(seed).integer(-1000, 1000);
 }
 
-describe("Test generateFuzzyCombinedChange function", () => {
-    it("consistency of the generateFuzzyCombinedChange using counter field kind.", () => {
+describe("generateFuzzyCombinedChange", () => {
+    it("consistent given the same seed", () => {
         const change1 = generateFuzzyCombinedChange(
             counterRebaser,
             generateRandomCounterChange,
