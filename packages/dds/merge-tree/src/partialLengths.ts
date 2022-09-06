@@ -319,10 +319,8 @@ export class PartialSequenceLengths {
             mergePartialLengths(childPartialLengths, combinedPartialLengths.partialLengths);
 
             if (computeLocalPartials) {
-                const partialLengths = mergePartialLengths(childUnsequencedPartialLengths);
-
                 combinedPartialLengths.unsequencedRecords = {
-                    partialLengths,
+                    partialLengths: mergePartialLengths(childUnsequencedPartialLengths),
                     overlappingRemoves: Array.from(mergeSortedListsBySeq(childOverlapRemoves)),
                     cachedOverlappingByRefSeq: new Map(),
                 };
