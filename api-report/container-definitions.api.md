@@ -83,7 +83,7 @@ export interface IAudienceOwner extends IAudience {
     removeMember(clientId: string): boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface IBatchMessage {
     // (undocumented)
     contents: string;
@@ -189,7 +189,7 @@ export interface IContainerContext extends IDisposable {
     readonly storage: IDocumentStorageService;
     // (undocumented)
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;

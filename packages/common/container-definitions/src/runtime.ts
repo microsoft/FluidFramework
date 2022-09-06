@@ -104,6 +104,9 @@ export interface IRuntime extends IDisposable {
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 }
 
+/**
+ * Payload type for IContainerContext.submitBatchFn()
+ */
 export interface IBatchMessage {
     contents: string;
     metadata: Record<string, unknown> | undefined;
@@ -125,6 +128,7 @@ export interface IContainerContext extends IDisposable {
     readonly storage: IDocumentStorageService;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
+    /** @deprecated - please use submitBatchFn & submitSummaryFn */
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
     readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;

@@ -1782,6 +1782,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
                 clientSequenceNumber = this.context.submitBatchFn(batchToSend);
             } else {
+                // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
+                // version that has support for batches (submitBatchFn)
                 for (const message of batch) {
                     clientSequenceNumber = this.context.submitFn(
                         MessageType.Operation,
@@ -2598,8 +2600,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             });
             if (this._flushMode !== FlushMode.TurnBased) {
                 this.flush();
-            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
             } else if (!this.flushTrigger) {
+                // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 Promise.resolve().then(() => {
                     this.flushTrigger = false;
