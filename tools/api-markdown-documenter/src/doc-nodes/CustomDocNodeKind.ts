@@ -9,6 +9,7 @@ import { DocTableCell } from "@microsoft/api-documenter/lib/nodes/DocTableCell";
 import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 import { DocNodeKind, TSDocConfiguration } from "@microsoft/tsdoc";
 
+import { DocAlert } from "./DocAlert";
 import { DocHeading } from "./DocHeading";
 import { DocList } from "./DocList";
 
@@ -18,6 +19,7 @@ import { DocList } from "./DocList";
  * @internal
  */
 export const enum CustomDocNodeKind {
+    Alert = "Alert",
     EmphasisSpan = "EmphasisSpan",
     Heading = "Heading",
     List = "List",
@@ -43,6 +45,10 @@ export class CustomDocNodes {
             const configuration: TSDocConfiguration = new TSDocConfiguration();
 
             configuration.docNodeManager.registerDocNodes("@fluid-tools/api-markdown-documenter", [
+                {
+                    docNodeKind: CustomDocNodeKind.Alert,
+                    constructor: DocAlert,
+                },
                 {
                     docNodeKind: CustomDocNodeKind.EmphasisSpan,
                     constructor: DocEmphasisSpan,
@@ -79,6 +85,7 @@ export class CustomDocNodes {
             ]);
 
             configuration.docNodeManager.registerAllowableChildren(DocNodeKind.Section, [
+                CustomDocNodeKind.Alert,
                 CustomDocNodeKind.Heading,
                 CustomDocNodeKind.List,
                 CustomDocNodeKind.NoteBox,
@@ -101,6 +108,11 @@ export class CustomDocNodes {
                 CustomDocNodeKind.EmphasisSpan,
                 DocNodeKind.Paragraph,
                 DocNodeKind.PlainText,
+            ]);
+
+            configuration.docNodeManager.registerAllowableChildren(CustomDocNodeKind.Alert, [
+                DocNodeKind.Paragraph,
+                DocNodeKind.Section,
             ]);
 
             CustomDocNodes._configuration = configuration;

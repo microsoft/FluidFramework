@@ -88,6 +88,18 @@ export enum ApiModifier {
      * Indicates a `static` member of a `class` or `interface`.
      */
     Static = "static",
+
+    /**
+     * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/virtual | @virtual}
+     * tag. This item is intended to be overridden by implementing types.
+     */
+    Virtual = "virtual",
+
+    /**
+     * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/sealed | @sealed}
+     * tag. This item may not to be overridden by implementing types.
+     */
+    Sealed = "sealed",
 }
 
 /**
@@ -608,7 +620,7 @@ export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
 }
 
 /**
- * Gets any {@link https://tsdoc.org/pages/tags/throws/ | @throws} comment blocks from the API item if it has them.
+ * Gets any {@link https://tsdoc.org/pages/tags/throws/ | @throws} comment blocks from the API item, if it has them.
  *
  * @param apiItem - The API item whose documentation is being queried.
  *
@@ -616,6 +628,21 @@ export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
  */
 export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
     return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.throws.tagName);
+}
+
+/**
+ * Gets any {@link https://tsdoc.org/pages/tags/see/ | @see} comment blocks from the API item, if it has them.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@see` comment block section, if the API item has one. Otherwise, `undefined`.
+ */
+export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.seeBlocks !== undefined) {
+        const seeBlocks = apiItem.tsdocComment.seeBlocks.map((block) => block.content);
+        return seeBlocks.length === 0 ? undefined : seeBlocks;
+    }
+    return undefined;
 }
 
 /**
@@ -642,6 +669,31 @@ export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
         return apiItem.tsdocComment.returnsBlock.content;
     }
     return undefined;
+}
+
+/**
+ * Gets the {@link https://tsdoc.org/pages/tags/deprecated/ | @deprecated} comment block from the API item if it has
+ * one.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@deprecated` comment block section, if the API item has one. Otherwise, `undefined`.
+ */
+export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
+    return apiItem instanceof ApiDocumentedItem &&
+        apiItem.tsdocComment?.deprecatedBlock !== undefined
+        ? apiItem.tsdocComment.deprecatedBlock.content
+        : undefined;
+}
+
+/**
+ * Returns whether or not the provided API item is of a kind that can be marked as optional, and if it is
+ * indeed optional.
+ */
+export function isDeprecated(apiItem: ApiItem): boolean {
+    return (
+        apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.deprecatedBlock !== undefined
+    );
 }
 
 /**
@@ -696,6 +748,21 @@ export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]):
 
     if (isStatic(apiItem) && !modifiersToOmit?.includes(ApiModifier.Static)) {
         modifiers.push(ApiModifier.Static);
+    }
+
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+        if (
+            apiItem.tsdocComment.modifierTagSet.isVirtual() &&
+            !modifiersToOmit?.includes(ApiModifier.Virtual)
+        ) {
+            modifiers.push(ApiModifier.Virtual);
+        }
+        if (
+            apiItem.tsdocComment.modifierTagSet.isSealed() &&
+            !modifiersToOmit?.includes(ApiModifier.Sealed)
+        ) {
+            modifiers.push(ApiModifier.Sealed);
+        }
     }
 
     return modifiers;

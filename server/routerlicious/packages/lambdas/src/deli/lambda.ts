@@ -413,6 +413,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         let sequencedMessageCount = 0;
 
+        // array of messages that should be produced to the deltas topic after processing
+        const produceToDeltas: ITicketedMessage[] = [];
+
         const boxcar = extractBoxcar(rawMessage);
 
         for (const message of boxcar.contents) {
@@ -492,7 +495,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         operation: sequencedMessage,
                     };
 
-                    this.produceMessage(this.deltasProducer, outgoingMessage);
+                    if (this.serviceConfiguration.deli.maintainBatches) {
+                        produceToDeltas.push(outgoingMessage);
+                    } else {
+                        this.produceMessage(this.deltasProducer, outgoingMessage);
+                    }
 
                     sequencedMessageCount++;
 
@@ -531,7 +538,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 }
 
                 case TicketType.Nack: {
-                    this.produceMessage(this.deltasProducer, ticketedMessage.message);
+                    if (this.serviceConfiguration.deli.maintainBatches) {
+                        produceToDeltas.push(ticketedMessage.message);
+                    } else {
+                        this.produceMessage(this.deltasProducer, ticketedMessage.message);
+                    }
                     break;
                 }
 
@@ -546,6 +557,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     // ignore unknown types
                     break;
             }
+        }
+
+        if (produceToDeltas.length > 0) {
+            // processing this boxcar resulted in one or more ticketed messages (sequenced ops or nacks)
+            // produce them in a single boxcar to the deltas topic
+            this.produceMessages(this.deltasProducer, produceToDeltas);
         }
 
         this.checkpointInfo.rawMessagesSinceCheckpoint++;
@@ -627,6 +644,32 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 }
 
                 const errorMsg = "Could not send message to producer";
+                this.context.log?.error(
+                    `${errorMsg}: ${JSON.stringify(error)}`,
+                    {
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
+                    });
+                Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
+                this.context.error(error, {
+                    restart: true,
+                    tenantId: this.tenantId,
+                    documentId: this.documentId,
+                });
+            });
+    }
+
+    private produceMessages(producer: IProducer, messages: ITicketedMessage[]) {
+        this.lastSendP = producer
+            .send(messages, this.tenantId, this.documentId)
+            .catch((error) => {
+                if (this.closed) {
+                    return;
+                }
+
+                const errorMsg = `Could not send ${messages.length} messages to producer`;
                 this.context.log?.error(
                     `${errorMsg}: ${JSON.stringify(error)}`,
                     {

@@ -4,11 +4,11 @@
  */
 
 /* eslint-disable max-len */
+import * as fs from "fs";
 import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
@@ -74,12 +74,14 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
         runtimeOptions,
     );
 
-    const sessionExpiryDurationMs = 3000; // 3 seconds
+    // const sessionExpiryDurationMs = 3000; // 3 seconds
+    const inactiveTimeoutMs = 3000; // 3 seconds
 
     // Set settings here, may be useful to put everything in the mockConfigProvider
     const settings = {
-        "Fluid.GarbageCollection.RunSessionExpiry": "true",
-        "Fluid.GarbageCollection.TestOverride.SessionExpiryMs": sessionExpiryDurationMs,
+        // "Fluid.GarbageCollection.RunSessionExpiry": "true",
+        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": inactiveTimeoutMs,
+        // "Fluid.GarbageCollection.TestOverride.SessionExpiryMs": sessionExpiryDurationMs,
     };
     const configProvider = mockConfigProvider(settings);
 
@@ -106,12 +108,6 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
             // Wrap the logger
             overrideLogger = new IgnoreErrorLogger(provider.logger);
             provider.logger = overrideLogger;
-
-            // Ignore session expiry errors
-            overrideLogger.ignoreExpectedEventTypes({
-                eventName: "fluid:telemetry:Container:ContainerClose",
-                errorType: ContainerErrorType.clientSessionExpiredError,
-            });
 
             // Create the containerManager responsible for retrieving, creating, loading, and tracking the lifetime of containers.
             const containerManager = new ContainerManager(runtimeFactory, configProvider, provider);
@@ -267,21 +263,40 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
              * At this point the test has finished, we might want to store a list of all the actions at this point and await them all to make sure they finish.
              * Feel free to put anything in the debug object. It's likely to get big. You can also put a range of actions if you're just trying to hone in on
              * what changed.
+             *
+             * This is the validation and data storage part of the test.
              */
-            const debugObject = {
-                actionCount: actionsList.length,
-                actionsList,
-                errorCount: errorList.length,
-                errorList,
+
+            const stats = {
                 ...actionStats,
-                handleRecord: handleTracker.handleActionRecord,
+                actionCount: actionsList.length,
+                errorCount: errorList.length,
             };
 
+            const runData = {
+                stats,
+                actions: actionsList,
+                errors: errorList,
+            };
+
+            fs.mkdirSync(`nyc/testData-${seed}`, { recursive: true });
+            fs.writeFileSync(`nyc/testData-${seed}/events.json`, JSON.stringify(overrideLogger.events));
+            fs.writeFileSync(`nyc/testData-${seed}/inactiveObjectEvents.json`, JSON.stringify(overrideLogger.inactiveObjectEvents));
+            fs.writeFileSync(`nyc/testData-${seed}/errorEvents.json`, JSON.stringify(overrideLogger.errorEvents));
+            fs.writeFileSync(`nyc/testData-${seed}/errorEventStats.json`, JSON.stringify(overrideLogger.errorEventStats));
+            fs.writeFileSync(`nyc/testData-${seed}/actions.json`, JSON.stringify(actionsList));
+            fs.writeFileSync(`nyc/testData-${seed}/stats.json`, JSON.stringify(stats));
+            fs.writeFileSync(`nyc/testData-${seed}/errors.json`, JSON.stringify(errorList));
+            fs.writeFileSync(`nyc/testData-${seed}/runData.json`, JSON.stringify(runData));
+
             // Check that we don't have errors and print the debug object
-            assert(errorList.length === 0, `Errors occurred!\nDebug: ${JSON.stringify(debugObject)}`);
+            assert(errorList.length === 0, `${errorList.length} errors occurred! Check the nyc/testData-${seed}/errors.json`);
+
+            // Check that we don't have any error logs
+            assert(overrideLogger.errorEvents.length === 0, `${overrideLogger.errorEvents.length} error events have been logged! Check the nyc/testData-${seed}/errorEvents.json`);
 
             /**
-             * This is just some heuristic expectations
+             * This is just some heuristic expectations and validations
              * - expect some number of actions.
              * - expect some number of each action type.
              *
@@ -289,11 +304,10 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
              */
             const minimumExpectedActions = 100;
             const minimumExpectedActionsPerActionType = minimumExpectedActions / 10;
-            assert(actionsList.length > minimumExpectedActions, `Very few actions!\nDebug: ${JSON.stringify(debugObject)}`);
+            assert(actionsList.length > minimumExpectedActions, `Very few actions!`);
             Object.entries(actionStats).forEach(([name, stat]) => {
                 assert(stat >= minimumExpectedActionsPerActionType, `There are less than ${minimumExpectedActionsPerActionType} calls to ${name}!`);
             });
-
             // TODO: write the whole test to a file so that we can replicate it. For now, running the test with a particular seed will do.
         }).timeout(testTime + 40 * 1000); // Add 40s of leeway
     }

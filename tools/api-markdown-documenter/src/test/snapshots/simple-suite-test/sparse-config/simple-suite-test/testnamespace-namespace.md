@@ -30,6 +30,12 @@ Example 2
 const bar = foo
 ```
 
+## Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [TestInterface](docs/simple-suite-test/testnamespace-testinterface-interface) | Test interface |
+
 ## Classes
 
 |  Class | Description |
@@ -42,23 +48,17 @@ const bar = foo
 |  --- | --- |
 |  [TestEnum](docs/simple-suite-test/testnamespace-testenum-enum) | Test Enum |
 
+## Types
+
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TestTypeAlias](docs/simple-suite-test/testnamespace-testtypealias-typealias) | Test Type-Alias |
+
 ## Functions
 
 |  Function | Return Type | Description |
 |  --- | --- | --- |
 |  [testFunction(testParameter)](docs/simple-suite-test/testnamespace-testfunction-function) | number | Test function |
-
-## Interfaces
-
-|  Interface | Description |
-|  --- | --- |
-|  [TestInterface](docs/simple-suite-test/testnamespace-testinterface-interface) | Test interface |
-
-## Namespaces
-
-|  Namespace | Description |
-|  --- | --- |
-|  [TestSubNamespace](docs/simple-suite-test/testnamespace-testsubnamespace-namespace) | Test sub-namespace |
 
 ## Variables
 
@@ -66,8 +66,8 @@ const bar = foo
 |  --- | --- | --- |
 |  [TestConst](docs/simple-suite-test/testnamespace-testconst-variable) | <code>readonly</code> | Test Constant |
 
-## Types
+## Namespaces
 
-|  TypeAlias | Description |
+|  Namespace | Description |
 |  --- | --- |
-|  [TestTypeAlias](docs/simple-suite-test/testnamespace-testtypealias-typealias) | Test Type-Alias |
+|  [TestSubNamespace](docs/simple-suite-test/testnamespace-testsubnamespace-namespace) | Test sub-namespace |
