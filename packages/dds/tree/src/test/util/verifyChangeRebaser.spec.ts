@@ -44,7 +44,6 @@ describe("verifyChangeRebaser", () => {
         assert.equal(output.composeWithInverseIsNoOp, "Passed");
     });
 
-    // This test case contains all the different "edge case" numbers
     it("test counter with special number types", () => {
         const output = verifyChangeRebaser(
             counterRebaser,
