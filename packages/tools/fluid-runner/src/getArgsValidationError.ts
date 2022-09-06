@@ -7,8 +7,7 @@ import * as fs from "fs";
 
 export function getArgsValidationError(
     inputFile: string,
-    outputFolder: string,
-    scenario: string,
+    outputFile: string,
 ): string | undefined {
     // Validate input file
     if (!inputFile) {
@@ -19,15 +18,10 @@ export function getArgsValidationError(
     }
 
     // Validate output file
-    if (!outputFolder) {
-        return "Output folder name is missing.";
-    } else if (!fs.existsSync(outputFolder)) {
-        return "Output folder does not exist.";
-    }
-
-    // Validate scenario name
-    if (!scenario) {
-        return "Scenario name is missing.";
+    if (!outputFile) {
+        return "Output file is missing.";
+    } else if (fs.existsSync(outputFile)) {
+        return `Output file already exists [${outputFile}].`;
     }
 
     return undefined;

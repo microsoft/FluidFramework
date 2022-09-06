@@ -7,14 +7,15 @@ import * as fs from "fs";
 import path from "path";
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { createContainerAndExecute, exportFile } from "../exportFile";
+import { createContainerAndExecute, parseBundleAndExportFile } from "../exportFile";
 import { isJsonSnapshot } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
-import { fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
+import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
 
 describe("exportFile", () => {
     const folderRoot = path.join(__dirname, "../../src/test");
     const outputFolder = path.join(folderRoot, "outputFolder");
+    const outputFilePath = path.join(outputFolder, "result.txt");
     const snapshotFolder = path.join(folderRoot, "localOdspSnapshots");
     const sampleCodeLoadersFolder = path.join(__dirname, "sampleCodeLoaders");
 
@@ -37,33 +38,28 @@ describe("exportFile", () => {
     fs.readdirSync(snapshotFolder).forEach((snapshotFileName: string) => {
         describe(`Export using snapshot [${snapshotFileName}]`, () => {
             it("Output file is correct", async () => {
-                const scenario = "sampleScenario";
-                const exportFileResult = await exportFile(
+                const exportFileResult = await parseBundleAndExportFile(
                     path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
                     path.join(snapshotFolder, snapshotFileName),
-                    outputFolder,
-                    scenario,
+                    outputFilePath,
                     new MockLogger(),
                 );
 
                 assert(exportFileResult.success, "exportFile call was not successful");
 
-                const resultFilePath = path.join(outputFolder, "result.txt");
-                assert(fs.existsSync(resultFilePath), "result file does not exist");
+                assert(fs.existsSync(outputFilePath), "result file does not exist");
 
-                const resultFileContent = fs.readFileSync(resultFilePath, { encoding: "utf-8" });
-                assert.strictEqual(resultFileContent, scenario, "result output is not correct");
+                const resultFileContent = fs.readFileSync(outputFilePath, { encoding: "utf-8" });
+                assert.strictEqual(resultFileContent, executeResult, "result output is not correct");
             });
 
             it("Execution result is correct", async () => {
-                const scenario = "sampleScenario";
                 const result = await createContainerAndExecute(
                     getSnapshotFileContent(path.join(snapshotFolder, snapshotFileName)),
                     await fluidExport,
-                    scenario,
                     new MockLogger(),
                 );
-                assert.deepStrictEqual(result, { "result.txt": scenario }, "result objects do not match");
+                assert.deepStrictEqual(result, executeResult, "result objects do not match");
             });
         });
     });
@@ -73,11 +69,10 @@ describe("exportFile", () => {
         const snapshotFilePath = path.join(snapshotFolder, "odspSnapshot1.json");
 
         it("codeLoaderBundle", async () => {
-            const result = await exportFile(
+            const result = await parseBundleAndExportFile(
                 path.join(sampleCodeLoadersFolder, "badCodeLoader.js"),
                 snapshotFilePath,
-                outputFolder,
-                "scneario",
+                outputFilePath,
                 mockLogger,
             );
 
@@ -87,11 +82,10 @@ describe("exportFile", () => {
         });
 
         it("codeLoaderBundle.fluidExport", async () => {
-            const result = await exportFile(
+            const result = await parseBundleAndExportFile(
                 path.join(sampleCodeLoadersFolder, "badFluidFileConverter.js"),
                 snapshotFilePath,
-                outputFolder,
-                "scneario",
+                outputFilePath,
                 mockLogger,
             );
 
@@ -101,11 +95,10 @@ describe("exportFile", () => {
         });
 
         it("input file", async () => {
-            const result = await exportFile(
+            const result = await parseBundleAndExportFile(
                 path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
                 "nonExistentFile.json",
-                outputFolder,
-                "scneario",
+                outputFilePath,
                 mockLogger,
             );
 
@@ -114,32 +107,17 @@ describe("exportFile", () => {
                 `error message does not contain "input file" [${result.errorMessage}]`);
         });
 
-        it("output folder", async () => {
-            const result = await exportFile(
+        it("output file", async () => {
+            const result = await parseBundleAndExportFile(
                 path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
                 snapshotFilePath,
-                "nonExistentFolder",
-                "scneario",
+                snapshotFilePath, // output file already exists
                 mockLogger,
             );
 
             assert(!result.success, "result should not be successful");
-            assert(result.errorMessage.toLowerCase().includes("output folder"),
-                `error message does not contain "output folder" [${result.errorMessage}]`);
-        });
-
-        it("scneario", async () => {
-            const result = await exportFile(
-                path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
-                snapshotFilePath,
-                outputFolder,
-                "",
-                mockLogger,
-            );
-
-            assert(!result.success, "result should not be successful");
-            assert(result.errorMessage.toLowerCase().includes("scenario"),
-                `error message does not contain "scenario" [${result.errorMessage}]`);
+            assert(result.errorMessage.toLowerCase().includes("output file"),
+                `error message does not contain "output file" [${result.errorMessage}]`);
         });
     });
 });

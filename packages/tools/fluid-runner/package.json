@@ -13,7 +13,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "fluid-runner": "bin/fluidRunner"
+    "fluid-runner": "bin/fluid-runner"
   },
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",

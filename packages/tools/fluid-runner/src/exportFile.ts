@@ -4,7 +4,6 @@
  */
 
 import * as fs from "fs";
-import path from "path";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -30,34 +29,45 @@ interface IExportFileResponseFailure {
 
 const clientArgsValidationError = "Client_ArgsValidationError";
 
-export async function exportFile(
+export async function parseBundleAndExportFile(
     codeLoader: string,
     inputFile: string,
-    outputFolder: string,
-    scenario: string,
+    outputFile: string,
+    logger: ITelemetryLogger,
+): Promise<IExportFileResponse> {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const codeLoaderBundle = require(codeLoader);
+    if (!isCodeLoaderBundle(codeLoaderBundle)) {
+        const eventName = clientArgsValidationError;
+        const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
+        return { success: false, eventName, errorMessage };
+    }
+
+    const fluidExport = await codeLoaderBundle.fluidExport;
+    if (!isFluidFileConverter(fluidExport)) {
+        const eventName = clientArgsValidationError;
+        const errorMessage = "Fluid export from CodeLoaderBundle is not of type IFluidFileConverter";
+        return { success: false, eventName, errorMessage };
+    }
+
+    // !!! TODO: improve description in command line arguments
+    // !!! TODO: "options" command line argument (passed to execute most likely?)
+
+    return exportFile(fluidExport, inputFile, outputFile, logger);
+}
+
+export async function exportFile(
+    fluidFileConverter: IFluidFileConverter,
+    inputFile: string,
+    outputFile: string,
     logger: ITelemetryLogger,
 ): Promise<IExportFileResponse> {
     try {
         return await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
-            const argsValidationError = getArgsValidationError(inputFile, outputFolder, scenario);
+            const argsValidationError = getArgsValidationError(inputFile, outputFile);
             if (argsValidationError) {
                 const eventName = clientArgsValidationError;
                 return { success: false, eventName, errorMessage: argsValidationError };
-            }
-
-            // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-            const codeLoaderBundle = require(codeLoader);
-            if (!isCodeLoaderBundle(codeLoaderBundle)) {
-                const eventName = clientArgsValidationError;
-                const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
-                return { success: false, eventName, errorMessage };
-            }
-
-            const fluidExport = await codeLoaderBundle.fluidExport;
-            if (!isFluidFileConverter(fluidExport)) {
-                const eventName = clientArgsValidationError;
-                const errorMessage = "Fluid export from CodeLoaderBundle is not of type IFluidFileConverter";
-                return { success: false, eventName, errorMessage };
             }
 
             // TODO: read file stream
@@ -68,17 +78,11 @@ export async function exportFile(
                 inputFileContent = fs.readFileSync(inputFile);
             }
 
-            const results = await createContainerAndExecute(
+            fs.appendFileSync(outputFile, await createContainerAndExecute(
                 inputFileContent,
-                fluidExport,
-                scenario,
+                fluidFileConverter,
                 logger,
-            );
-
-            // eslint-disable-next-line guard-for-in, no-restricted-syntax
-            for (const key in results) {
-                fs.appendFileSync(path.join(outputFolder, key), results[key]);
-            }
+            ));
 
             return { success: true };
         });
@@ -91,9 +95,8 @@ export async function exportFile(
 export async function createContainerAndExecute(
     localOdspSnapshot: string | Uint8Array,
     fluidFileConverter: IFluidFileConverter,
-    scenario: string,
     logger: ITelemetryLogger,
-): Promise<Record<string, string>> {
+): Promise<string> {
     const loader = new Loader({
         urlResolver: new FakeUrlResolver(),
         documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
@@ -106,5 +109,5 @@ export async function createContainerAndExecute(
         [LoaderHeader.loadMode]: { opsBeforeReturn: "cached" } } });
 
     return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () =>
-        fluidFileConverter.execute(container, scenario, logger));
+        fluidFileConverter.execute(container));
 }

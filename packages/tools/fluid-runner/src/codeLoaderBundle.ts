@@ -11,7 +11,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
  * Contract that defines the necessary exports for the bundle provided at runtime
  * For an example, see "src/test/sampleCodeLoaders/sampleCodeLoader.ts"
  */
- export interface ICodeLoaderBundle {
+export interface ICodeLoaderBundle {
     /**
      * Fluid export of all the required objects and functions
      */
@@ -24,6 +24,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 export interface IFluidFileConverter {
     /**
      * Get code loader details to provide at Loader creation
+     * @param logger - created logger object to pass to code loader
      */
     getCodeLoader(logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader>;
 
@@ -33,13 +34,10 @@ export interface IFluidFileConverter {
     scope?: FluidObject;
 
     /**
-     * Execute code and return the results
+     * Executes code on container and returns the result
      * @param container - container created by this application
-     * @param scenario - scenario this execution is related to
-     * @param logger - passed through logger object
-     * @returns - object containing file names as property keys and file content as values
      */
-    execute(container: IContainer, scenario: string, logger: ITelemetryBaseLogger): Promise<Record<string, string>>;
+    execute(container: IContainer): Promise<string>;
 }
 
 /**
