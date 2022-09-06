@@ -2628,7 +2628,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 MessageType.Summarize,
                 contents,
                 false); // batch
-            }
+        }
     }
 
     /**

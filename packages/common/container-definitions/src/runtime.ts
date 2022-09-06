@@ -125,9 +125,9 @@ export interface IContainerContext extends IDisposable {
     readonly storage: IDocumentStorageService;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: any) => number;
-    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
+    readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
+    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

@@ -190,7 +190,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
     // (undocumented)
-    readonly submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: any) => number;
+    readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)

@@ -38,6 +38,7 @@ export function create(
     const router: Router = Router();
     const externalOrdererUrl: string = config.get("worker:serverUrl");
     const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
+    const externalDeltaStreamUrl: string = config.get("worker:deltaStreamUrl") || externalOrdererUrl;
     const sessionStickinessDurationMs: number | undefined = config.get("alfred:sessionStickinessDurationMs");
     // Whether to enforce server-generated document ids in create doc flow
     const enforceServerGeneratedDocumentId: boolean = config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
@@ -105,6 +106,7 @@ export function create(
                 crypto.randomBytes(4).toString("hex"),
                 externalOrdererUrl,
                 externalHistorianUrl,
+                externalDeltaStreamUrl,
                 values,
                 enableDiscovery);
 
@@ -127,6 +129,7 @@ export function create(
                     const session: ISession = {
                         ordererUrl: externalOrdererUrl,
                         historianUrl: externalHistorianUrl,
+                        deltaStreamUrl: externalDeltaStreamUrl,
                         // Indicate to consumer that session was newly created.
                         isSessionAlive: false,
                         isSessionActive: false,
@@ -152,6 +155,7 @@ export function create(
             const session = getSession(
                 externalOrdererUrl,
                 externalHistorianUrl,
+                externalDeltaStreamUrl,
                 tenantId,
                 documentId,
                 documentsCollection,
