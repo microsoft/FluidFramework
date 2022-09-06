@@ -174,7 +174,7 @@ const empty: Root;
 export const emptyField: FieldSchema;
 
 // @public
-export const EmptyKey: FieldKey;
+export const EmptyKey: LocalFieldKey;
 
 // @public
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;

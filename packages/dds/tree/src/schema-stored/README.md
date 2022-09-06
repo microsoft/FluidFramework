@@ -1,4 +1,4 @@
-# Schema-Stored
+# schema-stored
 
 This folder contains proof of concept level prototype code for a schema system for trees.
 It is focused on how the schema system could work: mostly regarding what data could be stored where,
