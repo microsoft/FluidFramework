@@ -135,7 +135,7 @@ function getChangeHandler(
     kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
     const fieldKind = fieldKinds.get(kind);
-    assert(fieldKind !== undefined, "Unknown field kind");
+    assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
     return fieldKind.changeHandler;
 }
 
