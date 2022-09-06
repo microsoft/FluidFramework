@@ -24,7 +24,8 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
-    "build:compile": "npm run build:clean && npm run tsc",
+    "build:compile": "npm run build:clean && npm run tsc && npm run build:copy",
+    "build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
     "build:docs": "api-extractor run --local",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
     "build:full:compile": "npm run build:full",
