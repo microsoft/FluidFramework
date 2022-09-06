@@ -8,7 +8,6 @@ import { AnchorSet, FieldKey, UpPath } from "../tree";
 import { SequenceEditBuilder, singleTextCursor } from "../feature-libraries";
 import { jsonString } from "../domains";
 import { Transposed as T } from "../changeset";
-import { brand } from ".";
 
 /**
  *
@@ -18,8 +17,9 @@ import { brand } from ".";
  * @returns - set of UpPaths representing the randomnly generated tree.
  */
 export function generateRandomUpPaths(
-    parentKey: FieldKey, seed: number, maxUpPaths: number): Set<UpPath> {
-    const rootKey = brand<FieldKey>("root");
+    parentKeys: Set<FieldKey>, seed: number, maxUpPaths: number): Set<UpPath> {
+    const random = makeRandom(seed);
+    const rootKey = random.pick(Array.from(parentKeys));
     // initialize root UpPath
     const root: UpPath = {
         parent: undefined,
@@ -32,10 +32,10 @@ export function generateRandomUpPaths(
 
     // loop through to create more upPaths
     for (let i = 0; i < (seed % maxUpPaths); i++) {
-        const currParent = getRandomParent(parents, makeRandom(seed + i).integer(1, 10000000));
+        const currParent = getRandomParent(parents, random.integer(1, 10000000));
         const currUpPath: UpPath = {
             parent: currParent,
-            parentField: parentKey,
+            parentField: random.pick(Array.from(parentKeys)),
             parentIndex: i,
         };
         parents.add(currUpPath);
@@ -75,17 +75,26 @@ export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.Loca
     const currOperation = random.pick(Object.keys(operations));
     if (currOperation === operations.setValue) {
         builder.setValue(
-            getRandomParent(upPaths, random.integer(1, 10000000)),
+            getRandomParent(
+                upPaths,
+                random.integer(1, 10000000),
+            ),
             random.integer(1, 10000000),
         );
     } else if (currOperation === operations.insert) {
-        builder.insert(getRandomParent(
-            upPaths, random.integer(1, 10000000)),
+        builder.insert(
+            getRandomParent(
+                upPaths,
+                random.integer(1, 10000000),
+            ),
             singleTextCursor(nodeX),
         );
     } else {
         builder.delete(
-            getRandomParent(upPaths, random.integer(1, 10000000)),
+            getRandomParent(
+                upPaths,
+                random.integer(1, 10000000),
+            ),
             random.integer(1, upPaths.size),
         );
     }
