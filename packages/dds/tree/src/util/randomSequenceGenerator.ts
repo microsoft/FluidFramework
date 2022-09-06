@@ -56,6 +56,12 @@ function getRandomParent(parentSet: Set<UpPath>, seed: number): UpPath {
     return parents[randomIndex % parents.length];
 }
 
+enum operations {
+    setValue,
+    delete,
+    insert,
+}
+
 /**
  *
  * @param upPaths - Set of UpPaths which represents the state of the tree.
@@ -65,9 +71,8 @@ function getRandomParent(parentSet: Set<UpPath>, seed: number): UpPath {
 export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.LocalChangeset {
     const random = makeRandom(seed);
     const builder = new SequenceEditBuilder(() => {}, new AnchorSet());
-    const operations = ["setValue", "delete", "insert"];
     const nodeX = { type: jsonString.name, value: "X" };
-    const currOperation = random.pick(operations);
+    const currOperation = random.pick(Object.keys(operations));
     if (currOperation === "setValue") {
         builder.setValue(
             getRandomParent(upPaths, random.integer(1, 10000000)),
