@@ -2066,11 +2066,13 @@ export class MergeTree {
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
     ): LocalReferencePosition {
-        if (isRemoved(segment)) {
-            if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)) {
-                throw new UsageError(
-                    "Can only create SlideOnRemove or Transient local reference position on a removed segment");
-            }
+        if (
+            isRemovedAndAcked(segment)
+            && !refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)
+        ) {
+            throw new UsageError(
+                "Can only create SlideOnRemove or Transient local reference position on a removed segment",
+            );
         }
         const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
         segment.localRefs = localRefs;

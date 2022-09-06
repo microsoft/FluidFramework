@@ -7,5 +7,6 @@ export * from "./localDeltaStorageService";
 export * from "./localDocumentDeltaConnection";
 export * from "./localDocumentService";
 export * from "./localDocumentServiceFactory";
+export * from "./localDocumentStorageService";
 export * from "./localResolver";
 export * from "./localSessionStorageDb";
