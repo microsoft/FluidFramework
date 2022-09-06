@@ -47,37 +47,37 @@ export abstract class SortedSet<T, U extends string | number> {
         }
         let start = 0;
         let end = this.keySortedItems.length - 1;
-        const itemOrdinal = this.getKey(item);
+        const itemKey = this.getKey(item);
         let index = -1;
 
         while (start <= end) {
             index = start + Math.floor((end - start) / 2);
-            const indexOrdinal = this.getKey(this.keySortedItems[index]);
-            if (indexOrdinal > itemOrdinal) {
+            const indexKey = this.getKey(this.keySortedItems[index]);
+            if (indexKey > itemKey) {
                 if (start === index) {
                     return { exists: false, index };
                 }
                 end = index - 1;
-            } else if (indexOrdinal < itemOrdinal) {
+            } else if (indexKey < itemKey) {
                 if (index === end) {
                     return { exists: false, index: index + 1 };
                 }
                 start = index + 1;
-            } else if (indexOrdinal === itemOrdinal) {
+            } else if (indexKey === itemKey) {
                 // at this point we've found the ordinal of the item
                 // so we need to find the index of the item instance
                 //
                 if (item === this.keySortedItems[index]) {
                     return { exists: true, index };
                 }
-                for (let b = index - 1; b >= 0 && this.getKey(this.keySortedItems[b]) === itemOrdinal; b--) {
+                for (let b = index - 1; b >= 0 && this.getKey(this.keySortedItems[b]) === itemKey; b--) {
                     if (this.keySortedItems[b] === item) {
                         return { exists: true, index: b };
                     }
                 }
                 for (index + 1;
                     index < this.keySortedItems.length
-                        && this.getKey(this.keySortedItems[index]) === itemOrdinal;
+                        && this.getKey(this.keySortedItems[index]) === itemKey;
                     index++
                 ) {
                     if (this.keySortedItems[index] === item) {
