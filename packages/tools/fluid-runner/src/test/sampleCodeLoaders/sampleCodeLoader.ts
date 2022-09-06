@@ -20,7 +20,7 @@ async function getCodeLoader(_logger: ITelemetryBaseLogger): Promise<ICodeDetail
 }
 
 export const executeResult = "result";
-async function execute(_container: IContainer): Promise<string> {
+async function execute(_container: IContainer, _options?: string): Promise<string> {
     return executeResult;
 }
 

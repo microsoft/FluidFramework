@@ -36,8 +36,9 @@ export interface IFluidFileConverter {
     /**
      * Executes code on container and returns the result
      * @param container - container created by this application
+     * @param options - additional options
      */
-    execute(container: IContainer): Promise<string>;
+    execute(container: IContainer, options?: string): Promise<string>;
 }
 
 /**

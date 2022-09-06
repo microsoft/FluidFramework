@@ -45,6 +45,11 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         describe: "Path of telemetry file for config and session data (cannot already exist)",
                         type: "string",
                         demandOption: true,
+                    })
+                    .option("options", {
+                        describe: "Additional options passed to container on execution",
+                        type: "string",
+                        demandOption: false,
                     }),
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             async (argv) => {
@@ -67,6 +72,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         argv.inputFile,
                         argv.outputFile,
                         logger,
+                        argv.options,
                     );
                 } else {
                     result = await exportFile(
@@ -74,6 +80,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         argv.inputFile,
                         argv.outputFile,
                         logger,
+                        argv.options,
                     );
                 }
 

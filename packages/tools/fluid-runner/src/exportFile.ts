@@ -38,6 +38,7 @@ export async function parseBundleAndExportFile(
     inputFile: string,
     outputFile: string,
     logger: ITelemetryLogger,
+    options?: string,
 ): Promise<IExportFileResponse> {
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const codeLoaderBundle = require(codeLoader);
@@ -54,9 +55,7 @@ export async function parseBundleAndExportFile(
         return { success: false, eventName, errorMessage };
     }
 
-    // !!! TODO: "options" command line argument (passed to execute most likely?)
-
-    return exportFile(fluidExport, inputFile, outputFile, logger);
+    return exportFile(fluidExport, inputFile, outputFile, logger, options);
 }
 
 /**
@@ -67,6 +66,7 @@ export async function exportFile(
     inputFile: string,
     outputFile: string,
     logger: ITelemetryLogger,
+    options?: string,
 ): Promise<IExportFileResponse> {
     try {
         return await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
@@ -88,6 +88,7 @@ export async function exportFile(
                 inputFileContent,
                 fluidFileConverter,
                 logger,
+                options,
             ));
 
             return { success: true };
@@ -106,6 +107,7 @@ export async function createContainerAndExecute(
     localOdspSnapshot: string | Uint8Array,
     fluidFileConverter: IFluidFileConverter,
     logger: ITelemetryLogger,
+    options?: string,
 ): Promise<string> {
     const loader = new Loader({
         urlResolver: new FakeUrlResolver(),
@@ -119,5 +121,5 @@ export async function createContainerAndExecute(
         [LoaderHeader.loadMode]: { opsBeforeReturn: "cached" } } });
 
     return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () =>
-        fluidFileConverter.execute(container));
+        fluidFileConverter.execute(container, options));
 }
