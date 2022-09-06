@@ -1,4 +1,4 @@
-# Transaction
+# transaction
 
 This folder contains a proof-of-concept level prototype code for a transaction system for editing [checkouts](../checkout/README.md).
 

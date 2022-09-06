@@ -1,4 +1,4 @@
-# Checkout
+# checkout
 
 Abstraction for Checkouts.
 
