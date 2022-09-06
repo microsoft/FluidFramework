@@ -52,7 +52,7 @@ releasegroup1 dependencies to `~1.4.0-0`:
 }
 ```
 
-## Bumping based on current dependency range
+### Bumping based on current dependency range
 
 It is very helpful to bump a dependency based on its current value and a bump type, such as "major" or "minor". The
 following command yields the same results as the above command:
@@ -63,7 +63,7 @@ flub bump deps releasegroup1 --bumpType minor --prerelease
 
 To bump to a release version instead, omit the `--prerelease` argument.
 
-## Bumping standalone dependencies
+### Bumping standalone dependencies
 
 Some packages are versioned independently from other release groups. In the example above, we could bump to the next
 major version of the eslint-config package across the whole repo using the following command:
@@ -85,6 +85,21 @@ That command will update the package.json like so:
 
 For more detailed usage information see the [command reference](#flub-bump-deps-package_or_release_group);
 
+## release
+
+The `release` command ensures that a release branch is in good condition, then walks the user through releasing a
+package or release group.
+
+### Testing
+
+The command provides a `testMode` flag, which subclasses are expected to check when handling states. If in test mode,
+all handled states should immediately return true. This enables tests to verify that new states are handled in some way.
+
+The command also provides a `state` flag that can be used to initialize the state machine to a specific state. This is
+intended for testing.
+
+For more detailed usage information see the [command reference](#);
+
 # Usage
 <!-- usage -->
 ```sh-session
@@ -92,7 +107,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.3000 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.4.5000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -318,7 +333,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/info.ts)_
 
 ## `flub release`
 
@@ -344,7 +359,7 @@ FLAGS
   --[no-]updateCheck            Check that the local repo is up to date with the remote.
 ```
 
-_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/release.ts)_
+_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/release.ts)_
 
 ## `flub version VERSION`
 
@@ -390,7 +405,7 @@ EXAMPLES
     $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/version.ts)_
 
 ## `flub version latest`
 

@@ -4,5 +4,26 @@
  */
 
 export { run } from "@oclif/core";
-export * from "./lib";
+// export {
+//     generateReleaseGitTagName,
+//     getAllVersions,
+//     getPreReleaseDependencies,
+//     getTagsForReleaseGroup,
+//     getVersionFromTag,
+//     isReleased,
+//     npmCheckUpdates,
+//     PreReleaseDependencies,
+//     sortVersions,
+//     VersionDetails,
+
+//     bumpPackageDependencies,
+//     bumpReleaseGroup,
+//     PackageWithRangeSpec,
+
+//     createBumpBranch,
+//     generateBumpDepsBranchName,
+//     generateBumpVersionBranchName,
+//     generateReleaseBranchName,
+//     getDefaultBumpTypeForBranch,
+// } from "./lib";
 export type { ReleaseGroup, ReleasePackage } from "./releaseGroups";

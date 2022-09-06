@@ -30,9 +30,6 @@ export function bumpReleaseGroup(context: Context, bumpType: VersionChangeType, 
 export function createBumpBranch(context: Context, releaseGroupOrPackage: ReleaseGroup | ReleasePackage, bumpType: VersionBumpType): Promise<string>;
 
 // @internal
-export function difference<T>(setA: Set<T>, setB: Set<T>): Set<T>;
-
-// @internal
 export function generateBumpDepsBranchName(bumpedDep: ReleaseGroup, bumpType: VersionBumpTypeExtended | "releasedDeps", releaseGroup?: ReleaseGroup): string;
 
 // @internal

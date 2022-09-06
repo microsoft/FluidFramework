@@ -10,11 +10,7 @@ export {
     getDefaultBumpTypeForBranch,
     generateReleaseBranchName,
 } from "./branches";
-export {
-    bumpPackageDependencies,
-    bumpVersion as bumpReleaseGroup,
-    PackageWithRangeSpec,
-} from "./bump";
+export { bumpPackageDependencies, bumpReleaseGroup, PackageWithRangeSpec } from "./bump";
 export {
     getAllVersions,
     getPreReleaseDependencies,
@@ -28,17 +24,4 @@ export {
     VersionDetails,
 } from "./package";
 export { difference } from "./sets";
-
-export function applyMixins(derivedCtor: any, constructors: any[]) {
-    // eslint-disable-next-line unicorn/no-array-for-each
-    constructors.forEach((baseCtor) => {
-        // eslint-disable-next-line unicorn/no-array-for-each
-        Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
-            Object.defineProperty(
-                derivedCtor.prototype,
-                name,
-                Object.getOwnPropertyDescriptor(baseCtor.prototype, name) || Object.create(null),
-            );
-        });
-    });
-}
+export { getIndent, indentString } from "./text";

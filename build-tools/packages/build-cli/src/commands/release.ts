@@ -4,6 +4,7 @@
  */
 
 import { VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
+import { Command } from "@oclif/core";
 import {
     bumpTypeFlag,
     checkFlags,
@@ -17,7 +18,6 @@ import {
     StateMachineCommand,
     UnifiedReleaseMachineDefinition,
     UnifiedReleaseHandler,
-    HandlerData,
 } from "../machines";
 
 /**
@@ -32,10 +32,13 @@ import {
  * This process is continued until all the dependencies have been released, after which the release group itself is
  * released.
  */
+
 export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends StateMachineCommand<T> {
     machine = UnifiedReleaseMachineDefinition;
     data: HandlerData = {};
     handler: StateHandler | undefined;
+
+    static description = "";
 
     static flags = {
         releaseGroup: releaseGroupFlag({

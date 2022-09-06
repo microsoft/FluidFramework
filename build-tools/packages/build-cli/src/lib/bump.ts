@@ -113,7 +113,7 @@ export async function bumpPackageDependencies(
  *
  * @internal
  */
-export async function bumpVersion(
+export async function bumpReleaseGroup(
     context: Context,
     bumpType: VersionChangeType,
     releaseGroupOrPackage: MonoRepo | Package,
