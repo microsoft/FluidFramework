@@ -619,17 +619,10 @@ export function renderDeprecatedCell(
 ): DocTableCell {
     return isDeprecated(apiItem)
         ? new DocTableCell({ configuration: config.tsdocConfiguration }, [
-              new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                  new DocEmphasisSpan(
-                      { configuration: config.tsdocConfiguration, bold: true, italic: true },
-                      [
-                          new DocPlainText({
-                              configuration: config.tsdocConfiguration,
-                              text: "DEPRECATED",
-                          }),
-                      ],
-                  ),
-              ]),
+              new DocCodeSpan({
+                  configuration: config.tsdocConfiguration,
+                  code: "DEPRECATED",
+              }),
           ])
         : renderEmptyTableCell(config);
 }
