@@ -2805,7 +2805,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw new UsageError("can't get state when offline load disabled");
         }
 
-        assert(this.batchManager.empty, "Can't trigger save in the middle of a batch");
+        // Flush pending batch.
+        // getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+        // to close current batch.
+        this.flush();
 
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
         if (previousPendingState) {
