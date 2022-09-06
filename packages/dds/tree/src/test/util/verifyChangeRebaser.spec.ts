@@ -27,7 +27,11 @@ const counterRebaser = commutativeRebaser({
 
 describe("verifyChangeRebaser", () => {
     it("test counter with safe integers", () => {
-        const output = verifyChangeRebaser(counterRebaser, new Set([-1, 2, 3, 0, -2, 4]), (a, b) => a === b);
+        const output = verifyChangeRebaser(
+            counterRebaser,
+            new Set([-1, 2, 3, 0, -2, 4]),
+            (a, b) => a === b || (isNaN(a) && isNaN(b)),
+        );
         assert.equal(output.rebaseLeftDistributivity, "Passed");
         assert.equal(output.composeAssociativity, "Passed");
         assert.equal(output.rebaseRightDistributivity, "Passed");
@@ -37,7 +41,11 @@ describe("verifyChangeRebaser", () => {
     });
 
     it("test counter with unsafe integers", () => {
-        const output = verifyChangeRebaser(counterRebaser, new Set([Number.MAX_SAFE_INTEGER, -10, 2]), (a, b) => a === b);
+        const output = verifyChangeRebaser(
+            counterRebaser,
+            new Set([Number.MAX_SAFE_INTEGER, -10, 2]),
+            (a, b) => a === b || (isNaN(a) && isNaN(b)),
+        );
         assert.equal(output.rebaseLeftDistributivity, "Passed");
         assert.notEqual(output.composeAssociativity, "Passed");
         assert.equal(output.rebaseRightDistributivity, "Passed");
@@ -59,7 +67,7 @@ describe("verifyChangeRebaser", () => {
                 Number.MIN_SAFE_INTEGER,
                 Number.MAX_SAFE_INTEGER,
             ]),
-            (a, b) => a === b,
+            (a, b) => a === b || (isNaN(a) && isNaN(b)),
         );
         assert.notEqual(output.rebaseLeftDistributivity, "Passed");
         assert.notEqual(output.composeAssociativity, "Passed");
