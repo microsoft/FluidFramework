@@ -12,11 +12,12 @@ import { JsonableTree, EmptyKey, Value } from "../../tree";
 import { brand, Brand, clone } from "../../util";
 import {
     defaultSchemaPolicy, getEditableTree, EditableTree, buildForest, typeSymbol, UnwrappedEditableField,
-    proxySymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive, UnwrappedEditableTree, isPrimitiveValue,
+    proxySymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive,
+    isPrimitiveValue, isPrimitive, Multiplicity, getTypeNameSymbol,
 } from "../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
-import { getFieldKind, getFieldSchema, getPrimaryField, isPrimitive } from "../../feature-libraries/editable-tree/utilities";
+import { getFieldKind, getFieldSchema, getPrimaryField } from "../../feature-libraries/editable-tree/utilities";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
 
@@ -60,7 +61,7 @@ const addressSchema = namedTreeSchema({
     name: brand("Test:Address-1.0.0"),
     localFields: {
         street: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        zip: fieldSchema(FieldKinds.value, [stringSchema.name]),
+        zip: fieldSchema(FieldKinds.optional, [stringSchema.name]),
         phones: fieldSchema(FieldKinds.value, [phonesSchema.name]),
     },
     extraLocalFields: emptyField,
@@ -145,8 +146,7 @@ const person: JsonableTree = {
             fields: {
                 street: [{ value: "treeStreet", type: stringSchema.name }],
                 // TODO: revisit as ideally we don't want to have undefined properties in our proxy object
-                // TODO: string was missing here. Either it should be made optional. or provided. Adding a value for now.
-                zip: [{ type: stringSchema.name, value: "zip-code" }],
+                zip: [{ type: stringSchema.name }],
                 phones: [{
                     type: phonesSchema.name,
                     fields: {
@@ -207,7 +207,7 @@ function expectTreeEquals(inputField: UnwrappedEditableField, expected: Jsonable
         const fields = expected.fields ?? {};
         assert.equal(key in fields, true);
         const field: JsonableTree[] = fields[key];
-        const isSequence = getFieldKind(getFieldSchema(type, key)).multiplicity;
+        const isSequence = getFieldKind(getFieldSchema(type, key)).multiplicity === Multiplicity.Sequence;
         // implicit sequence
         if (isSequence) {
             expectTreeSequence(subNode, field);
@@ -246,6 +246,8 @@ describe.only("editable-tree", () => {
         assert.strictEqual(proxy[typeSymbol], personSchema);
         assert.strictEqual(proxy.address[typeSymbol], addressSchema);
         assert.strictEqual((proxy.address.phones[2] as ComplexPhoneType)[typeSymbol], complexPhoneSchema);
+        assert.strictEqual(proxy[getTypeNameSymbol]("name"), stringSchema.name);
+        assert.strictEqual(proxy.address[getTypeNameSymbol]("phones"), phonesSchema.name);
     });
 
     it("traverse a complete tree", () => {

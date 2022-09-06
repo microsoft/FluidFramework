@@ -169,8 +169,9 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 
 // @public
 export interface EditableTree {
+    readonly [getTypeNameSymbol]: (key: string) => TreeSchemaIdentifier;
     // (undocumented)
-    readonly [editableTreeProxySymbol]: object;
+    readonly [proxySymbol]: object;
     readonly [typeSymbol]: TreeSchema;
     readonly [value_2]: Value;
     readonly [key: string]: UnwrappedEditableField;
@@ -184,9 +185,6 @@ export interface EditableTreeContext {
 
 // @public
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
-
-// @public (undocumented)
-export const editableTreeProxySymbol: unique symbol;
 
 // @public (undocumented)
 const empty: Root;
@@ -338,6 +336,9 @@ export interface GenericTreeNode<TChild> extends NodeData {
 export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField];
 
 // @public
+export const getTypeNameSymbol: unique symbol;
+
+// @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
 }
 
@@ -401,6 +402,9 @@ export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : fa
 
 // @public (undocumented)
 export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
+
+// @public (undocumented)
+export function isPrimitive(schema: TreeSchema): boolean;
 
 // @public (undocumented)
 export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
@@ -732,6 +736,9 @@ export abstract class ProgressiveEditBuilder<TChange> {
 
 // @public
 type ProtoNode = JsonableTree;
+
+// @public (undocumented)
+export const proxySymbol: unique symbol;
 
 // @public
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {

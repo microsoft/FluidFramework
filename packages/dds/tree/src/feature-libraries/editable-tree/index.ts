@@ -12,10 +12,12 @@ export {
     UnwrappedEditableField,
     type as typeSymbol,
     value as valueSymbol,
+    getTypeName as getTypeNameSymbol,
     proxySymbol,
     EditableTreeContext,
 } from "./editableTree";
 export {
     PrimitiveValue,
     isPrimitiveValue,
+    isPrimitive,
 } from "./utilities";

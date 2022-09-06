@@ -104,8 +104,10 @@ export {
     EditableTree,
     getEditableTree,
     isPrimitiveValue,
+    isPrimitive,
     typeSymbol,
-    proxySymbol as editableTreeProxySymbol,
+    getTypeNameSymbol,
+    proxySymbol,
     defaultSchemaPolicy,
     PrimitiveValue,
 } from "./feature-libraries";

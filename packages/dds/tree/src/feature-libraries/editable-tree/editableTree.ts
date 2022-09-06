@@ -8,7 +8,7 @@ import {
 	IEditableForest, TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState,
 } from "../../forest";
 import { brand } from "../../util";
-import { TreeSchema, FieldSchema, rootFieldKey, LocalFieldKey } from "../../schema-stored";
+import { TreeSchema, FieldSchema, rootFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
     AdaptingProxyHandler,
@@ -31,6 +31,11 @@ export const type: unique symbol = Symbol("editable-tree type");
 export const value: unique symbol = Symbol("editable-tree value");
 
 /**
+ * A symbol to for the type name of a child node in contexts where string keys are already in use for fields.
+ */
+ export const getTypeName: unique symbol = Symbol("editable-tree typeName");
+
+/**
  * A tree which can be traversed and edited.
  *
  * When iterating, only visits non tempt fields.
@@ -49,6 +54,11 @@ export interface EditableTree {
      * If this node is is well-formed, it must follow this schema.
      */
     readonly [type]: TreeSchema;
+
+    /**
+     * A function to get the type of a non-sequence child node.
+    */
+    readonly [getTypeName]: (key: string) => TreeSchemaIdentifier;
 
     /**
      * Value stored on this node.
@@ -151,6 +161,7 @@ class ProxyTarget {
 		cursor: ITreeSubscriptionCursor,
 	) {
 		this.lazyCursor = cursor.fork();
+        context.withCursors.add(this);
 	}
 
     public free(): void {
@@ -178,6 +189,10 @@ class ProxyTarget {
 			const result = this.context.forest.tryMoveCursorTo(this.anchor, this.lazyCursor);
 			assert(result === TreeNavigationResult.Ok,
                 "It is invalid to access an EditableTree node which no longer exists");
+            this.context.withCursors.add(this);
+            this.context.forest.anchors.forget(this.anchor);
+            this.context.withAnchors.delete(this);
+            this.anchor = undefined;
 		}
 		return this.lazyCursor;
 	}
@@ -194,9 +209,22 @@ class ProxyTarget {
         return getFieldKind(getFieldSchema(this.type, key));
     }
 
-	getKeys(): string[] {
-		return [...this.cursor.keys] as string[];
-	}
+    get keys(): string[] {
+        // For now this is an approximation:
+        const keys: string[] = [];
+        for (const key of this.cursor.keys) {
+            // TODO: with new cursor API, field iteration will skip empty fields and this check can be removed.
+            if (this.has(key as string)) {
+                keys.push(key as string);
+            }
+        }
+        return keys;
+    }
+
+    public has(key: string): boolean {
+        // Make fields present only if non-empty.
+        return this.cursor.length(brand(key)) !== 0;
+    }
 
     /**
      * @returns the key, if any, of the primary array field.
@@ -223,6 +251,12 @@ class ProxyTarget {
         const childTargets = mapCursorField(this.cursor, brand(key), (c) => new ProxyTarget(this.context, c));
         return proxifyField(fieldKind, childTargets);
     }
+
+    public getTypeName(key: string): TreeSchemaIdentifier {
+        const childTypes = mapCursorField(this.cursor, brand(key), (c) => c.type);
+        assert(childTypes.length === 1, "A complex type. Please, use typeSymbol to get a node schema instead.");
+        return childTypes[0];
+    }
 }
 
 /**
@@ -241,6 +275,8 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             return target.value;
         } else if (key === proxySymbol) {
             return target;
+        } else if (key === getTypeName) {
+            return target.getTypeName.bind(target);
         }
 		return undefined;
 	},
@@ -283,20 +319,11 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         //     }
         // }
 
-        // Make fields present only if non-empty.
-		return target.cursor.length(brand(key)) !== 0;
+		return target.has(key);
 	},
     // Includes all non-empty fields, which are the enumerable fields.
 	ownKeys: (target: ProxyTarget): string[] => {
-        // For now this is an approximation:
-        const keys: string[] = [];
-        for (const key of target.cursor.keys) {
-            // TODO: with new cursor API, field iteration will skip empty fields and this check can be removed.
-            if (target.cursor.length(key) !== 0) {
-                keys.push(key as string);
-            }
-        }
-        return keys;
+        return target.keys;
 	},
 	getOwnPropertyDescriptor: (target: ProxyTarget, key: string | symbol): PropertyDescriptor | undefined => {
 		// We generally don't want to allow users of the proxy to reconfigure all the properties,
@@ -309,16 +336,13 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
 			} else if (key === type) {
 				return { configurable: true, enumerable: false, value: target.type, writable: false };
 			}
-		} else {
-			const length = target.cursor.length(brand(key));
-			if (length !== 0) {
-				return {
-					configurable: true,
-					enumerable: true,
-					value: target.proxifyField(key),
-					writable: false,
-				};
-			}
+		} else if (target.has(key)) {
+            return {
+                configurable: true,
+                enumerable: true,
+                value: target.proxifyField(key),
+                writable: false,
+            };
 		}
 		return undefined;
 	},
@@ -392,6 +416,7 @@ export function getEditableTree(forest: IEditableForest): [EditableTreeContext, 
             targets.push(new ProxyTarget(context, cursor));
         } while (cursor.seek(1) === TreeNavigationResult.Ok);
     }
+    cursor.clear();
     cursor.free();
     forest.anchors.forget(destination);
     const rootSchema = forest.schema.lookupGlobalFieldSchema(rootFieldKey);
