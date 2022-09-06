@@ -5,16 +5,20 @@
 
 import { IDisposable } from "@fluidframework/common-definitions";
 import { assert, Lazy } from "@fluidframework/common-utils";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ICriticalContainerError, IBatchMessage } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { wrapError } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
-import { ContainerMessageType } from "./containerRuntime";
+import { ContainerMessageType, ContainerRuntimeMessage } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
+
+/**
+ * Message type used by BatchManager
+ */
+export type BatchMessage = IBatchMessage & { localOpMetadata: unknown; deserializedContent: ContainerRuntimeMessage; };
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -69,10 +73,6 @@ export interface IRuntimeStateHandler{
         content: any,
         localOpMetadata: unknown,
         opMetadata: Record<string, unknown> | undefined): void;
-    rollback(
-        type: ContainerMessageType,
-        content: any,
-        localOpMetadata: unknown): void;
 }
 
 /**
@@ -394,62 +394,12 @@ export class PendingStateManager implements IDisposable {
     }
 
     /**
-     * Capture the pending state at this point
-     */
-    public checkpoint() {
-        const checkpointHead = this.pendingStates.peekBack();
-        return {
-            rollback: () => {
-                try {
-                    while (this.pendingStates.peekBack() !== checkpointHead) {
-                        this.rollbackNextPendingState();
-                    }
-                } catch (err) {
-                    const error = wrapError(err, (message) => {
-                        return DataProcessingError.create(
-                            `RollbackError: ${message}`,
-                            "checkpointRollback",
-                            undefined) as DataProcessingError;
-                    });
-                    this.stateHandler.close(error);
-                    throw error;
-                }
-            },
-        };
-    }
-
-    /**
      * Returns the next pending state from the pending state queue.
      */
     private peekNextPendingState(): IPendingState {
         const nextPendingState = this.pendingStates.peekFront();
         assert(!!nextPendingState, 0x171 /* "No pending state found for the remote message" */);
         return nextPendingState;
-    }
-
-    /**
-     * Undo the last pending state
-     */
-    private rollbackNextPendingState() {
-        const pendingStatesCount = this.pendingStates.length;
-        if (pendingStatesCount === 0) {
-            return;
-        }
-
-        this._pendingMessagesCount--;
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pendingState = this.pendingStates.pop()!;
-        switch (pendingState.type) {
-            case "message":
-                this.stateHandler.rollback(
-                    pendingState.messageType,
-                    pendingState.content,
-                    pendingState.localOpMetadata);
-                break;
-            default:
-                throw new Error(`Can't rollback state ${pendingState.type}`);
-        }
     }
 
     /**
@@ -509,5 +459,42 @@ export class PendingStateManager implements IDisposable {
 
         // Revert the FlushMode.
         this.stateHandler.setFlushMode(savedFlushMode);
+    }
+}
+
+/**
+ * Helper class that manages partial batch & rollback.
+ */
+export class BatchManager {
+    private pendingBatch: BatchMessage [] = [];
+
+    public push(message: BatchMessage) {
+            this.pendingBatch.push(message);
+    }
+
+    public get empty() { return this.pendingBatch.length === 0; }
+
+    public popBatch() {
+        const batch = this.pendingBatch;
+        this.pendingBatch = [];
+        return batch;
+    }
+
+    /**
+     * Capture the pending state at this point
+     */
+     public checkpoint() {
+        const startPoint = this.pendingBatch.length;
+        return {
+            rollback: (process: (message: BatchMessage) => void) => {
+                for (let i = this.pendingBatch.length; i > startPoint;) {
+                    i--;
+                    const message = this.pendingBatch[i];
+                    process(message);
+                }
+
+                this.pendingBatch.length = startPoint;
+            },
+        };
     }
 }
