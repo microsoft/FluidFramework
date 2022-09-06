@@ -29,6 +29,10 @@ interface IExportFileResponseFailure {
 
 const clientArgsValidationError = "Client_ArgsValidationError";
 
+/**
+ * Intermediary method to extract IFluidFileConverter from a provided JS bundle path
+ * @param codeLoader - path to provided JS bundle
+ */
 export async function parseBundleAndExportFile(
     codeLoader: string,
     inputFile: string,
@@ -50,12 +54,14 @@ export async function parseBundleAndExportFile(
         return { success: false, eventName, errorMessage };
     }
 
-    // !!! TODO: improve description in command line arguments
     // !!! TODO: "options" command line argument (passed to execute most likely?)
 
     return exportFile(fluidExport, inputFile, outputFile, logger);
 }
 
+/**
+ * Execute code on container based on ODSP snapshot and write result to file
+ */
 export async function exportFile(
     fluidFileConverter: IFluidFileConverter,
     inputFile: string,
@@ -92,6 +98,10 @@ export async function exportFile(
     }
 }
 
+/**
+ * Create the container based on an ODSP snapshot and execute code on it
+ * @returns result of execution
+ */
 export async function createContainerAndExecute(
     localOdspSnapshot: string | Uint8Array,
     fluidFileConverter: IFluidFileConverter,

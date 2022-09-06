@@ -11,6 +11,9 @@ import { exportFile, IExportFileResponse, parseBundleAndExportFile } from "./exp
 import { FileLogger } from "./logger/FileLogger";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 
+/**
+ * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vis versa
+ */
 export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     yargs
@@ -18,27 +21,28 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
         .version(false)
         .command(
             "exportFile",
-            "Generate an output for a local snapshot",
+            "Generate an output for a local ODSP snapshot",
             // eslint-disable-next-line @typescript-eslint/no-shadow
             (yargs) =>
                 yargs
                     .option("codeLoader", {
-                        describe: "Name of the code loader bundle",
+                        // eslint-disable-next-line max-len
+                        describe: "Path to code loader bundle. Required if this application is being called without modification.\nSee \"README.md\" for more details.",
                         type: "string",
                         demandOption: false,
                     })
                     .option("inputFile", {
-                        describe: "Name of the file containing local ODSP snapshot",
+                        describe: "Path to local ODSP snapshot",
                         type: "string",
                         demandOption: true,
                     })
                     .option("outputFile", {
-                        describe: "Name of the output file",
+                        describe: "Path of output file (cannot already exist).\nExecution result will be written here",
                         type: "string",
                         demandOption: true,
                     })
                     .option("telemetryFile", {
-                        describe: "Config and session data for telemetry",
+                        describe: "Path of telemetry file for config and session data (cannot already exist)",
                         type: "string",
                         demandOption: true,
                     }),
