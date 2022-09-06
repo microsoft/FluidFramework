@@ -27,15 +27,15 @@ export type TelemetryEventPropertyType =
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
  */
-export interface ITaggedTelemetryPropertyType {
-    value: TelemetryEventPropertyType;
-    tag: string;
+ export interface TaggedProperty<TValue> {
+    value: TValue,
+    tag: string,
 }
 /**
  * JSON-serializable properties, which will be logged with telemetry.
  */
 export interface ITelemetryProperties {
-    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+    [index: string]: TelemetryEventPropertyType | TaggedProperty<TelemetryEventPropertyType>;
 }
 
 /**
@@ -43,13 +43,8 @@ export interface ITelemetryProperties {
  */
 export type TelemetryBasePropertyType = string | number | boolean | undefined;
 
-export interface ITaggedBasePropertyType {
-    value: TelemetryBasePropertyType;
-    tag: string;
-}
-
 export interface ITelemetryBaseProperties {
-    [index: string]: TelemetryBasePropertyType | ITaggedBasePropertyType;
+    [index: string]: TelemetryBasePropertyType | TaggedProperty<TelemetryBasePropertyType>;
 }
 
 /**
