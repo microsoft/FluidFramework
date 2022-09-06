@@ -14,7 +14,102 @@ import {
     ISegment,
     toRemovalInfo,
 } from "./mergeTreeNodes";
-import { PartialSequenceLengthsSet } from "./sortedSegmentSet";
+import { SortedSet } from "./sortedSet";
+
+export class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
+    protected getOrdinal(item: PartialSequenceLength): number {
+        return item.seq;
+    }
+
+    public addOrUpdate(
+        newItem: PartialSequenceLength,
+        update?: (existingItem: PartialSequenceLength, newItem: PartialSequenceLength) => void,
+    ) {
+        const prev = this.latestLEQ(newItem.seq);
+
+        if (prev?.seq !== newItem.seq) {
+            // new element, update len
+            newItem.len = (prev?.len ?? 0) + newItem.seglen;
+        }
+
+        // update the len of all following elements
+        for (const e of this.ordinalSortedItems) {
+            if (e.seq <= newItem.seq) {
+                continue;
+            }
+
+            e.len += newItem.seglen;
+        }
+
+        super.addOrUpdate(newItem, (currentPartial, partialLength) => {
+            currentPartial.seglen += partialLength.seglen;
+            currentPartial.len += partialLength.seglen;
+            combineOverlapClients(currentPartial, partialLength);
+        });
+    }
+
+    /**
+     * Returns the partial length whose sequence number is the greatest sequence
+     * number that is less than or equal to key.
+     * @param key - sequence number
+     */
+    latestLEQ(key: number): PartialSequenceLength | undefined {
+        return this.items[this.latestLeqIndex(key)];
+    }
+
+    /**
+     * Returns the partial length whose sequence number is the lowest sequence
+     * number that is greater than or equal to key.
+     * @param key - sequence number
+     */
+    firstGte(key: number): PartialSequenceLength | undefined {
+        let indexFirstGTE = 0;
+        for (; indexFirstGTE < this.size; indexFirstGTE++) {
+            if (this.ordinalSortedItems[indexFirstGTE].seq >= key) {
+                break;
+            }
+        }
+        return this.ordinalSortedItems[indexFirstGTE];
+    }
+
+    private latestLeqIndex(key: number): number {
+        let best = -1;
+        let lo = 0;
+        let hi = this.size - 1;
+        while (lo <= hi) {
+            const mid = lo + Math.floor((hi - lo) / 2);
+            if (this.items[mid].seq <= key) {
+                if ((best < 0) || (this.items[best].seq < this.items[mid].seq)) {
+                    best = mid;
+                }
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return best;
+    }
+
+    copyDown(minSeq: number): number {
+        const mindex = this.latestLeqIndex(minSeq);
+        let minLength = 0;
+        if (mindex >= 0) {
+            minLength = this.ordinalSortedItems[mindex].len;
+            const seqCount = this.size;
+            if (mindex <= (seqCount - 1)) {
+                // Still some entries remaining
+                const remainingCount = (seqCount - mindex) - 1;
+                // Copy down
+                for (let i = 0; i < remainingCount; i++) {
+                    this.ordinalSortedItems[i] = this.ordinalSortedItems[i + mindex + 1];
+                    this.ordinalSortedItems[i].len -= minLength;
+                }
+                this.ordinalSortedItems.length = remainingCount;
+            }
+        }
+        return minLength;
+    }
+}
 
 interface IOverlapClient {
     clientId: number;

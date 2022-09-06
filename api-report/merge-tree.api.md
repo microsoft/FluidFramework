@@ -886,21 +886,6 @@ export const NonCollabClient = -2;
 // @public (undocumented)
 export function ordinalToArray(ord: string): number[];
 
-// Warning: (ae-forgotten-export) The symbol "PartialSequenceLength" needs to be exported by the entry point index.d.ts
-// Warning: (ae-incompatible-release-tags) The symbol "PartialSequenceLengthsSet" is marked as @public, but its signature references "SortedSet" which is marked as @internal
-//
-// @public (undocumented)
-export class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
-    // (undocumented)
-    addOrUpdate(newItem: PartialSequenceLength, update?: (existingItem: PartialSequenceLength, newItem: PartialSequenceLength) => void): void;
-    // (undocumented)
-    copyDown(minSeq: number): number;
-    firstGte(key: number): PartialSequenceLength | undefined;
-    // (undocumented)
-    protected getOrdinal(item: PartialSequenceLength): number;
-    latestLEQ(key: number): PartialSequenceLength | undefined;
-}
-
 // @public (undocumented)
 export class PropertiesManager {
     constructor();
@@ -1182,7 +1167,7 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
     min(): Property<TKey, TData> | undefined;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "SortedSegmentSet" is marked as @public, but its signature references "SortedSet" which is marked as @internal
+// Warning: (ae-forgotten-export) The symbol "SortedSet" needs to be exported by the entry point index.d.ts
 //
 // @public
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<T, string> {
@@ -1194,26 +1179,6 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 export type SortedSegmentSetItem = ISegment | {
     readonly segment: ISegment;
 };
-
-// Warning: (ae-internal-missing-underscore) The name "SortedSet" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export abstract class SortedSet<T, U extends string | number> {
-    // (undocumented)
-    addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void;
-    // (undocumented)
-    protected abstract getOrdinal(t: T): U;
-    // (undocumented)
-    has(item: T): boolean;
-    // (undocumented)
-    get items(): readonly T[];
-    // (undocumented)
-    protected readonly ordinalSortedItems: T[];
-    // (undocumented)
-    remove(item: T): boolean;
-    // (undocumented)
-    get size(): number;
-}
 
 // @public (undocumented)
 export class Stack<T> {
