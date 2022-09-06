@@ -10,22 +10,12 @@ import { AnchorSet, generateFuzzyCombinedChange } from "../../tree";
 
 const testSeed = 432167897;
 
-function commutativeRebaser<TChange>(data: {
-    compose: (changes: TChange[]) => TChange;
-    invert: (changes: TChange) => TChange;
-    rebaseAnchors: (anchor: AnchorSet, over: TChange) => void;
-}): ChangeRebaser<TChange> {
-    return {
-        rebase: (change: TChange, over: TChange) => change,
-        ...data,
-    };
-}
-
-const counterRebaser = commutativeRebaser({
+const counterRebaser: ChangeRebaser<number> = {
     compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
     invert: (change: number) => -change,
+    rebase: (change: number, over: number) => change,
     rebaseAnchors: (anchor: AnchorSet, over: number) => {},
-});
+};
 
 function generateRandomCounterChange(seed: number) {
     return makeRandom(seed).integer(-1000, 1000);
