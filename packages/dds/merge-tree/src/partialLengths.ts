@@ -25,7 +25,7 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
         newItem: PartialSequenceLength,
         update?: (existingItem: PartialSequenceLength, newItem: PartialSequenceLength) => void,
     ) {
-        const prev = this.latestLEQ(newItem.seq);
+        const prev = this.latestLeq(newItem.seq);
 
         if (prev?.seq !== newItem.seq) {
             // new element, update len
@@ -53,8 +53,8 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
      * number that is less than or equal to key.
      * @param key - sequence number
      */
-    latestLEQ(key: number): PartialSequenceLength | undefined {
-        return this.items[this.latestLeqIndex(key)];
+    latestLeq(key: number): PartialSequenceLength | undefined {
+        return this.keySortedItems[this.latestLeqIndex(key)];
     }
 
     /**
@@ -63,31 +63,13 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
      * @param key - sequence number
      */
     firstGte(key: number): PartialSequenceLength | undefined {
-        let indexFirstGTE = 0;
-        for (; indexFirstGTE < this.size; indexFirstGTE++) {
-            if (this.keySortedItems[indexFirstGTE].seq >= key) {
-                break;
-            }
-        }
-        return this.keySortedItems[indexFirstGTE];
+        const { index } = this.findItemPosition({ seq: key, len: 0, seglen: 0 });
+        return this.keySortedItems[index];
     }
 
     private latestLeqIndex(key: number): number {
-        let best = -1;
-        let lo = 0;
-        let hi = this.size - 1;
-        while (lo <= hi) {
-            const mid = lo + Math.floor((hi - lo) / 2);
-            if (this.items[mid].seq <= key) {
-                if ((best < 0) || (this.items[best].seq < this.items[mid].seq)) {
-                    best = mid;
-                }
-                lo = mid + 1;
-            } else {
-                hi = mid - 1;
-            }
-        }
-        return best;
+        const { exists, index } = this.findItemPosition({ seq: key, len: 0, seglen: 0 });
+        return exists ? index : index - 1;
     }
 
     copyDown(minSeq: number): number {
@@ -535,11 +517,11 @@ export class PartialSequenceLengths {
     ) {
         let seqPartialLen: PartialSequenceLength | undefined;
         let penultPartialLen: PartialSequenceLength | undefined;
-        let pLen = partialLengths.latestLEQ(seq);
+        let pLen = partialLengths.latestLeq(seq);
         if (pLen) {
             if (pLen.seq === seq) {
                 seqPartialLen = pLen;
-                pLen = partialLengths.latestLEQ(seq - 1);
+                pLen = partialLengths.latestLeq(seq - 1);
                 if (pLen) {
                     penultPartialLen = pLen;
                 }
@@ -634,7 +616,7 @@ export class PartialSequenceLengths {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const branchPartialLengths = childBlock.partialLengths!;
                 const partialLengths = branchPartialLengths.partialLengths;
-                const leqPartial = partialLengths.latestLEQ(seq);
+                const leqPartial = partialLengths.latestLeq(seq);
                 if (leqPartial) {
                     if (leqPartial.seq === seq) {
                         seqSeglen += leqPartial.seglen;
@@ -685,7 +667,7 @@ export class PartialSequenceLengths {
         let pLen = this.minLength;
         const cliLatestIndex = this.cliLatest(clientId);
         const cliSeq = this.clientSeqNumbers[clientId];
-        pLen += this.partialLengths.latestLEQ(refSeq)?.len ?? 0;
+        pLen += this.partialLengths.latestLeq(refSeq)?.len ?? 0;
 
         if (localSeq === undefined) {
             if (cliLatestIndex >= 0) {
@@ -706,7 +688,7 @@ export class PartialSequenceLengths {
                 "Local getPartialLength invoked without computing local partials.");
             const unsequencedPartialLengths = this.unsequencedRecords.partialLengths;
             // Local segments at or before localSeq should also be included
-            const local = unsequencedPartialLengths.latestLEQ(localSeq);
+            const local = unsequencedPartialLengths.latestLeq(localSeq);
             if (local) {
                 pLen += local.len;
 
@@ -763,7 +745,7 @@ export class PartialSequenceLengths {
             this.unsequencedRecords.cachedOverlappingByRefSeq.set(refSeq, cachedOverlapPartials);
         }
 
-        const overlap = cachedOverlapPartials.latestLEQ(localSeq);
+        const overlap = cachedOverlapPartials.latestLeq(localSeq);
         return overlap?.len ?? 0;
     }
 
@@ -828,7 +810,7 @@ export class PartialSequenceLengths {
     }
 
     private cliLatestLEQ(clientId: number, refSeq: number): PartialSequenceLength | undefined {
-        return this.clientSeqNumbers[clientId]?.latestLEQ(refSeq);
+        return this.clientSeqNumbers[clientId]?.latestLeq(refSeq);
     }
 
     private cliLatest(clientId: number) {
