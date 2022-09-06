@@ -6,6 +6,9 @@
 import { ISegment } from "./mergeTreeNodes";
 import { combineOverlapClients, PartialSequenceLength } from "./partialLengths";
 
+/**
+ * @internal
+ */
 export abstract class SortedSet<T, U extends string | number> {
     protected abstract getOrdinal(t: T): U;
 

@@ -221,16 +221,10 @@ export class PartialSequenceLengths {
                 }
             }
 
-            for (const partial of mergePartialLengths(childPartialLengths)) {
-                combinedPartialLengths.partialLengths.addOrUpdate(partial);
-            }
+            mergePartialLengths(childPartialLengths, combinedPartialLengths.partialLengths);
 
             if (computeLocalPartials) {
-                const partialLengths = new PartialSequenceLengthsSet();
-
-                for (const partial of mergePartialLengths(childUnsequencedPartialLengths)) {
-                    partialLengths.addOrUpdate(partial);
-                }
+                const partialLengths = mergePartialLengths(childUnsequencedPartialLengths);
 
                 combinedPartialLengths.unsequencedRecords = {
                     partialLengths,
@@ -890,28 +884,15 @@ export function combineOverlapClients(a: PartialSequenceLength, b: PartialSequen
  * [{ seq: 1, seglen: 2 }, { seq: 2, seglen: 4 }, { seq: 3, seglen: -1 }]
  * ```
  */
-function mergePartialLengths<T extends PartialSequenceLength>(childPartialLengths: T[][]): T[] {
-    const mergedLengths: T[] = [];
-    // All child PartialSequenceLengths are now sorted temporally (i.e. by seq). Since
-    // a given MergeTree operation can affect multiple segments, there may be multiple entries
-    // for a given seq. We run through them in order, coalescing all length information for a given
-    // seq together into `combinedPartialLengths`.
-    let currentPartial: T | undefined;
+function mergePartialLengths(
+    childPartialLengths: PartialSequenceLength[][],
+    mergedLengths: PartialSequenceLengthsSet = new PartialSequenceLengthsSet(),
+): PartialSequenceLengthsSet {
     for (const partialLength of mergeSortedListsBySeq(childPartialLengths)) {
-        if (!currentPartial || currentPartial.seq !== partialLength.seq) {
-            // Start a new seq entry.
-            currentPartial = {
-                ...partialLength,
-                len: (currentPartial?.len ?? 0) + partialLength.seglen,
-                overlapRemoveClients: cloneOverlapRemoveClients(partialLength.overlapRemoveClients),
-            };
-            mergedLengths.push(currentPartial);
-        } else {
-            // Update existing entry
-            currentPartial.seglen += partialLength.seglen;
-            currentPartial.len += partialLength.seglen;
-            combineOverlapClients(currentPartial, partialLength);
-        }
+        mergedLengths.addOrUpdate({
+            ...partialLength,
+            overlapRemoveClients: cloneOverlapRemoveClients(partialLength.overlapRemoveClients),
+        });
     }
     return mergedLengths;
 }
