@@ -8,7 +8,8 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { PendingStateManager, BatchManager, BatchMessage } from "../pendingStateManager";
+import { PendingStateManager } from "../pendingStateManager";
+import { BatchManager, BatchMessage } from "../batchManager";
 
 describe("Pending State Manager", () => {
     describe("Rollback", () => {

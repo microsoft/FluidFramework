@@ -5,20 +5,15 @@
 
 import { IDisposable } from "@fluidframework/common-definitions";
 import { assert, Lazy } from "@fluidframework/common-utils";
-import { ICriticalContainerError, IBatchMessage } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import Deque from "double-ended-queue";
-import { ContainerMessageType, ContainerRuntimeMessage } from "./containerRuntime";
+import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
-
-/**
- * Message type used by BatchManager
- */
-export type BatchMessage = IBatchMessage & { localOpMetadata: unknown; deserializedContent: ContainerRuntimeMessage; };
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -459,42 +454,5 @@ export class PendingStateManager implements IDisposable {
 
         // Revert the FlushMode.
         this.stateHandler.setFlushMode(savedFlushMode);
-    }
-}
-
-/**
- * Helper class that manages partial batch & rollback.
- */
-export class BatchManager {
-    private pendingBatch: BatchMessage [] = [];
-
-    public push(message: BatchMessage) {
-            this.pendingBatch.push(message);
-    }
-
-    public get empty() { return this.pendingBatch.length === 0; }
-
-    public popBatch() {
-        const batch = this.pendingBatch;
-        this.pendingBatch = [];
-        return batch;
-    }
-
-    /**
-     * Capture the pending state at this point
-     */
-     public checkpoint() {
-        const startPoint = this.pendingBatch.length;
-        return {
-            rollback: (process: (message: BatchMessage) => void) => {
-                for (let i = this.pendingBatch.length; i > startPoint;) {
-                    i--;
-                    const message = this.pendingBatch[i];
-                    process(message);
-                }
-
-                this.pendingBatch.length = startPoint;
-            },
-        };
     }
 }

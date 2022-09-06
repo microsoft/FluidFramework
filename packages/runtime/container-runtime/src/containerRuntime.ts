@@ -118,9 +118,8 @@ import {
 import {
     IPendingLocalState,
     PendingStateManager,
-    BatchMessage,
-    BatchManager,
 } from "./pendingStateManager";
+import { BatchManager, BatchMessage } from "./batchManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
@@ -1761,7 +1760,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const batch = this.batchManager.popBatch();
 
-        // If flush has already been called then exit early
         const length = batch.length;
 
         if (length > 1) {
@@ -2591,23 +2589,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 });
             this.closeFn(error);
             throw error;
-        } else {
-            this.batchManager.push({
-                contents: serializedContent,
-                deserializedContent,
-                metadata,
-                localOpMetadata,
-            });
-            if (this._flushMode !== FlushMode.TurnBased) {
+        }
+
+        this.batchManager.push({
+            contents: serializedContent,
+            deserializedContent,
+            metadata,
+            localOpMetadata,
+        });
+        if (this._flushMode !== FlushMode.TurnBased) {
+            this.flush();
+        } else if (!this.flushTrigger) {
+            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            Promise.resolve().then(() => {
+                this.flushTrigger = false;
                 this.flush();
-            } else if (!this.flushTrigger) {
-                // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                Promise.resolve().then(() => {
-                    this.flushTrigger = false;
-                    this.flush();
-                });
-            }
+            });
         }
 
         if (this.isContainerMessageDirtyable(type, contents)) {
