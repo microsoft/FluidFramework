@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ChangeRebaser } from "../../rebase";
-import { AnchorSet, generateFuzzyCombinedChange } from "../../tree";
+import { AnchorSet } from "../../tree";
+import { generateFuzzyCombinedChange } from "./fuzz";
 
 const testSeed = 432167897;
 

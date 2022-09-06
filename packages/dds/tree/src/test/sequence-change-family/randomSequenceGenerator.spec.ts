@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import { FieldKey } from "../../tree";
-import { brand, generateRandomChange, generateRandomUpPaths } from "../../util";
+import { brand } from "../../util";
+import { generateRandomUpPaths, generateRandomChange } from "./randomSequenceGenerator";
 
 const testSeed = 432167897;
 

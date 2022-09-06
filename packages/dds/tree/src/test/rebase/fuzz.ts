@@ -4,7 +4,7 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ChangeRebaser } from "../rebase";
+import { ChangeRebaser } from "../../rebase";
 
 const operations = {
     rebase: "rebase",
