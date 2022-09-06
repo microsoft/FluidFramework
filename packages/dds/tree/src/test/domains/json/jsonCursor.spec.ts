@@ -9,7 +9,7 @@ import { FieldKey } from "../../../tree";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
-import { brand } from "../../../util";
+import { brand, fail } from "../../../util";
 import { generateCanada } from "./json";
 import { mahattanPerimeter } from "./benchmarks";
 
@@ -196,44 +196,3 @@ describe("JsonCursor", () => {
         });
     });
 });
-
-describe.only("manhattan perimeter", () => {
-    const canada = generateCanada([2, 10]);
-    it("can be computed", () => {
-        const cursor = new JsonCursor(canada);
-        cursor.down("features" as FieldKey, 0);
-        cursor.down("" as FieldKey, 0);
-        cursor.down("geometry" as FieldKey, 0);
-        cursor.down("coordinates" as FieldKey, 0);
-
-        const perimeter = mahattanPerimeter(cursor);
-        assert.equal(perimeter, getPerimeter(canada));
-    });
-});
-
-interface Canada {
-    type: "FeatureCollection";
-    features: [{
-        type: "Feature";
-        properties: { name: "Canada"; };
-        geometry: {
-            type: "Polygon";
-            coordinates: [number, number][][];
-        };
-    }];
-}
-function getPerimeter(data: Canada): number {
-    let total = 0;
-    let current: [number, number] | undefined;
-
-    for (const outer of data.features[0].geometry.coordinates) {
-        for (const coordinate of outer) {
-            if (current !== undefined) {
-                total += Math.abs(current[0] - coordinate[0]) + Math.abs(current[1] - coordinate[1]);
-            }
-            current = coordinate;
-        }
-    }
-
-    return total;
-}
