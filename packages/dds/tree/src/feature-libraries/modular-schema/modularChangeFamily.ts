@@ -36,12 +36,12 @@ export class ModularChangeFamily implements
 
         const fieldChanges = new Map<FieldKey, FieldChange[]>();
         for (const change of changes) {
-            for (const key of Object.keys(change)) {
-                getOrAddEmptyToMap(fieldChanges, brand(key)).push(change[key]);
+            for (const [key, fieldChange] of change.entries()) {
+                getOrAddEmptyToMap(fieldChanges, key).push(fieldChange);
             }
         }
 
-        const composedFields: FieldChangeMap = {};
+        const composedFields: FieldChangeMap = new Map();
         for (const field of fieldChanges.keys()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const changesForField = fieldChanges.get(field)!;
@@ -54,43 +54,40 @@ export class ModularChangeFamily implements
             );
 
             // TODO: Could optimize by checking that composedField is non-empty
-            composedFields[field as string] = {
-                fieldKind: kind,
-                change: brand(composedField),
-            };
+            composedFields.set(
+                field,
+                { fieldKind: kind, change: brand(composedField) },
+            );
         }
 
         return composedFields;
     }
 
     invert(changes: FieldChangeMap): FieldChangeMap {
-        const invertedFields: FieldChangeMap = {};
+        const invertedFields: FieldChangeMap = new Map();
 
-        for (const field of Object.keys(changes)) {
-            const fieldChange = changes[field];
+        for (const [field, fieldChange] of changes.entries()) {
             const invertedChange = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser.invert(
                 fieldChange.change,
                 (childChanges) => this.invert(childChanges));
 
-            invertedFields[field] = {
-                fieldKind: fieldChange.fieldKind,
-                change: brand(invertedChange),
-            };
+            invertedFields.set(
+                field,
+                { fieldKind: fieldChange.fieldKind, change: brand(invertedChange) },
+            );
         }
 
         return invertedFields;
     }
 
     rebase(change: FieldChangeMap, over: FieldChangeMap): FieldChangeMap {
-        const rebasedFields: FieldChangeMap = {};
+        const rebasedFields: FieldChangeMap = new Map();
 
-        for (const field of Object.keys(change)) {
-            const baseChanges = over[field];
+        for (const [field, fieldChange] of change.entries()) {
+            const baseChanges = over.get(field);
             if (baseChanges === undefined) {
-                rebasedFields[field] = change[field];
+                rebasedFields.set(field, fieldChange);
             } else {
-                const fieldChange = change[field];
-
                 // TODO: Handle the case where `change` and `over` have different field kinds for this field
                 const rebasedField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser.rebase(
                     fieldChange.change,
@@ -98,10 +95,10 @@ export class ModularChangeFamily implements
                     (child, baseChild) => this.rebase(child, baseChild));
 
                 // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
-                rebasedFields[field] = {
-                    fieldKind: fieldChange.fieldKind,
-                    change: brand(rebasedField),
-                };
+                rebasedFields.set(
+                    field,
+                    { fieldKind: fieldChange.fieldKind, change: brand(rebasedField) },
+                );
             }
         }
 
@@ -114,13 +111,12 @@ export class ModularChangeFamily implements
 
     intoDelta(change: FieldChangeMap): Delta.Root {
         const delta: Delta.Root = new Map();
-        for (const field of Object.keys(change)) {
-            const fieldChange = change[field];
+        for (const [field, fieldChange] of change.entries()) {
             const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
                 fieldChange.change,
                 (childChange) => this.intoDelta(childChange),
             );
-            delta.set(brand(field), deltaField);
+            delta.set(field, deltaField);
         }
         return delta;
     }
@@ -135,7 +131,7 @@ function getChangeHandler(
     kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
     const fieldKind = fieldKinds.get(kind);
-    assert(fieldKind !== undefined, "Unknown field kind");
+    assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
     return fieldKind.changeHandler;
 }
 
@@ -146,8 +142,7 @@ class ModularChangeEncoder extends ChangeEncoder<FieldChangeMap> {
 
     encodeForJson(formatVersion: number, change: FieldChangeMap): JsonCompatibleReadOnly {
         const encodedFields: { [key: string]: JsonCompatibleReadOnly; } = {};
-        for (const field of Object.keys(change)) {
-            const fieldChange = change[field];
+        for (const [field, fieldChange] of change.entries()) {
             const encodedChange = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).encoder.encodeForJson(
                 formatVersion,
                 fieldChange.change,
@@ -159,7 +154,7 @@ class ModularChangeEncoder extends ChangeEncoder<FieldChangeMap> {
                 change: encodedChange,
             };
 
-            encodedFields[field] = encodedField;
+            encodedFields[field as string] = encodedField;
         }
 
         return encodedFields;
@@ -167,7 +162,7 @@ class ModularChangeEncoder extends ChangeEncoder<FieldChangeMap> {
 
     decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): FieldChangeMap {
         const encodedChange = change as Record<string, JsonCompatibleReadOnly>;
-        const decodedFields: FieldChangeMap = {};
+        const decodedFields: FieldChangeMap = new Map();
         for (const field of Object.keys(encodedChange)) {
             const fieldChange = encodedChange[field] as unknown as EncodedFieldChange;
             const fieldChangeset = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).encoder.decodeJson(
@@ -176,7 +171,7 @@ class ModularChangeEncoder extends ChangeEncoder<FieldChangeMap> {
                 (encodedChild) => this.decodeJson(formatVersion, encodedChild),
             );
 
-            decodedFields[field] = { fieldKind: fieldChange.fieldKind, change: brand(fieldChangeset) };
+            decodedFields.set(brand(field), { fieldKind: fieldChange.fieldKind, change: brand(fieldChangeset) });
         }
 
         return decodedFields;

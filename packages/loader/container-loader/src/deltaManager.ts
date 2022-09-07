@@ -199,12 +199,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
-    public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
+    public submit(type: MessageType, contents?: string, batch = false, metadata?: any) {
         if (this.currentlyProcessingOps && this.preventConcurrentOpSend) {
             this.close(new UsageError("Making changes to data model is disallowed while processing ops."));
         }
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
-            contents: JSON.stringify(contents),
+            contents,
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
             type,
@@ -218,7 +218,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             return -1;
         }
 
-        this.opsSize += message.contents.length;
+        if (contents !== undefined) {
+            this.opsSize += contents.length;
+        }
 
         this.messageBuffer.push(message);
 
@@ -233,15 +235,26 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public submitSignal(content: any) { return this.connectionManager.submitSignal(content); }
 
     public flush() {
-        if (this.messageBuffer.length === 0) {
+        const batch = this.messageBuffer;
+        if (batch.length === 0) {
             return;
         }
 
-        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
-        this.emit("prepareSend", this.messageBuffer);
-
-        this.connectionManager.sendMessages(this.messageBuffer);
         this.messageBuffer = [];
+
+        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
+        this.emit("prepareSend", batch);
+
+        if (batch.length === 1) {
+            assert(batch[0].metadata?.batch === undefined, "no batch markup on single message");
+        } else {
+            assert(batch[0].metadata?.batch === true, "no start batch markup");
+            assert(batch[batch.length - 1].metadata?.batch === false, "no end batch markup");
+        }
+
+        this.connectionManager.sendMessages(batch);
+
+        assert(this.messageBuffer.length === 0, "reentrancy");
     }
 
     public get connectionProps(): ITelemetryProperties {
@@ -778,7 +791,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
-        assert(!this.currentlyProcessingOps, "Already processing ops.");
+        assert(!this.currentlyProcessingOps, 0x3af /* Already processing ops. */);
         this.currentlyProcessingOps = true;
         this.lastProcessedMessage = message;
 

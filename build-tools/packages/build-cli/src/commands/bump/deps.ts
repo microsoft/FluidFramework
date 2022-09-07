@@ -212,11 +212,10 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             const changedVersionMessage = changedVersionsString.join("\n");
             if (shouldCommit) {
                 const commitMessage = `Bump dependencies\n\n${changedVersionMessage}`;
-                assert(flags.bumpType !== undefined, `Bump type is undefined.`);
 
                 const bumpBranch = generateBumpDepsBranchName(
                     args.package_or_release_group,
-                    flags.bumpType,
+                    flags.bumpType ?? "current",
                     flags.releaseGroup,
                 );
                 this.log(`Creating branch ${bumpBranch}`);

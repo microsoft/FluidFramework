@@ -1,6 +1,6 @@
 # TestInterface
 
-[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterface](./simple-suite-test/testinterface-interface)
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterface](./simple-suite-test/testinterface-interface)
 
 Test interface
 
@@ -14,17 +14,17 @@ export interface TestInterface
 
 Here are some remarks about the interface
 
-## Events
-
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | <code>readonly</code> | () =&gt; void | Test interface event property |
-
 ## Construct Signatures
 
 |  ConstructSignature | Return Type | Description |
 |  --- | --- | --- |
 |  [(new)()](./simple-suite-test/testinterface-interface#_new_-constructsignature) | [TestInterface](./simple-suite-test/testinterface-interface) | Test construct signature. |
+
+## Events
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | <code>readonly</code> | () =&gt; void | Test interface event property |
 
 ## Properties
 
@@ -46,6 +46,22 @@ Here are some remarks about the interface
 |  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
 |  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
+## Construct Signature Details
+
+### new (): TestInterface {#_new_-constructsignature}
+
+Test construct signature.
+
+#### Signature {#_new_-signature}
+
+```typescript
+new (): TestInterface;
+```
+
+#### Returns {#_new_-returns}
+
+<b>Return type:</b> [TestInterface](./simple-suite-test/testinterface-interface)
+
 ## Event Details
 
 ### testClassEventProperty {#testclasseventproperty-propertysignature}
@@ -61,22 +77,6 @@ readonly testClassEventProperty: () => void;
 #### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the event property
-
-## Construct Signature Details
-
-### (new) {#_new_-constructsignature}
-
-Test construct signature.
-
-#### Signature {#_new_-signature}
-
-```typescript
-new (): TestInterface;
-```
-
-#### Returns {#_new_-returns}
-
-<b>Return type:</b> [TestInterface](./simple-suite-test/testinterface-interface)
 
 ## Property Details
 
@@ -122,7 +122,7 @@ Here are some remarks about the method
 
 ## Call Signature Details
 
-### (call) {#_call_-callsignature}
+### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#_call_-callsignature}
 
 Test interface event call signature
 
@@ -136,7 +136,7 @@ Test interface event call signature
 
 Here are some remarks about the event call signature
 
-### (call) {#_call__1-callsignature}
+### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#_call__1-callsignature}
 
 Another example call signature
 
@@ -149,3 +149,13 @@ Another example call signature
 #### Remarks {#_call__1-remarks}
 
 Here are some remarks about the event call signature
+
+## See also {#testinterface-see-also}
+
+[TestInterface.testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature)
+
+[TestInterface.testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature)
+
+[TestInterface.testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature)
+
+[TestInterface.testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature)

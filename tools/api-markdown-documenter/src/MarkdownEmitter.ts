@@ -15,13 +15,15 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocLinkTag, DocNode, DocNodeKind, StringBuilder } from "@microsoft/tsdoc";
 
-import { logError, logWarning } from "./LoggingUtilities";
-import { MarkdownDocument } from "./MarkdownDocument";
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
-} from "./MarkdownDocumenterConfiguration";
+} from "./Configuration";
+import { Logger } from "./Logging";
+import { MarkdownDocument } from "./MarkdownDocument";
 import {
+    CustomDocNodeKind,
+    DocAlert,
     DocEmphasisSpan,
     DocHeading,
     DocList,
@@ -30,7 +32,6 @@ import {
     DocTableCell,
     ListKind,
 } from "./doc-nodes";
-import { CustomDocNodeKind } from "./doc-nodes/CustomDocNodeKind";
 import { getLinkUrlForApiItem } from "./utilities";
 
 /**
@@ -67,6 +68,11 @@ export interface EmitterOptions extends BaseEmitterOptions {
      * @defaultValue 0
      */
     headingLevel?: number;
+
+    /**
+     * An optional logger for reporting system events while emitting Markdown contents.
+     */
+    logger?: Logger;
 }
 
 /**
@@ -120,6 +126,10 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                 );
                 break;
             }
+            case CustomDocNodeKind.Alert: {
+                this.writeAlert(docNode as DocAlert, context, docNodeSiblings);
+                break;
+            }
             case CustomDocNodeKind.Heading: {
                 this.writeHeading(docNode as DocHeading, context, docNodeSiblings);
                 break;
@@ -166,6 +176,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         }
 
         const options: EmitterOptions = context.options;
+        const logger = options.logger;
 
         const result: IResolveDeclarationReferenceResult =
             this.apiModel.resolveDeclarationReference(
@@ -182,19 +193,15 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                     // Generate a name such as Namespace1.Namespace2.MyClass.myMethod()
                     rawLinkText = result.resolvedApiItem.getScopedNameWithinPackage();
                 }
-                if (rawLinkText.length > 0) {
-                    this.writeLink(
-                        this.getEscapedText(rawLinkText.replace(/\s+/g, " ")),
-                        linkUrl,
-                        context,
-                    );
-                } else {
-                    logWarning("Unable to determine link text");
-                }
+                this.writeLink(
+                    this.getEscapedText(rawLinkText.replace(/\s+/g, " ")),
+                    linkUrl,
+                    context,
+                );
             }
         } else if (result.errorMessage) {
             const elementText = docLinkTag.codeDestination.emitAsTsdoc();
-            logWarning(`Unable to resolve reference "${elementText}": ` + result.errorMessage);
+            logger?.warning(`Unable to resolve reference "${elementText}": ` + result.errorMessage);
 
             // Emit item as simple italicized text, so that at least something appears in the generated output
             this.writePlainText(
@@ -264,12 +271,13 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         docNodeSiblings: boolean,
     ): void {
         const writer: IndentedWriter = context.writer;
+        const logger = context.options.logger;
 
         writer.ensureSkippedLine();
 
         let headingLevel = docHeading.level ?? context.options.headingLevel ?? 1;
         if (headingLevel <= 0) {
-            logError(
+            logger?.error(
                 `Cannot render a heading level less than 1. Got ${headingLevel}. Will use 1 instead.`,
             );
             headingLevel = 1;
@@ -341,6 +349,45 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         writer.increaseIndent("> ");
 
         this.writeNode(docNoteBox.content, context, docNodeSiblings);
+
+        writer.decreaseIndent();
+
+        writer.ensureSkippedLine();
+    }
+
+    /**
+     * Writes Markdown content for the provided `docAlert`.
+     *
+     * @virtual
+     */
+    protected writeAlert(
+        docAlert: DocAlert,
+        context: EmitterContext,
+        docNodeSiblings: boolean,
+    ): void {
+        const writer: IndentedWriter = context.writer;
+
+        writer.ensureSkippedLine();
+
+        writer.increaseIndent("> ");
+
+        let headerText: string[] = [];
+        if (docAlert.type !== undefined) {
+            headerText.push(`[${docAlert.type}]`);
+        }
+
+        if (docAlert.type !== undefined && docAlert.title !== undefined) {
+            headerText.push(": ");
+        }
+
+        if (docAlert.title !== undefined) {
+            headerText.push(docAlert.title);
+        }
+
+        this.writePlainText(headerText.join(""), { ...context, boldRequested: true });
+        writer.ensureSkippedLine();
+
+        this.writeNode(docAlert.content, context, docNodeSiblings);
 
         writer.decreaseIndent();
 
