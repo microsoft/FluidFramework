@@ -17,7 +17,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocCodeSpan, DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
 import {
     ApiFunctionLike,
@@ -316,7 +316,7 @@ export function renderPropertiesTable(
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiProperties.some((apiItem) => getModifiers(apiItem).length !== 0);
     const hasDefaultValues = apiProperties.some(
-        (apiItem) => getDefaultValueBlock(apiItem) !== undefined,
+        (apiItem) => getDefaultValueBlock(apiItem, config) !== undefined,
     );
 
     const headerTitles: string[] = ["Property"];
@@ -523,7 +523,7 @@ export function renderDefaultValueCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const defaultValueSection = getDefaultValueBlock(apiItem);
+    const defaultValueSection = getDefaultValueBlock(apiItem, config);
 
     if (defaultValueSection === undefined) {
         return renderEmptyTableCell(config);

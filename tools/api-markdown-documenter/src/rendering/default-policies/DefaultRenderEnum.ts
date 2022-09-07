@@ -5,7 +5,7 @@
 import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { filterByKind, mergeSections } from "../../utilities";
 import { renderChildrenUnderHeading, renderMemberTables } from "../helpers";
 

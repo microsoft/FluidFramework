@@ -15,7 +15,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { ApiModuleLike, filterByKind, mergeSections } from "../../utilities";
 import { renderMemberTables } from "../helpers";
 import { renderChildDetailsSection } from "../helpers/RenderingHelpers";

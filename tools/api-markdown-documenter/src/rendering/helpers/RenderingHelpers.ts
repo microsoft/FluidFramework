@@ -25,9 +25,9 @@ import {
     DocSection,
 } from "@microsoft/tsdoc";
 
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { Heading } from "../../Heading";
 import { Link } from "../../Link";
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocHeading, DocList, DocNoteBox, ListKind } from "../../doc-nodes";
 import {
     ApiFunctionLike,
