@@ -233,6 +233,9 @@ export function createOdspNetworkError(
                 errorMessage, { canRetry: true, retryAfterMs }, driverProps);
             break;
     }
+    if (innerMostErrorCode === "fluidInvalidSchema") {
+        error = new FluidInvalidSchemaError(errorMessage, driverProps);
+    }
     enrichOdspError(error, response, facetCodes, undefined, redirectLocation);
     return error;
 }

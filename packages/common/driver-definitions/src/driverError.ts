@@ -83,6 +83,8 @@ export enum DriverErrorType {
      * location, then this error is thrown to let the client know about the new location info.
      */
     locationRedirection = "locationRedirection",
+
+    fluidInvalidSchema = "fluidInvalidSchema",
 }
 
 /**
