@@ -6,7 +6,7 @@
 import * as fs from "fs";
 
 /**
- * Is the give snapshot in JSON format
+ * Is the given snapshot in JSON format
  * @param path - path to snapshot file
  */
 export function isJsonSnapshot(path: string): boolean {

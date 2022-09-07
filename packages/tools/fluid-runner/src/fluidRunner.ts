@@ -12,7 +12,7 @@ import { FileLogger } from "./logger/FileLogger";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 
 /**
- * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vis versa
+ * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
  */
 export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
