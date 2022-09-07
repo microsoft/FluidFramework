@@ -41,7 +41,7 @@ export abstract class SortedSet<T, U extends string | number> {
         return position.exists;
     }
 
-    private findItemPosition(item: T): { exists: boolean; index: number; } {
+    protected findItemPosition(item: T): { exists: boolean; index: number; } {
         if (this.keySortedItems.length === 0) {
             return { exists: false, index: 0 };
         }
@@ -64,27 +64,7 @@ export abstract class SortedSet<T, U extends string | number> {
                 }
                 start = index + 1;
             } else if (indexKey === itemKey) {
-                // at this point we've found the ordinal of the item
-                // so we need to find the index of the item instance
-                //
-                if (item === this.keySortedItems[index]) {
-                    return { exists: true, index };
-                }
-                for (let b = index - 1; b >= 0 && this.getKey(this.keySortedItems[b]) === itemKey; b--) {
-                    if (this.keySortedItems[b] === item) {
-                        return { exists: true, index: b };
-                    }
-                }
-                for (index + 1;
-                    index < this.keySortedItems.length
-                        && this.getKey(this.keySortedItems[index]) === itemKey;
-                    index++
-                ) {
-                    if (this.keySortedItems[index] === item) {
-                        return { exists: true, index };
-                    }
-                }
-                return { exists: false, index };
+                return { exists: true, index };
             }
         }
         return { exists: false, index };
