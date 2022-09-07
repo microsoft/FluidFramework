@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./codeLoaderBundle";
-export * from "./exportFile";
-export * from "./fluidRunner";
+export { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle";
+export { parseBundleAndExportFile, exportFile, createContainerAndExecute, IExportFileResponse } from "./exportFile";
+export { fluidRunner } from "./fluidRunner";
