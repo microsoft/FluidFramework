@@ -8,6 +8,7 @@ import { SortedSegmentSet, SortedSegmentSetItem } from "../sortedSegmentSet";
 import { ISegment } from "../mergeTreeNodes";
 import { LocalReferencePosition } from "../localReference";
 import { ReferenceType } from "../ops";
+import { TrackingGroup } from "../mergeTreeTracking";
 import { TestClient } from "./testClient";
 const segmentCount = 15;
 
@@ -85,7 +86,11 @@ describe("SortedSegmentSet", () => {
     });
 
     it("SortedSegmentSet of local references", () => {
-        const set = new SortedSegmentSet<LocalReferencePosition>();
+        // using a sorted segment set directly creates problems,
+        // as we don't correctly split, or merge, so leverage
+        // the tracking group for correct behavior in those case
+        // and spy it's internal set
+        const set = new TrackingGroup();
         for (let i = 0; i < client.getLength(); i++) {
             for (const pos of [i, client.getLength() - 1 - i]) {
                 const segmentInfo = client.getContainingSegment(pos);
@@ -93,11 +98,12 @@ describe("SortedSegmentSet", () => {
                 const lref = client.createLocalReferencePosition(
                     segmentInfo.segment, segmentInfo.offset, ReferenceType.SlideOnRemove, undefined);
                 assert.equal(set.has(lref), false);
-                set.addOrUpdate(lref);
+                set.link(lref);
                 assert.equal(set.has(lref), true);
             }
         }
         assert.equal(set.size, client.getLength() * 2);
-        validateSet(client, set, (i) => i.getSegment()?.ordinal);
+        validateSet<LocalReferencePosition>(
+            client, (set as any).trackedSet, (i) => i.getSegment()?.ordinal);
     });
 });

@@ -5,7 +5,6 @@
 
 import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
-import { computeNumericOrdinal } from "./ordinal";
 
 export type SortedSegmentSetItem =
     ISegment
@@ -64,8 +63,7 @@ export class SortedSegmentSet<
             const lref = maybeRef as LocalReferencePosition;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const segment = lref.getSegment()!;
-            const offset = lref.getOffset();
-            return `${segment.ordinal}${String.fromCharCode(0)}${computeNumericOrdinal(offset)}`;
+            return segment.ordinal;
         }
         const maybeObject = item as { readonly segment: ISegment; };
         if (maybeObject?.segment) {
