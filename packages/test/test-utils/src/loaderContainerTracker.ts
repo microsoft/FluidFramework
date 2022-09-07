@@ -152,7 +152,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      * Ensure all tracked containers are synchronized
      */
     public async ensureSynchronized(...containers: IContainer[]) {
-        await this.processSynchronized(-1, ...containers);
+        await this.processSynchronized(undefined, ...containers);
     }
 
     /**
@@ -173,7 +173,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
      *      - this overlaps with !isDirty, but include task scheduler ops.
      *      - Trailing NoOp is tracked and don't count as pending ops.
      */
-    private async processSynchronized(timeoutDuration: number, ...containers: IContainer[]) {
+    private async processSynchronized(timeoutDuration: number | undefined, ...containers: IContainer[]) {
         const start = Date.now();
         const resumed = this.resumeProcessing(...containers);
 
@@ -200,50 +200,41 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         // Only write it out once
                         waitingSequenceNumberSynchronized = true;
                         debugWait("Waiting for sequence number synchronized");
-                        if (timeoutDuration >= 0) {
-                            await timeoutAwait(this.waitForAnyInboundOps(containersToApply), {
-                                durationMs: timeoutDuration - (Date.now() - start),
-                                errorMsg: "Timeout on waiting for sequence number synchronized",
-                            });
-                        } else {
-                            await this.waitForAnyInboundOps(containersToApply);
-                        }
+                        await timeoutAwait(this.waitForAnyInboundOps(containersToApply), {
+                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start)
+                            : Number.MAX_SAFE_INTEGER,
+                            errorMsg: "Timeout on waiting for sequence number synchronized",
+                        });
                     }
                 } else {
                     waitingSequenceNumberSynchronized = false;
-                    if (timeoutDuration >= 0) {
-                        await timeoutAwait(this.waitForPendingClients(pendingClients), {
-                            durationMs: timeoutDuration - (Date.now() - start),
-                            errorMsg: "Timeout on waiting for pending join or leave op",
-                        });
-                    } else {
-                        await this.waitForPendingClients(pendingClients);
-                    }
+                    await timeoutAwait(this.waitForPendingClients(pendingClients), {
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start)
+                            : Number.MAX_SAFE_INTEGER,
+                        errorMsg: "Timeout on waiting for pending join or leave op",
+                    });
                 }
             } else {
                 // Wait for all the containers to be saved
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
-                if (timeoutDuration >= 0) {
-                    const remainedDuration = timeoutDuration - (Date.now() - start);
-                    await Promise.all(dirtyContainers.map(async (c) => Promise.race(
-                        [timeoutPromise(
-                            (resolve) => c.once("saved", () => resolve()),
-                            {
-                                durationMs: remainedDuration,
-                                errorMsg: "Timeout on waiting a container to be saved",
-                            },
-                        ),
-                        new Promise((resolve) => c.once("closed", resolve)),
-                        ],
-                    )));
-                } else {
-                    await Promise.all(dirtyContainers.map(async (c) => Promise.race(
-                        [new Promise((resolve) => c.once("saved", resolve)),
-                        new Promise((resolve) => c.once("closed", resolve))],
-                    )));
-                }
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                const remainedDuration = timeoutDuration ? timeoutDuration - (Date.now() - start)
+                : Number.MAX_SAFE_INTEGER;
+                await Promise.all(dirtyContainers.map(async (c) => Promise.race(
+                    [timeoutPromise(
+                        (resolve) => c.once("saved", () => resolve()),
+                        {
+                            durationMs: remainedDuration,
+                            errorMsg: "Timeout on waiting a container to be saved",
+                        },
+                    ),
+                    new Promise((resolve) => c.once("closed", resolve)),
+                    ],
+                )));
             }
 
             // yield a turn to allow side effect of the ops we just processed execute before we check again
@@ -253,14 +244,12 @@ export class LoaderContainerTracker implements IOpProcessingController {
         // Pause all container that was resumed
         // don't call pause if resumed is empty and pause everything, which is not what we want
         if (resumed.length !== 0) {
-            if (timeoutDuration >= 0) {
-                await timeoutAwait(this.pauseProcessing(...resumed), {
-                    durationMs: timeoutDuration - (Date.now() - start),
-                    errorMsg: "Timeout on waiting for pausing all resumed containers",
-                });
-            } else {
-                await this.pauseProcessing(...resumed);
-            }
+            await timeoutAwait(this.pauseProcessing(...resumed), {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start)
+                : Number.MAX_SAFE_INTEGER,
+                errorMsg: "Timeout on waiting for pausing all resumed containers",
+            });
         }
 
         debugWait("Synchronized");
