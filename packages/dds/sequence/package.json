@@ -111,6 +111,9 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
+      "InterfaceDeclaration_ISharedIntervalCollection": {
+        "backCompat": false
+      },
       "RemovedClassDeclaration_SharedNumberSequence": {
         "backCompat": false,
         "forwardCompat": false
@@ -195,6 +198,9 @@
       "ClassDeclaration_SequenceDeltaEvent": {
         "backCompat": false
       },
+      "ClassDeclaration_SharedIntervalCollection": {
+        "backCompat": false
+      },
       "ClassDeclaration_SequenceMaintenanceEvent": {
         "backCompat": false
       },
@@ -221,7 +227,8 @@
       },
       "ClassDeclaration_Interval": {
         "backCompat": false
-      }
+      },
+      "InterfaceDeclaration_ISharedIntervalCollection": {"backCompat": false}
     }
   }
 }

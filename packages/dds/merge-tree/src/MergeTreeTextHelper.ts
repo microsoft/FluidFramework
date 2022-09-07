@@ -66,7 +66,7 @@ function gatherText(
         }
     } else if (placeholder && placeholder.length > 0) {
         const placeholderText = placeholder === "*" ?
-            `\n${segment.toString()}` : placeholder.repeat(segment.cachedLength);
+            `\n${segment}` : placeholder.repeat(segment.cachedLength);
         textSegment.text += placeholderText;
     }
 

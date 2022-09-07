@@ -67,6 +67,9 @@
         "backCompat": false,
         "forwardCompat": false
       },
+      "InterfaceDeclaration_ISharedIntervalCollection": {
+        "backCompat": false
+      },
       "InterfaceDeclaration_ISharedString": {
         "backCompat": false
       },
@@ -74,6 +77,9 @@
         "backCompat": false
       },
       "ClassDeclaration_SequenceDeltaEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedIntervalCollection": {
         "backCompat": false
       },
       "ClassDeclaration_SequenceMaintenanceEvent": {

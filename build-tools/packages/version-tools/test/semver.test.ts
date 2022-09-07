@@ -6,7 +6,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { assert } from "chai";
-import { detectConstraintType, bumpRange, detectBumpType } from "../src/semver";
+import {
+    detectConstraintType,
+    bumpRange,
+    detectBumpType,
+    isPrereleaseVersion,
+} from "../src/semver";
 
 describe("semver", () => {
     describe("detect constraint types", () => {
@@ -557,6 +562,44 @@ describe("semver", () => {
                 const result = bumpRange(input, "current", true);
                 assert.strictEqual(result, expected);
             });
+        });
+    });
+
+    describe("isPrereleaseVersion", () => {
+        it("1.2.3 = false", () => {
+            const input = `1.2.3`;
+            const result = isPrereleaseVersion(input);
+            assert.isFalse(result);
+        });
+
+        it("1.2.3-2345 = true", () => {
+            const input = `1.2.3-2345`;
+            const result = isPrereleaseVersion(input);
+            assert.isTrue(result);
+        });
+
+        it("0.4.2001 = false", () => {
+            const input = `0.4.2001`;
+            const result = isPrereleaseVersion(input);
+            assert.isFalse(result);
+        });
+
+        it("0.4.2001-2345 = true", () => {
+            const input = `0.4.2001-2345`;
+            const result = isPrereleaseVersion(input);
+            assert.isTrue(result);
+        });
+
+        it("2.0.0-internal.1.0.0 = false", () => {
+            const input = `2.0.0-internal.1.0.0`;
+            const result = isPrereleaseVersion(input);
+            assert.isFalse(result);
+        });
+
+        it("2.0.0-internal.1.0.0.2345 = true", () => {
+            const input = `2.0.0-internal.1.0.0.2345`;
+            const result = isPrereleaseVersion(input);
+            assert.isTrue(result);
         });
     });
 });
