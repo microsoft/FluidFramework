@@ -173,6 +173,7 @@ export class ContainerContext implements IContainerContext {
         public readonly loader: ILoader,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
+        /** @returns clientSequenceNumber of last message in a batch */
         public readonly submitBatchFn: (batch: IBatchMessage[]) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,

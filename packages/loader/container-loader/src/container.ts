@@ -1711,6 +1711,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    /** @returns clientSequenceNumber of last message in a batch */
     private submitBatch(batch: IBatchMessage[]): number {
         let clientSequenceNumber = -1;
         for (const message of batch) {

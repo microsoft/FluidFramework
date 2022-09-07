@@ -130,6 +130,7 @@ export interface IContainerContext extends IDisposable {
     readonly baseSnapshot: ISnapshotTree | undefined;
     /** @deprecated - please use submitBatchFn & submitSummaryFn */
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+    /** @returns clientSequenceNumber of last message in a batch */
     readonly submitBatchFn: (batch: IBatchMessage[]) => number;
     readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;

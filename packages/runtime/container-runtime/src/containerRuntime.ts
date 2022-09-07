@@ -1778,6 +1778,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 for (const message of batch) {
                     batchToSend.push({ contents: message.contents, metadata: message.metadata });
                 }
+                // returns clientSequenceNumber of last message in a batch
                 clientSequenceNumber = this.context.submitBatchFn(batchToSend);
             } else {
                 // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
@@ -1792,9 +1793,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 this.deltaSender.flush();
             }
-        }
 
-        clientSequenceNumber -= batch.length - 1;
+            // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
+            clientSequenceNumber -= batch.length - 1;
+            assert(clientSequenceNumber >= 0, "clientSequenceNumber can't be negative");
+        }
 
         // Let the PendingStateManager know that a message was submitted.
         // In future, need to shift toward keeping batch as a whole!
