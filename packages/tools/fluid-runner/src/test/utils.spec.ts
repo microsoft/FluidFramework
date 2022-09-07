@@ -17,10 +17,11 @@ describe("utils", () => {
         fs.readdirSync(snapshotFolder).forEach((snapshotFileName: string) => {
             it(snapshotFileName, () => {
                 const filePath = path.join(snapshotFolder, snapshotFileName);
+                const fileContent = fs.readFileSync(filePath);
                 if (jsonSnapshots.has(snapshotFileName)) {
-                    assert.strictEqual(isJsonSnapshot(filePath), true, "expect a JSON file");
+                    assert.strictEqual(isJsonSnapshot(fileContent), true, "expect a JSON file");
                 } else {
-                    assert.strictEqual(isJsonSnapshot(filePath), false, "expect a non-JSON file");
+                    assert.strictEqual(isJsonSnapshot(fileContent), false, "expect a non-JSON file");
                 }
             });
         });

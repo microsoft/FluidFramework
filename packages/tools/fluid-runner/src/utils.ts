@@ -7,13 +7,11 @@ import * as fs from "fs";
 
 /**
  * Is the given snapshot in JSON format
- * @param path - path to snapshot file
+ * @param content - snapshot file content
  */
-export function isJsonSnapshot(path: string): boolean {
+export function isJsonSnapshot(content: Buffer): boolean {
     const buffer = Buffer.alloc(1);
-    const fd = fs.openSync(path, "r");
-    fs.readSync(fd, buffer, 0, 1, 0);
-    fs.closeSync(fd);
+    content.copy(buffer, 0, 0, 1);
 
     return buffer.toString() === "{";
 }
@@ -23,10 +21,8 @@ export function isJsonSnapshot(path: string): boolean {
  * Works on both JSON and binary snapshot formats
  * @param filePath - path to the ODSP snapshot file
  */
-export function getSnapshotFileContent(filePath: string): string | Uint8Array {
-    if (isJsonSnapshot(filePath)) {
-        return fs.readFileSync(filePath, { encoding: "utf-8" });
-    } else {
-        return fs.readFileSync(filePath);
-    }
+export function getSnapshotFileContent(filePath: string): string | Buffer {
+    // TODO: read file stream
+    const content = fs.readFileSync(filePath);
+    return isJsonSnapshot(content) ? content.toString() : content;
 }

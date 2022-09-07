@@ -77,7 +77,7 @@ export async function exportFile(
             }
 
             fs.writeFileSync(outputFile, await createContainerAndExecute(
-                getSnapshotFileContent(inputFile), // TODO: read file stream
+                getSnapshotFileContent(inputFile),
                 fluidFileConverter,
                 logger,
                 options,
