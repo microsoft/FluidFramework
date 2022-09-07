@@ -12,23 +12,23 @@ export interface TestInterface
 
 Here are some remarks about the interface
 
-## Events
-
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) | <code>readonly</code> | () =&gt; void | Test interface event property |
-
 ## Construct Signatures
 
 |  ConstructSignature | Return Type | Description |
 |  --- | --- | --- |
 |  [(new)()](docs/simple-suite-test/testinterface-_new_-constructsignature) | [TestInterface](docs/simple-suite-test/testinterface-interface) | Test construct signature. |
 
+## Events
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) | <code>readonly</code> | () =&gt; void | Test interface event property |
+
 ## Properties
 
 |  Property | Modifiers | Default Value | Type | Description |
 |  --- | --- | --- | --- | --- |
-|  [testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
+|  [testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature) | 📝 | 📝 | number | Test interface property |
 |  [testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature) | <code>optional</code> | 0 | number | Test optional property |
 
 ## Methods
@@ -43,3 +43,13 @@ Here are some remarks about the interface
 |  --- | --- |
 |  [(call)(event, listener)](docs/simple-suite-test/testinterface-_call_-callsignature) | Test interface event call signature |
 |  [(call)(event, listener)](docs/simple-suite-test/testinterface-_call__1-callsignature) | Another example call signature |
+
+## See also {#testinterface-see-also}
+
+[TestInterface.testInterfaceMethod()](docs/simple-suite-test/testinterface-testinterfacemethod-methodsignature)
+
+[TestInterface.testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature)
+
+[TestInterface.testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature)
+
+[TestInterface.testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature)

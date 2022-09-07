@@ -23,6 +23,7 @@ import {
     ILoaderOptions,
     LoaderHeader,
     ISnapshotTreeWithBlobContents,
+    IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
     IContainerRuntime,
@@ -41,6 +42,7 @@ import {
     TaggedLoggerAdapter,
     MonitoringContext,
     loggerToMonitoringContext,
+    wrapError,
 } from "@fluidframework/telemetry-utils";
 import {
     DriverHeader,
@@ -113,7 +115,11 @@ import {
     ReportOpPerfTelemetry,
     IPerfSignalReport,
 } from "./connectionTelemetry";
-import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
+import {
+    IPendingLocalState,
+    PendingStateManager,
+} from "./pendingStateManager";
+import { BatchManager, BatchMessage } from "./batchManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
@@ -195,6 +201,7 @@ export interface ContainerRuntimeMessage {
     contents: any;
     type: ContainerMessageType;
 }
+
 export interface ISummaryBaseConfiguration {
     /**
      *  Delay before first attempt to spawn summarizing container.
@@ -781,7 +788,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
-    private needsFlush = false;
     private flushTrigger = false;
 
     private _connected: boolean;
@@ -830,6 +836,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
+    private readonly batchManager = new BatchManager();
     private readonly garbageCollector: IGarbageCollector;
 
     // Local copy of incomplete received chunks.
@@ -1065,7 +1072,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 flush: this.flush.bind(this),
                 flushMode: () => this.flushMode,
                 reSubmit: this.reSubmit.bind(this),
-                rollback: this.rollback.bind(this),
                 setFlushMode: (mode) => this.setFlushMode(mode),
             },
             this._flushMode,
@@ -1434,7 +1440,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return true;
         }
 
-        if (!this.pendingStateManager.hasPendingMessages()) {
+        if (!this.hasPendingMessages()) {
             // If there are no pending messages, we can always reconnect
             this.resetReconnectCount();
             return true;
@@ -1628,7 +1634,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // If there are no more pending messages after processing a local message,
             // the document is no longer dirty.
-            if (!this.pendingStateManager.hasPendingMessages()) {
+            if (!this.hasPendingMessages()) {
                 this.updateDocumentDirtyState(false);
             }
 
@@ -1771,30 +1777,64 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
-        if (!this.deltaSender) {
-            return;
+        const batch = this.batchManager.popBatch();
+
+        const length = batch.length;
+
+        if (length > 1) {
+            batch[0].metadata = { ...batch[0].metadata, batch: true };
+            batch[length - 1].metadata = { ...batch[length - 1].metadata, batch: false };
         }
 
-        // Let the PendingStateManager know that there was an attempt to flush messages.
-        // Note that this should happen before the `this.needsFlush` check below because in the scenario where we are
-        // not connected, `this.needsFlush` will be false but the PendingStateManager might have pending messages and
-        // hence needs to track this.
-        this.pendingStateManager.onFlush();
-
-        // If flush has already been called then exit early
-        if (!this.needsFlush) {
-            return;
-        }
-
-        this.needsFlush = false;
+        const refSeqNumber = this.deltaManager.lastSequenceNumber;
+        let clientSequenceNumber: number = -1;
 
         // Did we disconnect in the middle of turn-based batch?
         // If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
-        if (!this.canSendOps()) {
-            return;
+        if (this.canSendOps()) {
+            if (this.context.submitBatchFn !== undefined) {
+                const batchToSend: IBatchMessage[] = [];
+                for (const message of batch) {
+                    batchToSend.push({ contents: message.contents, metadata: message.metadata });
+                }
+                // returns clientSequenceNumber of last message in a batch
+                clientSequenceNumber = this.context.submitBatchFn(batchToSend);
+            } else {
+                // Legacy path - supporting old loader versions. Can be removed only when LTS moves above
+                // version that has support for batches (submitBatchFn)
+                for (const message of batch) {
+                    clientSequenceNumber = this.context.submitFn(
+                        MessageType.Operation,
+                        message.deserializedContent,
+                        true, // batch
+                        message.metadata);
+                }
+
+                this.deltaSender.flush();
+            }
+
+            // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
+            clientSequenceNumber -= batch.length - 1;
+            assert(clientSequenceNumber >= 0, "clientSequenceNumber can't be negative");
         }
 
-        return this.deltaSender.flush();
+        // Let the PendingStateManager know that a message was submitted.
+        // In future, need to shift toward keeping batch as a whole!
+        for (const message of batch) {
+            this.pendingStateManager.onSubmitMessage(
+                message.deserializedContent.type,
+                clientSequenceNumber,
+                refSeqNumber,
+                message.deserializedContent.contents,
+                message.localOpMetadata,
+                message.metadata,
+            );
+            clientSequenceNumber++;
+        }
+
+        assert(this.batchManager.empty, "reentrancy");
+
+        this.pendingStateManager.onFlush();
     }
 
     public orderSequentially(callback: () => void): void {
@@ -1820,9 +1860,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private trackOrderSequentiallyCalls(callback: () => void): void {
-        let checkpoint: { rollback: () => void; } | undefined;
+        let checkpoint: { rollback: (action: (message: BatchMessage) => void) => void; } | undefined;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
-            checkpoint = this.pendingStateManager.checkpoint();
+            checkpoint = this.batchManager.checkpoint();
         }
 
         try {
@@ -1831,7 +1871,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } catch (error) {
             if (checkpoint) {
                 // This will throw and close the container if rollback fails
-                checkpoint.rollback();
+                try {
+                    checkpoint.rollback((message: BatchMessage) =>
+                        this.rollback(
+                            message.deserializedContent.type,
+                            message.deserializedContent.contents,
+                            message.localOpMetadata));
+                } catch (err) {
+                    const error2 = wrapError(err, (message) => {
+                        return DataProcessingError.create(
+                            `RollbackError: ${message}`,
+                            "checkpointRollback",
+                            undefined) as DataProcessingError;
+                    });
+                    this.closeFn(error2);
+                    throw error2;
+                }
             } else {
                 // pre-0.58 error message: orderSequentiallyCallbackException
                 this.closeFn(new GenericError("orderSequentially callback exception", error));
@@ -1967,7 +2022,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.emit("attached");
         }
 
-        if (attachState === AttachState.Attached && !this.pendingStateManager.hasPendingMessages()) {
+        if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
             this.updateDocumentDirtyState(false);
         }
         this.dataStores.setAttachState(attachState);
@@ -2235,6 +2290,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
+        assert(this.batchManager.empty, "Can't trigger summary in the middle of a batch");
+
         let latestSnapshotVersionId: string | undefined;
         if (refreshLatestAck) {
             const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
@@ -2432,7 +2489,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let clientSequenceNumber: number;
             try {
-                clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
+                clientSequenceNumber = this.submitSummaryMessage(summaryMessage);
             } catch (error) {
                 return { stage: "upload", ...uploadData, error };
             }
@@ -2491,12 +2548,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private hasPendingMessages() {
+        return this.pendingStateManager.hasPendingMessages() || !this.batchManager.empty;
+    }
+
     private updateDocumentDirtyState(dirty: boolean) {
         if (this.attachState !== AttachState.Attached) {
             assert(dirty, "Non-attached container is dirty");
         } else {
             // Other way is not true = see this.isContainerMessageDirtyable()
-            assert(!dirty || this.pendingStateManager.hasPendingMessages(),
+            assert(!dirty || this.hasPendingMessages(),
                 "if doc is dirty, there has to be pending ops");
         }
 
@@ -2538,104 +2599,70 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private submit(
         type: ContainerMessageType,
-        content: any,
+        contents: any,
         localOpMetadata: unknown = undefined,
-        opMetadata: Record<string, unknown> | undefined = undefined,
+        metadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
 
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
 
-        let clientSequenceNumber: number = -1;
-        let opMetadataInternal = opMetadata;
+        const deserializedContent: ContainerRuntimeMessage = { type, contents };
+        const serializedContent = JSON.stringify(deserializedContent);
 
-        if (this.canSendOps()) {
-            const serializedContent = JSON.stringify(content);
-
-            // If in TurnBased flush mode we will trigger a flush at the next turn break
-            if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
-                opMetadataInternal = {
-                    ...opMetadata,
-                    batch: true,
-                };
-                this.needsFlush = true;
-
-                // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                if (!this.flushTrigger) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flushTrigger = false;
-                        this.flush();
-                    });
-                }
-            }
-
-            if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
-                clientSequenceNumber = this.submitRuntimeMessage(type,
-                    content, this._flushMode === FlushMode.TurnBased /* batch */, opMetadataInternal);
-            } else {
-                // If the content length is larger than the client configured message size
-                // instead of splitting the content, we will fail by explicitly closing the container
-                this.closeFn(new GenericError(
-                    "OpTooLarge",
-                    /* error */ undefined,
-                    {
-                        length: serializedContent.length,
-                        limit: defaultMaxOpSizeInBytes,
-                    }));
-                clientSequenceNumber = -1;
-            }
+        if (serializedContent.length > defaultMaxOpSizeInBytes) {
+            // If the content length is larger than the client configured message size
+            // instead of splitting the content, we will fail by explicitly closing the container
+            const error = new GenericError(
+                "OpTooLarge",
+                /* error */ undefined,
+                {
+                    length: serializedContent.length,
+                    limit: defaultMaxOpSizeInBytes,
+                });
+            this.closeFn(error);
+            throw error;
         }
 
-        // Let the PendingStateManager know that a message was submitted.
-        this.pendingStateManager.onSubmitMessage(
-            type,
-            clientSequenceNumber,
-            this.deltaManager.lastSequenceNumber,
-            content,
+        this.batchManager.push({
+            contents: serializedContent,
+            deserializedContent,
+            metadata,
             localOpMetadata,
-            opMetadataInternal,
-        );
-        if (this.isContainerMessageDirtyable(type, content)) {
+        });
+        if (this._flushMode !== FlushMode.TurnBased) {
+            this.flush();
+        } else if (!this.flushTrigger) {
+            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            Promise.resolve().then(() => {
+                this.flushTrigger = false;
+                this.flush();
+            });
+        }
+
+        if (this.isContainerMessageDirtyable(type, contents)) {
             this.updateDocumentDirtyState(true);
         }
     }
 
-    private submitSystemMessage(
-        type: MessageType,
-        contents: any) {
+    private submitSummaryMessage(contents: ISummaryContent) {
         this.verifyNotClosed();
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
         // System message should not be sent in the middle of the batch.
-        // That said, we can preserve existing behavior by not flushing existing buffer.
-        // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
-        const middleOfBatch = this.flushMode === FlushMode.TurnBased && this.needsFlush;
-        if (middleOfBatch) {
-            this.mc.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
+        assert(this.batchManager.empty, "System op in the middle of a batch");
+
+        // back-compat: ADO #1385: Make this call unconditional in the future
+        if (this.context.submitSummaryFn !== undefined) {
+            return this.context.submitSummaryFn(contents);
+        } else {
+            return this.context.submitFn(
+                MessageType.Summarize,
+                contents,
+                false); // batch
         }
-
-        return this.context.submitFn(
-            type,
-            contents,
-            middleOfBatch);
-    }
-
-    private submitRuntimeMessage(
-        type: ContainerMessageType,
-        contents: any,
-        batch: boolean,
-        appData?: any,
-    ) {
-        this.verifyNotClosed();
-        assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
-        const payload: ContainerRuntimeMessage = { type, contents };
-        return this.context.submitFn(
-            MessageType.Operation,
-            payload,
-            batch,
-            appData);
     }
 
     /**
@@ -2812,6 +2839,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw new UsageError("can't get state when offline load disabled");
         }
 
+        // Flush pending batch.
+        // getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+        // to close current batch.
+        this.flush();
+
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
         if (previousPendingState) {
             return {
@@ -2905,7 +2937,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // If it's not the case, we should take it into account when calculating dirty state.
         assert(this.context.attachState === AttachState.Attached,
             "this function is called for attached containers only");
-        if (!this.pendingStateManager.hasPendingMessages()) {
+        if (!this.hasPendingMessages()) {
             this.updateDocumentDirtyState(false);
         }
     }

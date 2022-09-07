@@ -9,6 +9,7 @@
     "outDir": "../dist/test",
     "types": ["node", "mocha", "chai"],
     "skipLibCheck": true,
+    "target": "ES2015",
   },
   "references": [
     {
