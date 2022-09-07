@@ -252,9 +252,13 @@ class ProxyTarget {
         return proxifyField(fieldKind, childTargets);
     }
 
+    /**
+     * @returns the type name of a node.
+     * It shall never be possible to call this for sequence fields as they are unwrapped into arrays.
+     */
     public getTypeName(key: string): TreeSchemaIdentifier {
         const childTypes = mapCursorField(this.cursor, brand(key), (c) => c.type);
-        assert(childTypes.length === 1, "A complex type. Please, use typeSymbol to get a node schema instead.");
+        assert(childTypes.length <= 1, "invalid non sequence");
         return childTypes[0];
     }
 }
@@ -292,6 +296,7 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
 			switch (key) {
 				case proxySymbol:
 				case type:
+                case getTypeName:
 				// Currently not supporting iteration over fields.
                 // case Symbol.iterator:
 					return true;
@@ -335,7 +340,11 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
 				return { configurable: true, enumerable: false, value: target, writable: false };
 			} else if (key === type) {
 				return { configurable: true, enumerable: false, value: target.type, writable: false };
-			}
+			} else if (key === getTypeName) {
+                return {
+                    configurable: true, enumerable: false, value: target.getTypeName.bind(target), writable: false,
+                };
+            }
 		} else if (target.has(key)) {
             return {
                 configurable: true,
@@ -355,7 +364,8 @@ function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
     if (isPrimitive(target.type)) {
         const nodeValue = target.cursor.value;
         // see `isPrimitive` doc for `undefined` case
-        if (isPrimitiveValue(nodeValue) && nodeValue !== undefined) {
+        assert(nodeValue !== undefined, "Undefined values not allowed");
+        if (isPrimitiveValue(nodeValue)) {
             return nodeValue;
         }
     }

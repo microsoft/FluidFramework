@@ -121,7 +121,7 @@ type ComplexPhoneType = EditableTree & {
 
 type AddressType = EditableTree & {
     street: string;
-    zip: string;
+    zip?: string;
     phones: (number | string | ComplexPhoneType)[];
 };
 
@@ -145,8 +145,6 @@ const person: JsonableTree = {
         address: [{
             fields: {
                 street: [{ value: "treeStreet", type: stringSchema.name }],
-                // TODO: revisit as ideally we don't want to have undefined properties in our proxy object
-                zip: [{ type: stringSchema.name }],
                 phones: [{
                     type: phonesSchema.name,
                     fields: {
@@ -266,10 +264,12 @@ describe("editable-tree", () => {
         // Check for expected symbols:
         assert(proxySymbol in personProxy);
         assert(typeSymbol in personProxy);
+        assert(getTypeNameSymbol in personProxy);
         // Check fields show up:
         assert("age" in personProxy);
         assert.equal(EmptyKey in personProxy, false);
         assert.equal("child" in personProxy, false);
+        assert.equal("zip" in (personProxy as PersonType).address, false);
         // Value does not show up when empty:
         assert.equal(valueSymbol in personProxy, false);
 
@@ -379,6 +379,18 @@ describe("editable-tree", () => {
         context.free();
     });
 
+    it("undefined values not allowed", () => {
+        const rootSchema = fieldSchema(FieldKinds.value, [optionalChildSchema.name]);
+        const schemaData: SchemaData = {
+            treeSchema: schemaMap,
+            globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
+        };
+        const forest = setupForest(schemaData, [{ type: optionalChildSchema.name, fields: { child: [{ type: int32Schema.name, value: undefined }] } }]);
+        const [context, field] = getEditableTree(forest);
+        assert.throws(() => ((field as EditableTree).child), /Undefined values not allowed/);
+        context.free();
+    });
+
     it("array nodes get unwrapped", () => {
         const rootSchema = fieldSchema(FieldKinds.value, [phonesSchema.name]);
         assert(getPrimaryField(phonesSchema) !== undefined);
@@ -429,14 +441,15 @@ describe("editable-tree", () => {
         assert.equal(proxy.salary, 10420.2);
         const cloned = clone(proxy.friends);
         assert.deepEqual(cloned, { Mat: "Mat" });
-        assert.deepEqual(Object.keys(proxy.address!), ["street", "zip", "phones"]);
+        assert.deepEqual(Object.keys(proxy.address!), ["street", "phones"]);
         assert.equal(proxy.address?.street, "treeStreet");
         assert.equal(proxy.address?.phones![1], 123456879);
+        assert.equal(proxy.address?.zip, undefined);
     });
 
     it("read upwards", () => {
         const proxy = buildTestPerson();
-        assert.deepEqual(Object.keys(proxy.address!), ["street", "zip", "phones"]);
+        assert.deepEqual(Object.keys(proxy.address!), ["street", "phones"]);
         assert.equal(proxy.address?.phones![1], 123456879);
         assert.equal(proxy.address?.street, "treeStreet");
         assert.deepEqual(Object.keys(proxy), ["name", "age", "salary", "friends", "address"]);
