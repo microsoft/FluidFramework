@@ -58,7 +58,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
         // To answer the question of whether we support a given version, we would need to query the codeLoader
         // to see if it thinks it can load the requested version.  But for now, ICodeDetailsLoader doesn't have
         // a supports() method.  We could attempt a load and catch the error, but it might not be desirable to
-        // load code just to check.  It might be desirable to add such a method to that interface.
+        // load code just to check.  It might be desirable to add a supports() method to ICodeDetailsLoader.
         return true;
     }
 
@@ -67,6 +67,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
      * interface.  This demo uses a convention of requesting the default path and passing the container reference
      * in the request header.  It does this with the expectation that the model has been bundled with the container
      * code along with a request handler that will recognize this request format and return the model.
+     * makeModelRequestHandler is provide to create exactly that request handler that the container author needs.
      *
      * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
      * loader that separately fetches model code and wraps the container from the outside.
