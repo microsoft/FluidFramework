@@ -7,11 +7,11 @@ import { StringBuilder } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 import * as Path from "path";
 
-import { MarkdownDocument } from "./MarkdownDocument";
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
-} from "./MarkdownDocumenterConfiguration";
+} from "./Configuration";
+import { MarkdownDocument } from "./MarkdownDocument";
 import { MarkdownEmitter } from "./MarkdownEmitter";
 import { renderApiItemDocument, renderModelDocument, renderPackageDocument } from "./rendering";
 import { doesItemRequireOwnDocument, getLinkUrlForApiItem } from "./utilities";
