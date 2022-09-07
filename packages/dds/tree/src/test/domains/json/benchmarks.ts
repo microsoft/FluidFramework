@@ -21,18 +21,19 @@ export function sum(cursor: ITreeCursor): number {
 
 export function mahattanPerimeter(
     cursor: ITreeCursor,
-    extractCoordinates: (cursor: ITreeCursor) => Generator<[number, number]>,
+    extractCoordinates: (cursor: ITreeCursor, calculate: (x: number, y: number) => void) => number,
 ): number {
     let total = 0;
-    // let count = 0;
     let current: [number, number] | undefined;
 
-    for (const [x, y] of extractCoordinates(cursor)) {
+    const calculate = (x: number, y: number) => {
         if (current !== undefined) {
             total += Math.abs(current[0] - x) + Math.abs(current[1] - y);
         }
         current = [x, y];
-    }
+    };
+
+    extractCoordinates(cursor, calculate);
 
     return total;
 }

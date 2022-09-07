@@ -61,7 +61,7 @@ function bench(
     data: {
         name: string;
         getJson: () => any;
-        dataConsumer: (cursor: ITreeCursor) => Generator<any>;
+        dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
     }[],
 ) {
     for (const { name, getJson, dataConsumer } of data) {
@@ -102,7 +102,9 @@ function bench(
 
         const consumers: [
             string,
-            (cursor: ITreeCursor, dataConsumer: (cursor: ITreeCursor) => Generator<any>) => void,
+            (cursor: ITreeCursor,
+                dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any
+            ) => void,
         ][] = [
             ["cursorToJsonObject", cursorToJsonObject],
             ["jsonableTreeFromCursor", jsonableTreeFromCursor],
@@ -137,7 +139,7 @@ const canada = generateCanada(
         ? undefined
         : [2, 10]);
 
-function* extractCoordinatesFromCanada(cursor: ITreeCursor): Generator<[number, number]> {
+function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
     cursor.down(FeatureKey, 0);
     cursor.down(EmptyKey, 0);
     cursor.down(GeometryKey, 0);
@@ -161,7 +163,7 @@ function* extractCoordinatesFromCanada(cursor: ITreeCursor): Generator<[number, 
             const y = cursor.value as number;
             cursor.up();
 
-            yield [x, y];
+            calculate(x, y);
             resultInner = cursor.seek(1);
         }
         cursor.up();
