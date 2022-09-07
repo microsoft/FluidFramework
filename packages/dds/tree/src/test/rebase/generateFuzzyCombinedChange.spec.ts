@@ -23,8 +23,8 @@ function generateRandomChange(seed: number) {
     return String(seed);
 }
 
-describe("Test generateFuzzyCombinedChange function", () => {
-    it("consistency of the generateFuzzyCombinedChange using counter field kind.", () => {
+describe("generateFuzzyCombinedChange", () => {
+    it("consistent given the same seed", () => {
         const change1 = generateFuzzyCombinedChange(
             testStringRebaser,
             generateRandomChange,

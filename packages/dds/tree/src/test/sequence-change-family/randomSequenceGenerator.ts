@@ -4,99 +4,80 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { unreachableCase } from "@fluidframework/common-utils";
 import { AnchorSet, FieldKey, UpPath } from "../../tree";
 import { SequenceEditBuilder, singleTextCursor } from "../../feature-libraries";
-import { jsonString } from "../../domains";
+import { jsonNumber } from "../../domains";
 import { Transposed as T } from "../../changeset";
 
 /**
- *
- * @param parentKey - parentKey used for creating the object for the parentField.
- * @param seed - seed used to randomly select the location for the UpPath objects.
- * @param maxUpPaths - maximum number of UpPaths generated during the function call.
- * @returns - set of UpPaths representing the randomnly generated tree.
+ * @param parentKeys - Keys allowed in the generated path.
+ * @param seed - Seed used to randomly select the location for the generated UpPath.
+ * @param maxDepth - Maximum depth for the generated path (inclusive).
+ * @param maxIndex - Maximum child index for the generated path (inclusive).
+ * @returns - A randomly generated UpPath.
  */
-export function generateRandomUpPaths(
-    parentKeys: Set<FieldKey>, seed: number, maxUpPaths: number): Set<UpPath> {
+export function generateRandomUpPath(
+    parentKeys: Set<FieldKey>,
+    seed: number,
+    maxDepth: number,
+    maxIndex: number,
+): UpPath {
+    const fieldKeys = Array.from(parentKeys);
     const random = makeRandom(seed);
-    const rootKey = random.pick(Array.from(parentKeys));
-    // initialize root UpPath
-    const root: UpPath = {
+    let path: UpPath = {
         parent: undefined,
-        parentField: rootKey,
-        parentIndex: 0,
+        parentField: random.pick(fieldKeys),
+        parentIndex: random.integer(0, maxIndex),
     };
-
-    // initialize set to keep track of all upPaths created
-    const parents = new Set([root]);
-
+    const depth = random.integer(0, maxDepth);
     // loop through to create more upPaths
-    for (let i = 0; i < (seed % maxUpPaths); i++) {
-        const currParent = getRandomParent(parents, random.integer(1, 10000000));
-        const currUpPath: UpPath = {
-            parent: currParent,
-            parentField: random.pick(Array.from(parentKeys)),
-            parentIndex: i,
+    for (let i = 0; i <= depth; i++) {
+        path = {
+            parent: path,
+            parentField: random.pick(fieldKeys),
+            parentIndex: random.integer(0, maxIndex),
         };
-        parents.add(currUpPath);
     }
 
-    return parents;
+    return path;
+}
+
+enum Operation {
+    SetValue = 0,
+    Delete = 1,
+    Insert = 2,
 }
 
 /**
- *
- * @param parentSet - set of the UpPaths to select a random parent from.
- * @param seed - random seed used to select a parent.
- * @returns - randomly selected parent from the set.
+ * @param seed - Random seed used to generate the change.
+ * @param pathGenerator - Generator of random path.
+ * @returns Randomly generated change.
  */
-function getRandomParent(parentSet: Set<UpPath>, seed: number): UpPath {
-    const parents = Array.from(parentSet);
-    const randomIndex = makeRandom(seed).integer(1, 10000000);
-    return parents[randomIndex % parents.length];
-}
-
-const operations = {
-    setValue: "setValue",
-    delete: "delete",
-    insert: "insert",
-};
-
-/**
- *
- * @param upPaths - Set of UpPaths which represents the state of the tree.
- * @param seed - random seed used to generate the change.
- * @returns randomly generated change.
- */
-export function generateRandomChange(upPaths: Set<UpPath>, seed: number): T.LocalChangeset {
+export function generateRandomChange(seed: number, pathGenerator: (seed: number) => UpPath): T.LocalChangeset {
     const random = makeRandom(seed);
     const builder = new SequenceEditBuilder(() => {}, new AnchorSet());
-    const nodeX = { type: jsonString.name, value: "X" };
-    const currOperation = random.pick(Object.keys(operations));
-    if (currOperation === operations.setValue) {
-        builder.setValue(
-            getRandomParent(
-                upPaths,
-                random.integer(1, 10000000),
-            ),
-            random.integer(1, 10000000),
-        );
-    } else if (currOperation === operations.insert) {
-        builder.insert(
-            getRandomParent(
-                upPaths,
-                random.integer(1, 10000000),
-            ),
-            singleTextCursor(nodeX),
-        );
-    } else {
-        builder.delete(
-            getRandomParent(
-                upPaths,
-                random.integer(1, 10000000),
-            ),
-            random.integer(1, upPaths.size),
-        );
+    const operation = random.integer(Operation.SetValue, Operation.Insert) as Operation;
+    switch (operation) {
+        case Operation.SetValue:
+            builder.setValue(
+                pathGenerator(random.real()),
+                random.integer(0, Number.MAX_SAFE_INTEGER),
+            );
+            break;
+        case Operation.Insert:
+            builder.insert(
+                pathGenerator(random.real()),
+                singleTextCursor({ type: jsonNumber.name, value: random.integer(0, Number.MAX_SAFE_INTEGER) }),
+            );
+            break;
+        case Operation.Delete:
+            builder.delete(
+                pathGenerator(random.real()),
+                random.integer(1, 10),
+            );
+            break;
+        default: unreachableCase(operation);
     }
 
     return builder.getChanges()[0];
