@@ -10,10 +10,7 @@ import * as fs from "fs";
  * @param content - snapshot file content
  */
 export function isJsonSnapshot(content: Buffer): boolean {
-    const buffer = Buffer.alloc(1);
-    content.copy(buffer, 0, 0, 1);
-
-    return buffer.toString() === "{";
+    return content.toString(undefined, 0, 1) === "{";
 }
 
 /**
