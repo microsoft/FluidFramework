@@ -7,9 +7,9 @@ import { test } from "@oclif/test";
 import { FluidReleaseMachineDefinition } from "../../src/machines";
 
 describe("release command handles all states", () => {
-    const unhandledStates: string[] = [];
+    const knownUnhandledStates: string[] = [];
     const machineStates = FluidReleaseMachineDefinition.states().filter(
-        (s) => !unhandledStates.includes(s),
+        (s) => !knownUnhandledStates.includes(s),
     );
 
     for (const state of machineStates) {
