@@ -1433,7 +1433,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return true;
         }
 
-        if (!this.pendingStateManager.hasPendingMessages()) {
+        if (!this.hasPendingMessages()) {
             // If there are no pending messages, we can always reconnect
             this.resetReconnectCount();
             return true;
@@ -1552,6 +1552,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._perfSignalData.signalsLost = 0;
             this._perfSignalData.signalTimestamp = 0;
             this._perfSignalData.trackingSignalSequenceNumber = undefined;
+        } else {
+            assert(this.attachState === AttachState.Attached,
+                "Connection is possible only if container exists in storage");
         }
 
         // Fail while disconnected
@@ -1624,7 +1627,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // If there are no more pending messages after processing a local message,
             // the document is no longer dirty.
-            if (!this.pendingStateManager.hasPendingMessages()) {
+            if (!this.hasPendingMessages()) {
                 this.updateDocumentDirtyState(false);
             }
 
@@ -2003,7 +2006,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.emit("attached");
         }
 
-        if (attachState === AttachState.Attached && !this.pendingStateManager.hasPendingMessages()) {
+        if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
             this.updateDocumentDirtyState(false);
         }
         this.dataStores.setAttachState(attachState);
@@ -2529,7 +2532,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private hasPendingMessages() {
+        return this.pendingStateManager.hasPendingMessages() || !this.batchManager.empty;
+    }
+
     private updateDocumentDirtyState(dirty: boolean) {
+        if (this.attachState !== AttachState.Attached) {
+            assert(dirty, "Non-attached container is dirty");
+        } else {
+            // Other way is not true = see this.isContainerMessageDirtyable()
+            assert(!dirty || this.hasPendingMessages(),
+                "if doc is dirty, there has to be pending ops");
+        }
+
         if (this.dirtyContainer === dirty) {
             return;
         }
@@ -2902,6 +2917,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // we may not have seen every sequence number (because of system ops) so apply everything once we
         // don't have any more saved ops
         await this.pendingStateManager.applyStashedOpsAt();
+
+        // If it's not the case, we should take it into account when calculating dirty state.
+        assert(this.context.attachState === AttachState.Attached,
+            "this function is called for attached containers only");
+        if (!this.hasPendingMessages()) {
+            this.updateDocumentDirtyState(false);
+        }
     }
 
     private validateSummaryHeuristicConfiguration(configuration: ISummaryConfigurationHeuristics) {

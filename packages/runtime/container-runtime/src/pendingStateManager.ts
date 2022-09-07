@@ -228,7 +228,11 @@ export class PendingStateManager implements IDisposable {
 
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pendingStates.push(this.initialStates.shift()!);
+            const firstPendingState = this.initialStates.shift()!;
+            this.pendingStates.push(firstPendingState);
+            if (firstPendingState.type === "message") {
+                this._pendingMessagesCount++;
+            }
         }
     }
 
@@ -262,6 +266,7 @@ export class PendingStateManager implements IDisposable {
         }
 
         this._pendingMessagesCount--;
+        assert(this._pendingMessagesCount >= 0, "positive");
 
         // Post-processing part - If we are processing a batch then this could be the last message in the batch.
         this.maybeProcessBatchEnd(message);
