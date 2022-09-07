@@ -41,10 +41,10 @@ export interface ITelemetryProperties {
 /**
  * Set of properties defined for the base logger to use only primitive types.
  */
-export type TelemetryBasePropertyType = string | number | boolean | undefined;
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 export interface ITelemetryBaseProperties {
-    [index: string]: TelemetryBasePropertyType | TaggedProperty<TelemetryBasePropertyType>;
+    [index: string]: TelemetryBaseEventPropertyType | TaggedProperty<TelemetryBaseEventPropertyType>;
 }
 
 /**
