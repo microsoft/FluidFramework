@@ -300,7 +300,7 @@ export class Client {
             (seg) => {
                 assert(
                     seg.seq !== UnassignedSequenceNumber && seg.removedSeq !== UnassignedSequenceNumber,
-                    "serializeGCData should never be invoked with local changes"
+                    "serializeGCData should never be invoked with local changes",
                 );
                 // Only serialize segments that have not been removed.
                 if (seg.removedSeq === undefined) {
