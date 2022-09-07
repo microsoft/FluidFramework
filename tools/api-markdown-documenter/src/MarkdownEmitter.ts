@@ -201,11 +201,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             }
         } else if (result.errorMessage) {
             const elementText = docLinkTag.codeDestination.emitAsTsdoc();
-            if (logger !== undefined) {
-                logger.warning(
-                    `Unable to resolve reference "${elementText}": ` + result.errorMessage,
-                );
-            }
+            logger?.warning(`Unable to resolve reference "${elementText}": ` + result.errorMessage);
 
             // Emit item as simple italicized text, so that at least something appears in the generated output
             this.writePlainText(
@@ -281,11 +277,9 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
 
         let headingLevel = docHeading.level ?? context.options.headingLevel ?? 1;
         if (headingLevel <= 0) {
-            if (logger !== undefined) {
-                logger.error(
-                    `Cannot render a heading level less than 1. Got ${headingLevel}. Will use 1 instead.`,
-                );
-            }
+            logger?.error(
+                `Cannot render a heading level less than 1. Got ${headingLevel}. Will use 1 instead.`,
+            );
             headingLevel = 1;
         }
 
