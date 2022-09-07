@@ -9,7 +9,11 @@ import { ContainerRuntimeMessage } from "./containerRuntime";
 /**
  * Message type used by BatchManager
  */
-export type BatchMessage = IBatchMessage & { localOpMetadata: unknown; deserializedContent: ContainerRuntimeMessage; };
+export type BatchMessage = IBatchMessage & {
+    localOpMetadata: unknown;
+    deserializedContent: ContainerRuntimeMessage;
+    referenceSequenceNumber: number;
+};
 
 /**
  * Helper class that manages partial batch & rollback.
