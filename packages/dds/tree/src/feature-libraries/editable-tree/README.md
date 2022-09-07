@@ -1,4 +1,4 @@
-# Editable Tree
+# editable-tree
 
 Editable Tree is a simple API for accessing a Forest's data.
 
