@@ -9,9 +9,7 @@ import { FieldKey } from "../../../tree";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
-import { brand, fail } from "../../../util";
-import { generateCanada } from "./json";
-import { mahattanPerimeter } from "./benchmarks";
+import { brand } from "../../../util";
 
 describe("JsonCursor", () => {
     // This tests that test data roundtrips via extract.
