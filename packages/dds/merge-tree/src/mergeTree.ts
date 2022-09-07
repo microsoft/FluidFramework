@@ -24,9 +24,8 @@ import {
     UniversalSequenceNumber,
 } from "./constants";
 import {
-    assertLocalReferences,
-     LocalReferenceCollection,
-     LocalReferencePosition,
+    LocalReferenceCollection,
+    LocalReferencePosition,
 } from "./localReference";
 import {
 	BaseSegment,
@@ -908,8 +907,7 @@ export class MergeTree {
         } else {
             for (const ref of refsToSlide) {
                 ref.callbacks?.beforeSlide?.();
-                assertLocalReferences(ref);
-                ref.link(undefined, 0, undefined);
+                segment.localRefs?.removeLocalRef(ref);
                 ref.callbacks?.afterSlide?.();
             }
         }
@@ -925,7 +923,7 @@ export class MergeTree {
         if (!segment.localRefs || segment.localRefs.empty) {
             return undefined;
         }
-        const refsToSlide: ReferencePosition[] = [];
+        const refsToSlide: LocalReferencePosition[] = [];
         const removedRefs: LocalReferencePosition[] = [];
         for (const lref of segment.localRefs) {
             if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
@@ -935,7 +933,12 @@ export class MergeTree {
                     refsToSlide.push(lref);
                 }
             } else {
-                segment.localRefs.removeLocalRef(lref);
+                // since we are pending, don't actually remove it,
+                // return the set of refs that will be removed on ack
+                //
+                if (!pending) {
+                    segment.localRefs.removeLocalRef(lref);
+                }
                 removedRefs.push(lref);
             }
         }

@@ -133,7 +133,8 @@
         "backCompat": false
       },
       "InterfaceDeclaration_LocalReferencePosition": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "ClassDeclaration_MergeTree": {
         "forwardCompat": false,
@@ -201,7 +202,8 @@
       "RemovedInterfaceDeclaration_TSTResult": {"forwardCompat": false, "backCompat": false},
       "RemovedClassDeclaration_SnapshotLegacy": {"forwardCompat": false, "backCompat": false},
       "TypeAliasDeclaration_RangeStackMap": {"backCompat": false},
-      "InterfaceDeclaration_ReferencePosition": {"backCompat": false}
+      "InterfaceDeclaration_ReferencePosition": {"backCompat": false},
+      "ClassDeclaration_TrackingGroup": {"forwardCompat": false}
     }
   }
 }

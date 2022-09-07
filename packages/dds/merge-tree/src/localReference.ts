@@ -9,6 +9,7 @@ import { List, ListNode } from "./collections";
 import {
     ISegment,
 } from "./mergeTreeNodes";
+import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
@@ -37,9 +38,12 @@ export function _validateReferenceType(refType: ReferenceType) {
             "Reference types can only be one of Transient, SlideOnRemove, and StayOnRemove");
     }
 }
-
+/**
+ * @sealed
+ */
 export interface LocalReferencePosition extends ReferencePosition {
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+    readonly trackingCollection: TrackingGroupCollection;
 }
 
 /**
@@ -54,6 +58,10 @@ class LocalReference implements LocalReferencePosition {
     private listNode: ListNode<LocalReference> | undefined;
 
     public callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>> | undefined;
+    private _trackingCollection?: TrackingGroupCollection;
+    public get trackingCollection(): TrackingGroupCollection {
+        return (this._trackingCollection ??= new TrackingGroupCollection(this));
+    }
 
     constructor(
         public refType = ReferenceType.Simple,
@@ -64,13 +72,24 @@ class LocalReference implements LocalReferencePosition {
     }
 
     public link(segment: ISegment | undefined, offset: number, listNode: ListNode<LocalReference> | undefined) {
-        if (listNode !== this.listNode
-            && this.listNode !== undefined) {
+        if (listNode !== this.listNode && this.listNode !== undefined) {
             this.segment?.localRefs?.removeLocalRef(this);
         }
-        this.segment = segment;
-        this.offset = offset;
         this.listNode = listNode;
+
+        if (segment !== this.segment) {
+            const groups: TrackingGroup[] = [];
+            this.trackingCollection.trackingGroups.forEach(
+                (tg) => {
+                    tg.unlink(this);
+                    groups.push(tg);
+                });
+
+            this.segment = segment;
+
+            groups.forEach((tg) => tg.link(this));
+        }
+        this.offset = offset;
     }
 
     public isLeaf() {
@@ -108,7 +127,7 @@ interface IRefsAtOffset {
     after?: List<LocalReference>;
 }
 
-export function assertLocalReferences(
+function assertLocalReferences(
     lref: any,
 ): asserts lref is LocalReference {
     assert(lref instanceof LocalReference, 0x2e0 /* "lref not a Local Reference" */);
@@ -252,24 +271,26 @@ export class LocalReferenceCollection {
      * @internal
      */
     public addLocalRef(lref: LocalReferencePosition, offset: number) {
-        assert(
-            !refTypeIncludesFlag(lref, ReferenceType.Transient),
-            0x2df /* "transient references cannot be bound to segments" */);
         assertLocalReferences(lref);
         assert(offset < this.segment.cachedLength, 0x348 /* offset cannot be beyond segment length */);
-        const refsAtOffset = this.refsByOffset[offset] =
-            this.refsByOffset[offset]
-            ?? { at: new List() };
-        const atRefs = refsAtOffset.at =
-            refsAtOffset.at
-            ?? new List();
 
-        lref.link(this.segment, offset, atRefs.push(lref).last);
+        if (refTypeIncludesFlag(lref, ReferenceType.Transient)) {
+            lref.link(this.segment, offset, undefined);
+        } else {
+            const refsAtOffset = this.refsByOffset[offset] =
+                this.refsByOffset[offset]
+                ?? { at: new List() };
+            const atRefs = refsAtOffset.at =
+                refsAtOffset.at
+                ?? new List();
 
-        if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
-            this.hierRefCount++;
+            lref.link(this.segment, offset, atRefs.push(lref).last);
+
+            if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+                this.hierRefCount++;
+            }
+            this.refCount++;
         }
-        this.refCount++;
     }
 
     /**
@@ -284,7 +305,7 @@ export class LocalReferenceCollection {
             node?.list?.remove(node);
 
             lref.link(
-                lref.getSegment(),
+                undefined,
                 lref.getOffset(),
                 undefined);
             if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
@@ -314,6 +335,7 @@ export class LocalReferenceCollection {
         this.hierRefCount += other.hierRefCount;
         this.refCount += other.refCount;
         other.hierRefCount = 0;
+        other.refCount = 0;
         for (const lref of other) {
             assertLocalReferences(lref);
             lref.link(
