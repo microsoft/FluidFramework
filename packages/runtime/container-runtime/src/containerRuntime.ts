@@ -1433,7 +1433,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return true;
         }
 
-        if (!this.pendingStateManager.hasPendingMessages()) {
+        if (!this.hasPendingMessages()) {
             // If there are no pending messages, we can always reconnect
             this.resetReconnectCount();
             return true;
@@ -1627,7 +1627,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // If there are no more pending messages after processing a local message,
             // the document is no longer dirty.
-            if (!this.pendingStateManager.hasPendingMessages()) {
+            if (!this.hasPendingMessages()) {
                 this.updateDocumentDirtyState(false);
             }
 
@@ -2006,7 +2006,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.emit("attached");
         }
 
-        if (attachState === AttachState.Attached && !this.pendingStateManager.hasPendingMessages()) {
+        if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
             this.updateDocumentDirtyState(false);
         }
         this.dataStores.setAttachState(attachState);
@@ -2532,12 +2532,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private hasPendingMessages() {
+        return this.pendingStateManager.hasPendingMessages() || !this.batchManager.empty;
+    }
+
     private updateDocumentDirtyState(dirty: boolean) {
         if (this.attachState !== AttachState.Attached) {
             assert(dirty, "Non-attached container is dirty");
         } else {
             // Other way is not true = see this.isContainerMessageDirtyable()
-            assert(!dirty || this.pendingStateManager.hasPendingMessages(),
+            assert(!dirty || this.hasPendingMessages(),
                 "if doc is dirty, there has to be pending ops");
         }
 
@@ -2917,7 +2921,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // If it's not the case, we should take it into account when calculating dirty state.
         assert(this.context.attachState === AttachState.Attached,
             "this function is called for attached containers only");
-        if (!this.pendingStateManager.hasPendingMessages()) {
+        if (!this.hasPendingMessages()) {
             this.updateDocumentDirtyState(false);
         }
     }
