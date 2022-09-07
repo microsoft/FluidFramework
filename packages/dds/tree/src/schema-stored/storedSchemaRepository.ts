@@ -75,10 +75,8 @@ export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
     ) {
         super();
         if (data !== undefined) {
-            this.data = {
-                treeSchema: new Map(this.data.treeSchema),
-                globalFieldSchema: new Map(this.data.globalFieldSchema),
-            };
+            this.data.treeSchema = new Map(data.treeSchema);
+            this.data.globalFieldSchema = new Map(data.globalFieldSchema);
         }
     }
 
