@@ -650,7 +650,7 @@ export class PartialSequenceLengths {
             }
         } else {
             assert(this.unsequencedRecords !== undefined,
-                "Local getPartialLength invoked without computing local partials.");
+                0x39f /* Local getPartialLength invoked without computing local partials. */);
             const unsequencedPartialLengths = this.unsequencedRecords.partialLengths;
             // Local segments at or before localSeq should also be included
             const localIndex = latestLEQ(unsequencedPartialLengths, localSeq);

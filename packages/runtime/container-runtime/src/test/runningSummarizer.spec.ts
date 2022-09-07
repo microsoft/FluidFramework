@@ -117,7 +117,7 @@ describe("Runtime", () => {
                     summaryProposal,
                 };
                 mockDeltaManager.emit("op", {
-                    contents,
+                    data: JSON.stringify(contents),
                     type: MessageType.SummaryAck,
                     sequenceNumber: ++lastRefSeq,
                 });
@@ -135,7 +135,7 @@ describe("Runtime", () => {
                     message: "test-nack",
                 };
                 mockDeltaManager.emit("op", {
-                    contents,
+                    data: JSON.stringify(contents),
                     type: MessageType.SummaryNack,
                     sequenceNumber: ++lastRefSeq,
                 });
@@ -757,7 +757,7 @@ describe("Runtime", () => {
                     assert(!ackNackResult.success, "on-demand summary should fail");
                     assert(ackNackResult.data?.summaryNackOp.type === MessageType.SummaryNack,
                         "should be nack");
-                    assert(ackNackResult.data.summaryNackOp.contents.message === "test-nack",
+                    assert(JSON.parse((ackNackResult.data.summaryNackOp as any).data).message === "test-nack",
                         "summary nack error should be test-nack");
                 });
 

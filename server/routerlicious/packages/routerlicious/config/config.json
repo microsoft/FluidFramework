@@ -243,6 +243,7 @@
     },
     "worker": {
         "alfredUrl": "http://alfred:3003",
+        "deltaStreamUrl": "http://localhost:3003",
         "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://localhost:3001",
         "internalBlobStorageUrl": "http://historian:3000",
