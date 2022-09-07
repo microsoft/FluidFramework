@@ -58,7 +58,6 @@ describe("Runtime", () => {
             };
             const summaryConfig: ISummaryConfiguration = {
                 state: "enabled",
-                idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
