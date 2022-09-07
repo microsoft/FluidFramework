@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
+import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
@@ -12,7 +12,6 @@ import {
     jsonableTreeFromCursor,
     singleTextCursor,
     jsonTypeSchema,
-    FieldKey,
     EmptyKey,
 } from "../../..";
 import { initializeForest, TreeNavigationResult } from "../../../forest";
@@ -21,7 +20,7 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
-import { generateCanada } from "./json";
+import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./json";
 import { mahattanPerimeter, sum } from "./benchmarks";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -139,10 +138,10 @@ const canada = generateCanada(
         : [2, 10]);
 
 function* extractCoordinatesFromCanada(cursor: ITreeCursor): Generator<[number, number]> {
-    cursor.down("features" as FieldKey, 0);
+    cursor.down(FeatureKey, 0);
     cursor.down(EmptyKey, 0);
-    cursor.down("geometry" as FieldKey, 0);
-    cursor.down("coordinates" as FieldKey, 0);
+    cursor.down(GeometryKey, 0);
+    cursor.down(CoordinatesKey, 0);
 
     let result = cursor.down(EmptyKey, 0);
     assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
