@@ -546,6 +546,7 @@ declare function get_current_InterfaceDeclaration_ILocationRedirectionError():
 declare function use_old_InterfaceDeclaration_ILocationRedirectionError(
     use: TypeOnly<old.ILocationRedirectionError>);
 use_old_InterfaceDeclaration_ILocationRedirectionError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILocationRedirectionError());
 
 /*
