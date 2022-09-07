@@ -2582,6 +2582,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
+        if (this.deltaManager.readOnlyInfo.readonly) {
+            this.logger.sendErrorEvent({ eventName: "SubmitOpInReadonly" });
+        }
+
         // Let the PendingStateManager know that a message was submitted.
         this.pendingStateManager.onSubmitMessage(
             type,
