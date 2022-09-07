@@ -108,6 +108,10 @@ export class ContainerContext implements IContainerContext {
     }
 
     private _connected: boolean;
+    /**
+     * When true, ops are free to flow
+     * When false, ops should be kept as pending or rejected
+     */
     public get connected(): boolean {
         return this._connected;
     }
