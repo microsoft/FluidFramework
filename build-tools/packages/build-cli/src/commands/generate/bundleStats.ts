@@ -7,6 +7,7 @@ import { execSync } from "child_process";
 import { existsSync, copySync, readJSONSync } from "fs-extra";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
+import { string } from "@oclif/core/lib/flags";
 
 export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats.flags> {
     static description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
@@ -40,8 +41,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
         let hasSmallAssetError = false;
         const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
 
-        // eslint-disable-next-line unicorn/no-array-for-each
-        lernaOutput.forEach((pkg: { name: string; location: string }) => {
+        for(const pkg of lernaOutput) {
             if (pkg.location === undefined) {
                 this.exit(-1);
                 this.error("missing location in lerna package entry");
@@ -78,7 +78,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
                     recursive: true,
                 });
             }
-        });
+        }
 
         if (hasSmallAssetError) {
             this.error(
