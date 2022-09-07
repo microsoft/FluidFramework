@@ -288,7 +288,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
-            { eventName: "Load" },
+            {
+                eventName: "Load",
+                canReconnect: loadOptions?.canReconnect,
+                loadMode: JSON.stringify(loadOptions?.loadMode),
+            },
             async (event) => new Promise<Container>((resolve, reject) => {
                 const version = loadOptions.version;
 
