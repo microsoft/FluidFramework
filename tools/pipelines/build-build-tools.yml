@@ -70,7 +70,7 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskTest: test
+    taskTest: ci:test
     poolBuild: Large
     cgSubDirectory: packages
     checkoutSubmodules: true
@@ -90,10 +90,10 @@ extends:
         workingDir: '$(Build.SourcesDirectory)/build-tools'
     # Build the build-tools locally so it can be used to generate the monorepo package.json
     - task: Npm@1
-      displayName: 'npm run build:compile'
+      displayName: 'npm run build:full'
       inputs:
         command: 'custom'
-        customCommand: 'run build:compile'
+        customCommand: 'run build:full'
         workingDir: '$(Build.SourcesDirectory)/build-tools'
     - task: Bash@3
       displayName: 'Generate Mono repo package json'

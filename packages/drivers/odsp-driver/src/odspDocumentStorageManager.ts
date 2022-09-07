@@ -228,8 +228,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         }
 
         // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
-        // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
-        if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
+        if (count === 1 && (blobid === null || blobid === this.documentId)) {
             const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
             const odspSnapshotCacheValue: ISnapshotContents = await PerformanceEvent.timedExecAsync(
                 this.logger,
@@ -275,7 +274,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                         // Based on the concurrentSnapshotFetch policy:
                         // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
                         // or grab the cache value and then the network value if the cache value returns undefined.
-                        if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                        // For summarizer which could call this during refreshing of summary parent, always use the cache
+                        // first. Also for other clients, if it is not critical path which is determined by firstVersionCall,
+                        // then also check the cache first.
+                        if (this.firstVersionCall && this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                             const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions, scenarioName);
 
                             // Ensure that failures on both paths are ignored initially.

@@ -103,11 +103,13 @@ USAGE
 <!-- commands -->
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
+* [`flub check policy`](#flub-check-policy)
 * [`flub commands`](#flub-commands)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
+* [`flub release`](#flub-release)
 * [`flub version VERSION`](#flub-version-version)
 * [`flub version latest`](#flub-version-latest)
 
@@ -176,6 +178,27 @@ FLAGS
 
 DESCRIPTION
   Checks that the dependencies between Fluid Framework packages are properly layered.
+```
+
+## `flub check policy`
+
+Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.
+
+```
+USAGE
+  $ flub check policy -e <value> [-f] [-d <value>] [-p <value>] [--stdin] [-v]
+
+FLAGS
+  -d, --handler=<value>     Filter handler names by <regex>
+  -e, --exclusions=<value>  (required) Path to the exclusions.json file
+  -f, --fix                 Fix errors if possible
+  -p, --path=<value>        Filter file paths by <regex>
+  -v, --verbose             Verbose logging.
+  --stdin                   Get file from stdin
+
+DESCRIPTION
+  Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files,
+  assert tagging, etc.
 ```
 
 ## `flub commands`
@@ -296,6 +319,32 @@ DESCRIPTION
 ```
 
 _See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/info.ts)_
+
+## `flub release`
+
+```
+USAGE
+  $ flub release [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-S
+    semver|internal|virtualPatch] [-x | --install | --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
+
+FLAGS
+  -S, --versionScheme=<option>  Version scheme to use.
+                                <options: semver|internal|virtualPatch>
+  -g, --releaseGroup=<option>   release group
+                                <options: client|server|azure|build-tools>
+  -p, --package=<value>         Name of package.
+  -t, --bumpType=<option>       Version bump type.
+                                <options: major|minor|patch>
+  -v, --verbose                 Verbose logging.
+  -x, --skipChecks              Skip all checks.
+  --[no-]branchCheck            Check that the current branch is correct.
+  --[no-]commit                 Commit changes to a new branch.
+  --[no-]install                Update lockfiles by running 'npm install' automatically.
+  --[no-]policyCheck            Check that the local repo complies with all policy.
+  --[no-]updateCheck            Check that the local repo is up to date with the remote.
+```
+
+_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/release.ts)_
 
 ## `flub version VERSION`
 
