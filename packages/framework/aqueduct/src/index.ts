@@ -18,9 +18,35 @@
  * @packageDocumentation
  */
 
-export * from "./data-object-factories";
-export * from "./data-objects";
-export * from "./container-runtime-factories";
-export * from "./container-services";
-export * from "./request-handlers";
-export * from "./utils";
+export {
+    DataObjectFactory,
+    PureDataObjectFactory,
+    IRootDataObjectFactory,
+} from "./data-object-factories";
+export {
+    DataObject,
+    PureDataObject,
+    DataObjectTypes,
+    IDataObjectProps,
+} from "./data-objects";
+export {
+    BaseContainerRuntimeFactory,
+    ContainerRuntimeFactoryWithDefaultDataStore,
+} from "./container-runtime-factories";
+export {
+    serviceRoutePathRoot,
+    ContainerServiceRegistryEntries,
+    BaseContainerService,
+    generateContainerServicesRequestHandler,
+} from "./container-services";
+export {
+    mountableViewRequestHandler,
+    defaultRouteRequestHandler,
+    defaultFluidObjectRequestHandler,
+} from "./request-handlers";
+export {
+    waitForAttach,
+    getDefaultObjectFromContainer,
+    getObjectWithIdFromContainer,
+    getObjectFromContainer,
+} from "./utils";
