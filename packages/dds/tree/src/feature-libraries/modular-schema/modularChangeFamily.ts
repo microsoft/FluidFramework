@@ -212,7 +212,7 @@ export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
         let remainingPath = path;
         while (remainingPath !== undefined) {
             const editor = getChangeHandler(this.fieldKinds, remainingPath.parentFieldKind).editor;
-            const fieldChange = editor.makeChangeToChild(remainingPath.parentIndex, nodeChange);
+            const fieldChange = editor.buildChildChange(remainingPath.parentIndex, nodeChange);
             nodeChange = {};
             nodeChange[field as string] = { fieldKind: remainingPath.parentFieldKind, change: brand(fieldChange) };
             remainingPath = remainingPath.parent;

@@ -25,7 +25,7 @@ type ValueChangeset = FieldKinds.ReplaceOp<number>;
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
     rebaser: FieldKinds.replaceRebaser(),
     encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
-    editor: { makeChangeToChild: (index, change) => fail("Child changes not supported") },
+    editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
     intoDelta: (change, deltaFromChild) => change === 0
         ? []
@@ -52,7 +52,7 @@ const singleNodeRebaser: FieldChangeRebaser<FieldChangeMap> = {
 };
 
 const singleNodeEditor: FieldEditor<FieldChangeMap> = {
-    makeChangeToChild: (index: number, change: FieldChangeMap) => {
+    buildChildChange: (index: number, change: FieldChangeMap) => {
         assert(index === 0, "This field kind only supports one node in its field");
         return change;
     },

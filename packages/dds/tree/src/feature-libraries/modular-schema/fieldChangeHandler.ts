@@ -56,7 +56,10 @@ export interface FieldChangeEncoder<TChangeset> {
 }
 
 export interface FieldEditor<TChangeset> {
-    makeChangeToChild(childIndex: number, change: FieldChangeMap): TChangeset;
+    /**
+     * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
+     */
+    buildChildChange(childIndex: number, change: FieldChangeMap): TChangeset;
 }
 
 export type ToDelta = (child: FieldChangeMap) => Delta.Root;
