@@ -33,12 +33,13 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
         }
 
         // update the len of all following elements
-        for (const e of this.keySortedItems) {
-            if (e.seq <= newItem.seq) {
-                continue;
+        for (let i = this.keySortedItems.length - 1; i >= 0; i--) {
+            const element = this.keySortedItems[i];
+            if (!element || element.seq <= newItem.seq) {
+                break;
             }
 
-            e.len += newItem.seglen;
+            element.len += newItem.seglen;
         }
 
         super.addOrUpdate(newItem, (currentPartial, partialLength) => {
