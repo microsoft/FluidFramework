@@ -217,62 +217,98 @@ function renderApiSection(
         throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
     }
 
+    const logger = config.logger;
+
+    logger.verbose(`Rendering section for ${apiItem.displayName}...`);
+
+    let renderedSection: DocSection;
     switch (apiItem.kind) {
         case ApiItemKind.CallSignature:
-            return config.renderCallSignatureSection(apiItem as ApiCallSignature, config);
+            renderedSection = config.renderCallSignatureSection(
+                apiItem as ApiCallSignature,
+                config,
+            );
+            break;
 
         case ApiItemKind.Class:
-            return config.renderClassSection(apiItem as ApiClass, config, (childItem) =>
+            renderedSection = config.renderClassSection(apiItem as ApiClass, config, (childItem) =>
                 renderApiSection(childItem, config),
             );
+            break;
 
         case ApiItemKind.ConstructSignature:
-            return config.renderConstructorSection(apiItem as ApiConstructSignature, config);
+            renderedSection = config.renderConstructorSection(
+                apiItem as ApiConstructSignature,
+                config,
+            );
+            break;
 
         case ApiItemKind.Constructor:
-            return config.renderConstructorSection(apiItem as ApiConstructor, config);
+            renderedSection = config.renderConstructorSection(apiItem as ApiConstructor, config);
+            break;
 
         case ApiItemKind.Enum:
-            return config.renderEnumSection(apiItem as ApiEnum, config, (childItem) =>
+            renderedSection = config.renderEnumSection(apiItem as ApiEnum, config, (childItem) =>
                 renderApiSection(childItem, config),
             );
+            break;
 
         case ApiItemKind.EnumMember:
-            return config.renderEnumMemberSection(apiItem as ApiEnumMember, config);
+            renderedSection = config.renderEnumMemberSection(apiItem as ApiEnumMember, config);
+            break;
 
         case ApiItemKind.Function:
-            return config.renderFunctionSection(apiItem as ApiFunction, config);
+            renderedSection = config.renderFunctionSection(apiItem as ApiFunction, config);
+            break;
 
         case ApiItemKind.IndexSignature:
-            return config.renderIndexSignatureSection(apiItem as ApiIndexSignature, config);
+            renderedSection = config.renderIndexSignatureSection(
+                apiItem as ApiIndexSignature,
+                config,
+            );
+            break;
 
         case ApiItemKind.Interface:
-            return config.renderInterfaceSection(apiItem as ApiInterface, config, (childItem) =>
-                renderApiSection(childItem, config),
+            renderedSection = config.renderInterfaceSection(
+                apiItem as ApiInterface,
+                config,
+                (childItem) => renderApiSection(childItem, config),
             );
+            break;
 
         case ApiItemKind.Method:
-            return config.renderMethodSection(apiItem as ApiMethod, config);
+            renderedSection = config.renderMethodSection(apiItem as ApiMethod, config);
+            break;
 
         case ApiItemKind.MethodSignature:
-            return config.renderMethodSection(apiItem as ApiMethodSignature, config);
+            renderedSection = config.renderMethodSection(apiItem as ApiMethodSignature, config);
+            break;
 
         case ApiItemKind.Namespace:
-            return config.renderNamespaceSection(apiItem as ApiNamespace, config, (childItem) =>
-                renderApiSection(childItem, config),
+            renderedSection = config.renderNamespaceSection(
+                apiItem as ApiNamespace,
+                config,
+                (childItem) => renderApiSection(childItem, config),
             );
+            break;
 
         case ApiItemKind.Property:
         case ApiItemKind.PropertySignature:
-            return config.renderPropertySection(apiItem as ApiPropertyItem, config);
+            renderedSection = config.renderPropertySection(apiItem as ApiPropertyItem, config);
+            break;
 
         case ApiItemKind.TypeAlias:
-            return config.renderTypeAliasSection(apiItem as ApiTypeAlias, config);
+            renderedSection = config.renderTypeAliasSection(apiItem as ApiTypeAlias, config);
+            break;
 
         case ApiItemKind.Variable:
-            return config.renderVariableSection(apiItem as ApiVariable, config);
+            renderedSection = config.renderVariableSection(apiItem as ApiVariable, config);
+            break;
 
         default:
             throw new Error(`Unrecognized API item kind: "${apiItem.kind}".`);
     }
+
+    logger.verbose(`${apiItem.displayName} section rendered successfully!`);
+    return renderedSection;
 }
