@@ -81,7 +81,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
             }
             mt.seedWithArray(seedArray);
 
-            const clients: TestClient[] = [new TestClient()];
+            const clients: TestClient[] = [new TestClient({ mergeTreeUseNewLengthCalculations: true })];
             clients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 

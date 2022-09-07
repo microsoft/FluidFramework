@@ -428,7 +428,7 @@ describe("MergeTree.Client", () => {
     });
 
     it("Split segment with no references and append to segment with references", () => {
-        const clients = createClientsAtInitialState("", "A", "B");
+        const clients = createClientsAtInitialState({ initialState: "" }, "A", "B");
 
         const messages: ISequencedDocumentMessage[] = [];
         let seq = 0;
