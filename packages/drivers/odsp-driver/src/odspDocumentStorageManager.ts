@@ -312,7 +312,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                             } else {
                                 method = "network";
                                 const options: ISnapshotOptions = { ...hostSnapshotOptions };
-                                // Don't fetch the blobs/deltas if it is not the first call.
+                                // Don't fetch the blobs/deltas if it is not the first call. By default server will add
+                                // blobs and deltas to the response.
                                 if (!this.firstVersionCall) {
                                     options.blobs = 0;
                                     options.deltas = 0;
