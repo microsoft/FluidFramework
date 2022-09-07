@@ -201,15 +201,18 @@ export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
         fieldKind: FieldKindIdentifier,
         change: FieldChangeset,
     ): void {
-        let nodeChange: FieldChangeMap = {};
-        nodeChange[field as string] = { fieldKind, change };
+        let nodeChange: FieldChangeMap = new Map();
+        nodeChange.set(field, { fieldKind, change });
 
         let remainingPath = path;
         while (remainingPath !== undefined) {
             const editor = getChangeHandler(this.fieldKinds, remainingPath.parentFieldKind).editor;
             const fieldChange = editor.buildChildChange(remainingPath.parentIndex, nodeChange);
-            nodeChange = {};
-            nodeChange[field as string] = { fieldKind: remainingPath.parentFieldKind, change: brand(fieldChange) };
+            nodeChange = new Map();
+            nodeChange.set(
+                field,
+                { fieldKind: remainingPath.parentFieldKind, change: brand(fieldChange) },
+            );
             remainingPath = remainingPath.parent;
         }
 
