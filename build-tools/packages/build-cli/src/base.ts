@@ -148,8 +148,13 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
 
     /** Logs a warning. */
     public warning(message: string | Error): string | Error {
-        this.warn(chalk.yellow(`WARNING: ${message}`));
+        super.warn(chalk.yellow(`WARNING: ${message}`));
         return message;
+    }
+
+    /** @deprecated Use {@link BaseCommand.warning} instead. */
+    public warn(input: string | Error): string | Error {
+        return super.warn(input);
     }
 
     /** Logs a verbose log statement. */

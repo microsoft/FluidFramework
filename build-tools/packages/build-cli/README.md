@@ -337,6 +337,8 @@ _See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/b
 
 ## `flub release`
 
+Releases a package or release group.
+
 ```
 USAGE
   $ flub release [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-S
@@ -357,6 +359,17 @@ FLAGS
   --[no-]install                Update lockfiles by running 'npm install' automatically.
   --[no-]policyCheck            Check that the local repo complies with all policy.
   --[no-]updateCheck            Check that the local repo is up to date with the remote.
+
+DESCRIPTION
+  Releases a package or release group.
+
+  First the release group's dependencies are checked. If any of the dependencies are also in the repo, then they're
+  checked for the latest release version. If the dependencies have not yet been released, then the command prompts to
+  perform the release of the dependency, then run the releae command again.
+
+  This process is continued until all the dependencies have been released, after which the release group itself is
+
+  released.
 ```
 
 _See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/release.ts)_
