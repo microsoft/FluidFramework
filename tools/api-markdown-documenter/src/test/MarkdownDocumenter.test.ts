@@ -238,7 +238,7 @@ describe("api-markdown-documenter full-suite tests", () => {
             configName: "flat-config",
             configLessApiModel: flatConfig,
             generateFrontMatter: (apiItem) =>
-                `<!--- This is sample front-matter for API item "${apiItem.displayName}" -->`,
+                `[//]: # This is sample front-matter for API item "${apiItem.displayName}".`,
         },
         {
             configName: "sparse-config",
