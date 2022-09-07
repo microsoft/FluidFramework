@@ -1,6 +1,6 @@
 # simple-suite-test
 
-[Packages](./index) &gt; [simple-suite-test](./simple-suite-test)
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test)
 
 Test package
 
@@ -38,6 +38,15 @@ A test example
 const foo = bar;
 ```
 
+## Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) | An empty interface |
+|  [TestInterface](./simple-suite-test/testinterface-interface) | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
+
 ## Classes
 
 |  Class | Description |
@@ -51,23 +60,28 @@ const foo = bar;
 |  --- | --- |
 |  [TestEnum](./simple-suite-test#testenum-enum) | Test Enum |
 
+## Types
+
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
+|  [TypeAlias](./simple-suite-test#typealias-typealias) | Test Type-Alias |
+
 ## Functions
 
-|  Function | Return Type | Description |
-|  --- | --- | --- |
-|  [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) | TTypeParameter | Test function |
-|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
-|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
-|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
+|  Function | Alerts | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
+|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) |  | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
+|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | <code>DEPRECATED</code> | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
+|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
-## Interfaces
+## Variables
 
-|  Interface | Description |
-|  --- | --- |
-|  [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) | An empty interface |
-|  [TestInterface](./simple-suite-test/testinterface-interface) | Test interface |
-|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
-|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
+|  Variable | Alerts | Modifiers | Description |
+|  --- | --- | --- | --- |
+|  [testConst](./simple-suite-test#testconst-variable) |  | <code>readonly</code> | Test Constant |
+|  [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | <code>DEPRECATED</code> | <code>readonly</code> | I have a <code>@deprecated</code> tag with an empty comment block. |
 
 ## Namespaces
 
@@ -75,19 +89,6 @@ const foo = bar;
 |  --- | --- |
 |  [TestModule](./simple-suite-test/testmodule-namespace) |  |
 |  [TestNamespace](./simple-suite-test/testnamespace-namespace) | Test Namespace |
-
-## Variables
-
-|  Variable | Modifiers | Description |
-|  --- | --- | --- |
-|  [testConst](./simple-suite-test#testconst-variable) | <code>readonly</code> | Test Constant |
-
-## Types
-
-|  TypeAlias | Description |
-|  --- | --- |
-|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
-|  [TypeAlias](./simple-suite-test#typealias-typealias) | Test Type-Alias |
 
 ## Enumeration Details
 
@@ -175,6 +176,38 @@ TestEnumValue3 = 4
 
 Here are some remarks about the enum value
 
+## Type Details
+
+### TestMappedType {#testmappedtype-typealias}
+
+Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
+
+#### Signature {#testmappedtype-signature}
+
+```typescript
+export declare type TestMappedType = {
+    [K in TestEnum]: boolean;
+};
+```
+
+#### Remarks {#testmappedtype-remarks}
+
+Here are some remarks about the mapped type
+
+### TypeAlias {#typealias-typealias}
+
+Test Type-Alias
+
+#### Signature {#typealias-signature}
+
+```typescript
+export declare type TypeAlias = string;
+```
+
+#### Remarks {#typealias-remarks}
+
+Here are some remarks about the type alias
+
 ## Function Details
 
 ### testFunction {#testfunction-function}
@@ -229,7 +262,10 @@ An inline type
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
+> <b>\[Warning\]: Deprecated</b>
+> 
 > This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
+> 
 > 
 
 Test function that returns an inline type
@@ -278,34 +314,17 @@ testConst = 42
 
 Here are some remarks about the variable
 
-## Type Details
+### testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
 
-### TestMappedType {#testmappedtype-typealias}
+> <b>\[Warning\]: Deprecated</b>
+> 
+> 
+> 
 
-Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
+I have a `@deprecated` tag with an empty comment block.
 
-#### Signature {#testmappedtype-signature}
-
-```typescript
-export declare type TestMappedType = {
-    [K in TestEnum]: boolean;
-};
-```
-
-#### Remarks {#testmappedtype-remarks}
-
-Here are some remarks about the mapped type
-
-### TypeAlias {#typealias-typealias}
-
-Test Type-Alias
-
-#### Signature {#typealias-signature}
+#### Signature {#testconstwithemptydeprecatedblock-signature}
 
 ```typescript
-export declare type TypeAlias = string;
+testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty comment block."
 ```
-
-#### Remarks {#typealias-remarks}
-
-Here are some remarks about the type alias

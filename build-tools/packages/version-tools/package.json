@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/version-tools",
-  "version": "0.4.3000",
+  "version": "0.4.5000",
   "description": "Versioning tools for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -68,7 +68,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@oclif/core": "^1.9.5",
+    "@oclif/core": "~1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",

@@ -188,7 +188,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
     });
 
     it("should generate summary tree", async () => {
-        const container = await createContainer(provider, { disableIsolatedChannels: false });
+        const container = await createContainer(provider, {});
         const defaultDataStore = await requestFluidObject<ITestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 
@@ -233,50 +233,6 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         assert(dataStoreChannelsTree?.type === SummaryType.Tree, "Expected .channels tree in default data store.");
 
         const defaultDdsNode = dataStoreChannelsTree.tree.root;
-        assert(defaultDdsNode?.type === SummaryType.Tree, "Expected default root DDS in summary.");
-        assert(!defaultDdsNode.unreferenced, "Default root DDS should be referenced.");
-        assert(defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
-            "Expected .attributes blob in default root DDS summary tree.");
-    });
-
-    it("Should generate summary tree with isolated channels disabled", async () => {
-        const container = await createContainer(provider, { disableIsolatedChannels: true });
-        const defaultDataStore = await requestFluidObject<ITestDataObject>(container, defaultDataStoreId);
-        const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
-        await provider.ensureSynchronized();
-
-        const { stats, summary } = await containerRuntime.summarize({
-            runGC: false,
-            fullTree: false,
-            trackState: false,
-            summaryLogger: new TelemetryNullLogger(),
-        });
-
-        // Validate stats
-        assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
-        // .component, and .attributes blobs
-        assert(stats.blobNodeCount >= 2, `Stats expected at least 2 blob nodes, but had ${stats.blobNodeCount}.`);
-        // root node, default data store, and default root dds
-        assert(stats.treeNodeCount >= 3, `Stats expected at least 3 tree nodes, but had ${stats.treeNodeCount}.`);
-
-        // Validate summary
-        assert(!summary.unreferenced, "Root summary should be referenced.");
-        assert(summary.tree[channelsTreeName] === undefined, "Unexpected .channels tree in summary root.");
-
-        const defaultDataStoreNode = summary.tree[defaultDataStore._context.id];
-        assert(defaultDataStoreNode?.type === SummaryType.Tree, "Expected default data store tree in summary.");
-        assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
-        assert(defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
-            "Expected .component blob in default data store summary tree.");
-        const attributes = readBlobContent(defaultDataStoreNode.tree[".component"].content) as Record<string, unknown>;
-        assert(attributes.snapshotFormatVersion === "0.1", "Datastore attributes snapshotFormatVersion should be 0.1");
-        assert(attributes.summaryFormatVersion === undefined, "Unexpected datastore attributes summaryFormatVersion");
-        assert(attributes.disableIsolatedChannels === undefined,
-            "Unexpected datastore attributes disableIsolatedChannels");
-        assert(defaultDataStoreNode.tree[channelsTreeName] === undefined,
-            "Unexpected .channels tree in default data store.");
-
-        const defaultDdsNode = defaultDataStoreNode.tree.root;
         assert(defaultDdsNode?.type === SummaryType.Tree, "Expected default root DDS in summary.");
         assert(!defaultDdsNode.unreferenced, "Default root DDS should be referenced.");
         assert(defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
@@ -332,7 +288,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
     it("TelemetryContext is populated with data", async () => {
         const mockLogger = new MockLogger();
-        const container = await createContainer(provider, { disableIsolatedChannels: true }, mockLogger);
+        const container = await createContainer(provider, {}, mockLogger);
         const defaultDataStore = await requestFluidObject<ITestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
         await provider.ensureSynchronized();
