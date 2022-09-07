@@ -51,12 +51,7 @@ function clone<T>(value: Jsonable<T>): Jsonable<T> {
         : cloneObject(value);
 }
 
-function* noopDataConsumer(cursor: ITreeCursor) {
-    yield undefined;
-}
-
-// Helper that measures an optimized 'deepClone()' vs. using ITreeCursor to extract an
-// equivalent clone of the source data.
+// Helper that measures a variety of access patterns using ITreeCursor.
 function bench(
     data: {
         name: string;
