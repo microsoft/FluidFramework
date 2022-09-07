@@ -26,9 +26,9 @@ import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
  *
  * - Tables
  *
- *   - event properties
- *
  *   - constructor-signatures
+ *
+ *   - event properties
  *
  *   - properties
  *
@@ -41,9 +41,9 @@ import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
  * - Details (for any types not rendered to their own documents - see
  *   {@link PolicyOptions.documentBoundaries})
  *
- *   - event properties
- *
  *   - constructor-signatures
+ *
+ *   - event properties
  *
  *   - properties
  *
@@ -52,9 +52,6 @@ import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
  *   - call-signatures
  *
  *   - index-signatures
- *
- * Note: this ordering was established to mirror existing fluidframework.com rendering.
- * The plan is to change this in a subsequent change (before public release).
  */
 export function renderInterfaceSection(
     apiInterface: ApiInterface,
@@ -97,14 +94,14 @@ export function renderInterfaceSection(
         const renderedMemberTables = renderMemberTables(
             [
                 {
-                    headingTitle: "Events",
-                    itemKind: ApiItemKind.PropertySignature,
-                    items: eventProperties,
-                },
-                {
                     headingTitle: "Construct Signatures",
                     itemKind: ApiItemKind.ConstructSignature,
                     items: constructSignatures,
+                },
+                {
+                    headingTitle: "Events",
+                    itemKind: ApiItemKind.PropertySignature,
+                    items: eventProperties,
                 },
                 {
                     headingTitle: "Properties",
@@ -138,14 +135,14 @@ export function renderInterfaceSection(
         const renderedDetailsSection = renderChildDetailsSection(
             [
                 {
-                    headingTitle: "Event Details",
-                    itemKind: ApiItemKind.PropertySignature,
-                    items: eventProperties,
-                },
-                {
                     headingTitle: "Construct Signature Details",
                     itemKind: ApiItemKind.ConstructSignature,
                     items: constructSignatures,
+                },
+                {
+                    headingTitle: "Event Details",
+                    itemKind: ApiItemKind.PropertySignature,
+                    items: eventProperties,
                 },
                 {
                     headingTitle: "Property Details",

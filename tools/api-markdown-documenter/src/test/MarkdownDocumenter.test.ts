@@ -180,6 +180,7 @@ describe("api-markdown-documenter full-suite tests", () => {
         includeTopLevelDocumentHeading: false,
         documentBoundaries: [], // Render everything to package documents
         hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+        emptyTableCellText: "---",
     };
 
     /**
@@ -209,6 +210,7 @@ describe("api-markdown-documenter full-suite tests", () => {
             ApiItemKind.Variable,
         ],
         hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+        emptyTableCellText: "📝",
     };
 
     const configs: ConfigTestProps[] = [

@@ -19,7 +19,7 @@ export type TreeType = TreeSchemaIdentifier;
  *
  * TODO:
  * This has to be a LocalFieldKey since different nodes will have different FieldSchema for it.
- * This make it prone to collisions and suggests
+ * This makes it prone to collisions and suggests
  * that this intention may be better conveyed by metadata on the TreeViewSchema.
  */
 export const EmptyKey: LocalFieldKey = brand("");

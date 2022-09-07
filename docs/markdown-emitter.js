@@ -73,7 +73,26 @@ class HugoMarkdownEmitter extends MarkdownEmitter {
     }
 
     /**
-     * Override base logic to make use of Hugo callouts for note boxes
+     * Override base logic to make use of Hugo callouts for note boxes.
+     *
+     * @override
+     */
+     writeAlert(docAlert, context) {
+        const writer = context.writer;
+
+        writer.ensureNewLine();
+
+        writer.writeLine(`{{% callout ${docAlert.type ?? 'note'} ${docAlert.title ?? ''} %}}`);
+
+        this.writeNode(docAlert.content, context, false);
+        writer.ensureNewLine();
+
+        writer.writeLine('{{% /callout %}}');
+        writer.writeLine();
+    }
+
+    /**
+     * Override base logic to make use of Hugo callouts for note boxes.
      *
      * @override
      */
@@ -82,10 +101,7 @@ class HugoMarkdownEmitter extends MarkdownEmitter {
 
         writer.ensureNewLine();
 
-        const title = docNoteBox.title ?? "";
-        const type = title.toLowerCase() === "deprecated" ? "warning" : "note";
-
-        writer.writeLine(`{{% callout ${type} ${title} %}}`);
+        writer.writeLine('{{% callout note %}}');
 
         this.writeNode(docNoteBox.content, context, false);
         writer.ensureNewLine();

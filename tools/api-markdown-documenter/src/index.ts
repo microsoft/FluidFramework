@@ -15,6 +15,8 @@
  */
 
 export {
+    DocAlert,
+    DocAlertType,
     DocEmphasisSpan,
     DocHeading,
     DocList,
@@ -22,6 +24,7 @@ export {
     DocTable,
     DocTableCell,
     DocTableRow,
+    IDocAlertParameters,
     IDocHeadingParameters,
     IDocListParameters,
     ListKind,
