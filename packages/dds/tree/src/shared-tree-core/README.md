@@ -1,4 +1,4 @@
-# Shared Tree Core
+# shared-tree-core
 
 Provides a SharedObject for a tree which handles the collaboration window, and keeping indexes up to date.
 

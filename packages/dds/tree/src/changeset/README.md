@@ -1,4 +1,4 @@
-# Changeset
+# changeset
 
 Abstraction for Changesets (supporting the needs of Rebaser), and an implementation of Delta which can an be applied to Forests.
 

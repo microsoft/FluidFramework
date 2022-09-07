@@ -28,7 +28,7 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { SharedCell } from "@fluidframework/cell";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { MessageType, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -232,24 +232,24 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const ops = { pos1: 0, seg: "b", type: 0 };
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.equal(type, MessageType.Operation);
-            assert.equal(contents.type, ContainerMessageType.FluidDataStoreOp);
-
-            assert.equal(contents.contents.contents.type, DataStoreMessageType.ChannelOp);
-
-            assert.strictEqual(contents.contents.contents.content.address,
-                sharedStringId, "Address should be shared string");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(ops), "Ops should be equal");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
         const testChannel1 = await dataStore.getSharedObject<SharedString>(sharedStringId);
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.equal(message.type, ContainerMessageType.FluidDataStoreOp);
+
+            assert.equal(message.contents.contents.type, DataStoreMessageType.ChannelOp);
+
+            assert.strictEqual(message.contents.contents.content.address,
+                sharedStringId, "Address should be shared string");
+            assert.strictEqual(JSON.stringify(message.contents.contents.content.contents),
+                JSON.stringify(ops), "Ops should be equal");
+            defPromise.resolve();
+            return 0;
+        });
 
         // Fire op before attaching the container
         testChannel1.insertText(0, "a");
@@ -266,19 +266,20 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const ops = { key: "1", type: "set", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                sharedMapId, "Address should be shared map");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(ops), "Ops should be equal");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
         const testChannel1 = await dataStore.getSharedObject<SharedMap>(sharedMapId);
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.strictEqual(message.contents.contents.content.address,
+                sharedMapId, "Address should be shared map");
+            assert.strictEqual(JSON.stringify(message.contents.contents.content.contents),
+                JSON.stringify(ops), "Ops should be equal");
+            defPromise.resolve();
+            return 0;
+        });
 
         // Fire op before attaching the container
         testChannel1.set("0", "a");
@@ -295,20 +296,21 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const testChannelId = "testChannel1";
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.id,
-                testChannelId, "Channel id should match");
-            assert.strictEqual(contents.contents.contents.content.type,
-                SharedMap.getFactory().type, "Channel type should match");
-            assert.strictEqual(contents.contents.contents.type, DataStoreMessageType.Attach,
-                "Op should be an attach op");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.strictEqual(message.contents.contents.content.id,
+                testChannelId, "Channel id should match");
+            assert.strictEqual(message.contents.contents.content.type,
+                SharedMap.getFactory().type, "Channel type should match");
+            assert.strictEqual(message.contents.contents.type, DataStoreMessageType.Attach,
+                "Op should be an attach op");
+            defPromise.resolve();
+            return 0;
+        });
 
         const containerP = container.attach(request);
 
@@ -332,20 +334,19 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const router = await dataStore.context.containerRuntime.createDataStore([testDataStoreType]);
         const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
 
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
+        dataStore.context.containerRuntime.on("op", (message) => {
             try {
-                assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
-                assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
-                assert.strictEqual(contents.contents.id,
+                assert.strictEqual(message.type, ContainerMessageType.Attach, "Op should be an attach op");
+                assert.strictEqual(message.contents.id,
                     comp2.context.id, "DataStore id should match");
-                assert.strictEqual(contents.contents.type,
+                assert.strictEqual(message.contents.type,
                     testDataStoreType, "DataStore type should match");
                 defPromise.resolve();
             } catch (e) {
                 defPromise.reject(e);
             }
             return 0;
-        };
+        });
 
         // Fire attach op
         dataStore.root.set("attachComp", comp2.handle);
@@ -362,19 +363,20 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         };
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                crcId, "Address should be consensus register collection");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(op), "Op should be same");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
         const testChannel1 = await dataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.strictEqual(message.contents.contents.content.address,
+                crcId, "Address should be consensus register collection");
+            assert.strictEqual(JSON.stringify(message.contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        });
 
         // Fire op before attaching the container
         await testChannel1.write("0", "a");
@@ -396,19 +398,20 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         };
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                sharedDirectoryId, "Address should be shared directory");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(op), "Op should be same");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
         const testChannel1 = await dataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.strictEqual(message.contents.contents.content.address,
+                sharedDirectoryId, "Address should be shared directory");
+            assert.strictEqual(JSON.stringify(message.contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        });
 
         // Fire op before attaching the container
         testChannel1.set("0", "a");
@@ -424,19 +427,20 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const op = { type: "setCell", value: { value: "b" } };
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                sharedCellId, "Address should be shared directory");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(op), "Op should be same");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
         const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.strictEqual(message.contents.contents.content.address,
+                sharedCellId, "Address should be shared directory");
+            assert.strictEqual(JSON.stringify(message.contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        });
 
         // Fire op before attaching the container
         testChannel1.set("a");
@@ -451,21 +455,22 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
     it("Fire ops during container attach for shared ink", async () => {
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                sharedInkId, "Address should be ink");
-            assert.strictEqual(contents.contents.contents.content.contents.type,
-                "createStroke", "Op type should be same");
-            assert.strictEqual(contents.contents.contents.content.contents.pen.thickness,
-                20, "Thickness should be same");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
         const testChannel1 = await dataStore.getSharedObject<Ink>(sharedInkId);
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.strictEqual(message.contents.contents.content.address,
+                sharedInkId, "Address should be ink");
+            assert.strictEqual(message.contents.contents.content.contents.type,
+                "createStroke", "Op type should be same");
+            assert.strictEqual(message.contents.contents.content.contents.pen.thickness,
+                20, "Thickness should be same");
+            defPromise.resolve();
+            return 0;
+        });
 
         // Fire op before attaching the container
         const color: IColor = {
@@ -484,19 +489,20 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const op = { opName: "add", value: JSON.stringify("s") };
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                cocId, "Address should be consensus queue");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(op), "Op should be same");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
         const testChannel1 = await dataStore.getSharedObject<ConsensusQueue>(cocId);
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.strictEqual(message.contents.contents.content.address,
+                cocId, "Address should be consensus queue");
+            assert.strictEqual(JSON.stringify(message.contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        });
 
         // Fire op before attaching the container
         await testChannel1.add("a");
@@ -514,24 +520,25 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const seg = { items: ["s"] };
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                sparseMatrixId, "Address should be sparse matrix");
-            if (contents.contents.contents.content.contents.ops[0].type === MergeTreeDeltaType.INSERT) {
-                assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents.ops[0].seg),
-                    JSON.stringify(seg), "Seg should be same");
-            } else {
-                assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents.ops[1].seg),
-                    JSON.stringify(seg), "Seg should be same");
-            }
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
         const testChannel1 = await dataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.strictEqual(message.contents.contents.content.address,
+                sparseMatrixId, "Address should be sparse matrix");
+            if (message.contents.contents.content.contents.ops[0].type === MergeTreeDeltaType.INSERT) {
+                assert.strictEqual(JSON.stringify(message.contents.contents.content.contents.ops[0].seg),
+                    JSON.stringify(seg), "Seg should be same");
+            } else {
+                assert.strictEqual(JSON.stringify(message.contents.contents.content.contents.ops[1].seg),
+                    JSON.stringify(seg), "Seg should be same");
+            }
+            defPromise.resolve();
+            return 0;
+        });
 
         // Fire op before attaching the container
         testChannel1.insertRows(0, 1);
@@ -549,19 +556,20 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const op = { pos1: 0, seg: 9, type: 0, target: "rows" };
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                sharedMatrixId, "Address should be shared matrix");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(op), "Op should be same");
-            defPromise.resolve();
-            return 0;
-        };
 
         // Get the root dataStore from the detached container.
         const response = await container.request({ url: "/" });
         const dataStore = response.value as ITestFluidObject;
         const testChannel1 = await dataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+
+        dataStore.context.containerRuntime.on("op", (message) => {
+            assert.strictEqual(message.contents.contents.content.address,
+                sharedMatrixId, "Address should be shared matrix");
+            assert.strictEqual(JSON.stringify(message.contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        });
 
         // Fire op before attaching the container
         testChannel1.insertRows(0, 20);

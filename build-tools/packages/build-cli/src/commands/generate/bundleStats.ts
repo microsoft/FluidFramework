@@ -12,9 +12,9 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
     static description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
     static flags = {
         packageMetadataPath: Flags.file({
-            description: "A path to a file containing JSON formatted package metadata. Used for testing. When not provided, the output of `npx lerna list --all --json` is used.",
+            description:
+                "A path to a file containing JSON formatted package metadata. Used for testing. When not provided, the output of `npx lerna list --all --json` is used.",
             required: false,
-            default: JSON.parse(execSync("npx lerna list --all --json").toString()),
             hidden: true,
         }),
         smallestAssetSize: Flags.integer({
@@ -27,7 +27,9 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 
     public async run(): Promise<void> {
         const flags = this.processedFlags;
-        const lernaOutput = flags.packageMetadataPath ?? JSON.parse(execSync("npx lerna list --all --json").toString());
+        const lernaOutput =
+            flags.packageMetadataPath ??
+            JSON.parse(execSync("npx lerna list --all --json").toString());
 
         if (!Array.isArray(lernaOutput)) {
             this.error("failed to get package information");
@@ -38,6 +40,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
         let hasSmallAssetError = false;
         const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
 
+        // eslint-disable-next-line unicorn/no-array-for-each
         lernaOutput.forEach((pkg: { name: string; location: string }) => {
             if (pkg.location === undefined) {
                 this.exit(-1);

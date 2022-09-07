@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.3000 win32-x64 node-v14.18.1
+@fluid-tools/build-cli/0.4.5000 win32-x64 node-v14.18.1
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -103,13 +103,15 @@ USAGE
 <!-- commands -->
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
-* [`flub collect bundleStats`](#flub-collect-bundlestats)
+* [`flub check policy`](#flub-check-policy)
 * [`flub commands`](#flub-commands)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
+* [`flub release`](#flub-release)
+* [`flub run bundleStats`](#flub-run-bundlestats)
 * [`flub version VERSION`](#flub-version-version)
 * [`flub version latest`](#flub-version-latest)
 
@@ -180,23 +182,25 @@ DESCRIPTION
   Checks that the dependencies between Fluid Framework packages are properly layered.
 ```
 
-## `flub collect bundleStats`
+## `flub check policy`
 
-Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption
+Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.
 
 ```
 USAGE
-  $ flub collect bundleStats [--lernaOutput <value>] [--smallestAssetSize <value>] [-v]
+  $ flub check policy -e <value> [-f] [-d <value>] [-p <value>] [--stdin] [-v]
 
 FLAGS
-  -v, --verbose                Verbose logging.
-  --lernaOutput=<value>...     [default: npx lerna list --all --json] Lerna Output
-  --smallestAssetSize=<value>  [default: 100] The smallest asset size in bytes that we deems to be correct. Adjust if we
-                               are testing for assets that are smaller.
+  -d, --handler=<value>     Filter handler names by <regex>
+  -e, --exclusions=<value>  (required) Path to the exclusions.json file
+  -f, --fix                 Fix errors if possible
+  -p, --path=<value>        Filter file paths by <regex>
+  -v, --verbose             Verbose logging.
+  --stdin                   Get file from stdin
 
 DESCRIPTION
-  Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
-  consumption
+  Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files,
+  assert tagging, etc.
 ```
 
 ## `flub commands`
@@ -263,21 +267,20 @@ EXAMPLES
 
 ## `flub generate bundleStats`
 
-Run to report the bundle analysis. Do not run Danger directly at the root of the repo as this better isolates its usage and dependencies
+Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption
 
 ```
 USAGE
-  $ flub generate bundleStats [--dirname <value>] [-v]
+  $ flub generate bundleStats [--smallestAssetSize <value>] [-v]
 
 FLAGS
-  -v, --verbose      Verbose logging.
-  --dirname=<value>  [default:
-                     C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\dist\commands\generate]
-                     Directory
+  -v, --verbose                Verbose logging.
+  --smallestAssetSize=<value>  [default: 100] The smallest asset size in bytes to consider correct. Adjust when testing
+                               for assets that are smaller.
 
 DESCRIPTION
-  Run to report the bundle analysis. Do not run Danger directly at the root of the repo as this better isolates its
-  usage and dependencies
+  Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
+  consumption
 ```
 
 ## `flub generate packageJson`
@@ -335,7 +338,51 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/info.ts)_
+
+## `flub release`
+
+```
+USAGE
+  $ flub release [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-S
+    semver|internal|virtualPatch] [-x | --install | --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
+
+FLAGS
+  -S, --versionScheme=<option>  Version scheme to use.
+                                <options: semver|internal|virtualPatch>
+  -g, --releaseGroup=<option>   release group
+                                <options: client|server|azure|build-tools>
+  -p, --package=<value>         Name of package.
+  -t, --bumpType=<option>       Version bump type.
+                                <options: major|minor|patch>
+  -v, --verbose                 Verbose logging.
+  -x, --skipChecks              Skip all checks.
+  --[no-]branchCheck            Check that the current branch is correct.
+  --[no-]commit                 Commit changes to a new branch.
+  --[no-]install                Update lockfiles by running 'npm install' automatically.
+  --[no-]policyCheck            Check that the local repo complies with all policy.
+  --[no-]updateCheck            Check that the local repo is up to date with the remote.
+```
+
+_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/release.ts)_
+
+## `flub run bundleStats`
+
+Generate a report from input bundle stats collected through the collect bundleStats command.
+
+```
+USAGE
+  $ flub run bundleStats [--dirname <value>] [-v]
+
+FLAGS
+  -v, --verbose      Verbose logging.
+  --dirname=<value>  [default:
+                     C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\dist\commands\run]
+                     Directory
+
+DESCRIPTION
+  Generate a report from input bundle stats collected through the collect bundleStats command.
+```
 
 ## `flub version VERSION`
 
@@ -381,7 +428,7 @@ EXAMPLES
     $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/version.ts)_
 
 ## `flub version latest`
 

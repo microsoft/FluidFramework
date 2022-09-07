@@ -22,6 +22,20 @@ describe("virtualPatch scheme", () => {
             assert.strictEqual(calculated.version, expected);
         });
 
+        it("parses 0.4.2001", () => {
+            const input = `0.4.2001`;
+            const expected = `4.2.1`;
+            const calculated = fromVirtualPatchScheme(input);
+            assert.strictEqual(calculated.version, expected);
+        });
+
+        it("parses 0.4.2000", () => {
+            const input = `0.4.2000`;
+            const expected = `4.2.0`;
+            const calculated = fromVirtualPatchScheme(input);
+            assert.strictEqual(calculated.version, expected);
+        });
+
         it("parses 0.1.1003", () => {
             const input = `0.1.1003`;
             const expected = `1.1.3`;

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeEncoder } from "../../change-family";
-import { ChangeRebaser } from "../../rebase";
 import {
     FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier, SchemaPolicy, fieldSchema, SchemaData,
 } from "../../schema-stored";
 import { isNeverField } from "./comparison";
+import { FieldChangeHandler } from "./fieldChangeHandler";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -41,7 +40,7 @@ export class FieldKind {
     public constructor(
         public readonly identifier: FieldKindIdentifier,
         public readonly multiplicity: Multiplicity,
-        public readonly changeHandler: ChangeHandler<any>,
+        public readonly changeHandler: FieldChangeHandler<any>,
         private readonly allowsTreeSupersetOf:
             (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean,
         public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
@@ -80,29 +79,6 @@ export class FieldKind {
      * and will be unable to process any changes that use those FieldKinds.
      */
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
-}
-
-/**
- * Functionality provided by a field kind which will be composed together to
- * implement a unified ChangeFamily supporting documents with multiple field kinds.
- *
- * TODO: eventually field-kinds will need to provide everything ChangeFamily requires.
- */
-export interface ChangeHandler<TChange> {
-    /**
-     * Provides merge / rebase policy for handling concurrent changes.
-     *
-     * TODO: This might handle changes from other field kinds if the file kind opts into them.
-     * Sort out how to reflect this in the type parameter for this vs other uses of TChanges in this interface.
-     */
-    readonly rebaser: ChangeRebaser<TChange>;
-
-    /**
-     * Handles encoding of changes.
-     */
-    readonly encoder: ChangeEncoder<TChange>;
-
-    // TODO: add edit builder.
 }
 
 /**
