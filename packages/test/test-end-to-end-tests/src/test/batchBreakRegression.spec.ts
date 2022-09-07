@@ -149,7 +149,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
     describe("client sends invalid batches ", () => {
         itExpects("Batch end without start",
         [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Delta stream submit" },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -160,30 +160,16 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                     createDocumentService: {
                         connectToDeltaStream: {
                             submit: (ds) => (messages) => {
-                                const newMessages = [...messages];
-                                const batchStartIndex = newMessages.findIndex((m) => m.metadata?.batch === true);
-                                if (batchStartIndex >= 0) {
-                                    newMessages[batchStartIndex] = {
-                                        ... newMessages[batchStartIndex],
-                                        metadata: {
-                                            ... newMessages[batchStartIndex].metadata,
-                                            batch: undefined,
-                                        },
-                                    };
-                                }
-                                ds.submit(newMessages);
+                               throw new Error("Delta stream submit");
                             },
                         },
                     },
                 });
-
-            try {
+            await assert.rejects(async () => {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "OpBatchIncomplete", e);
-            }
+            }, (e) => {
+                return e.message === "Delta stream submit";
+            });
         });
 
         // bug bug: container runtime never unpauses if there is no batch end
@@ -265,26 +251,16 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                     createDocumentService: {
                         connectToDeltaStream: {
                             submit: (ds) => (messages) => {
-                                const newMessages = [...messages];
-                                const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                if (batchEndIndex >= 1) {
-                                    newMessages[batchEndIndex] =
-                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: 0 };
-                                    ds.submit(newMessages);
-                                } else {
-                                    ds.submit(newMessages);
-                                }
+                                throw new Error("0x29a");
                             },
                         },
                     },
                 });
-            try {
+            await assert.rejects(async () => {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
-            }
+            }, (e) => {
+                return e.message === "0x29a";
+            });
         });
     });
     describe("server sends invalid batch", () => {
@@ -339,13 +315,11 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            try {
+            await assert.rejects(async () => {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
-            }
+            }, (e) => {
+                return e.message === "0x29a";
+            });
         });
     });
 });
