@@ -174,7 +174,7 @@ const empty: Root;
 export const emptyField: FieldSchema;
 
 // @public
-export const EmptyKey: FieldKey;
+export const EmptyKey: LocalFieldKey;
 
 // @public
 export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
@@ -209,10 +209,7 @@ export interface FieldChangeHandler<TChangeset> {
 }
 
 // @public (undocumented)
-export interface FieldChangeMap {
-    // (undocumented)
-    [key: string]: FieldChange;
-}
+export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @public (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
@@ -326,6 +323,7 @@ export interface IEditableForest extends IForestSubscription {
 // @public
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
+    forgetAnchor(anchor: Anchor): void;
     root(range: DetachedField): Anchor;
     // (undocumented)
     readonly rootField: DetachedField;

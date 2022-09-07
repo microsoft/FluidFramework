@@ -25,9 +25,9 @@ contained within itself, as well as to inspect the state of the collaboration se
 You'll use one or more shared objects in your container to model your collaborative data. The `fluid-framework` package includes
 three data structures that cover a broad range of scenarios:
 
-1. [SharedMap][], a map-like data structure for storing key/value pair data.
-2. [SharedDirectory][], a map-like data structure with ability to organize keys into subdirectories.
-3. [SharedString][], a data structure for string data.
+1. [SharedMap]({{< relref "/docs/data-structures/map.md" >}}), a map-like data structure for storing key/value pair data.
+2. [SharedDirectory]({{< relref "shareddirectory-class.md" >}}), a map-like data structure with ability to organize keys into subdirectories.
+3. [SharedString]({{< relref "string.md" >}}), a data structure for string data.
 
 ## Package scopes
 
@@ -65,10 +65,10 @@ You can [read more about the scopes and their intent][scopes] in the Fluid Frame
 [@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
 [@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
 
-[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient.md" >}}
-[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient.md" >}}
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
 
-[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer.md" >}}
-[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer.md" >}}
+[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

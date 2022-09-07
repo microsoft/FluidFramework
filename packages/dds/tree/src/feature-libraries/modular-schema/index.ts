@@ -11,3 +11,4 @@ export {
 	allowsTreeSuperset,
 } from "./comparison";
 export { FieldTypeView, TreeViewSchema, ViewSchemaCollection, ViewSchema } from "./view";
+export { typedTreeSchema, typedFieldSchema } from "./typedSchema";

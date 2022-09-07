@@ -22,6 +22,7 @@ import {
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
     ISnapshotTreeWithBlobContents,
+    IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
     IRequest,
@@ -42,6 +43,7 @@ import {
     ISummaryTree,
     IVersion,
     MessageType,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { Container } from "./container";
@@ -59,6 +61,8 @@ export class ContainerContext implements IContainerContext {
         quorum: IQuorum,
         loader: ILoader,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
+        submitSummaryFn: (summaryOp: ISummaryContent) => number,
+        submitBatchFn: (batch: IBatchMessage[]) => number,
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
@@ -76,6 +80,8 @@ export class ContainerContext implements IContainerContext {
             quorum,
             loader,
             submitFn,
+            submitSummaryFn,
+            submitBatchFn,
             submitSignalFn,
             closeFn,
             version,
@@ -166,6 +172,9 @@ export class ContainerContext implements IContainerContext {
         quorum: IQuorum,
         public readonly loader: ILoader,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
+        public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
+        /** @returns clientSequenceNumber of last message in a batch */
+        public readonly submitBatchFn: (batch: IBatchMessage[]) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,

@@ -850,6 +850,32 @@
           }
         },
         {
+          "kind": "Variable",
+          "canonicalReference": "simple-suite-test!testConstWithEmptyDeprecatedBlock:var",
+          "docComment": "/**\n * I have a `@deprecated` tag with an empty comment block.\n *\n * @deprecated\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "testConstWithEmptyDeprecatedBlock = "
+            },
+            {
+              "kind": "Content",
+              "text": "\"I have a `@deprecated` tag with an empty comment block.\""
+            }
+          ],
+          "initializerTokenRange": {
+            "startIndex": 1,
+            "endIndex": 2
+          },
+          "isReadonly": true,
+          "releaseTag": "Public",
+          "name": "testConstWithEmptyDeprecatedBlock",
+          "variableTypeTokenRange": {
+            "startIndex": 0,
+            "endIndex": 0
+          }
+        },
+        {
           "kind": "Interface",
           "canonicalReference": "simple-suite-test!TestEmptyInterface:interface",
           "docComment": "/**\n * An empty interface\n *\n * @public\n */\n",
