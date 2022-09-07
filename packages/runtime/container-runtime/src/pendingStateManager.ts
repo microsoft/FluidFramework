@@ -233,9 +233,9 @@ export class PendingStateManager implements IDisposable {
 
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const message = this.initialStates.shift()!;
-            this.pendingStates.push(message);
-            if (message.type === "message") {
+            const firstPendingState = this.initialStates.shift()!;
+            this.pendingStates.push(firstPendingState);
+            if (firstPendingState.type === "message") {
                 this._pendingMessagesCount++;
             }
         }
