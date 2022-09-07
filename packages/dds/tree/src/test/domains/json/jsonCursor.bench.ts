@@ -154,7 +154,6 @@ function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number
             cursor.up();
 
             assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok, "No Y field");
-            // const yResult = cursor.down(EmptyKey, 1);
             const y = cursor.value as number;
             cursor.up();
 
@@ -172,6 +171,6 @@ function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number
     cursor.up();
 }
 
-describe.only("ITreeCursor", () => {
+describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
 });
