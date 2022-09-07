@@ -209,10 +209,7 @@ export interface FieldChangeHandler<TChangeset> {
 }
 
 // @public (undocumented)
-export interface FieldChangeMap {
-    // (undocumented)
-    [key: string]: FieldChange;
-}
+export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @public (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
@@ -326,6 +323,7 @@ export interface IEditableForest extends IForestSubscription {
 // @public
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
+    forgetAnchor(anchor: Anchor): void;
     root(range: DetachedField): Anchor;
     // (undocumented)
     readonly rootField: DetachedField;

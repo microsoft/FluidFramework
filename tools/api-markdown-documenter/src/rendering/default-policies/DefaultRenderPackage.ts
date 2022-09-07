@@ -5,7 +5,7 @@
 import { ApiItem, ApiPackage } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { renderModuleLikeSection } from "./DefaultRenderModuleLike";
 
 /**

@@ -25,10 +25,9 @@ import { DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
 
+import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { Heading } from "../Heading";
 import { Link } from "../Link";
-import { logError } from "../LoggingUtilities";
-import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
 
 /**
@@ -587,12 +586,14 @@ function getCustomBlockSectionsForMultiInstanceTags(
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
  * Must start with "@". See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
 function getCustomBlockSectionForSingleInstanceTag(
     apiItem: ApiItem,
     tagName: string,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     const blocks = getCustomBlockSectionsForMultiInstanceTags(apiItem, tagName);
     if (blocks === undefined) {
@@ -600,7 +601,7 @@ function getCustomBlockSectionForSingleInstanceTag(
     }
 
     if (blocks.length > 1) {
-        logError(
+        config.logger.error(
             `API item ${apiItem.displayName} has multiple "${tagName}" comment blocks. This is not supported.`,
         );
     }
@@ -650,11 +651,19 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * if it has one.
  *
  * @param apiItem - The API item whose documentation is being queried.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
  *
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
  */
-export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined {
-    return getCustomBlockSectionForSingleInstanceTag(apiItem, StandardTags.defaultValue.tagName);
+export function getDefaultValueBlock(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    return getCustomBlockSectionForSingleInstanceTag(
+        apiItem,
+        StandardTags.defaultValue.tagName,
+        config,
+    );
 }
 
 /**
