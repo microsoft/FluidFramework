@@ -101,6 +101,7 @@ export interface OdspErrorResponse {
     };
 }
 
+/** Redirect error from ODSP  */
 export class OdspRedirectError extends LoggingError {
     readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
     readonly canRetry = false;
@@ -110,6 +111,7 @@ export class OdspRedirectError extends LoggingError {
         readonly redirectLocation: string | undefined,
         props: DriverErrorTelemetryProps,
     ) {
+        // do not log redirectLocation (URL can contain sensitive info)
         super(message, props, new Set(["redirectLocation"]));
     }
 }

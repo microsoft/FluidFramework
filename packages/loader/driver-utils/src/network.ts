@@ -102,6 +102,7 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
         readonly redirectUrl: IResolvedUrl,
         props: DriverErrorTelemetryProps,
     ) {
+        // do not log redirectURL
         super(message, props, new Set(["redirectUrl"]));
     }
 }
