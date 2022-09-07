@@ -14,16 +14,18 @@ import {
     Multiplicity,
     ModularChangeFamily,
     FieldKinds,
+    FieldEditor,
 } from "../../../feature-libraries";
 import { FieldKindIdentifier } from "../../../schema-stored";
 import { Delta, FieldKey } from "../../../tree";
-import { brand } from "../../../util";
+import { brand, fail } from "../../../util";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
     rebaser: FieldKinds.replaceRebaser(),
     encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
+    editor: { makeChangeToChild: (index, change) => fail("Child changes not supported") },
 
     intoDelta: (change, deltaFromChild) => change === 0
         ? []
@@ -49,9 +51,17 @@ const singleNodeRebaser: FieldChangeRebaser<FieldChangeMap> = {
     rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 };
 
+const singleNodeEditor: FieldEditor<FieldChangeMap> = {
+    makeChangeToChild: (index: number, change: FieldChangeMap) => {
+        assert(index === 0, "This field kind only supports one node in its field");
+        return change;
+    },
+};
+
 const singleNodeHandler: FieldChangeHandler<FieldChangeMap> = {
     rebaser: singleNodeRebaser,
     encoder: singleNodeEncoder,
+    editor: singleNodeEditor,
 
     intoDelta: (change, deltaFromChild) => [{
         type: Delta.MarkType.Modify,

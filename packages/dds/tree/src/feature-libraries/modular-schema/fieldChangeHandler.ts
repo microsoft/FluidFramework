@@ -16,6 +16,7 @@ export interface FieldChangeHandler<TChangeset> {
     _typeCheck?: Invariant<TChangeset>;
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
+    editor: FieldEditor<TChangeset>;
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
     // TODO
@@ -52,6 +53,10 @@ export interface FieldChangeEncoder<TChangeset> {
       * Decodes `change` from a JSON compatible object.
       */
      decodeJson(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder): TChangeset;
+}
+
+export interface FieldEditor<TChangeset> {
+    makeChangeToChild(childIndex: number, change: FieldChangeMap): TChangeset;
 }
 
 export type ToDelta = (child: FieldChangeMap) => Delta.Root;

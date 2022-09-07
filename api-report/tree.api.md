@@ -199,6 +199,8 @@ export interface FieldChangeEncoder<TChangeset> {
 // @public
 export interface FieldChangeHandler<TChangeset> {
     // (undocumented)
+    editor: FieldEditor<TChangeset>;
+    // (undocumented)
     encoder: FieldChangeEncoder<TChangeset>;
     // (undocumented)
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
@@ -571,6 +573,8 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     // (undocumented)
     readonly encoder: ChangeEncoder<FieldChangeMap>;
     // (undocumented)
+    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
+    // (undocumented)
     intoDelta(change: FieldChangeMap): Delta.Root;
     // (undocumented)
     invert(changes: FieldChangeMap): FieldChangeMap;
@@ -585,6 +589,8 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
 // @public (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(family: ModularChangeFamily, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
+    // (undocumented)
+    submitChange(path: UpPathWithFieldKinds | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset): void;
 }
 
 // @public

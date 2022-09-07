@@ -17,6 +17,7 @@ export {
     FieldChangeHandler,
     FieldChangeRebaser,
     FieldChangeEncoder,
+    FieldEditor,
     FieldChangeMap,
     FieldChange,
     FieldChangeset,
