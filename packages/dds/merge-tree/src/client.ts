@@ -298,6 +298,10 @@ export class Client {
         this.mergeTree.walkAllSegments(
             this.mergeTree.root,
             (seg) => {
+                assert(
+                    seg.seq !== UnassignedSequenceNumber && seg.removedSeq !== UnassignedSequenceNumber,
+                    "serializeGCData should never be invoked with local changes"
+                );
                 // Only serialize segments that have not been removed.
                 if (seg.removedSeq === undefined) {
                     handleCollectingSerializer.stringify(
