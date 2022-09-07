@@ -33,6 +33,7 @@ describe("Runtime", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
+                    attachState: AttachState.Attached,
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorumClients(),
                     taggedLogger: new MockLogger(),
@@ -74,6 +75,7 @@ describe("Runtime", () => {
                     const containerErrors: ICriticalContainerError[] = [];
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
+                            attachState: AttachState.Attached,
                             deltaManager: new MockDeltaManager(),
                             quorum: new MockQuorumClients(),
                             taggedLogger: new MockLogger(),
@@ -185,6 +187,7 @@ describe("Runtime", () => {
 
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
+                            attachState: AttachState.Attached,
                             deltaManager: new MockDeltaManager(),
                             quorum: new MockQuorumClients(),
                             taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
@@ -240,7 +243,8 @@ describe("Runtime", () => {
                     const pendingState = {
                         pending: {
                             pendingStates: [{
-                                type: "attach",
+                                type: "message",
+                                messageType: ContainerMessageType.BlobAttach,
                                 content: {},
                             }],
                         },
@@ -320,6 +324,7 @@ describe("Runtime", () => {
             const getMockContext = (): Partial<IContainerContext> => {
                 return {
                     clientId: "fakeClientId",
+                    attachState: AttachState.Attached,
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorumClients(),
                     taggedLogger: mockLogger,
@@ -530,6 +535,7 @@ describe("Runtime", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
+                    attachState: AttachState.Attached,
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorumClients(),
                     taggedLogger: new MockLogger(),

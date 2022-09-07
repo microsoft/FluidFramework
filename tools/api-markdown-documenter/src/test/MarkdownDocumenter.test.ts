@@ -9,12 +9,12 @@ import { compare } from "dir-compare";
 import { Suite } from "mocha";
 import * as Path from "path";
 
-import { MarkdownDocument } from "../MarkdownDocument";
-import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
-} from "../MarkdownDocumenterConfiguration";
+} from "../Configuration";
+import { MarkdownDocument } from "../MarkdownDocument";
+import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
 import { MarkdownEmitter } from "../MarkdownEmitter";
 import { renderModelDocument, renderPackageDocument } from "../rendering";
 
