@@ -63,19 +63,8 @@ export async function fetchSnapshot(
     snapshotDownloader: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
-    let queryParams: ISnapshotOptions = {};
-
-    if (fetchFullSnapshot) {
-        if (versionId !== "latest") {
-            queryParams = { blobs: 2 };
-        } else {
-            queryParams = { deltas: 1, blobs: 2 };
-        }
-    }
-
-    const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(
-        `${snapshotUrl}${path}${queryString}`, token, forceAccessTokenViaAuthorizationHeader);
+        `${snapshotUrl}${path}`, token, forceAccessTokenViaAuthorizationHeader);
     const response = await PerformanceEvent.timedExecAsync(
         logger,
         {
