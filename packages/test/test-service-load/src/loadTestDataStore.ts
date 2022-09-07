@@ -450,10 +450,17 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
         }
 
-        const opsRun = this.sendOps(dataModel, config, timeout);
-        const signalsRun = this.sendSignals(config, timeout);
-        // runResult if of type [boolean, void] as we return boolean for Ops alone based on runtime.disposed value
-        const runResult = await Promise.all([opsRun, signalsRun]);
+        let runResult: [boolean, void];
+        try {
+            const opsRun = this.sendOps(dataModel, config);
+            const signalsRun = this.sendSignals(config);
+            // runResult is of type [boolean, void] as we return boolean for Ops alone based on runtime.disposed value
+            runResult = await Promise.all([opsRun, signalsRun]);
+        } finally {
+            if (timeout !== undefined) {
+                clearTimeout(timeout);
+            }
+        }
         return runResult[0];
     }
 
@@ -461,7 +468,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         return this.runtime;
     }
 
-    async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig, timeout: NodeJS.Timeout | undefined) {
+    async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
         const cycleMs = config.testConfig.readWriteCycleMs;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
@@ -493,14 +500,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             }
             return !this.runtime.disposed;
         } finally {
-            if (timeout !== undefined) {
-                clearTimeout(timeout);
-            }
             dataModel.printStatus();
         }
     }
 
-    async sendSignals(config: IRunConfig, timeout: NodeJS.Timeout | undefined) {
+    async sendSignals(config: IRunConfig) {
         const clientSignalsSendCount = (typeof config.testConfig.totalSignalsSendCount === "undefined") ?
                                         0 : config.testConfig.totalSignalsSendCount / config.testConfig.numClients;
         const cycleMs = config.testConfig.readWriteCycleMs;
@@ -517,10 +521,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                 // Random jitter of +- 50% of signalGapMs
                 await delay(signalsGapMs + signalsGapMs * random.real(0, .5, true)(config.randEng));
             }
-        } finally {
-            if (timeout !== undefined) {
-                clearTimeout(timeout);
-            }
+        } catch (e) {
+            console.error("Error during submitting signals: ", e);
         }
     }
 }

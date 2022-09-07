@@ -392,15 +392,11 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
     });
 
     let submittedSignals = 0;
+    let receivedSignals = 0;
     testRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
         if (message.type === "generic-signal" && local === true) {
             submittedSignals += 1;
-        }
-    });
-
-    let receivedSignals = 0;
-    testRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-        if (message.type === "generic-signal" && local === false) {
+        } else if (message.type === "generic-signal" && local === false) {
             receivedSignals += 1;
         }
     });
