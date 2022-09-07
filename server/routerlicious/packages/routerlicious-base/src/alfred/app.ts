@@ -97,8 +97,9 @@ export function create(
         appTenants,
         documentsCollection);
 
-    app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
+    app.use("/public", express.static(path.join(__dirname, "../../public")));
     app.use(routes.api);
+    app.use(cors());
 
     // Catch 404 and forward to error handler
     app.use(catch404());
