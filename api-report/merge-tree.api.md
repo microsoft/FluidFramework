@@ -119,7 +119,7 @@ export class Client {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage): {
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -133,7 +133,7 @@ export class Client {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getOrAddShortClientId(longClientId: string): number;
-    getPosition(segment: ISegment): number;
+    getPosition(segment: ISegment | undefined, localSeq?: number): number;
     // (undocumented)
     getPropertiesAtPosition(pos: number): PropertySet | undefined;
     // (undocumented)

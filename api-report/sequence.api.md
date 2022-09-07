@@ -70,7 +70,7 @@ export interface IInterval {
     // (undocumented)
     compareStart(b: IInterval): number;
     // (undocumented)
-    modify(label: string, start: number | undefined, end: number | undefined, op?: ISequencedDocumentMessage): IInterval | undefined;
+    modify(label: string, start: number | undefined, end: number | undefined, op?: ISequencedDocumentMessage, localSeq?: number): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
     // (undocumented)
@@ -186,8 +186,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     nextInterval(pos: number): TInterval | undefined;
     // (undocumented)
     previousInterval(pos: number): TInterval | undefined;
-    // @internal (undocumented)
-    rebaseLocalInterval(opName: string, serializedInterval: SerializedIntervalDelta, localSeq: number): SerializedIntervalDelta;
+    // @internal
+    rebaseLocalInterval(opName: string, serializedInterval: SerializedIntervalDelta, localSeq: number): SerializedIntervalDelta | undefined;
     removeIntervalById(id: string): TInterval | undefined;
     // @internal (undocumented)
     serializeInternal(): ISerializedIntervalCollectionV2;
@@ -342,7 +342,7 @@ export class SequenceInterval implements ISerializableInterval {
     // (undocumented)
     intervalType: IntervalType;
     // (undocumented)
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): SequenceInterval;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)

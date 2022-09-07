@@ -199,7 +199,7 @@ function tileShift(
     offset: number | undefined, end: number | undefined, searchInfo: IReferenceSearchInfo) {
     if (node.isLeaf()) {
         const seg = node;
-        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && Marker.is(seg)) {
+        if ((searchInfo.mergeTree.localNetLength(seg) ?? 0) > 0 && Marker.is(seg)) {
             if (refHasTileLabel(seg, searchInfo.tileLabel)) {
                 searchInfo.tile = seg;
             }
@@ -344,7 +344,6 @@ function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefine
     }
     return base;
 }
-
 class HierMergeBlock extends MergeBlock implements IHierBlock {
     public rightmostTiles: MapLike<ReferencePosition>;
     public leftmostTiles: MapLike<ReferencePosition>;
@@ -478,6 +477,18 @@ export class MergeTree {
         const removalInfo = toRemovalInfo(segment);
         if (localSeq === undefined) {
             if (removalInfo !== undefined) {
+                if (this.options?.mergeTreeUseNewLengthCalculations !== true) {
+                    const normalizedRemovedSeq = removalInfo.removedSeq === UnassignedSequenceNumber
+                        ? Number.MAX_SAFE_INTEGER
+                        : removalInfo.removedSeq;
+                    if (normalizedRemovedSeq > this.collabWindow.minSeq) {
+                        return 0;
+                    }
+                    // this segment removed and outside the collab window which means it is zamboni eligible
+                    // this also means the segment could not exist, so we should not consider it
+                    // when making decisions about conflict resolutions
+                    return undefined;
+                }
                 return 0;
             } else {
                 return segment.cachedLength;
@@ -625,7 +636,7 @@ export class MergeTree {
                                 && prevSegment.canAppend(segment)
                                 && matchProperties(prevSegment.properties, segment.properties)
                                 && prevSegment.trackingCollection.matches(segment.trackingCollection)
-                                && this.localNetLength(segment) > 0;
+                                && (this.localNetLength(segment) ?? 0) > 0;
 
                             if (canAppend) {
                                 prevSegment!.append(segment);
@@ -642,7 +653,7 @@ export class MergeTree {
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
                             } else {
                                 holdNodes.push(segment);
-                                if (this.localNetLength(segment) > 0) {
+                                if ((this.localNetLength(segment) ?? 0) > 0) {
                                     prevSegment = segment;
                                 } else {
                                     prevSegment = undefined;
@@ -977,6 +988,35 @@ export class MergeTree {
             } else {
                 const segment = node;
                 const removalInfo = toRemovalInfo(segment);
+                if (this.options?.mergeTreeUseNewLengthCalculations === true) {
+                    // normalize the seq numbers
+                    // if the remove is local (UnassignedSequenceNumber) give it the highest possible
+                    // seq for comparison, as it will get a seq higher than any other seq once sequenced
+                    // if the segments seq is local (UnassignedSequenceNumber) give it the second highest
+                    // possible seq, as the highest is reserved for the remove.
+                    const seq = node.seq === UnassignedSequenceNumber
+                        ? Number.MAX_SAFE_INTEGER - 1
+                        : node.seq ?? 0;
+
+                    if (removalInfo !== undefined) {
+                        const removedSeq = removalInfo.removedSeq === UnassignedSequenceNumber
+                            ? Number.MAX_SAFE_INTEGER
+                            : removalInfo?.removedSeq;
+                        if (removedSeq <= this.collabWindow.minSeq) {
+                            return undefined;
+                        }
+                        if (removedSeq <= refSeq || removalInfo.removedClientIds.includes(clientId)) {
+                            return 0;
+                        }
+                    }
+
+                    if (seq <= refSeq || segment.clientId === clientId) {
+                        return segment.cachedLength;
+                    } else {
+                        // Segment invisible to client at reference sequence number/branch id/client id of op
+                        return 0;
+                    }
+                }
 
                 if (removalInfo !== undefined
                     && removalInfo.removedSeq !== UnassignedSequenceNumber
@@ -2068,11 +2108,13 @@ export class MergeTree {
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
     ): LocalReferencePosition {
-        if (isRemoved(segment)) {
-            if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)) {
-                throw new UsageError(
-                    "Can only create SlideOnRemove or Transient local reference position on a removed segment");
-            }
+        if (
+            isRemovedAndAcked(segment)
+            && !refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)
+        ) {
+            throw new UsageError(
+                "Can only create SlideOnRemove or Transient local reference position on a removed segment",
+            );
         }
         const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
         segment.localRefs = localRefs;

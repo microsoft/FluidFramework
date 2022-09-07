@@ -57,28 +57,33 @@ export class TestClient extends Client {
         snapshot.extractSync();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summaryTree = snapshot.emit([], TestClient.serializer, undefined!).summary;
-        return TestClient.createFromSummary(summaryTree, newLongClientId, client1.specToSegment);
+        return TestClient.createFromSummary(
+            summaryTree, newLongClientId, client1.specToSegment, client1.mergeTree.options);
     }
 
     public static async createFromSnapshot(
         snapshotTree: ITree,
         newLongClientId: string,
-        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        return TestClient.createFromStorage(new MockStorage(snapshotTree), newLongClientId, specToSeg);
+        specToSeg: (spec: IJSONSegment) => ISegment,
+        options?: PropertySet): Promise<TestClient> {
+        return TestClient.createFromStorage(new MockStorage(snapshotTree), newLongClientId, specToSeg, options);
     }
 
     public static async createFromSummary(
         summaryTree: ISummaryTree,
         newLongClientId: string,
-        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        return TestClient.createFromStorage(MockStorage.createFromSummary(summaryTree), newLongClientId, specToSeg);
+        specToSeg: (spec: IJSONSegment) => ISegment,
+        options?: PropertySet): Promise<TestClient> {
+        return TestClient.createFromStorage(
+            MockStorage.createFromSummary(summaryTree), newLongClientId, specToSeg, options);
     }
 
     public static async createFromStorage(
         storage: MockStorage,
         newLongClientId: string,
-        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        const client2 = new TestClient(undefined, specToSeg);
+        specToSeg: (spec: IJSONSegment) => ISegment,
+        options?: PropertySet): Promise<TestClient> {
+        const client2 = new TestClient(options, specToSeg);
         const { catchupOpsP } = await client2.load(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
@@ -317,19 +322,16 @@ export class TestClient extends Client {
             return posAccumulated <= pos;
         });
 
-        const { currentSeq: seqNumberTo } = this.getCollabWindow();
         assert(segment !== undefined, "No segment found");
-        if ((segment.removedSeq !== undefined &&
-             segment.removedSeq !== UnassignedSequenceNumber &&
-             segment.removedSeq <= seqNumberTo)
-            || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
-            // Segment that the position was in has been removed: null out offset.
-            offset = 0;
-        }
 
-        const slowPathResult = this.findReconnectionPosition(segment, localSeq) + offset;
+        const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
 
-        assert.equal(fastPathSegment, segment, "Unequal rebasePosition computed segments");
+        const slowPathResult =
+            segoff.segment !== undefined
+            && segoff.offset !== undefined
+            && this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+
+        assert.equal(fastPathSegment, segoff.segment || undefined, "Unequal rebasePosition computed segments");
         assert.equal(fastPathResult, slowPathResult, "Unequal rebasePosition results");
         return fastPathResult;
     }

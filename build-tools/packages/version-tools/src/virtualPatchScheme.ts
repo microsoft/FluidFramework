@@ -74,7 +74,7 @@ export function bumpVirtualPatchVersion(
  */
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer {
     const parsedVersion = semver.parse(virtualPatchVersion);
-    assert(parsedVersion !== null);
+    assert(parsedVersion !== null, `Parsed as null: ${virtualPatchVersion}`);
 
     if (!isVirtualPatch(parsedVersion)) {
         throw new Error(`Version is not using the virtualPatch scheme: ${virtualPatchVersion}`);
@@ -103,7 +103,7 @@ export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | stri
  */
 export function toVirtualPatchScheme(version: semver.SemVer | string): semver.SemVer {
     const parsedVersion = semver.parse(version);
-    assert(parsedVersion !== null);
+    assert(parsedVersion !== null, `Parsed as null: ${version}`);
 
     if (isVirtualPatch(parsedVersion)) {
         return parsedVersion;

@@ -29,7 +29,8 @@ export interface IInterval {
         label: string,
         start: number | undefined,
         end: number | undefined,
-        op?: ISequencedDocumentMessage
+        op?: ISequencedDocumentMessage,
+        localSeq?: number
     ): IInterval | undefined;
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
