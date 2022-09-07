@@ -42,7 +42,9 @@ export function renderModelDocument(
     apiModel: ApiModel,
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
-    config.logger.verbose(`Rendering API Model document...`);
+    const logger = config.logger;
+
+    logger.verbose(`Rendering API Model document...`);
 
     const docNodes: DocNode[] = [];
 
@@ -56,7 +58,7 @@ export function renderModelDocument(
     // Render body contents
     docNodes.push(config.renderModelSection(apiModel, config));
 
-    config.logger.verbose(`API Model document rendered successfully.`);
+    logger.verbose(`API Model document rendered successfully.`);
 
     return createMarkdownDocument(
         apiModel,
@@ -77,7 +79,9 @@ export function renderPackageDocument(
     apiPackage: ApiPackage,
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
-    config.logger.verbose(`Rendering ${apiPackage.name} package document...`);
+    const logger = config.logger;
+
+    logger.verbose(`Rendering ${apiPackage.name} package document...`);
 
     const docNodes: DocNode[] = [];
 
@@ -96,7 +100,7 @@ export function renderPackageDocument(
         ),
     );
 
-    config.logger.verbose(`Package document rendered successfully.`);
+    logger.verbose(`Package document rendered successfully.`);
 
     return createMarkdownDocument(
         apiPackage,
@@ -145,7 +149,9 @@ export function renderApiItemDocument(
         );
     }
 
-    config.logger.verbose(`Rendering document for ${apiItem.displayName} (${apiItem.kind})...`);
+    const logger = config.logger;
+
+    logger.verbose(`Rendering document for ${apiItem.displayName} (${apiItem.kind})...`);
 
     const docNodes: DocNode[] = [];
 
@@ -162,7 +168,7 @@ export function renderApiItemDocument(
     // Render body content for the item
     docNodes.push(renderApiSection(apiItem, config));
 
-    config.logger.verbose(`Document for ${apiItem.displayName} rendered successfully.`);
+    logger.verbose(`Document for ${apiItem.displayName} rendered successfully.`);
 
     return createMarkdownDocument(
         apiItem,
