@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -158,7 +159,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     /**
      * Ensure all tracked containers are synchronized with a time limit
      */
-    public async ensureSynchronizedWithTimeout?(timeoutDuration: number, ...containers: IContainer[]) {
+    public async ensureSynchronizedWithTimeout?(timeoutDuration: number | undefined, ...containers: IContainer[]) {
         await this.processSynchronized(timeoutDuration, ...containers);
     }
 
@@ -201,7 +202,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         waitingSequenceNumberSynchronized = true;
                         debugWait("Waiting for sequence number synchronized");
                         await timeoutAwait(this.waitForAnyInboundOps(containersToApply), {
-                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                             durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start)
                             : Number.MAX_SAFE_INTEGER,
                             errorMsg: "Timeout on waiting for sequence number synchronized",
@@ -210,7 +210,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 } else {
                     waitingSequenceNumberSynchronized = false;
                     await timeoutAwait(this.waitForPendingClients(pendingClients), {
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                             durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start)
                             : Number.MAX_SAFE_INTEGER,
                         errorMsg: "Timeout on waiting for pending join or leave op",
@@ -221,7 +220,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 const remainedDuration = timeoutDuration ? timeoutDuration - (Date.now() - start)
                 : Number.MAX_SAFE_INTEGER;
                 await Promise.all(dirtyContainers.map(async (c) => Promise.race(
@@ -245,7 +243,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
         // don't call pause if resumed is empty and pause everything, which is not what we want
         if (resumed.length !== 0) {
             await timeoutAwait(this.pauseProcessing(...resumed), {
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start)
                 : Number.MAX_SAFE_INTEGER,
                 errorMsg: "Timeout on waiting for pausing all resumed containers",

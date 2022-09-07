@@ -393,8 +393,9 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._documentCreated = false;
     }
 
-    public async ensureSynchronized(timeoutDuration = -1) {
-        if (timeoutDuration < 0) {
+    public async ensureSynchronized(timeoutDuration: number | undefined) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (timeoutDuration) {
             return this._loaderContainerTracker.ensureSynchronized();
         } else {
             return this._loaderContainerTracker.ensureSynchronizedWithTimeout?.(timeoutDuration);
