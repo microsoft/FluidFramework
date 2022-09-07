@@ -12,14 +12,14 @@ export function getArgsValidationError(
     // Validate input file
     if (!inputFile) {
         // TODO: Do not log file name. It can be customer content
-        return "Input file name is missing.";
+        return "Input file name argument is missing.";
     } else if (!fs.existsSync(inputFile)) {
         return "Input file does not exist.";
     }
 
     // Validate output file
     if (!outputFile) {
-        return "Output file is missing.";
+        return "Output file argument is missing.";
     } else if (fs.existsSync(outputFile)) {
         return `Output file already exists [${outputFile}].`;
     }
