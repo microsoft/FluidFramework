@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { brand } from "../../util";
 import { detachedFieldAsKey } from "../../tree";
-import { IEditableForest, TreeNavigationResult } from "../../forest";
+import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { SharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
