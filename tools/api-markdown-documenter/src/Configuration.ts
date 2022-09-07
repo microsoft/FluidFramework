@@ -6,6 +6,7 @@ import { ApiModel } from "@microsoft/api-extractor-model";
 import { TSDocConfiguration } from "@microsoft/tsdoc";
 import { NewlineKind } from "@rushstack/node-core-library";
 
+import { Logger, defaultConsoleLogger } from "./Logging";
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
 import { CustomDocNodes } from "./doc-nodes";
 import { RenderingPolicies, defaultRenderingPolicies } from "./rendering";
@@ -41,13 +42,16 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
      */
     readonly tsdocConfiguration?: TSDocConfiguration;
 
-    // TODO: take in an optional logger instead.
     /**
-     * Whether or not verbose logging is enabled.
+     * Policy object for logging system events.
      *
-     * @defaultValue `false`
+     * @remarks A custom logger can be provided for customized policy, or for a target other than the console.
+     *
+     * If you wish to enable `verbose` logging, consider using {@link verboseConsoleLogger}.
+     *
+     * @defaultValue {@link defaultConsoleLogger}
      */
-    readonly verbose?: boolean;
+    readonly logger?: Logger;
 }
 
 /**
@@ -61,7 +65,7 @@ export function markdownDocumenterConfigurationWithDefaults(
     return {
         newlineKind: NewlineKind.OsDefault,
         tsdocConfiguration: CustomDocNodes.configuration,
-        verbose: false,
+        logger: defaultConsoleLogger,
         ...defaultPolicyOptions,
         ...defaultRenderingPolicies,
         ...partialConfig,

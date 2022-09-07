@@ -25,8 +25,8 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocNode, DocSection } from "@microsoft/tsdoc";
 
+import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { MarkdownDocument } from "../MarkdownDocument";
-import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { doesItemRequireOwnDocument, getFilePathForApiItem } from "../utilities";
 import { renderBreadcrumb, renderHeadingForApiItem } from "./helpers";
 
@@ -42,9 +42,7 @@ export function renderModelDocument(
     apiModel: ApiModel,
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
-    if (config.verbose) {
-        console.log(`Rendering API Model document...`);
-    }
+    config.logger.verbose(`Rendering API Model document...`);
 
     const docNodes: DocNode[] = [];
 
@@ -58,9 +56,7 @@ export function renderModelDocument(
     // Render body contents
     docNodes.push(config.renderModelSection(apiModel, config));
 
-    if (config.verbose) {
-        console.log(`API Model document rendered successfully.`);
-    }
+    config.logger.verbose(`API Model document rendered successfully.`);
 
     return createMarkdownDocument(
         apiModel,
@@ -81,9 +77,7 @@ export function renderPackageDocument(
     apiPackage: ApiPackage,
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
-    if (config.verbose) {
-        console.log(`Rendering ${apiPackage.name} package document...`);
-    }
+    config.logger.verbose(`Rendering ${apiPackage.name} package document...`);
 
     const docNodes: DocNode[] = [];
 
@@ -102,9 +96,7 @@ export function renderPackageDocument(
         ),
     );
 
-    if (config.verbose) {
-        console.log(`Package document rendered successfully.`);
-    }
+    config.logger.verbose(`Package document rendered successfully.`);
 
     return createMarkdownDocument(
         apiPackage,
@@ -153,9 +145,7 @@ export function renderApiItemDocument(
         );
     }
 
-    if (config.verbose) {
-        console.log(`Rendering document for ${apiItem.displayName}...`);
-    }
+    config.logger.verbose(`Rendering document for ${apiItem.displayName} (${apiItem.kind})...`);
 
     const docNodes: DocNode[] = [];
 
@@ -172,9 +162,7 @@ export function renderApiItemDocument(
     // Render body content for the item
     docNodes.push(renderApiSection(apiItem, config));
 
-    if (config.verbose) {
-        console.log(`Document for ${apiItem.displayName} rendered successfully.`);
-    }
+    config.logger.verbose(`Document for ${apiItem.displayName} rendered successfully.`);
 
     return createMarkdownDocument(
         apiItem,

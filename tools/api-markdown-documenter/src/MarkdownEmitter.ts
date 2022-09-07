@@ -15,12 +15,12 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocLinkTag, DocNode, DocNodeKind, StringBuilder } from "@microsoft/tsdoc";
 
-import { logError, logWarning } from "./LoggingUtilities";
-import { MarkdownDocument } from "./MarkdownDocument";
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
-} from "./MarkdownDocumenterConfiguration";
+} from "./Configuration";
+import { Logger } from "./Logging";
+import { MarkdownDocument } from "./MarkdownDocument";
 import {
     CustomDocNodeKind,
     DocAlert,
@@ -68,6 +68,11 @@ export interface EmitterOptions extends BaseEmitterOptions {
      * @defaultValue 0
      */
     headingLevel?: number;
+
+    /**
+     * An optional logger for reporting system events while emitting Markdown contents.
+     */
+    logger?: Logger;
 }
 
 /**
@@ -171,6 +176,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         }
 
         const options: EmitterOptions = context.options;
+        const logger = options.logger;
 
         const result: IResolveDeclarationReferenceResult =
             this.apiModel.resolveDeclarationReference(
@@ -187,19 +193,19 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                     // Generate a name such as Namespace1.Namespace2.MyClass.myMethod()
                     rawLinkText = result.resolvedApiItem.getScopedNameWithinPackage();
                 }
-                if (rawLinkText.length > 0) {
-                    this.writeLink(
-                        this.getEscapedText(rawLinkText.replace(/\s+/g, " ")),
-                        linkUrl,
-                        context,
-                    );
-                } else {
-                    logWarning("Unable to determine link text");
-                }
+                this.writeLink(
+                    this.getEscapedText(rawLinkText.replace(/\s+/g, " ")),
+                    linkUrl,
+                    context,
+                );
             }
         } else if (result.errorMessage) {
             const elementText = docLinkTag.codeDestination.emitAsTsdoc();
-            logWarning(`Unable to resolve reference "${elementText}": ` + result.errorMessage);
+            if (logger !== undefined) {
+                logger.warning(
+                    `Unable to resolve reference "${elementText}": ` + result.errorMessage,
+                );
+            }
 
             // Emit item as simple italicized text, so that at least something appears in the generated output
             this.writePlainText(
@@ -269,14 +275,17 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         docNodeSiblings: boolean,
     ): void {
         const writer: IndentedWriter = context.writer;
+        const logger = context.options.logger;
 
         writer.ensureSkippedLine();
 
         let headingLevel = docHeading.level ?? context.options.headingLevel ?? 1;
         if (headingLevel <= 0) {
-            logError(
-                `Cannot render a heading level less than 1. Got ${headingLevel}. Will use 1 instead.`,
-            );
+            if (logger !== undefined) {
+                logger.error(
+                    `Cannot render a heading level less than 1. Got ${headingLevel}. Will use 1 instead.`,
+                );
+            }
             headingLevel = 1;
         }
 
