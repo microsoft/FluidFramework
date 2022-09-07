@@ -81,6 +81,9 @@
       },
       "InterfaceDeclaration_IAuthorizationError": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_ILocationRedirectionError": {
+        "backCompat": false
       }
     }
   }
