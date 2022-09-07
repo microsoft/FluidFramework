@@ -16,7 +16,7 @@ export interface Logger {
     /**
      * Default logging function.
      */
-    log: LoggingFunction;
+    info: LoggingFunction;
 
     /**
      * Logs a `warning`.
@@ -44,7 +44,7 @@ export interface Logger {
  * Default logger, configured to log to the console.
  */
 export const defaultConsoleLogger: Logger = {
-    log: console.log,
+    info: console.log,
     warning: logWarningToConsole,
     error: logErrorToConsole,
     success: logSuccessToConsole,

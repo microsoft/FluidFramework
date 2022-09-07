@@ -329,7 +329,7 @@ export function loadModel(reportsDirectoryPath: string, logger?: Logger): Promis
 // @public
 export interface Logger {
     error: LoggingFunction;
-    log: LoggingFunction;
+    info: LoggingFunction;
     success: LoggingFunction;
     verbose: LoggingFunction;
     warning: LoggingFunction;

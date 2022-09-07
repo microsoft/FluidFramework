@@ -30,9 +30,7 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
         throw new Error(`Provided directory does not exist: "${reportsDirectoryPath}".`);
     }
 
-    if (logger !== undefined) {
-        logger.log("Generating API model...");
-    }
+    logger?.info("Generating API model...");
 
     const apiReportFilePaths: string[] = [];
     for (const filename of FileSystem.readFolderItemNames(reportsDirectoryPath)) {
@@ -55,16 +53,12 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
         apiModel.loadPackage(apiReportFilePath);
     }
 
-    if (logger !== undefined) {
-        logger.success("API model generated!");
-        logger.log("Resolving `@inheritDoc` comments...");
-    }
+    logger?.success("API model generated!");
+    logger?.info("Resolving `@inheritDoc` comments...");
 
     applyInheritDoc(apiModel, apiModel);
 
-    if (logger !== undefined) {
-        logger.success("`@inheritDoc` comments resolved successfully!");
-    }
+    logger?.success("`@inheritDoc` comments resolved successfully!");
 
     return apiModel;
 }
