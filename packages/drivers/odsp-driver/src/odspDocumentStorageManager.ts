@@ -308,16 +308,16 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                             // while the first caller is awaiting later async code in this block.
 
                             retrievedSnapshot = await cachedSnapshotP;
-
-                            method = retrievedSnapshot !== undefined ? "cache" : "network";
-
-                            const options: ISnapshotOptions = { ...hostSnapshotOptions };
-                            // Don't fetch the blobs/deltas if it is not the first call.
-                            if (!this.firstVersionCall) {
-                                options.blobs = 0;
-                                options.deltas = 0;
-                            }
-                            if (retrievedSnapshot === undefined) {
+                            if (retrievedSnapshot !== undefined) {
+                                method = "cache";
+                            } else {
+                                method = "network";
+                                const options: ISnapshotOptions = { ...hostSnapshotOptions };
+                                // Don't fetch the blobs/deltas if it is not the first call.
+                                if (!this.firstVersionCall) {
+                                    options.blobs = 0;
+                                    options.deltas = 0;
+                                }
                                 retrievedSnapshot = await this.fetchSnapshot(options, scenarioName);
                             }
                         }
@@ -330,10 +330,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                 },
             );
 
-            // Successful call, make network calls only
+            // Don't override ops which were fetched during initial load, since we could still need them.
+            const id = this.initializeFromSnapshot(odspSnapshotCacheValue, this.firstVersionCall);
             this.firstVersionCall = false;
-            const id = this.initializeFromSnapshot(odspSnapshotCacheValue);
-
             return id ? [{ id, treeId: undefined! }] : [];
         }
 
