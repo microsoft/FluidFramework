@@ -19,21 +19,21 @@ export function sum(cursor: ITreeCursor): number {
     return total;
 }
 
-export function mahattanPerimeter(
+export function averageLocation(
     cursor: ITreeCursor,
     extractCoordinates: (cursor: ITreeCursor, calculate: (x: number, y: number) => void) => number,
-): number {
-    let total = 0;
-    let current: [number, number] | undefined;
+): [number, number] {
+    let count = 0;
+    let xTotal = 0;
+    let yTotal = 0;
 
     const calculate = (x: number, y: number) => {
-        if (current !== undefined) {
-            total += Math.abs(current[0] - x) + Math.abs(current[1] - y);
-        }
-        current = [x, y];
+        count += 1;
+        xTotal += x;
+        yTotal += y;
     };
 
     extractCoordinates(cursor, calculate);
 
-    return total;
+    return [xTotal / count, yTotal / count];
 }

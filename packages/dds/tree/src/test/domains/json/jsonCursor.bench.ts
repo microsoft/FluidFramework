@@ -21,7 +21,7 @@ import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
 import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./json";
-import { mahattanPerimeter, sum } from "./benchmarks";
+import { averageLocation, sum } from "./benchmarks";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -109,7 +109,7 @@ function bench(
             ["cursorToJsonObject", cursorToJsonObject],
             ["jsonableTreeFromCursor", jsonableTreeFromCursor],
             ["sum", sum],
-            ["manhattanPerimeter", mahattanPerimeter],
+            ["averageLocation", averageLocation],
         ];
 
         for (const [consumerName, consumer] of consumers) {
