@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "assert";
-import { assert } from "console";
-import { ITreeCursor, mapCursorField, reduceField, TreeNavigationResult } from "../../../forest";
-import { FieldKey } from "../../../tree";
+import { fail, strict as assert } from "assert";
+import { ITreeCursor, reduceField, TreeNavigationResult } from "../../../forest";
+import { EmptyKey, FieldKey } from "../../../tree";
 
 export function sum(cursor: ITreeCursor): number {
     let total = 0;
@@ -20,38 +19,20 @@ export function sum(cursor: ITreeCursor): number {
     return total;
 }
 
-export function mahattanPerimeter(cursor: ITreeCursor): number {
+export function mahattanPerimeter(
+    cursor: ITreeCursor,
+    extractCoordinates: (cursor: ITreeCursor) => Generator<[number, number]>,
+): number {
     let total = 0;
+    // let count = 0;
     let current: [number, number] | undefined;
 
-    let result = cursor.down(key, 0);
-    if (result !== TreeNavigationResult.Ok) {
-        assert(result === TreeNavigationResult.NotFound, "pending not supported in reduceField");
-        // This has to be special cased (and not fall through the code below)
-        // since the call to `up` needs to be skipped.
-        return output;
+    for (const [x, y] of extractCoordinates(cursor)) {
+        if (current !== undefined) {
+            total += Math.abs(current[0] - x) + Math.abs(current[1] - y);
+        }
+        current = [x, y];
     }
-    while (result === TreeNavigationResult.Ok) {
-        output = (f(cursor, output));
-        result = cursor.seek(1);
-    }
-
-    // Read x and y values
-    if (cursor.down("" as FieldKey, 0) !== TreeNavigationResult.Ok) {
-        fail("no x");
-    }
-    const x = cursor.value;
-    cursor.up();
-    if (cursor.down("" as FieldKey, 1) !== TreeNavigationResult.Ok) {
-        fail("no y");
-    }
-    const y = cursor.value;
-    cursor.up();
-
-    if (current !== undefined) {
-        total += Math.abs(current[0] - x) + Math.abs(current[1] - y);
-    }
-    current = [x, y];
 
     return total;
 }

@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { fail, strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { buildForest, ITreeCursor, jsonableTreeFromCursor, singleTextCursor, jsonTypeSchema } from "../../..";
+import {
+    buildForest,
+    ITreeCursor,
+    jsonableTreeFromCursor,
+    singleTextCursor,
+    jsonTypeSchema,
+    FieldKey,
+    EmptyKey,
+} from "../../..";
 import { initializeForest, TreeNavigationResult } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
@@ -14,7 +22,7 @@ import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
 import { generateCanada } from "./json";
-import { sum } from "./benchmarks";
+import { mahattanPerimeter, sum } from "./benchmarks";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -44,67 +52,82 @@ function clone<T>(value: Jsonable<T>): Jsonable<T> {
         : cloneObject(value);
 }
 
+function* noopDataConsumer(cursor: ITreeCursor) {
+    yield undefined;
+}
+
 // Helper that measures an optimized 'deepClone()' vs. using ITreeCursor to extract an
 // equivalent clone of the source data.
-function bench(name: string, getJson: () => any) {
-    const json = getJson();
-    const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
-    const schemaData: SchemaData = {
-            globalFieldSchema: new Map(),
-            treeSchema: jsonTypeSchema,
-    };
-    const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
+function bench(
+    data: {
+        name: string;
+        getJson: () => any;
+        dataConsumer: (cursor: ITreeCursor) => Generator<any>;
+    }[],
+) {
+    for (const { name, getJson, dataConsumer } of data) {
+        const json = getJson();
+        const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
+        const schemaData: SchemaData = {
+                globalFieldSchema: new Map(),
+                treeSchema: jsonTypeSchema,
+        };
+        const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
 
-    benchmark({
-        type: BenchmarkType.Measurement,
-        title: `Direct: '${name}'`,
-        before: () => {
-            const cloned = clone(json);
-            assert.deepEqual(cloned, json,
-                "clone() must return an equivalent tree.");
-            assert.notEqual(cloned, json,
-                "clone() must not return the same tree instance.");
-        },
-        benchmarkFn: () => {
-            clone(json);
-        },
-    });
+        benchmark({
+            type: BenchmarkType.Measurement,
+            title: `Direct: '${name}'`,
+            before: () => {
+                const cloned = clone(json);
+                assert.deepEqual(cloned, json,
+                    "clone() must return an equivalent tree.");
+                assert.notEqual(cloned, json,
+                    "clone() must not return the same tree instance.");
+            },
+            benchmarkFn: () => {
+                clone(json);
+            },
+        });
 
-    const cursorFactories: [string, () => ITreeCursor][] = [
-        ["JsonCursor", () => new JsonCursor(json)],
-        ["TextCursor", () => singleTextCursor(encodedTree)],
-        ["object-forest Cursor", () => {
-            const forest = buildForest(schema);
-            initializeForest(forest, [encodedTree]);
-            const cursor = forest.allocateCursor();
-            assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
-            return cursor;
-        }],
-    ];
+        const cursorFactories: [string, () => ITreeCursor][] = [
+            ["JsonCursor", () => new JsonCursor(json)],
+            ["TextCursor", () => singleTextCursor(encodedTree)],
+            ["object-forest Cursor", () => {
+                const forest = buildForest(schema);
+                initializeForest(forest, [encodedTree]);
+                const cursor = forest.allocateCursor();
+                assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
+                return cursor;
+            }],
+        ];
 
-    const consumers: [string, (cursor: ITreeCursor) => void][] = [
-        ["cursorToJsonObject", cursorToJsonObject],
-        ["jsonableTreeFromCursor", jsonableTreeFromCursor],
-        ["sum", sum],
-        // TODO: benchmarks that access fields by name (ex: canada perminater)
-    ];
+        const consumers: [
+            string,
+            (cursor: ITreeCursor, dataConsumer: (cursor: ITreeCursor) => Generator<any>) => void,
+        ][] = [
+            // ["cursorToJsonObject", cursorToJsonObject],
+            // ["jsonableTreeFromCursor", jsonableTreeFromCursor],
+            // ["sum", sum],
+            ["manhattanPerimeter", mahattanPerimeter],
+        ];
 
-    for (const [consumerName, consumer] of consumers) {
-        for (const [factoryName, factory] of cursorFactories) {
-            let cursor: ITreeCursor;
-            benchmark({
-                type: BenchmarkType.Measurement,
-                title: `${consumerName}(${factoryName}): '${name}'`,
-                before: () => {
-                    cursor = factory();
-                    assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-                    assert.deepEqual(
-                        jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
-                },
-                benchmarkFn: () => {
-                    consumer(cursor);
-                },
-            });
+        for (const [consumerName, consumer] of consumers) {
+            for (const [factoryName, factory] of cursorFactories) {
+                let cursor: ITreeCursor;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `${consumerName}(${factoryName}): '${name}'`,
+                    before: () => {
+                        cursor = factory();
+                        assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+                        assert.deepEqual(
+                            jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+                    },
+                    benchmarkFn: () => {
+                        consumer(cursor, dataConsumer);
+                    },
+                });
+            }
         }
     }
 }
@@ -115,6 +138,37 @@ const canada = generateCanada(
         ? undefined
         : [2, 10]);
 
-describe("ITreeCursor", () => {
-    bench("canada", () => canada);
+function* extractCoordinatesFromCanada(cursor: ITreeCursor): Generator<[number, number]> {
+    cursor.down("features" as FieldKey, 0);
+    cursor.down(EmptyKey, 0);
+    cursor.down("geometry" as FieldKey, 0);
+    cursor.down("coordinates" as FieldKey, 0);
+
+    let result = cursor.down(EmptyKey, 0);
+    // assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+    let resultInner = cursor.down(EmptyKey, 0);
+    // assert.equal(resultInner, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+
+    while (result === TreeNavigationResult.Ok) {
+        while (resultInner === TreeNavigationResult.Ok) {
+            // Read x and y values
+            // assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok, "No X field");
+            const x = cursor.value as number;
+            cursor.up();
+
+            // assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok, "No Y field");
+            const y = cursor.value as number;
+            cursor.up();
+
+            yield [x, y];
+            resultInner = cursor.seek(1);
+        }
+        cursor.up();
+        result = cursor.seek(1);
+        resultInner = cursor.down(EmptyKey, 0);
+    }
+}
+
+describe.only("ITreeCursor", () => {
+    bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
 });
