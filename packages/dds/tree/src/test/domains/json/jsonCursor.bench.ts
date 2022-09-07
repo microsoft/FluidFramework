@@ -168,6 +168,12 @@ function* extractCoordinatesFromCanada(cursor: ITreeCursor): Generator<[number, 
         cursor.up();
         result = cursor.seek(1);
     }
+
+    // Reset the cursor state
+    cursor.up();
+    cursor.up();
+    cursor.up();
+    cursor.up();
 }
 
 describe.only("ITreeCursor", () => {
