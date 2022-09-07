@@ -1768,9 +1768,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (length > 1) {
             batch[0].metadata = { ...batch[0].metadata, batch: true };
             batch[length - 1].metadata = { ...batch[length - 1].metadata, batch: false };
+
+            // This assert fires for the following reason (there might be more cases like that):
+            // AgentScheduler will send ops in response to ConsensusRegisterCollection's "atomicChanged" event handler,
+            // i.e. in the middle of op processing!
+            // Sending ops while processing ops is not good idea - it's not defined when
+            // referenceSequenceNumber changes in op processing sequence (at the beginning or end of op processing),
+            // If we send ops in response to processing multiple ops, then we for sure hit this assert!
+            // Tracked via ADO #1834
+            // assert(batch[0].referenceSequenceNumber === batch[length - 1].referenceSequenceNumber,
+            //    "Batch should be generated synchronously, without processing ops in the middle!");
         }
 
-        const refSeqNumber = this.deltaManager.lastSequenceNumber;
         let clientSequenceNumber: number = -1;
 
         // Did we disconnect in the middle of turn-based batch?
@@ -1808,7 +1817,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.pendingStateManager.onSubmitMessage(
                 message.deserializedContent.type,
                 clientSequenceNumber,
-                refSeqNumber,
+                message.referenceSequenceNumber,
                 message.deserializedContent.contents,
                 message.localOpMetadata,
                 message.metadata,
@@ -2614,10 +2623,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             deserializedContent,
             metadata,
             localOpMetadata,
+            referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
         });
         if (this._flushMode !== FlushMode.TurnBased) {
             this.flush();
         } else if (!this.flushTrigger) {
+            this.flushTrigger = true;
             // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Promise.resolve().then(() => {
