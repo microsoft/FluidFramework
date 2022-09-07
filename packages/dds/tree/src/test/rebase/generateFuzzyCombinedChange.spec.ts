@@ -4,35 +4,36 @@
  */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { generateFuzzyCombinedChange } from "./fuzz";
 
 const testSeed = 432167897;
 
-const counterRebaser: ChangeRebaser<number> = {
-    compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
-    invert: (change: number) => -change,
-    rebase: (change: number, over: number) => change,
-    rebaseAnchors: (anchor: AnchorSet, over: number) => {},
+type TChange = TChange[] | { I: TChange; } | { C: TChange; O: TChange; } | string;
+
+const testStringRebaser: ChangeRebaser<TChange> = {
+    compose: (changes: TChange[]) => changes,
+    invert: (change: TChange) => ({ I: change }),
+    rebase: (change: TChange, over: TChange) => ({ C: change, O: over }),
+    rebaseAnchors: (anchor: AnchorSet, over: TChange) => {},
 };
 
-function generateRandomCounterChange(seed: number) {
-    return makeRandom(seed).integer(-1000, 1000);
+function generateRandomChange(seed: number) {
+    return String(seed);
 }
 
 describe("Test generateFuzzyCombinedChange function", () => {
     it("consistency of the generateFuzzyCombinedChange using counter field kind.", () => {
         const change1 = generateFuzzyCombinedChange(
-            counterRebaser,
-            generateRandomCounterChange,
+            testStringRebaser,
+            generateRandomChange,
             testSeed,
             10,
         );
         const change2 = generateFuzzyCombinedChange(
-            counterRebaser,
-            generateRandomCounterChange,
+            testStringRebaser,
+            generateRandomChange,
             testSeed,
             10,
         );
