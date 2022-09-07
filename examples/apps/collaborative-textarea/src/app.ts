@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TinyliciousModelLoader } from "@fluid-example/example-utils";
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { AppCodeLoader } from "./codeLoader";
-import { ICollaborativeTextAppModel } from "./container";
+import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
 import { CollaborativeTextView } from "./view";
 
 /**
@@ -16,12 +15,17 @@ import { CollaborativeTextView } from "./view";
  * requires making async calls.
  */
 async function start() {
-    const tinyliciousModelLoader = new TinyliciousModelLoader<ICollaborativeTextAppModel>(new AppCodeLoader());
+    const tinyliciousModelLoader = new TinyliciousModelLoader<ICollaborativeTextAppModel>(
+        new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
+    );
 
     let id: string;
     let model: ICollaborativeTextAppModel;
 
     if (location.hash.length === 0) {
+        // Normally our code loader is expected to match up with the version passed here.
+        // But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+        // the version doesn't actually matter.
         const createResponse = await tinyliciousModelLoader.createDetached("1.0");
         model = createResponse.model;
         id = await createResponse.attach();
