@@ -60,7 +60,9 @@ export { ApiModel }
 export enum ApiModifier {
     Optional = "optional",
     Readonly = "readonly",
-    Static = "static"
+    Sealed = "sealed",
+    Static = "static",
+    Virtual = "virtual"
 }
 
 // @public
@@ -110,6 +112,30 @@ export { DefaultRenderingPolicies }
 
 // @public
 export const defaultRenderingPolicies: Required<RenderingPolicies>;
+
+// @public
+export class DocAlert extends DocNode {
+    constructor(parameters: IDocAlertParameters, content: DocNode);
+    readonly content: DocNode;
+    // @override (undocumented)
+    get kind(): string;
+    readonly title: string | undefined;
+    readonly type: DocAlertType | undefined;
+}
+
+// @public
+export enum DocAlertType {
+    // (undocumented)
+    Danger = "Danger",
+    // (undocumented)
+    Important = "Important",
+    // (undocumented)
+    Note = "Note",
+    // (undocumented)
+    Tip = "Tip",
+    // (undocumented)
+    Warning = "Warning"
+}
 
 export { DocEmphasisSpan }
 
@@ -187,6 +213,9 @@ export function getAncestralHierarchy(apiItem: ApiItem, includePredecate: (apiIt
 export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
+export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
+
+// @public
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
@@ -226,6 +255,9 @@ export function getQualifiedApiItemName(apiItem: ApiItem): string;
 export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
+export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
 export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
@@ -245,12 +277,21 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 export type HierarchyBoundaries = ApiMemberKind[];
 
 // @public
+export interface IDocAlertParameters extends IDocNodeParameters {
+    title?: string;
+    type?: DocAlertType;
+}
+
+// @public
 export type IDocHeadingParameters = IDocNodeParameters & Heading;
 
 // @public
 export interface IDocListParameters extends IDocNodeContainerParameters {
     listKind?: ListKind;
 }
+
+// @public
+export function isDeprecated(apiItem: ApiItem): boolean;
 
 // @public
 export function isOptional(apiItem: ApiItem): boolean;
@@ -307,6 +348,8 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
     // @virtual @override
     emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string;
     // @virtual
+    protected writeAlert(docAlert: DocAlert, context: EmitterContext, docNodeSiblings: boolean): void;
+    // @virtual
     protected writeEmphasisSpan(docEmphasisSpan: DocEmphasisSpan, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual
     protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeSiblings: boolean): void;
@@ -334,6 +377,7 @@ interface MemberTableProperties {
     headingTitle: string;
     itemKind: ApiItemKind;
     items: readonly ApiItem[];
+    options?: TableRenderingOptions;
 }
 
 // @public
@@ -345,6 +389,7 @@ export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
 // @public
 export interface PolicyOptions {
     documentBoundaries?: DocumentBoundaries;
+    emptyTableCellText?: string;
     fileNamePolicy?: FileNamePolicy;
     headingTitlePolicy?: HeadingTitlePolicy;
     hierarchyBoundaries?: HierarchyBoundaries;
@@ -371,7 +416,7 @@ function renderApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumen
 function renderApiTitleCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
-function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox;
+function renderBetaAlert(config: Required<MarkdownDocumenterConfiguration>): DocAlert;
 
 // @public
 function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
@@ -389,10 +434,13 @@ function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle
 function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public
-function renderDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
+function renderDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableRenderingOptions): DocTable | undefined;
 
 // @public
 function renderDefaultValueCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
+
+// @public
+function renderDeprecatedCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
 function renderDeprecationNoticeSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
@@ -422,7 +470,7 @@ export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outp
 function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
-function renderFunctionLikeSummaryTable(apiItems: readonly ApiFunctionLike[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
+function renderFunctionLikeSummaryTable(apiItems: readonly ApiFunctionLike[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableRenderingOptions): DocTable | undefined;
 
 // @public
 function renderHeading(heading: Heading, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
@@ -436,13 +484,14 @@ function renderHeritageTypes(apiItem: ApiItem, config: Required<MarkdownDocument
 declare namespace RenderingHelpers {
     export {
         renderSignature,
+        renderSeeAlso,
         renderHeritageTypes,
         renderTypeParameters,
         renderExcerptWithHyperlinks,
         renderBreadcrumb,
         renderHeadingForApiItem,
         renderHeading,
-        renderBetaWarning,
+        renderBetaAlert,
         renderSummarySection,
         renderRemarksSection,
         renderThrowsSection,
@@ -469,6 +518,7 @@ declare namespace RenderingHelpers {
         renderApiTitleCell,
         renderModifiersCell,
         renderDefaultValueCell,
+        renderDeprecatedCell,
         renderPropertyTypeCell,
         renderParameterTitleCell,
         renderParameterTypeCell,
@@ -476,7 +526,8 @@ declare namespace RenderingHelpers {
         renderTypeExcerptCell,
         renderPlainTextCell,
         renderEmptyTableCell,
-        MemberTableProperties
+        MemberTableProperties,
+        TableRenderingOptions
     }
 }
 export { RenderingHelpers }
@@ -520,7 +571,7 @@ export function renderModelDocument(apiModel: ApiModel, config: Required<Markdow
 function renderModelSection(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
-function renderModifiersCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
+function renderModifiersCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, modifiersToOmit?: ApiModifier[]): DocTableCell;
 
 // @public
 function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly ApiItem[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
@@ -556,7 +607,7 @@ function renderParameterTypeCell(apiParameter: Parameter, config: Required<Markd
 function renderPlainTextCell(text: string, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
-function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
+function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], config: Required<MarkdownDocumenterConfiguration>, options?: TableRenderingOptions): DocTable | undefined;
 
 // @public
 function renderPropertyTypeCell(apiProperty: ApiPropertyItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
@@ -574,13 +625,16 @@ function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<Markdow
 export type RenderSectionWithInnerContent = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 
 // @public
+function renderSeeAlso(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+
+// @public
 function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderSummarySection(apiItem: ApiItem): DocSection | undefined;
 
 // @public
-function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
+function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableRenderingOptions): DocTable | undefined;
 
 // @public
 function renderTableWithHeading(memberTableProperties: MemberTableProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
@@ -593,6 +647,11 @@ function renderTypeExcerptCell(typeExcerpt: Excerpt, config: Required<MarkdownDo
 
 // @public
 function renderTypeParameters(typeParameters: readonly TypeParameter[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+
+// @public
+interface TableRenderingOptions {
+    modifiersToOmit?: ApiModifier[];
+}
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;

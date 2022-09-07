@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
@@ -91,7 +92,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     private trackTrailingNoOps(container: IContainer, record: ContainerRecord) {
         container.deltaManager.outbound.on("op", (messages) => {
             for (const msg of messages) {
-                if (msg.type === MessageType.NoOp) {
+                if (canBeCoalescedByService(msg)) {
                     // Track the NoOp that was sent.
                     if (record.trailingNoOps === 0) {
                         // record the starting sequence number of the trailing no ops if we haven't been tracking yet.
@@ -107,7 +108,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
         container.deltaManager.inbound.on("push", (message) => {
             // Received the no op back, update the record if we are tracking
-            if (message.type === MessageType.NoOp
+            if (canBeCoalescedByService(message)
                 && message.clientId === (container as Container).clientId
                 && record.trailingNoOps !== 0
                 && record.startTrailingNoOps <= message.clientSequenceNumber
@@ -454,13 +455,13 @@ export class LoaderContainerTracker implements IOpProcessingController {
     private setupInOutTracker(container: IContainer, inflightTracker: Map<IContainer, number>) {
         const outHandler = (messages: IDocumentMessage[]) => {
             for (const message of messages) {
-                if (message.type !== MessageType.NoOp) {
+                if (!canBeCoalescedByService(message)) {
                     inflightTracker.set(container, message.clientSequenceNumber);
                 }
             }
         };
         const inHandler = (message: ISequencedDocumentMessage) => {
-            if (message.type !== MessageType.NoOp
+            if (!canBeCoalescedByService(message)
                 && message.clientId === (container as Container).clientId
                 && inflightTracker.get(container) === message.clientSequenceNumber) {
                 inflightTracker.delete(container);

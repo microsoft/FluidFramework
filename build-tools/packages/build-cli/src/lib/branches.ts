@@ -85,7 +85,7 @@ export function generateBumpVersionBranchName(
  */
 export function generateBumpDepsBranchName(
     bumpedDep: ReleaseGroup,
-    bumpType: VersionBumpTypeExtended,
+    bumpType: VersionBumpTypeExtended | "releasedDeps",
     releaseGroup?: ReleaseGroup,
 ): string {
     const releaseGroupSegment = releaseGroup ? `_${releaseGroup}` : "";
@@ -108,21 +108,38 @@ export function generateBumpDepsBranchName(
  * @internal
  */
 export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: string): string {
+    // An array of all the sections of a "path" branch -- a branch with slashes in the name.
+    const branchPath = ["release"];
+
     const scheme = detectVersionScheme(version);
-    const branchVersion =
-        scheme === "internal"
-            ? fromInternalScheme(version)[1].version
-            : scheme === "virtualPatch"
-            ? fromVirtualPatchScheme(version).version
-            : version;
+    const schemeIsInternal = scheme === "internal" || scheme === "internalPrerelease";
+
+    let branchVersion: string;
+    if (schemeIsInternal === true) {
+        branchVersion = fromInternalScheme(version)[1].version;
+    } else if (scheme === "virtualPatch") {
+        branchVersion = fromVirtualPatchScheme(version).version;
+    } else {
+        branchVersion = version;
+    }
+
+    if (releaseGroup === "client") {
+        if (schemeIsInternal) {
+            branchPath.push("v2int");
+        }
+    } else {
+        branchPath.push(releaseGroup);
+    }
+
     const releaseBranchVersion =
         scheme === "virtualPatch"
             ? toVirtualPatchScheme(
                   `${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
-              )
+              ).version
             : `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
-    const branchName = releaseGroup === "client" ? "v2int" : releaseGroup;
-    const releaseBranch = `release/${branchName}/${releaseBranchVersion}`;
+    branchPath.push(releaseBranchVersion);
+
+    const releaseBranch = branchPath.join("/");
     return releaseBranch;
 }
 

@@ -103,7 +103,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly disableIsolatedChannels: boolean;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
@@ -620,8 +619,6 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
-    // @deprecated (undocumented)
-    disableIsolatedChannels?: boolean;
     // @deprecated (undocumented)
     disableSummaries?: boolean;
     // @deprecated (undocumented)
