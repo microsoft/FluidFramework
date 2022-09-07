@@ -10,29 +10,29 @@ import { generateFuzzyCombinedChange } from "./fuzz";
 
 const testSeed = 432167897;
 
-type TChange = TChange[] | { I: TChange; } | { C: TChange; O: TChange; } | string;
+type TestChange = TestChange[] | { I: TestChange; } | { C: TestChange; O: TestChange; } | number;
 
-const testStringRebaser: ChangeRebaser<TChange> = {
-    compose: (changes: TChange[]) => changes,
-    invert: (change: TChange) => ({ I: change }),
-    rebase: (change: TChange, over: TChange) => ({ C: change, O: over }),
-    rebaseAnchors: (anchor: AnchorSet, over: TChange) => {},
+const testRebaser: ChangeRebaser<TestChange> = {
+    compose: (changes: TestChange[]) => changes,
+    invert: (change: TestChange) => ({ I: change }),
+    rebase: (change: TestChange, over: TestChange) => ({ C: change, O: over }),
+    rebaseAnchors: (anchor: AnchorSet, over: TestChange) => {},
 };
 
 function generateRandomChange(seed: number) {
-    return String(seed);
+    return seed;
 }
 
 describe("generateFuzzyCombinedChange", () => {
     it("consistent given the same seed", () => {
         const change1 = generateFuzzyCombinedChange(
-            testStringRebaser,
+            testRebaser,
             generateRandomChange,
             testSeed,
             10,
         );
         const change2 = generateFuzzyCombinedChange(
-            testStringRebaser,
+            testRebaser,
             generateRandomChange,
             testSeed,
             10,
