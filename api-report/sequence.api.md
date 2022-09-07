@@ -393,8 +393,6 @@ export class SharedIntervalCollection extends SharedObject implements ISharedInt
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    // @deprecated (undocumented)
-    waitIntervalCollection(label: string): Promise<IntervalCollection<Interval>>;
 }
 
 // @public @deprecated

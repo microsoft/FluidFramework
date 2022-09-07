@@ -126,16 +126,6 @@ export class SharedIntervalCollection
         );
     }
 
-    /**
-     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
-     * are supported. Use `getIntervalCollection` instead.
-     */
-    public async waitIntervalCollection(
-        label: string,
-    ): Promise<IntervalCollection<Interval>> {
-        return this.intervalCollections.get(this.getIntervalCollectionPath(label));
-    }
-
     public getIntervalCollection(label: string): IntervalCollection<Interval> {
         const realLabel = this.getIntervalCollectionPath(label);
         const sharedCollection = this.intervalCollections.get(realLabel);
