@@ -146,7 +146,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      protected sendTelemetryEventCore(
         event: ITelemetryGenericEvent & { category: TelemetryEventCategory; },
         error?: any) {
-        const newEvent = { ...event };
+        const newEvent = convertToBaseEvent(event);
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -155,7 +155,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (typeof newEvent.duration === "number") {
             newEvent.duration = TelemetryLogger.formatTick(newEvent.duration);
         }
-        stringifyEventFields(newEvent);
         this.send(newEvent);
     }
 
@@ -567,17 +566,23 @@ export class PerformanceEvent {
 }
 
 /**
-     * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
-     * @param event - Event with fields you want to stringify.
-     */
-function stringifyEventFields(event: TelemetryEventTypes): void {
+ * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
+ * @param event - Event with fields you want to stringify.
+ */
+function convertToBaseEvent(event: TelemetryEventTypes): ITelemetryBaseEvent {
+    const newEvent: ITelemetryBaseEvent = {
+        category: "",
+        eventName: "",
+    };
     for (const key of Object.keys(event)) {
         const filteredEventVal = filterValidTelemetryProps(event[key]);
         if (filteredEventVal !== null) {
-            event[key] = filteredEventVal;
+            newEvent[key] = filteredEventVal;
         }
     }
+    return newEvent;
 }
+
 /**
  * Takes in parameter, if parameter is of primitive type, return the original value.
  * If parameter is an array, stringify then return the result.
