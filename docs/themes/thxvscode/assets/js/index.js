@@ -1,6 +1,6 @@
 /**
  * Top level scripts
- * Immeditaely executed
+ * Immediately executed
  */
 
 import 'bootstrap'
@@ -11,13 +11,13 @@ import 'bootstrap'
 
 import { loadSkipToContentButton } from './jquery/accessibility'
 import { loadDocsJavascript } from './jquery/docs'
-import { loadNavSearch } from './jquery/search'
+// import { loadNavSearch } from './jquery/search'
 // import { loadUpdatesBanner } from './jquery/updates'
 
 // Function to load after DOM Ready
-$(function () {
-  loadSkipToContentButton()
-  loadDocsJavascript()
-  loadNavSearch()
-  // loadUpdatesBanner()
-})
+window.onload = function () {
+    loadSkipToContentButton()
+    loadDocsJavascript()
+    //   loadNavSearch()
+    // loadUpdatesBanner()
+}
