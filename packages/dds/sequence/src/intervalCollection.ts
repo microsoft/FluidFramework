@@ -733,6 +733,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         }
     }
 
+    /**
+     * @returns an array of all intervals contained in this collection that overlap the range
+     * `[startPosition, endPosition]`.
+     */
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
         if (endPosition < startPosition || this.intervalTree.intervals.isEmpty()) {
             return [];
@@ -1107,6 +1111,9 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     }
 }
 
+/**
+ * Change events emitted by `IntervalCollection`s
+ */
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     /**
      * This event is invoked whenever the endpoints of an interval may have changed.
@@ -1152,6 +1159,13 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
         ) => void);
 }
 
+/**
+ * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
+ * This class is not a DDS in its own right, but emits events on mutating operations such that it's possible to
+ * integrate into a DDS.
+ * This aligns with its usage in `SharedSegmentSequence`, which allows associating intervals to positions in the
+ * sequence DDS which are broadcast to all other clients in an eventually consistent fashion.
+ */
 export class IntervalCollection<TInterval extends ISerializableInterval>
     extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     private savedSerializedIntervals?: ISerializedInterval[];
@@ -1182,6 +1196,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
+    /** @internal */
     public attachGraph(client: Client, label: string) {
         if (this.attached) {
             throw new LoggingError("Only supports one Sequence attach");
@@ -1256,6 +1271,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
+    /**
+     * @returns the interval in this collection that has the provided `id`.
+     * If no interval in the collection has this `id`, returns `undefined`.
+     */
     public getIntervalById(id: string) {
         if (!this.localCollection) {
             throw new LoggingError("attach must be called before accessing intervals");
@@ -1264,7 +1283,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     /**
-     * Create a new interval and add it to the collection
+     * Creates a new interval and add it to the collection.
      * @param start - interval start position
      * @param end - interval end position
      * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
@@ -1329,6 +1348,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.emit("deleteInterval", interval, local, op);
     }
 
+    /**
+     * Removes an interval from the collection.
+     * @param id - Id of the interval to remove
+     * @returns the removed interval
+     */
     public removeIntervalById(id: string) {
         if (!this.localCollection) {
             throw new LoggingError("Attach must be called before accessing intervals");
@@ -1340,6 +1364,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return interval;
     }
 
+    /**
+     * Changes the properties on an existing interval.
+     * @param id - Id of the interval whose properties should be changed
+     * @param props - Property set to apply to the interval. Shallow merging is used between any existing properties
+     * and `prop`, i.e. the interval will end up with a property object equivalent to `{ ...oldProps, ...props }`.
+     */
     public changeProperties(id: string, props: PropertySet) {
         if (!this.attached) {
             throw new LoggingError("Attach must be called before accessing intervals");
@@ -1369,6 +1399,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
+    /**
+     * Changes the endpoints of an existing interval.
+     * @param id - Id of the interval to change
+     * @param start - New start value, if defined. `undefined` signifies this endpoint should be left unchanged.
+     * @param end - New end value, if defined. `undefined` signifies this endpoint should be left unchanged.
+     * @returns the interval that was changed, if it existed in the collection.
+     */
     public change(id: string, start?: number, end?: number): TInterval | undefined {
         if (!this.localCollection) {
             throw new LoggingError("Attach must be called before accessing intervals");
@@ -1784,31 +1821,54 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.localCollection.serialize();
     }
 
+    /**
+     * @returns an iterator over all intervals in this collection.
+     */
     public [Symbol.iterator](): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this);
         return iterator;
     }
 
+    /**
+     * @returns a forward iterator over all intervals in this collection with start point equal to `startPosition`.
+     */
     public CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this, true, startPosition);
         return iterator;
     }
 
+    /**
+     * @returns a backward iterator over all intervals in this collection with start point equal to `startPosition`.
+     */
     public CreateBackwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this, false, startPosition);
         return iterator;
     }
 
+    /**
+     * @returns a forward iterator over all intervals in this collection with end point equal to `endPosition`.
+     */
     public CreateForwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this, true, undefined, endPosition);
         return iterator;
     }
 
+    /**
+     * @returns a backward iterator over all intervals in this collection with end point equal to `endPosition`.
+     */
     public CreateBackwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this, false, undefined, endPosition);
         return iterator;
     }
 
+    /**
+     * Gathers iteration results that optionally match a start/end criteria into the provided array.
+     * @param results - Array to gather the results into. In lieu of a return value, this array will be populated with
+     * intervals matching the query upon edit.
+     * @param iteratesForward - whether or not iteration should be in the forward direction
+     * @param start - If provided, only match intervals whose start point is equal to `start`.
+     * @param end - If provided, only match intervals whose end point is equal to `end`.
+     */
     public gatherIterationResults(
         results: TInterval[],
         iteratesForward: boolean,
@@ -1821,6 +1881,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.localCollection.gatherIterationResults(results, iteratesForward, start, end);
     }
 
+    /**
+     * @returns an array of all intervals in this collection that overlap with the interval
+     * `[startPosition, endPosition]`.
+     */
     public findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[] {
         if (!this.localCollection) {
             throw new LoggingError("attachSequence must be called");
@@ -1829,6 +1893,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.localCollection.findOverlappingIntervals(startPosition, endPosition);
     }
 
+    /**
+     * Applies a function to each interval in this collection.
+     */
     public map(fn: (interval: TInterval) => void) {
         if (!this.localCollection) {
             throw new LoggingError("attachSequence must be called");

@@ -160,7 +160,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     protected client: Client;
-    // Deferred that triggers once the object is loaded
+    /** `Deferred` that triggers once the object is loaded */
     protected loadedDeferred = new Deferred<void>();
     // cache out going ops created when partial loading
     private readonly loadedDeferredOutgoingOps:
@@ -247,7 +247,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         this.submitSequenceMessage(groupOp);
     }
 
-    public getContainingSegment(pos: number) {
+    /**
+     * Finds the segment information (i.e. segment + offset) corresponding to a character position in the SharedString.
+     * If the position is past the end of the string, `segment` and `offset` on the returned object may be undefined.
+     * @param pos - Character position (index) into the current local view of the SharedString.
+     */
+    public getContainingSegment(pos: number): { segment: T | undefined; offset: number | undefined; } {
         return this.client.getContainingSegment<T>(pos);
     }
 
@@ -296,6 +301,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.getRangeExtentsOfPosition(pos);
     }
 
+    /**
+     * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
+     * ReferenceType.Transient, the returned reference will be added to the localRefs on the provided segment.
+     * @param segment - Segment to add the local reference on
+     * @param offset - Offset on the segment at which to place the local reference
+     * @param refType - ReferenceType for the created local reference
+     * @param properties - PropertySet to place on the created local reference
+     */
     public createLocalReferencePosition(
         segment: T,
         offset: number,
@@ -308,8 +321,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             properties);
     }
 
+    /**
+     * Resolves a `ReferencePosition` into a character position using this client's perspective.
+     */
     public localReferencePositionToPosition(lref: ReferencePosition): number {
         return this.client.localReferencePositionToPosition(lref);
+    }
+
+    /**
+     * Removes a `LocalReferencePosition` from this SharedString.
+     */
+    public removeLocalReferencePosition(lref: LocalReferencePosition) {
+        return this.client.removeLocalReferencePosition(lref);
     }
 
     /**
@@ -355,10 +378,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
-    public removeLocalReferencePosition(lref: LocalReferencePosition) {
-        return this.client.removeLocalReferencePosition(lref);
-    }
-
     /**
      * Given a position specified relative to a marker id, lookup the marker
      * and convert the position to a character position.
@@ -395,10 +414,19 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.getStackContext(startPos, rangeLabels);
     }
 
+    /**
+     * @returns - The most recent sequence number which has been acked by the server and processed by this
+     * SharedSegmentSequence.
+     */
     public getCurrentSeq() {
         return this.client.getCurrentSeq();
     }
 
+    /**
+     * Inserts a segment directly before a `ReferencePosition`.
+     * @param refPos - The reference position to insert the segment at
+     * @param segment - The segment to insert
+     */
     public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
         const insertOp = this.client.insertAtReferencePositionLocal(pos, segment);
         if (insertOp) {
@@ -407,15 +435,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     /**
-     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
-     * are supported. Use `getIntervalCollection` instead.
+     * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
+     * creates one.
      */
-    public async waitIntervalCollection(
-        label: string,
-    ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalCollections.get(label);
-    }
-
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
         return this.intervalCollections.get(label);
     }
@@ -432,6 +454,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.intervalCollections.keys();
     }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
+     */
     protected summarizeCore(
         serializer: IFluidSerializer,
         telemetryContext?: ITelemetryContext,
@@ -487,13 +512,22 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
+     */
     protected onConnect() {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
     }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+     */
     protected onDisconnect() { }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+     */
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata as IMapMessageLocalMetadata)) {
             this.submitSequenceMessage(
@@ -561,6 +595,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
+     */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         // if loading isn't complete, we need to cache all
         // incoming ops to be applied after loading is complete
@@ -583,6 +620,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.didAttach}
+     */
     protected didAttach() {
         // If we are not local, and we've attached we need to start generating and sending ops
         // so start collaboration and provide a default client id incase we are not connected
@@ -591,6 +631,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.initializeLocalCore}
+     */
     protected initializeLocalCore() {
         super.initializeLocalCore();
         this.loadFinished();
