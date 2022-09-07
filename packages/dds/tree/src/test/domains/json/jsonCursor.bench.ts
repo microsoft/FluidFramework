@@ -105,9 +105,9 @@ function bench(
             string,
             (cursor: ITreeCursor, dataConsumer: (cursor: ITreeCursor) => Generator<any>) => void,
         ][] = [
-            // ["cursorToJsonObject", cursorToJsonObject],
-            // ["jsonableTreeFromCursor", jsonableTreeFromCursor],
-            // ["sum", sum],
+            ["cursorToJsonObject", cursorToJsonObject],
+            ["jsonableTreeFromCursor", jsonableTreeFromCursor],
+            ["sum", sum],
             ["manhattanPerimeter", mahattanPerimeter],
         ];
 
@@ -145,18 +145,20 @@ function* extractCoordinatesFromCanada(cursor: ITreeCursor): Generator<[number, 
     cursor.down("coordinates" as FieldKey, 0);
 
     let result = cursor.down(EmptyKey, 0);
-    // assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
-    let resultInner = cursor.down(EmptyKey, 0);
-    // assert.equal(resultInner, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+    assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
 
     while (result === TreeNavigationResult.Ok) {
+        let resultInner = cursor.down(EmptyKey, 0);
+        assert.equal(resultInner, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+
         while (resultInner === TreeNavigationResult.Ok) {
             // Read x and y values
-            // assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok, "No X field");
+            assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok, "No X field");
             const x = cursor.value as number;
             cursor.up();
 
-            // assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok, "No Y field");
+            assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok, "No Y field");
+            // const yResult = cursor.down(EmptyKey, 1);
             const y = cursor.value as number;
             cursor.up();
 
@@ -165,7 +167,6 @@ function* extractCoordinatesFromCanada(cursor: ITreeCursor): Generator<[number, 
         }
         cursor.up();
         result = cursor.seek(1);
-        resultInner = cursor.down(EmptyKey, 0);
     }
 }
 
