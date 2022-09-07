@@ -36,10 +36,34 @@ export {
     IMapMessageLocalMetadata,
     IValueOpEmitter,
 } from "./defaultMapInterfaces";
-export * from "./sharedString";
-export * from "./sequence";
-export * from "./sequenceFactory";
-export * from "./sequenceDeltaEvent";
-export * from "./sharedSequence";
-export * from "./sharedIntervalCollection";
-export { IInterval, IntervalConflictResolver } from "./intervalTree";
+export {
+    ISharedString,
+    SharedStringSegment,
+    SharedString,
+    getTextAndMarkers,
+} from "./sharedString";
+export {
+    SharedSegmentSequence,
+    ISharedSegmentSequenceEvents,
+} from "./sequence";
+export { SharedStringFactory } from "./sequenceFactory";
+export {
+    SequenceEvent,
+    SequenceDeltaEvent,
+    SequenceMaintenanceEvent,
+    ISequenceDeltaRange,
+} from "./sequenceDeltaEvent";
+export {
+    IJSONRunSegment,
+    SubSequence,
+    SharedSequence,
+} from "./sharedSequence";
+export {
+    SharedIntervalCollectionFactory,
+    ISharedIntervalCollection,
+    SharedIntervalCollection,
+} from "./sharedIntervalCollection";
+export {
+    IInterval,
+    IntervalConflictResolver,
+} from "./intervalTree";
