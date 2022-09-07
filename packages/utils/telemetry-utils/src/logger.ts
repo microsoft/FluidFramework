@@ -575,7 +575,7 @@ function convertToBaseEvent(event: TelemetryEventTypes): ITelemetryBaseEvent {
         eventName: "",
     };
     for (const key of Object.keys(event)) {
-        const filteredEventVal = filterValidTelemetryProps(event[key]);
+        const filteredEventVal = convertToBasePropertyType(event[key]);
         if (filteredEventVal !== null) {
             newEvent[key] = filteredEventVal;
         }
@@ -588,7 +588,7 @@ function convertToBaseEvent(event: TelemetryEventTypes): ITelemetryBaseEvent {
  * If parameter is an array, stringify then return the result.
  * @param x - parameter passed to validate/filter
  */
-function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
+function convertToBasePropertyType(x: any): TelemetryEventPropertyType | null {
     switch (typeof x) {
         case "string":
         case "number":
