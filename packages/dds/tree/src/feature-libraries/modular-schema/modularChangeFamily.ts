@@ -15,6 +15,8 @@ import { FieldKind } from "./fieldKind";
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
  * as determined by the schema.
+ *
+ * @sealed
  */
 export class ModularChangeFamily implements
     ChangeFamily<ModularEditBuilder, FieldChangeMap>,
@@ -183,6 +185,9 @@ interface EncodedFieldChange {
     change: JsonCompatibleReadOnly;
 }
 
+/**
+ * @sealed
+ */
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(
         family: ModularChangeFamily,

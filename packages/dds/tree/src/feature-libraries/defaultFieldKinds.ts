@@ -22,6 +22,8 @@ import {
 
 /**
  * Encoder for changesets which carry no information.
+ *
+ * @sealed
  */
 export class UnitEncoder extends ChangeEncoder<0> {
     public encodeForJson(formatVersion: number, change: 0): JsonCompatible {
@@ -43,6 +45,8 @@ export class UnitEncoder extends ChangeEncoder<0> {
 
 /**
  * Encoder for changesets which are just a json compatible value.
+ *
+ * @sealed
  */
 export class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
     public encodeForJson(formatVersion: number, change: T): JsonCompatibleReadOnly {

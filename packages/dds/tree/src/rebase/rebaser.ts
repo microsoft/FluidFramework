@@ -13,6 +13,8 @@ export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 /**
  * A collection of branches which can rebase changes between them.
+ *
+ * @sealed
  */
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     private lastRevision = 0;

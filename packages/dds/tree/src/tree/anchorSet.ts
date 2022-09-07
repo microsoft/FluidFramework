@@ -21,6 +21,8 @@ const NeverAnchor: Anchor = brand(0);
  * Collection of Anchors at a specific revision.
  *
  * See {@link Rebaser} for how to update across revisions.
+ *
+ * @sealed
  */
 export class AnchorSet {
     /**
