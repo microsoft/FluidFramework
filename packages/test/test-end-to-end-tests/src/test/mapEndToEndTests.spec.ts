@@ -17,7 +17,7 @@ import {
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -341,10 +341,14 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     beforeEach(() => {
         provider = getTestObjectProvider();
     });
+    afterEach(async () => reset());
+
+    const reset = async () => provider.reset();
 
     let container: Container;
     let dataObject: ITestFluidObject;
     let sharedMap: SharedMap;
+
     let containerRuntime: ContainerRuntime;
     let clearEventCount: number;
     let changedEventData: IValueChanged[];
@@ -357,10 +361,13 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     beforeEach(async () => {
         const configWithFeatureGates = {
             ...testContainerConfig,
-            loaderProps: { configProvider: configProvider({
-                "Fluid.ContainerRuntime.EnableRollback": true,
-            }) },
+            loaderProps: {
+                configProvider: configProvider({
+                    "Fluid.ContainerRuntime.EnableRollback": true,
+                }),
+            },
         };
+
         container = await provider.makeTestContainer(configWithFeatureGates) as Container;
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
@@ -372,6 +379,72 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         });
         sharedMap.on("clear", (local, target) => {
             clearEventCount++;
+        });
+    });
+    describe("Concurrent op processing", () => {
+        let container2: Container;
+        let dataObject2: ITestFluidObject;
+        let sharedMap2: SharedMap;
+
+        beforeEach(async () => {
+            await reset();
+            provider = getTestObjectProvider();
+        });
+
+        const setupContainers = async (
+            containerConfig: ITestContainerConfig,
+            featureGates: Record<string, ConfigTypes> = {},
+        ) => {
+            const configWithFeatureGates = {
+                ...containerConfig,
+                loaderProps: { configProvider: configProvider(featureGates) },
+            };
+            const container1 = await provider.makeTestContainer(configWithFeatureGates) as Container;
+            container2 = await provider.loadTestContainer(configWithFeatureGates) as Container;
+
+            dataObject = await requestFluidObject<ITestFluidObject>(container1, "default");
+            dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+
+            sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+            sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+
+            await provider.ensureSynchronized();
+        };
+
+        itExpects("Should close container when sending an op while processing another op",
+            [{
+                eventName: "fluid:telemetry:Container:ContainerClose",
+                error: "Making changes to data model is disallowed while processing ops.",
+            }], async () => {
+                await setupContainers(testContainerConfig, { "Fluid.Container.ConcurrentOpSend": true });
+
+                sharedMap.on("valueChanged", (changed, local) => {
+                    if (!local) {
+                        assert.equal(changed.key, "key2", "Incorrect value for key1 in container 1");
+                    }
+                    // Avoid re-entrancy by setting a new key
+                    if (changed.key !== "key2") {
+                        sharedMap2.set("key2", "v2");
+                    }
+                });
+                // Set 1st key to trigger above valueChanged
+                sharedMap.set("key1", "v1");
+                await provider.ensureSynchronized();
+            });
+
+        it("Negative test with unset concurrentOpSend feature gate", async () => {
+            await setupContainers(testContainerConfig, { "Fluid.Container.ConcurrentOpSend": false });
+            sharedMap.on("valueChanged", (changed, local) => {
+                // Avoid re-entrancy by setting a new key
+                if (changed.key !== "key2") {
+                    sharedMap2.set("key2", "v2");
+                }
+            });
+            // Set 1st key to trigger above valueChanged
+            sharedMap.set("key1", "v1");
+            await provider.ensureSynchronized();
+            assert.equal(sharedMap.get("key1"), "v1", "The new value is not updated in map 1");
+            assert.equal(sharedMap2.get("key2"), "v2", "The new value is not updated in map 2");
         });
     });
 

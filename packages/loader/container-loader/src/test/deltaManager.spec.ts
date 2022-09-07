@@ -176,6 +176,7 @@ describe("Loader", () => {
                     await tickClock(1000 * 1000);
                     assert.equal(counter, 0, "No messages sent after 99 ops");
                     tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+                    await tickClock(1);
                     assert.equal(counter, 1, "One message should be sent");
                 });
 
@@ -191,6 +192,21 @@ describe("Loader", () => {
                     }
                     assert.equal(counter, 0, "No messages sent after 99 ops");
                     await tickClock(100);
+                    assert.equal(counter, 1, "One message should be sent");
+                });
+
+                it("1k op frequency will generate noop at op intervals", async () => {
+                    let counter = 0;
+                    const tracker = new CollabWindowTracker(
+                        () => { counter++; tracker.stopSequenceNumberUpdate(); },
+                        Infinity,
+                        1000,
+                    );
+                    for (let num = 0; num < 1000; ++num) {
+                        tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+                    }
+                    assert.equal(counter, 0, "No messages sent after 999 ops");
+                    await tickClock(1);
                     assert.equal(counter, 1, "One message should be sent");
                 });
 
