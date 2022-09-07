@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// import express from "express";
-import http from "http";
+import express from "express";
 import morgan from "morgan";
-
 import {
     BaseTelemetryProperties,
     CommonProperties,
@@ -14,22 +12,10 @@ import {
     LumberEventName,
     Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-
 import { getCorrelationIdWithHttpFallback } from "./asyncLocalStorage";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
-
-/**
- * Replace Express Request & Response to http
- * https://github.com/DefinitelyTyped/DefinitelyTyped/commit/7f6441aaf2180a8a716f091bd6a75aeb359f69c3
- */
-
-type HttpRequest = http.IncomingMessage;
-type HttpResponse = http.ServerResponse;
-
- // eslint-disable-next-line max-len
- type Handler<Request extends HttpRequest, Response extends HttpResponse> = (req: Request, res: Response, callback: (err?: Error) => void) => void;
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
@@ -47,13 +33,13 @@ export function alternativeMorganLoggerMiddleware(loggerFormat: string) {
 export function jsonMorganLoggerMiddleware(
     serviceName: string,
     computeAdditionalProperties?: (
-        tokens: morgan.TokenIndexer,
-        req: HttpRequest,
-        res: HttpResponse) => Record<string, any>,
-    ): Handler<HttpRequest, HttpResponse> {
+        tokens: morgan.TokenIndexer<express.Request, express.Response>,
+        req: express.Request,
+        res: express.Response) => Record<string, any>,
+    ): express.RequestHandler {
     return (request, response, next): void => {
         const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
-        morgan((tokens, req, res) => {
+        morgan<express.Request, express.Response>((tokens, req, res) => {
             let additionalProperties = {};
             if (computeAdditionalProperties) {
                 additionalProperties = computeAdditionalProperties(tokens, req, res);
