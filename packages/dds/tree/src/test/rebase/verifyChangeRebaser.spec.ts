@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser } from "../../rebase";
+import { ChangeRebaser, verifyChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
-import { verifyChangeRebaser } from "../../util";
 
 const counterRebaser: ChangeRebaser<number> = {
     compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),

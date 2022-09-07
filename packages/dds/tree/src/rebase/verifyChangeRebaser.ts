@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeRebaser } from "../rebase";
+import { ChangeRebaser } from ".";
 
 export type Passed = "Passed";
 
