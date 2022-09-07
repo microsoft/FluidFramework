@@ -551,7 +551,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                 this.snapshotUrl!,
                 storageToken,
                 id,
-                this.fetchFullSnapshot,
                 !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                 this.logger,
                 snapshotDownloader,

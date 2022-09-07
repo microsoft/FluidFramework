@@ -61,7 +61,9 @@ export async function fetchSnapshot(
     snapshotDownloader: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
-    let queryParams: ISnapshotOptions = { deltas: 0, blobs: 0 };
+    // We just want to fetch tree here. So explicitly set to not fetch blobs and deltas
+    // as by default server will send that.
+    const queryParams: ISnapshotOptions = { deltas: 0, blobs: 0 };
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(
         `${snapshotUrl}${path}${queryString}`, token, forceAccessTokenViaAuthorizationHeader);
