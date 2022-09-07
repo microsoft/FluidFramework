@@ -5,8 +5,9 @@
 import { deflate, inflate } from "pako";
 import { compress, decompress } from "lz4js";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ISummaryTree, ISnapshotTree, ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { Uint8ArrayToString } from "@fluidframework/common-utils";
+import { ISummaryTree, ISnapshotTree, ISummaryBlob, SummaryType, SummaryObject }
+from "@fluidframework/protocol-definitions";
+import { IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getBlobAtPath, listBlobPaths, replaceSummaryObject, SummaryStorageHooks } from "./summaryStorageAdapter";
 import { BlobHeaderBuilder, readBlobHeader, skipHeader, writeBlobHeader } from "./summaryBlobProtocol";
 
@@ -18,8 +19,16 @@ export enum Algorithms {
 
 const ALGORITHM_KEY = "ALG";
 
-function cloneSummary(summary: ISummaryTree): ISummaryTree {
-    return JSON.parse(JSON.stringify(summary)) as ISummaryTree;
+function summaryBlobReplacer(key: string, value: SummaryObject) {
+    if (value.type === SummaryType.Blob) {
+        return undefined;
+    } else {
+        return value;
+    }
+}
+
+function cloneSummarySkipBlobs(summary: ISummaryTree): ISummaryTree {
+    return JSON.parse(JSON.stringify(summary, summaryBlobReplacer)) as ISummaryTree;
 }
 
 /**
@@ -46,10 +55,10 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
      */
     public onPreUploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext):
     { prepSummary: ISummaryTree; prepContext: ISummaryContext; } {
-        const newSummary = cloneSummary(summary);
+        const newSummary = cloneSummarySkipBlobs(summary);
         const paths: string[][] = [];
         const currentPath: string[] = [];
-        listBlobPaths(paths, currentPath, newSummary);
+        listBlobPaths(paths, currentPath, summary);
         paths.forEach((path) => {
             const summaryBlob: ISummaryBlob = getBlobAtPath(summary, path);
             let decompressed: Uint8Array;
@@ -62,7 +71,7 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
             // TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummaryBlob
             // fails on assertion at 2 different generations of the hash which do not lead to
             // the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
-            const compressedString = Uint8ArrayToString(Buffer.from(compressed), "base64");
+            const compressedString = Uint8ArrayToString(IsoBuffer.from(compressed), "base64");
             const compressedEncoded = new TextEncoder().encode(compressedString);
             const newSummaryBlob: ISummaryBlob = { type: SummaryType.Blob, content: compressedEncoded };
             replaceSummaryObject(newSummary, path, newSummaryBlob);
@@ -109,7 +118,7 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
             // with the hash comparison we need to be prepared that the blob together with the
             // blob header is base64 encoded. We need to try whether it is the case.
             const compressedString = new TextDecoder().decode(compressedEncoded);
-            compressedEncoded = Buffer.from(compressedString, "base64");
+            compressedEncoded = IsoBuffer.from(compressedString, "base64");
             header = readBlobHeader(compressedEncoded);
             if (!header) {
                 return file;

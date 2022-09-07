@@ -2,6 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { IsoBuffer } from "@fluidframework/common-utils";
+
 /**
  * This class represents the object instatiation of the header which is optionaly writen at the
  * beginning of the binary blob. It supports conversion to / from the binary array.
@@ -11,8 +14,9 @@
  * - HEADER CONTENT :  HEADER CONTENT LENGTH bytes
  */
 export class BlobHeader {
-    public static readonly ENCODING = "ascii";
-    public static readonly HEADER_PREFIX = Buffer.from("f4e72832a5bd47d7a2f35ed47ed94a3c", "hex");
+    public static readonly ENCODING = "utf-8";
+    public static readonly HEADER_PREFIX = new Uint8Array([0xf4, 0xe7, 0x28, 0x32, 0xa5, 0xbd, 0x47, 0xd7, 0xa2
+        , 0xf3, 0x5e, 0xd4, 0x7e, 0xd9, 0x4a, 0x3c]);
     constructor(private readonly _fields: { [key: string]: string; }) { }
     public getValue(key: string): string {
         return this._fields[key];
@@ -30,23 +34,24 @@ export class BlobHeader {
      * This method converts this header object to binary array.
      * @returns this header object as binary array.
      */
-    public toBinary(): Buffer {
+    public toBinary(): IsoBuffer {
         const contentStr = JSON.stringify(this._fields);
-        const contentBinary: Buffer = Buffer.from(contentStr, BlobHeader.ENCODING);
+        const contentBinary: IsoBuffer = IsoBuffer.from(contentStr, BlobHeader.ENCODING);
         const contentBinaryLength = contentBinary.byteLength;
         const contentBinaryLengthBuf = new ArrayBuffer(4);
         const view = new DataView(contentBinaryLengthBuf);
         view.setUint32(0, contentBinaryLength, false);
-        return Buffer.concat([BlobHeader.HEADER_PREFIX, Buffer.from(contentBinaryLengthBuf), contentBinary]);
+
+        return concat([BlobHeader.HEADER_PREFIX, IsoBuffer.from(contentBinaryLengthBuf), contentBinary]);
     }
 
     /**
      * This method converts the binary array to header object, if not present, undefined is returned.
      * @returns header object
      */
-    public static fromBinary(buffer: Buffer): BlobHeader | undefined {
+    public static fromBinary(buffer: IsoBuffer): BlobHeader | undefined {
         const possibleHeader = buffer.slice(0, BlobHeader.HEADER_PREFIX.byteLength);
-        if (!possibleHeader.equals(BlobHeader.HEADER_PREFIX)) {
+        if (!isEqual(possibleHeader, BlobHeader.HEADER_PREFIX)) {
             return undefined;
         }
         const arrayBuffer = toArrayBuffer(buffer);
@@ -54,7 +59,7 @@ export class BlobHeader {
         const contentBinaryLength = view.getUint32(BlobHeader.HEADER_PREFIX.byteLength, false);
         const contentPos = BlobHeader.HEADER_PREFIX.byteLength + 4;
         const contentBinary = arrayBuffer.slice(contentPos, contentPos + contentBinaryLength);
-        const contentStr = Buffer.from(contentBinary).toString(BlobHeader.ENCODING);
+        const contentStr = IsoBuffer.from(contentBinary).toString(BlobHeader.ENCODING);
         return new BlobHeader(JSON.parse(contentStr));
     }
 
@@ -63,7 +68,7 @@ export class BlobHeader {
      * @param buffer - The byte array
      * @returns The rest of the message cutting of the complete header from the given byte array.
      */
-    public static skipHeader(buffer: Buffer): Buffer {
+    public static skipHeader(buffer: IsoBuffer): IsoBuffer {
         const header = this.fromBinary(buffer);
         if (!this.fromBinary(buffer)) {
             return buffer;
@@ -91,8 +96,8 @@ function toArrayBuffer(buf) {
 export function writeBlobHeader(header: BlobHeader, buffer: ArrayBufferLike): ArrayBufferLike {
     const binaryHeader = header.toBinary();
     const totalLength = buffer.byteLength + binaryHeader.byteLength;
-    const contentBuffer = Buffer.from(buffer);
-    const newBuffer = Buffer.concat([binaryHeader, contentBuffer], totalLength);
+    const contentBuffer = IsoBuffer.from(buffer);
+    const newBuffer = concat([binaryHeader, contentBuffer], totalLength);
     return newBuffer;
 }
 
@@ -102,7 +107,7 @@ export function writeBlobHeader(header: BlobHeader, buffer: ArrayBufferLike): Ar
  * @returns header object
  */
 export function readBlobHeader(buffer: ArrayBufferLike): BlobHeader | undefined {
-    return BlobHeader.fromBinary(Buffer.from(buffer));
+    return BlobHeader.fromBinary(IsoBuffer.from(buffer));
 }
 
 /**
@@ -111,7 +116,7 @@ export function readBlobHeader(buffer: ArrayBufferLike): BlobHeader | undefined 
 * @returns The rest of the message cutting of the complete header from the given byte array.
 */
 export function skipHeader(buffer: ArrayBufferLike): ArrayBufferLike {
-    return BlobHeader.skipHeader(Buffer.from(buffer));
+    return BlobHeader.skipHeader(IsoBuffer.from(buffer));
 }
 
 /**
@@ -125,4 +130,39 @@ export class BlobHeaderBuilder {
     public build(): BlobHeader {
         return new BlobHeader(this._fields);
     }
+}
+
+function concat(args: IsoBuffer[], totalLength?: number) {
+    let merged = args[0];
+    for (let i = 1; i < args.length; i++) {
+        merged = concatTwo(merged, args[i], totalLength);
+    }
+    return merged;
+}
+
+function concatTwo(arrayOne: IsoBuffer, arrayTwo: IsoBuffer, totalLength?: number): IsoBuffer {
+    let arrayTwoReduced = arrayTwo;
+    if (totalLength !== undefined) {
+        if (arrayOne.length > totalLength) {
+            return arrayOne.subarray(0, totalLength);
+        } else if (arrayOne.length + arrayTwo.length > totalLength) {
+            arrayTwoReduced = arrayTwo.subarray(0, totalLength - arrayOne.length);
+        }
+    }
+    const mergedArray = new IsoBuffer(arrayOne.length + arrayTwo.length);
+    mergedArray.set(arrayOne);
+    mergedArray.set(arrayTwoReduced, arrayOne.length);
+    return mergedArray;
+}
+
+function isEqual(arrayOne: IsoBuffer, arrayTwo: IsoBuffer) {
+    if (arrayOne.length !== arrayTwo.length) {
+        return false;
+    }
+    for (let i = 0; i < arrayOne.length; i++) {
+        if (arrayOne[i] !== arrayTwo[i]) {
+            return false;
+        }
+    }
+    return true;
 }
