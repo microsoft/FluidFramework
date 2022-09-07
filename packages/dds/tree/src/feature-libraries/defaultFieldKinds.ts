@@ -4,10 +4,10 @@
  */
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
-import { ChangeEncoder, JsonCompatible, JsonCompatibleReadOnly } from "../change-family";
+import { ChangeEncoder } from "../change-family";
 import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, Delta, JsonableTree } from "../tree";
-import { brand } from "../util";
+import { brand, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import {
     FieldKind,
     Multiplicity,

@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { JsonCompatible } from "../../change-family";
+import { JsonCompatible } from "../../util";
 import {
     ITreeCursor,
     mapCursorField,
