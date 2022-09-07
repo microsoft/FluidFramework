@@ -1,13 +1,9 @@
-/**
- * Top level scripts
- * Immediately executed
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
 
-import 'bootstrap'
-
-/**
- * Functionalities implemented in jQuery
- */
+// JQuery and bootstrap 3.4 JS must be loaded on the page outside of this script.
 
 import { loadSkipToContentButton } from './jquery/accessibility'
 import { loadDocsJavascript } from './jquery/docs'
@@ -18,6 +14,6 @@ import { loadDocsJavascript } from './jquery/docs'
 window.onload = function () {
     loadSkipToContentButton()
     loadDocsJavascript()
-    //   loadNavSearch()
+    // loadNavSearch()
     // loadUpdatesBanner()
 }
