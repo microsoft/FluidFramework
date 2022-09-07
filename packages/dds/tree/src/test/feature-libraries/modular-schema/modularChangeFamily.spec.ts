@@ -15,9 +15,10 @@ import {
     ModularChangeFamily,
     FieldKinds,
     FieldEditor,
+    UpPathWithFieldKinds,
 } from "../../../feature-libraries";
 import { FieldKindIdentifier } from "../../../schema-stored";
-import { Delta, FieldKey } from "../../../tree";
+import { AnchorSet, Delta, FieldKey } from "../../../tree";
 import { brand, fail } from "../../../util";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
@@ -262,5 +263,29 @@ describe("ModularChangeFamily", () => {
         const encoded = JSON.stringify(family.encoder.encodeForJson(version, rootChange1a));
         const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
         assert.deepEqual(decoded, rootChange1a);
+    });
+
+    it("build child change", () => {
+        const editor = family.buildEditor((delta) => {}, new AnchorSet());
+        const path: UpPathWithFieldKinds = {
+            parent: undefined,
+            parentField: fieldA,
+            parentFieldKind: singleNodeField.identifier,
+            parentIndex: 0,
+        };
+
+        editor.submitChange(path, fieldB, valueField.identifier, brand(valueChange1a));
+        const changes = editor.getChanges();
+        const innerChange: FieldChangeMap = new Map([[
+            fieldB,
+            { fieldKind: valueField.identifier, change: brand(valueChange1a) },
+        ]]);
+
+        const expectedChange: FieldChangeMap = new Map([[
+            fieldA,
+            { fieldKind: singleNodeField.identifier, change: brand(innerChange) },
+        ]]);
+
+        assert.deepEqual(changes, [expectedChange]);
     });
 });

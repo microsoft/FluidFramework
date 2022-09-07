@@ -210,7 +210,7 @@ export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
             const fieldChange = editor.buildChildChange(remainingPath.parentIndex, nodeChange);
             nodeChange = new Map();
             nodeChange.set(
-                field,
+                remainingPath.parentField,
                 { fieldKind: remainingPath.parentFieldKind, change: brand(fieldChange) },
             );
             remainingPath = remainingPath.parent;
