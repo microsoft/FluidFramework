@@ -72,6 +72,11 @@ export {
 } from "./domains";
 
 export {
+    ICheckout,
+    TransactionResult,
+} from "./checkout";
+
+export {
     buildForest,
     TextCursor,
     jsonableTreeFromCursor,
@@ -110,4 +115,8 @@ export {
     proxySymbol,
     defaultSchemaPolicy,
     PrimitiveValue,
+    SequenceEditBuilder,
+    PlacePath,
+    SequenceChangeset,
+    NodePath,
 } from "./feature-libraries";

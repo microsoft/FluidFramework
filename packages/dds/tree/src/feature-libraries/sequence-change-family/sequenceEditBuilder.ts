@@ -211,8 +211,8 @@ function wrap1(marks: T.FieldMarks, node: UpPath): T.FieldMarks {
     return toFieldMarks({ type: "Modify", fields: marks }, node);
 }
 
-type NodePath = UpPath;
-type PlacePath = UpPath;
+export type NodePath = UpPath;
+export type PlacePath = UpPath;
 
 const ERR_UP_PATH_NOT_VALID
     = "If the two paths have the same key and the same index then they should have shared an UpPath earlier";

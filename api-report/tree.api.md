@@ -333,13 +333,19 @@ export interface GenericTreeNode<TChild> extends NodeData {
 }
 
 // @public
-export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField];
+export function getEditableTree(tree: ICheckout<SequenceEditBuilder>): [EditableTreeContext, UnwrappedEditableField];
 
 // @public
 export const getTypeNameSymbol: unique symbol;
 
 // @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
+}
+
+// @public (undocumented)
+export interface ICheckout<TEditBuilder> {
+    readonly forest: IForestSubscription;
+    runTransaction(transaction: (forest: IForestSubscription, editor: TEditBuilder) => TransactionResult): TransactionResult;
 }
 
 // @public
@@ -701,6 +707,9 @@ export interface NodeData {
     value?: TreeValue;
 }
 
+// @public (undocumented)
+export type NodePath = UpPath;
+
 // @public
 export interface ObservingDependent extends Dependent {
     // @override
@@ -722,6 +731,9 @@ type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndD
 
 // @public
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+
+// @public (undocumented)
+export type PlacePath = UpPath;
 
 // @public (undocumented)
 export type PrimitiveValue = string | boolean | number;
@@ -811,6 +823,22 @@ export interface SchemaPolicy {
 // @public
 const sequence: FieldKind;
 
+// @public (undocumented)
+export type SequenceChangeset = Transposed.LocalChangeset;
+
+// @public (undocumented)
+export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangeset> {
+    constructor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet);
+    // (undocumented)
+    delete(place: PlacePath, count: number): void;
+    // (undocumented)
+    insert(place: PlacePath, cursor: ITreeCursor): void;
+    // (undocumented)
+    move(source: PlacePath, count: number, destination: PlacePath): void;
+    // (undocumented)
+    setValue(node: NodePath, value: Value): void;
+}
+
 // @public
 export class SimpleDependee implements Dependee {
     constructor(computationName?: string);
@@ -895,6 +923,14 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
 
 // @public (undocumented)
 export type ToDelta = (child: FieldChangeMap) => Delta.Root;
+
+// @public (undocumented)
+export enum TransactionResult {
+    // (undocumented)
+    Abort = 0,
+    // (undocumented)
+    Apply = 1
+}
 
 // @public (undocumented)
 export interface TreeLocation {
