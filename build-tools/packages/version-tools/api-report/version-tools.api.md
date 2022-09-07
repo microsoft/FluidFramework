@@ -23,6 +23,9 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 export function fromInternalScheme(internalVersion: semver.SemVer | string): [publicVersion: semver.SemVer, internalVersion: semver.SemVer];
 
 // @public
+export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
+
+// @public
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases?: boolean): string;
 
 // @public
@@ -30,6 +33,9 @@ export function getVersionRange(version: semver.SemVer | string, maxAutomaticBum
 
 // @public
 export function isInternalVersionScheme(version: semver.SemVer | string, allowPrereleases?: boolean): boolean;
+
+// @public
+export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean;
 
 // @public
 export function isVersionBumpType(type: VersionChangeType | string | undefined): type is VersionBumpType;
@@ -45,6 +51,9 @@ export function sortVersions(versionList: string[], allowPrereleases?: boolean):
 
 // @public
 export function toInternalScheme(publicVersion: semver.SemVer | string, version: semver.SemVer | string): semver.SemVer;
+
+// @public
+export function toVirtualPatchScheme(version: semver.SemVer | string): semver.SemVer;
 
 // @public
 export type VersionBumpType = "major" | "minor" | "patch";
