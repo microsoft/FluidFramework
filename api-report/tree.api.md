@@ -228,6 +228,11 @@ export interface FieldChangeRebaser<TChangeset> {
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;
 
 // @public (undocumented)
+export interface FieldEditor<TChangeset> {
+    buildChildChange(childIndex: number, change: FieldChangeMap): TChangeset;
+}
+
+// @public (undocumented)
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
 
 // @public
@@ -920,6 +925,14 @@ export interface UpPath {
     readonly parent: UpPath | undefined;
     readonly parentField: FieldKey;
     readonly parentIndex: number;
+}
+
+// @public (undocumented)
+export interface UpPathWithFieldKinds extends UpPath {
+    // (undocumented)
+    readonly parent: UpPathWithFieldKinds | undefined;
+    // (undocumented)
+    readonly parentFieldKind: FieldKindIdentifier;
 }
 
 // @public

@@ -22,6 +22,7 @@ export {
     FieldChange,
     FieldChangeset,
     ToDelta,
+    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
