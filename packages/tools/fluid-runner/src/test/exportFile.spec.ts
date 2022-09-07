@@ -8,7 +8,7 @@ import path from "path";
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { createContainerAndExecute, parseBundleAndExportFile } from "../exportFile";
-import { isJsonSnapshot } from "../utils";
+import { getSnapshotFileContent } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
 
@@ -26,14 +26,6 @@ describe("exportFile", () => {
     afterEach(() => {
         fs.rmdirSync(outputFolder, { recursive: true });
     });
-
-    function getSnapshotFileContent(filePath: string): string | Uint8Array {
-        if (isJsonSnapshot(filePath)) {
-            return fs.readFileSync(filePath, { encoding: "utf-8" });
-        } else {
-            return fs.readFileSync(filePath);
-        }
-    }
 
     fs.readdirSync(snapshotFolder).forEach((snapshotFileName: string) => {
         describe(`Export using snapshot [${snapshotFileName}]`, () => {

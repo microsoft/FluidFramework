@@ -17,3 +17,16 @@ export function isJsonSnapshot(path: string): boolean {
 
     return buffer.toString() === "{";
 }
+
+/**
+ * Get the ODSP snapshot file content
+ * Works on both JSON and binary snapshot formats
+ * @param filePath - path to the ODSP snapshot file
+ */
+export function getSnapshotFileContent(filePath: string): string | Uint8Array {
+    if (isJsonSnapshot(filePath)) {
+        return fs.readFileSync(filePath, { encoding: "utf-8" });
+    } else {
+        return fs.readFileSync(filePath);
+    }
+}
