@@ -71,6 +71,7 @@
   "dependencies": {
     "@fluid-tools/version-tools": "^0.4.5000",
     "@fluidframework/build-tools": "^0.4.5000",
+    "@fluidframework/bundle-size-tools": "^0.0.8505",
     "@oclif/core": "~1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
@@ -80,6 +81,7 @@
     "@rushstack/node-core-library": "^3.51.1",
     "chalk": "^2.4.2",
     "date-fns": "^2.29.1",
+    "fs-extra": "^9.0.1",
     "inquirer": "^8.0.0",
     "jssm": "^5.79.18",
     "jssm-viz-cli": "^5.83.0",
@@ -126,6 +128,7 @@
   "oclif": {
     "bin": "flub",
     "dirname": "flub",
+    "flexibleTaxonomy": true,
     "commands": "./dist/commands",
     "additionalHelpFlags": [
       "-h"
