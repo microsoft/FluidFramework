@@ -1044,6 +1044,8 @@ export class MergeTree {
     // (undocumented)
     mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
     // (undocumented)
+    obliterateRange(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite: boolean | undefined, opArgs: IMergeTreeDeltaOpArgs): void;
+    // (undocumented)
     options?: PropertySet | undefined;
     // (undocumented)
     static readonly options: {

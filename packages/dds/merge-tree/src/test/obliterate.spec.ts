@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { UnassignedSequenceNumber } from "../constants";
 import { MergeTreeDeltaType } from "../ops";
 import { TestClient } from "./testClient";
 import { insertText } from "./testUtils";
@@ -141,7 +142,7 @@ describe.skip("obliterate", () => {
                 "hello world".length,
                 refSeq,
                 localClientId,
-                refSeq + 1,
+                UnassignedSequenceNumber,
                 false,
                 undefined as any,
             );
