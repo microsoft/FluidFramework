@@ -379,7 +379,7 @@ export interface ISummaryRuntimeOptions {
      * Delay before first attempt to spawn summarizing container.
      *
      * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryConfiguration.initialSummarizerDelayMs} instead.
+     * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
      */
     initialSummarizerDelayMs?: number;
 
@@ -387,7 +387,7 @@ export interface ISummaryRuntimeOptions {
      * Flag that disables summaries if it is set to true.
      *
      * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryConfiguration.disableSummaries} instead.
+     * {@link ISummaryConfigurationDisableSummarizer.state} instead.
      */
     disableSummaries?: boolean;
 
@@ -395,7 +395,7 @@ export interface ISummaryRuntimeOptions {
      * @defaultValue 7000 operations (ops)
      *
      * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryConfiguration.maxOpsSinceLastSummary} instead.
+     * {@link ISummaryBaseConfiguration.maxOpsSinceLastSummary} instead.
      */
     maxOpsSinceLastSummary?: number;
 
@@ -405,7 +405,7 @@ export interface ISummaryRuntimeOptions {
      * @defaultValue `false` (disabled) and must be explicitly set to true to enable.
      *
      * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-     * {@link ISummaryConfiguration.summarizerClientElection} instead.
+     * {@link ISummaryBaseConfiguration.summarizerClientElection} instead.
      */
     summarizerClientElection?: boolean;
 
