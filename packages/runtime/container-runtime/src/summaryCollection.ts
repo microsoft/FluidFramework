@@ -239,9 +239,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
         private readonly logger: ITelemetryLogger,
     ) {
         super();
-        this.deltaManager.on(
-            "op",
-            (op) => this.handleOp(op));
+        this.deltaManager.on("op", (op) => this.handleOp(op));
     }
 
     /**
@@ -299,20 +297,25 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
      * Handler for ops; only handles ops relating to summaries.
      * @param op - op message to handle
      */
-    private handleOp(op: ISequencedDocumentMessage) {
+    private handleOp(opArg: ISequencedDocumentMessage) {
+        const op = { ...opArg };
         switch (op.type) {
             case MessageType.Summarize: {
                 this.handleSummaryOp(op as ISummaryOpMessage);
                 return;
             }
-            case MessageType.SummaryAck: {
-                this.handleSummaryAck(op as ISummaryAckMessage);
-                return;
-            }
-            case MessageType.SummaryNack: {
-                this.handleSummaryNack(op as ISummaryNackMessage);
-                return;
-            }
+            case MessageType.SummaryAck:
+            case MessageType.SummaryNack:
+                // Old files (prior to PR #10077) may not contain this info
+                // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
+                if ((op as any).data !== undefined) {
+                    op.contents = JSON.parse((op as any).data);
+                }
+                if (op.type === MessageType.SummaryAck) {
+                    return this.handleSummaryAck(op as ISummaryAckMessage);
+                } else {
+                    return this.handleSummaryNack(op as ISummaryNackMessage);
+                }
             default: {
                 // If the difference between timestamp of current op and last summary op is greater than
                 // the maxAckWaitTime, then we need to inform summarizer to not wait and summarize

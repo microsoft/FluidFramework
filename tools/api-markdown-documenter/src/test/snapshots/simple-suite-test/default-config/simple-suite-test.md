@@ -1,6 +1,6 @@
 # simple-suite-test
 
-[Packages](./index) &gt; [simple-suite-test](./simple-suite-test)
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test)
 
 Test package
 
