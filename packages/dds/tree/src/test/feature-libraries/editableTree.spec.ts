@@ -242,11 +242,11 @@ describe("editable-tree", () => {
         const proxy = buildTestPerson();
         assert.ok(proxy);
         assert.equal(Object.keys(proxy).length, 5);
-        assert.strictEqual(proxy[typeSymbol], personSchema);
-        assert.strictEqual(proxy.address[typeSymbol], addressSchema);
-        assert.strictEqual((proxy.address.phones[2] as ComplexPhoneType)[typeSymbol], complexPhoneSchema);
-        assert.strictEqual(proxy[getTypeNameSymbol]("name"), stringSchema.name);
-        assert.strictEqual(proxy.address[getTypeNameSymbol]("phones"), phonesSchema.name);
+        assert.equal(proxy[typeSymbol], personSchema);
+        assert.equal(proxy.address[typeSymbol], addressSchema);
+        assert.equal((proxy.address.phones[2] as ComplexPhoneType)[typeSymbol], complexPhoneSchema);
+        assert.equal(proxy[getTypeNameSymbol]("name"), stringSchema.name);
+        assert.equal(proxy.address[getTypeNameSymbol]("phones"), phonesSchema.name);
     });
 
     it("traverse a complete tree", () => {
@@ -344,7 +344,7 @@ describe("editable-tree", () => {
         {
             const forest = setupForest(schemaData, []);
             const [context, field] = getEditableTree(forest);
-            assert.strictEqual(field, undefined);
+            assert.equal(field, undefined);
             context.free();
         }
         // With value
@@ -364,7 +364,7 @@ describe("editable-tree", () => {
         };
         const forest = setupForest(schemaData, [{ type: int32Schema.name, value: 1 }]);
         const [context, field] = getEditableTree(forest);
-        assert.strictEqual(field, 1);
+        assert.equal(field, 1);
         context.free();
     });
 
@@ -376,7 +376,7 @@ describe("editable-tree", () => {
         };
         const forest = setupForest(schemaData, [{ type: optionalChildSchema.name, fields: { child: [{ type: int32Schema.name, value: 1 }] } }]);
         const [context, field] = getEditableTree(forest);
-        assert.strictEqual((field as EditableTree).child, 1);
+        assert.equal((field as EditableTree).child, 1);
         context.free();
     });
 
