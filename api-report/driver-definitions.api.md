@@ -42,6 +42,7 @@ export enum DriverErrorType {
     throttlingError = "throttlingError",
     // (undocumented)
     unsupportedClientProtocolVersion = "unsupportedClientProtocolVersion",
+    usageError = "usageError",
     writeError = "writeError"
 }
 
@@ -181,7 +182,7 @@ export interface IDocumentStorageServicePolicies {
 // @public
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
-    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage;
+    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.usageError;
     // (undocumented)
     readonly statusCode?: number;
 }
