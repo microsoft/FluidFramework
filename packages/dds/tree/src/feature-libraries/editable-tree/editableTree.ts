@@ -112,6 +112,11 @@ export type EditableField = readonly [FieldSchema, readonly EditableTree[]];
  */
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
 
+/**
+ * A common context of a "forest" of EditableTrees.
+ * It handles group operations like transforming cursors into anchors for edits.
+ * TODO: add test coverage.
+ */
 export interface EditableTreeContext {
     /**
      * Call before editing.
