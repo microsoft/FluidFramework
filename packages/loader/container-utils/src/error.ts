@@ -22,7 +22,7 @@ import {
     IClientJoin,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
-    MessageType
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 
 /**
