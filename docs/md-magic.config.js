@@ -7,6 +7,24 @@ const fs = require("fs");
 const pathLib = require("path");
 const template = require("markdown-magic-template");
 const fetch = require("node-fetch");
+const os = require("os");
+
+const mdMagicTemplatesPath = pathLib.join(__dirname, "..", ".md-magic-templates");
+
+const generatedContentNotice = `<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->`
+
+const getPackageJsonPath = (originalPath) => {
+    const dir = pathLib.dirname(originalPath);
+    return pathLib.join(dir, "package.json");
+}
+
+const getPackageJson = (originalPath) => {
+    const packageJsonPath = getPackageJsonPath(originalPath);
+    const packageJson = getPackageMetadata(packageJsonPath);
+    packageJson.shortName = getShortName(packageJson.name);
+    return packageJson;
+}
 
 const getRepoRoot = () => {
     const root = pathLib.normalize(pathLib.join(__dirname, ".."));
@@ -45,9 +63,7 @@ const toPosix = (path) => {
 }
 
 const getStartedInfo = (path, includeTinylicious = false) => {
-    // console.log(`path: ${path}`);
-    const preamble = `<!-- The getting started instructions are automatically generated.
-To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
+    const preamble = `${generatedContentNotice}
 
 ## Getting Started
 
@@ -67,6 +83,34 @@ You can run this example using the following steps:
     ].filter(item => item !== undefined);
 
     return `${steps.join("\n")}\n`;
+}
+
+const generateInstallationSection = (pkg, devDependency) => {
+    return `## Installation
+
+To get started, install the package by running the following command:
+
+\`\`\`bash
+npm i ${pkg.name}${devDependency ? " -D" : ""}
+\`\`\``;
+}
+
+const trademarkSection = `## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.`;
+
+const generateApiDocsLinkSection = (pkg) => {
+    return `## API Documentation
+
+API documentation for **${pkg.name}** is available at <https://fluidframework.com/docs/apis/${pkg.shortName}>.`;
+}
+
+const generateScriptsSection = (scriptsTable) => {
+    return `## Scripts
+
+${scriptsTable}`;
 }
 
 const fetchFunc = async (content, options) => {
@@ -124,8 +168,7 @@ const mdMagicConfig = {
         },
         /* Match <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) --> */
         GET_STARTED(content, options, config) {
-            const dir = pathLib.dirname(config.originalPath);
-            const jsonPath = pathLib.join(dir, "package.json");
+            const jsonPath = getPackageJsonPath(config.originalPath);
             if (options && options.tinylicious) {
                 return getStartedInfo(jsonPath, options.tinylicious);
             } else {
@@ -133,18 +176,39 @@ const mdMagicConfig = {
             }
         },
         PKGJSON(content, options, config) {
-            const dir = pathLib.dirname(config.originalPath);
-            const jsonPath = pathLib.join(dir, "package.json");
-            options.pkg = jsonPath;
+            options.pkg = getPackageJsonPath(config.originalPath);
             return require("markdown-magic-package-json")(content, options, config);
         },
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:installation=true apiDocs=true scripts=true trademark=true devDependency=false) --> */
+        README_SIMPLE(content, options, config) {
+            const pkg = getPackageJson(config.originalPath);
+
+            const sections = [generatedContentNotice];
+
+            if(options.installation !== "FALSE") {
+                sections.push(generateInstallationSection(pkg, options.devDependency));
+            }
+
+            if(options.apiDocs !== "FALSE") {
+                sections.push(generateApiDocsLinkSection(pkg));
+            }
+
+            if(options.scripts !== "FALSE") {
+                const scriptsTable = require("markdown-magic-package-scripts")(content, options, config);
+                sections.push(generateScriptsSection(scriptsTable));
+            }
+
+            if(options.trademark !== "FALSE") {
+                sections.push(trademarkSection);
+            }
+
+            return sections.join(`${os.EOL}${os.EOL}`);
+        },
         TEMPLATE(content, options, config) {
-            const dir = pathLib.dirname(config.originalPath);
-            const jsonPath = pathLib.join(dir, "package.json");
-            const pkg = getPackageMetadata(jsonPath);
-            pkg.shortName = getShortName(pkg.name);
+            const pkg = getPackageJson(config.originalPath);
+
             options = options || {};
-            options.src = pathLib.relative(dir, pathLib.join(__dirname, "../.md-magic-templates/", options.src));
+            options.src = pathLib.relative(dir, pathLib.join(mdMagicTemplatesPath, options.src));
             return template({ pkg: pkg })(content, options, config);
         },
         SCRIPTS: require("markdown-magic-package-scripts"),
