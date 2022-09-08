@@ -167,6 +167,23 @@ export interface Dependent extends NamedComputation {
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
 
+// @public
+export interface EditableTree {
+    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [proxyTargetSymbol]: object;
+    readonly [valueSymbol]: Value;
+    readonly [key: string]: UnwrappedEditableField;
+}
+
+// @public
+export interface EditableTreeContext {
+    free(): void;
+    prepareForEdit(): void;
+}
+
+// @public
+export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
+
 // @public (undocumented)
 const empty: Root;
 
@@ -318,6 +335,12 @@ export interface GenericTreeNode<TChild> extends NodeData {
 }
 
 // @public
+export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField];
+
+// @public
+export const getTypeSymbol: unique symbol;
+
+// @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
 }
 
@@ -382,6 +405,12 @@ export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : fa
 
 // @public (undocumented)
 export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
+
+// @public (undocumented)
+export function isPrimitive(schema: TreeSchema): boolean;
+
+// @public (undocumented)
+export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 
 // @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {
@@ -701,6 +730,9 @@ type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndD
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 // @public (undocumented)
+export type PrimitiveValue = string | boolean | number;
+
+// @public (undocumented)
 export abstract class ProgressiveEditBuilder<TChange> {
     constructor(changeFamily: ChangeFamily<unknown, TChange>, deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet);
     // @sealed
@@ -711,6 +743,9 @@ export abstract class ProgressiveEditBuilder<TChange> {
 
 // @public
 type ProtoNode = JsonableTree;
+
+// @public
+export const proxyTargetSymbol: unique symbol;
 
 // @public @sealed
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
@@ -918,6 +953,12 @@ class UnitEncoder extends ChangeEncoder<0> {
 }
 
 // @public
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
+
+// @public
+export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly UnwrappedEditableTree[];
+
+// @public
 export interface UpPath {
     // (undocumented)
     readonly parent: UpPath | undefined;
@@ -962,6 +1003,9 @@ export enum ValueSchema {
     // (undocumented)
     String = 2
 }
+
+// @public
+export const valueSymbol: unique symbol;
 
 // (No @packageDocumentation comment for this package)
 
