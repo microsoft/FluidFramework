@@ -170,7 +170,6 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 // @public
 export interface EditableTree {
     readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
-    // (undocumented)
     readonly [proxyTargetSymbol]: object;
     readonly [valueSymbol]: Value;
     readonly [key: string]: UnwrappedEditableField;
