@@ -291,7 +291,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 eventName: "Load",
                 canReconnect: loadOptions?.canReconnect,
-                loadMode: JSON.stringify(loadOptions?.loadMode),
+                deltaConnection: loadOptions?.loadMode?.deltaConnection,
+                opsBeforeReturn: loadOptions?.loadMode?.opsBeforeReturn,
             },
             async (event) => new Promise<Container>((resolve, reject) => {
                 const version = loadOptions.version;
