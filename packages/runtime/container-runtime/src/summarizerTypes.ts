@@ -25,16 +25,16 @@ import { SummarizeReason } from "./summaryGenerator";
 import { ISummaryConfigurationHeuristics } from ".";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated This will be removed in a later release.
  */
 export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated This will be removed in a later release.
  */
 export interface IProvideSummarizer {
     /**
-     * @deprecated - This will be removed in a later release.
+     * @deprecated This will be removed in a later release.
      */
     readonly ISummarizer: ISummarizer;
 }

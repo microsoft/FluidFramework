@@ -31,8 +31,8 @@ export interface ITableDocumentEvents extends IEvent {
 }
 
 /**
- * @deprecated - TableDocument is an abandoned prototype.  Please use SharedMatrix with
- *               the IMatrixProducer/Consumer interfaces instead.
+ * @deprecated `TableDocument` is an abandoned prototype.
+ * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
  */
 export class TableDocument extends DataObject<{ Events: ITableDocumentEvents; }> implements ITable {
     public static getFactory() { return TableDocument.factory; }
