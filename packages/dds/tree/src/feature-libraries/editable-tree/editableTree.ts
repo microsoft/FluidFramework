@@ -438,7 +438,6 @@ export function getEditableTree(forest: IEditableForest): [EditableTreeContext, 
             targets.push(new ProxyTarget(context, cursor));
         } while (cursor.seek(1) === TreeNavigationResult.Ok);
     }
-    cursor.clear();
     cursor.free();
     forest.anchors.forget(destination);
     const rootSchema = forest.schema.lookupGlobalFieldSchema(rootFieldKey);
