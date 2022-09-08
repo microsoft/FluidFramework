@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { JsonCompatibleReadOnly } from "../../../change-family";
 import {
     FieldChangeEncoder,
     FieldChangeHandler,
@@ -19,7 +18,7 @@ import {
 } from "../../../feature-libraries";
 import { FieldKindIdentifier } from "../../../schema-stored";
 import { AnchorSet, Delta, FieldKey } from "../../../tree";
-import { brand, fail } from "../../../util";
+import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
