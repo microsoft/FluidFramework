@@ -11,7 +11,6 @@ import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { wrapError } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
@@ -69,10 +68,6 @@ export interface IRuntimeStateHandler{
         content: any,
         localOpMetadata: unknown,
         opMetadata: Record<string, unknown> | undefined): void;
-    rollback(
-        type: ContainerMessageType,
-        content: any,
-        localOpMetadata: unknown): void;
 }
 
 /**
@@ -233,7 +228,11 @@ export class PendingStateManager implements IDisposable {
 
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pendingStates.push(this.initialStates.shift()!);
+            const firstPendingState = this.initialStates.shift()!;
+            this.pendingStates.push(firstPendingState);
+            if (firstPendingState.type === "message") {
+                this._pendingMessagesCount++;
+            }
         }
     }
 
@@ -267,6 +266,7 @@ export class PendingStateManager implements IDisposable {
         }
 
         this._pendingMessagesCount--;
+        assert(this._pendingMessagesCount >= 0, "positive");
 
         // Post-processing part - If we are processing a batch then this could be the last message in the batch.
         this.maybeProcessBatchEnd(message);
@@ -394,62 +394,12 @@ export class PendingStateManager implements IDisposable {
     }
 
     /**
-     * Capture the pending state at this point
-     */
-    public checkpoint() {
-        const checkpointHead = this.pendingStates.peekBack();
-        return {
-            rollback: () => {
-                try {
-                    while (this.pendingStates.peekBack() !== checkpointHead) {
-                        this.rollbackNextPendingState();
-                    }
-                } catch (err) {
-                    const error = wrapError(err, (message) => {
-                        return DataProcessingError.create(
-                            `RollbackError: ${message}`,
-                            "checkpointRollback",
-                            undefined) as DataProcessingError;
-                    });
-                    this.stateHandler.close(error);
-                    throw error;
-                }
-            },
-        };
-    }
-
-    /**
      * Returns the next pending state from the pending state queue.
      */
     private peekNextPendingState(): IPendingState {
         const nextPendingState = this.pendingStates.peekFront();
         assert(!!nextPendingState, 0x171 /* "No pending state found for the remote message" */);
         return nextPendingState;
-    }
-
-    /**
-     * Undo the last pending state
-     */
-    private rollbackNextPendingState() {
-        const pendingStatesCount = this.pendingStates.length;
-        if (pendingStatesCount === 0) {
-            return;
-        }
-
-        this._pendingMessagesCount--;
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pendingState = this.pendingStates.pop()!;
-        switch (pendingState.type) {
-            case "message":
-                this.stateHandler.rollback(
-                    pendingState.messageType,
-                    pendingState.content,
-                    pendingState.localOpMetadata);
-                break;
-            default:
-                throw new Error(`Can't rollback state ${pendingState.type}`);
-        }
     }
 
     /**

@@ -36,6 +36,9 @@ export class SimpleDependee implements Dependee {
 		}
 	}
 
+    /**
+     * @sealed
+     */
 	public listDependents() {
 		return this.dependents;
 	}

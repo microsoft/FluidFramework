@@ -4,6 +4,8 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { FieldKey } from "../../../tree";
+import { brand } from "../../../util";
 
 interface Canada {
     type: "FeatureCollection";
@@ -16,6 +18,11 @@ interface Canada {
         };
     }];
 }
+
+// Keys used by the Canada dataset
+export const FeatureKey: FieldKey = brand("features");
+export const GeometryKey: FieldKey = brand("geometry");
+export const CoordinatesKey: FieldKey = brand("coordinates");
 
 // The geometry of 'canada.json' is encoded as 480 segments of varying length.
 const originalSegmentLengths = [

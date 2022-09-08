@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.3000 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.4.5000 win32-x64 node-v14.18.1
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -106,10 +106,12 @@ USAGE
 * [`flub check policy`](#flub-check-policy)
 * [`flub commands`](#flub-commands)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
+* [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
 * [`flub release`](#flub-release)
+* [`flub run bundleStats`](#flub-run-bundlestats)
 * [`flub version VERSION`](#flub-version-version)
 * [`flub version latest`](#flub-version-latest)
 
@@ -263,6 +265,24 @@ EXAMPLES
   $ flub generate buildVersion
 ```
 
+## `flub generate bundleStats`
+
+Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption
+
+```
+USAGE
+  $ flub generate bundleStats [--smallestAssetSize <value>] [-v]
+
+FLAGS
+  -v, --verbose                Verbose logging.
+  --smallestAssetSize=<value>  [default: 100] The smallest asset size in bytes to consider correct. Adjust when testing
+                               for assets that are smaller.
+
+DESCRIPTION
+  Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
+  consumption
+```
+
 ## `flub generate packageJson`
 
 Generate mono repo package json
@@ -318,7 +338,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/info.ts)_
 
 ## `flub release`
 
@@ -344,7 +364,25 @@ FLAGS
   --[no-]updateCheck            Check that the local repo is up to date with the remote.
 ```
 
-_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/release.ts)_
+_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/release.ts)_
+
+## `flub run bundleStats`
+
+Generate a report from input bundle stats collected through the collect bundleStats command.
+
+```
+USAGE
+  $ flub run bundleStats [--dirname <value>] [-v]
+
+FLAGS
+  -v, --verbose      Verbose logging.
+  --dirname=<value>  [default:
+                     C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\dist\commands\run]
+                     Directory
+
+DESCRIPTION
+  Generate a report from input bundle stats collected through the collect bundleStats command.
+```
 
 ## `flub version VERSION`
 
@@ -390,7 +428,7 @@ EXAMPLES
     $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.3000/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/version.ts)_
 
 ## `flub version latest`
 

@@ -93,7 +93,11 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
         const messageCount = 1;
-        setMapKeys(dataObject1map, messageCount, largeString);
+        try {
+            setMapKeys(dataObject1map, messageCount, largeString);
+            assert(false, "should throw");
+        } catch {
+        }
 
         const error = await errorEvent;
         assert.ok(error instanceof GenericError);

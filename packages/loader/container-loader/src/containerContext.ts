@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
@@ -22,6 +22,7 @@ import {
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
     ISnapshotTreeWithBlobContents,
+    IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
     IRequest,
@@ -59,8 +60,9 @@ export class ContainerContext implements IContainerContext {
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        submitFn: (type: MessageType, contents: string, batch: boolean, appData: any) => number,
+        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSummaryFn: (summaryOp: ISummaryContent) => number,
+        submitBatchFn: (batch: IBatchMessage[]) => number,
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
@@ -79,6 +81,7 @@ export class ContainerContext implements IContainerContext {
             loader,
             submitFn,
             submitSummaryFn,
+            submitBatchFn,
             submitSignalFn,
             closeFn,
             version,
@@ -110,8 +113,13 @@ export class ContainerContext implements IContainerContext {
         return this.container.clientDetails;
     }
 
+    private _connected: boolean;
+    /**
+     * When true, ops are free to flow
+     * When false, ops should be kept as pending or rejected
+     */
     public get connected(): boolean {
-        return this.container.connected;
+        return this._connected;
     }
 
     public get canSummarize(): boolean {
@@ -170,6 +178,8 @@ export class ContainerContext implements IContainerContext {
         public readonly loader: ILoader,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
+        /** @returns clientSequenceNumber of last message in a batch */
+        public readonly submitBatchFn: (batch: IBatchMessage[]) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
@@ -178,6 +188,7 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
+        this._connected = this.container.connected;
         this._quorum = quorum;
         this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
@@ -227,9 +238,7 @@ export class ContainerContext implements IContainerContext {
 
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
-
-        assert(connected === this.connected, 0x0de /* "Mismatch in connection state while setting" */);
-
+        this._connected = connected;
         runtime.setConnectionState(connected, clientId);
     }
 
