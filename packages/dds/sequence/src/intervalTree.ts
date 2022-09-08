@@ -3,30 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IIntegerRange,
-} from "../base";
-import { ConflictAction, IRBAugmentation, IRBMatcher, RBNode, RBNodeActions, RedBlackTree } from "./rbTree";
+    RBNode,
+    IRBAugmentation,
+    IRBMatcher,
+    RedBlackTree,
+    ConflictAction,
+    RBNodeActions,
+} from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export interface AugmentedIntervalNode {
     minmax: IInterval;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export interface IInterval {
     clone(): IInterval;
     compare(b: IInterval): number;
@@ -34,8 +27,8 @@ export interface IInterval {
     compareEnd(b: IInterval): number;
     modify(
         label: string,
-        start: number,
-        end: number,
+        start: number | undefined,
+        end: number | undefined,
         op?: ISequencedDocumentMessage,
         localSeq?: number
     ): IInterval | undefined;
@@ -44,21 +37,11 @@ export interface IInterval {
 }
 
 const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
+
 export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
+
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>,
     IRBMatcher<T, AugmentedIntervalNode> {
     public intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);

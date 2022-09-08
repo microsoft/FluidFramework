@@ -14,7 +14,6 @@ import {
 import {
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 
 /**
@@ -234,7 +233,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-        getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
+        getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
     ): ISummarizerNodeWithGC;
 
     /**
@@ -260,19 +259,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      * 2. To identify if this node or any of its children's used routes changed since last summary.
      *
      * @param usedRoutes - The routes that are used in this node.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If a node becomes unreferenced
-     * as part of this GC run, this timestamp is used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
-
-    /**
-     * @deprecated - Renamed to getBaseGCDetails.
-     * Returns the GC details that may be added to this node's summary.
-     */
-    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
-
-    /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
-    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 export const channelsTreeName = ".channels";

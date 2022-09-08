@@ -23,6 +23,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { HandleTable, Handle, isHandleValid } from "./handletable";
 import { deserializeBlob } from "./serialization";
 import { HandleCache } from "./handlecache";
@@ -214,8 +215,8 @@ export class PermutationVector extends Client {
         return handle;
     }
 
-    public adjustPosition(pos: number, fromSeq: number, clientId: number) {
-        const { segment, offset } = this.mergeTree.getContainingSegment(pos, fromSeq, clientId);
+    public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
+        const { segment, offset } = this.getContainingSegment(pos, op);
 
         // Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
         // a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles
@@ -228,8 +229,8 @@ export class PermutationVector extends Client {
         return this.getPosition(segment) + offset!;
     }
 
-    public handleToPosition(handle: Handle, localSeq = this.mergeTree.collabWindow.localSeq) {
-        assert(localSeq <= this.mergeTree.collabWindow.localSeq,
+    public handleToPosition(handle: Handle, localSeq = this.getCollabWindow().localSeq) {
+        assert(localSeq <= this.getCollabWindow().localSeq,
             0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */);
 
         // TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
@@ -246,8 +247,7 @@ export class PermutationVector extends Client {
         let containingSegment!: PermutationSegment;
         let containingOffset: number;
 
-        this.mergeTree.walkAllSegments(
-            this.mergeTree.root,
+        this.walkAllSegments(
             (segment) => {
                 const { start, cachedLength } = segment as PermutationSegment;
 
