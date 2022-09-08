@@ -265,7 +265,10 @@ module.exports = {
         "@typescript-eslint/prefer-nullish-coalescing": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
 
-        // By default libraries should not take dependencies on node libraries
+        /**
+         * By default libraries should not take dependencies on node libraries. This rule can be disabled at the project
+         * level for libraries that are intended to be used only in node.
+         */
         "import/no-nodejs-modules": "warn",
     },
     overrides: [
