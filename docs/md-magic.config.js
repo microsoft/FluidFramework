@@ -7,6 +7,7 @@ const fs = require("fs");
 const pathLib = require("path");
 const template = require("markdown-magic-template");
 const fetch = require("node-fetch");
+const scripts = require("markdown-magic-package-scripts");
 const os = require("os");
 
 const mdMagicTemplatesPath = pathLib.join(__dirname, "..", ".md-magic-templates");
@@ -202,7 +203,7 @@ const mdMagicConfig = {
             }
 
             if(options.scripts !== "FALSE") {
-                const scriptsTable = require("markdown-magic-package-scripts")(content, options, config);
+                const scriptsTable = scripts(content, options, config);
                 sections.push(generateScriptsSection(scriptsTable, true));
             }
 
@@ -236,8 +237,12 @@ const mdMagicConfig = {
             options.src = pathLib.relative(dir, pathLib.join(mdMagicTemplatesPath, options.src));
             return template({ pkg: pkg })(content, options, config);
         },
-        /* Match <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) --> */
-        SCRIPTS: require("markdown-magic-package-scripts"),
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS:includeHeading=TRUE) --> */
+        SCRIPTS(content, options, config) {
+            const includeHeading = options.includeHeading !== "FALSE";
+            const scriptsTable = scripts(content, options, config);
+            return generateScriptsSection(scriptsTable, includeHeading);
+        },
         FETCH: fetchFunc,
     },
     callback: function () {
