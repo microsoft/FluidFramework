@@ -87,7 +87,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     itExpects("A large op will close the container", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpTooLarge" },
     ], async () => {
-        const maxMessageSizeInBytes = 768000;  // defaultMaxOpSizeInBytes
+        const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
         await setupContainers(testContainerConfig, { });
         const errorEvent = containerError(container1);
 
@@ -106,7 +106,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     });
 
     it("Small ops will pass", async () => {
-        const maxMessageSizeInBytes = 768000; // defaultMaxOpSizeInBytes
+        const maxMessageSizeInBytes = 960 * 1024; // slightly below 1Mb
         await setupContainers(testContainerConfig, { });
         const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
         const messageCount = 10;
