@@ -152,7 +152,7 @@ export class TestTreeProvider {
 
 /**
  * Run a custom "spy function" every time the given method is invoked.
- * @param prototype - the prototype of the object which contains the method
+ * @param methodClass - the class that has the method
  * @param methodName - the name of the method
  * @param spy - the spy function to run alongside the method
  * @returns a function which will remove the spy function when invoked. Should be called exactly once
