@@ -47,14 +47,14 @@ export {
     brandOpaque,
     ValueFromBranded,
     NameFromBranded,
+    JsonCompatibleReadOnly,
+    JsonCompatible,
 } from "./util";
 
 export {
     ChangeEncoder,
     ChangeFamily,
     ProgressiveEditBuilder,
-    JsonCompatibleReadOnly,
-    JsonCompatible,
 } from "./change-family";
 
 export {
@@ -82,12 +82,14 @@ export {
     ModularChangeFamily,
     ModularEditBuilder,
     FieldChangeHandler,
+    FieldEditor,
     FieldChangeRebaser,
     FieldChangeEncoder,
     FieldChangeMap,
     FieldChangeset,
     FieldChange,
     ToDelta,
+    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -97,5 +99,17 @@ export {
     Multiplicity,
     isNeverField,
     FullSchemaPolicy,
+    UnwrappedEditableField,
+    EditableTreeContext,
+    UnwrappedEditableTree,
+    EditableTreeOrPrimitive,
+    EditableTree,
+    getEditableTree,
+    isPrimitiveValue,
+    isPrimitive,
+    getTypeSymbol,
+    valueSymbol,
+    proxyTargetSymbol,
     defaultSchemaPolicy,
+    PrimitiveValue,
 } from "./feature-libraries";
