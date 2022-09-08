@@ -195,9 +195,6 @@ class ProxyTarget {
             assert(result === TreeNavigationResult.Ok,
                 "It is invalid to access an EditableTree node which no longer exists");
             this.context.withCursors.add(this);
-            this.context.forest.anchors.forget(this.anchor);
-            this.context.withAnchors.delete(this);
-            this.anchor = undefined;
         }
         return this.lazyCursor;
     }
