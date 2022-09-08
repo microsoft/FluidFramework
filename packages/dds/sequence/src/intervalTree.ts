@@ -44,6 +44,7 @@ export interface IInterval {
     compareStart(b: IInterval): number;
     /**
      * Compares the end endpoint of this interval to `b`'s end endpoint.
+     * Standard comparator semantics apply.
      * @param b - Interval to compare against
      */
     compareEnd(b: IInterval): number;
