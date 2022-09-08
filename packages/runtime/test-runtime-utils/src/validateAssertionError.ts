@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AssertionError } from "assert";
 import { shortCodeMap } from "./assertionShortCodesMap";
 
 /**
