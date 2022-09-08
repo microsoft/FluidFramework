@@ -592,7 +592,6 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
 // @public (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(family: ModularChangeFamily, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
-    // (undocumented)
     submitChange(path: UpPathWithFieldKinds | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset): void;
 }
 

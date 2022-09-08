@@ -197,10 +197,10 @@ export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
 
     /**
      * Adds a change to the edit builder
-     * @param path to the parent node of the field being edited
-     * @param field the field which is being edited
-     * @param fieldKind the kind of the field
-     * @param change the change to the field
+     * @param path - path to the parent node of the field being edited
+     * @param field - the field which is being edited
+     * @param fieldKind - the kind of the field
+     * @param change - the change to the field
      */
     submitChange(
         path: UpPathWithFieldKinds | undefined,
