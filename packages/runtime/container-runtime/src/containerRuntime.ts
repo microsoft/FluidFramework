@@ -519,6 +519,12 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     return false;
 }
 
+/**
+ * Unpacks runtime messages
+ * @internal - no promises RE back-compat - this is internal API.
+ * @param message - message (as it observed in storage / service)
+ * @returns unpacked runtime message
+ */
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
     if (message.type === MessageType.Operation) {
         // legacy op format?
