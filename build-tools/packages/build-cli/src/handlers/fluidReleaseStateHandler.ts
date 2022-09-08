@@ -176,7 +176,13 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
             }
 
             case "CheckShouldCommitReleasedDepsBump": {
-                result = await checkShouldCommitReleasedDepsBump(state, machine, testMode, log, data);
+                result = await checkShouldCommitReleasedDepsBump(
+                    state,
+                    machine,
+                    testMode,
+                    log,
+                    data,
+                );
                 break;
             }
 

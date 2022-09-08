@@ -105,7 +105,7 @@ export abstract class StateMachineCommand<
                 );
 
                 if (handled === true) {
-                    this.info(`Test mode: ${flags.state} state handled.`)
+                    this.info(`Test mode: ${flags.state} state handled.`);
                     this.exit(100);
                 } else {
                     this.exit(1);

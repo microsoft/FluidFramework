@@ -72,5 +72,6 @@ export const askForReleaseType: StateHandlerFunction = async (
     if (result !== true) {
         throw new Error(`Failed when calling the ${bumpType} action from the ${state} state.`);
     }
+
     return true;
 };

@@ -58,4 +58,3 @@ describe("release command handles all states", () => {
             });
     }
 });
-
