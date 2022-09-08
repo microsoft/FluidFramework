@@ -25,10 +25,10 @@ import { pkgVersion } from "./packageVersion";
 import { SharedSegmentSequence, SubSequence } from "./";
 
 /**
- * An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
- * to "pad" a run of unoccupied cells.
+ * An empty segment that occupies 'cachedLength' positions.
+ * {@link SparseMatrix} uses `PaddingSegment` to "pad" a run of unoccupied cells.
  *
- * @deprecated PaddingSegment is part of an abandoned prototype.
+ * @deprecated `PaddingSegment` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
  */
 export class PaddingSegment extends BaseSegment {
