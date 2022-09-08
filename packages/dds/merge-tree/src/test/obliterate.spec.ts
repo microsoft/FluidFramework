@@ -29,7 +29,7 @@ describe.skip("obliterate", () => {
     });
 
     it("removes text", () => {
-        client.mergeTree.obliterateRange(
+        client.obliterateRange(
             0,
             client.getLength(),
             refSeq,
@@ -43,7 +43,7 @@ describe.skip("obliterate", () => {
 
     describe("concurrent obliterate and insert", () => {
         it("removes text for obliterate then insert", () => {
-            client.mergeTree.obliterateRange(
+            client.obliterateRange(
                 0,
                 client.getLength(),
                 refSeq,
@@ -75,7 +75,7 @@ describe.skip("obliterate", () => {
                 undefined,
                 { op: { type: MergeTreeDeltaType.INSERT } },
             );
-            client.mergeTree.obliterateRange(
+            client.obliterateRange(
                 0,
                 "hello world".length,
                 refSeq,
@@ -90,7 +90,7 @@ describe.skip("obliterate", () => {
 
     describe("endpoint behavior", () => {
         it("does not expand to include text inserted at start", () => {
-            client.mergeTree.obliterateRange(
+            client.obliterateRange(
                 5,
                 client.getLength(),
                 refSeq,
@@ -112,7 +112,7 @@ describe.skip("obliterate", () => {
             assert.equal(client.getText(), "hello world");
         });
         it("does not expand to include text inserted at end", () => {
-            client.mergeTree.obliterateRange(
+            client.obliterateRange(
                 0,
                 5,
                 refSeq,
@@ -137,7 +137,7 @@ describe.skip("obliterate", () => {
 
     describe("local obliterate with concurrent inserts", () => {
         it("removes range when pending local obliterate op", () => {
-            client.mergeTree.obliterateRange(
+            client.obliterateRange(
                 0,
                 "hello world".length,
                 refSeq,

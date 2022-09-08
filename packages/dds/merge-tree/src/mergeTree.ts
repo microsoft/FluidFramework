@@ -1930,18 +1930,6 @@ export class MergeTree {
         }
     }
 
-    public obliterateRange(
-        start: number,
-        end: number,
-        refSeq: number,
-        clientId: number,
-        seq: number,
-        overwrite = false,
-        opArgs: IMergeTreeDeltaOpArgs,
-    ): void {
-        this.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
-    }
-
     public markRangeRemoved(
         start: number,
         end: number,
