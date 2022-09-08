@@ -8,7 +8,7 @@ import { brand } from "../../util";
 import { detachedFieldAsKey } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
-import { SharedTree } from "../../shared-tree";
+import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
 
 describe("SharedTree", () => {
@@ -20,7 +20,7 @@ describe("SharedTree", () => {
         const value = "42";
 
         // Validate that the given tree has the state we create in this test
-        function validateTree(tree: SharedTree): void {
+        function validateTree(tree: ISharedTree): void {
             const readCursor = tree.forest.allocateCursor();
             const destination = tree.forest.root(tree.forest.rootField);
             const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
