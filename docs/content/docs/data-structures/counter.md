@@ -13,7 +13,7 @@ menuPosition: 5
 The `SharedCounter` distributed data structure (DDS) is used to store an integer counter value that can be modified by multiple clients simultaneously.
 The data structure affords incrementing and decrementing the shared value via its `increment` method. Decrements are done by providing a negative value.
 
-The `SharedCounter` is a specialized [optimistic DDS](https://fluidframework.com/docs/build/dds/#optimistic-data-structures).
+The `SharedCounter` is a specialized [Optimistic DDS][].
 It operates on communicated _deltas_ (amounts by which the shared value should be incremented or decremented), rather than direct changes to the shared value.
 In this way, it avoids the pitfalls of DDSes with simpler merge strategies, in which one user's edit may clobber another's (see [below](#why-a-specialized-dds)).
 
@@ -88,11 +88,11 @@ npm install @fluidframework/shared-counter
 ### Creation
 
 The workflow for creating a `SharedCounter` is effectively the same as many of our other DDSes.
-For an example of how to create one, please see our workflow examples for [SharedMap](https://fluidframework.com/docs/data-structures/map/#creation).
+For an example of how to create one, please see our workflow examples for [SharedMap creation][].
 
 ### Incrementing / decrementing the value
 
-Once you have created your `SharedCounter`, you can change its value using the [increment](https://fluidframework.com/docs/apis/counter/isharedcounter-interface#increment-methodsignature) method.
+Once you have created your `SharedCounter`, you can change its value using the [increment][] method.
 This method accepts a positive or negative *integer* to be applied to the shared value.
 
 
@@ -103,7 +103,7 @@ sharedCounter.increment(-5); // Subtracts 5 from the current value
 
 ### `incremented` event
 
-The [incremented](https://fluidframework.com/docs/apis/counter/isharedcounterevents-interface#_call_-callsignature) event is sent when a client in the collaborative session changes the counter value via the `increment` method.
+The [incremented][] event is sent when a client in the collaborative session changes the counter value via the `increment` method.
 
 Signature:
 
@@ -152,3 +152,8 @@ Since `updateCounterValueLabel` is listening for all `incremented` events, the v
 
 For a comprehensive view of the `counter` package's API documentation, see [the SharedCounter API docs]({{< ref "docs/apis/counter.md" >}}).
 
+<!-- Links -->
+[increment]: {{< relref "isharedcounter-interface.md#increment-methodsignature" >}}
+[incremented]: {{< relref "isharedcounterevents-interface.md#_call_-callsignature" >}}
+[Optimistic DDS]: {{< relref "dds.md#optimistic-data-structures" >}}
+[SharedMap creation]: {{< relref "map.md#creation" >}}
