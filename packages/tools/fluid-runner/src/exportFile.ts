@@ -10,9 +10,11 @@ import { Loader } from "@fluidframework/container-loader";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getArgsValidationError } from "./getArgsValidationError";
-import { IFluidFileConverter, isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
+import { IFluidFileConverter } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
 import { getSnapshotFileContent } from "./utils";
+// eslint-disable-next-line import/no-internal-modules
+import { createLogger, FileLogger, getTelemetryFileValidationError } from "./logger/FileLogger";
 
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
@@ -30,49 +32,29 @@ interface IExportFileResponseFailure {
 const clientArgsValidationError = "Client_ArgsValidationError";
 
 /**
- * Intermediary method to extract IFluidFileConverter from a provided JS bundle path
- * @param codeLoader - path to provided JS bundle
- */
-export async function parseBundleAndExportFile(
-    codeLoader: string,
-    inputFile: string,
-    outputFile: string,
-    logger: ITelemetryLogger,
-    options?: string,
-): Promise<IExportFileResponse> {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const codeLoaderBundle = require(codeLoader);
-    if (!isCodeLoaderBundle(codeLoaderBundle)) {
-        const eventName = clientArgsValidationError;
-        const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
-        return { success: false, eventName, errorMessage };
-    }
-
-    const fluidExport = await codeLoaderBundle.fluidExport;
-    if (!isFluidFileConverter(fluidExport)) {
-        const eventName = clientArgsValidationError;
-        const errorMessage = "Fluid export from CodeLoaderBundle is not of type IFluidFileConverter";
-        return { success: false, eventName, errorMessage };
-    }
-
-    return exportFile(fluidExport, inputFile, outputFile, logger, options);
-}
-
-/**
- * Execute code on container based on ODSP snapshot and write result to file
+ * Execute code on Container based on ODSP snapshot and write result to file
  */
 export async function exportFile(
     fluidFileConverter: IFluidFileConverter,
     inputFile: string,
     outputFile: string,
-    logger: ITelemetryLogger,
+    telemetryFile: string,
     options?: string,
 ): Promise<IExportFileResponse> {
+    const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
+    if (telemetryArgError) {
+        const eventName = clientArgsValidationError;
+        return { success: false, eventName, errorMessage: telemetryArgError };
+    }
+    const fileLogger = new FileLogger(telemetryFile);
+    const logger = createLogger(fileLogger);
+
     try {
         return await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
             const argsValidationError = getArgsValidationError(inputFile, outputFile);
             if (argsValidationError) {
                 const eventName = clientArgsValidationError;
+                logger.sendErrorEvent({ eventName, message: argsValidationError });
                 return { success: false, eventName, errorMessage: argsValidationError };
             }
 
@@ -87,7 +69,10 @@ export async function exportFile(
         });
     } catch (error) {
         const eventName = "Client_UnexpectedError";
+        logger.sendErrorEvent({ eventName }, error);
         return { success: false, eventName, errorMessage: "Unexpected error", error };
+    } finally {
+        await fileLogger.flush();
     }
 }
 
