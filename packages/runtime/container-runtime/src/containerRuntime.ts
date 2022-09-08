@@ -500,11 +500,6 @@ interface IPendingRuntimeState {
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
-// By default, we should reject any op larger than 768KB,
-// in order to account for some extra overhead from serialization
-// to not reach the 1MB limits in socket.io and Kafka.
-const defaultMaxOpSizeInBytes = 768000;
-
 const defaultFlushMode = FlushMode.TurnBased;
 
 export enum RuntimeMessage {
@@ -1563,9 +1558,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(
-                    // pre-0.58 error message: MaxReconnectsWithNoProgress
                     DataProcessingError.create(
-                        "Runtime detected too many reconnects with no progress syncing local ops",
+                        // eslint-disable-next-line max-len
+                        "Runtime detected too many reconnects with no progress syncing local ops. Batch of ops is likely too large (over 1Mb)",
                         "setConnectionState",
                         undefined,
                         {
@@ -2603,20 +2598,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const deserializedContent: ContainerRuntimeMessage = { type, contents };
         const serializedContent = JSON.stringify(deserializedContent);
-
-        if (serializedContent.length > defaultMaxOpSizeInBytes) {
-            // If the content length is larger than the client configured message size
-            // instead of splitting the content, we will fail by explicitly closing the container
-            const error = new GenericError(
-                "OpTooLarge",
-                /* error */ undefined,
-                {
-                    length: serializedContent.length,
-                    limit: defaultMaxOpSizeInBytes,
-                });
-            this.closeFn(error);
-            throw error;
-        }
 
         if (this.deltaManager.readOnlyInfo.readonly) {
             this.logger.sendErrorEvent({ eventName: "SubmitOpInReadonly" });
