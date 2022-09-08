@@ -7,18 +7,20 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable max-len */
 import { fail, strict as assert } from "assert";
-import { NamedTreeSchema, StoredSchemaRepository, namedTreeSchema, ValueSchema, fieldSchema, SchemaData, TreeSchemaIdentifier, rootFieldKey } from "../../schema-stored";
-import { IEditableForest, initializeForest } from "../../forest";
-import { JsonableTree, EmptyKey, Value } from "../../tree";
-import { brand, Brand, clone } from "../../util";
+import {
+    NamedTreeSchema, StoredSchemaRepository, namedTreeSchema, ValueSchema, fieldSchema, SchemaData,
+    TreeSchemaIdentifier, rootFieldKey,
+} from "../../../schema-stored";
+import { IEditableForest, initializeForest } from "../../../forest";
+import { JsonableTree, EmptyKey, Value } from "../../../tree";
+import { brand, Brand, clone } from "../../../util";
 import {
     defaultSchemaPolicy, getEditableTree, EditableTree, buildForest, getTypeSymbol, UnwrappedEditableField,
-    proxyTargetSymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive,
-    isPrimitiveValue, isPrimitive, Multiplicity,
-} from "../../feature-libraries";
+    proxyTargetSymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive, isPrimitiveValue, Multiplicity,
+} from "../../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
-import { getFieldKind, getFieldSchema, getPrimaryField } from "../../feature-libraries/editable-tree/utilities";
+import { getFieldKind, getFieldSchema, getPrimaryField } from "../../../feature-libraries/editable-tree/utilities";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
 
@@ -287,12 +289,6 @@ describe("editable-tree", () => {
         const hasValue = buildTestProxy({ type: optionalChildSchema.name, value: 1 }) as object;
         // Value does show up when not empty:
         assert(valueSymbol in hasValue);
-    });
-
-    it("isPrimitive", () => {
-        assert(isPrimitive(int32Schema));
-        assert(isPrimitive(stringSchema));
-        assert(!isPrimitive(optionalChildSchema));
     });
 
     it("sequence roots are arrays", () => {

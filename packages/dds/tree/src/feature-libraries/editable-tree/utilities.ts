@@ -84,9 +84,5 @@ export function adaptWithProxy<From extends object, To extends object>(
 }
 
 export function getArrayOwnKeys(length: number): string[] {
-    const keys: string[] = ["length"];
-    for (let i = 0; i < length; i++) {
-        keys.push(String(i));
-    }
-    return keys;
+    return Object.getOwnPropertyNames(Array.from(Array(length)));
 }
