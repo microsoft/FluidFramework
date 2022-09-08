@@ -45,7 +45,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const insertion: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                 ],
             },
         };
@@ -67,7 +67,7 @@ describe("SequenceChangeFamily - Compose", () => {
                     {
                         type: "Modify",
                         fields: {
-                            foo: [[{ type: "Insert", id: 1, content: [{ type, value: 1 }] }]],
+                            foo: [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
                         },
                     },
                 ],
@@ -155,7 +155,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] },
                 ],
             },
         };
@@ -165,7 +165,7 @@ describe("SequenceChangeFamily - Compose", () => {
                     type: "Modify",
                     fields: {
                         foo: [
-                            [{ type: "Insert", id: 2, content: [{ type, value: 42 }] }],
+                            { type: "Insert", id: 2, content: [{ type, value: 42 }] },
                         ],
                     },
                 }],
@@ -173,19 +173,19 @@ describe("SequenceChangeFamily - Compose", () => {
         };
         const expected: SequenceChangeset = {
             marks: {
-                root: [[
+                root: [
                     {
                         type: "MInsert",
                         id: 1,
                         content: { type, value: 1 },
                         fields: {
                             foo: [
-                                [{ type: "Insert", id: 2, content: [{ type, value: 42 }] }],
+                                { type: "Insert", id: 2, content: [{ type, value: 42 }] },
                             ],
                         },
                     },
                     { type: "Insert", id: 1, content: [{ type, value: 2 }] },
-                ]],
+                ],
             },
         };
         const actual = compose([insert, modify]);
@@ -196,16 +196,16 @@ describe("SequenceChangeFamily - Compose", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{
+                    {
                         type: "MInsert",
                         id: 1,
                         content: { type, value: 1 },
                         fields: {
                             foo: [
-                                [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                                { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                             ],
                         },
-                    }],
+                    },
                 ],
             },
         };
@@ -215,7 +215,7 @@ describe("SequenceChangeFamily - Compose", () => {
                     type: "Modify",
                     fields: {
                         bar: [
-                            [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                            { type: "Insert", id: 3, content: [{ type, value: 3 }] },
                         ],
                     },
                 }],
@@ -224,19 +224,19 @@ describe("SequenceChangeFamily - Compose", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [{
+                    {
                         type: "MInsert",
                         id: 1,
                         content: { type, value: 1 },
                         fields: {
                             foo: [
-                                [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                                { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                             ],
                             bar: [
-                                [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                                { type: "Insert", id: 3, content: [{ type, value: 3 }] },
                             ],
                         },
-                    }],
+                    },
                 ],
             },
         };
@@ -258,7 +258,7 @@ describe("SequenceChangeFamily - Compose", () => {
                     type: "Modify",
                     fields: {
                         foo: [
-                            [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                         ],
                     },
                 }],
@@ -272,7 +272,7 @@ describe("SequenceChangeFamily - Compose", () => {
                         type: "Modify",
                         fields: {
                             foo: [
-                                [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                                { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                             ],
                         },
                     },
@@ -297,7 +297,7 @@ describe("SequenceChangeFamily - Compose", () => {
                     type: "Modify",
                     fields: {
                         foo: [
-                            [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                         ],
                     },
                 }],
@@ -312,7 +312,7 @@ describe("SequenceChangeFamily - Compose", () => {
                         tomb,
                         fields: {
                             foo: [
-                                [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                                { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                             ],
                         },
                     },
@@ -331,7 +331,7 @@ describe("SequenceChangeFamily - Compose", () => {
                     type: "Modify",
                     fields: {
                         foo: [
-                            [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                         ],
                         bar: [
                             { type: "Delete", id: 2, count: 1 },
@@ -347,7 +347,7 @@ describe("SequenceChangeFamily - Compose", () => {
                     fields: {
                         bar: [
                             1,
-                            [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                            { type: "Insert", id: 3, content: [{ type, value: 3 }] },
                         ],
                         baz: [
                             { type: "Delete", id: 4, count: 1 },
@@ -363,12 +363,12 @@ describe("SequenceChangeFamily - Compose", () => {
                     type: "Modify",
                     fields: {
                         foo: [
-                            [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                            { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                         ],
                         bar: [
                             { type: "Delete", id: 2, count: 1 },
                             1,
-                            [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                            { type: "Insert", id: 3, content: [{ type, value: 3 }] },
                         ],
                         baz: [
                             { type: "Delete", id: 4, count: 1 },
@@ -398,11 +398,11 @@ describe("SequenceChangeFamily - Compose", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [
+                    { type: "Insert", id: 1, content: [
                         { type, value: 1 },
                         { type, value: 2 },
                         { type, value: 3 },
-                    ] }],
+                    ] },
                 ],
             },
         };
@@ -418,10 +418,10 @@ describe("SequenceChangeFamily - Compose", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [
+                    { type: "Insert", id: 1, content: [
                         { type, value: 1 },
                         { type, value: 3 },
-                    ] }],
+                    ] },
                 ],
             },
         };
@@ -431,7 +431,7 @@ describe("SequenceChangeFamily - Compose", () => {
     it("insert ○ delete (across inserts)", () => {
         const insert: SequenceChangeset = {
             marks: {
-                root: [[
+                root: [
                     { type: "Insert", id: 1, content: [
                         { type, value: 1 },
                         { type, value: 2 },
@@ -444,7 +444,7 @@ describe("SequenceChangeFamily - Compose", () => {
                         { type, value: 5 },
                         { type, value: 6 },
                     ] },
-                ]],
+                ],
             },
         };
         const deletion: SequenceChangeset = {
@@ -458,14 +458,14 @@ describe("SequenceChangeFamily - Compose", () => {
         const actual = compose([insert, deletion]);
         const expected: SequenceChangeset = {
             marks: {
-                root: [[
+                root: [
                     { type: "Insert", id: 1, content: [
                         { type, value: 1 },
                     ] },
                     { type: "Insert", id: 3, content: [
                         { type, value: 6 },
                     ] },
-                ]],
+                ],
             },
         };
         assert.deepEqual(actual, expected);
@@ -557,14 +557,14 @@ describe("SequenceChangeFamily - Compose", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                 ],
             },
         };
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                     { type: "Modify", value: { id: 0, value: 1 } },
                 ],
             },
@@ -578,14 +578,14 @@ describe("SequenceChangeFamily - Compose", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                 ],
             },
         };
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                     {
                         type: "Modify",
                         fields: {
@@ -616,7 +616,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                 ],
             },
         };
@@ -624,7 +624,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                     { type: "Delete", id: 1, count: 3 },
                 ],
             },
@@ -644,7 +644,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                 ],
             },
         };
@@ -652,7 +652,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
                     { type: "Revive", id: 1, count: 5, tomb },
                 ],
             },
@@ -665,18 +665,18 @@ describe("SequenceChangeFamily - Compose", () => {
         const insertA: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     2,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }, { type, value: 3 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }, { type, value: 3 }] },
                 ],
             },
         };
         const insertB: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                    { type: "Insert", id: 3, content: [{ type, value: 3 }] },
                     4,
-                    [{ type: "Insert", id: 4, content: [{ type, value: 4 }] }],
+                    { type: "Insert", id: 4, content: [{ type, value: 4 }] },
                 ],
             },
         };
@@ -684,16 +684,12 @@ describe("SequenceChangeFamily - Compose", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [
-                        { type: "Insert", id: 3, content: [{ type, value: 3 }] },
-                        { type: "Insert", id: 1, content: [{ type, value: 1 }] },
-                    ],
+                    { type: "Insert", id: 3, content: [{ type, value: 3 }] },
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     2,
-                    [
-                        { type: "Insert", id: 2, content: [{ type, value: 2 }] },
-                        { type: "Insert", id: 4, content: [{ type, value: 4 }] },
-                        { type: "Insert", id: 2, content: [{ type, value: 3 }] },
-                    ],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }] },
+                    { type: "Insert", id: 4, content: [{ type, value: 4 }] },
+                    { type: "Insert", id: 2, content: [{ type, value: 3 }] },
                 ],
             },
         };
@@ -815,9 +811,9 @@ describe("SequenceChangeFamily - Compose", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     2,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }, { type, value: 3 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }, { type, value: 3 }] },
                 ],
             },
         };
@@ -835,11 +831,11 @@ describe("SequenceChangeFamily - Compose", () => {
             marks: {
                 root: [
                     { type: "Revive", id: 3, count: 1, tomb },
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    { type: "Insert", id: 1, content: [{ type, value: 1 }] },
                     2,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                     { type: "Revive", id: 4, count: 1, tomb },
-                    [{ type: "Insert", id: 2, content: [{ type, value: 3 }] }],
+                    { type: "Insert", id: 2, content: [{ type, value: 3 }] },
                 ],
             },
         };

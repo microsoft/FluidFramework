@@ -32,8 +32,11 @@
     // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
     "remoteUser": "node",
     "features": {
-        "azure-cli": "latest",
-        "github-cli": "latest",
-        "git-lfs": "latest"
+        "git-lfs": "latest",
+        // We do not install Azure CLI and Github CLI because of security considerations
+        // when creating Github Codespaces instances. It's ok to install them manually if
+        // using this file to develop in a local container.
+        // "azure-cli": "latest",  // DO NOT UNCOMMENT
+        // "github-cli": "latest", // DO NOT UNCOMMENT
     }
 }

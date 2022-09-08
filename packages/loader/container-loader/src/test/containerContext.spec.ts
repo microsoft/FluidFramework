@@ -73,6 +73,8 @@ describe("ContainerContext Tests", () => {
             Sinon.fake(),
             Sinon.fake(),
             Sinon.fake(),
+            Sinon.fake(),
+            Sinon.fake(),
             Container.version,
             Sinon.fake(),
             existing,

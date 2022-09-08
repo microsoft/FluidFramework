@@ -22,6 +22,8 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
         case MessageType.Propose:
         case MessageType.Reject:
         case MessageType.NoOp:
+        case MessageType2.Accept:
+            case MessageType.Summarize:
             return true;
         default:
             return false;
@@ -35,8 +37,8 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
  * "op"
  * "summarize"
  */
-export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
-    return message.type === MessageType.Operation || message.type === MessageType.Summarize;
+export function isRuntimeMessage(message: { type: string; }): boolean {
+    return message.type === MessageType.Operation;
 }
 
 enum RuntimeMessage {
@@ -66,4 +68,17 @@ export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): bo
         return true;
     }
     return false;
+}
+
+// ADO #1385: staging code changes across layers.
+// Eventually to be replaced by MessageType.accept
+export enum MessageType2 {
+    Accept = "accept",
+}
+
+// ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
+export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
+    // This assumes that in the future relay service may implement coalescing of accept messages,
+    // same way it was doing coalescing of immediate noops in the past.
+    return message.type === MessageType.NoOp || message.type === MessageType2.Accept;
 }

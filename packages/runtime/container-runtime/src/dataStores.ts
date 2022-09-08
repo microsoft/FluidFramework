@@ -143,7 +143,6 @@ export class DataStores implements IDisposable {
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ),
                     writeGCDataAtRoot: this.writeGCDataAtRoot,
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             } else {
                 if (typeof value !== "object") {
@@ -164,7 +163,6 @@ export class DataStores implements IDisposable {
                     snapshotTree,
                     isRootDataStore: undefined,
                     writeGCDataAtRoot: this.writeGCDataAtRoot,
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -245,13 +243,11 @@ export class DataStores implements IDisposable {
                         entries: [createAttributesBlob(
                             pkg,
                             true /* isRootDataStore */,
-                            this.runtime.disableIsolatedChannels,
                         )],
                     },
                 },
             ),
             writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             pkg,
         });
 
@@ -356,7 +352,6 @@ export class DataStores implements IDisposable {
             snapshotTree: undefined,
             isRootDataStore: isRoot,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
         });
         this.contexts.addUnbound(context);
         return context;
@@ -378,7 +373,6 @@ export class DataStores implements IDisposable {
             snapshotTree: undefined,
             isRootDataStore: false,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             createProps: props,
         });
         this.contexts.addUnbound(context);

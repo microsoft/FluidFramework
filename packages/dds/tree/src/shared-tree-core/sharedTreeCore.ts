@@ -38,7 +38,9 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
     extends SharedObject<ISharedTreeCoreEvents> {
     public readonly editManager: EditManager<TChange, TChangeFamily>;
 
-    /** All {@link SummaryElement}s that are present on any {@link Index}es in this DDS */
+    /**
+     * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
+     */
     private readonly summaryElements: SummaryElement[];
 
     /**
@@ -116,7 +118,7 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     protected onConnect() {
-        assert(this.runtime.clientId !== undefined, "Expected clientId to be defined once connected");
+        assert(this.runtime.clientId !== undefined, 0x3a5 /* Expected clientId to be defined once connected */);
         this.editManager.setLocalSessionId(this.runtime.clientId);
     }
 

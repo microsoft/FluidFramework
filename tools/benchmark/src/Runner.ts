@@ -14,6 +14,8 @@ import {
     isParentProcess,
     isInPerformanceTestingMode,
     performanceTestSuiteTag,
+    userCategoriesSplitter,
+    TestType,
 } from "./Configuration";
 import { BenchmarkData } from "./Reporter";
 
@@ -34,6 +36,10 @@ import { BenchmarkData } from "./Reporter";
  * the iterations until it hits a low uncertainty point.
  *
  * Optionally, setup and teardown functions can be provided via the `before` and `after` options.
+ *
+ * Tests created with this function get tagged with '\@ExecutionTime', so mocha's --grep/--fgrep
+ * options can be used to only run this type of tests by fitering on that value.
+ *
  * @public
  */
 export function benchmark(args: BenchmarkArguments): Test {
@@ -45,10 +51,16 @@ export function benchmark(args: BenchmarkArguments): Test {
         only: args.only ?? false,
         before: args.before ?? (() => {}),
         after: args.after ?? (() => {}),
+        category: args.category ?? "",
     };
     const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
-    const typeTag = BenchmarkType[options.type];
-    const qualifiedTitle = `${performanceTestSuiteTag} @${typeTag} ${args.title}`;
+    const benchmarkTypeTag = BenchmarkType[options.type];
+    const testTypeTag = TestType[TestType.ExecutionTime];
+    let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
+
+    if (options.category !== "") {
+        qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${options.category}`;
+    }
 
     const itFunction = options.only ? it.only : it;
     const test = itFunction(qualifiedTitle, async () => {

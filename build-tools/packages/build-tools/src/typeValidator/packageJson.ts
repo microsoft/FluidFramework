@@ -27,6 +27,7 @@ interface PackageJson{
     name:string,
     version: string,
     main: string | undefined,
+    private: boolean | undefined,
     devDependencies: Record<string, string>;
     typeValidation?: {
         version: string,
@@ -80,6 +81,8 @@ export async function getAndUpdatePackageDetails(packageDir: string, updateOptio
         return {skipReason: "Skipping package: @fluid-internal "}
     }else if( packageDetails.pkg.main?.endsWith("index.js") !== true){
         return  {skipReason: "Skipping package: no index.js in main property"}
+    }else if(packageDetails.pkg.private === true){
+        return {skipReason: "Skipping package: private package"}
     }else if(packageDetails.pkg.typeValidation?.disabled === true){
         return  {skipReason: "Skipping package: type validation disabled"}
     }

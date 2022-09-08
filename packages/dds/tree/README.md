@@ -71,15 +71,21 @@ This diagram shows the ownership hierarchy during a transaction with solid arrow
 
 ```mermaid
 graph TD;
-    store["Data Store"]-->doc["Persisted Summaries"]
-    container["Fluid Container"]-->shared-tree;
-    shared-tree--"extends"-->shared-tree-core;
-    shared-tree-core-."reads".->doc;
-    shared-tree-core-->EditManager-->X["collab window & branches"];
-    shared-tree-core-->Indexes-->ForestIndex;
-    shared-tree-->checkout["default checkout"]-->transaction-."updates".->checkout;
-    transaction-->ProgressiveEditBuilder
-    checkout-."reads".->ForestIndex;
+    subgraph "Persisted Data"
+        store["Data Store"]-->doc["Persisted Summaries"]
+    end
+    container["Fluid Container"]-->shared-tree
+    subgraph "@fluid-internal/tree"
+        shared-tree--"extends"-->shared-tree-core
+        shared-tree-core-."reads".->doc
+        shared-tree-core-->EditManager-->X["collab window & branches"]
+        shared-tree-core-->Indexes-->ForestIndex
+        shared-tree-->checkout["default checkout"]
+        transaction-."updates".->checkout
+        transaction-->ProgressiveEditBuilder
+        checkout-."reads".->ForestIndex
+        checkout-->transaction
+    end
 ```
 
 `tree` is a DDS, and therefore it stores its persisted data in a Fluid Container, and is also owned by that same container.
@@ -111,11 +117,13 @@ could be added in the future.
 #### Viewing
 
 ```mermaid
-graph LR;
+flowchart LR;
     doc["Persisted Summaries"]--"Summary+Trailing ops"-->shared-tree-core
-    shared-tree--"configures"-->shared-tree-core
-    shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
-    ForestIndex--"Exposed by"-->checkout;
+    subgraph "@fluid-internal/tree"
+        shared-tree--"configures"-->shared-tree-core
+        shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
+        ForestIndex--"Exposed by"-->checkout
+    end
     checkout--"viewed by"-->app
 ```
 
@@ -151,7 +159,23 @@ When it is more designed, some details for how it works belong in this section (
 
 ### Editing
 
-TODO: add a diagram for this section.
+Edit related data flow with solid arrows.
+Key view related updates made in response with dotted arrows.
+
+This shows editing during a transaction:
+
+```mermaid
+flowchart RL
+    subgraph "@fluid-internal/tree"
+        transaction--"collects edits in"-->ProgressiveEditBuilder
+        ProgressiveEditBuilder--"updates anchors"-->AnchorSet
+        ProgressiveEditBuilder--"deltas for edits"-->transaction
+        transaction--"applies deltas to"-->forest["checkout's forest"]
+    end
+    command["App's command callback"]
+    command--"Edits"-->transaction
+    forest-."invalidation".->command
+```
 
 The application can use their view to locate places they want to edit.
 The application passes a "command" to the checkout which create a transaction that runs the command.
@@ -163,12 +187,137 @@ Each change is processed in two ways:
 -   the change is accumulated in a `ProgressiveEditBuilder` which will be used to create/encode the actual edit to send to Fluid.
 
 Once the command ends, the transaction is rolled back leaving the forest in a clean state.
-Then if the command did not error, a [`change-set`](./src/changeset/README.md) is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
+Then if the command did not error, a [`changeset`](./src/changeset/README.md) is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
 The checkout then rebases the op if any Ops came in while the transaction was pending (only possible for async transactions or if the checkout was behind due to it being async for some reason).
 Finally the checkout sends the op to `shared-tree-core` which submits it to Fluid.
 This submission results in the op becoming a local op, which `shared-tree-core` creates a delta for.
 This delta goes to the indexes, resulting in the ForestIndex and thus checkouts getting updated,
 as well as anything else subscribing to deltas.
 
+This shows completion of a transaction.
+Not shown are the rollback or changes to forest (and the resulting invalidation) and AnchorSet,
+then the updating of them with the final version of the edit.
+In the common case this can be skipped (since they cancel out).
+Also not shown is the (also usually unneeded) step of rebasing the changeset before storing it and sending it to the service.
+
+```mermaid
+flowchart LR
+    command["App's command callback"]--"commit"-->transaction
+    subgraph "@fluid-internal/tree"
+        transaction--"build"-->ProgressiveEditBuilder
+        ProgressiveEditBuilder--"changeset"-->transaction
+        transaction--"changeset (from builder)"-->core["shared-tree-core"]
+        core--"changeset"-->EditManager--"changeset"-->local["Local Branch"]
+    end
+    core--"Op"-->service["Fluid ordering service (Kafka)"]
+    service--"Sequenced Op"-->clients["All clients"]
+    service--"Sequenced Op"-->log["Op Log"]
+```
+
 When the op gets sequenced, `shared-tree-core` receives it back from the ordering service,
 rebases it as needed, and sends another delta to the indexes.
+
+```mermaid
+graph LR;
+    service["Fluid Service"]--"Sequenced Op"-->core["shared-tree-core"]
+    subgraph "@fluid-internal/tree"
+        core--"changeset"-->EditManager
+        EditManager--"add changeset"-->remote["remote branch"]
+        remote--"rebase into"-->main[main branch]
+        main--"rebase over new changeset"-->local["Local Branch"]
+        main--"sequenced changeset"-->Indexes
+        local--"delta"-->Indexes
+        Indexes--"delta"-->ForestIndex
+    end
+    ForestIndex--"invalidates"-->app
+    Indexes--"delta (for apps that want deltas)"-->app
+```
+
+### Dependencies
+
+`@fluid-internal/tree` depends on the Fluid runtime (various packages in `@fluidframework/*`)
+and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-internal`).
+`@fluid-internal/tree` is also complex,
+so its implementation is broken up into several parts which have carefully controlled dependencies to help ensure the codebase is maintainable.
+The goal of this internal structuring is to make evolution and maintenance easy.
+Some of the principles used to guide this are:
+
+- Avoid cyclic dependencies:
+
+    Cyclic dependencies can make it hard to learn a codebase incrementally, as well as make it hard to update or replace parts of the codebase incrementally.
+    Additionally they can cause runtime issues with initialization.
+
+- Minimize coupling:
+
+    Reducing the number and complexity of edges in the dependency graph.
+    This often involves approaches like making a component generic instead of depending on a concrete type directly,
+    or combining related components that have a lot of coupling.
+
+- Reducing transitive dependencies:
+
+    Try to keep the total number of dependencies of a given component small when possible.
+    This applies both at the module level, but also for the actual object defined by those modules.
+    One particular kind of dependency we make a particular effort to avoid are dependencies on stateful systems from code that has complex conditional logic.
+    One example of this is in [rebase](./src/rebase/README.md) where we ensured that the stateful system, `Rebaser` is not depended on by the actual change specific rebase policy.
+    Instead the actual replace policy logic for changes is behind the `ChangeRebaser` interface, which does not depend on `Rebaser` and exposes the policy as pure functions (and thus is stateless).
+    This is important for testability, since complex conditional logic (like `ChangeRebaser` implementations) require extensive unit testing,
+    which is very difficult (and often slow) for stateful systems and systems with lots of dependencies.
+    If we instead took the pattern of putting the change rebasing policy in `Rebaser` subclasses,
+    this would violate this guiding principal and result in much harder to isolate and test policy logic.
+
+    Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
+    This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
+    `shared-tree-core` is an excellent example of this: it can be run with no indexes, and trivial a change family allowing it to have very few required dependencies.
+    This often takes the form of either depending on interfaces (which can have their implementation swapped out or mocked), like [`ChangeFamily`](./src/change-family/README.md), or collection functionality in a registry, like we do for `FieldKinds` and `shared-tree-core`'s indexes.
+    Dependency injection is one example of a useful pattern for reducing transitive dependencies.
+    In addition to simplifying reasoning about the system (less total to think about for a given scenario) and simplifying testing,
+    this approach also makes the lifecycle for new features easier to manage, since they can be fully implemented and tested without having to modify code outside of themselves.
+    This makes pre-releases, stabilization and eventual deprecation of these features much easier, and even makes publishing them from separate packages possible if it ends up needing an even more separated lifecycle.
+
+    Additionally, this architectural approach can lead to smaller applications by not pulling in unneeded functionality.
+
+These approaches have led to a dependency structure that looks roughly like the diagram below.
+A more exact structure can be observed from the `fence.json` files which are enforced via [good-fences](https://www.npmjs.com/package/good-fences).
+In this diagram, some dependency arrows for dependencies which are already included transitively are omitted.
+
+```mermaid
+flowchart
+    direction TB
+    subgraph package ["@fluid-internal/tree"]
+        direction TB
+        subgraph core ["core libraries"]
+            direction TB
+            checkout-->forest
+            shared-tree-core-->change-family
+            forest-->schema-stored
+            change-family-->rebase
+            changeset-->tree
+            edit-manager-->change-family
+            rebase-->tree
+            schema-stored-->dependency-tracking
+            schema-view-->schema-stored
+            transaction-->change-family
+            transaction-->checkout
+            dependency-tracking
+            forest-->tree
+        end
+        core-->util
+        feature-->core
+        shared-tree-->feature
+        subgraph feature ["feature-libraries"]
+            direction TB
+            defaultRebaser
+            defaultSchema-->defaultFieldKinds-->modular-schema
+            forestIndex-->treeTextCursor
+            modular-schema
+            object-forest-->treeTextCursor
+            schemaIndex
+            sequence-change-family-->treeTextCursor
+        end
+        subgraph domains
+            JSON
+        end
+        domains-->feature
+    end
+    package-->runtime["Fluid runtime"]
+```
