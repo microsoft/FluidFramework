@@ -156,4 +156,5 @@ For a comprehensive view of the `counter` package's API documentation, see [the 
 [increment]: {{< relref "isharedcounter-interface.md#increment-methodsignature" >}}
 [incremented]: {{< relref "isharedcounterevents-interface.md#_call_-callsignature" >}}
 [Optimistic DDS]: {{< relref "dds.md#optimistic-data-structures" >}}
+[SharedMap]: {{< relref "map.md" >}}
 [SharedMap creation]: {{< relref "map.md#creation" >}}

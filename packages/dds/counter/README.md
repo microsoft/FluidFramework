@@ -157,4 +157,5 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 [increment]: https://fluidframework.com/docs/apis/counter/isharedcounter-interface#increment-methodsignature
 [incremented]: https://fluidframework.com/docs/apis/counter/isharedcounterevents-interface#_call_-callsignature
 [Optimistic DDS]: https://fluidframework.com/docs/build/dds/#optimistic-data-structures
+[SharedMap]: https://fluidframework.com/docs/data-structures/map
 [SharedMap creation]: https://fluidframework.com/docs/data-structures/map/#creation
