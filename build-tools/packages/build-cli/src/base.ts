@@ -134,7 +134,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     /** Log a message with an indent. */
     public logIndent(input: string, indentNumber = 2) {
         const message = indentString(input, indentNumber);
-        this.log(message);
+        this.info(message);
     }
 
     public info(message: string | Error) {

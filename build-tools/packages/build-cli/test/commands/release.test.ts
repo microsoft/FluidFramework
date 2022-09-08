@@ -59,25 +59,3 @@ describe("release command handles all states", () => {
     }
 });
 
-// for (const state of machineStates) {
-//     // console.log(`HERE!!!`);
-//     describe(`Handles ${state}`, async () => {
-//         // console.log(`state: ${state}`);
-//         test.stdout()
-//             .command([
-//                 "release",
-//                 "--releaseGroup",
-//                 "build-tools",
-//                 "--bumpType",
-//                 "patch",
-//                 "--testMode",
-//                 "--state",
-//                 state,
-//                 "-v",
-//             ])
-//             .exit(100)
-//             .it(`Handles state: '${state}'`, (ctx) => {
-//                 // ctx.stdout.includes(`Final state: ${state}`);
-//             });
-//     });
-// }

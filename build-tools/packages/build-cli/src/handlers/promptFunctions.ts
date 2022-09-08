@@ -259,7 +259,7 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
             {
                 title: "DETAILS",
                 message: chalk.red(
-                    `\nCan't release the ${releaseGroup} release group because some of its dependencies need to be released first.`,
+                    `Can't release the ${releaseGroup} release group because some of its dependencies need to be released first.`,
                 ),
             },
         ],
