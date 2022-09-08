@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree } from "../tree";
+import { JsonableTree, TreeValue } from "../tree";
 
 // TODOs:
 // Clipboard
@@ -69,7 +69,7 @@ export namespace Transposed {
 		/**
 		 * Can be left unset to represent the value being cleared.
 		 */
-		value?: Value;
+		value?: TreeValue;
 	}
 
 	export interface Modify {
@@ -311,7 +311,6 @@ export type NodeCount = number;
 export type GapCount = number;
 export type Skip = number;
 export type ChangesetTag = number | string;
-export type Value = number | string | boolean;
 export type ClientId = number;
 export enum Tiebreak { Left, Right }
 export enum Effects {
