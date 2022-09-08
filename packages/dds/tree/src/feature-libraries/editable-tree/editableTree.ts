@@ -62,6 +62,9 @@ export interface EditableTree {
      */
     readonly [valueSymbol]: Value;
 
+    /**
+     * Stores {@link ProxyTarget}, which implements reading and writing for this node.
+     */
     readonly [proxyTargetSymbol]: object;
 
     /**
