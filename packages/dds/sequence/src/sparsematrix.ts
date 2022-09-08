@@ -28,7 +28,7 @@ import { SharedSegmentSequence, SubSequence } from "./";
  * An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
  * to "pad" a run of unoccupied cells.
  *
- * @deprecated PaddingSegment is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated PaddingSegment is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export class PaddingSegment extends BaseSegment {
     public static readonly typeString = "PaddingSegment";
@@ -98,12 +98,12 @@ export class PaddingSegment extends BaseSegment {
 }
 
 /**
- * @deprecated SparseMatrixItem is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated SparseMatrixItem is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export type SparseMatrixItem = Serializable;
 
 /**
- * @deprecated RunSegment is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated RunSegment is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export class RunSegment extends SubSequence<SparseMatrixItem> {
     public static readonly typeString = "RunSegment";
@@ -183,42 +183,42 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 }
 
 /**
- * @deprecated MatrixSegment is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated MatrixSegment is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export type MatrixSegment = RunSegment | PaddingSegment;
 
 /**
- * @deprecated maxCol is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated maxCol is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export const maxCol = 0x200000;         // X128 Excel maximum of 16,384 columns
 
 /**
- * @deprecated maxCols is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated maxCols is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export const maxCols = maxCol + 1;
 
 /**
- * @deprecated maxRow is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated maxRow is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export const maxRow = 0xFFFFFFFF;       // X4096 Excel maximum of 1,048,576 rows
 
 /**
- * @deprecated maxRows is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated maxRows is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export const maxRows = maxRow + 1;
 
 /**
- * @deprecated maxCellPosition is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated maxCellPosition is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export const maxCellPosition = maxCol * maxRow;
 
 /**
- * @deprecated positionToRowCol is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated positionToRowCol is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export const rowColToPosition = (row: number, col: number) => row * maxCols + col;
 
 /**
- * @deprecated positionToRowCol is part of an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated positionToRowCol is part of an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export function positionToRowCol(position: number) {
     const row = Math.floor(position / maxCols);
@@ -227,7 +227,7 @@ export function positionToRowCol(position: number) {
 }
 
 /**
- * @deprecated SparseMatrix is an abandoned prototype.  Use SharedMatrix instead.
+ * @deprecated SparseMatrix is an abandoned prototype. Use {@link SharedMatrix} instead.
  */
 export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     /**
