@@ -45,10 +45,12 @@ export class TrackingGroup {
         }
     }
 
-    public unlink(segment: Trackable) {
-        if (this.trackedSet.remove(segment)) {
-            segment.trackingCollection.unlink(this);
+    public unlink(trackable: Trackable) {
+        if (this.trackedSet.remove(trackable)) {
+            trackable.trackingCollection.unlink(this);
+            return true;
         }
+        return false;
     }
 }
 
@@ -71,11 +73,14 @@ export class TrackingGroupCollection {
         }
     }
 
-    public unlink(trackingGroup: TrackingGroup): void {
+    public unlink(trackingGroup: TrackingGroup): boolean {
         if (trackingGroup.has(this.trackable)) {
-            trackingGroup.unlink(this.trackable);
+            if (!trackingGroup.unlink(this.trackable)) {
+                return false;
+            }
+            return this.trackingGroups.delete(trackingGroup);
         }
-        this.trackingGroups.delete(trackingGroup);
+        return false;
     }
 
     public copyTo(trackable: Trackable) {

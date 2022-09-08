@@ -39,3 +39,4 @@ export * from "./segmentPropertiesManager";
 export * from "./sortedSegmentSet";
 export * from "./textSegment";
 export * from "./referencePositions";
+export * from "./revertibles";

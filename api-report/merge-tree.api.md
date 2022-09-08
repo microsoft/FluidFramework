@@ -16,6 +16,19 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
 // @public (undocumented)
+export interface AnnotateRevertible {
+    // (undocumented)
+    operation: typeof MergeTreeDeltaType.ANNOTATE;
+    // (undocumented)
+    propertyDeltas: PropertySet;
+    // (undocumented)
+    trackingGroup: TrackingGroup;
+}
+
+// @public (undocumented)
+export function appendToRevertibles(driver: MergeTreeRevertibleDriver, event: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
+
+// @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
@@ -289,6 +302,9 @@ export interface Dictionary<TKey, TData> {
     // (undocumented)
     remove(key: TKey): void;
 }
+
+// @public (undocumented)
+export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @public (undocumented)
 export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, combiningOp?: ICombiningOp, seq?: number): MapLike<T>;
@@ -586,6 +602,14 @@ export interface InsertContext {
 }
 
 // @public (undocumented)
+export interface InsertRevertible {
+    // (undocumented)
+    operation: typeof MergeTreeDeltaType.INSERT;
+    // (undocumented)
+    trackingGroup: TrackingGroup;
+}
+
+// @public (undocumented)
 export function internedSpaces(n: number): string;
 
 // Warning: (ae-internal-missing-underscore) The name "IRBAugmentation" should be prefixed with an underscore because the declaration is marked as @internal
@@ -687,9 +711,9 @@ export class LocalReferenceCollection {
     // @internal
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
-    // (undocumented)
+    // @internal (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    // (undocumented)
+    // @internal (undocumented)
     addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
     // @internal (undocumented)
     addLocalRef(lref: LocalReferencePosition, offset: number): void;
@@ -708,15 +732,19 @@ export class LocalReferenceCollection {
     // @internal (undocumented)
     hierRefCount: number;
     // @internal (undocumented)
+    isAfterTombstone(lref: LocalReferencePosition): boolean;
+    // @internal (undocumented)
     removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // @internal
     split(offset: number, splitSeg: ISegment): void;
+    // @internal (undocumented)
+    walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
 
 // @public @sealed (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
-    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
 }
@@ -814,6 +842,9 @@ export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | t
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
 // @public (undocumented)
+export type MergeTreeDeltaRevertible = InsertRevertible | RemoveRevertible | AnnotateRevertible;
+
+// @public (undocumented)
 export const MergeTreeDeltaType: {
     readonly INSERT: 0;
     readonly REMOVE: 1;
@@ -837,6 +868,27 @@ export const MergeTreeMaintenanceType: {
 
 // @public (undocumented)
 export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
+
+// @public (undocumented)
+export interface MergeTreeRevertibleDriver {
+    // (undocumented)
+    annotateRange(start: number, end: number, props: PropertySet): any;
+    // (undocumented)
+    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    // (undocumented)
+    getContainingSegment(pos: number): {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    };
+    // (undocumented)
+    getPosition(segment: ISegment): number;
+    // (undocumented)
+    insertFromSpec(pos: number, spec: IJSONSegment): any;
+    // (undocumented)
+    localReferencePositionToPosition(lref: LocalReferencePosition): number;
+    // (undocumented)
+    removeRange(start: number, end: number): any;
+}
 
 // @public (undocumented)
 export interface MergeTreeStats {
@@ -1080,6 +1132,14 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean;
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
 // @public (undocumented)
+export interface RemoveRevertible {
+    // (undocumented)
+    operation: typeof MergeTreeDeltaType.REMOVE;
+    // (undocumented)
+    trackingGroup: TrackingGroup;
+}
+
+// @public (undocumented)
 export const reservedMarkerIdKey = "markerId";
 
 // @public (undocumented)
@@ -1090,6 +1150,9 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 
 // @public (undocumented)
 export const reservedTileLabelsKey = "referenceTileLabels";
+
+// @public (undocumented)
+export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @public (undocumented)
 export interface SearchResult {
@@ -1249,7 +1312,7 @@ export class TrackingGroup {
     // (undocumented)
     get tracked(): readonly Trackable[];
     // (undocumented)
-    unlink(segment: Trackable): void;
+    unlink(trackable: Trackable): boolean;
 }
 
 // @public (undocumented)
@@ -1266,7 +1329,7 @@ export class TrackingGroupCollection {
     // (undocumented)
     readonly trackingGroups: Set<TrackingGroup>;
     // (undocumented)
-    unlink(trackingGroup: TrackingGroup): void;
+    unlink(trackingGroup: TrackingGroup): boolean;
 }
 
 // @public (undocumented)

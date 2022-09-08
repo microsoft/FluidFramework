@@ -8,7 +8,6 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
 import random from "random-js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
@@ -66,7 +65,7 @@ export function doOverRange(
     range: IConfigRange,
     growthFunc: (input: number) => number,
     doAction: (current: number) => void) {
-    for (let current = range.min; current <= range.max; current = growthFunc(current)) {
+    for (let current = range.min; current <= range.max; current = current === 0 ? 1 : growthFunc(current)) {
         doAction(current);
     }
 }
@@ -221,13 +220,7 @@ export function applyMessages(
             clients.forEach((c) => c.applyMsg(message));
         }
     } catch (e) {
-        if (e instanceof Error) {
-            e.message += `\n${logger.toString()}`;
-        }
-        if (typeof e === "string") {
-            throw new LoggingError(`${e}\n${logger.toString()}`);
-        }
-        throw e;
+        throw logger.addLogsToError(e);
     }
     return seq;
 }

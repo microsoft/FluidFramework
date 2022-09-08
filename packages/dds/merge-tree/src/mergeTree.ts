@@ -891,7 +891,7 @@ export class MergeTree {
      * Otherwise eventual consistency is not guaranteed.
      * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
      */
-    private slideReferences(segment: ISegment, refsToSlide: Iterable<LocalReferencePosition>) {
+    private slideReferences(segment: ISegment, refsToSlide: LocalReferencePosition[]) {
         assert(
             isRemovedAndAcked(segment),
             0x2f1 /* slideReferences from a segment which has not been removed and acked */);
@@ -906,9 +906,9 @@ export class MergeTree {
             }
         } else {
             for (const ref of refsToSlide) {
-                ref.callbacks?.beforeSlide?.();
+                ref.callbacks?.beforeSlide?.(ref);
                 segment.localRefs?.removeLocalRef(ref);
-                ref.callbacks?.afterSlide?.();
+                ref.callbacks?.afterSlide?.(ref);
             }
         }
         // TODO is it required to update the path lengths?
