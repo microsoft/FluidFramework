@@ -68,8 +68,9 @@ export const askForReleaseType: StateHandlerFunction = async (
     }
 
     // This state is unique; it uses major/minor/patch as the actions
-    machine.action(bumpType);
-
-    BaseStateHandler.signalSuccess(machine, state);
+    const result = machine.action(bumpType);
+    if (result !== true) {
+        throw new Error(`Failed when calling the ${bumpType} action from the ${state} state.`);
+    }
     return true;
 };
