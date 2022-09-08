@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { JsonCompatibleReadOnly } from "../../change-family";
 import { FieldKindIdentifier } from "../../schema-stored";
 import { Delta, FieldKey } from "../../tree";
-import { Brand, Invariant } from "../../util";
+import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to

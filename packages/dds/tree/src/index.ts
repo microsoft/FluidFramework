@@ -47,14 +47,14 @@ export {
     brandOpaque,
     ValueFromBranded,
     NameFromBranded,
+    JsonCompatibleReadOnly,
+    JsonCompatible,
 } from "./util";
 
 export {
     ChangeEncoder,
     ChangeFamily,
     ProgressiveEditBuilder,
-    JsonCompatibleReadOnly,
-    JsonCompatible,
 } from "./change-family";
 
 export {

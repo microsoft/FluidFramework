@@ -8,6 +8,7 @@ export {
     TreeNavigationResult,
     mapCursorField,
     SynchronousNavigationResult,
+    reduceField,
 } from "./cursor";
 export * from "./forest";
 export {
