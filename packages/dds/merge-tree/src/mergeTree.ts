@@ -1930,6 +1930,18 @@ export class MergeTree {
         }
     }
 
+    public obliterateRange(
+        start: number,
+        end: number,
+        refSeq: number,
+        clientId: number,
+        seq: number,
+        overwrite = false,
+        opArgs: IMergeTreeDeltaOpArgs,
+    ): void {
+        this.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
+    }
+
     public markRangeRemoved(
         start: number,
         end: number,
@@ -1938,7 +1950,7 @@ export class MergeTree {
         seq: number,
         overwrite = false,
         opArgs: IMergeTreeDeltaOpArgs,
-    ) {
+    ): void {
         let _overwrite = overwrite;
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
