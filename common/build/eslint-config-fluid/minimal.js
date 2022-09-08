@@ -264,6 +264,9 @@ module.exports = {
         "@typescript-eslint/prefer-includes": "error",
         "@typescript-eslint/prefer-nullish-coalescing": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
+
+        // By default libraries should not take dependencies on node libraries
+        "import/no-nodejs-modules": "warn",
     },
     overrides: [
         {
