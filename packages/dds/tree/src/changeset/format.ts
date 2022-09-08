@@ -66,7 +66,9 @@ export namespace Transposed {
 	}
 
 	export interface SetValue extends HasOpId {
-		/** Can be left unset to represent the value being cleared. */
+		/**
+		 * Can be left unset to represent the value being cleared.
+		 */
 		value?: Value;
 	}
 

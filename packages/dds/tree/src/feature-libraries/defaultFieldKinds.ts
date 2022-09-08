@@ -4,10 +4,10 @@
  */
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
-import { ChangeEncoder, JsonCompatible, JsonCompatibleReadOnly } from "../change-family";
+import { ChangeEncoder } from "../change-family";
 import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, Delta, JsonableTree } from "../tree";
-import { brand } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import {
     FieldKind,
     Multiplicity,
@@ -22,6 +22,8 @@ import {
 
 /**
  * Encoder for changesets which carry no information.
+ *
+ * @sealed
  */
 export class UnitEncoder extends ChangeEncoder<0> {
     public encodeForJson(formatVersion: number, change: 0): JsonCompatible {
@@ -43,6 +45,8 @@ export class UnitEncoder extends ChangeEncoder<0> {
 
 /**
  * Encoder for changesets which are just a json compatible value.
+ *
+ * @sealed
  */
 export class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
     public encodeForJson(formatVersion: number, change: T): JsonCompatibleReadOnly {
@@ -134,6 +138,7 @@ export const noChangeHandle: FieldChangeHandler<0> = {
         rebase: (change: 0, over: 0, rebaseChild: NodeChangeRebaser) => 0,
     },
     encoder: new UnitEncoder(),
+    editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
     intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
 };
 
@@ -153,6 +158,7 @@ export const counterHandle: FieldChangeHandler<number> = {
         rebaseAnchors: (anchor: AnchorSet, over: number) => {},
     }),
     encoder: new ValueEncoder<number>(),
+    editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
     intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [{
         type: Delta.MarkType.Modify,
         setValue: change,
@@ -192,6 +198,7 @@ export const value: FieldKind = new FieldKind(
     {
         rebaser: replaceRebaser<JsonableTree>(),
         encoder: new ValueEncoder<JsonableTree & JsonCompatibleReadOnly>(),
+        editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
         intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
     },
     (types, other) =>
@@ -209,6 +216,7 @@ export const optional: FieldKind = new FieldKind(
     {
         rebaser: replaceRebaser<JsonableTree | 0>(),
         encoder: new ValueEncoder<(JsonableTree | 0) & JsonCompatibleReadOnly>(),
+        editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
         intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
     },
     (types, other) =>
@@ -226,6 +234,7 @@ export const sequence: FieldKind = new FieldKind(
     {
         rebaser: replaceRebaser<JsonableTree[]>(),
         encoder: new ValueEncoder<(JsonableTree[]) & JsonCompatibleReadOnly>(),
+        editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
         intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
     },
     // TODO: is order correct?

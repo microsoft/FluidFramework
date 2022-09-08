@@ -335,6 +335,7 @@ class Cursor extends RootedTextCursor implements ITreeSubscriptionCursor {
 
     free(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);
+        this.forest.currentCursors.delete(this);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 

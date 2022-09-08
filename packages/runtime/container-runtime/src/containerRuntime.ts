@@ -2618,6 +2618,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw error;
         }
 
+        if (this.deltaManager.readOnlyInfo.readonly) {
+            this.logger.sendErrorEvent({ eventName: "SubmitOpInReadonly" });
+        }
+
         this.batchManager.push({
             contents: serializedContent,
             deserializedContent,
