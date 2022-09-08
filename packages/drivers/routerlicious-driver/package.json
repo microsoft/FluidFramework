@@ -123,6 +123,9 @@
       "RemovedClassDeclaration_NullBlobStorageService": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "InterfaceDeclaration_IRouterliciousDriverPolicies": {
+        "forwardCompat": false
       }
     }
   }

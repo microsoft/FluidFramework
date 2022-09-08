@@ -115,6 +115,12 @@ describe("generateReleaseBranchName", () => {
         assert.equal(actual, expected);
     });
 
+    it("client using semver", () => {
+        const actual = generateReleaseBranchName(MonoRepoKind.Client, "1.2.3");
+        const expected = "release/1.2";
+        assert.equal(actual, expected);
+    });
+
     it("Fluid internal version scheme", () => {
         const actual = generateReleaseBranchName(MonoRepoKind.Client, "2.0.0-internal.1.0.0");
         const expected = "release/v2int/1.0";
