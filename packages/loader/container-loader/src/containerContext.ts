@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
@@ -113,8 +113,13 @@ export class ContainerContext implements IContainerContext {
         return this.container.clientDetails;
     }
 
+    private _connected: boolean;
+    /**
+     * When true, ops are free to flow
+     * When false, ops should be kept as pending or rejected
+     */
     public get connected(): boolean {
-        return this.container.connected;
+        return this._connected;
     }
 
     public get canSummarize(): boolean {
@@ -183,6 +188,7 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
+        this._connected = this.container.connected;
         this._quorum = quorum;
         this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
@@ -232,9 +238,7 @@ export class ContainerContext implements IContainerContext {
 
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
-
-        assert(connected === this.connected, 0x0de /* "Mismatch in connection state while setting" */);
-
+        this._connected = connected;
         runtime.setConnectionState(connected, clientId);
     }
 

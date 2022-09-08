@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { JsonCompatibleReadOnly } from "../../change-family";
 import { FieldKindIdentifier } from "../../schema-stored";
-import { Delta } from "../../tree";
-import { Brand, Invariant } from "../../util";
+import { Delta, FieldKey } from "../../tree";
+import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -67,10 +66,7 @@ export type NodeChangeComposer = (changes: FieldChangeMap[]) => FieldChangeMap;
 export type NodeChangeEncoder = (change: FieldChangeMap) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => FieldChangeMap;
 
-// TODO: Replace with Map<FieldKey, FieldChanges>
-export interface FieldChangeMap {
-    [key: string]: FieldChange;
-}
+export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
      fieldKind: FieldKindIdentifier;

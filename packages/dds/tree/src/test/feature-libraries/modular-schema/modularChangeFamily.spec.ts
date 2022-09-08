@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { JsonCompatibleReadOnly } from "../../../change-family";
 import {
     FieldChangeEncoder,
     FieldChangeHandler,
@@ -17,7 +16,7 @@ import {
 } from "../../../feature-libraries";
 import { FieldKindIdentifier } from "../../../schema-stored";
 import { Delta, FieldKey } from "../../../tree";
-import { brand } from "../../../util";
+import { brand, JsonCompatibleReadOnly } from "../../../util";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -73,92 +72,122 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 
 const family = new ModularChangeFamily(fieldKinds);
 
+const fieldA: FieldKey = brand("a");
+const fieldB: FieldKey = brand("b");
+
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
 const valueChange2: ValueChangeset = { old: 1, new: 2 };
 
-const innerChanges1a: FieldChangeMap = {
-    a: {
-        fieldKind: valueField.identifier,
-        change: brand(valueChange1a),
-    },
-};
+const innerChanges1a: FieldChangeMap = new Map([[
+    fieldA,
+    { fieldKind: valueField.identifier, change: brand(valueChange1a) },
+]]);
 
-const innerChanges1b: FieldChangeMap = {
-    a: {
-        fieldKind: valueField.identifier,
-        change: brand(valueChange1b),
-    },
+const innerChanges1b: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: valueField.identifier,
+            change: brand(valueChange1b),
+        },
+    ],
+    [
+        fieldB,
+        {
+            fieldKind: valueField.identifier,
+            change: brand(valueChange1a),
+        },
+    ],
+]);
 
-    b: {
-        fieldKind: valueField.identifier,
-        change: brand(valueChange1a),
-    },
-};
+const innerChanges2: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: valueField.identifier,
+            change: brand(valueChange2),
+        },
+    ],
+    [
+        fieldB,
+        {
+            fieldKind: valueField.identifier,
+            change: brand(valueChange1a),
+        },
+    ],
+]);
 
-const innerChanges2: FieldChangeMap = {
-    a: {
-        fieldKind: valueField.identifier,
-        change: brand(valueChange2),
-    },
+const rootChange1a: FieldChangeMap = new Map([
+    [
+        fieldA,
+        {
+            fieldKind: singleNodeField.identifier,
+            change: brand(innerChanges1a),
+        },
+    ],
+    [
+        fieldB,
+        {
+            fieldKind: valueField.identifier,
+            change: brand(valueChange2),
+        },
+    ],
+]);
 
-    b: {
-        fieldKind: valueField.identifier,
-        change: brand(valueChange1a),
-    },
-};
-
-const rootChange1a: FieldChangeMap = {
-    a: {
-        fieldKind: singleNodeField.identifier,
-        change: brand(innerChanges1a),
-    },
-
-    b: {
-        fieldKind: valueField.identifier,
-        change: brand(valueChange2),
-    },
-};
-
-const rootChange1b: FieldChangeMap = {
-    a: {
+const rootChange1b: FieldChangeMap = new Map([[
+    fieldA,
+    {
         fieldKind: singleNodeField.identifier,
         change: brand(innerChanges1b),
     },
-};
+]]);
 
-const rootChange2: FieldChangeMap = {
-    a: {
+const rootChange2: FieldChangeMap = new Map([[
+    fieldA,
+    {
         fieldKind: singleNodeField.identifier,
         change: brand(innerChanges2),
     },
-};
+]]);
 
 describe("ModularChangeFamily", () => {
     it("compose", () => {
         const composedValues: ValueChangeset = { old: 0, new: 2 };
 
-        const innerComposed: FieldChangeMap = {
-            a: {
-                fieldKind: valueField.identifier,
-                change: brand(composedValues),
-            },
-            b: {
-                fieldKind: valueField.identifier,
-                change: brand(valueChange1a),
-            },
-        };
+        const innerComposed: FieldChangeMap = new Map([
+            [
+                fieldA,
+                {
+                    fieldKind: valueField.identifier,
+                    change: brand(composedValues),
+                },
+            ],
+            [
+                fieldB,
+                {
+                    fieldKind: valueField.identifier,
+                    change: brand(valueChange1a),
+                },
+            ],
+        ]);
 
-        const expectedCompose: FieldChangeMap = {
-            a: {
-                fieldKind: singleNodeField.identifier,
-                change: brand(innerComposed),
-            },
-            b: {
-                fieldKind: valueField.identifier,
-                change: brand(valueChange2),
-            },
-        };
+        const expectedCompose: FieldChangeMap = new Map([
+            [
+                fieldA,
+                {
+                    fieldKind: singleNodeField.identifier,
+                    change: brand(innerComposed),
+                },
+            ],
+            [
+                fieldB,
+                {
+                    fieldKind: valueField.identifier,
+                    change: brand(valueChange2),
+                },
+            ],
+        ]);
 
         assert.deepEqual(family.compose([rootChange1a, rootChange2]), expectedCompose);
     });
@@ -167,23 +196,24 @@ describe("ModularChangeFamily", () => {
         const valueInverse1: ValueChangeset = { old: 1, new: 0 };
         const valueInverse2: ValueChangeset = { old: 2, new: 1 };
 
-        const innerInverse: FieldChangeMap = {
-            a: {
+        const innerInverse: FieldChangeMap = new Map([[
+            fieldA,
+            {
                 fieldKind: valueField.identifier,
                 change: brand(valueInverse1),
             },
-        };
+        ]]);
 
-        const expectedInverse: FieldChangeMap = {
-            a: {
-                fieldKind: singleNodeField.identifier,
-                change: brand(innerInverse),
-            },
-            b: {
-                fieldKind: valueField.identifier,
-                change: brand(valueInverse2),
-            },
-        };
+        const expectedInverse: FieldChangeMap = new Map([
+            [
+                fieldA,
+                { fieldKind: singleNodeField.identifier, change: brand(innerInverse) },
+            ],
+            [
+                fieldB,
+                { fieldKind: valueField.identifier, change: brand(valueInverse2) },
+            ],
+        ]);
 
         assert.deepEqual(family.invert(rootChange1a), expectedInverse);
     });
@@ -202,9 +232,6 @@ describe("ModularChangeFamily", () => {
             type: Delta.MarkType.Modify,
             setValue: 2,
         }];
-
-        const fieldA: FieldKey = brand("a");
-        const fieldB: FieldKey = brand("b");
 
         const nodeDelta: Delta.MarkList = [{
             type: Delta.MarkType.Modify,

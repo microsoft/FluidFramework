@@ -20,7 +20,9 @@ import { cachedValue, ICachedValue, recordDependency } from "../dependency-track
 import { JsonableTree, Delta } from "../tree";
 import { jsonableTreeFromCursor } from "./treeTextCursor";
 
-/** The storage key for the blob in the summary containing tree data */
+/**
+ * The storage key for the blob in the summary containing tree data
+ */
 const treeBlobKey = "ForestTree";
 
 /**
