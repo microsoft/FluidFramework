@@ -107,7 +107,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.5000 win32-x64 node-v14.18.1
+@fluid-tools/build-cli/0.4.5000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -385,7 +385,7 @@ DESCRIPTION
 
   First the release group's dependencies are checked. If any of the dependencies are also in the repo, then they're
   checked for the latest release version. If the dependencies have not yet been released, then the command prompts to
-  perform the release of the dependency, then run the releae command again.
+  perform the release of the dependency, then run the release command again.
 
   This process is continued until all the dependencies have been released, after which the release group itself is
 
@@ -404,8 +404,7 @@ USAGE
 
 FLAGS
   -v, --verbose      Verbose logging.
-  --dirname=<value>  [default:
-                     C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\dist\commands\run]
+  --dirname=<value>  [default: /home/tylerbu/code/FluidFramework/build-tools/packages/build-cli/dist/commands/run]
                      Directory
 
 DESCRIPTION
