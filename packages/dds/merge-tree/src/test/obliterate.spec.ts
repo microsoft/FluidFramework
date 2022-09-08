@@ -8,7 +8,7 @@ import { MergeTreeDeltaType } from "../ops";
 import { TestClient } from "./testClient";
 import { insertText } from "./testUtils";
 
-describe("obliterate", () => {
+describe.skip("obliterate", () => {
     let client: TestClient;
     let refSeq: number;
     const localClientId = 17;
