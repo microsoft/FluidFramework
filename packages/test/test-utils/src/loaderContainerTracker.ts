@@ -15,6 +15,9 @@ import { timeoutAwait, timeoutPromise } from "./timeoutUtils";
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");
 
+// set the maximum timeout value as 5 mins
+const defaultMaxTimeout = 5 * 6000;
+
 interface ContainerRecord {
     // A short number for debug output
     index: number;
@@ -202,16 +205,14 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         waitingSequenceNumberSynchronized = true;
                         debugWait("Waiting for sequence number synchronized");
                         await timeoutAwait(this.waitForAnyInboundOps(containersToApply), {
-                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start)
-                            : Number.MAX_SAFE_INTEGER,
+                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout,
                             errorMsg: "Timeout on waiting for sequence number synchronized",
                         });
                     }
                 } else {
                     waitingSequenceNumberSynchronized = false;
                     await timeoutAwait(this.waitForPendingClients(pendingClients), {
-                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start)
-                            : Number.MAX_SAFE_INTEGER,
+                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout,
                         errorMsg: "Timeout on waiting for pending join or leave op",
                     });
                 }
@@ -220,8 +221,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
-                const remainedDuration = timeoutDuration ? timeoutDuration - (Date.now() - start)
-                : Number.MAX_SAFE_INTEGER;
+                const remainedDuration = timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout;
                 await Promise.all(dirtyContainers.map(async (c) => Promise.race(
                     [timeoutPromise(
                         (resolve) => c.once("saved", () => resolve()),
@@ -243,8 +243,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
         // don't call pause if resumed is empty and pause everything, which is not what we want
         if (resumed.length !== 0) {
             await timeoutAwait(this.pauseProcessing(...resumed), {
-                durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start)
-                : Number.MAX_SAFE_INTEGER,
+                durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout,
                 errorMsg: "Timeout on waiting for pausing all resumed containers",
             });
         }
