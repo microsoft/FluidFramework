@@ -221,7 +221,7 @@ class ProxyTarget {
         return getFieldKind(getFieldSchema(this.getType() as TreeSchema, key));
     }
 
-    get keys(): string[] {
+    public getKeys(): string[] {
         // For now this is an approximation:
         const keys: string[] = [];
         for (const key of this.cursor.keys) {
@@ -337,7 +337,7 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     },
     // Includes all non-empty fields, which are the enumerable fields.
     ownKeys: (target: ProxyTarget): string[] => {
-        return target.keys;
+        return target.getKeys();
     },
     getOwnPropertyDescriptor: (target: ProxyTarget, key: string | symbol): PropertyDescriptor | undefined => {
         // We generally don't want to allow users of the proxy to reconfigure all the properties,
