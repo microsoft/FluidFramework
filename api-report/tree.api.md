@@ -199,6 +199,8 @@ export interface FieldChangeEncoder<TChangeset> {
 // @public
 export interface FieldChangeHandler<TChangeset> {
     // (undocumented)
+    editor: FieldEditor<TChangeset>;
+    // (undocumented)
     encoder: FieldChangeEncoder<TChangeset>;
     // (undocumented)
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
@@ -221,6 +223,11 @@ export interface FieldChangeRebaser<TChangeset> {
 
 // @public (undocumented)
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;
+
+// @public (undocumented)
+export interface FieldEditor<TChangeset> {
+    buildChildChange(childIndex: number, change: FieldChangeMap): TChangeset;
+}
 
 // @public (undocumented)
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
@@ -569,6 +576,8 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     // (undocumented)
     readonly encoder: ChangeEncoder<FieldChangeMap>;
     // (undocumented)
+    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
+    // (undocumented)
     intoDelta(change: FieldChangeMap): Delta.Root;
     // (undocumented)
     invert(changes: FieldChangeMap): FieldChangeMap;
@@ -583,6 +592,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
 // @public @sealed (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(family: ModularChangeFamily, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
+    submitChange(path: UpPathWithFieldKinds | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset): void;
 }
 
 // @public
@@ -913,6 +923,14 @@ export interface UpPath {
     readonly parent: UpPath | undefined;
     readonly parentField: FieldKey;
     readonly parentIndex: number;
+}
+
+// @public (undocumented)
+export interface UpPathWithFieldKinds extends UpPath {
+    // (undocumented)
+    readonly parent: UpPathWithFieldKinds | undefined;
+    // (undocumented)
+    readonly parentFieldKind: FieldKindIdentifier;
 }
 
 // @public
