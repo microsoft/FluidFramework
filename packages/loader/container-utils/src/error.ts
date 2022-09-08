@@ -201,14 +201,14 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
             const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
             return {
                 ...baseTelemetry,
-                messageJoinClientId: join.clientId,
+                joinMessageClientId: join.clientId,
             };
         }
         case MessageType.ClientLeave: {
             const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
             return {
                 ...baseTelemetry,
-                messageLeaveClientId: JSON.parse(systemLeaveMessage.data) as string,
+                leaveMessageClientId: JSON.parse(systemLeaveMessage.data) as string,
             };
         }
         default: {
