@@ -5,7 +5,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { Value, Anchor } from "../../tree";
 import {
-	IEditableForest, TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState,
+    IEditableForest, TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState,
 } from "../../forest";
 import { brand } from "../../util";
 import { TreeSchema, FieldSchema, rootFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../../schema-stored";
@@ -153,16 +153,16 @@ class ProxyContext implements EditableTreeContext {
 }
 
 class ProxyTarget {
-	private readonly lazyCursor: ITreeSubscriptionCursor;
+    private readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
 
-	constructor(
-		public readonly context: ProxyContext,
-		cursor: ITreeSubscriptionCursor,
-	) {
-		this.lazyCursor = cursor.fork();
+    constructor(
+        public readonly context: ProxyContext,
+        cursor: ITreeSubscriptionCursor,
+    ) {
+        this.lazyCursor = cursor.fork();
         context.withCursors.add(this);
-	}
+    }
 
     public free(): void {
         this.lazyCursor.free();
@@ -183,27 +183,27 @@ class ProxyTarget {
         this.context.withCursors.delete(this);
     }
 
-	public get cursor(): ITreeSubscriptionCursor {
-		if (this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared) {
+    public get cursor(): ITreeSubscriptionCursor {
+        if (this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared) {
             assert(this.anchor !== undefined, "EditableTree should have an anchor if it does not have a cursor");
-			const result = this.context.forest.tryMoveCursorTo(this.anchor, this.lazyCursor);
-			assert(result === TreeNavigationResult.Ok,
+            const result = this.context.forest.tryMoveCursorTo(this.anchor, this.lazyCursor);
+            assert(result === TreeNavigationResult.Ok,
                 "It is invalid to access an EditableTree node which no longer exists");
             this.context.withCursors.add(this);
             this.context.forest.anchors.forget(this.anchor);
             this.context.withAnchors.delete(this);
             this.anchor = undefined;
-		}
-		return this.lazyCursor;
-	}
+        }
+        return this.lazyCursor;
+    }
 
-	get type(): TreeSchema {
-		return this.context.forest.schema.lookupTreeSchema(this.cursor.type);
-	}
+    get type(): TreeSchema {
+        return this.context.forest.schema.lookupTreeSchema(this.cursor.type);
+    }
 
     get value(): Value {
-		return this.cursor.value;
-	}
+        return this.cursor.value;
+    }
 
     public lookupFieldKind(key: string): FieldKind {
         return getFieldKind(getFieldSchema(this.type, key));
@@ -268,46 +268,46 @@ class ProxyTarget {
  * by means of the cursors.
  */
 const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
-	get: (target: ProxyTarget, key: string | symbol): unknown => {
-		if (typeof key === "string") {
+    get: (target: ProxyTarget, key: string | symbol): unknown => {
+        if (typeof key === "string") {
             // All string keys are fields
             return target.proxifyField(key);
         }
-		if (key === type) {
-			return target.type;
-		} else if (key === value) {
+        if (key === type) {
+            return target.type;
+        } else if (key === value) {
             return target.value;
         } else if (key === proxySymbol) {
             return target;
         } else if (key === getTypeName) {
             return target.getTypeName.bind(target);
         }
-		return undefined;
-	},
-	set: (target: ProxyTarget, key: string | symbol, setValue: unknown, receiver: ProxyTarget): boolean => {
-		throw new Error("Not implemented.");
-	},
-	deleteProperty: (target: ProxyTarget, key: string | symbol): boolean => {
-		throw new Error("Not implemented.");
-	},
+        return undefined;
+    },
+    set: (target: ProxyTarget, key: string | symbol, setValue: unknown, receiver: ProxyTarget): boolean => {
+        throw new Error("Not implemented.");
+    },
+    deleteProperty: (target: ProxyTarget, key: string | symbol): boolean => {
+        throw new Error("Not implemented.");
+    },
     // Include documented symbols (except value when value is undefined) and all non-empty fields.
-	has: (target: ProxyTarget, key: string | symbol): boolean => {
+    has: (target: ProxyTarget, key: string | symbol): boolean => {
         if (typeof key === "symbol") {
-			switch (key) {
-				case proxySymbol:
-				case type:
+            switch (key) {
+                case proxySymbol:
+                case type:
                 case getTypeName:
-				// Currently not supporting iteration over fields.
+                // Currently not supporting iteration over fields.
                 // case Symbol.iterator:
-					return true;
+                    return true;
                 case value:
                     // Could do `target.value !== ValueSchema.Nothing`
                     // instead if values which could be modified should report as existing.
                     return target.value !== undefined;
-				default:
-					return false;
-			}
-		}
+                default:
+                    return false;
+            }
+        }
 
         // For now primary array fields are handled by just returning the array, so we don't need this:
         // const length = target.getPrimaryArrayLength();
@@ -324,37 +324,37 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         //     }
         // }
 
-		return target.has(key);
-	},
+        return target.has(key);
+    },
     // Includes all non-empty fields, which are the enumerable fields.
-	ownKeys: (target: ProxyTarget): string[] => {
+    ownKeys: (target: ProxyTarget): string[] => {
         return target.keys;
-	},
-	getOwnPropertyDescriptor: (target: ProxyTarget, key: string | symbol): PropertyDescriptor | undefined => {
-		// We generally don't want to allow users of the proxy to reconfigure all the properties,
+    },
+    getOwnPropertyDescriptor: (target: ProxyTarget, key: string | symbol): PropertyDescriptor | undefined => {
+        // We generally don't want to allow users of the proxy to reconfigure all the properties,
         // but it is an TypeError to return non-configurable for properties that do not exist on target,
         // so they must return true.
 
         if (typeof key === "symbol") {
-			if (key === proxySymbol) {
-				return { configurable: true, enumerable: false, value: target, writable: false };
-			} else if (key === type) {
-				return { configurable: true, enumerable: false, value: target.type, writable: false };
-			} else if (key === getTypeName) {
+            if (key === proxySymbol) {
+                return { configurable: true, enumerable: false, value: target, writable: false };
+            } else if (key === type) {
+                return { configurable: true, enumerable: false, value: target.type, writable: false };
+            } else if (key === getTypeName) {
                 return {
                     configurable: true, enumerable: false, value: target.getTypeName.bind(target), writable: false,
                 };
             }
-		} else if (target.has(key)) {
+        } else if (target.has(key)) {
             return {
                 configurable: true,
                 enumerable: true,
                 value: target.proxifyField(key),
                 writable: false,
             };
-		}
-		return undefined;
-	},
+        }
+        return undefined;
+    },
 };
 
 /**
@@ -416,7 +416,7 @@ function proxifyField(fieldKind: FieldKind, childTargets: ProxyTarget[]): Unwrap
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField] {
-	const context = new ProxyContext(forest);
+    const context = new ProxyContext(forest);
     const cursor = forest.allocateCursor();
     const destination = forest.root(forest.rootField);
     const cursorResult = forest.tryMoveCursorTo(destination, cursor);
