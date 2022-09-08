@@ -51,7 +51,9 @@ function clone<T>(value: Jsonable<T>): Jsonable<T> {
         : cloneObject(value);
 }
 
-// Helper that measures a variety of access patterns using ITreeCursor.
+/**
+ * Performance test suite that measures a variety of access patterns using ITreeCursor.
+ */
 function bench(
     data: {
         name: string;
