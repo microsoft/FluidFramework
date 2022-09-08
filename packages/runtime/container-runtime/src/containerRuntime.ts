@@ -1649,7 +1649,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
                     this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
-                    b,reak;
+                    break;
                 case ContainerMessageType.BlobAttach:
                     this.blobManager.processBlobAttachOp(message, local);
                     break;
