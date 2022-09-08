@@ -12,9 +12,9 @@ import { IEditableForest, initializeForest } from "../../forest";
 import { JsonableTree, EmptyKey, Value } from "../../tree";
 import { brand, Brand, clone } from "../../util";
 import {
-    defaultSchemaPolicy, getEditableTree, EditableTree, buildForest, typeSymbol, UnwrappedEditableField,
-    proxySymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive,
-    isPrimitiveValue, isPrimitive, Multiplicity, getTypeNameSymbol, UnwrappedEditableTree,
+    defaultSchemaPolicy, getEditableTree, EditableTree, buildForest, getTypeSymbol, UnwrappedEditableField,
+    proxyTargetSymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive,
+    isPrimitiveValue, isPrimitive, Multiplicity,
 } from "../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -27,11 +27,13 @@ const stringSchema = namedTreeSchema({
     extraLocalFields: emptyField,
     value: ValueSchema.String,
 });
+
 const int32Schema = namedTreeSchema({
     name: brand("Int32"),
     extraLocalFields: emptyField,
     value: ValueSchema.Number,
 });
+
 const float32Schema = namedTreeSchema({
     name: brand("Float32"),
     extraLocalFields: emptyField,
@@ -71,6 +73,7 @@ const addressSchema = namedTreeSchema({
 const mapStringSchema = namedTreeSchema({
     name: brand("Map<String>"),
     extraLocalFields: fieldSchema(FieldKinds.value, [stringSchema.name]),
+    value: ValueSchema.Serializable,
 });
 
 const personSchema = namedTreeSchema({
@@ -207,9 +210,9 @@ function expectTreeEquals(inputField: UnwrappedEditableField, expected: Jsonable
         return;
     }
     // Confirm we have an EditableTree object.
-    assert(node[proxySymbol] !== undefined);
+    assert(node[proxyTargetSymbol] !== undefined);
     assert.equal(node[valueSymbol], expected.value);
-    const type = node[typeSymbol];
+    const type = node[getTypeSymbol]();
     assert.equal(type, expectedType);
     for (const key of Object.keys(node)) {
         const subNode: UnwrappedEditableField = node[key];
@@ -242,11 +245,11 @@ describe("editable-tree", () => {
         const proxy = buildTestPerson();
         assert.ok(proxy);
         assert.equal(Object.keys(proxy).length, 5);
-        assert.equal(proxy[typeSymbol], personSchema);
-        assert.equal(proxy.address[typeSymbol], addressSchema);
-        assert.equal((proxy.address.phones[2] as ComplexPhoneType)[typeSymbol], complexPhoneSchema);
-        assert.equal(proxy[getTypeNameSymbol]("name"), stringSchema.name);
-        assert.equal(proxy.address[getTypeNameSymbol]("phones"), phonesSchema.name);
+        assert.equal(proxy[getTypeSymbol](), personSchema);
+        assert.equal(proxy.address[getTypeSymbol](), addressSchema);
+        assert.equal((proxy.address.phones[2] as ComplexPhoneType)[getTypeSymbol](), complexPhoneSchema);
+        assert.equal(proxy[getTypeSymbol]("name", true), stringSchema.name);
+        assert.equal(proxy.address[getTypeSymbol]("phones", true), phonesSchema.name);
     });
 
     it("traverse a complete tree", () => {
@@ -263,9 +266,8 @@ describe("editable-tree", () => {
         assert.equal("lazyCursor" in personProxy, false);
         assert.equal("context" in personProxy, false);
         // Check for expected symbols:
-        assert(proxySymbol in personProxy);
-        assert(typeSymbol in personProxy);
-        assert(getTypeNameSymbol in personProxy);
+        assert(proxyTargetSymbol in personProxy);
+        assert(getTypeSymbol in personProxy);
         // Check fields show up:
         assert("age" in personProxy);
         assert.equal(EmptyKey in personProxy, false);
@@ -388,7 +390,7 @@ describe("editable-tree", () => {
         };
         const forest = setupForest(schemaData, [{ type: optionalChildSchema.name, fields: { child: [{ type: int32Schema.name, value: undefined }] } }]);
         const [context, field] = getEditableTree(forest);
-        assert.throws(() => ((field as EditableTree).child), /Undefined values not allowed/);
+        assert.throws(() => ((field as EditableTree).child), /`undefined` values not allowed for primitive fields/);
         context.free();
     });
 

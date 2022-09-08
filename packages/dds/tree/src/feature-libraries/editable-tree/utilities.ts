@@ -29,7 +29,7 @@ export function isPrimitive(schema: TreeSchema): boolean {
 export type PrimitiveValue = string | boolean | number;
 
 export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue {
-    return typeof nodeValue !== "object";
+    return nodeValue !== undefined && typeof nodeValue !== "object";
 }
 
 export function getPrimaryField(schema: TreeSchema): { key: LocalFieldKey; schema: FieldSchema; } | undefined {

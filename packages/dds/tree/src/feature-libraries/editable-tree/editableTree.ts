@@ -8,7 +8,9 @@ import {
     IEditableForest, TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState,
 } from "../../forest";
 import { brand } from "../../util";
-import { TreeSchema, FieldSchema, rootFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../../schema-stored";
+import {
+    FieldSchema, rootFieldKey, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema,
+} from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
     AdaptingProxyHandler,
@@ -16,30 +18,28 @@ import {
     getFieldKind, getFieldSchema, getPrimaryField, isPrimitive, isPrimitiveValue, PrimitiveValue,
 } from "./utilities";
 
-// Symbol for extracting target from editable-tree proxies.
-// Useful for debugging and testing, but not part of the public API.
-export const proxySymbol: unique symbol = Symbol("editable-tree proxy");
+/**
+ * A symbol for extracting target from editable-tree proxies.
+ * Useful for debugging and testing, but not part of the public API.
+ */
+export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarget");
 
 /**
- * A symbol to for the type of a node in contexts where string keys are already in use for fields.
+ * A symbol to get a function, which returns the type of a node in contexts
+ * where string keys are already in use for fields.
  */
-export const type: unique symbol = Symbol("editable-tree type");
+export const getTypeSymbol: unique symbol = Symbol("editable-tree:getType()");
 
  /**
- * A symbol to for the value of a node in contexts where string keys are already in use for fields.
+ * A symbol to get the value of a node in contexts where string keys are already in use for fields.
  */
-export const value: unique symbol = Symbol("editable-tree value");
-
-/**
- * A symbol to for the type name of a child node in contexts where string keys are already in use for fields.
- */
- export const getTypeName: unique symbol = Symbol("editable-tree typeName");
+export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
 /**
  * A tree which can be traversed and edited.
  *
- * When iterating, only visits non tempt fields.
- * To discover empty fields, inspect the schema using {@link typeSymbol}.
+ * When iterating, only visits non-empty fields.
+ * To discover empty fields, inspect the schema using {@link getTypeSymbol}.
  *
  * TODO: support editing.
  * TODO: `extends Iterable<EditableField>`
@@ -50,22 +50,19 @@ export const value: unique symbol = Symbol("editable-tree value");
  */
 export interface EditableTree {
     /**
-     * The type of this node.
-     * If this node is is well-formed, it must follow this schema.
+     * A function to get the type of a node.
+     * If this node is well-formed, it must follow this schema.
+     * @param key - if key is supplied, returns the type of a non-sequence child node (if exists)
+     * @param nameOnly - if true, returns only the type identifier
      */
-    readonly [type]: TreeSchema;
-
-    /**
-     * A function to get the type of a non-sequence child node.
-    */
-    readonly [getTypeName]: (key: string) => TreeSchemaIdentifier;
+    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
 
     /**
      * Value stored on this node.
      */
-    readonly [value]: Value;
+    readonly [valueSymbol]: Value;
 
-    readonly [proxySymbol]: object;
+    readonly [proxyTargetSymbol]: object;
 
     /**
      * Fields of this node, indexed by their field keys (as strings).
@@ -85,7 +82,7 @@ export interface EditableTree {
 
 /**
  * EditableTree,
- * but with for a type that `isPrimitive` unwrapped into just the value if that value is a {@link PrimitiveValue}.
+ * but with any type that `isPrimitive` unwrapped into the value if that value is a {@link PrimitiveValue}.
  */
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 
@@ -108,7 +105,10 @@ export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly Unwrapped
 export type EditableField = readonly [FieldSchema, readonly EditableTree[]];
 
 /**
- * Unwraps fields with non-sequence multiplicities.
+ * Unwrapped field.
+ * Non-sequence multiplicities are unwrapped to the child tree or `undefined` if there is none.
+ * Sequence multiplicities are handled with arrays.
+ * See {@link UnwrappedEditableTree} for how the children themselves are unwrapped.
  */
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
 
@@ -197,8 +197,20 @@ class ProxyTarget {
         return this.lazyCursor;
     }
 
-    get type(): TreeSchema {
-        return this.context.forest.schema.lookupTreeSchema(this.cursor.type);
+    public getType(key?: string, nameOnly?: boolean): TreeSchemaIdentifier | TreeSchema | undefined {
+        let typeName = this.cursor.type;
+        if (key !== undefined) {
+            const childTypes = mapCursorField(this.cursor, brand(key), (c) => c.type);
+            assert(childTypes.length <= 1, "invalid non sequence");
+            typeName = childTypes[0];
+        }
+        if (nameOnly) {
+            return typeName;
+        }
+        if (typeName) {
+            return this.context.forest.schema.lookupTreeSchema(typeName);
+        }
+        return undefined;
     }
 
     get value(): Value {
@@ -206,7 +218,7 @@ class ProxyTarget {
     }
 
     public lookupFieldKind(key: string): FieldKind {
-        return getFieldKind(getFieldSchema(this.type, key));
+        return getFieldKind(getFieldSchema(this.getType() as TreeSchema, key));
     }
 
     get keys(): string[] {
@@ -230,7 +242,7 @@ class ProxyTarget {
      * @returns the key, if any, of the primary array field.
      */
     public getPrimaryArrayKey(): LocalFieldKey | undefined {
-        const nodeType = this.type;
+        const nodeType = this.getType() as TreeSchema;
         const primary = getPrimaryField(nodeType);
         if (primary === undefined) {
             return undefined;
@@ -273,14 +285,12 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             // All string keys are fields
             return target.proxifyField(key);
         }
-        if (key === type) {
-            return target.type;
-        } else if (key === value) {
+        if (key === getTypeSymbol) {
+            return target.getType.bind(target);
+        } else if (key === valueSymbol) {
             return target.value;
-        } else if (key === proxySymbol) {
+        } else if (key === proxyTargetSymbol) {
             return target;
-        } else if (key === getTypeName) {
-            return target.getTypeName.bind(target);
         }
         return undefined;
     },
@@ -294,13 +304,12 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     has: (target: ProxyTarget, key: string | symbol): boolean => {
         if (typeof key === "symbol") {
             switch (key) {
-                case proxySymbol:
-                case type:
-                case getTypeName:
+                case proxyTargetSymbol:
+                case getTypeSymbol:
                 // Currently not supporting iteration over fields.
                 // case Symbol.iterator:
                     return true;
-                case value:
+                case valueSymbol:
                     // Could do `target.value !== ValueSchema.Nothing`
                     // instead if values which could be modified should report as existing.
                     return target.value !== undefined;
@@ -336,14 +345,10 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         // so they must return true.
 
         if (typeof key === "symbol") {
-            if (key === proxySymbol) {
+            if (key === proxyTargetSymbol) {
                 return { configurable: true, enumerable: false, value: target, writable: false };
-            } else if (key === type) {
-                return { configurable: true, enumerable: false, value: target.type, writable: false };
-            } else if (key === getTypeName) {
-                return {
-                    configurable: true, enumerable: false, value: target.getTypeName.bind(target), writable: false,
-                };
+            } else if (key === getTypeSymbol) {
+                return { configurable: true, enumerable: false, value: target.getType.bind(target), writable: false };
             }
         } else if (target.has(key)) {
             return {
@@ -361,13 +366,14 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
  * See {@link UnwrappedEditableTree} for documentation on what unwrapping this perform.
  */
 function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
-    if (isPrimitive(target.type)) {
+    const fieldSchema = target.getType() as TreeSchema;
+    if (isPrimitive(fieldSchema)) {
         const nodeValue = target.cursor.value;
         // see `isPrimitive` doc for `undefined` case
-        assert(nodeValue !== undefined, "Undefined values not allowed");
         if (isPrimitiveValue(nodeValue)) {
             return nodeValue;
         }
+        assert(fieldSchema.value === ValueSchema.Serializable, "`undefined` values not allowed for primitive fields");
     }
     const primary = target.getPrimaryArrayKey();
     if (primary !== undefined) {

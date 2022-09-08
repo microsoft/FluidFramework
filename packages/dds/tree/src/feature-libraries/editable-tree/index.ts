@@ -10,10 +10,9 @@ export {
     EditableTreeOrPrimitive,
     UnwrappedEditableTree,
     UnwrappedEditableField,
-    type as typeSymbol,
-    value as valueSymbol,
-    getTypeName as getTypeNameSymbol,
-    proxySymbol,
+    getTypeSymbol,
+    valueSymbol,
+    proxyTargetSymbol,
     EditableTreeContext,
 } from "./editableTree";
 export {

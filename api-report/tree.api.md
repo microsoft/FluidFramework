@@ -169,11 +169,10 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 
 // @public
 export interface EditableTree {
-    readonly [getTypeNameSymbol]: (key: string) => TreeSchemaIdentifier;
+    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
     // (undocumented)
-    readonly [proxySymbol]: object;
-    readonly [typeSymbol]: TreeSchema;
-    readonly [value_2]: Value;
+    readonly [proxyTargetSymbol]: object;
+    readonly [valueSymbol]: Value;
     readonly [key: string]: UnwrappedEditableField;
 }
 
@@ -336,7 +335,7 @@ export interface GenericTreeNode<TChild> extends NodeData {
 export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField];
 
 // @public
-export const getTypeNameSymbol: unique symbol;
+export const getTypeSymbol: unique symbol;
 
 // @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
@@ -737,8 +736,8 @@ export abstract class ProgressiveEditBuilder<TChange> {
 // @public
 type ProtoNode = JsonableTree;
 
-// @public (undocumented)
-export const proxySymbol: unique symbol;
+// @public
+export const proxyTargetSymbol: unique symbol;
 
 // @public
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
@@ -934,9 +933,6 @@ export interface TreeValue extends Serializable {
 }
 
 // @public
-export const typeSymbol: unique symbol;
-
-// @public
 class UnitEncoder extends ChangeEncoder<0> {
     // (undocumented)
     decodeBinary(formatVersion: number, change: IsoBuffer): 0;
@@ -991,6 +987,9 @@ export enum ValueSchema {
     // (undocumented)
     String = 2
 }
+
+// @public
+export const valueSymbol: unique symbol;
 
 // (No @packageDocumentation comment for this package)
 
