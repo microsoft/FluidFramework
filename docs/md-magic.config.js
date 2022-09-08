@@ -85,32 +85,40 @@ You can run this example using the following steps:
     return `${steps.join("\n")}\n`;
 }
 
-const generateInstallationSection = (pkg, devDependency) => {
-    return `## Installation
-
-To get started, install the package by running the following command:
+const generateInstallationSection = (pkg, devDependency, includeHeading) => {
+    const sectionBody = `To get started, install the package by running the following command:
 
 \`\`\`bash
 npm i ${pkg.name}${devDependency ? " -D" : ""}
 \`\`\``;
+
+    return includeHeading
+        ? `## Installation${os.EOL}${os.EOL}${sectionBody}`
+        : sectionBody;
 }
 
-const trademarkSection = `## Trademark
-
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
-or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+const generateTrademarkSection = (includeHeading) => {
+    const sectionBody = `This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.`;
 
-const generateApiDocsLinkSection = (pkg) => {
-    return `## API Documentation
-
-API documentation for **${pkg.name}** is available at <https://fluidframework.com/docs/apis/${pkg.shortName}>.`;
+    return includeHeading
+        ? `## Trademark${os.EOL}${os.EOL}${sectionBody}`
+        : sectionBody;
 }
 
-const generateScriptsSection = (scriptsTable) => {
-    return `## Scripts
+const generateApiDocsLinkSection = (pkg, includeHeading) => {
+    const sectionBody = `API documentation for **${pkg.name}** is available at <https://fluidframework.com/docs/apis/${pkg.shortName}>.`;
 
-${scriptsTable}`;
+    return includeHeading
+        ? `## API Documentation${os.EOL}${os.EOL}${sectionBody}`
+        : sectionBody;
+}
+
+const generateScriptsSection = (scriptsTable, includeHeading) => {
+    return includeHeading
+        ? `## Scripts${os.EOL}${os.EOL}${scriptsTable}`
+        : scriptsTable;
 }
 
 const fetchFunc = async (content, options) => {
@@ -179,30 +187,47 @@ const mdMagicConfig = {
             options.pkg = getPackageJsonPath(config.originalPath);
             return require("markdown-magic-package-json")(content, options, config);
         },
-        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:installation=true apiDocs=true scripts=true trademark=true devDependency=false) --> */
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_SIMPLE:installation=TRUE&apiDocs=TRUE&scripts=TRUE&trademark=TRUE&devDependency=FALSE) --> */
         README_SIMPLE(content, options, config) {
             const pkg = getPackageJson(config.originalPath);
 
             const sections = [generatedContentNotice];
 
             if(options.installation !== "FALSE") {
-                sections.push(generateInstallationSection(pkg, options.devDependency));
+                sections.push(generateInstallationSection(pkg, options.devDependency, true));
             }
 
             if(options.apiDocs !== "FALSE") {
-                sections.push(generateApiDocsLinkSection(pkg));
+                sections.push(generateApiDocsLinkSection(pkg, true));
             }
 
             if(options.scripts !== "FALSE") {
                 const scriptsTable = require("markdown-magic-package-scripts")(content, options, config);
-                sections.push(generateScriptsSection(scriptsTable));
+                sections.push(generateScriptsSection(scriptsTable, true));
             }
 
             if(options.trademark !== "FALSE") {
-                sections.push(trademarkSection);
+                sections.push(generateTrademarkSection(true));
             }
 
             return sections.join(`${os.EOL}${os.EOL}`);
+        },
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) --> */
+        README_API_DOCS_SECTION(content, options, config) {
+            const includeHeading = options.includeHeading !== "FALSE";
+            const pkg = getPackageJson(config.originalPath);
+            return generateApiDocsLinkSection(pkg, includeHeading);
+        },
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=FALSE) --> */
+        README_INSTALLATION_SECTION(content, options, config) {
+            const includeHeading = options.includeHeading !== "FALSE";
+            const pkg = getPackageJson(config.originalPath);
+            return generateInstallationSection(pkg, options.devDependency, includeHeading);
+        },
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) --> */
+        README_TRADEMARK_SECTION(content, options, config) {
+            const includeHeading = options.includeHeading !== "FALSE";
+            return generateTrademarkSection(includeHeading);
         },
         TEMPLATE(content, options, config) {
             const pkg = getPackageJson(config.originalPath);
@@ -211,6 +236,7 @@ const mdMagicConfig = {
             options.src = pathLib.relative(dir, pathLib.join(mdMagicTemplatesPath, options.src));
             return template({ pkg: pkg })(content, options, config);
         },
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) --> */
         SCRIPTS: require("markdown-magic-package-scripts"),
         FETCH: fetchFunc,
     },
