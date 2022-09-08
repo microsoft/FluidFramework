@@ -112,11 +112,83 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
+      "InterfaceDeclaration_ISharedIntervalCollection": {
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_SharedNumberSequence": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedNumberSequenceFactory": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedObjectSequence": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedObjectSequenceFactory": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedTypeAliasDeclaration_MatrixSegment": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxCellPosition": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxCol": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxCols": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxRow": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_maxRows": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_PaddingSegment": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedFunctionDeclaration_positionToRowCol": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedVariableDeclaration_rowColToPosition": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_RunSegment": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SparseMatrix": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SparseMatrixFactory": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedTypeAliasDeclaration_SparseMatrixItem": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
       "ClassDeclaration_IntervalCollection": {
         "backCompat": false
       },
       "ClassDeclaration_SequenceInterval": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "InterfaceDeclaration_ISharedString": {
         "backCompat": false
@@ -125,6 +197,9 @@
         "backCompat": false
       },
       "ClassDeclaration_SequenceDeltaEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedIntervalCollection": {
         "backCompat": false
       },
       "ClassDeclaration_SequenceMaintenanceEvent": {
@@ -150,7 +225,11 @@
       },
       "ClassDeclaration_SparseMatrix": {
         "backCompat": false
-      }
+      },
+      "ClassDeclaration_Interval": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISharedIntervalCollection": {"backCompat": false}
     }
   }
 }

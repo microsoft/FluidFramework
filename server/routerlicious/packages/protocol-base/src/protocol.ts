@@ -155,9 +155,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
                 immediateNoOp = true;
                 break;
 
-            case MessageType.Reject:
-                throw new Error("Quorum rejection is removed.");
-
             default:
         }
 
