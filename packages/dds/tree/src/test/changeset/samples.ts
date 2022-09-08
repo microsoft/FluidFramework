@@ -4,7 +4,7 @@
  */
 
 import { jsonArray, jsonNumber, jsonObject, jsonString } from "../../domains";
-import { ChangesetTag, Effects, Transposed as T } from "../../changeset";
+import { ChangesetTag, Effects, Transposed as T } from "../../feature-libraries";
 
 /**
  * Interface used solely to annotate samples with clarifying information.
