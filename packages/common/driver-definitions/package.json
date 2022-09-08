@@ -42,7 +42,7 @@
     "@fluidframework/protocol-definitions": "^1.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.3.1000",
     "@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@^1.1.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
