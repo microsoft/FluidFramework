@@ -49,6 +49,7 @@ export class DocumentService implements api.IDocumentService {
         private _resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,
         private deltaStorageUrl: string,
+        private deltaStreamUrl: string,
         private storageUrl: string,
         private readonly logger: ITelemetryLogger,
         protected tokenProvider: ITokenProvider,
@@ -192,31 +193,31 @@ export class DocumentService implements api.IDocumentService {
                 this.documentId,
                 refreshToken,
             );
+
             return R11sDocumentDeltaConnection.create(
                 this.tenantId,
                 this.documentId,
                 ordererToken.jwt,
                 io,
                 client,
-                this.ordererUrl,
+                this.deltaStreamUrl,
                 this.logger,
             );
         };
 
         // Attempt to establish connection.
         // Retry with new token on authorization error; otherwise, allow container layer to handle.
-        let connection: api.IDocumentDeltaConnection;
         try {
-            connection = await connect();
+            const connection = await connect();
+            return connection;
         } catch (error: any) {
             if (error?.statusCode === 401) {
                 // Fetch new token and retry once,
                 // otherwise 401 will be bubbled up as non-retriable AuthorizationError.
-                connection = await connect(true /* refreshToken */);
+                return connect(true /* refreshToken */);
             }
             throw error;
         }
-        return connection;
     }
 
     /**
@@ -241,6 +242,7 @@ export class DocumentService implements api.IDocumentService {
         this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || this.ordererUrl;
         this.lastDiscoveredAt = Date.now();
     }
 

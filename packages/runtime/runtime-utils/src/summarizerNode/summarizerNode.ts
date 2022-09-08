@@ -166,10 +166,15 @@ export class SummarizerNode implements IRootSummarizerNode {
         // If there is no latestSummary, clearSummary and return before reaching this code.
         assert(!!localPathsToUse, 0x1a5 /* "Tracked summary local paths not set" */);
 
+        // DataStore can be realized out-of-order during the summary execution (ex. the mixinSummaryHandler
+        // in order to provide search capability to the summaries). If that happens,
+        // a child node will not have the handle paths with ".channels".
+        // By using the _latestSummary's basePath we have a safe path to compose its pendingSummary.
+        // PR: https://github.com/microsoft/FluidFramework/pull/11697
         const summary = new SummaryNode({
             ...localPathsToUse,
             referenceSequenceNumber: this.wipReferenceSequenceNumber,
-            basePath: parentPath,
+            basePath: parentSkipRecursion ? this._latestSummary?.basePath ?? parentPath : parentPath,
         });
         const fullPathForChildren = summary.fullPathForChildren;
         for (const child of this.children.values()) {

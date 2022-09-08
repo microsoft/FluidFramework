@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const customWebpack = require('../webpack.prod.js');
-const webpackRules = customWebpack({ production: true })[1].module.rules;
+const customWebpack = require('../webpack.config');
+const webpackRules = customWebpack({ production: true }).module.rules;
 
 module.exports = {
     "stories": [

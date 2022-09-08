@@ -6,10 +6,10 @@
 import { IQuorum, Quorum } from "@fluid-experimental/quorum";
 import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@fluidframework/register-collection";
 
-import type { IMigrationTool } from "./interfaces";
+import type { IMigrationTool } from "../migrationInterfaces";
 
 const quorumKey = "quorum";
 const crcKey = "crc";
@@ -22,7 +22,6 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     private _quorum: IQuorum<string> | undefined;
     private _crc: IConsensusRegisterCollection<string> | undefined;
     private _taskManager: ITaskManager | undefined;
-    private _newContainerId: string | undefined;
 
     private get quorum() {
         if (this._quorum === undefined) {
@@ -45,15 +44,23 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         return this._taskManager;
     }
 
-    public get migrated() {
-        return this.crc.read(newContainerIdKey) !== undefined;
+    public get migrationState() {
+        if (this.newContainerId !== undefined) {
+            return "migrated";
+        } else if (this.acceptedVersion !== undefined) {
+            return "migrating";
+        } else if (this.proposedVersion !== undefined) {
+            return "stopping";
+        } else {
+            return "collaborating";
+        }
     }
 
     public get newContainerId() {
-        return this._newContainerId;
+        return this.crc.read(newContainerIdKey);
     }
 
-    public async setNewContainerId(id: string) {
+    public async finalizeMigration(id: string) {
         // Only permit a single container to be set as a migration destination.
         if (this.crc.read(newContainerIdKey) !== undefined) {
             throw new Error("New container was already established");
@@ -73,7 +80,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         return this.quorum.get(newVersionKey);
     }
 
-    public async proposeVersion(newVersion: string) {
+    public readonly proposeVersion = (newVersion: string) => {
         // Don't permit changes to the version after a new one has already been accepted.
         // TODO: Consider whether we should throw on trying to set when a pending proposal exists -- currently
         // the Quorum will silently drop these on the floor.
@@ -84,20 +91,12 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         // Note that the accepted proposal could come from another client (e.g. two clients try to propose
         // simultaneously).  Watching via the event listener will work regardless of whether our proposal or
         // a remote client's proposal was the one that actually got accepted.
-        return new Promise<void>((resolve, reject) => {
-            const acceptedListener = (key: string) => {
-                if (key === newVersionKey) {
-                    resolve();
-                    this.quorum.off("accepted", acceptedListener);
-                }
-            };
-            this.quorum.on("accepted", acceptedListener);
-            // Even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
-            // whether our proposal or a remote client's proposal is accepted (though maybe we'd do retry
-            // logic if a remote client rejects the local client's proposal).
-            this.quorum.set(newVersionKey, newVersion);
-        });
-    }
+
+        // So even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
+        // whether our proposal or a remote client's proposal is accepted (though maybe we'd do retry
+        // logic if a remote client rejects the local client's proposal).
+        this.quorum.set(newVersionKey, newVersion);
+    };
 
     public async volunteerForMigration(): Promise<void> {
         return this.taskManager.lockTask(migrateTaskName);
@@ -125,19 +124,18 @@ export class MigrationTool extends DataObject implements IMigrationTool {
 
         this.quorum.on("pending", (key: string) => {
             if (key === newVersionKey) {
-                this.emit("newVersionProposed");
+                this.emit("stopping");
             }
         });
 
         this.quorum.on("accepted", (key: string) => {
             if (key === newVersionKey) {
-                this.emit("newVersionAccepted");
+                this.emit("migrating");
             }
         });
 
-        this.crc.on("atomicChanged", (key: string, value: string) => {
+        this.crc.on("atomicChanged", (key: string) => {
             if (key === newContainerIdKey) {
-                this._newContainerId = value;
                 this.emit("migrated");
             }
         });

@@ -11,6 +11,7 @@ import { FieldKey, TreeType, UpPath, Value } from "../tree";
  */
 export interface ITreeCursor {
     /**
+     *
      * What kind of place the cursor is at.
      * Determines which operations are allowed.
      */
@@ -18,20 +19,24 @@ export interface ITreeCursor {
     /*
      * True iff the current field or node (depending on mode) is "pending",
      * meaning that it has not been downloaded.
+
      */
     readonly pending: boolean;
 
     /**
+     *
      * Enters the first field (setting mode to `Fields`)
      * so fields can be iterated with `nextField` and `skipPendingFields`.
      *
      * If there are no fields, mode is returned to `Nodes` and false is returned.
      *
      * Allowed when `mode` is `Nodes` and not `pending`.
+
      */
     firstField(): boolean;
 
      /**
+     *
      * Moves the "current field" forward one in an arbitrary field traversal order.
      *
      * If there is no remaining field to iterate to,
@@ -43,6 +48,7 @@ export interface ITreeCursor {
      * This can be used to skip to the end of a large number of consecutive pending fields.
      *
      * Allowed when `mode` is `Fields`.
+
      */
     nextField(): boolean;
 
@@ -199,8 +205,10 @@ export const enum CursorLocationType {
     Nodes,
 
     /**
+     *
      * Can iterate through fields of a node.
      * At a "current field".
+
      */
     Fields,
 }

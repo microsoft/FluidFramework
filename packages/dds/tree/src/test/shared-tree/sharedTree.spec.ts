@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { TransactionResult } from "../../transaction";
 import { singleTextCursor } from "../../feature-libraries";
 import { brand } from "../../util";
 import { detachedFieldAsKey } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { SharedTree } from "../../shared-tree";
+import { TransactionResult } from "../../checkout";
 
 describe("SharedTree", () => {
     it("can be connected to another tree", async () => {
@@ -24,8 +24,11 @@ describe("SharedTree", () => {
             const readCursor = tree.forest.allocateCursor();
             const destination = tree.forest.root(tree.forest.rootField);
             const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
-            assert(cursorResult === TreeNavigationResult.Ok);
-            assert(readCursor.value === value);
+            assert.equal(cursorResult, TreeNavigationResult.Ok);
+            assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+            assert.equal(readCursor.value, value);
+            readCursor.free();
+            tree.forest.forgetAnchor(destination);
         }
 
         // Apply an edit to the first tree which inserts a node with a value

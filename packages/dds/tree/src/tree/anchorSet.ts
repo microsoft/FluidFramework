@@ -14,18 +14,25 @@ import { Value } from "./types";
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
-/** A singleton which represents a permanently invalid location (i.e. there is never a node there) */
+/**
+ * A singleton which represents a permanently invalid location (i.e. there is never a node there)
+ */
 const NeverAnchor: Anchor = brand(0);
 
 /**
  * Collection of Anchors at a specific revision.
  *
  * See {@link Rebaser} for how to update across revisions.
+ *
+ * @sealed
  */
 export class AnchorSet {
-    // Incrementing counter to give each anchor in this set a unique index for its identifier.
-    // "0" is reserved for the `NeverAnchor`
+    /**
+     * Incrementing counter to give each anchor in this set a unique index for its identifier.
+     * "0" is reserved for the `NeverAnchor`.
+     */
     private anchorCounter = 1;
+
     /**
      * Special root node under which all anchors in this anchor set are transitively parented.
      * This does not appear in the UpPaths (instead they use undefined for the root).
@@ -38,6 +45,7 @@ export class AnchorSet {
      * TODO: check for and enforce this.
      */
     private readonly root = new PathNode(this, EmptyKey, 0, undefined);
+
     // TODO: anchor system could be optimized a bit to avoid the maps (Anchor is ref to Path, path has ref count).
     // For now use this more encapsulated approach with maps.
     private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
@@ -64,7 +72,7 @@ export class AnchorSet {
         }
 
         const path = this.anchorToPath.get(anchor);
-        assert(path !== undefined, "Cannot locate anchor which is not in this AnchorSet");
+        assert(path !== undefined, 0x3a6 /* Cannot locate anchor which is not in this AnchorSet */);
         return path.deleted ? undefined : path;
     }
 
@@ -272,30 +280,30 @@ export class AnchorSet {
 
         const visitor = {
             onDelete: (start: number, count: number): void => {
-                assert(parentField !== undefined, "Must be in a field to delete");
+                assert(parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
                 this.moveChildren(count, { parent, parentField, parentIndex: start }, undefined);
             },
             onInsert: (start: number, content: Delta.ProtoNode[]): void => {
-                assert(parentField !== undefined, "Must be in a field to insert");
+                assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
                 this.moveChildren(content.length, undefined, { parent, parentField, parentIndex: start });
             },
             onMoveOut: (start: number, count: number, id: Delta.MoveId): void => {
-                assert(parentField !== undefined, "Must be in a field to move out");
+                assert(parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
                 moveTable.set(id, { parent, parentField, parentIndex: start });
             },
             onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
-                assert(parentField !== undefined, "Must be in a field to move in");
+                assert(parentField !== undefined, 0x3aa /* Must be in a field to move in */);
                 const srcPath = moveTable.get(id) ?? fail("Must visit a move in after its move out");
                 this.moveChildren(count, srcPath, { parent, parentField, parentIndex: start });
             },
             onSetValue: (value: Value): void => {},
             enterNode: (index: number): void => {
-                assert(parentField !== undefined, "Must be in a field to enter node");
+                assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
                 parent = { parent, parentField, parentIndex: index };
                 parentField = undefined;
             },
             exitNode: (index: number): void => {
-                assert(parent !== undefined, "Must have parent node");
+                assert(parent !== undefined, 0x3ac /* Must have parent node */);
                 parentField = parent.parentField;
                 parent = parent.parent;
             },

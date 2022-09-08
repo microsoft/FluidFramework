@@ -45,44 +45,59 @@ function clone<T>(value: Jsonable<T>): Jsonable<T> {
         : cloneObject(value);
 }
 
-// Helper that measures an optimized 'deepClone()' vs. using ITreeCursor to extract an
-// equivalent clone of the source data.
-function bench(name: string, getJson: () => any) {
-    const json = getJson();
-    const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
-    const schemaData: SchemaData = {
-            globalFieldSchema: new Map(),
-            treeSchema: jsonTypeSchema,
-    };
-    const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
+/**
+ * Performance test suite that measures a variety of access patterns using ITreeCursor.
+ */
+function bench(
+    data: {
+        name: string;
+        getJson: () => any;
+        dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
+    }[],
+) {
+    for (const { name, getJson, dataConsumer } of data) {
+        const json = getJson();
+        const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
+        const schemaData: SchemaData = {
+                globalFieldSchema: new Map(),
+                treeSchema: jsonTypeSchema,
+        };
+        const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
 
-    benchmark({
-        type: BenchmarkType.Measurement,
-        title: `Direct: '${name}'`,
-        before: () => {
-            const cloned = clone(json);
-            assert.deepEqual(cloned, json,
-                "clone() must return an equivalent tree.");
-            assert.notEqual(cloned, json,
-                "clone() must not return the same tree instance.");
-        },
-        benchmarkFn: () => {
-            clone(json);
-        },
-    });
+        benchmark({
+            type: BenchmarkType.Measurement,
+            title: `Direct: '${name}'`,
+            before: () => {
+                const cloned = clone(json);
+                assert.deepEqual(cloned, json,
+                    "clone() must return an equivalent tree.");
+                assert.notEqual(cloned, json,
+                    "clone() must not return the same tree instance.");
+            },
+            benchmarkFn: () => {
+                clone(json);
+            },
+        });
 
     const cursorFactories: [string, () => ITreeCursorNew][] = [
         ["TextCursor", () => singleTextCursorNew(encodedTree)],
     ];
 
-    const consumers: [string, (cursor: ITreeCursorNew) => void][] = [
-        // TODO: finish porting other cursor code and enable this.
+        const consumers: [
+            string,
+            (cursor: ITreeCursor,
+                dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any
+            New) => void,
+        ][] = [
+            // TODO: finish porting other cursor code and enable this.
         // ["cursorToJsonObject", cursorToJsonObjectNew],
-        ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+            ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
         ["sum", sum],
         ["sum-map", sumMap],
         // TODO: benchmarks that access fields by name (ex: canada perminater)
-    ];
+            ["sum", sum],
+            ["averageLocation", averageLocation],
+        ];
 
     for (const [consumerName, consumer] of consumers) {
         for (const [factoryName, factory] of cursorFactories) {
@@ -137,12 +152,81 @@ function sumMap(cursor: ITreeCursorNew): number {
     return total;
 }
 
+function sum(cursor: ITreeCursorNew): number {
+    let total = 0;
+    const value = cursor.value;
+    if (typeof value === "number") {
+        total += value;
+    }
+    let moreFields = cursor.firstField();
+    while (moreFields) {
+        let inField = cursor.firstNode();
+        while (inField) {
+            total += sum(cursor);
+            inField = cursor.nextField();
+        }
+        moreFields = cursor.nextField();
+    }
+    return total;
+}
+
+function sumMap(cursor: ITreeCursorNew): number {
+    let total = 0;
+    const value = cursor.value;
+    if (typeof value === "number") {
+        total += value;
+    }
+    let moreFields = cursor.firstField();
+    while (moreFields) {
+        forEachNode(cursor, sumMap);
+        moreFields = cursor.nextField();
+    }
+    return total;
+}
+
 const canada = generateCanada(
     // Use the default (large) data set for benchmarking, otherwise use a small dataset.
     isInPerformanceTestingMode
         ? undefined
         : [2, 10]);
 
+function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
+    cursor.down(FeatureKey, 0);
+    cursor.down(EmptyKey, 0);
+    cursor.down(GeometryKey, 0);
+    cursor.down(CoordinatesKey, 0);
+
+    let result = cursor.down(EmptyKey, 0);
+    assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+
+    while (result === TreeNavigationResult.Ok) {
+        let resultInner = cursor.down(EmptyKey, 0);
+        assert.equal(resultInner, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+
+        while (resultInner === TreeNavigationResult.Ok) {
+            // Read x and y values
+            assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok, "No X field");
+            const x = cursor.value as number;
+            cursor.up();
+
+            assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok, "No Y field");
+            const y = cursor.value as number;
+            cursor.up();
+
+            calculate(x, y);
+            resultInner = cursor.seek(1);
+        }
+        cursor.up();
+        result = cursor.seek(1);
+    }
+
+    // Reset the cursor state
+    cursor.up();
+    cursor.up();
+    cursor.up();
+    cursor.up();
+}
+
 describe("ITreeCursor", () => {
-    bench("canada", () => canada);
+    bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
 });

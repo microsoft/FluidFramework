@@ -32,9 +32,9 @@ module.exports = {
   },
   plugins: [
     new webpack.ProvidePlugin({
-      '$': 'jquery',
-      'jQuery': 'jquery',
-      'window.jQuery': 'jquery',
+    //   '$': 'jquery',
+    //   'jQuery': 'jquery',
+    //   'window.jQuery': 'jquery',
       'Cookies': 'js-cookie',
       'StickyFill': 'stickyfilljs'
     }),

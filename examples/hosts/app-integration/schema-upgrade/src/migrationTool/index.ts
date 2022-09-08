@@ -4,4 +4,3 @@
  */
 
 export * from "./migrationTool";
-export * from "./interfaces";
