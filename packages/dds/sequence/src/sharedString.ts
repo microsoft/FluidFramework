@@ -218,6 +218,14 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         }
     }
 
+    /**
+     * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
+     * Note that Markers receive `ReferenceType.Tile` by default.
+     * @param startPos - Position at which to start the search
+     * @param clientId - clientId dictating the perspective to search from
+     * @param tileLabel - Label of the tile to search for
+     * @param preceding - Whether the desired tile comes before (true) or after (false) `startPos`
+     */
     public findTile(startPos: number | undefined, tileLabel: string, preceding = true): {
         tile: ReferencePosition;
         pos: number;
@@ -244,18 +252,15 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
     }
 
-    /**
-     * @deprecated - use `getTextWithPlaceholders` instead.
-     */
-    public getTextRangeWithPlaceholders(start: number, end: number) {
-        return this.getTextWithPlaceholders(start, end);
-    }
-
     public getTextRangeWithMarkers(start: number, end: number) {
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
     }
 
+    /**
+     * Looks up and returns a `Marker` using its id. Returns `undefined` if there is no marker with the provided
+     * id in this `SharedString`.
+     */
     public getMarkerFromId(id: string): ISegment | undefined {
         return this.client.getMarkerFromId(id);
     }

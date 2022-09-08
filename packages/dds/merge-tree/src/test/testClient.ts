@@ -57,28 +57,33 @@ export class TestClient extends Client {
         snapshot.extractSync();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summaryTree = snapshot.emit([], TestClient.serializer, undefined!).summary;
-        return TestClient.createFromSummary(summaryTree, newLongClientId, client1.specToSegment);
+        return TestClient.createFromSummary(
+            summaryTree, newLongClientId, client1.specToSegment, client1.mergeTree.options);
     }
 
     public static async createFromSnapshot(
         snapshotTree: ITree,
         newLongClientId: string,
-        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        return TestClient.createFromStorage(new MockStorage(snapshotTree), newLongClientId, specToSeg);
+        specToSeg: (spec: IJSONSegment) => ISegment,
+        options?: PropertySet): Promise<TestClient> {
+        return TestClient.createFromStorage(new MockStorage(snapshotTree), newLongClientId, specToSeg, options);
     }
 
     public static async createFromSummary(
         summaryTree: ISummaryTree,
         newLongClientId: string,
-        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        return TestClient.createFromStorage(MockStorage.createFromSummary(summaryTree), newLongClientId, specToSeg);
+        specToSeg: (spec: IJSONSegment) => ISegment,
+        options?: PropertySet): Promise<TestClient> {
+        return TestClient.createFromStorage(
+            MockStorage.createFromSummary(summaryTree), newLongClientId, specToSeg, options);
     }
 
     public static async createFromStorage(
         storage: MockStorage,
         newLongClientId: string,
-        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        const client2 = new TestClient(undefined, specToSeg);
+        specToSeg: (spec: IJSONSegment) => ISegment,
+        options?: PropertySet): Promise<TestClient> {
+        const client2 = new TestClient(options, specToSeg);
         const { catchupOpsP } = await client2.load(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
