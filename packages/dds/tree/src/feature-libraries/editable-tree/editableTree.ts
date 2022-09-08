@@ -374,7 +374,6 @@ function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
     const fieldSchema = target.getType() as TreeSchema;
     if (isPrimitive(fieldSchema)) {
         const nodeValue = target.cursor.value;
-        // see `isPrimitive` doc for `undefined` case
         if (isPrimitiveValue(nodeValue)) {
             return nodeValue;
         }

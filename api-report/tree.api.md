@@ -176,7 +176,7 @@ export interface EditableTree {
     readonly [key: string]: UnwrappedEditableField;
 }
 
-// @public (undocumented)
+// @public
 export interface EditableTreeContext {
     free(): void;
     prepareForEdit(): void;
