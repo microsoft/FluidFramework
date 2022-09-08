@@ -341,16 +341,30 @@ export class Client {
         return this._mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId(), localSeq);
     }
 
+    /**
+     * Creates a `LocalReferencePosition` on this client. If the refType does not include ReferenceType.Transient,
+     * the returned reference will be added to the localRefs on the provided segment.
+     * @param segment - Segment to add the local reference on
+     * @param offset - Offset on the segment at which to place the local reference
+     * @param refType - ReferenceType for the created local reference
+     * @param properties - PropertySet to place on the created local reference
+     */
     public createLocalReferencePosition(
         segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined,
     ): LocalReferencePosition {
         return this._mergeTree.createLocalReferencePosition(segment, offset ?? 0, refType, properties);
     }
 
+    /**
+     * Removes a `LocalReferencePosition` from this client.
+     */
     public removeLocalReferencePosition(lref: LocalReferencePosition) {
         return this._mergeTree.removeLocalReferencePosition(lref);
     }
 
+    /**
+     * Resolves a `ReferencePosition` into a character position using this client's perspective.
+     */
     public localReferencePositionToPosition(lref: ReferencePosition): number {
         return this._mergeTree.referencePositionToLocalPosition(lref);
     }

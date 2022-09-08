@@ -13,18 +13,6 @@ import { JsonableTree } from "../tree";
  * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
 export namespace Transposed {
-	export interface Transaction extends PeerChangeset {
-		/**
-		 * The tag of the changeset that this transaction was originally issued after.
-		 */
-		ref: ChangesetTag;
-		/**
-		 * The tag of the latest changeset that this transaction has been transposed over.
-		 * Omitted on changesets that have not been transposed.
-		 */
-		newRef?: ChangesetTag;
-	}
-
 	/**
 	 * Represents changes to a document forest.
 	 */

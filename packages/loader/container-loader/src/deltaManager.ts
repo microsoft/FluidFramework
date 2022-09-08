@@ -25,6 +25,8 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
+    MonitoringContext,
+    loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -47,6 +49,7 @@ import {
     DataCorruptionError,
     extractSafePropertiesFromMessage,
     DataProcessingError,
+    UsageError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
@@ -88,6 +91,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private pending: ISequencedDocumentMessage[] = [];
     private fetchReason: string | undefined;
+
+    private readonly mc: MonitoringContext;
+
+    // A boolean used to assert that ops are not being sent while processing another op.
+    private currentlyProcessingOps: boolean = false;
+
+    // Feature gate that closes a container when sending an op if the container is
+    // concurrently processing another op
+    private readonly preventConcurrentOpSend: boolean = true;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -188,6 +200,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
+        if (this.currentlyProcessingOps && this.preventConcurrentOpSend) {
+            this.close(new UsageError("Making changes to data model is disallowed while processing ops."));
+        }
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: JSON.stringify(contents),
             metadata,
@@ -198,7 +213,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (!batch) {
             this.flush();
         }
-
         const message = this.connectionManager.prepareMessageToSend(messagePartial);
         if (message === undefined) {
             return -1;
@@ -213,7 +227,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (!batch) {
             this.flush();
         }
-
         return message.clientSequenceNumber;
     }
 
@@ -295,7 +308,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         };
 
         this.connectionManager = createConnectionManager(props);
-
+        this.mc = loggerToMonitoringContext(logger);
+        this.preventConcurrentOpSend = this.mc.config.getBoolean("Fluid.Container.ConcurrentOpSend") === true;
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
@@ -764,6 +778,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
+        assert(!this.currentlyProcessingOps, "Already processing ops.");
+        this.currentlyProcessingOps = true;
         this.lastProcessedMessage = message;
 
         // All non-system messages are coming from some client, and should have clientId
@@ -818,7 +834,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             throw new Error("Attempted to process an inbound message without a handler attached");
         }
         this.handler.process(message);
-
+        this.currentlyProcessingOps = false;
         const endTime = Date.now();
 
         // Should be last, after changing this.lastProcessedSequenceNumber above, as many callers

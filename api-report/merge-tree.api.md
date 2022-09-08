@@ -105,7 +105,6 @@ export class Client {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
@@ -163,7 +162,6 @@ export class Client {
     }>;
     // (undocumented)
     localOps: number;
-    // (undocumented)
     localReferencePositionToPosition(lref: ReferencePosition): number;
     // (undocumented)
     localTime: number;
@@ -187,7 +185,6 @@ export class Client {
     posFromRelativePos(relativePos: IRelativePosition): number;
     rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
-    // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
@@ -716,10 +713,12 @@ export class LocalReferenceCollection {
     split(offset: number, splitSeg: ISegment): void;
 }
 
-// @public (undocumented)
+// @public @sealed (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
 }
 
 // @public (undocumented)
@@ -1041,7 +1040,7 @@ export interface ReferencePosition {
     refType: ReferenceType;
 }
 
-// @public (undocumented)
+// @public
 export enum ReferenceType {
     // (undocumented)
     NestBegin = 2,
@@ -1053,13 +1052,9 @@ export enum ReferenceType {
     RangeEnd = 32,
     // (undocumented)
     Simple = 0,
-    // (undocumented)
     SlideOnRemove = 64,
-    // (undocumented)
     StayOnRemove = 128,
-    // (undocumented)
     Tile = 1,
-    // (undocumented)
     Transient = 256
 }
 
@@ -1170,11 +1165,16 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 // @public
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<T, string> {
     // (undocumented)
+    protected findItemPosition(item: T): {
+        exists: boolean;
+        index: number;
+    };
+    // (undocumented)
     protected getKey(item: T): string;
 }
 
 // @public (undocumented)
-export type SortedSegmentSetItem = ISegment | {
+export type SortedSegmentSetItem = ISegment | LocalReferencePosition | {
     readonly segment: ISegment;
 };
 
@@ -1182,6 +1182,11 @@ export type SortedSegmentSetItem = ISegment | {
 export abstract class SortedSet<T, U extends string | number> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void;
+    // (undocumented)
+    protected findItemPosition(item: T): {
+        exists: boolean;
+        index: number;
+    };
     // (undocumented)
     protected abstract getKey(t: T): U;
     // (undocumented)
@@ -1248,25 +1253,30 @@ export class TextSegment extends BaseSegment {
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
 // @public (undocumented)
+export type Trackable = ISegment | LocalReferencePosition;
+
+// @public (undocumented)
 export class TrackingGroup {
     constructor();
     // (undocumented)
-    has(segment: ISegment): boolean;
+    has(trackable: Trackable): boolean;
     // (undocumented)
-    link(segment: ISegment): void;
-    // (undocumented)
+    link(trackable: Trackable): void;
+    // @deprecated (undocumented)
     get segments(): readonly ISegment[];
     // (undocumented)
     get size(): number;
     // (undocumented)
-    unlink(segment: ISegment): void;
+    get tracked(): readonly Trackable[];
+    // (undocumented)
+    unlink(segment: Trackable): void;
 }
 
 // @public (undocumented)
 export class TrackingGroupCollection {
-    constructor(segment: ISegment);
+    constructor(trackable: Trackable);
     // (undocumented)
-    copyTo(segment: ISegment): void;
+    copyTo(trackable: Trackable): void;
     // (undocumented)
     get empty(): boolean;
     // (undocumented)

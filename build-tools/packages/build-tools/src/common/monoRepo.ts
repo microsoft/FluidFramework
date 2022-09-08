@@ -97,7 +97,7 @@ export class MonoRepo {
                 for (const dir of lerna.packages as string[]) {
                     // TODO: other glob pattern?
                     const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
-                    this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), MonoRepoKind[kind], ignoredDirs, this));
+                    this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), kind, ignoredDirs, this));
                 }
                 this.workspaceGlobs = lerna.packages;
                 return;

@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
 import { SortedSet } from "./sortedSet";
 
-export type SortedSegmentSetItem = ISegment | { readonly segment: ISegment; };
-
+export type SortedSegmentSetItem =
+    ISegment
+    | LocalReferencePosition
+    | { readonly segment: ISegment; };
 /**
  * Stores a unique and sorted set of segments, or objects with segments
  *
@@ -21,6 +24,13 @@ export type SortedSegmentSetItem = ISegment | { readonly segment: ISegment; };
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment>
     extends SortedSet<T, string> {
     protected getKey(item: T): string {
+        const maybeRef = item as Partial<LocalReferencePosition>;
+        if (maybeRef.getSegment !== undefined && maybeRef.isLeaf?.() === false) {
+            const lref = maybeRef as LocalReferencePosition;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const segment = lref.getSegment()!;
+            return segment.ordinal;
+        }
         const maybeObject = item as { readonly segment: ISegment; };
         if (maybeObject?.segment) {
             return maybeObject.segment.ordinal;

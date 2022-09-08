@@ -483,6 +483,25 @@ describe("TaskManager", () => {
                     assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
                 });
 
+                it("Disconnect while queued: Removed from the queue for other clients", async () => {
+                    const taskId = "taskId";
+                    const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
+                    taskManager2.subscribeToTask(taskId);
+                    containerRuntimeFactory.processAllMessages();
+                    await volunteerTaskP1;
+                    const clientId1 = containerRuntime1.clientId;
+                    const clientId2 = containerRuntime2.clientId;
+
+                    assert.deepEqual(taskManager1._getTaskQueues().get(taskId), [clientId1, clientId2],
+                        "Task queue should have both clients");
+
+                    containerRuntime2.connected = false;
+                    containerRuntimeFactory.processAllMessages();
+
+                    assert.deepEqual(taskManager1._getTaskQueues().get(taskId), [clientId1],
+                        "Task queue should only have client 1");
+                });
+
                 it("Disconnect while pending: Rejects the volunteerForTask promise", async () => {
                     const taskId = "taskId";
                     const volunteerTaskP = taskManager1.volunteerForTask(taskId);
