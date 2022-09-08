@@ -13,6 +13,7 @@ import random from "random-js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -30,7 +31,7 @@ export const insertAtRefPos: TestOperation =
     (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => {
         const segs: ISegment[] = [];
         // gather all the segments at the pos, including removed segments
-        client.mergeTree.walkAllSegments(client.mergeTree.root, (seg) => {
+        walkAllChildSegments(client.mergeTree.root, (seg) => {
             const pos = client.getPosition(seg);
             if (pos >= opStart) {
                 if (pos <= opStart) {
@@ -154,7 +155,7 @@ export function generateOperationMessagesForClients(
         // and is our baseline
         const client = clients[random.integer(1, clients.length - 1)(mt)];
         const len = client.getLength();
-        const sg = client.mergeTree.pendingSegments?.last();
+        const sg = client.peekPendingSegmentGroups();
         let op: IMergeTreeOp | undefined;
         if (len === 0 || len < minLength) {
             const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
@@ -174,10 +175,10 @@ export function generateOperationMessagesForClients(
         }
         if (op !== undefined) {
             // Pre-check to avoid logger.toString() in the string template
-            if (sg === client.mergeTree.pendingSegments?.last()) {
+            if (sg === client.peekPendingSegmentGroups()) {
                 assert.notEqual(
                     sg,
-                    client.mergeTree.pendingSegments?.last(),
+                    client.peekPendingSegmentGroups(),
                     `op created but segment group not enqueued.${logger}`);
             }
             const message = client.makeOpMessage(op, --tempSeq);

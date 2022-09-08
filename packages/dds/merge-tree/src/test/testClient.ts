@@ -12,7 +12,6 @@ import random from "random-js";
 import { Client } from "../client";
 import {
     List,
-    ListMakeHead,
 } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { ISegment, Marker } from "../mergeTreeNodes";
@@ -23,6 +22,7 @@ import { SnapshotLegacy } from "../snapshotlegacy";
 import { TextSegment } from "../textSegment";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -57,28 +57,33 @@ export class TestClient extends Client {
         snapshot.extractSync();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summaryTree = snapshot.emit([], TestClient.serializer, undefined!).summary;
-        return TestClient.createFromSummary(summaryTree, newLongClientId, client1.specToSegment);
+        return TestClient.createFromSummary(
+            summaryTree, newLongClientId, client1.specToSegment, client1.mergeTree.options);
     }
 
     public static async createFromSnapshot(
         snapshotTree: ITree,
         newLongClientId: string,
-        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        return TestClient.createFromStorage(new MockStorage(snapshotTree), newLongClientId, specToSeg);
+        specToSeg: (spec: IJSONSegment) => ISegment,
+        options?: PropertySet): Promise<TestClient> {
+        return TestClient.createFromStorage(new MockStorage(snapshotTree), newLongClientId, specToSeg, options);
     }
 
     public static async createFromSummary(
         summaryTree: ISummaryTree,
         newLongClientId: string,
-        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        return TestClient.createFromStorage(MockStorage.createFromSummary(summaryTree), newLongClientId, specToSeg);
+        specToSeg: (spec: IJSONSegment) => ISegment,
+        options?: PropertySet): Promise<TestClient> {
+        return TestClient.createFromStorage(
+            MockStorage.createFromSummary(summaryTree), newLongClientId, specToSeg, options);
     }
 
     public static async createFromStorage(
         storage: MockStorage,
         newLongClientId: string,
-        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        const client2 = new TestClient(undefined, specToSeg);
+        specToSeg: (spec: IJSONSegment) => ISegment,
+        options?: PropertySet): Promise<TestClient> {
+        const client2 = new TestClient(options, specToSeg);
         const { catchupOpsP } = await client2.load(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
@@ -91,10 +96,10 @@ export class TestClient extends Client {
         return client2;
     }
 
-    declare public mergeTree: MergeTree;
+    public readonly mergeTree: MergeTree;
 
-    public readonly checkQ: List<string> = ListMakeHead<string>();
-    protected readonly q: List<ISequencedDocumentMessage> = ListMakeHead<ISequencedDocumentMessage>();
+    public readonly checkQ: List<string> = new List<string>();
+    protected readonly q: List<ISequencedDocumentMessage> = new List<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;
     constructor(
@@ -104,6 +109,7 @@ export class TestClient extends Client {
             specToSeg,
             DebugLogger.create("fluid:testClient"),
             options);
+        this.mergeTree = (this as Record<"_mergeTree", MergeTree>)._mergeTree;
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
         // Validate by default
@@ -122,21 +128,21 @@ export class TestClient extends Client {
     }
 
     public enqueueTestString() {
-        this.checkQ.enqueue(this.getText());
+        this.checkQ.push(this.getText());
     }
     public getMessageCount(): number {
-        return this.q.count();
+        return this.q.length;
     }
     public enqueueMsg(msg: ISequencedDocumentMessage) {
-        this.q.enqueue(msg);
+        this.q.push(msg);
     }
     public dequeueMsg(): ISequencedDocumentMessage | undefined {
-        return this.q.dequeue();
+        return this.q.shift()?.data;
     }
     public applyMessages(msgCount: number) {
         let currMsgCount = msgCount;
         while (currMsgCount > 0) {
-            const msg = this.q.dequeue();
+            const msg = this.dequeueMsg();
             if (msg) {
                 this.applyMsg(msg);
             } else {
@@ -301,7 +307,7 @@ export class TestClient extends Client {
             (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
             || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
 
-        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+        walkAllChildSegments(this.mergeTree.root, (seg) => {
             assert(seg.seq !== undefined || seg.localSeq !== undefined, "either seq or localSeq should be defined");
             segment = seg;
 
@@ -344,7 +350,7 @@ export class TestClient extends Client {
             position taking into account local segments that were modified,
             after the current segment.
         */
-        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+        walkAllChildSegments(this.mergeTree.root, (seg) => {
             // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
             if (seg === segment) {
                 return false;

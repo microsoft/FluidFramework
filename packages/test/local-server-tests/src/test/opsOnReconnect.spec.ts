@@ -9,10 +9,10 @@ import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/cont
 import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
+    IContainerRuntimeOptions,
     isRuntimeMessage,
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
@@ -60,7 +60,7 @@ describe("Ops on Reconnect", () => {
         await new Promise<void>((resolve) => container.once("connected", () => resolve()));
     }
 
-    async function createLoader(): Promise<IHostLoader> {
+    async function createLoader(runtimeOptions?: IContainerRuntimeOptions): Promise<IHostLoader> {
         const factory: TestFluidObjectFactory = new TestFluidObjectFactory(
             [
                 [map1Id, SharedMap.getFactory()],
@@ -83,6 +83,7 @@ describe("Ops on Reconnect", () => {
                 ],
                 undefined,
                 [innerRequestHandler],
+                runtimeOptions,
             );
 
         const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
@@ -96,10 +97,23 @@ describe("Ops on Reconnect", () => {
         return loader;
     }
 
-    async function createContainer(): Promise<IContainer> {
-        const loader = await createLoader();
+    async function createContainer(runtimeOptions?: IContainerRuntimeOptions): Promise<IContainer> {
+        const loader = await createLoader(runtimeOptions);
         return createAndAttachContainer(
             codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
+    }
+
+    async function setupFirstContainer(runtimeOptions: IContainerRuntimeOptions = { flushMode: FlushMode.Immediate }) {
+        // Create the first container, dataObject and DDSes.
+        container1 = await createContainer(runtimeOptions) as Container;
+        container1Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
+            container1,
+            "default");
+
+        container1Object1Map1 = await container1Object1.getSharedObject<SharedMap>(map1Id);
+        container1Object1Map2 = await container1Object1.getSharedObject<SharedMap>(map2Id);
+        container1Object1Directory = await container1Object1.getSharedObject<SharedDirectory>(directoryId);
+        container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);
     }
 
     async function setupSecondContainersDataObject(): Promise<ITestFluidObject> {
@@ -138,25 +152,11 @@ describe("Ops on Reconnect", () => {
         return container2Object1;
     }
 
-    const flush = (containerObject) => (containerObject.context.containerRuntime as IContainerRuntime).flush();
-
     beforeEach(async () => {
         urlResolver = new LocalResolver();
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
         loaderContainerTracker = new LoaderContainerTracker();
-
-        // Create the first container, dataObject and DDSes.
-        container1 = await createContainer() as Container;
-        container1Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-            container1,
-            "default");
-
-        container1Object1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-        container1Object1Map1 = await container1Object1.getSharedObject<SharedMap>(map1Id);
-        container1Object1Map2 = await container1Object1.getSharedObject<SharedMap>(map2Id);
-        container1Object1Directory = await container1Object1.getSharedObject<SharedDirectory>(directoryId);
-        container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);
 
         // Wait for the attach ops to get processed.
         await loaderContainerTracker.ensureSynchronized();
@@ -168,9 +168,10 @@ describe("Ops on Reconnect", () => {
 
     describe("Ops on Container reconnect", () => {
         it("can resend ops on reconnection that were sent in disconnected state", async () => {
+            // Initialize first container with specific flushMode
+            await setupFirstContainer();
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -180,13 +181,13 @@ describe("Ops on Reconnect", () => {
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
             // Set values in DDSes in disconnected state.
-            container1Object1Map1.set("key1", "value1");
-            container1Object1Map1.set("key2", "value2");
-            container1Object1Map2.set("key3", "value3");
-            container1Object1Map2.set("key4", "value4");
-            container1Object1String.insertText(0, "value5");
-
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("key1", "value1");
+                container1Object1Map1.set("key2", "value2");
+                container1Object1Map2.set("key3", "value3");
+                container1Object1Map2.set("key4", "value4");
+                container1Object1String.insertText(0, "value5");
+            });
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -206,9 +207,10 @@ describe("Ops on Reconnect", () => {
         });
 
         it("can resend ops on reconnection that were sent in Nack'd state", async () => {
+            // Initialize first container with specific flushMode
+            await setupFirstContainer();
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Nack the client.
             assert(container1.clientId);
@@ -218,12 +220,12 @@ describe("Ops on Reconnect", () => {
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
             // Set values in DDSes in disconnected state.
-            container1Object1Map1.set("key1", "value1");
-            container1Object1Map1.set("key2", "value2");
-            container1Object1Directory.set("key3", "value3");
-            container1Object1Directory.set("key4", "value4");
-
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("key1", "value1");
+                container1Object1Map1.set("key2", "value2");
+                container1Object1Directory.set("key3", "value3");
+                container1Object1Directory.set("key4", "value4");
+            });
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -244,9 +246,10 @@ describe("Ops on Reconnect", () => {
 
     describe("Ordering of ops that are sent in disconnected state", () => {
         it("can resend ops in a dataObject in right order on reconnect", async () => {
+            // Initialize first container with specific flushMode
+            await setupFirstContainer();
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -256,14 +259,14 @@ describe("Ops on Reconnect", () => {
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
             // Set values in each DDS interleaved with each other.
-            container1Object1Map1.set("key1", "value1");
-            container1Object1Map2.set("key2", "value2");
-            container1Object1Directory.set("key3", "value3");
-            container1Object1Map1.set("key4", "value4");
-            container1Object1Map2.set("key5", "value5");
-            container1Object1Directory.set("key6", "value6");
-
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("key1", "value1");
+                container1Object1Map2.set("key2", "value2");
+                container1Object1Directory.set("key3", "value3");
+                container1Object1Map1.set("key4", "value4");
+                container1Object1Map2.set("key5", "value5");
+                container1Object1Directory.set("key6", "value6");
+            });
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -284,7 +287,8 @@ describe("Ops on Reconnect", () => {
         });
 
         it("can resend ops in multiple dataObjects in right order on reconnect", async () => {
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+            // Initialize first container with specific flushMode
+            await setupFirstContainer();
 
             // Create dataObject2 in the first container.
             const container1Object2 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
@@ -296,9 +300,9 @@ describe("Ops on Reconnect", () => {
             const container1Object2Map2 = await container1Object2.getSharedObject<SharedMap>(map2Id);
 
             // Set the new dataStore's handle in a map so that a new container has access to it.
-            container1Object1Map1.set("dataStore2Key", container1Object2.handle);
-
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("dataStore2Key", container1Object2.handle);
+            });
 
             // Wait for the set above to get processed.
             await loaderContainerTracker.ensureSynchronized();
@@ -323,16 +327,16 @@ describe("Ops on Reconnect", () => {
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
             // Set values in the DDSes across the two dataStores interleaved with each other.
-            container1Object1Map1.set("key1", "value1");
-            container1Object2Map1.set("key2", "value2");
-            container1Object1Map2.set("key3", "value3");
-            container1Object2Map2.set("key4", "value4");
-            container1Object1Map1.set("key5", "value5");
-            container1Object2Map1.set("key6", "value6");
-            container1Object1Map2.set("key7", "value7");
-            container1Object2Map2.set("key8", "value8");
-
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("key1", "value1");
+                container1Object2Map1.set("key2", "value2");
+                container1Object1Map2.set("key3", "value3");
+                container1Object2Map2.set("key4", "value4");
+                container1Object1Map1.set("key5", "value5");
+                container1Object2Map1.set("key6", "value6");
+                container1Object1Map2.set("key7", "value7");
+                container1Object2Map2.set("key8", "value8");
+            });
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -357,6 +361,8 @@ describe("Ops on Reconnect", () => {
 
     describe("Ordering of ops when disconnecting after ops are sent", () => {
         it("can resend ops in a dataObject in right order on connect", async () => {
+            // Initialize first container
+            await setupFirstContainer();
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
 
@@ -394,7 +400,8 @@ describe("Ops on Reconnect", () => {
         });
 
         it("can resend ops in multiple dataObjects in right order on connect", async () => {
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+            // Initialize first container with specific flushMode
+            await setupFirstContainer();
 
             // Create dataObject2 in the first container.
             const container1Object2 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
@@ -406,9 +413,9 @@ describe("Ops on Reconnect", () => {
             const container1Object2Map2 = await container1Object2.getSharedObject<SharedMap>(map2Id);
 
             // Set the new dataStore's handle in a map so that a new container has access to it.
-            container1Object1Map1.set("dataStore2Key", container1Object2.handle);
-
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("dataStore2Key", container1Object2.handle);
+            });
 
             // Wait for the set above to get processed.
             await loaderContainerTracker.ensureSynchronized();
@@ -425,16 +432,16 @@ describe("Ops on Reconnect", () => {
             assert.ok(container2Object2, "Could not get dataStore2 in the second container");
 
             // Set values in the DDSes across the two dataStores interleaved with each other.
-            container1Object1Map1.set("key1", "value1");
-            container1Object2Map1.set("key2", "value2");
-            container1Object1Map2.set("key3", "value3");
-            container1Object2Map2.set("key4", "value4");
-            container1Object1Map1.set("key5", "value5");
-            container1Object2Map1.set("key6", "value6");
-            container1Object1Map2.set("key7", "value7");
-            container1Object2Map2.set("key8", "value8");
-
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("key1", "value1");
+                container1Object2Map1.set("key2", "value2");
+                container1Object1Map2.set("key3", "value3");
+                container1Object2Map2.set("key4", "value4");
+                container1Object1Map1.set("key5", "value5");
+                container1Object2Map1.set("key6", "value6");
+                container1Object1Map2.set("key7", "value7");
+                container1Object2Map2.set("key8", "value8");
+            });
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -466,9 +473,10 @@ describe("Ops on Reconnect", () => {
 
     describe("Op batching on Container reconnect", () => {
         it("can resend batch ops in a dataObject in right order on connect", async () => {
+            // Initialize first container with specific flushMode
+            await setupFirstContainer();
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -484,17 +492,11 @@ describe("Ops on Reconnect", () => {
                 container1Object1Directory.set("key3", "value3");
             });
 
-            // Manually flush the ops so that they are sent as a batch.
-            flush(container1Object1);
-
             container1Object1.context.containerRuntime.orderSequentially(() => {
                 container1Object1Map1.set("key4", "value4");
                 container1Object1Map2.set("key5", "value5");
                 container1Object1Directory.set("key6", "value6");
             });
-
-            // Manually flush the ops so that they are sent as a batch.
-            (container1Object1.context.containerRuntime as IContainerRuntime).flush();
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -515,9 +517,10 @@ describe("Ops on Reconnect", () => {
         });
 
         it("can resend consecutive manually flushed batches in right order on connect", async () => {
+            // Initialize first container with specific flushMode
+            await setupFirstContainer();
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -527,20 +530,18 @@ describe("Ops on Reconnect", () => {
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
             // Set values in the DDSes so that they are batched together.
-            container1Object1Map1.set("key1", "value1");
-            container1Object1Map2.set("key2", "value2");
-            container1Object1Directory.set("key3", "value3");
-
-            // Manually flush the ops so that they are sent as a batch.
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("key1", "value1");
+                container1Object1Map2.set("key2", "value2");
+                container1Object1Directory.set("key3", "value3");
+            });
 
             // Set values in the DDSes so that they are batched together in a second batch.
-            container1Object1Map1.set("key4", "value4");
-            container1Object1Map2.set("key5", "value5");
-            container1Object1Directory.set("key6", "value6");
-
-            // Manually flush the ops so that they are sent as a batch.
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("key4", "value4");
+                container1Object1Map2.set("key5", "value5");
+                container1Object1Directory.set("key6", "value6");
+            });
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -561,9 +562,10 @@ describe("Ops on Reconnect", () => {
         });
 
         it("can resend manually flushed batch in right order on connect", async () => {
+            // Initialize first container with specific flushMode
+            await setupFirstContainer();
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -573,12 +575,11 @@ describe("Ops on Reconnect", () => {
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
             // Set values in the DDSes so that they are batched together.
-            container1Object1Map1.set("key1", "value1");
-            container1Object1Map2.set("key2", "value2");
-            container1Object1Directory.set("key3", "value3");
-
-            // Manually flush the ops so that they are sent as a batch.
-            flush(container1Object1);
+            container1Object1.context.containerRuntime.orderSequentially(() => {
+                container1Object1Map1.set("key1", "value1");
+                container1Object1Map2.set("key2", "value2");
+                container1Object1Directory.set("key3", "value3");
+            });
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -596,9 +597,10 @@ describe("Ops on Reconnect", () => {
         });
 
         it("can resend batch ops after reconnect if disconnect happened during the batch", async () => {
+            // Initialize first container with specific flushMode
+            await setupFirstContainer({ flushMode: FlushMode.TurnBased });
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Set values in the DDSes so that they are batched together.
             container1Object1Map1.set("key1", "value1");
