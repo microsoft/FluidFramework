@@ -4,17 +4,19 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangeEncoder, ChangeFamily, JsonCompatibleReadOnly, ProgressiveEditBuilder } from "../../change-family";
+import { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder } from "../../change-family";
 import { ChangeRebaser } from "../../rebase";
 import { FieldKindIdentifier } from "../../schema-stored";
-import { AnchorSet, Delta, FieldKey } from "../../tree";
-import { brand, getOrAddEmptyToMap } from "../../util";
-import { FieldChangeHandler, FieldChangeMap, FieldChange } from "./fieldChangeHandler";
+import { AnchorSet, Delta, FieldKey, UpPath } from "../../tree";
+import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
+import { FieldChangeHandler, FieldChangeMap, FieldChange, FieldChangeset } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
  * as determined by the schema.
+ *
+ * @sealed
  */
 export class ModularChangeFamily implements
     ChangeFamily<ModularEditBuilder, FieldChangeMap>,
@@ -22,7 +24,7 @@ export class ModularChangeFamily implements
     readonly encoder: ChangeEncoder<FieldChangeMap>;
 
     constructor(
-        private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+        readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
     ) {
         this.encoder = new ModularChangeEncoder(this.fieldKinds);
     }
@@ -183,14 +185,54 @@ interface EncodedFieldChange {
     change: JsonCompatibleReadOnly;
 }
 
+/**
+ * @sealed
+ */
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
+    private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
+
     constructor(
         family: ModularChangeFamily,
         deltaReceiver: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ) {
         super(family, deltaReceiver, anchors);
+        this.fieldKinds = family.fieldKinds;
     }
 
-    // TODO: Finish implementation
+    /**
+     * Adds a change to the edit builder
+     * @param path - path to the parent node of the field being edited
+     * @param field - the field which is being edited
+     * @param fieldKind - the kind of the field
+     * @param change - the change to the field
+     */
+    submitChange(
+        path: UpPathWithFieldKinds | undefined,
+        field: FieldKey,
+        fieldKind: FieldKindIdentifier,
+        change: FieldChangeset,
+    ): void {
+        let fieldChangeMap: FieldChangeMap = new Map();
+        fieldChangeMap.set(field, { fieldKind, change });
+
+        let remainingPath = path;
+        while (remainingPath !== undefined) {
+            const editor = getChangeHandler(this.fieldKinds, remainingPath.parentFieldKind).editor;
+            const fieldChange = editor.buildChildChange(remainingPath.parentIndex, fieldChangeMap);
+            fieldChangeMap = new Map();
+            fieldChangeMap.set(
+                remainingPath.parentField,
+                { fieldKind: remainingPath.parentFieldKind, change: brand(fieldChange) },
+            );
+            remainingPath = remainingPath.parent;
+        }
+
+        this.applyChange(fieldChangeMap);
+    }
+}
+
+export interface UpPathWithFieldKinds extends UpPath {
+    readonly parent: UpPathWithFieldKinds | undefined;
+    readonly parentFieldKind: FieldKindIdentifier;
 }

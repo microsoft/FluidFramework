@@ -67,7 +67,7 @@ export class DocumentPostCreateError extends Error {
 export class DocumentService implements api.IDocumentService {
     // Warning: (ae-forgotten-export) The symbol "ICache" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "ISnapshotTreeVersion" needs to be exported by the entry point index.d.ts
-    constructor(_resolvedUrl: api.IResolvedUrl, ordererUrl: string, deltaStorageUrl: string, storageUrl: string, logger: ITelemetryLogger, tokenProvider: ITokenProvider, tenantId: string, documentId: string, driverPolicies: IRouterliciousDriverPolicies, blobCache: ICache<ArrayBufferLike>, snapshotTreeCache: ICache<ISnapshotTreeVersion>, discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>);
+    constructor(_resolvedUrl: api.IResolvedUrl, ordererUrl: string, deltaStorageUrl: string, deltaStreamUrl: string, storageUrl: string, logger: ITelemetryLogger, tokenProvider: ITokenProvider, tenantId: string, documentId: string, driverPolicies: IRouterliciousDriverPolicies, blobCache: ICache<ArrayBufferLike>, snapshotTreeCache: ICache<ISnapshotTreeVersion>, discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>);
     connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection>;
     connectToStorage(): Promise<api.IDocumentStorageService>;

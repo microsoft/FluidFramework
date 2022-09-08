@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { JsonCompatibleReadOnly } from "../../change-family";
 import { FieldKindIdentifier } from "../../schema-stored";
 import { Delta, FieldKey } from "../../tree";
-import { Brand, Invariant } from "../../util";
+import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -16,6 +15,7 @@ export interface FieldChangeHandler<TChangeset> {
     _typeCheck?: Invariant<TChangeset>;
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
+    editor: FieldEditor<TChangeset>;
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
     // TODO
@@ -52,6 +52,13 @@ export interface FieldChangeEncoder<TChangeset> {
       * Decodes `change` from a JSON compatible object.
       */
      decodeJson(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder): TChangeset;
+}
+
+export interface FieldEditor<TChangeset> {
+    /**
+     * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
+     */
+    buildChildChange(childIndex: number, change: FieldChangeMap): TChangeset;
 }
 
 export type ToDelta = (child: FieldChangeMap) => Delta.Root;

@@ -65,10 +65,10 @@
     "@fluidframework/driver-base": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/driver-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/driver-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/gitresources": "^0.1037.1000",
-    "@fluidframework/protocol-base": "^0.1037.1000",
+    "@fluidframework/gitresources": "^0.1037.2000-91174",
+    "@fluidframework/protocol-base": "^0.1037.2000-91174",
     "@fluidframework/protocol-definitions": "^1.0.0",
-    "@fluidframework/server-services-client": "^0.1037.1000",
+    "@fluidframework/server-services-client": "^0.1037.2000-91174",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "cross-fetch": "^3.1.5",
     "json-stringify-safe": "5.0.1",
@@ -78,7 +78,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.3.1000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",

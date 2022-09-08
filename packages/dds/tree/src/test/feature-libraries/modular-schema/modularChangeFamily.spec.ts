@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { JsonCompatibleReadOnly } from "../../../change-family";
 import {
     FieldChangeEncoder,
     FieldChangeHandler,
@@ -14,16 +13,19 @@ import {
     Multiplicity,
     ModularChangeFamily,
     FieldKinds,
+    FieldEditor,
+    UpPathWithFieldKinds,
 } from "../../../feature-libraries";
 import { FieldKindIdentifier } from "../../../schema-stored";
-import { Delta, FieldKey } from "../../../tree";
-import { brand } from "../../../util";
+import { AnchorSet, Delta, FieldKey } from "../../../tree";
+import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
     rebaser: FieldKinds.replaceRebaser(),
     encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
+    editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
     intoDelta: (change, deltaFromChild) => change === 0
         ? []
@@ -49,9 +51,17 @@ const singleNodeRebaser: FieldChangeRebaser<FieldChangeMap> = {
     rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 };
 
+const singleNodeEditor: FieldEditor<FieldChangeMap> = {
+    buildChildChange: (index: number, change: FieldChangeMap) => {
+        assert(index === 0, "This field kind only supports one node in its field");
+        return change;
+    },
+};
+
 const singleNodeHandler: FieldChangeHandler<FieldChangeMap> = {
     rebaser: singleNodeRebaser,
     encoder: singleNodeEncoder,
+    editor: singleNodeEditor,
 
     intoDelta: (change, deltaFromChild) => [{
         type: Delta.MarkType.Modify,
@@ -252,5 +262,29 @@ describe("ModularChangeFamily", () => {
         const encoded = JSON.stringify(family.encoder.encodeForJson(version, rootChange1a));
         const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
         assert.deepEqual(decoded, rootChange1a);
+    });
+
+    it("build child change", () => {
+        const editor = family.buildEditor((delta) => {}, new AnchorSet());
+        const path: UpPathWithFieldKinds = {
+            parent: undefined,
+            parentField: fieldA,
+            parentFieldKind: singleNodeField.identifier,
+            parentIndex: 0,
+        };
+
+        editor.submitChange(path, fieldB, valueField.identifier, brand(valueChange1a));
+        const changes = editor.getChanges();
+        const innerChange: FieldChangeMap = new Map([[
+            fieldB,
+            { fieldKind: valueField.identifier, change: brand(valueChange1a) },
+        ]]);
+
+        const expectedChange: FieldChangeMap = new Map([[
+            fieldA,
+            { fieldKind: singleNodeField.identifier, change: brand(innerChange) },
+        ]]);
+
+        assert.deepEqual(changes, [expectedChange]);
     });
 });
