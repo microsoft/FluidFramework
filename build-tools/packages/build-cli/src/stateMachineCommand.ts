@@ -1,8 +1,13 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 import { BaseCommand } from "./base";
-import { StateHandler } from "./machines";
+import { StateHandler } from "./handlers";
 
 /**
  * A base CLI command that uses an internal state machine to govern its behavior. Subclasses must provide a state
@@ -83,7 +88,6 @@ export abstract class StateMachineCommand<
      */
     protected async stateLoop(): Promise<void> {
         const flags = this.processedFlags;
-        const context = await this.getContext();
 
         if (flags.testMode === true) {
             const machineStates = this.machine.states();
@@ -101,7 +105,8 @@ export abstract class StateMachineCommand<
                 );
 
                 if (handled === true) {
-                    this.exit(0);
+                    this.info(`Test mode: ${flags.state} state handled.`)
+                    this.exit(100);
                 } else {
                     this.exit(1);
                 }
@@ -121,6 +126,15 @@ export abstract class StateMachineCommand<
                 if (handled !== true) {
                     this.error(chalk.red(`Unhandled state: ${state}`));
                 }
+
+                if (this.machine.state_is_final(state)) {
+                    this.verbose(`Exiting. Final state: ${state}`);
+                    this.exit();
+
+                    // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
+                    // process.exit();
+                }
+
                 // eslint-disable-next-line no-constant-condition
             } while (true);
         }

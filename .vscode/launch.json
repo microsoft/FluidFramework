@@ -21,7 +21,7 @@
         {
             "name": "flub",
             "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
-            "cwd": "/home/tylerbu/code/release-3/",
+            "cwd": "/home/tylerbu/code/release-1/",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
@@ -32,6 +32,7 @@
                 "-g",
                 "client",
                 "-v",
+                "--no-policyCheck",
             ],
         },
         {

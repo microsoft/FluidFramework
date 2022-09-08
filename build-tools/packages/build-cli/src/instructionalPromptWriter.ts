@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "chalk";
 import { indentString } from "./lib";
@@ -29,7 +34,7 @@ interface Section {
 export abstract class InstructionalPromptWriter {
     protected abstract get log(): CommandLogger;
 
-    protected async formatPrompt(data: InstructionalPrompt): Promise<string> {
+    public async formatPrompt(data: InstructionalPrompt): Promise<string> {
         const b = new StringBuilder();
 
         b.append(chalk.green(chalk.underline(data.title)));
@@ -53,11 +58,17 @@ export abstract class InstructionalPromptWriter {
         return b.toString();
     }
 
-    protected async writePrompt(data: InstructionalPrompt) {
+    public async writePrompt(data: InstructionalPrompt) {
         const prompt = await this.formatPrompt(data);
 
         this.log.logHr();
         this.log.info("");
         this.log.info(prompt);
+    }
+}
+
+export class PromptWriter extends InstructionalPromptWriter {
+    public constructor(public log: CommandLogger) {
+        super();
     }
 }

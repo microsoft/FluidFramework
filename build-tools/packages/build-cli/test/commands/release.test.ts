@@ -6,12 +6,39 @@
 import { test } from "@oclif/test";
 import { FluidReleaseMachineDefinition } from "../../src/machines";
 
-describe("release command handles all states", () => {
-    const knownUnhandledStates: string[] = [];
-    const machineStates = FluidReleaseMachineDefinition.states().filter(
-        (s) => !knownUnhandledStates.includes(s),
-    );
+const knownUnhandledStates: string[] = [
+    // "AskForReleaseType",
+    // "CheckBranchName",
+    // "CheckBranchName2",
+    // "CheckBranchName3",
+    // "CheckBranchUpToDate",
+    // "CheckHasRemote",
+    // "CheckMainNextIntegrated",
+    // "CheckNoPrereleaseDependencies",
+    // "CheckNoPrereleaseDependencies2",
+    // "CheckNoPrereleaseDependencies3",
+    // "CheckPolicy",
+    // "CheckReleaseBranchDoesNotExist",
+    // "CheckReleaseGroupIsBumped",
+    // "CheckReleaseIsDone",
+    // "CheckShouldCommitBump",
+    // "CheckShouldCommitDeps",
+    // "CheckShouldCommitReleasedDepsBump",
+    // "CheckShouldRunOptionalChecks",
+    // "CheckValidReleaseGroup",
+    // "DoBumpReleasedDependencies",
+    // "DoMajorRelease",
+    // "DoMinorRelease",
+    // "DoPatchRelease",
+    // "DoReleaseGroupBump",
+    // "Failed",
+    // "Init",
+];
+const machineStates = FluidReleaseMachineDefinition.states()
+    .filter((s) => !knownUnhandledStates.includes(s))
+    .sort();
 
+describe("release command handles all states", () => {
     for (const state of machineStates) {
         test.stdout()
             .command([
@@ -23,10 +50,34 @@ describe("release command handles all states", () => {
                 "--testMode",
                 "--state",
                 state,
+                "--verbose",
             ])
-            .exit(0)
+            .exit(100)
             .it(`Handles state: '${state}'`, (ctx) => {
-                // n/a
+                // nothing
             });
     }
 });
+
+// for (const state of machineStates) {
+//     // console.log(`HERE!!!`);
+//     describe(`Handles ${state}`, async () => {
+//         // console.log(`state: ${state}`);
+//         test.stdout()
+//             .command([
+//                 "release",
+//                 "--releaseGroup",
+//                 "build-tools",
+//                 "--bumpType",
+//                 "patch",
+//                 "--testMode",
+//                 "--state",
+//                 state,
+//                 "-v",
+//             ])
+//             .exit(100)
+//             .it(`Handles state: '${state}'`, (ctx) => {
+//                 // ctx.stdout.includes(`Final state: ${state}`);
+//             });
+//     });
+// }
