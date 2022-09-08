@@ -23,14 +23,12 @@ describe("SharedTree", () => {
         function validateTree(tree: SharedTree): number {
             const readCursor = tree.forest.allocateCursor();
             const destination = tree.forest.root(tree.forest.rootField);
-            let cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
-            assert(cursorResult === TreeNavigationResult.Ok);
-            assert(readCursor.value === value);
-            let nofSiblings = 0;
-            for (; cursorResult === TreeNavigationResult.Ok; nofSiblings++) {
-                cursorResult = readCursor.seek(1);
-            }
-            return nofSiblings;
+            const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
+            assert.equal(cursorResult, TreeNavigationResult.Ok);
+            assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+            assert.equal(readCursor.value, value);
+            readCursor.free();
+            tree.forest.forgetAnchor(destination);
         }
 
         // Apply an edit to the first tree which inserts a node with a value

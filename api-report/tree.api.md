@@ -11,7 +11,7 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 // @public
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
-// @public
+// @public @sealed
 export class AnchorSet {
     applyDelta(delta: Delta.Root): void;
     // (undocumented)
@@ -28,7 +28,7 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
 // @public
 export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
 
-// @public
+// @public @sealed
 export abstract class BrandedType<ValueType, Name extends string> {
     protected readonly _type_brand: Name;
     // (undocumented)
@@ -106,7 +106,7 @@ export interface Covariant<T> {
 }
 
 // @public
-export function cursorToJsonObject(reader: ITreeCursor): unknown;
+export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
 
 // @public
 export const defaultSchemaPolicy: FullSchemaPolicy;
@@ -209,10 +209,7 @@ export interface FieldChangeHandler<TChangeset> {
 }
 
 // @public (undocumented)
-export interface FieldChangeMap {
-    // (undocumented)
-    [key: string]: FieldChange;
-}
+export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @public (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
@@ -228,7 +225,7 @@ export type FieldChangeset = Brand<unknown, "FieldChangeset">;
 // @public (undocumented)
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
 
-// @public
+// @public @sealed
 export class FieldKind {
     constructor(identifier: FieldKindIdentifier, multiplicity: Multiplicity, changeHandler: FieldChangeHandler<any>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
@@ -326,6 +323,7 @@ export interface IEditableForest extends IForestSubscription {
 // @public
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
+    forgetAnchor(anchor: Anchor): void;
     root(range: DetachedField): Anchor;
     // (undocumented)
     readonly rootField: DetachedField;
@@ -432,7 +430,7 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
     readonly [P in string]: JsonCompatibleReadOnly | undefined;
 };
 
-// @public
+// @public @sealed
 export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: Jsonable<T>);
     // (undocumented)
@@ -561,7 +559,7 @@ interface ModifyMovedOut {
     type: typeof MarkType.Modify;
 }
 
-// @public
+// @public @sealed
 export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap> {
     constructor(fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>);
     // (undocumented)
@@ -582,7 +580,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
     get rebaser(): ChangeRebaser<FieldChangeMap>;
 }
 
-// @public (undocumented)
+// @public @sealed (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(family: ModularChangeFamily, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
 }
@@ -695,15 +693,16 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
 // @public (undocumented)
 export abstract class ProgressiveEditBuilder<TChange> {
     constructor(changeFamily: ChangeFamily<unknown, TChange>, deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet);
+    // @sealed
     protected applyChange(change: TChange): void;
-    // (undocumented)
+    // @sealed (undocumented)
     getChanges(): TChange[];
 }
 
 // @public
 type ProtoNode = JsonableTree;
 
-// @public
+// @public @sealed
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     constructor(rebaser: TChangeRebaser);
     discardRevision(revision: RevisionTag): void;
@@ -780,7 +779,7 @@ export class SimpleDependee implements Dependee {
     // (undocumented)
     readonly computationName: string;
     invalidateDependents(): void;
-    // (undocumented)
+    // @sealed (undocumented)
     listDependents(): Set<Dependent>;
     // (undocumented)
     registerDependent(dependent: Dependent): boolean;
@@ -794,7 +793,7 @@ export function singleTextCursor(root: JsonableTree): TextCursor;
 // @public
 type Skip = number;
 
-// @public
+// @public @sealed
 export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends SimpleDependee implements SchemaData {
     constructor(policy: TPolicy, data?: SchemaData);
     // (undocumented)
@@ -896,7 +895,7 @@ export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 export interface TreeValue extends Serializable {
 }
 
-// @public
+// @public @sealed
 class UnitEncoder extends ChangeEncoder<0> {
     // (undocumented)
     decodeBinary(formatVersion: number, change: IsoBuffer): 0;
@@ -922,7 +921,7 @@ export type Value = undefined | TreeValue;
 // @public
 const value: FieldKind;
 
-// @public
+// @public @sealed
 class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
     // (undocumented)
     decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): T;
