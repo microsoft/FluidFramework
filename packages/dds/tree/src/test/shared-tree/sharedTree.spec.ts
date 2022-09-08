@@ -7,10 +7,9 @@ import { singleTextCursor } from "../../feature-libraries";
 import { brand } from "../../util";
 import { detachedFieldAsKey } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
-import { spyOnMethod, TestTreeProvider } from "../utils";
+import { TestTreeProvider } from "../utils";
 import { SharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
-import { SharedTreeCore } from "../../shared-tree-core";
 
 describe("SharedTree", () => {
     it("can be connected to another tree", async () => {

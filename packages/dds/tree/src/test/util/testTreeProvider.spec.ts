@@ -11,7 +11,7 @@ describe("TestTreeProvider", () => {
     it("can manually trigger summaries", async () => {
         let summaryCount = 0;
 
-        const unspy = spyOnMethod(SharedTreeCore.prototype, "summarizeCore", () => {
+        const unspy = spyOnMethod(SharedTreeCore, "summarizeCore", () => {
             summaryCount += 1;
         });
 

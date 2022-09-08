@@ -16,9 +16,8 @@ import {
     TestFluidObjectFactory,
     ITestFluidObject,
     createSummarizer,
-    summarizeNow
+    summarizeNow,
 } from "@fluidframework/test-utils";
-import { fail } from "assert";
 import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
 import { SharedTree, SharedTreeFactory } from "../shared-tree";
 
@@ -159,11 +158,11 @@ export class TestTreeProvider {
  * @returns a function which will remove the spy function when invoked. Should be called exactly once
  * after the spy is no longer needed.
  */
-export function spyOnMethod(prototype: any, methodName: string, spy: () => void): () => void {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function spyOnMethod(methodClass: Function, methodName: string, spy: () => void): () => void {
+    const { prototype } = methodClass;
     const method = prototype[methodName];
-    if (typeof method !== "function") {
-        fail(`Method does not exist: ${methodName}`);
-    }
+    assert(typeof method === "function", `Method does not exist: ${methodName}`);
 
     const methodSpy = function(this: unknown, ...args: unknown[]): unknown {
         spy();
