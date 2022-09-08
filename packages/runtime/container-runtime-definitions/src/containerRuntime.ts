@@ -12,7 +12,6 @@ import {
 import {
     IRequest,
     IResponse,
-    IFluidRouter,
     FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -26,6 +25,7 @@ import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
+    IDataStore,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
@@ -82,7 +82,7 @@ export interface IContainerRuntime extends
      * @param id - Id supplied during creating the data store.
      * @param wait - True if you want to wait for it.
      */
-    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+    getRootDataStore(id: string, wait?: boolean): Promise<IDataStore>;
 
     /**
      * Creates detached data store context. Data store initialization is considered complete

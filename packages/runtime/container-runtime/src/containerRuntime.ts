@@ -1723,8 +1723,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processSignal(envelope.address, transformed, local);
     }
 
-    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return this.getRootDataStoreChannel(id, wait);
+    public async getRootDataStore(id: string, wait = true): Promise<IDataStore> {
+        const channel = await this.getRootDataStoreChannel(id, wait);
+        return channelToDataStore(channel, id, this, this.dataStores, this.mc.logger);
     }
 
     private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
