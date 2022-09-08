@@ -15,7 +15,7 @@ import {
     TestFluidObjectFactory,
     ITestFluidObject } from "@fluidframework/test-utils";
 import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
-import { SharedTree, SharedTreeFactory } from "../shared-tree";
+import { ISharedTree, SharedTreeFactory } from "../shared-tree";
 
 // Testing utilities
 
@@ -53,10 +53,10 @@ export class TestTreeProvider {
     private static readonly treeId = "TestSharedTree";
 
     private readonly provider: ITestObjectProvider;
-    private readonly _trees: SharedTree[] = [];
+    private readonly _trees: ISharedTree[] = [];
     private readonly _containers: IContainer[] = [];
 
-    public get trees(): readonly SharedTree[] {
+    public get trees(): readonly ISharedTree[] {
         return this._trees;
     }
 
@@ -86,20 +86,20 @@ export class TestTreeProvider {
     }
 
     /**
-     * Create and initialize a new {@link SharedTree} that is connected to all other trees from this provider.
+     * Create and initialize a new {@link ISharedTree} that is connected to all other trees from this provider.
      * @returns the tree that was created. For convenience, the tree can also be accessed via `this[i]` where
      * _i_ is the index of the tree in order of creation.
      */
-    public async createTree(): Promise<SharedTree> {
+    public async createTree(): Promise<ISharedTree> {
         const container = this.trees.length === 0
         ? await this.provider.makeTestContainer()
         : await this.provider.loadTestContainer();
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
-        return this._trees[this.trees.length] = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
+        return this._trees[this.trees.length] = await dataObject.getSharedObject<ISharedTree>(TestTreeProvider.treeId);
     }
 
-    public [Symbol.iterator](): IterableIterator<SharedTree> {
+    public [Symbol.iterator](): IterableIterator<ISharedTree> {
         return this.trees[Symbol.iterator]();
     }
 
