@@ -4,17 +4,19 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangeEncoder, ChangeFamily, JsonCompatibleReadOnly, ProgressiveEditBuilder } from "../../change-family";
+import { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder } from "../../change-family";
 import { ChangeRebaser } from "../../rebase";
 import { FieldKindIdentifier } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey } from "../../tree";
-import { brand, getOrAddEmptyToMap } from "../../util";
+import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
 import { FieldChangeHandler, FieldChangeMap, FieldChange } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
  * as determined by the schema.
+ *
+ * @sealed
  */
 export class ModularChangeFamily implements
     ChangeFamily<ModularEditBuilder, FieldChangeMap>,
@@ -183,6 +185,9 @@ interface EncodedFieldChange {
     change: JsonCompatibleReadOnly;
 }
 
+/**
+ * @sealed
+ */
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(
         family: ModularChangeFamily,
