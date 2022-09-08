@@ -5,11 +5,11 @@
 
 import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
+import { ChangeEncoder, ChangeFamily } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet, Delta, FieldKey } from "../../tree";
-import { brand, makeArray, RecursiveReadonly } from "../../util";
+import { brand, makeArray, RecursiveReadonly, JsonCompatible } from "../../util";
 
 interface NonEmptyTestChangeset {
     /**

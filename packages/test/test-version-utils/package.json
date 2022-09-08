@@ -82,7 +82,7 @@
     "semver": "^7.3.4"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.3.1000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-version-utils-previous": "npm:@fluidframework/test-version-utils@^1.0.0",
