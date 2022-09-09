@@ -83,7 +83,7 @@ That command will update the package.json like so:
 }
 ```
 
-For more detailed usage information see the [command reference](#flub-bump-deps-package_or_release_group);
+For more detailed usage information see the [bump deps command reference](#flub-bump-deps-package_or_release_group);
 
 ## release
 
@@ -98,7 +98,7 @@ all handled states should immediately return true. This enables tests to verify 
 The command also provides a `state` flag that can be used to initialize the state machine to a specific state. This is
 intended for testing.
 
-For more detailed usage information see the [command reference](#);
+For more detailed usage information see the [release command reference](#flub-release);
 
 # Usage
 <!-- usage -->

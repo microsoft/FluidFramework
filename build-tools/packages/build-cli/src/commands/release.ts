@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
+import { detectVersionScheme, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 import {
     bumpTypeFlag,
     checkFlags,
@@ -13,12 +13,13 @@ import {
     versionSchemeFlag,
 } from "../flags";
 import { FluidReleaseStateHandler, FluidReleaseStateHandlerData, StateHandler } from "../handlers";
-import { InstructionalPromptWriter, PromptWriter } from "../instructionalPromptWriter";
+import { PromptWriter } from "../instructionalPromptWriter";
 import { StateMachineCommand, FluidReleaseMachineDefinition } from "../machines";
 
 /**
- * Releases a package or release group. Most of the logic for handling the release is contained in the
- * {@link FluidReleaseStateHandler}.
+ * Releases a package or release group. This command is mostly scaffolding and setting up the state machine, handlers,
+ * and the data to pass to the handlers. Most of the logic for handling the release is contained in the
+ * {@link FluidReleaseStateHandler} itself.
  */
 
 export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends StateMachineCommand<T> {
@@ -27,10 +28,11 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
     handler: StateHandler | undefined;
 
     static summary = "Releases a package or release group.";
-    static description = `First the release group's dependencies are checked. If any of the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have not yet been released, then the command prompts to perform the release of the dependency, then run the release command again.
+    static description = `The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
 
-    This process is continued until all the dependencies have been released, after which the release group itself is
-    released.`;
+    The command runs a number of checks automatically to make sure . If any of the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have not yet been released, then the command prompts to perform the release of the dependency, then run the release command again.
+
+    This process is continued until all the dependencies have been released, after which the release group itself is released.`;
 
     static flags = {
         releaseGroup: releaseGroupFlag({
@@ -42,9 +44,6 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
             required: false,
         }),
         bumpType: bumpTypeFlag({
-            required: false,
-        }),
-        versionScheme: versionSchemeFlag({
             required: false,
         }),
         skipChecks: skipCheckFlag,
@@ -64,7 +63,7 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
         this.data.releaseGroup = flags.releaseGroup ?? flags.package!;
         this.data.releaseVersion = context.getVersion(this.data.releaseGroup);
         this.data.bumpType = flags.bumpType as VersionBumpType;
-        this.data.versionScheme = flags.versionScheme as VersionScheme;
+        this.data.versionScheme = detectVersionScheme(this.data.releaseVersion);
 
         this.data.shouldSkipChecks = flags.skipChecks;
         this.data.shouldCheckPolicy = flags.policyCheck && !flags.skipChecks;
