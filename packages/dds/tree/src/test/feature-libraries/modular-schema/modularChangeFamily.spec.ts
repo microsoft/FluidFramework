@@ -308,12 +308,13 @@ describe("ModularChangeFamily", () => {
         };
 
         const value = "Test Value";
-        editor.setValue(path, value);
-
         const nodeChange: NodeChangeset = { valueChange: { value } };
         const expectedChange: FieldChangeMap = new Map([[
             fieldA,
             { fieldKind: singleNodeField.identifier, change: brand(nodeChange) },
         ]]);
+
+        editor.setValue(path, value);
+        assert.deepEqual(editor.getChanges(), [expectedChange]);
     });
 });
