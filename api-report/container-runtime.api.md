@@ -619,17 +619,17 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
-    // @deprecated (undocumented)
+    // @deprecated
     disableSummaries?: boolean;
-    // @deprecated (undocumented)
+    // @deprecated
     initialSummarizerDelayMs?: number;
     // @deprecated (undocumented)
     maxOpsSinceLastSummary?: number;
-    // @deprecated (undocumented)
+    // @deprecated
     summarizerClientElection?: boolean;
     // Warning: (ae-forgotten-export) The symbol "ISummarizerOptions" needs to be exported by the entry point index.d.ts
     //
-    // @deprecated (undocumented)
+    // @deprecated
     summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
     summaryConfigOverrides?: ISummaryConfiguration;
 }

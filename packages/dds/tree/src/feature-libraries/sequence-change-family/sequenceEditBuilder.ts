@@ -211,8 +211,18 @@ function wrap1(marks: T.FieldMarks, node: UpPath): T.FieldMarks {
     return toFieldMarks({ type: "Modify", fields: marks }, node);
 }
 
-type NodePath = UpPath;
-type PlacePath = UpPath;
+/**
+ * Location of a Node in a tree relative to the root.
+ * Only valid for a specific revision of that tree.
+ */
+export interface NodePath extends UpPath{}
+
+/**
+ * Location of a "Place" in a tree relative to the root.
+ * This means a location where a node could be inserted, such as between nodes or an end of a field.
+ * Only valid for a specific revision of that tree.
+ */
+export interface PlacePath extends UpPath{}
 
 const ERR_UP_PATH_NOT_VALID
     = "If the two paths have the same key and the same index then they should have shared an UpPath earlier";

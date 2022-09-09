@@ -48,7 +48,7 @@ export interface EmitterOptions extends BaseEmitterOptions {
     /**
      * The root item of the documentation node tree being emitted.
      */
-    contextApiItem: ApiItem | undefined;
+    contextApiItem: ApiItem;
 
     /**
      * Callback to get the link URL for the specified API item.
@@ -92,9 +92,30 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      */
     protected readonly apiModel: ApiModel;
 
-    public constructor(apiModel: ApiModel) {
+    /**
+     * Optional hook for generating front-matter that will be inserted at the top of the emitted Markdown string.
+     *
+     * @param contextApiItem - The API item for which the Markdown document is being generated.
+     *
+     * @returns The string of front-matter contents, or `undefined` if no front-matter is required.
+     *
+     * @defaultValue Does not insert any front-matter.
+     *
+     * @virtual
+     */
+    protected readonly generateFrontMatter?: (contextApiItem: ApiItem) => string;
+
+    /**
+     * @param apiModel - See {@link MarkdownEmitter.apiModel}.
+     * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
+     */
+    public constructor(
+        apiModel: ApiModel,
+        generateFrontMatter?: (contextApiItem: ApiItem) => string,
+    ) {
         super();
         this.apiModel = apiModel;
+        this.generateFrontMatter = generateFrontMatter;
     }
 
     /**
@@ -104,6 +125,14 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      * @virtual
      */
     public emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string {
+        if (this.generateFrontMatter !== undefined) {
+            const frontMatter = this.generateFrontMatter(options.contextApiItem).trim();
+
+            const writer = new IndentedWriter(stringBuilder);
+            writer.write(frontMatter);
+            writer.ensureSkippedLine();
+        }
+
         return super.emit(stringBuilder, docNode, options).trim();
     }
 

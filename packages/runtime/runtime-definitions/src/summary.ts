@@ -266,8 +266,9 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 
     /**
-     * @deprecated - Renamed to getBaseGCDetails.
      * Returns the GC details that may be added to this node's summary.
+     *
+     * @deprecated Renamed to {@link ISummarizerNodeWithGC.getBaseGCDetails}.
      */
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
 
