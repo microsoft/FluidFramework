@@ -178,7 +178,7 @@ export function walkAllChildSegments(
         startBlock.children[0],
         startBlock.parent === undefined
             ? undefined
-            : (node) => node === startBlock.parent ? NodeAction.Exit : NodeAction.Continue,
+            : (node) => node.parent === startBlock.parent ? NodeAction.Exit : NodeAction.Continue,
         leafAction,
     );
 }
