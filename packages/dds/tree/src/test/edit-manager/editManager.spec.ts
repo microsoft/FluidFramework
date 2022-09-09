@@ -174,6 +174,16 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
     }
 }
 
+class UnrebasableTestChangeRebaser extends TestChangeRebaser {
+    public invert(change: TestChangeset): TestChangeset {
+        assert.fail("Unexpected call to invert");
+    }
+
+    public rebase(change: TestChangeset, over: TestChangeset): TestChangeset {
+        assert.fail("Unexpected call to rebase");
+    }
+}
+
 class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
     public encodeForJson(formatVersion: number, change: TestChangeset): JsonCompatible {
         throw new Error("Method not implemented.");
@@ -201,10 +211,9 @@ function asDelta(intentions: number[]): Delta.Root {
     return intentions.length === 0 ? Delta.empty : new Map([[rootKey, intentions]]);
 }
 
-function changeFamilyFactory(): ChangeFamily<unknown, TestChangeset> {
-    const rebaser = new TestChangeRebaser();
+function changeFamilyFactory(rebaser?: ChangeRebaser<TestChangeset>): ChangeFamily<unknown, TestChangeset> {
     const family = {
-        rebaser,
+        rebaser: rebaser ?? new TestChangeRebaser(),
         encoder: new TestChangeEncoder(),
         buildEditor: () => assert.fail("Unexpected call to buildEditor"),
         intoDelta: (change: TestChangeset): Delta.Root => asDelta(change.intentions),
@@ -212,19 +221,18 @@ function changeFamilyFactory(): ChangeFamily<unknown, TestChangeset> {
     return family;
 }
 
-function editManagerFactory(): {
+function editManagerFactory(rebaser?: ChangeRebaser<TestChangeset>): {
     manager: TestEditManager;
     anchors: AnchorRebaseData;
-    family: ChangeFamily<unknown, TestChangeset>;
 } {
-    const family = changeFamilyFactory();
+    const family = changeFamilyFactory(rebaser);
     const anchors = new TestAnchorSet();
     const manager = new EditManager<TestChangeset, ChangeFamily<unknown, TestChangeset>>(
         family,
         anchors,
     );
     manager.setLocalSessionId(localSessionId);
-    return { manager, anchors, family };
+    return { manager, anchors };
 }
 
 const localSessionId: SessionId = "0";
@@ -378,7 +386,7 @@ describe("EditManager", () => {
 
     describe("Avoids unnecessary rebases", () => {
         it("Sequenced changes that are based on the trunk should not be rebased", () => {
-            const { manager, family } = editManagerFactory();
+            const { manager } = editManagerFactory(new UnrebasableTestChangeRebaser());
             const commit1: TestCommit = {
                 sessionId: peer1,
                 seqNumber: brand(1),
@@ -392,8 +400,6 @@ describe("EditManager", () => {
                 changeset: TestChangeRebaser.mintChangeset([1], 2),
             };
             manager.addSequencedChange(commit1);
-            family.rebaser.invert = () => assert.fail("invert was called");
-            family.rebaser.rebase = () => assert.fail("rebase was called");
             manager.addSequencedChange(commit2);
         });
     });
