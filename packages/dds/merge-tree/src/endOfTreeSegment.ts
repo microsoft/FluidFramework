@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { assert } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { LocalClientId } from "./constants";
@@ -117,4 +122,4 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
     toJSONObject = notSupported;
     ack = notSupported;
 }
-const notSupported = () => { assert(false, "operation not supported"); };
+const notSupported = () => { assert(false, 0x3b6 /* operation not supported */); };
