@@ -5,6 +5,18 @@ import { LocalReferenceCollection } from "./localReference";
 import { ISegment, IRemovalInfo, IMergeNode, IMergeBlock } from "./mergeTreeNodes";
 import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
 
+/**
+ * This is a special segment that is not bound or known by the merge tree itself, but the segment itself pretends
+ * to be a removed segment at the end of the tree. It is removed so it appears as a undefined/0 length segment.
+ * This segment adds the capability to hold local references that have been detached from the real merge tree,
+ * and give the appearance that they exist at the end of the tree. In general, local references only become detached
+ * when the tree becomes empty and the EndOfTreeSegment allows us to gracefully handle that case by giving those
+ * references a place to live. The EndOfTreeSegment is not in itself a generalized solution to the problem of
+ * detached references, as it requires special and careful understanding of its usage. Specifically, it is local only
+ * and would not lead to eventually consistent results if serialization of its contained references was attempted,
+ * as on deserialization a naive re-insertion would not put the back into the EndOfTreeSegment
+ * leading to inconsistent results with existing clients.
+ */
 export class EndOfTreeSegment implements ISegment, IRemovalInfo {
     type: string = "EndOfTreeSegment";
     private readonly root: IMergeBlock;
