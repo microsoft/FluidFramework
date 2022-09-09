@@ -112,8 +112,16 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
                     out.pushContent(moveMark);
                     break;
                 }
+                case "Revive": {
+                    const insertMark: Delta.Insert = {
+                        type: Delta.MarkType.Insert,
+                        // TODO: Restore the actual node
+                        content: [{ type: brand("RevivedNode") }],
+                    };
+                    out.pushContent(insertMark);
+                    break;
+                }
                 case "MMoveOut":
-                case "Revive":
                 case "MRevive":
                 case "Return":
                 case "MReturn":
