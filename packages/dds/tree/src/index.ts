@@ -90,6 +90,8 @@ export {
     FieldEditor,
     FieldChangeRebaser,
     FieldChangeEncoder,
+    NodeChangeset,
+    ValueChange,
     FieldChangeMap,
     FieldChangeset,
     FieldChange,
