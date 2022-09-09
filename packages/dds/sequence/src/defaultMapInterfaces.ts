@@ -47,7 +47,7 @@ export interface IMapMessageLocalMetadata {
 
 /**
  * A value factory is used to serialize/deserialize value types to a map
- * a
+ * @alpha
  */
 export interface IValueFactory<T> {
     /**
