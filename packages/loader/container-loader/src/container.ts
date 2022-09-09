@@ -1695,31 +1695,36 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
-        const outboundMessageType: string = type;
-        switch (outboundMessageType) {
+        switch (type) {
             case MessageType.Operation:
-            case MessageType.RemoteHelp:
-                break;
-            case MessageType.Summarize: {
-                // github #6451: this is only needed for staging so the server
-                // know when the protocol tree is included
-                // this can be removed once all clients send
-                // protocol tree by default
-                const summary = contents as ISummaryContent;
-                if (summary.details === undefined) {
-                    summary.details = {};
-                }
-                summary.details.includesProtocolTree =
-                    this.options.summarizeProtocolTree === true;
-                break;
-            }
+                return this.submitMessage(
+                    type,
+                    // back-compat: ADO #1385: pass content as-is in future.
+                    typeof contents === "string" ? contents : JSON.stringify(contents),
+                    batch,
+                    metadata);
+            // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
+            case MessageType.Summarize:
+                return this.submitSummaryMessage(contents as unknown as ISummaryContent);
             default:
                 this.close(new GenericError("invalidContainerSubmitOpType",
                     undefined /* error */,
                     { messageType: type }));
                 return -1;
         }
-        return this.submitMessage(type, JSON.stringify(contents), batch, metadata);
+    }
+
+    private submitSummaryMessage(summary: ISummaryContent) {
+        // github #6451: this is only needed for staging so the server
+        // know when the protocol tree is included
+        // this can be removed once all clients send
+        // protocol tree by default
+        if (summary.details === undefined) {
+            summary.details = {};
+        }
+        summary.details.includesProtocolTree =
+            this.options.summarizeProtocolTree === true;
+        return this.submitMessage(MessageType.Summarize, JSON.stringify(summary), false /* batch */);
     }
 
     private submitMessage(type: MessageType, contents?: string, batch?: boolean, metadata?: any): number {
@@ -1857,6 +1862,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new QuorumProxy(this.protocolHandler.quorum),
             loader,
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
+            (summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,

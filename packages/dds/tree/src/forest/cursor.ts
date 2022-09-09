@@ -73,7 +73,8 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
  * @returns array resulting from applying `f` to each item of field `key` on `cursor`'s current node.
  * Returns an empty array if the field is empty or not present (which are considered the same).
  */
-export function mapCursorField<T>(cursor: ITreeCursor, key: FieldKey, f: (cursor: ITreeCursor) => T): T[] {
+export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor, key: FieldKey, f: (cursor: TCursor) => T): T[] {
     const output: T[] = [];
     let result = cursor.down(key, 0);
     if (result !== TreeNavigationResult.Ok) {

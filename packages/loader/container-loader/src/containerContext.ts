@@ -42,6 +42,7 @@ import {
     ISummaryTree,
     IVersion,
     MessageType,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { Container } from "./container";
@@ -58,7 +59,8 @@ export class ContainerContext implements IContainerContext {
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
+        submitFn: (type: MessageType, contents: string, batch: boolean, appData: any) => number,
+        submitSummaryFn: (summaryOp: ISummaryContent) => number,
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
@@ -76,6 +78,7 @@ export class ContainerContext implements IContainerContext {
             quorum,
             loader,
             submitFn,
+            submitSummaryFn,
             submitSignalFn,
             closeFn,
             version,
@@ -166,6 +169,7 @@ export class ContainerContext implements IContainerContext {
         quorum: IQuorum,
         public readonly loader: ILoader,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
+        public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
