@@ -50,7 +50,7 @@ import {
     IDocumentStorageService,
     ISummaryContext,
 } from "@fluidframework/driver-definitions";
-import { readAndParse, isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
     DataProcessingError,
@@ -520,6 +520,9 @@ const defaultMaxOpSizeInBytes = 768000;
 
 const defaultFlushMode = FlushMode.TurnBased;
 
+/**
+ * @deprecated - use ContainerRuntimeMessage instead
+ */
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
     Attach = "attach",
@@ -530,6 +533,9 @@ export enum RuntimeMessage {
     Operation = "op",
 }
 
+/**
+ * @deprecated - please use version in driver-utils
+ */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
         return true;
@@ -549,13 +555,14 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
-        assert(isUnpackedRuntimeMessage(message), 0x122 /* "Message to unpack is not proper runtime message" */);
+        return true;
     } else {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
+        // Or it's non-runtime message.
         // Nothing to do in such case.
+        return false;
     }
-    return message;
 }
 
 /**
@@ -1602,20 +1609,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
-        // If it's not message for runtime, bail out right away.
-        if (!isUnpackedRuntimeMessage(messageArg)) {
-            return;
-        }
-
-        if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
-            this.savedOps.push(messageArg);
-        }
-
         // Do shallow copy of message, as methods below will modify it.
         // There might be multiple container instances receiving same message
         // We do not need to make deep copy, as each layer will just replace message.content itself,
         // but would not modify contents details
         let message = { ...messageArg };
+
+        // back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
+        // System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
+        // Old ops may contain empty string (I assume noops).
+        if (typeof message.contents === "string" && message.contents !== "") {
+            message.contents = JSON.parse(message.contents);
+        }
+
+        // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
+        // This format was not shipped to production workflows.
+        const runtimeMessage = unpackRuntimeMessage(message);
+
+        if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
+            this.savedOps.push(messageArg);
+        }
 
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
@@ -1623,19 +1636,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager.beforeOpProcessing(message);
 
         try {
-            message = unpackRuntimeMessage(message);
-
             // Chunk processing must come first given that we will transform the message to the unchunked version
             // once all pieces are available
             message = this.processRemoteChunkedMessage(message);
 
             let localOpMetadata: unknown;
-            if (local) {
-                // Call the PendingStateManager to process local messages.
-                // Do not process local chunked ops until all pieces are available.
-                if (message.type !== ContainerMessageType.ChunkedOp) {
-                    localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
-                }
+            if (local && runtimeMessage) {
+                localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
             }
 
             // If there are no more pending messages after processing a local message,
@@ -1644,7 +1651,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.updateDocumentDirtyState(false);
             }
 
-            switch (message.type) {
+            const type = message.type as ContainerMessageType;
+            switch (type) {
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local);
                     break;
@@ -1657,10 +1665,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.BlobAttach:
                     this.blobManager.processBlobAttachOp(message, local);
                     break;
+                case ContainerMessageType.ChunkedOp:
+                case ContainerMessageType.Rejoin:
+                    break;
                 default:
+                    assert(!runtimeMessage, "Runtime message of unknown type");
             }
 
-            this.emit("op", message);
+            // For back-compat, notify only about runtime messages for now.
+            if (runtimeMessage) {
+                this.emit("op", message, runtimeMessage);
+            }
+
             this.scheduleManager.afterOpProcessing(undefined, message);
 
             if (local) {

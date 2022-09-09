@@ -84,8 +84,13 @@ export const VisibilityState = {
 };
 export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
-export interface IContainerRuntimeBaseEvents extends IEvent {
-    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
+export interface IContainerRuntimeBaseEvents extends IEvent{
+    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
+    /**
+     * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
+     * represent internal container runtime type / content.
+     */
+    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
