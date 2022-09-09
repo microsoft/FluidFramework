@@ -2638,13 +2638,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.logger.sendErrorEvent({ eventName: "SubmitOpInReadonly" });
         }
 
-        this.batchManager.push({
-            contents: serializedContent,
-            deserializedContent,
-            metadata,
-            localOpMetadata,
-            referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-        });
+        try {
+            this.batchManager.push({
+                contents: serializedContent,
+                deserializedContent,
+                metadata,
+                localOpMetadata,
+                referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+            });
+        } catch (error) {
+            this.closeFn(error as GenericError);
+            throw error;
+        }
         if (this._flushMode !== FlushMode.TurnBased) {
             this.flush();
         } else if (!this.flushTrigger) {
