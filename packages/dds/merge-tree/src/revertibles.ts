@@ -11,7 +11,7 @@ import { LocalReferenceCollection, LocalReferencePosition } from "./localReferen
 import {
     IMergeTreeDeltaCallbackArgs,
 } from "./mergeTreeDeltaCallback";
-import { IRemovalInfo, ISegment, toRemovalInfo } from "./mergeTreeNodes";
+import { ISegment, toRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
 import { TrackingGroup } from "./mergeTreeTracking";
 import {
