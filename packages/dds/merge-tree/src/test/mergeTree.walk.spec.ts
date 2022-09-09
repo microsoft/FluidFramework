@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
+    IMergeBlock,
     MaxNodesInBlock,
 } from "../mergeTreeNodes";
 import {
@@ -29,7 +30,7 @@ describe("MergeTree walks", () => {
             LocalClientId,
             UniversalSequenceNumber,
             undefined);
-        for (let i = 1; i < MaxNodesInBlock * 4; i++) {
+        for (let i = 1; i < MaxNodesInBlock * MaxNodesInBlock; i++) {
             const text = i.toString();
             insertText(
                 mergeTree,
@@ -44,12 +45,22 @@ describe("MergeTree walks", () => {
         }
     });
 
-    describe("walkAllChildSegments", () => {
+    describe.only("walkAllChildSegments", () => {
+        function* getAllDescendantBlocks(block: IMergeBlock): Iterable<IMergeBlock> {
+            yield block;
+            for (let i = 0; i < block.childCount; i++) {
+                const child = block.children[i];
+                if (!child.isLeaf()) {
+                    yield* getAllDescendantBlocks(child);
+                }
+            }
+        }
+
         it("visits only descendants", () => {
-            for (let i = 0; i < mergeTree.root.childCount; i++) {
-                const block = mergeTree.root.children[i];
-                assert(!block.isLeaf(), "Expected multi-layer tree");
+            for (const block of getAllDescendantBlocks(mergeTree.root)) {
+                let walkedAnySegments = false;
                 walkAllChildSegments(block, (seg) => {
+                    walkedAnySegments = true;
                     let current = seg.parent;
                     while (current !== block && current !== undefined) {
                         current = current.parent;
@@ -57,6 +68,7 @@ describe("MergeTree walks", () => {
                     assert(current === block, "Expected all visited segments to be descendants");
                     return true;
                 });
+                assert(walkedAnySegments, "Walk should have hit segments");
             }
         });
     });
