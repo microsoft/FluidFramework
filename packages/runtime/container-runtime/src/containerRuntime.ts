@@ -2762,6 +2762,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
+        // The call to fetch the snapshot is very expensive and not always needed.
+        // It should only be done by the summarizerNode, if required.
         const snapshotTreeFetcher = async () => {
             const fetchResult = await this.fetchSnapshotFromStorage(
              ackHandle,
