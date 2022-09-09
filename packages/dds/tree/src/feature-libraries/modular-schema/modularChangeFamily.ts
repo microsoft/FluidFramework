@@ -336,7 +336,7 @@ export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     }
 
     setValue(path: UpPathWithFieldKinds, value: Value): void {
-        const valueChange: ValueChange = { value };
+        const valueChange: ValueChange = value === undefined ? {} : { value };
         const nodeChange: NodeChangeset = { valueChange };
         const editor = getChangeHandler(this.fieldKinds, path.parentFieldKind).editor;
         const fieldChange = editor.buildChildChange(path.parentIndex, nodeChange);
