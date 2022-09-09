@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
 import {
     IDeltaService,
     IDocumentStorage,
@@ -17,7 +16,6 @@ import {
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import cors from "cors";
 import express from "express";
 import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
