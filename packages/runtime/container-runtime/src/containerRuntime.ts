@@ -88,6 +88,7 @@ import {
     IAttachMessage,
     IDataStore,
     ITelemetryContext,
+    IFluidDataStoreRuntimeEntrypoint,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -1722,7 +1723,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processSignal(envelope.address, transformed, local);
     }
 
-    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+    public async getRootDataStore(id: string, wait = true): Promise<IFluidDataStoreRuntimeEntrypoint> {
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const context = await this.dataStores.getDataStore(internalId, wait);

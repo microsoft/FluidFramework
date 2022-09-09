@@ -90,6 +90,10 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
 
+export interface IFluidDataStoreRuntimeEntrypoint extends IFluidRouter {
+    readonly handle?: IFluidHandle<FluidObject>;
+}
+
 /**
  * Encapsulates the return codes of the aliasing API.
  *
@@ -104,7 +108,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 /**
  * A fluid router with the capability of being assigned an alias
  */
-export interface IDataStore extends IFluidRouter {
+export interface IDataStore extends IFluidDataStoreRuntimeEntrypoint {
     /**
      * Attempt to assign an alias to the datastore.
      * If the operation succeeds, the datastore can be referenced
@@ -161,10 +165,15 @@ export interface IContainerRuntimeBase extends
     ): Promise<IDataStore>;
 
     /**
-     * Creates data store. Returns router of data store. Data store is not bound to container,
-     * store in such state is not persisted to storage (file). Storing a handle to this store
-     * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
-     * gets attached to storage) will result in this store being attached to storage.
+     * Creates a data store and returns its entry point. The data store is not bound to a container,
+     * and in such state is not persisted to storage (file). Storing a handle to this store
+     * (or any of its parts, like DDS) into an already attached DDS (or non-attached DDS that will eventually
+     * get attached to storage) will result in this store being attached to storage.
+     *
+     * Currently, the returned object is also a router that can handle the request pattern. This will probably
+     * change in the future, and using the 'handle' property of the returned object (entry point) will be the
+     * primary way of interacting with the data store.
+     *
      * @param pkg - Package name of the data store factory
      */
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
@@ -196,13 +205,11 @@ export interface IContainerRuntimeBase extends
 }
 
 /**
- * Minimal interface a data store runtime need to provide for IFluidDataStoreContext to bind to control
- *
- * Functionality include attach, snapshot, op/signal processing, request routes,
- * and connection state notifications
+ * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
+ * Functionality includes attach, snapshot, op/signal processing, request routes, and connection state notifications.
  */
 export interface IFluidDataStoreChannel extends
-    IFluidRouter,
+    IFluidDataStoreRuntimeEntrypoint,
     IDisposable {
 
     readonly id: string;
