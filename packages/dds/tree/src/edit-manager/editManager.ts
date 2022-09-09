@@ -86,7 +86,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 
         const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
         this.updateBranch(branch, newCommit.refNumber);
-        const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit.changeset, branch);
+        const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit, branch);
 
         // Note: we never use the refNumber of a commit in the trunk
         this.trunk.push({
@@ -109,11 +109,16 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         return this.changeFamily.intoDelta(change);
     }
 
-    private rebaseChangeFromBranchToTrunk(changeToRebase: TChangeset, branch: Branch<TChangeset>): TChangeset {
+    private rebaseChangeFromBranchToTrunk(commitToRebase: Commit<TChangeset>, branch: Branch<TChangeset>): TChangeset {
+        // No need to rebase if the commit is already based on the trunk
+        if (this.trunk.length === 0 || commitToRebase.refNumber === this.trunk[this.trunk.length - 1].refNumber) {
+            return commitToRebase.changeset;
+        }
+
         const changeRebasedToRef = branch.localChanges.reduceRight(
             (newChange, branchCommit) =>
                 this.changeFamily.rebaser.rebase(newChange, this.changeFamily.rebaser.invert(branchCommit.changeset)),
-            changeToRebase,
+            commitToRebase.changeset,
         );
 
         return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));

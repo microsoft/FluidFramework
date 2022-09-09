@@ -215,6 +215,7 @@ function changeFamilyFactory(): ChangeFamily<unknown, TestChangeset> {
 function editManagerFactory(): {
     manager: TestEditManager;
     anchors: AnchorRebaseData;
+    family: ChangeFamily<unknown, TestChangeset>;
 } {
     const family = changeFamilyFactory();
     const anchors = new TestAnchorSet();
@@ -223,7 +224,7 @@ function editManagerFactory(): {
         anchors,
     );
     manager.setLocalSessionId(localSessionId);
-    return { manager, anchors };
+    return { manager, anchors, family };
 }
 
 const localSessionId: SessionId = "0";
@@ -373,6 +374,28 @@ describe("EditManager", () => {
             { seq: 8, type: "Ack" },
             { seq: 9, type: "Pull", ref: 0, from: peer2, expectedDelta: [9] },
         ]);
+    });
+
+    describe("Avoids unnecessary rebases", () => {
+        it("Sequenced changes that are based on the trunk should not be rebased", () => {
+            const { manager, family } = editManagerFactory();
+            const commit1: TestCommit = {
+                sessionId: peer1,
+                seqNumber: brand(1),
+                refNumber: brand(0),
+                changeset: TestChangeRebaser.mintChangeset([], 1),
+            };
+            const commit2: TestCommit = {
+                sessionId: peer1,
+                seqNumber: brand(2),
+                refNumber: brand(0),
+                changeset: TestChangeRebaser.mintChangeset([1], 2),
+            };
+            manager.addSequencedChange(commit1);
+            family.rebaser.invert = () => assert.fail("invert was called");
+            family.rebaser.rebase = () => assert.fail("rebase was called");
+            manager.addSequencedChange(commit2);
+        });
     });
 
     /**
