@@ -4,8 +4,9 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brand, brandOpaque, clone, fail, OffsetListFactory } from "../../../util";
+import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { FieldKey, Value, Delta } from "../../../tree";
+import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
 import { ProtoNode, Transposed as T } from "./format";
 import { isSkipMark } from "./utils";
 
@@ -14,7 +15,7 @@ import { isSkipMark } from "./utils";
  * @param changeset - The Changeset to convert
  * @returns A Delta for applying the changes described in the given Changeset.
  */
-export function toDelta(changeset: T.LocalChangeset): Delta.Root {
+ export function toDelta(changeset: T.LocalChangeset): Delta.Root {
     // Save result to a constant to work around linter bug:
     // https://github.com/typescript-eslint/typescript-eslint/issues/5014
     const out: Delta.Root = convertFieldMarks<Delta.OuterMark>(changeset.marks);
@@ -112,9 +113,25 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
                     out.pushContent(moveMark);
                     break;
                 }
+                case "Revive": {
+                    const insertMark: Delta.Insert = {
+                        type: Delta.MarkType.Insert,
+                        // TODO: Restore the actual node
+                        content: makeArray(mark.count, () => ({ type: DUMMY_REVIVED_NODE_TYPE })),
+                    };
+                    out.pushContent(insertMark);
+                    break;
+                }
+                case "MRevive": {
+                    const insertMark: Delta.Insert = {
+                        type: Delta.MarkType.Insert,
+                        // TODO: Restore the actual node
+                        content: [{ type: DUMMY_REVIVED_NODE_TYPE }],
+                    };
+                    out.pushContent(insertMark);
+                    break;
+                }
                 case "MMoveOut":
-                case "Revive":
-                case "MRevive":
                 case "Return":
                 case "MReturn":
                 case "Gap":
@@ -131,6 +148,8 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
     // TODO: add runtime checks
     return out.list as unknown as Delta.MarkList<TMarks>;
 }
+
+const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
 
 /**
  * Clones the content described by a Changeset into tree content expected by Delta.
