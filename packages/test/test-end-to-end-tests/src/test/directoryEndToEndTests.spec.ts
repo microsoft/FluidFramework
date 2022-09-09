@@ -235,7 +235,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
                 expectAllAfterValues("testKey2", "/", "value2.2");
             });
 
-            it("set/delete", async () => {
+            it("set/delete", async function() {
                 // delete after set
                 sharedDirectory1.set("testKey3", "value3.1");
                 sharedDirectory2.set("testKey3", "value3.2");
@@ -247,7 +247,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 
                 expectAllBeforeValues("testKey3", "/", "value3.1", "value3.2", undefined);
 
-                await provider.ensureSynchronized();
+                await provider.ensureSynchronized(this.timeout() / 3);
 
                 expectAllAfterValues("testKey3", "/", undefined);
             });
@@ -499,7 +499,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
                 expectAllAfterValues("testKey2", "/testSubDir", "value2.2");
             });
 
-            it("set/delete", async () => {
+            it("set/delete", async function() {
                 // delete after set
                 root1SubDir.set("testKey3", "value3.1");
                 root2SubDir.set("testKey3", "value3.2");
@@ -511,7 +511,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", "value3.2", undefined);
 
-                await provider.ensureSynchronized();
+                await provider.ensureSynchronized(this.timeout() / 3);
 
                 expectAllAfterValues("testKey3", "/testSubDir", undefined);
             });
@@ -570,13 +570,13 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
             });
         });
 
-        it("Only creates a subdirectory once when simultaneously created", async () => {
+        it("Only creates a subdirectory once when simultaneously created", async function() {
             const root1SubDir = sharedDirectory1.createSubDirectory("testSubDir");
             root1SubDir.set("testKey", "testValue");
             const root2SubDir = sharedDirectory2.createSubDirectory("testSubDir");
             root2SubDir.set("testKey2", "testValue2");
 
-            await provider.ensureSynchronized();
+            await provider.ensureSynchronized(this.timeout() / 2);
 
             assert.strictEqual(sharedDirectory1.getSubDirectory("testSubDir"), root1SubDir,
                 "Created two separate subdirectories in root1");

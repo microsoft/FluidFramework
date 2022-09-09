@@ -6,9 +6,8 @@
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { AnchorSet, FieldKey, UpPath } from "../../tree";
-import { SequenceEditBuilder, singleTextCursor } from "../../feature-libraries";
+import { SequenceEditBuilder, singleTextCursor, Transposed as T } from "../../feature-libraries";
 import { jsonNumber } from "../../domains";
-import { Transposed as T } from "../../changeset";
 
 /**
  * @param parentKeys - Keys allowed in the generated path.
