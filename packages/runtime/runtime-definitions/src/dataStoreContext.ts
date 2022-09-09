@@ -84,8 +84,13 @@ export const VisibilityState = {
 };
 export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
-export interface IContainerRuntimeBaseEvents extends IEvent {
-    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
+export interface IContainerRuntimeBaseEvents extends IEvent{
+    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
+    /**
+     * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. it's type and content
+     * represent internal container runtime type / content.
+     */
+    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 }
@@ -134,7 +139,7 @@ export interface IContainerRuntimeBase extends
 
     /**
      * Sets the flush mode for operations on the document.
-     * @deprecated - Will be removed in 0.60. See #9480.
+     * @deprecated Will be removed in 0.60. See #9480.
      */
     setFlushMode(mode: FlushMode): void;
 
@@ -215,8 +220,8 @@ export interface IFluidDataStoreChannel extends
     readonly visibilityState?: VisibilityState;
 
     /**
-     * @deprecated - This will be removed in favor of makeVisibleAndAttachGraph.
      * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
+     * @deprecated This will be removed in favor of {@link IFluidDataStoreChannel.makeVisibleAndAttachGraph}.
      */
     attachGraph(): void;
 
@@ -414,7 +419,7 @@ export interface IFluidDataStoreContext extends
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
     /**
-     * @deprecated - Renamed to getBaseGCDetails.
+     * @deprecated Renamed to {@link IFluidDataStoreContext.getBaseGCDetails}.
      */
     getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 

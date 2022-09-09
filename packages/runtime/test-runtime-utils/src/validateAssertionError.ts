@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AssertionError } from "assert";
 import { shortCodeMap } from "./assertionShortCodesMap";
 
 /**
@@ -26,7 +25,9 @@ import { shortCodeMap } from "./assertionShortCodesMap";
 export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean {
     const mappedMsg = shortCodeMap[error.message] as string ?? error.message;
     if (mappedMsg !== expectedErrorMsg) {
-        throw new AssertionError({ message: `Unexpected assertion thrown: ${error.message} ('${mappedMsg}')` });
+        // This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
+        // node assert library, which we don't want to do for this library because it's used in the browser.
+        throw new Error(`Unexpected assertion thrown: ${error.message} ('${mappedMsg}')`);
     }
     return true;
 }

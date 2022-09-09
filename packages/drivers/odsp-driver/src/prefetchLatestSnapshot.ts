@@ -28,6 +28,7 @@ import { IVersionedValueWithEpoch } from "./contracts";
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
  * the cached latest snapshot could be used and removes the network call from the critical path.
+ *
  * @param resolvedUrl - Resolved url to fetch the snapshot.
  * @param getStorageToken - function that can provide the storage token for a given site. This is
  *  is also referred to as the "VROOM" token in SPO.
@@ -36,11 +37,12 @@ import { IVersionedValueWithEpoch } from "./contracts";
  * @param logger - Logger to have telemetry events.
  * @param hostSnapshotFetchOptions - Options to fetch the snapshot if any. Otherwise default will be used.
  * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
- *  1RT call fails with redeem error. During fallback it will first redeem the sharing link and then make
- *  the Trees latest call.
- *  @deprecated - This will be replaced with snapshotFormatFetchType.
+ * 1RT call fails with redeem error. During fallback it will first redeem the sharing link and then make
+ * the Trees latest call.
+ * Note: this can be considered deprecated - it will be replaced with `snapshotFormatFetchType`.
  * @param fetchBinarySnapshotFormat - Control if we want to fetch binary format snapshot.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
+ *
  * @returns - True if the snapshot is cached, false otherwise.
  */
 export async function prefetchLatestSnapshot(
