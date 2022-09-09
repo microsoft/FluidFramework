@@ -2485,6 +2485,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let handle: string;
             try {
+                this.logger.sendTelemetryEvent({ eventName: "uploadSummaryWithContext",
+                    proposalHandle: summaryContext.proposalHandle,
+                    ackHandle: summaryContext.ackHandle,
+                    referenceSequenceNumber: summaryContext.referenceSequenceNumber });
                 handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
             } catch (error) {
                 return { stage: "generate", ...generateSummaryData, error };
