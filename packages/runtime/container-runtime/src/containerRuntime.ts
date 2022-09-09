@@ -230,7 +230,8 @@ export interface ISummaryBaseConfiguration {
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
     state: "enabled";
     /**
-     * @deprecated - please move all implementation to minIdleTime and maxIdleTime
+     * @deprecated Please move all implementations to {@link ISummaryConfigurationHeuristics.minIdleTime} and
+     * {@link ISummaryConfigurationHeuristics.maxIdleTime} instead.
      */
     idleTime: number;
     /**
@@ -375,33 +376,45 @@ export interface ISummaryRuntimeOptions {
     summaryConfigOverrides?: ISummaryConfiguration;
 
     /**
-     *  @deprecated - use `summaryConfigOverrides.initialSummarizerDelayMs` instead.
-     *  Delay before first attempt to spawn summarizing container.
-    */
+     * Delay before first attempt to spawn summarizing container.
+     *
+     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+     * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
+     */
     initialSummarizerDelayMs?: number;
 
     /**
-     * @deprecated - use `summaryConfigOverrides.disableSummaries` instead.
      * Flag that disables summaries if it is set to true.
+     *
+     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+     * {@link ISummaryConfigurationDisableSummarizer.state} instead.
      */
     disableSummaries?: boolean;
 
     /**
-     * @deprecated - use `summaryConfigOverrides.maxOpsSinceLastSummary` instead.
-     * Defaults to 7000 ops
+     * @defaultValue 7000 operations (ops)
+     *
+     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+     * {@link ISummaryBaseConfiguration.maxOpsSinceLastSummary} instead.
      */
     maxOpsSinceLastSummary?: number;
 
     /**
-    * @deprecated - use `summaryConfigOverrides.summarizerClientElection` instead.
-    * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-    * This defaults to false (disabled) and must be explicitly set to true to enable.
-    */
+     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
+     *
+     * @defaultValue `false` (disabled) and must be explicitly set to true to enable.
+     *
+     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+     * {@link ISummaryBaseConfiguration.summarizerClientElection} instead.
+     */
     summarizerClientElection?: boolean;
 
     /**
-     * @deprecated - use `summaryConfigOverrides.state = "DisableHeuristics"` instead.
-     *  Options that control the running summarizer behavior. */
+     * Options that control the running summarizer behavior.
+     *
+     * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
+     * `{@link ISummaryConfiguration.state} = "DisableHeuristics"` instead.
+     * */
     summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
 }
 

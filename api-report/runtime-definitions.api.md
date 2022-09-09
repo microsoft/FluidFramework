@@ -129,7 +129,7 @@ export interface IEnvelope {
 export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    // @deprecated (undocumented)
+    // @deprecated
     attachGraph(): void;
     readonly attachState: AttachState;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -345,7 +345,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    // @deprecated (undocumented)
+    // @deprecated
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
