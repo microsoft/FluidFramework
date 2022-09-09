@@ -55,14 +55,11 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
     async init() {
         await super.init();
 
-        const handler = new FluidReleaseStateHandler(this.machine, this.logger);
-
         const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);
         const flags = this.processedFlags;
-        this.handler = handler;
 
+        this.handler = new FluidReleaseStateHandler(this.machine, this.logger);
         this.data.context = context;
-        // this.data.promptWriter = handler; // The BaseHandler extends PromptWriter
         this.data.promptWriter = new PromptWriter(this.logger);
         this.data.releaseGroup = flags.releaseGroup ?? flags.package!;
         this.data.releaseVersion = context.getVersion(this.data.releaseGroup);

@@ -7,33 +7,9 @@ import { test } from "@oclif/test";
 import { FluidReleaseMachineDefinition } from "../../src/machines";
 
 const knownUnhandledStates: string[] = [
-    // "AskForReleaseType",
-    // "CheckBranchName",
-    // "CheckBranchName2",
-    // "CheckBranchName3",
-    // "CheckBranchUpToDate",
-    // "CheckHasRemote",
-    // "CheckMainNextIntegrated",
-    // "CheckNoPrereleaseDependencies",
-    // "CheckNoPrereleaseDependencies2",
-    // "CheckNoPrereleaseDependencies3",
-    // "CheckPolicy",
-    // "CheckReleaseBranchDoesNotExist",
-    // "CheckReleaseGroupIsBumped",
-    // "CheckReleaseIsDone",
-    // "CheckShouldCommitBump",
-    // "CheckShouldCommitDeps",
-    // "CheckShouldCommitReleasedDepsBump",
-    // "CheckShouldRunOptionalChecks",
-    // "CheckValidReleaseGroup",
-    // "DoBumpReleasedDependencies",
-    // "DoMajorRelease",
-    // "DoMinorRelease",
-    // "DoPatchRelease",
-    // "DoReleaseGroupBump",
-    // "Failed",
-    // "Init",
+    // Known unhandled states can be added here temporarily during development.
 ];
+
 const machineStates = FluidReleaseMachineDefinition.states()
     .filter((s) => !knownUnhandledStates.includes(s))
     .sort();

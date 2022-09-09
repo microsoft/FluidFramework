@@ -32,7 +32,7 @@ export interface StateHandler {
  * A base class that abstractly implements the {@link StateHandler} interface. Subclasses are expected to implement the
  * `handleState` method.
  */
-export abstract class BaseStateHandler extends InstructionalPromptWriter implements StateHandler {
+export abstract class BaseStateHandler implements StateHandler {
     abstract handleState(
         state: MachineState,
         machine: Machine<unknown>,
@@ -41,12 +41,11 @@ export abstract class BaseStateHandler extends InstructionalPromptWriter impleme
         data: unknown,
     ): Promise<boolean>;
 
+    // eslint-disable-next-line no-useless-constructor
     public constructor(
         protected readonly machine: Machine<unknown>,
         protected readonly log: CommandLogger,
-    ) {
-        super();
-    }
+    ) {}
 
     /**
      * Sends the "success" action to a state machine. Throws an error if the state transition fails.
