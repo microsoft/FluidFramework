@@ -199,6 +199,10 @@ export function createOdspNetworkError(
                 // For reference we can look here: \packages\drivers\odsp-driver\src\fetchSnapshot.ts
                 const responseError = parseResult?.errorResponse?.error;
                 redirectLocation = responseError?.["@error.redirectLocation"];
+                if (redirectLocation !== undefined) {
+                    error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
+                    break;
+                }
             }
             error = new NonRetryableError(
                 errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, driverProps);
@@ -254,9 +258,6 @@ export function createOdspNetworkError(
             break;
     }
 
-    if (redirectLocation !== undefined) {
-        error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
-    }
     enrichOdspError(error, response, facetCodes, undefined);
     return error;
 }
