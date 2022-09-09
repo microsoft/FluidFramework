@@ -3,8 +3,8 @@
 WebFlow is an experimental collaborative rich text editor built on top of the Fluid SharedString distributed data structure.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
-<!-- The getting started instructions are automatically generated.
-To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 

@@ -8,7 +8,7 @@ import {
     ProtoNode,
     toDelta as toDeltaImpl,
     Transposed as T,
-} from "../../changeset";
+} from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKey, Delta } from "../../tree";
 import { brand, brandOpaque } from "../../util";

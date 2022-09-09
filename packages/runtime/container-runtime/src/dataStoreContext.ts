@@ -700,7 +700,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     /**
-     * @deprecated - Sets the datastore as root, for aliasing purposes: #7948
+     * @deprecated Sets the datastore as root, for aliasing purposes: #7948
      * This method should not be used outside of the aliasing context.
      * It will be removed, as the source of truth for this flag will be the aliasing blob.
      */
@@ -709,7 +709,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     /**
-     * @deprecated - Renamed to getBaseGCDetails().
+     * @deprecated Renamed to `{@link FluidDataStoreContext.getBaseGCDetails}()`.
      */
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
@@ -851,7 +851,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
     }
 
     /**
-     * @deprecated - Renamed to getBaseGCDetails.
+     * @deprecated Renamed to {@link RemoteFluidDataStoreContext.getBaseGCDetails}.
      */
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
         return this.getBaseGCDetails();
@@ -965,7 +965,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     /**
-     * @deprecated - Renamed to getBaseGCDetails.
+     * @deprecated Renamed to {@link LocalFluidDataStoreContextBase.getBaseGCDetails}.
      */
     public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
         // Local data store does not have initial summary.

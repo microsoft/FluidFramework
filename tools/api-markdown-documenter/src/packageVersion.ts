@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-tools/api-markdown-documenter";
-export const pkgVersion = "0.2.0";
+export const pkgVersion = "0.4.0";

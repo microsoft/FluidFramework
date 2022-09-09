@@ -324,7 +324,7 @@ The site theme/template lives in `themes/thxvscode`.
 
 The following npm scripts are supported in this directory:
 
-<!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
+<!-- AUTO-GENERATED-CONTENT:START (SCRIPTS:includeHeading=FALSE) -->
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |

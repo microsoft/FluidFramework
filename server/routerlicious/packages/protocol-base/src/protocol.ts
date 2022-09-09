@@ -143,6 +143,11 @@ export class ProtocolOpHandler implements IProtocolHandler {
                 break;
 
             case MessageType.Propose:
+                // back-compat: ADO #1385: This should become unconditional eventually.
+                // Can be done only after Container.processRemoteMessage() stops parsing content!
+                if (typeof message.contents === "string") {
+                    message.contents = JSON.parse(message.contents);
+                }
                 const proposal = message.contents as IProposal;
                 this._quorum.addProposal(
                     proposal.key,

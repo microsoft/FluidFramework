@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
-import { ContainerMessageType, isRuntimeMessage } from "@fluidframework/container-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -40,8 +40,8 @@ async function yieldJSTurn(): Promise<void> {
 }
 
 function setupBatchMessageListener(dataStore: ITestFluidObject, receivedMessages: ISequencedDocumentMessage[]) {
-    dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
-        if (isRuntimeMessage(message)) {
+    dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+        if (runtimeMessage !== false) {
             receivedMessages.push(message);
         }
     });

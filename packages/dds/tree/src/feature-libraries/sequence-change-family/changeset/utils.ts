@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { fail } from "../util";
+import { fail } from "../../../util";
 import { Skip, Transposed as T } from "./format";
 
 export function isAttach(mark: T.Mark): mark is T.Attach {
