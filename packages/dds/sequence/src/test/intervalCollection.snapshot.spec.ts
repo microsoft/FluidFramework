@@ -10,9 +10,14 @@ import {
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalCollection, intervalLocatorFromEndpoint, IntervalType, SequenceInterval } from "../intervalCollection";
+import { SharedString, TestSharedString } from "../sharedString";
+import { SharedStringFactory, TestSharedStringFactory } from "../sequenceFactory";
+import {
+    IntervalCollection,
+    intervalLocatorFromEndpoint,
+    IntervalType, SequenceInterval,
+    // OldIntervalCollection,
+} from "../intervalCollection";
 
 const assertIntervals = (
     sharedString: SharedString,
@@ -37,6 +42,29 @@ const assertIntervals = (
     assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
+// const assertOldIntervals = (
+//     sharedString: SharedString,
+//     intervalCollection: OldIntervalCollection<SequenceInterval>,
+//     expected: readonly { start: number; end: number; }[],
+//     validateOverlapping: boolean = true,
+// ) => {
+//     const actual = Array.from(intervalCollection);
+//     if (validateOverlapping && sharedString.getLength() > 0) {
+//         const overlapping = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
+//         assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+//     }
+//     assert.strictEqual(actual.length, expected.length,
+//         `findOverlappingIntervals() must return the expected number of intervals`);
+
+//     const actualPos = actual.map((interval) => {
+//         assert(interval);
+//         const start = sharedString.localReferencePositionToPosition(interval.start);
+//         const end = sharedString.localReferencePositionToPosition(interval.end);
+//         return { start, end };
+//     });
+//     assert.deepEqual(actualPos, expected, "intervals are not as expected");
+// };
+
 async function loadSharedString(
     containerRuntimeFactory: MockContainerRuntimeFactory,
     id: string,
@@ -53,6 +81,26 @@ async function loadSharedString(
     await sharedString.load(services);
     await sharedString.loaded;
     return sharedString;
+}
+
+async function testLoadSharedString(
+    containerRuntimeFactory: MockContainerRuntimeFactory,
+    id: string,
+    summary: ISummaryTree,
+): Promise<TestSharedString> {
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+    dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
+    const services = {
+        deltaConnection: containerRuntime.createDeltaConnection(),
+        objectStorage: MockStorage.createFromSummary(summary),
+    };
+    const sharedString = new TestSharedString(dataStoreRuntime, id, TestSharedStringFactory.Attributes);
+    await sharedString.load(services);
+    await sharedString.loaded;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return sharedString;
+    // eslint-enable-next-line @typescript-eslint/no-unsafe-return
 }
 
 async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq: number; }> {
@@ -88,9 +136,23 @@ describe("IntervalCollection snapshotting", () => {
         containerRuntimeFactory.sequenceNumber = seq;
     });
 
+    it("uses the old interval format", async () => {
+        debugger;
+        const sharedString = await testLoadSharedString(containerRuntimeFactory, "1", summary);
+        sharedString.getIntervalCollection("test");
+    //     const intervals = Array.from(collection);
+    //     assert.equal(intervals.length, 1);
+    //     const interval = intervals[0] ?? assert.fail();
+    //     /* eslint-disable no-bitwise */
+    //     assert(interval.start.refType === (ReferenceType.RangeBegin | ReferenceType.SlideOnRemove));
+    //     assert(interval.end.refType === (ReferenceType.RangeEnd | ReferenceType.SlideOnRemove));
+    //     /* eslint-enable no-bitwise */
+    });
+
     it("creates the correct reference type on reload", async () => {
         // This is a direct regression test for an issue with interval collection deserialization logic.
         // It manifested in later failures demonstrated by the "enable operations on reload" suite.
+        debugger;
         const sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);
         const collection = sharedString.getIntervalCollection("test");
         const intervals = Array.from(collection);

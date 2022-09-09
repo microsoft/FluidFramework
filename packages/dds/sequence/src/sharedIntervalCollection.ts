@@ -23,6 +23,7 @@ import {
     IntervalCollection,
     IntervalCollectionValueType,
     ISerializableInterval,
+    // OldIntervalCollection,
 } from "./intervalCollection";
 import { DefaultMap } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
@@ -79,6 +80,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
     waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
     getIntervalCollection(label: string): IntervalCollection<TInterval>;
+    // getOldIntervalCollection(label: string): OldIntervalCollection<TInterval>;
 }
 
 /**
@@ -108,7 +110,7 @@ export class SharedIntervalCollection
 
     public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
     private readonly intervalCollections: DefaultMap<IntervalCollection<Interval>>;
-
+    // private readonly oldIntervalCollections: DefaultMap<OldIntervalCollection<Interval>>;
     /**
      * Constructs a new shared SharedIntervalCollection. If the object is non-local an id and service interfaces will
      * be provided
@@ -142,6 +144,12 @@ export class SharedIntervalCollection
         const sharedCollection = this.intervalCollections.get(realLabel);
         return sharedCollection;
     }
+
+    // public getOldIntervalCollection(label: string): IntervalCollection<Interval> {
+    //     const realLabel = this.getIntervalCollectionPath(label);
+    //     const sharedCollection = this.intervalCollections.get(realLabel);
+    //     return sharedCollection;
+    // }
 
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         return createSingleBlobSummary(snapshotFileName, this.intervalCollections.serialize(serializer));

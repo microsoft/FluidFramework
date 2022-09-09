@@ -564,8 +564,8 @@ export function createIntervalIndex(conflict?: IntervalConflictResolver<Interval
 }
 
 export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
-    private readonly intervalTree = new IntervalTree<TInterval>();
-    private readonly endIntervalTree: RedBlackTree<TInterval, TInterval>;
+    protected readonly intervalTree = new IntervalTree<TInterval>();
+    protected readonly endIntervalTree: RedBlackTree<TInterval, TInterval>;
     private readonly intervalIdMap: Map<string, TInterval> = new Map();
     private conflictResolver: IntervalConflictResolver<TInterval> | undefined;
     private endConflictResolver: ConflictAction<TInterval, TInterval> | undefined;
@@ -573,8 +573,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     private static readonly legacyIdPrefix = "legacy";
 
     constructor(
-        private readonly client: Client,
-        private readonly label: string,
+        protected readonly client: Client,
+        protected readonly label: string,
         private readonly helpers: IIntervalHelpers<TInterval>,
         /** Callback invoked each time one of the endpoints of an interval slides. */
         private readonly onPositionChange?: (interval: TInterval) => void,
@@ -842,12 +842,16 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     public serialize(): ISerializedIntervalCollectionV2 {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
-
         return {
             label: this.label,
             intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
             version: 2,
         };
+    }
+
+    public testSerialize(): ISerializedInterval[] {
+        const intervals = this.intervalTree.intervals.keys();
+        return (intervals as unknown as ISerializedInterval[]);
     }
 
     private addIntervalListeners(interval: TInterval) {
@@ -885,9 +889,50 @@ class SequenceIntervalCollectionFactory
         return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
     }
 
-    public store(value: IntervalCollection<SequenceInterval>): ISerializedIntervalCollectionV2 {
+    public store(value: IntervalCollection<SequenceInterval>): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
     }
+}
+
+class OldSequenceIntervalCollectionFactory
+    implements IValueFactory<TestIntervalCollection<SequenceInterval>> {
+    public load(
+        emitter: IValueOpEmitter,
+        raw: ISerializedInterval[],
+    ): TestIntervalCollection<SequenceInterval> {
+        const helpers: IIntervalHelpers<SequenceInterval> = {
+            compareEnds: compareSequenceIntervalEnds,
+            create: createSequenceInterval,
+        };
+        return new TestIntervalCollection(helpers, true, emitter, raw);
+    }
+    // this is definitely going to be an issue --> still need to figure out what to do about serialieInternal
+    public store(value: TestIntervalCollection<SequenceInterval>):
+    ISerializedInterval[] | ISerializedIntervalCollectionV2 {
+        return value.serializeInternal();
+    }
+}
+
+export class OldSequenceIntervalCollectionValueType
+    implements IValueType<TestIntervalCollection<SequenceInterval>> {
+    public static Name = "sharedStringIntervalCollection";
+
+    public get name(): string {
+        return OldSequenceIntervalCollectionValueType.Name;
+    }
+
+    public get factory(): IValueFactory<TestIntervalCollection<SequenceInterval>> {
+        return OldSequenceIntervalCollectionValueType._factory;
+    }
+
+    public get ops(): Map<string, IValueOperation<TestIntervalCollection<SequenceInterval>>> {
+        return OldSequenceIntervalCollectionValueType._ops;
+    }
+
+    private static readonly _factory: IValueFactory<TestIntervalCollection<SequenceInterval>> =
+        new OldSequenceIntervalCollectionFactory();
+
+    private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
 export class SequenceIntervalCollectionValueType
@@ -939,7 +984,7 @@ class IntervalCollectionFactory
         return collection;
     }
 
-    public store(value: IntervalCollection<Interval>): ISerializedIntervalCollectionV2 {
+    public store(value: IntervalCollection<Interval>): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
     }
 }
@@ -964,6 +1009,27 @@ export class IntervalCollectionValueType
         new IntervalCollectionFactory();
     private static readonly _ops = makeOpsMap<Interval>();
 }
+
+// export class OldIntervalCollectionValueType
+//     implements IValueType<OldIntervalCollection<Interval>> {
+//     public static Name = "sharedIntervalCollection";
+
+//     public get name(): string {
+//         return OldIntervalCollectionValueType.Name;
+//     }
+
+//     public get factory(): IValueFactory<OldIntervalCollection<Interval>> {
+//         return OldIntervalCollectionValueType._factory;
+//     }
+
+//     public get ops(): Map<string, IValueOperation<OldIntervalCollection<Interval>>> {
+//         return OldIntervalCollectionValueType._ops;
+//     }
+
+//     private static readonly _factory: IValueFactory<OldIntervalCollection<Interval>> =
+//         new IntervalCollectionFactory();
+//     private static readonly _ops = makeOpsMap<Interval>();
+// }
 
 function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
     const rebase = (
@@ -1062,10 +1128,11 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 
 export class IntervalCollection<TInterval extends ISerializableInterval>
     extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
-    private savedSerializedIntervals?: ISerializedInterval[];
+    // this definitely needs to be private or protected or something
+    protected savedSerializedIntervals?: ISerializedInterval[];
     private localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback | undefined;
-    private client: Client | undefined;
+    protected client: Client | undefined;
     private readonly pendingChangesStart: Map<string, ISerializedInterval[]> = new Map<string, ISerializedInterval[]>();
     private readonly pendingChangesEnd: Map<string, ISerializedInterval[]> = new Map<string, ISerializedInterval[]>();
 
@@ -1075,8 +1142,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
     /** @internal */
     constructor(
-        private readonly helpers: IIntervalHelpers<TInterval>,
-        private readonly requiresClient: boolean,
+        protected readonly helpers: IIntervalHelpers<TInterval>,
+        protected readonly requiresClient: boolean,
         private readonly emitter: IValueOpEmitter,
         serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
     ) {
@@ -1586,13 +1653,23 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     /**
      * @internal
      */
-    public serializeInternal(): ISerializedIntervalCollectionV2 {
+    public serializeInternal(): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
         }
-
+        if (Array.isArray(this.savedSerializedIntervals)) {
+            return this.localCollection.testSerialize();
+        }
         return this.localCollection.serialize();
     }
+
+    // public serializeInternalOld(): ISerializedIntervalCollectionV2 {
+    //     if (!this.attached) {
+    //         throw new LoggingError("attachSequence must be called");
+    //     }
+
+    //     return this.localCollection.serialize();
+    // }
 
     public [Symbol.iterator](): IntervalCollectionIterator<TInterval> {
         const iterator = new IntervalCollectionIterator<TInterval>(this);
@@ -1661,6 +1738,108 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
 
         return this.localCollection.nextInterval(pos);
+    }
+}
+
+export class TestLocalIntervalCollection<TInterval extends ISerializableInterval>
+ extends LocalIntervalCollection<SequenceInterval> {
+    endIntervalTree: RedBlackTree<SequenceInterval, SequenceInterval>;
+    constructor(
+        client: Client,
+        label: string,
+        helpers: IIntervalHelpers<SequenceInterval>,
+        /** Callback invoked each time one of the endpoints of an interval slides. */
+        onPositionChange?: (interval: SequenceInterval) => void,
+    ) {
+        super(client, label, helpers, onPositionChange);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>(helpers.compareEnds);
+    }
+
+    // doesn't actually return old type; returns new
+    public override serialize(): ISerializedIntervalCollectionV2 {
+        const client = this.client;
+        const intervals = this.intervalTree.intervals.keys();
+        // construct old type and cast it as new so the return type matches but we have the object that we want
+        // call sequenceinterval's serialize method to get it into the right type
+        const serialized = intervals.map((interval) => interval.serialize(client));
+        return (serialized as unknown as ISerializedIntervalCollectionV2);
+        // return {
+        //     label: this.label,
+        //     intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
+        //     version: 2,
+        // };
+    }
+}
+
+export class TestIntervalCollection<TInterval extends ISerializableInterval>
+ extends IntervalCollection<SequenceInterval> {
+    savedSerializedIntervals: ISerializedInterval[];
+    private testLocalCollection: TestLocalIntervalCollection<SequenceInterval>;
+
+    /** @internal */
+    constructor(
+        helpers: IIntervalHelpers<SequenceInterval>,
+        requiresClient: boolean,
+        emitter: IValueOpEmitter,
+        serializedIntervals: ISerializedInterval[],
+    ) {
+        super(helpers, requiresClient, emitter, serializedIntervals);
+
+        this.savedSerializedIntervals = serializedIntervals;
+    }
+
+    /**
+     * @internal
+     */
+    // actually returns an ISerializedInterval[], but it is casted as an ISerializableIntervalCollectionV2
+     public override serializeInternal(): ISerializedIntervalCollectionV2 {
+        if (!this.attached) {
+            throw new LoggingError("attachSequence must be called");
+        }
+
+        return this.testLocalCollection.serialize();
+    }
+
+    public attachGraph(client: Client, label: string) {
+        if (this.attached) {
+            throw new LoggingError("Only supports one Sequence attach");
+        }
+
+        if ((client === undefined) && (this.requiresClient)) {
+            throw new LoggingError("Client required for this collection");
+        }
+
+        // Instantiate the local interval collection based on the saved intervals
+        this.client = client;
+        this.testLocalCollection = new TestLocalIntervalCollection<TInterval>(
+            client,
+            label,
+            this.helpers,
+            (interval) => this.emit("changeInterval", interval, true, undefined),
+        );
+        if (this.savedSerializedIntervals) {
+            for (const serializedInterval of this.savedSerializedIntervals) {
+                this.testLocalCollection.ensureSerializedId(serializedInterval);
+                const { start, end, intervalType, properties } = serializedInterval;
+                const interval = this.helpers.create(
+                    label,
+                    start,
+                    end,
+                    client,
+                    intervalType,
+                    undefined,
+                    true,
+                );
+                interval.addProperties(properties);
+                this.testLocalCollection.add(interval);
+            }
+        }
+        this.savedSerializedIntervals = undefined;
+    }
+
+    public get attached(): boolean {
+        return !!this.testLocalCollection;
     }
 }
 
