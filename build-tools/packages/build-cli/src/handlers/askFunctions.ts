@@ -32,11 +32,11 @@ export const askForReleaseType: StateHandlerFunction = async (
 ): Promise<boolean> => {
     if (testMode) return true;
 
-    const { bumpType: inputBumpType, context, releaseGroup } = data;
+    const { bumpType: inputBumpType, context, releaseVersion } = data;
     assert(context !== undefined, "Context is undefined.");
 
     const currentBranch = await context.gitRepo.getCurrentBranchName();
-    const currentVersion = context.getVersion(releaseGroup!);
+    const currentVersion = releaseVersion;
     const bumpedMajor = bumpVersionScheme(currentVersion, "major");
     const bumpedMinor = bumpVersionScheme(currentVersion, "minor");
     const bumpedPatch = bumpVersionScheme(currentVersion, "patch");

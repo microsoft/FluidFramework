@@ -21,7 +21,7 @@
         {
             "name": "flub",
             "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
-            "cwd": "/home/tylerbu/code/release-1/",
+            "cwd": "${workspaceFolder}",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
