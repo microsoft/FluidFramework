@@ -85,7 +85,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
 
     itExpects("A large op will close the container", [
-        { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpTooLarge" },
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
     ], async () => {
         const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
         await setupContainers(testContainerConfig, { });
@@ -101,12 +101,16 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
         const error = await errorEvent;
         assert.ok(error instanceof GenericError);
-        assert.ok(error.getTelemetryProperties().length ?? 0 > maxMessageSizeInBytes);
-        assert.deepEqual(error.getTelemetryProperties().limit, maxMessageSizeInBytes);
+        assert.ok(error.getTelemetryProperties().opSize ?? 0 > maxMessageSizeInBytes);
+
+        // Limit has to be around 1Mb, but we should not assume here precise number.
+        const limit = error.getTelemetryProperties().limit as number;
+        assert(limit > maxMessageSizeInBytes / 2);
+        assert(limit < maxMessageSizeInBytes * 2);
     });
 
     it("Small ops will pass", async () => {
-        const maxMessageSizeInBytes = 960 * 1024; // slightly below 1Mb
+        const maxMessageSizeInBytes = 800 * 1024; // slightly below 1Mb
         await setupContainers(testContainerConfig, { });
         const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
         const messageCount = 10;
