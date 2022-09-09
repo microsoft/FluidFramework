@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { clone, fail, StackyIterator } from "../../util";
 import {
     getInputLength,
     getOutputLength,
@@ -16,8 +17,7 @@ import {
     splitMarkOnInput,
     splitMarkOnOutput,
     Transposed as T,
-} from "../../changeset";
-import { clone, fail, StackyIterator } from "../../util";
+} from "./changeset";
 import { SequenceChangeset } from "./sequenceChangeset";
 
 /**
