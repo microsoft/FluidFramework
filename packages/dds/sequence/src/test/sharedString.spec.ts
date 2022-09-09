@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-    appendToRevertibles,
+    appendToMergeTreeDeltaRevertibles,
     Marker,
     matchProperties,
     MergeTreeDeltaRevertible,
@@ -557,7 +557,7 @@ describe("SharedString", () => {
             const revertibles: MergeTreeDeltaRevertible[] = [];
             sharedString.on(
                 "sequenceDelta",
-                (event) => appendToRevertibles(sharedString, event.deltaArgs, revertibles));
+                (event) => appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles));
             for (let i = 0; i < 10; i++) {
                 sharedString.insertText(sharedString.getLength(), i.toString());
             }
@@ -577,7 +577,7 @@ describe("SharedString", () => {
             const revertibles: MergeTreeDeltaRevertible[] = [];
             sharedString.on(
                 "sequenceDelta",
-                (event) => appendToRevertibles(sharedString, event.deltaArgs, revertibles));
+                (event) => appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles));
             while (sharedString.getLength() > 0) {
                 const middle = Math.floor(sharedString.getLength() / 2);
                 sharedString.removeRange(middle, middle + 1);
@@ -601,7 +601,7 @@ describe("SharedString", () => {
             const revertibles: MergeTreeDeltaRevertible[] = [];
             sharedString.on(
                 "sequenceDelta",
-                (event) => appendToRevertibles(sharedString, event.deltaArgs, revertibles));
+                (event) => appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles));
 
             for (let i = 0; i < sharedString.getLength(); i++) {
                 sharedString.annotateRange(i, i + 1, { test: i });
