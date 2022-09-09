@@ -891,7 +891,7 @@ export class MergeTree {
      * Otherwise eventual consistency is not guaranteed.
      * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
      */
-    private slideReferences(segment: ISegment, refsToSlide: LocalReferencePosition[]) {
+    private slideReferences(segment: ISegment, refsToSlide: Iterable<LocalReferencePosition>) {
         assert(
             isRemovedAndAcked(segment),
             0x2f1 /* slideReferences from a segment which has not been removed and acked */);

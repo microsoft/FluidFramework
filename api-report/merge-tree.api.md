@@ -16,17 +16,7 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
 // @public (undocumented)
-export interface AnnotateRevertible {
-    // (undocumented)
-    operation: typeof MergeTreeDeltaType.ANNOTATE;
-    // (undocumented)
-    propertyDeltas: PropertySet;
-    // (undocumented)
-    trackingGroup: TrackingGroup;
-}
-
-// @public (undocumented)
-export function appendToRevertibles(driver: MergeTreeRevertibleDriver, event: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
+export function appendToRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
@@ -602,14 +592,6 @@ export interface InsertContext {
 }
 
 // @public (undocumented)
-export interface InsertRevertible {
-    // (undocumented)
-    operation: typeof MergeTreeDeltaType.INSERT;
-    // (undocumented)
-    trackingGroup: TrackingGroup;
-}
-
-// @public (undocumented)
 export function internedSpaces(n: number): string;
 
 // Warning: (ae-internal-missing-underscore) The name "IRBAugmentation" should be prefixed with an underscore because the declaration is marked as @internal
@@ -842,7 +824,17 @@ export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | t
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
 // @public (undocumented)
-export type MergeTreeDeltaRevertible = InsertRevertible | RemoveRevertible | AnnotateRevertible;
+export type MergeTreeDeltaRevertible = {
+    operation: typeof MergeTreeDeltaType.INSERT;
+    trackingGroup: TrackingGroup;
+} | {
+    operation: typeof MergeTreeDeltaType.REMOVE;
+    trackingGroup: TrackingGroup;
+} | {
+    operation: typeof MergeTreeDeltaType.ANNOTATE;
+    trackingGroup: TrackingGroup;
+    propertyDeltas: PropertySet;
+};
 
 // @public (undocumented)
 export const MergeTreeDeltaType: {
@@ -1130,14 +1122,6 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean;
 
 // @public (undocumented)
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
-
-// @public (undocumented)
-export interface RemoveRevertible {
-    // (undocumented)
-    operation: typeof MergeTreeDeltaType.REMOVE;
-    // (undocumented)
-    trackingGroup: TrackingGroup;
-}
 
 // @public (undocumented)
 export const reservedMarkerIdKey = "markerId";

@@ -179,7 +179,7 @@ export class LocalReferenceCollection {
      * @internal
      */
     public [Symbol.iterator]() {
-        const subiterators: IterableIterator<ListNode<LocalReference>>[] = [];
+        const subiterators: IterableIterator<ListNode<LocalReferencePosition>>[] = [];
         for (const refs of this.refsByOffset) {
             if (refs) {
                 if (refs.before) {
@@ -259,10 +259,9 @@ export class LocalReferenceCollection {
             refType,
             properties,
         );
+        ref.link(this.segment, offset, undefined);
         if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
             this.addLocalRef(ref, offset);
-        } else {
-            ref.link(this.segment, offset, undefined);
         }
         return ref;
     }
@@ -274,7 +273,6 @@ export class LocalReferenceCollection {
     public addLocalRef(lref: LocalReferencePosition, offset: number) {
         assertLocalReferences(lref);
         assert(offset < this.segment.cachedLength, 0x348 /* offset cannot be beyond segment length */);
-
         if (refTypeIncludesFlag(lref, ReferenceType.Transient)) {
             lref.link(this.segment, offset, undefined);
         } else {
@@ -301,6 +299,7 @@ export class LocalReferenceCollection {
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         if (this.has(lref)) {
             assertLocalReferences(lref);
+
             const node = lref.getListNode();
             node?.list?.remove(node);
 
@@ -446,7 +445,7 @@ export class LocalReferenceCollection {
                     this.refCount++;
                     lref.callbacks?.afterSlide?.(lref);
                 } else {
-                    lref.getSegment()?.localRefs?.removeLocalRef(lref);
+                    lref.link(undefined, 0, undefined);
                 }
             }
         }
@@ -477,7 +476,7 @@ export class LocalReferenceCollection {
                     this.refCount++;
                     lref.callbacks?.afterSlide?.(lref);
                 } else {
-                    lref.getSegment()?.localRefs?.removeLocalRef(lref);
+                    lref.link(undefined, 0, undefined);
                 }
             }
         }
@@ -488,8 +487,12 @@ export class LocalReferenceCollection {
     * @internal
     */
      public isAfterTombstone(lref: LocalReferencePosition) {
-        assertLocalReferences(lref);
-        return this.refsByOffset[lref.getOffset()]?.after === lref.getListNode()?.list;
+        const after = this.refsByOffset[lref.getOffset()]?.after;
+        if (after) {
+            assertLocalReferences(lref);
+            return after.includes(lref.getListNode());
+        }
+        return false;
     }
 
     /**
