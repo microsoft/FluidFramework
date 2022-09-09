@@ -290,9 +290,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.mc.logger,
             {
                 eventName: "Load",
-                canReconnect: loadOptions?.canReconnect,
-                deltaConnection: loadOptions?.loadMode?.deltaConnection,
-                opsBeforeReturn: loadOptions?.loadMode?.opsBeforeReturn,
+                details: JSON.stringify({
+                    canReconnect: loadOptions?.canReconnect,
+                    loadMode: loadOptions?.loadMode,
+                }),
             },
             async (event) => new Promise<Container>((resolve, reject) => {
                 const version = loadOptions.version;
@@ -315,7 +316,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         container.removeListener("closed", onClosed);
                     })
                     .then((props) => {
-                        event.end({ ...props, ...loadOptions.loadMode });
+                        event.end({
+                            details: JSON.stringify({ ...props }),
+                        });
                         resolve(container);
                     },
                         (error) => {
