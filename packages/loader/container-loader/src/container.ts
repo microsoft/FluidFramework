@@ -390,7 +390,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Only transition states if currently loading
         if (this._lifecycleState === "loading") {
             // Propagate current connection state through the system.
-            this.propagateConnectionState();
+            this.propagateConnectionState(true /* initial transition */);
             this._lifecycleState = "loaded";
         }
     }
@@ -634,6 +634,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this._deltaManager = this.createDeltaManager();
 
+        this._clientId = config.serializedContainerState?.clientId;
         this.connectionStateHandler = createConnectionStateHandler(
             {
                 logger: this.mc.logger,
@@ -642,9 +643,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     if (value === ConnectionState.Connected) {
                         this._clientId = this.connectionStateHandler.pendingClientId;
                     }
-                    this.connectionStateChanged(value, oldState, reason);
-                    if (this._lifecycleState === "loaded" && value !== ConnectionState.CatchingUp) {
-                        this.propagateConnectionState();
+                    this.logConnectionStateChangeTelemetry(value, oldState, reason);
+                    if (this._lifecycleState === "loaded") {
+                        this.propagateConnectionState(false /* initial transition */);
                     }
                 },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
@@ -660,7 +661,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
             },
             this.deltaManager,
-            config.serializedContainerState?.clientId,
+            this._clientId,
         );
 
         this.on(savedContainerEvent, () => {
@@ -939,8 +940,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._attachState = AttachState.Attached;
                 this.emit("attached");
 
-                // Propagate current connection state through the system.
-                this.propagateConnectionState();
                 if (!this.closed) {
                     this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
                 }
@@ -1610,7 +1609,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             prefetchType);
     }
 
-    private connectionStateChanged(
+    private logConnectionStateChangeTelemetry(
         value: ConnectionState,
         oldState: ConnectionState,
         reason?: string,
@@ -1668,7 +1667,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private propagateConnectionState() {
+    private propagateConnectionState(initialTransition: boolean) {
+        // When container loaded, we want to propagate initial connection state.
+        // After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
+        // This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
+        if (!initialTransition &&
+                this.connectionState !== ConnectionState.Connected &&
+                this.connectionState !== ConnectionState.Disconnected) {
+            return;
+        }
+        const state = this.connectionState === ConnectionState.Connected;
+
         const logOpsOnReconnect: boolean =
             this.connectionState === ConnectionState.Connected &&
             !this.firstConnection &&
@@ -1676,8 +1685,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-
-        const state = this.connectionState === ConnectionState.Connected;
 
         // Both protocol and context should not be undefined if we got so far.
 
