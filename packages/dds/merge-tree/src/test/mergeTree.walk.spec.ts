@@ -45,7 +45,7 @@ describe("MergeTree walks", () => {
         }
     });
 
-    describe.only("walkAllChildSegments", () => {
+    describe("walkAllChildSegments", () => {
         function* getAllDescendantBlocks(block: IMergeBlock): Iterable<IMergeBlock> {
             yield block;
             for (let i = 0; i < block.childCount; i++) {
