@@ -5,7 +5,13 @@
 
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { Deferred, gitHashFile, IsoBuffer, TelemetryNullLogger, TypedEventEmitter } from "@fluidframework/common-utils";
+import {
+    bufferToString,
+    Deferred,
+    IsoBuffer,
+    TelemetryNullLogger,
+    TypedEventEmitter,
+} from "@fluidframework/common-utils";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -24,8 +30,10 @@ abstract class BaseMockBlobStorage implements Pick<IDocumentStorageService, "rea
 }
 
 class DedupeStorage extends BaseMockBlobStorage {
+    public ids = new Map();
     public async createBlob(blob: ArrayBufferLike) {
-        const id = await gitHashFile(blob as any);
+        const id = this.ids.get(bufferToString(blob, "utf8")) ?? (this.ids.size + 999).toString();
+        this.ids.set(bufferToString(blob, "utf8"), id);
         this.blobs.set(id, blob);
         return { id };
     }
@@ -40,9 +48,10 @@ class NonDedupeStorage extends BaseMockBlobStorage {
 }
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IBlobManagerRuntime {
-    constructor(snapshot: IBlobManagerLoadInfo = {}, attached = false) {
+    constructor(snapshot: IBlobManagerLoadInfo = {}, attached = false, stash: any = [[], undefined]) {
         super();
         this.attachState = attached ? AttachState.Attached : AttachState.Detached;
+        this.ops = stash[0];
         this.blobManager = new BlobManager(
             undefined as any, // routeContext
             snapshot,
@@ -50,6 +59,7 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
             (blobId, localId) => this.sendBlobAttachOp(blobId, localId),
             () => undefined,
             this,
+            stash[1],
         );
     }
 
@@ -68,7 +78,7 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
                     return this.storage.createBlob(blob);
                 }
                 const P = this.processBlobsP.promise.then(async () => {
-                    if (!this.connected && this.attachState === AttachState.Attached) {
+                    if (!this.connected && !this.processing && this.attachState === AttachState.Attached) {
                         this.unprocessedBlobs.delete(blob);
                         throw new Error("fake error due to having no connection to storage service");
                     } else {
@@ -158,8 +168,8 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
         assert(!this.connected);
         await new Promise<void>((r) => setTimeout(r, 0));
         if (this.blobManager.hasPendingOfflineUploads) {
-            const uploadP = this.blobManager.onConnected();
             this.processing = true;
+            const uploadP = this.blobManager.onConnected();
             await this.processBlobs();
             await uploadP;
             this.processing = false;
@@ -182,6 +192,10 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
         const op = { metadata: { blobId: response.id, localId: redirected ? uuid() : undefined } };
         this.blobManager.processBlobAttachOp(op as ISequencedDocumentMessage, false);
         return op;
+    }
+
+    public getPendingState() {
+        return [[...this.ops], this.blobManager.getPendingBlobs()];
     }
 }
 
@@ -486,5 +500,29 @@ describe("BlobManager", () => {
         const summaryData = await runtime.attach();
         assert.strictEqual(summaryData?.ids.length, 3);
         assert.strictEqual(summaryData?.redirectTable.size, 3);
+    });
+
+    it("has no pending blobs after rehydration", async () => {
+        await runtime.attach();
+        await runtime.connect();
+
+        await createBlob(IsoBuffer.from("blob1", "utf8"));
+        await createBlob(IsoBuffer.from("blob2", "utf8"));
+        await createBlob(IsoBuffer.from("blob3", "utf8"));
+        await runtime.processBlobs();
+        runtime.disconnect();
+        await createBlob(IsoBuffer.from("blob4", "utf8"));
+        await createBlob(IsoBuffer.from("blob5", "utf8"));
+        await createBlob(IsoBuffer.from("blob6", "utf8"));
+
+        const pendingChanges = runtime.getPendingState();
+        await runtime.connect();
+        await runtime.processAll();
+
+        const runtime2 = new MockRuntime({}, true, pendingChanges);
+        await runtime2.connect();
+        await runtime2.processAll();
+
+        assert.equal((runtime2.blobManager as any).pendingBlobs.size, 0);
     });
 });

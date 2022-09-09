@@ -241,7 +241,7 @@ describe("Runtime", () => {
             const createMockContext =
                 (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
                     const pendingState = {
-                        pending: {
+                        stashedOps: {
                             pendingStates: [{
                                 type: "message",
                                 messageType: ContainerMessageType.BlobAttach,

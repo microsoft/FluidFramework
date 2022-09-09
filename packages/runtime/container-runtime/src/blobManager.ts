@@ -5,7 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { DriverErrorType, IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -187,6 +187,12 @@ export class BlobManager {
      * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
      */
     public async onConnected() {
+        // It's important we don't wait to upload here since runtime is now waiting for pending blob
+        // uploads to complete before transitioning to "connected" state. This implies we are now
+        // online and hopefully able to reach storage.
+
+        // This will cause us to retry uploading all pending blobs. The driver is expected to handle
+        // this appropriately, e.g. ODSP driver will upload at most one attachment blob at a time.
         this.retryThrottler.cancel();
         const pendingUploads = this.pendingOfflineUploads.map(async (e) => e.uploadP);
         await PerformanceEvent.timedExecAsync(this.logger, {
@@ -363,8 +369,13 @@ export class BlobManager {
     private async onUploadReject(localId: string, error) {
         const entry = this.pendingBlobs.get(localId);
         assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
-        if (!this.runtime.connected) {
-            if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+
+        // Disconnect due to ping timeout on websocket takes ~45s; until then driver will throw errors with
+        // errorType "offlineError" or the enigmatic "fetchFailure".
+        if (!this.runtime.connected ||
+            error.errorType === DriverErrorType.offlineError ||
+            error.errorType === DriverErrorType.fetchFailure) {
+            if (!this.runtime.connected && entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 this.transitionToOffline(localId);
             }
             // we are probably not connected to storage but start another upload request in case we are
@@ -377,6 +388,8 @@ export class BlobManager {
     }
 
     private transitionToOffline(localId: string) {
+        // Transitioning a blob to offline flow while connected could result in data loss since we
+        // can't guarantee it will be uploaded before ops referencing it are submitted.
         assert(!this.runtime.connected, 0x388 /* Must only transition to offline flow while runtime is disconnected */);
         const entry = this.pendingBlobs.get(localId);
         assert(!!entry, 0x389 /* No pending blob entry */);
@@ -426,8 +439,9 @@ export class BlobManager {
         if (local) {
             if (message.metadata.localId === undefined) {
                 // Since there is no local ID, we know this op was submitted while online.
-                const waitingBlobs = this.opsInFlight.get(message.metadata.blobId);
-                assert(!!waitingBlobs, 0x38e /* local online BlobAttach op with no pending blob */);
+                // If we stashed and rehydrated we will not have any waiting blobs since we don't
+                // stash pending online-flow blobs.
+                const waitingBlobs = this.opsInFlight.get(message.metadata.blobId) ?? [];
                 waitingBlobs.forEach((localId) => {
                     const pendingBlobEntry = this.pendingBlobs.get(localId);
                     assert(
@@ -584,7 +598,11 @@ export class BlobManager {
     public getPendingBlobs(): IPendingBlobs {
         const blobs = {};
         for (const [key, entry] of this.pendingBlobs) {
-            blobs[key] = { blob: bufferToString(entry.blob, "base64") };
+            // We never gave out handles for online-flow entries, so at this point there is no reason to save them
+            if (entry.status === PendingBlobStatus.OfflinePendingOp ||
+                entry.status === PendingBlobStatus.OfflinePendingUpload) {
+                blobs[key] = { blob: bufferToString(entry.blob, "base64") };
+            }
         }
         return blobs;
     }

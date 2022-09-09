@@ -13,6 +13,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { blobsTreeName } from "./summaryFormat";
 
 /**
  * Serialized blobs from a snapshot. Used to load offline.
@@ -44,10 +45,17 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
         tree: ISnapshotTree,
         blobs: ISerializedBaseSnapshotBlobs,
         storage: IDocumentStorageService,
+        root = true,
     ) {
         const treePs: Promise<any>[] = [];
-        for (const subTree of Object.values(tree.trees)) {
-            treePs.push(this.serializeTreeCore(subTree, blobs, storage));
+        for (const [key, subTree] of Object.entries(tree.trees)) {
+            // BlobManager will write a tree to the summary containing only "attachment" type entries
+            // which reference attachment blobs by ID. However, some drivers do not support this type
+            // and will convert them to "blob" type entries. We want to avoid saving these to reduce
+            // the size of stashed change blobs.
+            if (!root || key !== blobsTreeName) {
+                treePs.push(this.serializeTreeCore(subTree, blobs, storage, false));
+            }
         }
         for (const id of Object.values(tree.blobs)) {
             const blob = await storage.readBlob(id);
@@ -68,9 +76,12 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
     private static serializeTreeWithBlobContentsCore(
         tree: ISnapshotTreeWithBlobContents,
         blobs: ISerializedBaseSnapshotBlobs,
+        root = true,
     ) {
-        for (const subTree of Object.values(tree.trees)) {
-            this.serializeTreeWithBlobContentsCore(subTree, blobs);
+        for (const [key, subTree] of Object.entries(tree.trees)) {
+            if (!root || key !== blobsTreeName) {
+                this.serializeTreeWithBlobContentsCore(subTree, blobs, false);
+            }
         }
         for (const id of Object.values(tree.blobs)) {
             const blob = tree.blobsContents[id];
