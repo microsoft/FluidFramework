@@ -4,6 +4,7 @@
  */
 
 export * from "./interfaces";
+export * from "./modelContainerRuntimeFactory";
 export * from "./modelLoader";
 export * from "./sessionStorageModelLoader";
 export * from "./staticCodeLoader";

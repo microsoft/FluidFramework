@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { makeModelRequestHandler, ModelMakerCallback } from "@fluid-example/example-utils";
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { ModelContainerRuntimeFactory, ModelMakerCallback } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -30,16 +29,14 @@ const makeCollaborativeTextAppModel: ModelMakerCallback<ICollaborativeTextAppMod
         return new CollaborativeTextAppModel(collaborativeText);
     };
 
-export class CollaborativeTextContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+export class CollaborativeTextContainerRuntimeFactory
+    extends ModelContainerRuntimeFactory<ICollaborativeTextAppModel> {
     constructor() {
         super(
             new Map([
                 CollaborativeText.getFactory().registryEntry,
             ]), // registryEntries
-            undefined,
-            [
-                makeModelRequestHandler(makeCollaborativeTextAppModel),
-            ],
+            makeCollaborativeTextAppModel,
         );
     }
 
