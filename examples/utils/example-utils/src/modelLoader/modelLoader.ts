@@ -6,9 +6,9 @@
 import type { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
+import { create404Response, requestFluidObject } from "@fluidframework/runtime-utils";
 import type { IModelLoader, ModelMakerCallback } from "./interfaces";
 
 // This ModelLoader works on a convention, that the container it will load a model for must respond to a specific
@@ -23,14 +23,15 @@ import type { IModelLoader, ModelMakerCallback } from "./interfaces";
  * @returns A request handler that can be provided to the container runtime factory
  */
 export const makeModelRequestHandler = <ModelType>(modelMakerCallback: ModelMakerCallback<ModelType>) => {
-    return async (request: RequestParser, runtime: IContainerRuntime) => {
+    return async (request: IRequest, runtime: IContainerRuntime): Promise<IResponse> => {
         // The model request format is for an empty path (i.e. "") and passing a reference to the container in the
         // header as containerRef.
-        if (request.pathParts.length === 0 && request.headers?.containerRef !== undefined) {
+        if (request.url === "" && request.headers?.containerRef !== undefined) {
             const container: IContainer = request.headers.containerRef;
             const model = await modelMakerCallback(runtime, container);
             return { status: 200, mimeType: "fluid/object", value: model };
         }
+        return create404Response(request);
     };
 };
 
