@@ -338,9 +338,7 @@ export interface TestInterfaceWithIndexSignature
 
 #### Index Signature Details
 
-##### \[foo: number\]: {
-        bar: string;
-    } {#testinterfacewithindexsignature-_indexer_-indexsignature}
+##### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-_indexer_-indexsignature}
 
 Test index signature.
 
