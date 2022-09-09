@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, TreeValue } from "../tree";
+import { JsonableTree, TreeValue } from "../../../tree";
 
 // TODOs:
 // Clipboard
