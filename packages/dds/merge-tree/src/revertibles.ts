@@ -78,7 +78,7 @@ export interface MergeTreeRevertibleDriver{
 
 type InternalRevertDriver = MergeTreeRevertibleDriver & {
     __mergeTreeRevertible?: {
-        detachedReferences?: ISegment & IRemovalInfo;
+        detachedReferences?: EndOfTreeSegment;
         refCallbacks?: LocalReferencePosition["callbacks"]; };
 };
 
