@@ -243,7 +243,7 @@ export type FieldChangeset = Brand<unknown, "FieldChangeset">;
 
 // @public (undocumented)
 export interface FieldEditor<TChangeset> {
-    buildChildChange(childIndex: number, change: FieldChangeMap): TChangeset;
+    buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
 
 // @public (undocumented)
@@ -621,6 +621,8 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Fie
 // @public @sealed (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
     constructor(family: ModularChangeFamily, deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet);
+    // (undocumented)
+    setValue(path: UpPathWithFieldKinds, value: Value): void;
     submitChange(path: UpPathWithFieldKinds | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset): void;
 }
 
@@ -687,19 +689,27 @@ export const neverTree: TreeSchema;
 const noChangeHandle: FieldChangeHandler<0>;
 
 // @public (undocumented)
-export type NodeChangeComposer = (changes: FieldChangeMap[]) => FieldChangeMap;
+export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
 
 // @public (undocumented)
-export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => FieldChangeMap;
+export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
 // @public (undocumented)
-export type NodeChangeEncoder = (change: FieldChangeMap) => JsonCompatibleReadOnly;
+export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
 
 // @public (undocumented)
-export type NodeChangeInverter = (change: FieldChangeMap) => FieldChangeMap;
+export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 // @public (undocumented)
-export type NodeChangeRebaser = (change: FieldChangeMap, baseChange: FieldChangeMap) => FieldChangeMap;
+export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
+
+// @public (undocumented)
+export interface NodeChangeset {
+    // (undocumented)
+    fieldChanges?: FieldChangeMap;
+    // (undocumented)
+    valueChange?: ValueChange;
+}
 
 // @public
 export interface NodeData {
@@ -901,7 +911,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
 }
 
 // @public (undocumented)
-export type ToDelta = (child: FieldChangeMap) => Delta.Root;
+export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
 // @public (undocumented)
 export interface TreeLocation {
@@ -979,6 +989,11 @@ export type Value = undefined | TreeValue;
 
 // @public
 const value: FieldKind;
+
+// @public (undocumented)
+export interface ValueChange {
+    value?: Value;
+}
 
 // @public @sealed
 class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
