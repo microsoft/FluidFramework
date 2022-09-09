@@ -162,7 +162,7 @@ async function main() {
          *
          * @see {@link @fluid-tools/api-markdown-documenter#MarkdownEmitter.generateFrontMatter}.
          */
-         const generateFrontMatter = (apiItem) => {
+        function generateFrontMatter(apiItem) {
             // Generate Hugo front-matter for the API item
             let hugoFrontMatter;
             try {
