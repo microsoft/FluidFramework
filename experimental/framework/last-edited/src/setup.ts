@@ -53,9 +53,9 @@ export function setupLastEditedTrackerForContainer(
     // Register an op listener on the runtime. If the lastEditedTracker has loaded,
     // it passes the last edited information to its
     // last edited tracker. If the lastEditedTracker hasn't loaded, store the last edited information temporarily.
-    runtime.on("op", (message: ISequencedDocumentMessage) => {
+    runtime.on("op", (message: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
         // If this message should be discarded as per shouldDiscardMessageFn, return.
-        if (shouldDiscardMessageFn(message)) {
+        if (runtimeMessage === false || shouldDiscardMessageFn(message)) {
             return;
         }
 

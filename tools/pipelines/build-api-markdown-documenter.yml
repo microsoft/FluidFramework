@@ -60,7 +60,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: tools/api-markdown-documenter
-    tagName:
+    tagName: api-markdown-documenter
     taskBuild: build
     taskBuildDocs: true
     taskLint: true

@@ -31,8 +31,8 @@ import { IMapMessageLocalMetadata } from "./defaultMapInterfaces";
 const snapshotFileName = "header";
 
 /**
- * The factory that defines the SharedIntervalCollection
- * @deprecated - SharedIntervalCollection is not maintained and is planned to be removed.
+ * The factory that defines the SharedIntervalCollection.
+ * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
  */
 export class SharedIntervalCollectionFactory implements IChannelFactory {
     public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
@@ -82,7 +82,7 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 }
 
 /**
- * @deprecated - SharedIntervalCollection is not maintained and is planned to be removed.
+ * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
  */
 export class SharedIntervalCollection
     extends SharedObject implements ISharedIntervalCollection<Interval> {
@@ -128,8 +128,8 @@ export class SharedIntervalCollection
     }
 
     /**
-     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
-     * are supported. Use `getIntervalCollection` instead.
+     * @deprecated `IntervalCollection`s are created on a first-write wins basis, and concurrent creates
+     * are supported. Use {@link SharedIntervalCollection.getIntervalCollection} instead.
      */
     public async waitIntervalCollection(
         label: string,
