@@ -2485,6 +2485,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let handle: string;
             try {
+                // Logging removal tracked by task 1884.
                 this.logger.sendTelemetryEvent({ eventName: "uploadSummaryWithContext",
                     proposalHandle: summaryContext.proposalHandle,
                     ackHandle: summaryContext.ackHandle,
