@@ -65,7 +65,16 @@ export function doOverRange(
     range: IConfigRange,
     growthFunc: (input: number) => number,
     doAction: (current: number) => void) {
-    for (let current = range.min; current <= range.max; current = current === 0 ? 1 : growthFunc(current)) {
+    let lastCurrent = Number.NaN;
+    for (let current = range.min; current <= range.max; current = growthFunc(current)) {
+        // let growth funcs be simple
+        // especially around 0 and 1
+        // if the value didn't change,
+        // just increment it
+        if (current === lastCurrent) {
+            current++;
+        }
+        lastCurrent = current;
         doAction(current);
     }
 }

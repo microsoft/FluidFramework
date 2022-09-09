@@ -504,27 +504,32 @@ export class LocalReferenceCollection {
         start?: LocalReferencePosition,
         forward: boolean = true) {
         if (start !== undefined) {
+            if (!this.has(start)) {
+                throw new UsageError("start must be in collection");
+            }
             assertLocalReferences(start);
         }
         let offset = start?.getOffset() ?? (forward
             ? 0
             : this.segment.cachedLength - 1);
 
-        const offsetPositions: [IRefsAtOffset["before"], IRefsAtOffset["at"], IRefsAtOffset["after"]] =
-            [this.refsByOffset[offset]?.before, this.refsByOffset[offset]?.at, this.refsByOffset[offset]?.after];
+        const offsetPositions: List<IRefsAtOffset[keyof IRefsAtOffset]> = new List();
+            offsetPositions.push(
+                this.refsByOffset[offset]?.before,
+                this.refsByOffset[offset]?.at,
+                this.refsByOffset[offset]?.after);
 
         const startNode = start?.getListNode();
         const startList = startNode?.list;
 
         if (startList !== undefined) {
-            const index = offsetPositions.indexOf(startList);
             if (forward) {
-                for (let i = 0; i < index; i++) {
-                    offsetPositions[i] = undefined;
+                while (!offsetPositions.empty && offsetPositions.first !== startNode) {
+                    offsetPositions.shift();
                 }
             } else {
-                for (let i = index + 1; i < offsetPositions.length; i++) {
-                    offsetPositions[i] = undefined;
+                while (!offsetPositions.empty && offsetPositions.last !== startNode) {
+                    offsetPositions.pop();
                 }
             }
         }
@@ -537,21 +542,23 @@ export class LocalReferenceCollection {
                 forward,
             );
         };
-
+        const increment = forward ? 1 : -1;
         while (offset >= 0 && offset < this.refsByOffset.length) {
             while (offsetPositions.length > 0) {
                 const offsetPos = forward
                     ? offsetPositions.shift()
                     : offsetPositions.pop();
-                if (offsetPos !== undefined) {
-                    if (listWalker(offsetPos) === false) {
+                if (offsetPos?.data !== undefined) {
+                    if (listWalker(offsetPos.data) === false) {
                         return false;
                     }
                 }
            }
-            offset += forward ? 1 : -1;
+            offset += increment;
             offsetPositions.push(
-                this.refsByOffset[offset]?.before, this.refsByOffset[offset]?.at, this.refsByOffset[offset]?.after);
+                this.refsByOffset[offset]?.before,
+                this.refsByOffset[offset]?.at,
+                this.refsByOffset[offset]?.after);
         }
         return true;
     }

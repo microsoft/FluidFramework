@@ -53,7 +53,7 @@ export class EndOfTreeSegment implements ISegment, IRemovalInfo {
             this.root.children[this.root.childCount - 1],
             (node) => {
                 depth++;
-                if (node.isLeaf()) {
+                if (node?.isLeaf()) {
                     lastSegment = node;
                     return NodeAction.Exit;
                 }

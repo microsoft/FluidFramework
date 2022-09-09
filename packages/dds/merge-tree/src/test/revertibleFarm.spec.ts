@@ -7,7 +7,11 @@ import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import random from "random-js";
 import { SegmentGroup } from "../mergeTreeNodes";
-import { appendToRevertibles, MergeTreeDeltaRevertible, revertMergeTreeDeltaRevertibles } from "../revertibles";
+import {
+    appendToMergeTreeDeltaRevertibles,
+    MergeTreeDeltaRevertible,
+    revertMergeTreeDeltaRevertibles,
+} from "../revertibles";
 import {
     removeRange,
     doOverRange,
@@ -20,7 +24,7 @@ import { createClientsAtInitialState, TestClientLogger } from "./testClientLogge
 
  const defaultOptions = {
     initialOps: 5,
-    minLength: { min: 1, max: 256, growthFunc: (input: number) => input * Math.max(2, input) },
+    minLength: { min: 1, max: 256, growthFunc: (i) => i * i },
     concurrentOpsWithRevert: { min: 0, max: 8 },
     revertOps: { min: 1, max: 16 },
     ackBeforeRevert: [
@@ -30,7 +34,7 @@ import { createClientsAtInitialState, TestClientLogger } from "./testClientLogge
     ] as ("None" | "Some" | "All")[],
     rounds: 10,
     operations: [removeRange, annotateRange],
-    growthFunc: (input: number) => input * 2,
+    growthFunc: (i) => i * 2,
 };
 
 describe("MergeTree.Client", () => {
@@ -93,7 +97,8 @@ describe("MergeTree.Client", () => {
                                 clients.B.mergeTreeDeltaCallback = (op, delta) => {
                                     oldCallback?.(op, delta);
                                     if (op.sequencedMessage === undefined) {
-                                        appendToRevertibles(clientBDriver, delta, clientB_Revertibles);
+                                        appendToMergeTreeDeltaRevertibles(
+                                            clientBDriver, delta, clientB_Revertibles);
                                     }
                                 };
                                 msgs.push(...generateOperationMessagesForClients(
