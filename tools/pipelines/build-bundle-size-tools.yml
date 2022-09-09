@@ -34,7 +34,7 @@ trigger:
     - lts
   paths:
     include:
-    - tools/bundle-size-tools
+    - build-tools/packages/bundle-size-tools
     - tools/pipelines/build-bundle-size-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -51,7 +51,7 @@ pr:
     - lts
   paths:
     include:
-    - tools/bundle-size-tools
+    - build-tools/packages/bundle-size-tools
     - tools/pipelines/build-bundle-size-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -63,7 +63,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: tools/bundle-size-tools
+    buildDirectory: build-tools/packages/bundle-size-tools
     tagName:
     taskBuild: build
     taskBuildDocs: false
