@@ -30,7 +30,6 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "npm run test:types",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
