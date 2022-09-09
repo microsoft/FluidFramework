@@ -315,6 +315,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
+
             await assert.rejects(async () => {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
             }, (e) => {

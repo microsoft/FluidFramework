@@ -335,7 +335,6 @@ declare function get_current_InterfaceDeclaration_IConnectionDetails():
 declare function use_old_InterfaceDeclaration_IConnectionDetails(
     use: TypeOnly<old.IConnectionDetails>);
 use_old_InterfaceDeclaration_IConnectionDetails(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectionDetails());
 
 /*
@@ -384,7 +383,6 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<old.IContainerContext>);
 use_old_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*
