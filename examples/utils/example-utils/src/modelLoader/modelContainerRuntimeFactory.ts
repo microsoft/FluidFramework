@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     IContainerRuntimeOptions,
     ContainerRuntime,
@@ -14,7 +14,6 @@ import {
 import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { ModelMakerCallback } from "./interfaces";
 import { makeModelRequestHandler } from "./modelLoader";
 
@@ -23,7 +22,9 @@ import { makeModelRequestHandler } from "./modelLoader";
  * given request handlers.  It can be subclassed to implement a first-time initialization procedure for the containers
  * it creates.
  */
-export class ModelContainerRuntimeFactory<ModelType> extends RuntimeFactoryHelper {
+export class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
+    public get IRuntimeFactory() { return this; }
+
     /**
      * @param registryEntries - The data store registry for containers produced
      * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
@@ -32,24 +33,14 @@ export class ModelContainerRuntimeFactory<ModelType> extends RuntimeFactoryHelpe
         private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
         private readonly modelMakerCallback: ModelMakerCallback<ModelType>,
         private readonly runtimeOptions?: IContainerRuntimeOptions,
-    ) {
-        super();
-    }
+    ) { }
 
-    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-        await this.containerInitializingFirstTime(runtime);
-        await this.containerHasInitialized(runtime);
-    }
-
-    public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
-        await this.containerHasInitialized(runtime);
-    }
-
-    public async preInitialize(
+    public async instantiateRuntime(
         context: IContainerContext,
-        existing: boolean,
-    ): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
+        existing?: boolean,
+    ): Promise<IRuntime> {
+        const fromExisting = existing ?? context.existing ?? false;
+        const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
             makeModelRequestHandler(this.modelMakerCallback),
@@ -57,6 +48,11 @@ export class ModelContainerRuntimeFactory<ModelType> extends RuntimeFactoryHelpe
             undefined, // scope
             existing,
         );
+
+        if (!fromExisting) {
+            await this.containerInitializingFirstTime(runtime);
+        }
+        await this.containerHasInitialized(runtime);
 
         return runtime;
     }
