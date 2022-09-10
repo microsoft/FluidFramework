@@ -551,6 +551,9 @@ export const jsonString: NamedTreeSchema;
 // @public (undocumented)
 export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema>;
 
+// @public (undocumented)
+export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
+
 // @public
 function lastWriteWinsRebaser<TChange>(data: {
     noop: TChange;
