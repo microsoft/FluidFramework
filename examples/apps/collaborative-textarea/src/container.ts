@@ -18,7 +18,7 @@ class CollaborativeTextAppModel implements ICollaborativeTextAppModel {
     public constructor(public readonly collaborativeText: CollaborativeText) { }
 }
 
-export const collaborativeTextId = "collaborative-text";
+const collaborativeTextId = "collaborative-text";
 
 export class CollaborativeTextContainerRuntimeFactory
     extends ModelContainerRuntimeFactory<ICollaborativeTextAppModel> {
