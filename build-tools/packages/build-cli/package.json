@@ -78,6 +78,7 @@
     "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
+    "@octokit/core": "4.0.5",
     "@rushstack/node-core-library": "^3.51.1",
     "chalk": "^2.4.2",
     "date-fns": "^2.29.1",

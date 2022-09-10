@@ -195,6 +195,24 @@ export class GitRepo {
     }
 
     /**
+     * @param source - Source branch name
+     * @param target: Target branch name
+     * @return The last merge commit id between source and target branch
+     */
+    public async mergeBase(source: string, target: string) {
+        return await this.exec(`merge-base ${source} ${target}`, `merge base ${source} and ${target} branch`);
+    }
+
+    /**
+     * @param commitId - Last merged commit id between two branches
+     * @param target: Target branch name
+     * @return The list of unmerged commit ids between passed commit id and branch
+     */
+    public async revList(commitId: string, branchName: string) {
+        return await this.exec(`rev-list ${commitId}...${branchName} --reverse`, `lists commit objects in chronological order`);
+    }
+
+    /**
      * Execute git command
      *
      * @param command the git command

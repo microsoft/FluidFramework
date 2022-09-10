@@ -110,6 +110,7 @@ USAGE
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
+* [`flub merge branch`](#flub-merge-branch)
 * [`flub release`](#flub-release)
 * [`flub run bundleStats`](#flub-run-bundlestats)
 * [`flub version VERSION`](#flub-version-version)
@@ -339,6 +340,26 @@ DESCRIPTION
 ```
 
 _See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/info.ts)_
+
+## `flub merge branch`
+
+Sync branches depending on the batch size passed
+
+```
+USAGE
+  $ flub merge branch -s <value> -t <value> [-v]
+
+FLAGS
+  -s, --source=<value>  (required) Source branch
+  -t, --target=<value>  (required) Target branch
+  -v, --verbose         Verbose logging.
+
+DESCRIPTION
+  Sync branches depending on the batch size passed
+
+EXAMPLES
+  $ flub merge branch
+```
 
 ## `flub release`
 
