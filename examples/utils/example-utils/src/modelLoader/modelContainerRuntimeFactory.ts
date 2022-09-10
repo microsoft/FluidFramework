@@ -6,15 +6,12 @@
 import { IContainerContext } from "@fluidframework/container-definitions";
 import {
     IContainerRuntimeOptions,
-    FluidDataStoreRegistry,
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
 import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
 import {
-    IFluidDataStoreRegistry,
-    IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
@@ -26,12 +23,7 @@ import { makeModelRequestHandler } from "./modelLoader";
  * given request handlers.  It can be subclassed to implement a first-time initialization procedure for the containers
  * it creates.
  */
-export class ModelContainerRuntimeFactory<ModelType>
-    extends RuntimeFactoryHelper
-    implements IProvideFluidDataStoreRegistry {
-    public get IFluidDataStoreRegistry() { return this.registry; }
-    private readonly registry: IFluidDataStoreRegistry;
-
+export class ModelContainerRuntimeFactory<ModelType> extends RuntimeFactoryHelper {
     /**
      * @param registryEntries - The data store registry for containers produced
      * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
@@ -42,7 +34,6 @@ export class ModelContainerRuntimeFactory<ModelType>
         private readonly runtimeOptions?: IContainerRuntimeOptions,
     ) {
         super();
-        this.registry = new FluidDataStoreRegistry(registryEntries);
     }
 
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
