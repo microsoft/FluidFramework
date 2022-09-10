@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory, ModelMakerCallback } from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -14,20 +14,11 @@ export interface ICollaborativeTextAppModel {
     collaborativeText: CollaborativeText;
 }
 
-class CollaborativeTextAppModel {
+class CollaborativeTextAppModel implements ICollaborativeTextAppModel {
     public constructor(public readonly collaborativeText: CollaborativeText) { }
 }
 
 export const collaborativeTextId = "collaborative-text";
-
-const makeCollaborativeTextAppModel: ModelMakerCallback<ICollaborativeTextAppModel> =
-    async (runtime: IContainerRuntime, container: IContainer) => {
-        const collaborativeText = await requestFluidObject<CollaborativeText>(
-            await runtime.getRootDataStore(collaborativeTextId),
-            "",
-        );
-        return new CollaborativeTextAppModel(collaborativeText);
-    };
 
 export class CollaborativeTextContainerRuntimeFactory
     extends ModelContainerRuntimeFactory<ICollaborativeTextAppModel> {
@@ -36,15 +27,25 @@ export class CollaborativeTextContainerRuntimeFactory
             new Map([
                 CollaborativeText.getFactory().registryEntry,
             ]), // registryEntries
-            makeCollaborativeTextAppModel,
         );
     }
 
     /**
-     * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
+     * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         const inventoryList = await runtime.createDataStore(CollaborativeText.getFactory().type);
         await inventoryList.trySetAlias(collaborativeTextId);
+    }
+
+    /**
+     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+     */
+    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+        const collaborativeText = await requestFluidObject<CollaborativeText>(
+            await runtime.getRootDataStore(collaborativeTextId),
+            "",
+        );
+        return new CollaborativeTextAppModel(collaborativeText);
     }
 }

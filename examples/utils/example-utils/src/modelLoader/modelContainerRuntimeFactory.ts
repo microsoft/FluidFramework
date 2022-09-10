@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
+import { IContainer, IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     IContainerRuntimeOptions,
     ContainerRuntime,
@@ -14,15 +14,13 @@ import {
 import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { ModelMakerCallback } from "./interfaces";
 import { makeModelRequestHandler } from "./modelLoader";
 
 /**
- * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as
- * given request handlers.  It can be subclassed to implement a first-time initialization procedure for the containers
- * it creates.
+ * ModelContainerRuntimeFactory is an abstract class that gives a basic structure for container runtime initialization.
+ * It also requires a createModel method to returns the expected model type.
  */
-export class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
+export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     /**
@@ -31,7 +29,6 @@ export class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory 
      */
     constructor(
         private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
-        private readonly modelMakerCallback: ModelMakerCallback<ModelType>,
         private readonly runtimeOptions?: IContainerRuntimeOptions,
     ) { }
 
@@ -43,7 +40,7 @@ export class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory 
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
-            makeModelRequestHandler(this.modelMakerCallback),
+            makeModelRequestHandler(this.createModel.bind(this)),
             this.runtimeOptions,
             undefined, // scope
             existing,
@@ -62,12 +59,19 @@ export class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory 
      * is created. This likely includes creating any initial data stores that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) { }
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> { }
 
     /**
      * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
      * This likely includes loading any data stores that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerHasInitialized(runtime: IContainerRuntime) { }
+    protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> { }
+
+    /**
+     * Subclasses must implement createModel, which should build a ModelType given the runtime and container.
+     * @param runtime - The container runtime for the container being initialized
+     * @param container - The container being initialized
+     */
+    protected abstract createModel(runtime: IContainerRuntime, container: IContainer): Promise<ModelType>;
 }
