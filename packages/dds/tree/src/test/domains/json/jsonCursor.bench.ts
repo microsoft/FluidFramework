@@ -7,15 +7,14 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
-    ITreeCursorNew, jsonableTreeFromCursor, singleTextCursorNew, jsonTypeSchema, CursorLocationType,
+    ITreeCursorNew, jsonableTreeFromCursor, singleTextCursorNew, EmptyKey,
 } from "../../..";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
-import { defaultSchemaPolicy, jsonableTreeFromCursorNew } from "../../../feature-libraries";
-import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
-import { forEachNode } from "../../../forest";
-import { generateCanada } from "./json";
+import { jsonableTreeFromCursorNew } from "../../../feature-libraries";
+import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./json";
+import { averageLocation, sum, sumMap } from "./benchmarks";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -52,17 +51,12 @@ function bench(
     data: {
         name: string;
         getJson: () => any;
-        dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
+        dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any;
     }[],
 ) {
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
         const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
-        const schemaData: SchemaData = {
-                globalFieldSchema: new Map(),
-                treeSchema: jsonTypeSchema,
-        };
-        const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
 
         benchmark({
             type: BenchmarkType.Measurement,
@@ -83,21 +77,19 @@ function bench(
         ["TextCursor", () => singleTextCursorNew(encodedTree)],
     ];
 
-        const consumers: [
-            string,
-            (cursor: ITreeCursor,
-                dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any
-            New) => void,
-        ][] = [
-            // TODO: finish porting other cursor code and enable this.
+    const consumers: [
+        string,
+        (cursor: ITreeCursorNew,
+            dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any
+        ) => void,
+    ][] = [
+        // TODO: finish porting other cursor code and enable this.
         // ["cursorToJsonObject", cursorToJsonObjectNew],
-            ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+        ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
         ["sum", sum],
         ["sum-map", sumMap],
-        // TODO: benchmarks that access fields by name (ex: canada perminater)
-            ["sum", sum],
-            ["averageLocation", averageLocation],
-        ];
+        ["averageLocation", averageLocation],
+    ];
 
     for (const [consumerName, consumer] of consumers) {
         for (const [factoryName, factory] of cursorFactories) {
@@ -113,75 +105,12 @@ function bench(
                     //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
                 },
                 benchmarkFn: () => {
-                    consumer(cursor);
+                    consumer(cursor, dataConsumer);
                 },
             });
         }
     }
 }
-
-function sum(cursor: ITreeCursorNew): number {
-    let total = 0;
-    const value = cursor.value;
-    if (typeof value === "number") {
-        total += value;
-    }
-    let moreFields = cursor.firstField();
-    while (moreFields) {
-        let inField = cursor.firstNode();
-        while (inField) {
-            total += sum(cursor);
-            inField = cursor.nextField();
-        }
-        moreFields = cursor.nextField();
-    }
-    return total;
-}
-
-function sumMap(cursor: ITreeCursorNew): number {
-    let total = 0;
-    const value = cursor.value;
-    if (typeof value === "number") {
-        total += value;
-    }
-    let moreFields = cursor.firstField();
-    while (moreFields) {
-        forEachNode(cursor, sumMap);
-        moreFields = cursor.nextField();
-    }
-    return total;
-}
-
-function sum(cursor: ITreeCursorNew): number {
-    let total = 0;
-    const value = cursor.value;
-    if (typeof value === "number") {
-        total += value;
-    }
-    let moreFields = cursor.firstField();
-    while (moreFields) {
-        let inField = cursor.firstNode();
-        while (inField) {
-            total += sum(cursor);
-            inField = cursor.nextField();
-        }
-        moreFields = cursor.nextField();
-    }
-    return total;
-}
-
-function sumMap(cursor: ITreeCursorNew): number {
-    let total = 0;
-    const value = cursor.value;
-    if (typeof value === "number") {
-        total += value;
-    }
-    let moreFields = cursor.firstField();
-    while (moreFields) {
-        forEachNode(cursor, sumMap);
-        moreFields = cursor.nextField();
-    }
-    return total;
 }
 
 const canada = generateCanada(
@@ -190,41 +119,52 @@ const canada = generateCanada(
         ? undefined
         : [2, 10]);
 
-function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
-    cursor.down(FeatureKey, 0);
-    cursor.down(EmptyKey, 0);
-    cursor.down(GeometryKey, 0);
-    cursor.down(CoordinatesKey, 0);
+function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+    cursor.enterField(FeatureKey);
+    cursor.enterChildNode(0);
+    cursor.enterField(EmptyKey);
+    cursor.enterChildNode(0);
+    cursor.enterField(GeometryKey);
+    cursor.enterChildNode(0);
+    cursor.enterField(CoordinatesKey);
+    cursor.enterChildNode(0);
 
-    let result = cursor.down(EmptyKey, 0);
-    assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+    cursor.enterField(EmptyKey);
+    let result = cursor.firstNode();
+    assert.equal(result, true, "Unexpected shape for Canada dataset");
 
-    while (result === TreeNavigationResult.Ok) {
-        let resultInner = cursor.down(EmptyKey, 0);
-        assert.equal(resultInner, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+    while (result) {
+        cursor.enterField(EmptyKey);
+        let resultInner = cursor.firstNode();
+        assert.equal(resultInner, true, "Unexpected shape for Canada dataset");
 
-        while (resultInner === TreeNavigationResult.Ok) {
+        while (resultInner === true) {
             // Read x and y values
-            assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok, "No X field");
+            cursor.enterField(EmptyKey);
+            assert.equal(cursor.firstNode(), true, "No X field");
             const x = cursor.value as number;
-            cursor.up();
-
-            assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok, "No Y field");
+            assert.equal(cursor.nextNode(), true, "No Y field");
             const y = cursor.value as number;
-            cursor.up();
+
+            cursor.upToField();
+            cursor.upToNode();
 
             calculate(x, y);
-            resultInner = cursor.seek(1);
+            resultInner = cursor.nextNode();
         }
-        cursor.up();
-        result = cursor.seek(1);
+
+        cursor.upToNode();
+        result = cursor.nextNode();
     }
 
     // Reset the cursor state
-    cursor.up();
-    cursor.up();
-    cursor.up();
-    cursor.up();
+    cursor.upToField();
+    cursor.upToNode();
+    cursor.upToField();
+    cursor.upToNode();
+    cursor.upToField();
+    cursor.upToNode();
+    cursor.upToField();
 }
 
 describe("ITreeCursor", () => {
