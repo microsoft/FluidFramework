@@ -175,10 +175,6 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
 }
 
 class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-    public invert(change: TestChangeset): TestChangeset {
-        assert.fail("Unexpected call to invert");
-    }
-
     public rebase(change: TestChangeset, over: TestChangeset): TestChangeset {
         assert.fail("Unexpected call to rebase");
     }
@@ -354,6 +350,13 @@ describe("EditManager", () => {
             { seq: 4, type: "Pull", ref: 2, from: peer1 },
             { seq: 5, type: "Pull", ref: 0, from: peer2 },
             { seq: 6, type: "Pull", ref: 0, from: peer2 },
+        ]);
+
+        runUnitTestScenario("Can rebase peer changes over a local change", [
+            { seq: 1, type: "Push" },
+            { seq: 1, type: "Ack" },
+            { seq: 2, type: "Pull", ref: 0, from: peer1 },
+            { seq: 3, type: "Pull", ref: 0, from: peer1 },
         ]);
 
         runUnitTestScenario("Can rebase multiple local changes", [

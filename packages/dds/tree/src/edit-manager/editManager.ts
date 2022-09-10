@@ -57,7 +57,11 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public getLastSequencedChange(): TChangeset {
-        return this.trunk[this.trunk.length - 1].changeset;
+        return (this.getLastCommit() ?? fail("No sequenced changes")).changeset;
+    }
+
+    public getLastCommit(): Commit<TChangeset> | undefined {
+        return this.trunk[this.trunk.length - 1];
     }
 
     public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
@@ -88,13 +92,20 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         this.updateBranch(branch, newCommit.refNumber);
         const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit, branch);
 
+        const lastCommit = this.getLastCommit();
+        const isNewCommitBasedOnTrunk = lastCommit === undefined || newCommit.refNumber === lastCommit.seqNumber;
+        if (isNewCommitBasedOnTrunk) {
+            branch.isDivergent = false;
+        } else {
+            branch.isDivergent ||= newCommit.sessionId !== lastCommit?.sessionId;
+        }
+        branch.localChanges.push(newCommit);
+
         // Note: we never use the refNumber of a commit in the trunk
         this.trunk.push({
             ...newCommit,
             changeset: newChangeFullyRebased,
         });
-
-        branch.localChanges.push(newCommit);
 
         return this.changeFamily.intoDelta(this.rebaseLocalBranch(newChangeFullyRebased));
     }
@@ -110,8 +121,29 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     private rebaseChangeFromBranchToTrunk(commitToRebase: Commit<TChangeset>, branch: Branch<TChangeset>): TChangeset {
-        // No need to rebase if the commit is already based on the trunk
-        if (this.trunk.length === 0 || commitToRebase.refNumber === this.trunk[this.trunk.length - 1].refNumber) {
+        const trunkCommits = this.getCommitsAfter(branch.refSeq);
+        if (branch.localChanges.length === 0 && trunkCommits.length === 0) {
+            return commitToRebase.changeset;
+        }
+
+        // let isDivergent = false;
+        // let inQuestion = commitToRebase;
+        // for (let i = this.trunk.length - 1; i >= 0; --i) {
+        //     const prev = this.trunk[i];
+        //     if (prev.seqNumber === inQuestion.refNumber) {
+        //         break;
+        //     }
+        //     if (prev.sessionId !== inQuestion.sessionId) {
+        //         isDivergent = true;
+        //         break;
+        //     }
+        //     inQuestion = prev;
+        // }
+        // if (!isDivergent) {
+        //     // No need to rebase if the commit is already based on the trunk
+        //     return commitToRebase.changeset;
+        // }
+        if (!branch.isDivergent && commitToRebase.sessionId === this.trunk[this.trunk.length - 1]?.sessionId) {
             return commitToRebase.changeset;
         }
 
@@ -121,7 +153,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             commitToRebase.changeset,
         );
 
-        return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
+        return this.rebaseOverCommits(changeRebasedToRef, trunkCommits);
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
@@ -237,7 +269,9 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 
     private getOrCreateBranch(sessionId: SessionId, refSeq: SeqNumber): Branch<TChangeset> {
         if (!this.branches.has(sessionId)) {
-            this.branches.set(sessionId, { localChanges: [], refSeq });
+            const lastCommit = this.getLastCommit();
+            const isDivergent = lastCommit !== undefined && refSeq !== lastCommit.seqNumber;
+            this.branches.set(sessionId, { localChanges: [], refSeq, isDivergent });
         }
         return this.branches.get(sessionId) as Branch<TChangeset>;
     }
@@ -246,6 +280,11 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 interface Branch<TChangeset> {
     localChanges: Commit<TChangeset>[];
     refSeq: SeqNumber;
+    /**
+     * True iff there existed prior concurrent changes to the commits on the branch.
+     * In the case where this is false, the commits on the branch are equivalent to the commits on the trunk.
+     */
+    isDivergent: boolean;
 }
 const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
     "Received a sequenced change from the local session despite having no local changes";
