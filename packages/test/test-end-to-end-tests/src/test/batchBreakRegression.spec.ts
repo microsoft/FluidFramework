@@ -7,11 +7,17 @@
 import { strict as assert } from "assert";
 import { IDocumentDeltaConnectionEvents, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
+import { ITestObjectProvider, TestFluidObject, timeoutAwait, timeoutPromise } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ISequencedDocumentSystemMessage } from "@fluidframework/protocol-definitions";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
+} from "@fluidframework/protocol-definitions";
+import { ILoggingError } from "@fluidframework/common-definitions";
+import { waitContainerToCatchUp } from "@fluidframework/container-loader";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -71,54 +77,81 @@ async function runAndValidateBatch(
     provider: ITestObjectProvider,
     proxyDsf: IDocumentServiceFactory,
     timeout: number,
-    ) {
-    let containerUrl: string | undefined;
-    {
-        const loader = provider.createLoader(
-            [[
-                provider.defaultCodeDetails,
-                provider.createFluidEntryPoint(),
-            ]]);
+    ): Promise<ILoggingError | undefined> {
+    try {
+        let containerUrl: string | undefined;
+        {
+            const loader = provider.createLoader(
+                [[
+                    provider.defaultCodeDetails,
+                    provider.createFluidEntryPoint(),
+                ]]);
 
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        await container.attach(provider.driver.createCreateNewRequest(Date.now().toString()));
-        containerUrl = await container.getAbsoluteUrl("");
-        container.close();
-    }
-    assert(containerUrl);
-    {
-        const loader = provider.createLoader(
-            [[
-                provider.defaultCodeDetails,
-                provider.createFluidEntryPoint({ runtimeOptions: { summaryOptions: { disableSummaries: true } } }),
-            ]],
-            {
-                documentServiceFactory: proxyDsf,
+            const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+            await container.attach(provider.driver.createCreateNewRequest(Date.now().toString()));
+            containerUrl = await container.getAbsoluteUrl("");
+            container.close();
+        }
+        assert(containerUrl);
+        {
+            const loader = provider.createLoader(
+                [[
+                    provider.defaultCodeDetails,
+                    provider.createFluidEntryPoint({ runtimeOptions: { summaryOptions: { disableSummaries: true } } }),
+                ]],
+                {
+                    documentServiceFactory: proxyDsf,
+                });
+            const container = await loader.resolve({ url: containerUrl });
+            const testObject = await requestFluidObject<TestFluidObject>(container, "default");
+            // send batch
+            testObject.context.containerRuntime.orderSequentially(() => {
+                for (let i = 0; i < 10; i++) {
+                    testObject.root.set(i.toString(), i);
+                }
             });
-        const container = await loader.resolve({ url: containerUrl });
-        const testObject = await requestFluidObject<TestFluidObject>(container, "default");
-        // send batch
-        testObject.context.containerRuntime.orderSequentially(() => {
-            for (let i = 0; i < 10; i++) {
-                testObject.root.set(i.toString(), i);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            // send non-batch
+            testObject.root.set("foo", "bar");
+            while (container.isDirty && !container.closed) {
+                await timeoutPromise((resolve, reject) => {
+                    container.once("saved", () => resolve());
+                    container.once("closed", (e) => reject(e));
+                },
+                {
+                    durationMs: timeout, // 60 * 60 * 1000,
+                });
             }
-        });
-        // send non-batch
-        testObject.root.set("foo", "bar");
-        while (container.isDirty && !container.closed) {
-            await timeoutPromise((resolve, reject) => {
-                container.once("saved", () => resolve());
-                container.once("closed", (e) => reject(e));
-            },
-            {
-                durationMs: timeout, // 60 * 60 * 1000,
-            });
-        }
 
-        for (let i = 0; i < 10; i++) {
-            assert.equal(testObject.root.get(i.toString()), i, i.toString());
+            assert.equal(container.closed, true, "container should not be closed");
+            assert.equal(container.isDirty, false, "container should not be dirty");
+
+            for (let i = 0; i < 10; i++) {
+                assert.equal(testObject.root.get(i.toString()), i, i.toString());
+            }
+            assert.equal(testObject.root.get("foo"), "bar", "validate after batch op");
         }
-        assert.equal(testObject.root.get("foo"), "bar", "validate after batch op");
+        // load a new container and validate there as well to ensure everything saved
+        {
+            const loader = provider.createLoader(
+                [[
+                    provider.defaultCodeDetails,
+                    provider.createFluidEntryPoint({ runtimeOptions: { summaryOptions: { disableSummaries: true } } }),
+                ]]);
+            const container = await loader.resolve({ url: containerUrl });
+            await timeoutAwait(waitContainerToCatchUp(container), {
+                durationMs: timeout,
+            });
+            const testObject = await requestFluidObject<TestFluidObject>(container, "default");
+            for (let i = 0; i < 10; i++) {
+                assert.equal(testObject.root.get(i.toString()), i, `unexpected value after saved ${i.toString()}`);
+            }
+            assert.equal(testObject.root.get("foo"), "bar", "validate after save");
+        }
+    } catch (e) {
+        if (isILoggingError(e)) {
+            return e;
+        }
     }
 }
 
@@ -147,13 +180,14 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
     describe("client sends invalid batches ", () => {
-        itExpects.skip("Batch end without start",
+        itExpects("Batch end without start",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
 
+            let originalBatchMessage: IDocumentMessage | undefined;
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,
                 {
@@ -162,7 +196,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                             submit: (ds) => (messages) => {
                                 const newMessages = [...messages];
                                 const batchStartIndex = newMessages.findIndex((m) => m.metadata?.batch === true);
-                                if (batchStartIndex >= 0) {
+                                if (batchStartIndex >= 0 && originalBatchMessage === undefined) {
+                                    originalBatchMessage ??= newMessages[batchStartIndex];
                                     newMessages[batchStartIndex] = {
                                         ... newMessages[batchStartIndex],
                                         metadata: {
@@ -176,14 +211,10 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-
-            try {
-                await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "OpBatchIncomplete", e);
-            }
+            const e = await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
+            assert(isILoggingError(e), `unexpected error type: ${e}`);
+            assert.equal(e.message, "OpBatchIncomplete", e);
         });
 
         // bug bug: container runtime never unpauses if there is no batch end
@@ -193,6 +224,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
 
+            let originalBatchMessage: IDocumentMessage | undefined;
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,
                 {
@@ -201,7 +233,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                             submit: (ds) => (messages) => {
                                 const newMessages = [...messages];
                                 const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                if (batchEndIndex >= 0) {
+                                if (batchEndIndex >= 0 && originalBatchMessage === undefined) {
+                                    originalBatchMessage ??= newMessages[batchEndIndex];
                                     newMessages[batchEndIndex] = {
                                         ... newMessages[batchEndIndex],
                                         metadata: {
@@ -215,13 +248,10 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            try {
-                await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "OpBatchIncomplete", e);
-            }
+            const e = await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
+            assert(isILoggingError(e), `unexpected error type: ${e}`);
+            assert.equal(e.message, "OpBatchIncomplete", e);
         });
 
         itExpects("Split batch",
@@ -230,6 +260,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
 
+            let originalBatchMessage: IDocumentMessage | undefined;
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,
                 {
@@ -238,7 +269,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                             submit: (ds) => (messages) => {
                                 const newMessages = [...messages];
                                 const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                if (batchEndIndex >= 1) {
+                                if (batchEndIndex >= 1 && originalBatchMessage === undefined) {
+                                    originalBatchMessage ??= newMessages[batchEndIndex];
                                     ds.submit(newMessages.slice(0, batchEndIndex - 1));
                                     ds.submit(newMessages.slice(batchEndIndex - 1));
                                 } else {
@@ -250,15 +282,17 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                 });
             // it's odd this doesn't fail.
             await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
         });
 
-        itExpects.skip("force nack",
+        itExpects("force nack",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
 
+            let originalBatchMessage: IDocumentMessage | undefined;
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,
                 {
@@ -267,10 +301,11 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                             submit: (ds) => (messages) => {
                                 const newMessages = [...messages];
                                 const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                if (batchEndIndex >= 1) {
+                                if (batchEndIndex >= 1 && originalBatchMessage === undefined) {
+                                    originalBatchMessage ??= newMessages[batchEndIndex];
                                     // set reference seq number to below min seq so the server nacks the batch
                                     newMessages[batchEndIndex] =
-                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: -1 };
+                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: 0 };
                                     ds.submit(newMessages);
                                 } else {
                                     ds.submit(newMessages);
@@ -279,13 +314,10 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            try {
-                await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
-            }
+            const e = await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
+            assert(isILoggingError(e), `unexpected error type: ${e}`);
+            assert.equal(e.message, "0x29a", e);
         });
     });
     describe("server sends invalid batch", () => {
@@ -296,6 +328,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
 
+            let originalBatchMessage: IDocumentMessage | undefined;
             const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
                 provider.documentServiceFactory,
                 {
@@ -308,13 +341,15 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                                 if (event === "op"
                                     && Array.isArray(args)
                                     && args.length >= 2
-                                    && Array.isArray(args[1])) {
+                                    && Array.isArray(args[1])
+                                    && originalBatchMessage === undefined) {
                                         // this code adds a join message in the middle of a batch
                                         // eslint-disable-next-line max-len
                                         const newMessages: (ISequencedDocumentMessage | ISequencedDocumentSystemMessage)[]
                                             = [...args[1]];
                                         const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
                                         if (batchEndIndex >= 0) {
+                                            originalBatchMessage ??= newMessages[batchEndIndex];
                                             args[1] = newMessages
                                                 .slice(0, batchEndIndex)
                                                 .concat({
@@ -340,13 +375,10 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            try {
-                await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
-            }
+            const e = await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
+            assert(isILoggingError(e), `unexpected error type: ${e}`);
+            assert.equal(e.message, "0x29a", e);
         });
     });
 });
