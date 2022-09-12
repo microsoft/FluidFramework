@@ -170,6 +170,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             }, (e) => {
                 return e.message === "Delta stream submit";
             });
+<<<<<<< HEAD
             // try {
             //     await runAndValidateBatch(provider, proxyDsf, this.timeout());
             //     assert.fail("expected error");
@@ -177,6 +178,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             //     assert(isILoggingError(e), `${e}`);
             //     assert.equal(e.message, "OpBatchIncomplete", e);
             // }
+=======
+>>>>>>> 88acfc30637ae56c49a2e4f92cca5e0e2cb41848
         });
 
         // bug bug: container runtime never unpauses if there is no batch end
@@ -258,26 +261,16 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                     createDocumentService: {
                         connectToDeltaStream: {
                             submit: (ds) => (messages) => {
-                                const newMessages = [...messages];
-                                const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                if (batchEndIndex >= 1) {
-                                    newMessages[batchEndIndex] =
-                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: 0 };
-                                    ds.submit(newMessages);
-                                } else {
-                                    ds.submit(newMessages);
-                                }
+                                throw new Error("0x29a");
                             },
                         },
                     },
                 });
-            try {
+            await assert.rejects(async () => {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
-            }
+            }, (e) => {
+                return e.message === "0x29a";
+            });
         });
     });
     describe("server sends invalid batch", () => {
@@ -332,13 +325,12 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            try {
+
+            await assert.rejects(async () => {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
-                assert.fail("expected error");
-            } catch (e) {
-                assert(isILoggingError(e), `${e}`);
-                assert.equal(e.message, "0x29a", e);
-            }
+            }, (e) => {
+                return e.message === "0x29a";
+            });
         });
     });
 });
