@@ -134,15 +134,9 @@ declare namespace Delta {
         Root,
         empty,
         Mark,
-        OuterMark,
-        InnerModify,
         MarkList,
         Skip_2 as Skip,
         Modify,
-        ModifyDeleted,
-        ModifyMovedOut,
-        ModifyMovedIn,
-        ModifyInserted,
         Delete,
         ModifyAndDelete,
         MoveOut,
@@ -329,7 +323,7 @@ export interface FieldMap<TChild> {
 type FieldMap_2<T> = Map<FieldKey, T>;
 
 // @public (undocumented)
-type FieldMarks<TMark> = FieldMap_2<MarkList<TMark>>;
+type FieldMarks = FieldMap_2<MarkList>;
 
 // @public (undocumented)
 export interface FieldSchema {
@@ -397,9 +391,6 @@ export interface IForestSubscription extends Dependee {
 }
 
 // @public
-type InnerModify = ModifyDeleted | ModifyInserted | ModifyMovedIn | ModifyMovedOut;
-
-// @public
 function inputLength(mark: Mark): number;
 
 // @public
@@ -415,7 +406,7 @@ interface InsertAndModify {
     // (undocumented)
     content: ProtoNode_2;
     // (undocumented)
-    fields: FieldMarks<Skip_2 | ModifyInserted | MoveIn | MoveInAndModify>;
+    fields: FieldMarks;
     // (undocumented)
     type: typeof MarkType.InsertAndModify;
 }
@@ -553,10 +544,10 @@ export interface MakeNominal {
 }
 
 // @public
-type Mark = OuterMark | InnerModify;
+type Mark = Skip_2 | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
 
 // @public
-type MarkList<TMark = Mark> = TMark[];
+type MarkList = Mark[];
 
 // @public (undocumented)
 const MarkType: {
@@ -574,7 +565,7 @@ const MarkType: {
 // @public
 interface Modify {
     // (undocumented)
-    fields?: FieldMarks<OuterMark>;
+    fields?: FieldMarks;
     // (undocumented)
     setValue?: Value;
     // (undocumented)
@@ -584,7 +575,7 @@ interface Modify {
 // @public
 interface ModifyAndDelete {
     // (undocumented)
-    fields: FieldMarks<Skip_2 | ModifyDeleted | MoveOut>;
+    fields: FieldMarks;
     // (undocumented)
     type: typeof MarkType.ModifyAndDelete;
 }
@@ -592,46 +583,12 @@ interface ModifyAndDelete {
 // @public
 interface ModifyAndMoveOut {
     // (undocumented)
-    fields?: FieldMarks<Skip_2 | ModifyMovedOut | Delete | MoveOut>;
+    fields?: FieldMarks;
     moveId: MoveId;
     // (undocumented)
     setValue?: Value;
     // (undocumented)
     type: typeof MarkType.ModifyAndMoveOut;
-}
-
-// @public
-interface ModifyDeleted {
-    // (undocumented)
-    fields: FieldMarks<Skip_2 | ModifyDeleted | ModifyAndMoveOut | MoveOut>;
-    // (undocumented)
-    type: typeof MarkType.Modify;
-}
-
-// @public
-interface ModifyInserted {
-    // (undocumented)
-    fields: FieldMarks<Skip_2 | ModifyInserted | MoveIn | MoveInAndModify>;
-    // (undocumented)
-    type: typeof MarkType.Modify;
-}
-
-// @public
-interface ModifyMovedIn {
-    // (undocumented)
-    fields: FieldMarks<Skip_2 | ModifyMovedIn | MoveIn | MoveInAndModify | Insert | InsertAndModify>;
-    // (undocumented)
-    type: typeof MarkType.Modify;
-}
-
-// @public
-interface ModifyMovedOut {
-    // (undocumented)
-    fields?: FieldMarks<Skip_2 | ModifyMovedOut | Delete | ModifyAndDelete | ModifyAndMoveOut | MoveOut>;
-    // (undocumented)
-    setValue?: Value;
-    // (undocumented)
-    type: typeof MarkType.Modify;
 }
 
 // @public @sealed
@@ -679,7 +636,7 @@ interface MoveIn {
 // @public
 interface MoveInAndModify {
     // (undocumented)
-    fields: FieldMarks<Skip_2 | ModifyMovedIn | MoveIn | Insert>;
+    fields: FieldMarks;
     moveId: MoveId;
     // (undocumented)
     type: typeof MarkType.MoveInAndModify;
@@ -783,9 +740,6 @@ export type OpId = number;
 const optional: FieldKind;
 
 // @public
-type OuterMark = Skip_2 | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
-
-// @public
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 // @public
@@ -848,7 +802,7 @@ function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>>;
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public
-type Root = FieldMarks<OuterMark>;
+type Root = FieldMarks;
 
 // @public
 export interface RootField {
