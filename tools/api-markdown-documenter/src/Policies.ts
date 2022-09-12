@@ -279,7 +279,10 @@ export namespace DefaultPolicies {
                 // For signature items, the display-name is not particularly useful information
                 // ("(constructor)", "(call)", etc.).
                 // Instead, we will use a cleaned up variation on the type signature.
-                let signatureExcerpt = (apiItem as ApiDeclaredItem).excerpt.text;
+                // Regex replaces line breaks with spaces to ensure everything ends up on a single line.
+                let signatureExcerpt = (apiItem as ApiDeclaredItem).excerpt.text
+                    .trim()
+                    .replace(/[\r\n\s]+/g, " ");
                 if (signatureExcerpt.endsWith(";")) {
                     signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);
                 }
