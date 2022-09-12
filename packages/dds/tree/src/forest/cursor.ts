@@ -153,6 +153,8 @@ export interface ITreeCursor {
 
     /**
      * Navigate to the field with the specified `key` and set the mode to `Fields`.
+     *
+     * Only valid when `mode` is `Nodes`, and not `pending`.
      */
     enterField(key: FieldKey): void;
 
