@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { Brand, Opaque } from "../util";
+import { Brand, fail, OffsetListFactory, Opaque } from "../util";
 import { FieldKey, Value } from "./types";
 import { JsonableTree } from "./treeTextFormat";
 
@@ -171,6 +171,11 @@ export type OuterMark =
 export type InnerModify = ModifyDeleted | ModifyInserted | ModifyMovedIn | ModifyMovedOut;
 
 /**
+ * A mark that can apply to content inserted in the same delta.
+ */
+export type InsertedFieldsMark = Skip | ModifyInserted | MoveIn | MoveInAndModify;
+
+/**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
  * applying any of the changes, is not represented explicitly.
  * It corresponds to the sum of `inputLength(mark)` for all previous marks.
@@ -308,7 +313,7 @@ export interface Insert {
 export interface InsertAndModify {
     type: typeof MarkType.InsertAndModify;
     content: ProtoNode;
-    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+    fields: FieldMarks<InsertedFieldsMark>;
 }
 
 /**
@@ -365,4 +370,111 @@ export function inputLength(mark: Mark): number {
             return 0;
         default: unreachableCase(type);
     }
+}
+
+/**
+ * Converts inserted content into the format expected in Delta instances.
+ * This involves applying the following changes:
+ * - Updating node values
+ * - Inserting new subtrees within the inserted content
+ * - Deleting parts of the inserted content
+ *
+ * The only kind of change that is not applied by this function is MoveIn.
+ *
+ * @param node - The subtree to apply modifications to. Updated in place.
+ * @param modify - The modifications to either apply or collect.
+ * @returns The remaining modifications that the consumer of the Delta will apply on the given node. May be empty if
+ *   all modifications are applied by the function.
+ */
+ export function applyModifyToInsert(
+    node: ProtoNode,
+    modify: Modify,
+): Map<FieldKey, MarkList<InsertedFieldsMark>> {
+    const outFieldsMarks: Map<FieldKey, MarkList<InsertedFieldsMark>> = new Map();
+    if (modify.setValue !== undefined) {
+        node.value = modify.setValue.value;
+    }
+    if (modify.fields !== undefined) {
+        const protoFields = node.fields ?? {};
+        const modifyFields = modify.fields;
+        for (const brandedKey of modifyFields.keys()) {
+            const key = brandedKey as string;
+            const outNodes = protoFields[key] ?? fail("Missing field");
+            const outMarks = new OffsetListFactory<InsertedFieldsMark>();
+            let index = 0;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            for (const mark of modifyFields.get(brandedKey)!) {
+                if (isSkipMark(mark)) {
+                    index += mark;
+                    outMarks.pushOffset(mark);
+                } else {
+                    // Inline into `switch(mark.type)` once we upgrade to TS 4.7
+                    const type = mark.type;
+                    switch (type) {
+                        case MarkType.Insert: {
+                            outNodes.splice(index, 0, ...mark.content);
+                            index += mark.content.length;
+                            outMarks.pushOffset(mark.content.length);
+                            break;
+                        }
+                        case MarkType.InsertAndModify: {
+                            if (mark.fields.size > 0) {
+                                outMarks.pushContent({
+                                    type: MarkType.Modify,
+                                    fields: mark.fields,
+                                });
+                            }
+                            outNodes.splice(index, 0, mark.content);
+                            index += 1;
+                            break;
+                        }
+                        case MarkType.MoveIn:
+                        case MarkType.MoveInAndModify:
+                            // TODO: convert into a MoveIn/MoveInAndModify
+                            fail("Not implemented");
+                        case MarkType.Modify: {
+                            const clonedFields = applyModifyToInsert(outNodes[index], mark);
+                            if (clonedFields.size > 0) {
+                                outMarks.pushContent({
+                                    type: MarkType.Modify,
+                                    fields: clonedFields,
+                                });
+                            }
+                            index += 1;
+                            break;
+                        }
+                        case MarkType.Delete: {
+                            outNodes.splice(index, mark.count);
+                            break;
+                        }
+                        case MarkType.ModifyAndDelete: {
+                            // TODO: convert move-out of inserted content into insert at the destination
+                            fail("Not implemented");
+                        }
+                        case MarkType.MoveOut:
+                        case MarkType.ModifyAndMoveOut:
+                            // TODO: convert move-out of inserted content into insert at the destination
+                            fail("Not implemented");
+                        default: unreachableCase(type);
+                    }
+                }
+            }
+            if (outMarks.list.length > 0) {
+                outFieldsMarks.set(brandedKey, outMarks.list);
+            }
+            if (outNodes.length === 0) {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete protoFields[key];
+            }
+        }
+        if (Object.keys(protoFields).length === 0) {
+            delete node.fields;
+        }
+    }
+
+    return outFieldsMarks;
+}
+
+function isSkipMark(mark: Mark): mark is Skip {
+    return typeof mark === "number";
 }

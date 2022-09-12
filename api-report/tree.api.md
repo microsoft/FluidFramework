@@ -29,6 +29,9 @@ export class AnchorSet {
 }
 
 // @public
+function applyModifyToInsert(node: ProtoNode_2, modify: Modify): Map<FieldKey, MarkList<InsertedFieldsMark>>;
+
+// @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @public
@@ -131,11 +134,13 @@ interface Delete {
 declare namespace Delta {
     export {
         inputLength,
+        applyModifyToInsert,
         Root,
         empty,
         Mark,
         OuterMark,
         InnerModify,
+        InsertedFieldsMark,
         MarkList,
         Skip_2 as Skip,
         Modify,
@@ -255,7 +260,7 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChangeRebaser<TChangeset> {
     compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
     // (undocumented)
-    invert(changes: TChangeset, invertChild: NodeChangeInverter): TChangeset;
+    invert(change: TChangeset, invertChild: NodeChangeInverter): TChangeset;
     rebase(change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser): TChangeset;
 }
 
@@ -415,10 +420,13 @@ interface InsertAndModify {
     // (undocumented)
     content: ProtoNode_2;
     // (undocumented)
-    fields: FieldMarks<Skip_2 | ModifyInserted | MoveIn | MoveInAndModify>;
+    fields: FieldMarks<InsertedFieldsMark>;
     // (undocumented)
     type: typeof MarkType.InsertAndModify;
 }
+
+// @public
+type InsertedFieldsMark = Skip_2 | ModifyInserted | MoveIn | MoveInAndModify;
 
 // @public
 export class InvalidationToken {
