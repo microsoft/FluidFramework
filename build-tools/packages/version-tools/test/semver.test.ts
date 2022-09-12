@@ -38,7 +38,7 @@ describe("semver", () => {
         });
     });
 
-    describe("semverDiff", () => {
+    describe("detectBumpType semver", () => {
         it("major", () => {
             assert.equal(detectBumpType("0.0.1", "1.0.0"), "major");
         });
@@ -65,6 +65,54 @@ describe("semver", () => {
 
         it("prerelease", () => {
             assert.isUndefined(detectBumpType("0.0.1-foo", "0.0.1-foo.bar"));
+        });
+
+        it("v1 >= v2 throws", () => {
+            assert.throws(() => detectBumpType("0.0.1", "0.0.1"));
+            assert.throws(() => detectBumpType("0.0.2", "0.0.1"));
+            assert.throws(() => detectBumpType("0.0.1+0", "0.0.1"));
+            assert.throws(() => detectBumpType("0.0.1+2", "0.0.1+2"));
+            assert.throws(() => detectBumpType("0.0.1+3", "0.0.1+2"));
+            assert.throws(() => detectBumpType("0.0.1+2.0", "0.0.1+2"));
+            assert.throws(() => detectBumpType("0.0.1+2.a", "0.0.1+2.0"));
+        });
+    });
+
+    describe("detectBumpType internal version scheme", () => {
+        it("major", () => {
+            assert.equal(detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.2.0.0"), "major");
+        });
+
+        it("minor", () => {
+            assert.equal(detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.1.1.0"), "minor");
+        });
+
+        it("patch", () => {
+            assert.equal(detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.1.0.1"), "patch");
+        });
+
+        it("premajor", () => {
+            assert.equal(
+                detectBumpType("2.0.0-internal.1.0.0.82134", "2.0.0-internal.2.0.0"),
+                "major",
+            );
+        });
+
+        it("preminor", () => {
+            assert.equal(
+                detectBumpType("2.0.0-internal.1.1.0.82134", "2.0.0-internal.1.2.0"),
+                "minor",
+            );
+        });
+
+        it("prepatch", () => {
+            assert.equal(detectBumpType("1.1.1-foo", "1.1.2"), "patch");
+        });
+
+        it("prerelease", () => {
+            assert.isUndefined(
+                detectBumpType("2.0.0-internal.1.0.0.82134", "2.0.0-internal.1.0.0"),
+            );
         });
 
         it("v1 >= v2 throws", () => {

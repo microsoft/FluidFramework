@@ -126,6 +126,7 @@ USAGE
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
 * [`flub release`](#flub-release)
+* [`flub release report`](#flub-release-report)
 * [`flub run bundleStats`](#flub-run-bundlestats)
 * [`flub version VERSION`](#flub-version-version)
 * [`flub version latest`](#flub-version-latest)
@@ -384,15 +385,42 @@ DESCRIPTION
   The release command ensures that a release branch is in good condition, then walks the user through releasing a
   package or release group.
 
-  The command runs a number of checks automatically to make sure . If any of the dependencies are also in the repo, then
-  they're checked for the latest release version. If the dependencies have not yet been released, then the command
-  prompts to perform the release of the dependency, then run the release command again.
+  The command runs a number of checks automatically to make sure the branch is in a good state for a release. If any of
+  the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have
+  not yet been released, then the command prompts to perform the release of the dependency, then run the release command
+  again.
 
   This process is continued until all the dependencies have been released, after which the release group itself is
   released.
 ```
 
 _See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/release.ts)_
+
+## `flub release report`
+
+Generate a release report.
+
+```
+USAGE
+  $ flub release report [--json] [-d <value>] [-s | -r] [-o <value>] [-f] [-v]
+
+FLAGS
+  -d, --days=<value>    [default: 10] The number of days to look back for releases to report.
+  -f, --full            Output a full report.
+  -o, --output=<value>  Output a JSON report file to this location.
+  -r, --mostRecent      Always pick the most recent version as the latest (ignore semver version sorting).
+  -s, --highest         Always pick the greatest semver version as the latest (ignore dates).
+  -v, --verbose         Verbose logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Generate a release report.
+
+EXAMPLES
+  $ flub release report
+```
 
 ## `flub run bundleStats`
 

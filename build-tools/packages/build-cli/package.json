@@ -84,10 +84,12 @@
     "date-fns": "^2.29.1",
     "fs-extra": "^9.0.1",
     "inquirer": "^8.0.0",
+    "inquirer-table-prompt": "^0.2.1",
     "jssm": "^5.79.18",
     "jssm-viz-cli": "^5.83.0",
     "npm-check-updates": "^16.0.0",
     "semver": "^7.3.7",
+    "sort-json": "^2.0.1",
     "table": "^6.8.0"
   },
   "devDependencies": {
@@ -100,6 +102,7 @@
     "@types/node": "^14.18.0",
     "@types/semver": "^7.3.10",
     "@types/semver-utils": "^1.1.1",
+    "@types/sort-json": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "chai": "^4.2.0",
