@@ -7,6 +7,32 @@ import { Octokit } from "@octokit/core";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
 
+async function prExists(token: string, title: string): Promise<boolean> {
+    const owner = "microsoft";
+    const repo = "FluidFramework";
+    const octokit = new Octokit({ auth: token });
+    const response = await octokit.request("GET /repos/{owner}/{repo}/pulls", { owner, repo });
+
+    for (const data of response.data) {
+        if (data.title === title) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+async function prInfo(token: string, commitSha: string) {
+    const owner = "microsoft";
+    const repo = "FluidFramework";
+    const octokit = new Octokit({ auth: token });
+    await octokit.request("GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls", {
+        owner,
+        repo,
+        commitSha,
+    });
+}
+
 async function createPR(auth: string, source: string, target: string, author: string) {
     const owner = "microsoft";
     const repo = "FluidFramework";
@@ -63,6 +89,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
         auth: Flags.string({
             description: "GitHub authentication token",
             char: "a",
+            required: true,
         }),
         source: Flags.string({
             description: "Source branch",
@@ -93,6 +120,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
         const resolvedRoot = await getResolvedFluidRoot();
         const gitRepo = new GitRepo(resolvedRoot);
 
+        if (await prExists(flags.auth, "Automation: Main-next integrate")) {
+            this.log(`Open pull request exists`);
+            this.exit(-1);
+        }
+
         const lastMergedCommit = await gitRepo.mergeBase(flags.source, flags.target);
         this.log(
             `${lastMergedCommit} is the last merged commit id between ${flags.source} and ${flags.target}`,
@@ -114,18 +146,37 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
         }
 
         this.log(
-            `List of unmerged commits between ${flags.source} and ${flags.target} branches are ${unmergedCommitList}`,
+            `There are ${unmergedCommitList.length} unmerged commits between ${flags.source} and ${flags.target} branches`,
         );
 
-        if(unmergedCommitList.length === 0) {
+        if (unmergedCommitList.length === 0) {
             this.log(
-                `${flags.source} and ${flags.target} are in sync. No commits to merge`,
+                `${flags.source} and ${flags.target} branches are in sync. No commits to merge`,
             );
             this.exit(-1);
         }
 
-        const prNumber = await createPR(flags.auth, "BRANCH_NAME", flags.target, "sonalivdeshpande");
+        const commitSize =
+            flags.batchSize <= unmergedCommitList.length
+                ? flags.batchSize
+                : unmergedCommitList.length;
+        const commitToReset = unmergedCommitList[commitSize - 1];
+        const branchName = `${flags.source}-${flags.target}-${commitToReset}`;
 
-        this.log(`Pull request is opened against ${flags.target} with pull request number ${prNumber}`);
+        await gitRepo.switchBranch(flags.source);
+        await gitRepo.createBranch(branchName);
+        await gitRepo.fetchBranch(flags.source, branchName);
+        await gitRepo.resetBranch(commitToReset);
+        await gitRepo.setUpstream(branchName);
+
+        // fetch name of owner associated to the pull request
+        const data = await prInfo(flags.auth, commitToReset);
+        this.log(`Fetch pull request info for commit id ${commitToReset}: ${data}`);
+
+        const prNumber = await createPR(flags.auth, branchName, flags.target, "sonalivdeshpande");
+
+        this.log(
+            `Pull request is opened against ${flags.target} with pull request number ${prNumber}`,
+        );
     }
 }

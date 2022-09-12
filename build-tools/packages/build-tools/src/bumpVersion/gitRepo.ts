@@ -212,6 +212,14 @@ export class GitRepo {
         return await this.exec(`rev-list ${commitId}...${branchName} --reverse`, `lists commit objects in chronological order`);
     }
 
+    public async resetBranch(commitId: string) {
+        return await this.exec(`reset --hard ${commitId}`, `reset branch to a commit id`);
+    }
+
+    public async setUpstream(branchName: string) {
+        return await this.exec(`push --set-upstream origin ${branchName}`, `publish branch`);
+    }
+
     /**
      * Execute git command
      *

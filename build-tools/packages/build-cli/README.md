@@ -347,12 +347,15 @@ Sync branches depending on the batch size passed
 
 ```
 USAGE
-  $ flub merge branch -s <value> -t <value> [-v]
+  $ flub merge branch -a <value> -s <value> -t <value> -b <value> [-p <value>] [-v]
 
 FLAGS
-  -s, --source=<value>  (required) Source branch
-  -t, --target=<value>  (required) Target branch
-  -v, --verbose         Verbose logging.
+  -a, --auth=<value>                (required) GitHub authentication token
+  -b, --batchSize=<value>           (required) Maximum number of commit to include in the pull request
+  -p, --pullRequestInfo=<value>...  Pull request data
+  -s, --source=<value>              (required) Source branch
+  -t, --target=<value>              (required) Target branch
+  -v, --verbose                     Verbose logging.
 
 DESCRIPTION
   Sync branches depending on the batch size passed
