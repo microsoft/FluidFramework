@@ -102,7 +102,7 @@ export interface OdspErrorResponse {
 }
 
 /** Error encapsulating the error response from ODSP containing the redirect location when a resource has moved  */
-export class OdspRedirectError extends LoggingError {
+export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
     readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
     readonly canRetry = false;
 

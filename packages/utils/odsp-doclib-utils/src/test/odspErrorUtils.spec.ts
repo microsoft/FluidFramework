@@ -150,6 +150,8 @@ describe("OdspErrorUtils", () => {
                  "Error should be a fileNotFoundOrAccessDeniedError");
             assert(error.redirectLocation === "url", "redirect location is wrong");
             assert(isILoggingError(error));
+            assert(error.getTelemetryProperties().redirectLocation === undefined,
+                "redirect location should not be logged");
         });
         it("enriched with response data", () => {
             const mockHeaders = {
