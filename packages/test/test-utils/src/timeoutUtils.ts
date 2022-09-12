@@ -22,11 +22,10 @@ export async function timeoutAwait<T = void>(
     promise: PromiseLike<T>,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ) {
-    let oResolve: (v: T) => void;
-    const tp = timeoutPromise<T>((resolve) => {
-        oResolve = resolve;
-     }, timeoutOptions);
-    return Promise.race([promise.then((v) => oResolve(v)), tp]);
+    return Promise.race([promise, timeoutPromise<T>((resolve) => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        promise.then((v) => resolve(v));
+     }, timeoutOptions)]);
 }
 
 export async function ensureContainerConnected(container: Container): Promise<void> {
