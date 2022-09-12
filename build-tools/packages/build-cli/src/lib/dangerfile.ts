@@ -28,11 +28,11 @@ let logger: Logger;
 
 export async function dangerfile() {
     if (process.env.ADO_API_TOKEN === undefined) {
-        logger.error("no env ado api token provided");
+        logger.errorLog("no env ado api token provided");
     }
 
     if (process.env.DANGER_GITHUB_API_TOKEN === undefined) {
-        logger.error("no env github api token provided");
+        logger.errorLog("no env github api token provided");
     }
 
     const adoConnection = getAzureDevopsApi(
@@ -58,4 +58,4 @@ export async function dangerfile() {
     }
 }
 
-dangerfile().catch((error: string) => logger.error(error));
+dangerfile().catch((error: string) => logger.errorLog(error));
