@@ -149,7 +149,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
     describe("client sends invalid batches ", () => {
         itExpects("Batch end without start",
         [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Delta stream submit error" },
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Delta stream submit" },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -160,7 +160,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                     createDocumentService: {
                         connectToDeltaStream: {
                             submit: (ds) => (messages) => {
-                               throw new Error("Delta stream submit error");
+                               throw new Error("Delta stream submit");
                             },
                         },
                     },
@@ -168,7 +168,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             await assert.rejects(async () => {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
             }, (e) => {
-                return e.message === "Delta stream submit error";
+                return e.message === "Delta stream submit";
             });
         });
 
