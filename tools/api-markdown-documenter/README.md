@@ -4,7 +4,7 @@ Contains a programmatic API for generating [Markdown][] documentation from an AP
 
 It is similar to [API-Documenter][] and is heavily based upon it and uses it under the hood, but is designed to be more extensible and can be used programmatically.
 
-Note: this library does not currently offer a Command Line Interface (CLI).
+**Note**: this library does not currently offer a Command Line Interface (CLI).
 One may be added in the future, but for now this library is intended to be consumed programmatically.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
