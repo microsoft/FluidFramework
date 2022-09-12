@@ -75,6 +75,9 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
  */
 export interface JsonableTree extends PlaceholderTree {}
 
+/**
+ * Derives the scope using the type of `key`.
+ */
 export function scopeFromKey(key: FieldKey): FieldScope {
     return typeof key === "symbol" ? FieldScope.global : FieldScope.local;
 }
