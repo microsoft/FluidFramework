@@ -25,6 +25,8 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
 - [Signature from  `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
 - [Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
+- [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
+- [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
 
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
@@ -45,6 +47,11 @@ This field has been deprecated and will be removed in a future breaking change. 
 ### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
 
+### Add assertion that prevents sending op while processing another op
+`preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
+
+# 2.0.0
+
 ### Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface
 `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
 ```diff
@@ -59,6 +66,21 @@ This field has been deprecated and will be removed in a future breaking change. 
 
 ### Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package
 The utility classes `TelemetryNullLogger` and `BaseTelemetryNullLogger` are deprecated in the `@fluidframework/common-utils` package and have been moved to the `@fluidframework/telemetry-utils` package.  Please update your imports to take these from the new location.
+
+### IFluidContainerEvents event naming correction
+Renamed **dispose** to **disposed** to better communicate the state and align with currently emitted event.
+It's not a breaking change, but worth noting: we are now also exposing optional error (ICriticalContainerError) field with **disposed** event.
+
+## 3.0.0 Breaking changes
+- [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
+- [Remove `IContainerRuntime.flush`](#remove-icontainerruntimeflush)
+
+### Remove ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been removed. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
+### Remove `IContainerRuntime.flush`
+`IContainerRuntime.flush` has been removed. If a more manual/ensured flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
 
 # 2.0.0
 
@@ -91,9 +113,12 @@ bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and
 - [Marker.toString simplified](#markertostring-simplified)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
 - [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [waitIntervalCollection removed](#waitintervalcollection-removed)
 - [OldestClientObserver moved to @fluid-experimental/oldest-client-observer](#oldestclientobserver-moved-to-@fluid-experimental/oldest-client-observer)
 - [Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
 - [Remove deprecated data structures from `@fluidframework/sequence`](#remove-deprecated-data-structures-from-fluidframeworksequence)
+- [Renamed lockTask to volunteerForTask from @fluid-experimental/task-manager](renamed-lockTask-to-volunteerForTask-from-@fluid-experimental/task-manager)
+- [Renamed haveTaskLock to assigned from @fluid-experimental/task-manager](renamed-haveTaskLock-to-assigned-from-@fluid-experimental/task-manager)
 
 ###  Update to React 17
 The following packages use React and thus were impacted:
@@ -204,6 +229,11 @@ The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is n
 To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
 The corresponding method on `IMergeTreeTexHelper` will also be removed.
 
+### `waitIntervalCollection` removed
+
+`SharedSegmentSequence.waitIntervalCollection` has been removed.
+Use `getIntervalCollection` instead, which has the same semantics but is synchronous.
+
 ### OldestClientObserver moved to @fluid-experimental/oldest-client-observer
 The `OldestClientObserver` class and its associated interfaces have been removed from @fluid-experimental/task-manager and moved to the new package @fluid-experimental/oldest-client-observer. Please migrate all imports to @fluid-experimental/oldest-client-observer.
 
@@ -212,6 +242,12 @@ The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use 
 
 ### Remove deprecated data structures from `@fluidframework/sequence`
 `SharedNumberSequence`, `SharedObjectSequence`, and `SharedMatrix` have been removed from `@fluidframework/sequence`. They are currently still available in `@fluid-experimental/sequence-deprecated.
+
+### Renamed lockTask to volunteerForTask from @fluid-experimental/task-manager
+`TaskManager.lockTask()` has been renamed `volunteerForTask()` and now returns a `Promise<boolean>` instead of a `Promise<void>`. Please update all usages accordingly.
+
+### Renamed haveTaskLock to assigned from @fluid-experimental/task-manager
+`TaskManager.haveTaskLock()` has been renamed `assigned()`. Please update all usages accordingly.
 
 # 1.2.0
 

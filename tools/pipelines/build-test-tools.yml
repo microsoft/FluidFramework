@@ -21,6 +21,10 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 
 trigger:
   branches:
@@ -32,7 +36,6 @@ trigger:
     include:
     - tools/test-tools
     - tools/pipelines/build-test-tools.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -50,7 +53,6 @@ pr:
     include:
     - tools/test-tools
     - tools/pipelines/build-test-tools.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -60,6 +62,7 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: tools/test-tools
     tagName:
     taskBuild: build

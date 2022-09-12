@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-/* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
+/* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
 import {
@@ -15,6 +15,7 @@ import {
 } from "./constants";
 import {
      LocalReferenceCollection,
+     LocalReferencePosition,
 } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
@@ -27,6 +28,7 @@ import {
     MergeTreeDeltaType,
     ReferenceType,
 } from "./ops";
+import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
 import {
     clone,
@@ -108,6 +110,10 @@ export interface IHierBlock extends IMergeBlock {
  * Contains removal information associated to an {@link ISegment}.
  */
 export interface IRemovalInfo {
+    /**
+     * Local seq at which this segment was removed, if the removal is yet-to-be acked.
+     */
+    localRemovedSeq?: number;
     /**
      * Seq at which this segment was removed.
      */
@@ -295,6 +301,7 @@ export interface MergeTreeStats {
 export interface SegmentGroup {
     segments: ISegment[];
     previousProps?: PropertySet[];
+    removedReferences?: LocalReferencePosition[];
     localSeq: number;
 }
 
@@ -336,28 +343,15 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
     }
 
     public setOrdinal(child: IMergeNode, index: number) {
-        let childCount = this.childCount;
-        if (childCount === 8) {
-            childCount = 7;
-        }
-        assert((childCount >= 1) && (childCount <= 7), 0x040 /* "Child count is not within [1,7] range!" */);
-        let localOrdinal: number;
-        const ordinalWidth = 1 << (MaxNodesInBlock - (childCount + 1));
-        if (index === 0) {
-            localOrdinal = ordinalWidth - 1;
-        } else {
-            const prevOrd = this.children[index - 1].ordinal;
-            const prevOrdCode = prevOrd.charCodeAt(prevOrd.length - 1);
-            localOrdinal = prevOrdCode + ordinalWidth;
-        }
-        child.ordinal = this.ordinal + String.fromCharCode(localOrdinal);
-        assert(child.ordinal.length === (this.ordinal.length + 1), 0x041 /* "Unexpected child ordinal length!" */);
-        if (index > 0) {
-            assert(
-                child.ordinal > this.children[index - 1].ordinal,
-                0x042, /* "Child ordinal <= previous sibling ordinal!" */
+        const childCount = this.childCount;
+        assert((childCount >= 1) && (childCount <= MaxNodesInBlock),
+            0x040 /* "Child count is not within [1,8] range!" */);
+        child.ordinal = computeHierarchicalOrdinal(
+            MaxNodesInBlock,
+            childCount,
+            this.ordinal,
+            index === 0 ? undefined : this.children[index - 1]?.ordinal,
             );
-        }
     }
 
     public assignChild(child: IMergeNode, index: number, updateOrdinal = true) {
@@ -470,7 +464,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 leafSegment.parent = this.parent;
 
                 // Give the leaf a temporary yet valid ordinal.
-                // when this segment is put in the tree, it will get it's real ordinal,
+                // when this segment is put in the tree, it will get its real ordinal,
                 // but this ordinal meets all the necessary invariants for now.
                 leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 

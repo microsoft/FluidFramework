@@ -18,14 +18,17 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 // @public
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     abandon(taskId: string): void;
-    haveTaskLock(taskId: string): boolean;
-    lockTask(taskId: string): Promise<void>;
+    assigned(taskId: string): boolean;
+    complete(taskId: string): void;
     queued(taskId: string): boolean;
+    subscribed(taskId: string): boolean;
+    subscribeToTask(taskId: string): void;
+    volunteerForTask(taskId: string): Promise<boolean>;
 }
 
 // @public (undocumented)
 export interface ITaskManagerEvents extends ISharedObjectEvents {
-    (event: "assigned" | "lost", listener: (taskId: string) => void): any;
+    (event: "assigned" | "completed" | "lost", listener: (taskId: string) => void): any;
 }
 
 // @public
@@ -35,18 +38,20 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     abandon(taskId: string): void;
     // (undocumented)
     applyStashedOp(): void;
+    // (undocumented)
+    assigned(taskId: string): boolean;
+    // (undocumented)
+    complete(taskId: string): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
     static getFactory(): IChannelFactory;
     // (undocumented)
     _getTaskQueues(): Map<string, string[]>;
-    // (undocumented)
-    haveTaskLock(taskId: string): boolean;
     // @internal (undocumented)
     protected initializeLocalCore(): void;
     // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    lockTask(taskId: string): Promise<void>;
+    // @internal (undocumented)
+    protected onConnect(): void;
     // @internal (undocumented)
     protected onDisconnect(): void;
     // @internal
@@ -55,8 +60,14 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     queued(taskId: string): boolean;
     // @internal
     protected reSubmitCore(): void;
+    // (undocumented)
+    subscribed(taskId: string): boolean;
+    // (undocumented)
+    subscribeToTask(taskId: string): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    // (undocumented)
+    volunteerForTask(taskId: string): Promise<boolean>;
 }
 
 // (No @packageDocumentation comment for this package)

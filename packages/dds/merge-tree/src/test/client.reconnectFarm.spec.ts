@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import random from "random-js";
+import { describeFuzz } from "@fluid-internal/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeOp } from "../ops";
 import { SegmentGroup } from "../mergeTreeNodes";
@@ -57,7 +58,12 @@ function applyMessagesWithReconnect(
     return applyMessages(seq, reconnectMsgs, clients, logger);
 }
 
-export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: number; clients: IConfigRange; } = {
+interface IReconnectFarmConfig extends IMergeTreeOperationRunnerConfig {
+    minLength: number;
+    clients: IConfigRange;
+}
+
+export const defaultOptions: IReconnectFarmConfig = {
     minLength: 16,
     clients: { min: 2, max: 8 },
     opsPerRoundRange: { min: 40, max: 320 },
@@ -66,16 +72,20 @@ export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: numb
     growthFunc: (input: number) => input * 2,
 };
 
-describe("MergeTree.Client", () => {
-    const opts = defaultOptions;
+// Generate a list of single character client names, support up to 69 clients
+const clientNames = generateClientNames();
 
-    // Generate a list of single character client names, support up to 69 clients
-    const clientNames = generateClientNames();
-
+function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): void {
     doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
         it(`ReconnectFarm_${clientCount}`, async () => {
             const mt = random.engines.mt19937();
-            mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, clientCount]);
+            const seedArray = [0xDEADBEEF, 0XFEEDBED, clientCount];
+            if (extraSeed) {
+                opts.resultsFilePostfix ??= "";
+                opts.resultsFilePostfix += extraSeed;
+                seedArray.push(extraSeed);
+            }
+            mt.seedWithArray(seedArray);
 
             const clients: TestClient[] = [new TestClient()];
             clients.forEach(
@@ -101,4 +111,18 @@ describe("MergeTree.Client", () => {
         })
             .timeout(30 * 1000);
     });
+}
+
+describeFuzz("MergeTree.Client", ({ testCount }) => {
+    const opts = defaultOptions;
+
+    if (testCount > 1) {
+        doOverRange({ min: 0, max: testCount - 1 }, (x) => x + 1, (seed) => {
+            describe(`with seed ${seed}`, () => {
+                runReconnectFarmTests(opts, seed);
+            });
+        });
+    } else {
+        runReconnectFarmTests(opts);
+    }
 });

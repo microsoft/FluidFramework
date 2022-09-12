@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "2.0.0-internal.1.1.0",
+  "version": "2.0.0-internal.1.2.0",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,11 +35,11 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/container-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/container-loader": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/fluid-static": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/map": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/sequence": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/container-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-loader": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/fluid-static": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/map": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/sequence": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
@@ -49,7 +49,7 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
     "fluid-framework-previous": "npm:fluid-framework@^1.0.0",
@@ -64,6 +64,10 @@
         "backCompat": false
       },
       "ClassDeclaration_SequenceInterval": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISharedIntervalCollection": {
         "backCompat": false
       },
       "InterfaceDeclaration_ISharedString": {
@@ -73,6 +77,9 @@
         "backCompat": false
       },
       "ClassDeclaration_SequenceDeltaEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedIntervalCollection": {
         "backCompat": false
       },
       "ClassDeclaration_SequenceMaintenanceEvent": {

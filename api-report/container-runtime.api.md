@@ -103,14 +103,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly disableIsolatedChannels: boolean;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
-    flush(isImmediateBatch?: boolean): void;
     // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)
@@ -187,7 +185,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -351,7 +349,7 @@ export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getNodeType(nodePath: string): GCNodeType;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public (undocumented)
@@ -592,8 +590,6 @@ export interface ISummaryConfigurationDisableSummarizer {
 
 // @public (undocumented)
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
-    // @deprecated (undocumented)
-    idleTime: number;
     maxIdleTime: number;
     maxOps: number;
     maxTime: number;
@@ -623,8 +619,6 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
-    // @deprecated (undocumented)
-    disableIsolatedChannels?: boolean;
     // @deprecated (undocumented)
     disableSummaries?: boolean;
     // @deprecated (undocumented)

@@ -907,7 +907,6 @@ declare function get_old_InterfaceDeclaration_ISummarizerNodeWithGC():
 declare function use_current_InterfaceDeclaration_ISummarizerNodeWithGC(
     use: TypeOnly<current.ISummarizerNodeWithGC>);
 use_current_InterfaceDeclaration_ISummarizerNodeWithGC(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerNodeWithGC());
 
 /*

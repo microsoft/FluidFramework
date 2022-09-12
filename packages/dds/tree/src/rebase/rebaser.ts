@@ -32,7 +32,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
      */
     private readonly revisionTree: Map<
         RevisionTag,
-        { before: RevisionTag; change: ChangeSetFromChangeRebaser<TChangeRebaser>; }
+        { before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser>; }
     > = new Map();
 
     public constructor(public readonly rebaser: TChangeRebaser) {
@@ -44,12 +44,12 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
      * @returns a RevisionTag for the state after applying changes to `to`, and the rebased changes themselves.
      */
     public rebase(
-        changes: ChangeSetFromChangeRebaser<TChangeRebaser>,
+        changes: ChangesetFromChangeRebaser<TChangeRebaser>,
         from: RevisionTag,
         to: RevisionTag,
-    ): [RevisionTag, ChangeSetFromChangeRebaser<TChangeRebaser>] {
+    ): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>] {
         const over = this.getResolutionPath(from, to);
-        const finalChangeset: ChangeSetFromChangeRebaser<TChangeRebaser> =
+        const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> =
             this.rebaser.rebase(changes, over);
         const newRevision = this.makeRevision();
         this.revisionTree.set(newRevision, {
@@ -75,7 +75,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     private getRawResolutionPath(
         from: RevisionTag,
         to: RevisionTag,
-    ): ChangeSetFromChangeRebaser<TChangeRebaser>[] {
+    ): ChangesetFromChangeRebaser<TChangeRebaser>[] {
         if (from !== to) {
             throw Error("Not implemented"); // TODO: rebase
         }
@@ -85,7 +85,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     public getResolutionPath(
         from: RevisionTag,
         to: RevisionTag,
-    ): ChangeSetFromChangeRebaser<TChangeRebaser> {
+    ): ChangesetFromChangeRebaser<TChangeRebaser> {
         // TODO: fix typing
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.rebaser.compose(this.getRawResolutionPath(from, to));
@@ -101,10 +101,10 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
 }
 
 // TODO: managing the types with this is not working well (inferring any for methods in Rebaser). Do something else.
-export type ChangeSetFromChangeRebaser<
+export type ChangesetFromChangeRebaser<
     TChangeRebaser extends ChangeRebaser<any>,
-    > = TChangeRebaser extends ChangeRebaser<infer TChangeSet>
-    ? TChangeSet
+    > = TChangeRebaser extends ChangeRebaser<infer TChangeset>
+    ? TChangeset
     : never;
 
 /**
@@ -113,15 +113,18 @@ export type ChangeSetFromChangeRebaser<
  * This interface is designed to be easy to implement.
  * Use {@link Rebaser} for an ergonomic wrapper around this.
  *
- * The implementation must ensure TChangeSet forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
+ * The implementation must ensure TChangeset forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
  * - `compose([])` is the identity element.
  * - associativity is defined as `compose([...a, ...b])` is equal to
  * `compose([compose(a), compose(b)])` for all `a` and `b`.
  * - `inverse(a)` gives the inverse element of `a`.
  *
  * In these requirements the definition of equality is up to the implementer,
- * but it is required that any two changes which are considered equal
- * have the same impact when applied to any tree, and rebaseAnchors has identical effects as well.
+ * but it is required that any two changes which are considered equal:
+ * - have the same impact when applied to any tree.
+ * - can be substituted for each-other in all methods on this
+ * interface and produce equal (by this same definition) results.
+ *
  * For the sake of testability, implementations will likely want to have a concrete equality implementation.
  *
  * This API uses `compose` on arrays instead of an explicit identity element and associative binary operator
@@ -136,14 +139,14 @@ export type ChangeSetFromChangeRebaser<
  * or just minor semantic precision issues, which could be tolerated.
  * For now assume that such issues are not ok.
  */
-export interface ChangeRebaser<TChangeSet> {
-    _typeCheck?: Invariant<TChangeSet>;
+export interface ChangeRebaser<TChangeset> {
+    _typeCheck?: Invariant<TChangeset>;
 
     /**
      * Compose a collection of changesets into a single one.
      * See {@link ChangeRebaser} for requirements.
      */
-    compose(changes: TChangeSet[]): TChangeSet;
+    compose(changes: TChangeset[]): TChangeset;
 
     /**
      * @returns the inverse of `changes`.
@@ -151,7 +154,7 @@ export interface ChangeRebaser<TChangeSet> {
      * `compose([changes, inverse(changes)])` be equal to `compose([])`:
      * See {@link ChangeRebaser} for details.
      */
-    invert(changes: TChangeSet): TChangeSet;
+    invert(changes: TChangeset): TChangeset;
 
     /**
      * Rebase `change` over `over`.
@@ -160,17 +163,19 @@ export interface ChangeRebaser<TChangeSet> {
      * except be valid to apply after `over` instead of before it.
      *
      * Requirements:
-     * The implementation must ensure that:
+     * The implementation must ensure that for all possible changesets `a`, `b` and `c`:
      * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
      * - `rebase(compose([a, b]), c)` is equal to
      * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
+     * - `rebase(a, compose([]))` is equal to `a`.
+     * - `rebase(compose([]), a)` is equal to `a`.
      */
-    rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
+    rebase(change: TChangeset, over: TChangeset): TChangeset;
 
     // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
     // This isn't ideal, but it might be fine?
     // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
-    rebaseAnchors(anchors: AnchorSet, over: TChangeSet): void;
+    rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
 }
 
 export interface FinalChange {

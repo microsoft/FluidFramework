@@ -105,7 +105,6 @@ export class Client {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
@@ -120,7 +119,7 @@ export class Client {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage): {
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -134,7 +133,7 @@ export class Client {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getOrAddShortClientId(longClientId: string): number;
-    getPosition(segment: ISegment): number;
+    getPosition(segment: ISegment | undefined, localSeq?: number): number;
     // (undocumented)
     getPropertiesAtPosition(pos: number): PropertySet | undefined;
     // (undocumented)
@@ -163,7 +162,6 @@ export class Client {
     }>;
     // (undocumented)
     localOps: number;
-    // (undocumented)
     localReferencePositionToPosition(lref: ReferencePosition): number;
     // (undocumented)
     localTime: number;
@@ -187,7 +185,6 @@ export class Client {
     posFromRelativePos(relativePos: IRelativePosition): number;
     rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
-    // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
@@ -618,6 +615,7 @@ export interface IRelativePosition {
 
 // @public
 export interface IRemovalInfo {
+    localRemovedSeq?: number;
     removedClientIds: number[];
     removedSeq: number;
 }
@@ -715,10 +713,12 @@ export class LocalReferenceCollection {
     split(offset: number, splitSeg: ISegment): void;
 }
 
-// @public (undocumented)
+// @public @sealed (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
 }
 
 // @public (undocumented)
@@ -1040,7 +1040,7 @@ export interface ReferencePosition {
     refType: ReferenceType;
 }
 
-// @public (undocumented)
+// @public
 export enum ReferenceType {
     // (undocumented)
     NestBegin = 2,
@@ -1052,13 +1052,9 @@ export enum ReferenceType {
     RangeEnd = 32,
     // (undocumented)
     Simple = 0,
-    // (undocumented)
     SlideOnRemove = 64,
-    // (undocumented)
     StayOnRemove = 128,
-    // (undocumented)
     Tile = 1,
-    // (undocumented)
     Transient = 256
 }
 
@@ -1130,13 +1126,15 @@ export interface SegmentGroup {
     // (undocumented)
     previousProps?: PropertySet[];
     // (undocumented)
+    removedReferences?: LocalReferencePosition[];
+    // (undocumented)
     segments: ISegment[];
 }
 
 // @public (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
-    // (undocumented)
+    // @deprecated (undocumented)
     clear(): void;
     // (undocumented)
     copyTo(segment: ISegment): void;
@@ -1165,9 +1163,7 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 }
 
 // @public
-export class SortedSegmentSet<T extends ISegment | {
-    readonly segment: ISegment;
-} = ISegment> {
+export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T): void;
     // (undocumented)
@@ -1179,6 +1175,11 @@ export class SortedSegmentSet<T extends ISegment | {
     // (undocumented)
     get size(): number;
 }
+
+// @public (undocumented)
+export type SortedSegmentSetItem = ISegment | LocalReferencePosition | {
+    readonly segment: ISegment;
+};
 
 // @public (undocumented)
 export class Stack<T> {
@@ -1232,25 +1233,30 @@ export class TextSegment extends BaseSegment {
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
 // @public (undocumented)
+export type Trackable = ISegment | LocalReferencePosition;
+
+// @public (undocumented)
 export class TrackingGroup {
     constructor();
     // (undocumented)
-    has(segment: ISegment): boolean;
+    has(trackable: Trackable): boolean;
     // (undocumented)
-    link(segment: ISegment): void;
-    // (undocumented)
+    link(trackable: Trackable): void;
+    // @deprecated (undocumented)
     get segments(): readonly ISegment[];
     // (undocumented)
     get size(): number;
     // (undocumented)
-    unlink(segment: ISegment): void;
+    get tracked(): readonly Trackable[];
+    // (undocumented)
+    unlink(segment: Trackable): void;
 }
 
 // @public (undocumented)
 export class TrackingGroupCollection {
-    constructor(segment: ISegment);
+    constructor(trackable: Trackable);
     // (undocumented)
-    copyTo(segment: ISegment): void;
+    copyTo(trackable: Trackable): void;
     // (undocumented)
     get empty(): boolean;
     // (undocumented)

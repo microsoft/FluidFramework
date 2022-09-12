@@ -275,7 +275,7 @@ export class ChildLogger extends TelemetryLogger {
     /**
      * Create child logger
      * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
-     * is created, but it does not sends telemetry events anywhere.
+     * is created, but it does not send telemetry events anywhere.
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
      * @param propertyGetters - Getters to add additional properties to all events

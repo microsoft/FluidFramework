@@ -97,7 +97,6 @@ export class DataStores implements IDisposable {
         private readonly gcNodeUpdated: (
             nodePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
         private readonly aliasMap: Map<string, string>,
-        private readonly writeGCDataAtRoot: boolean,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
     ) {
         this.logger = ChildLogger.create(baseLogger);
@@ -142,8 +141,6 @@ export class DataStores implements IDisposable {
                         key,
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ),
-                    writeGCDataAtRoot: this.writeGCDataAtRoot,
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             } else {
                 if (typeof value !== "object") {
@@ -163,8 +160,6 @@ export class DataStores implements IDisposable {
                     makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
                     snapshotTree,
                     isRootDataStore: undefined,
-                    writeGCDataAtRoot: this.writeGCDataAtRoot,
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -245,13 +240,10 @@ export class DataStores implements IDisposable {
                         entries: [createAttributesBlob(
                             pkg,
                             true /* isRootDataStore */,
-                            this.runtime.disableIsolatedChannels,
                         )],
                     },
                 },
             ),
-            writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             pkg,
         });
 
@@ -355,8 +347,6 @@ export class DataStores implements IDisposable {
             makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: isRoot,
-            writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
         });
         this.contexts.addUnbound(context);
         return context;
@@ -377,8 +367,6 @@ export class DataStores implements IDisposable {
             makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: false,
-            writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             createProps: props,
         });
         this.contexts.addUnbound(context);
@@ -602,10 +590,8 @@ export class DataStores implements IDisposable {
     /**
      * After GC has run, called to notify this Container's data stores of routes that are used in it.
      * @param usedRoutes - The routes that are used in all data stores in this Container.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
-     * unreferenced as part of this GC run, this should be used to update the time when it happens.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Get a map of data store ids to routes used in it.
         const usedDataStoreRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -616,7 +602,7 @@ export class DataStores implements IDisposable {
 
         // Update the used routes in each data store. Used routes is empty for unused data stores.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? [], gcTimestamp);
+            context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? []);
         }
     }
 

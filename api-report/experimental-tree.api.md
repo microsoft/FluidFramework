@@ -846,6 +846,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
     // (undocumented)
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
+    static getFactory(): SharedTreeFactory;
     // (undocumented)
     getRuntime(): IFluidDataStoreRuntime;
     getWriteFormat(): WriteFormat;
@@ -908,8 +909,7 @@ export enum SharedTreeEvent {
 
 // @public
 export class SharedTreeFactory implements IChannelFactory {
-    constructor(...args: SharedTreeArgs<WriteFormat.v0_0_2>);
-    constructor(...args: SharedTreeArgs<WriteFormat.v0_1_1>);
+    constructor(...args: SharedTreeArgs);
     // (undocumented)
     static Attributes: IChannelAttributes;
     // (undocumented)
