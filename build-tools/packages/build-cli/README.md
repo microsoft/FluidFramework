@@ -136,7 +136,7 @@ Update the dependency version of a specified package or release group. That is, 
 
 ```
 USAGE
-  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-n <value> | -t major|minor|patch|current] [-p ]
+  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-p -t latest|newest|greatest|minor|patch|@next|@canary]
     [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit] [-v]
 
 ARGUMENTS
@@ -145,10 +145,9 @@ ARGUMENTS
 FLAGS
   -g, --releaseGroup=<option>  Only bump dependencies within this release group.
                                <options: client|server|azure|build-tools>
-  -n, --version=<value>        A semver version range string.
   -p, --prerelease             Bump to pre-release versions.
   -t, --bumpType=<option>      Bump the current version of the dependency according to this bump type.
-                               <options: major|minor|patch|current>
+                               <options: latest|newest|greatest|minor|patch|@next|@canary>
   -v, --verbose                Verbose logging.
   -x, --skipChecks             Skip all checks.
   --[no-]commit                Commit changes to a new branch.

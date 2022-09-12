@@ -15,6 +15,14 @@ import {
 } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 
+export type DependencyUpdateType =
+    | "latest"
+    | "newest"
+    | "greatest"
+    | "minor"
+    | "patch"
+    | `@${string}`;
+
 /**
  * A mapping of {@link Package} to a version range string or a bump type. This interface is used for convenience.
  *

@@ -19,6 +19,7 @@ export {
     getVersionFromTag,
     isReleased,
     npmCheckUpdates,
+    PackageVersionMap,
     PreReleaseDependencies,
     sortVersions,
     VersionDetails,

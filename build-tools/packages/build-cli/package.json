@@ -88,6 +88,8 @@
     "jssm-viz-cli": "^5.83.0",
     "npm-check-updates": "^16.0.0",
     "semver": "^7.3.7",
+    "semver-utils": "^1.1.4",
+    "strip-ansi": "^6.0.0",
     "table": "^6.8.0"
   },
   "devDependencies": {

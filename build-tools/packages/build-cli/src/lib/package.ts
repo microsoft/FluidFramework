@@ -17,6 +17,15 @@ import * as semver from "semver";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
 
 /**
+ * An object that maps package names to version strings or range strings.
+ *
+ * @internal
+ */
+export interface PackageVersionMap {
+    [packageName: ReleasePackage]: string;
+}
+
+/**
  * Checks the npm registry for updates for a release group's dependencies.
  *
  * @param context - The {@link Context}.
@@ -33,8 +42,9 @@ import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
 // eslint-disable-next-line max-params
 export async function npmCheckUpdates(
     context: Context,
-    releaseGroup: ReleaseGroup | ReleasePackage,
+    releaseGroup: ReleaseGroup | ReleasePackage | undefined,
     depsToUpdate: ReleasePackage[] | RegExp[],
+    releaseGroupFilter: ReleaseGroup | undefined,
     bumpType: "patch" | "minor" | "current",
     // eslint-disable-next-line default-param-last
     prerelease = false,
@@ -43,36 +53,68 @@ export async function npmCheckUpdates(
     log?: Logger,
 ): Promise<{
     updatedPackages: Package[];
-    updatedDependencies: Package[];
+    updatedDependencies: PackageVersionMap;
 }> {
     const updatedPackages: Package[] = [];
-    const deps = new Set<string>();
+
+    /** A set of all the packageName, versionString pairs of updated dependencies. */
+    const updatedDependencies: PackageVersionMap = {};
+
     // There can be a lot of duplicate log lines from npm-check-updates, so collect and dedupe before logging.
     const upgradeLogLines = new Set<string>();
     const searchGlobs: string[] = [];
     let repoPath: string;
 
     log?.info(`Checking npm for package updates...`);
-    if (isReleaseGroup(releaseGroup)) {
+    if (releaseGroup === undefined) {
+        // Apply to all packages in repo
+        repoPath = context.repo.resolvedRoot;
+
+        for (const monorepo of context.repo.releaseGroups.values()) {
+            if (monorepo.kind === releaseGroupFilter) {
+                log?.verbose(
+                    `Skipped release group ${releaseGroupFilter} because we're updating deps on that release group.`,
+                );
+                continue;
+            }
+
+            log?.verbose(
+                `Adding ${monorepo.workspaceGlobs.length} globs for release group ${monorepo.kind}.`,
+            );
+            searchGlobs.push(
+                ...monorepo.workspaceGlobs.map((g) =>
+                    path.join(path.relative(context.repo.resolvedRoot, monorepo.repoPath), g),
+                ),
+                ".",
+            );
+        }
+
+        for (const pkg of context.independentPackages) {
+            searchGlobs.push(path.relative(context.repo.resolvedRoot, pkg.directory));
+        }
+
+        // searchGlobs.push(`./**`);
+    } else if (isReleaseGroup(releaseGroup)) {
         const monorepo = context.repo.releaseGroups.get(releaseGroup);
         if (monorepo === undefined) {
             throw new Error(`Can't find release group: ${releaseGroup}`);
         }
 
-        searchGlobs.push(...monorepo.workspaceGlobs);
         repoPath = monorepo.repoPath;
+        searchGlobs.push(...monorepo.workspaceGlobs, ".");
+        // searchGlobs.push(".");
     } else {
         const pkg = context.fullPackageMap.get(releaseGroup);
         if (pkg === undefined) {
             throw new Error(`Package not found in context: ${releaseGroup}`);
         }
 
-        searchGlobs.push(pkg.directory);
         repoPath = pkg.directory;
+        searchGlobs.push(pkg.directory);
     }
 
     for (const glob of searchGlobs) {
-        log?.verbose(`Checking packages in ${glob}...`);
+        log?.verbose(`Checking packages in ${path.join(repoPath, glob)}...`);
 
         // eslint-disable-next-line no-await-in-loop
         const result = (await ncu({
@@ -90,23 +132,32 @@ export async function npmCheckUpdates(
             throw new TypeError(`Expected an object: ${typeof result}`);
         }
 
-        for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
-            const jsonPath = path.join(repoPath, pkgJsonPath);
-            // eslint-disable-next-line no-await-in-loop
-            const { name } = await readJsonAsync(jsonPath);
-            const pkg = context.fullPackageMap.get(name);
-            if (pkg === undefined) {
-                log?.warning(`Package not found in context: ${name}`);
-                continue;
-            }
+        // npm-check-updates returns different data depending on how many packages were updated. This code detects the
+        // two main cases: a single package or multiple packages.
+        if (glob.endsWith("**")) {
+            for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
+                const jsonPath = path.join(repoPath, pkgJsonPath);
+                // eslint-disable-next-line no-await-in-loop
+                const { name } = await readJsonAsync(jsonPath);
+                const pkg = context.fullPackageMap.get(name);
+                if (pkg === undefined) {
+                    log?.warning(`Package not found in context: ${name}`);
+                    continue;
+                }
 
-            for (const [dep, newRange] of Object.entries(upgradedDeps)) {
+                for (const [dep, newRange] of Object.entries(upgradedDeps)) {
+                    upgradeLogLines.add(`    ${dep}: '${newRange}'`);
+                    updatedDependencies[dep] = newRange;
+                }
+
+                if (Object.keys(upgradedDeps).length > 0) {
+                    updatedPackages.push(pkg);
+                }
+            }
+        } else {
+            for (const [dep, newRange] of Object.entries(result)) {
                 upgradeLogLines.add(`    ${dep}: '${newRange}'`);
-                deps.add(dep);
-            }
-
-            if (Object.keys(upgradedDeps).length > 0) {
-                updatedPackages.push(pkg);
+                updatedDependencies[dep] = newRange;
             }
         }
     }
@@ -115,8 +166,6 @@ export async function npmCheckUpdates(
     for (const line of upgradeLogLines.values()) {
         log?.info(line);
     }
-
-    const updatedDependencies: Package[] = getPackagesFromReleasePackages(context, [...deps]);
 
     return { updatedPackages, updatedDependencies };
 }
