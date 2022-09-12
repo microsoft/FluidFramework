@@ -1,21 +1,18 @@
 machine_name: "Fluid Unified Release Process";
 
 Init 'success'
-=> DoChecks;
+=> CheckShouldRunOptionalChecks;
 
 Init 'failure'
 => Failed;
 
-// DoChecks
-DoChecks 'success'
-=> CheckShouldRunOptionalChecks 'success'
+CheckShouldRunOptionalChecks 'success'
 => CheckValidReleaseGroup 'success'
 => CheckPolicy 'success'
 => CheckHasRemote 'success'
 => CheckBranchUpToDate 'success'
 => CheckNoPrereleaseDependencies 'success'
-=> AskReleaseDetails 'success'
-=> CheckForReleaseType;
+=> AskForReleaseType;
 
 [
 CheckValidReleaseGroup
@@ -25,25 +22,30 @@ CheckBranchUpToDate
 ] 'failure' => Failed;
 
 // ChecksDone
-CheckForReleaseType 'patch'
+AskForReleaseType 'patch'
+// => AskConfirmReleaseReport 'patch'
 => DoPatchRelease;
 
-CheckForReleaseType 'minor'
+AskForReleaseType 'minor'
 => DoMinorRelease;
 
-CheckForReleaseType 'major'
+AskForReleaseType 'major'
 => DoMajorRelease;
 
-[
-DoPatchRelease
-DoMinorRelease
-DoMajorRelease
-] 'success'
+DoMajorRelease 'success'
 => CheckBranchName 'success'
 => CheckMainNextIntegrated 'success'
+=> CheckReleaseGroupIsBumped 'success'
 => CheckReleaseIsDone 'success'
-=> CheckReleaseGroupIsNotBumped 'success'
-=> DoReleaseGroupBump;
+=> CheckNoPrereleaseDependencies;
+
+DoMinorRelease 'success'
+=> CheckBranchName2 'success'
+=> CheckReleaseGroupIsBumped;
+
+DoPatchRelease 'success'
+=> CheckBranchName3 'success'
+=> CheckReleaseGroupIsBumped;
 
 CheckMainNextIntegrated 'failure'
 => PromptToIntegrateNext;
@@ -51,12 +53,18 @@ CheckMainNextIntegrated 'failure'
 CheckReleaseIsDone 'failure'
 => PromptToRelease;
 
-CheckReleaseGroupIsNotBumped 'failure'
-=> CheckNoPrereleaseDependencies3;
+CheckReleaseGroupIsBumped 'failure'
+=> DoReleaseGroupBump;
 
-CheckBranchName 'failure'
+[
+CheckBranchName
+CheckBranchName3
+] 'failure'
 => CheckReleaseBranchDoesNotExist 'success' // No release branch found
 => PromptToRelease;
+
+CheckBranchName2 'failure'
+=> Failed;
 
 CheckReleaseBranchDoesNotExist 'failure'
 => Failed;
@@ -125,7 +133,7 @@ state DoChecks: {
 //   text-color       : black;
 // };
 
-state AskReleaseDetails: {
+state AskForReleaseType: {
    background-color : purple;
    text-color       : white;
 };

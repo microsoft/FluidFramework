@@ -31,6 +31,7 @@
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme && npm run build:diagrams",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
+    "build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:manifest": "oclif manifest",
     "build:readme": "oclif readme",
     "ci:build:docs": "api-extractor run",

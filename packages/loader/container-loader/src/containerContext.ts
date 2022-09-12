@@ -198,9 +198,10 @@ export class ContainerContext implements IContainerContext {
     }
 
     /**
-     * @deprecated - Temporary migratory API, to be removed when customers no longer need it.  When removed,
-     * ContainerContext should only take an IQuorumClients rather than an IQuorum.  See IContainerContext for more
-     * details.
+     * @deprecated Temporary migratory API, to be removed when customers no longer need it.
+     * When removed, `ContainerContext` should only take an {@link @fluidframework/container-definitions#IQuorumClients}
+     * rather than an {@link @fluidframework/protocol-definitions#IQuorum}.
+     * See {@link @fluidframework/container-definitions#IContainerContext} for more details.
      */
     public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
         return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;

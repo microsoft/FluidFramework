@@ -8,7 +8,7 @@ import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/pro
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
-import { isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
@@ -234,7 +234,7 @@ class ScheduleManagerCore {
         const batchMetadata = metadata?.batch;
 
         // Protocol messages are never part of a runtime batch of messages
-        if (!isUnpackedRuntimeMessage(message)) {
+        if (!isRuntimeMessage(message)) {
             // Protocol messages should never show up in the middle of the batch!
             assert(this.currentBatchClientId === undefined, 0x29a /* "System message in the middle of batch!" */);
             assert(batchMetadata === undefined, 0x29b /* "system op in a batch?" */);
