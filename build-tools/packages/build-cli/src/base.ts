@@ -9,7 +9,7 @@ import { Command, Flags } from "@oclif/core";
 import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import { rootPathFlag } from "./flags";
-import { getIndent, indentString } from "./lib";
+import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
 
 // This is needed to get type safety working in derived classes.
