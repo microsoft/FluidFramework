@@ -388,6 +388,9 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         return this.balance(_node);
     }
 
+    /**
+     * @returns The largest node in this tree which compares less than or equal to `key`
+     */
     public floor(key: TKey) {
         if (!this.isEmpty()) {
             return this.nodeFloor(this.root, key);
@@ -412,6 +415,9 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
     }
 
+    /**
+     * @returns The smallest node in this tree which compares greater than or equal to `key`
+     */
     public ceil(key: TKey) {
         if (!this.isEmpty()) {
             return this.nodeCeil(this.root, key);

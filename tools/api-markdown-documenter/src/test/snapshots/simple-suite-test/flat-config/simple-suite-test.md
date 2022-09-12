@@ -1,4 +1,4 @@
-[Packages](docs/index) &gt; [simple-suite-test](docs/simple-suite-test)
+[Packages](docs/) &gt; [simple-suite-test](docs/simple-suite-test)
 
 Test package
 

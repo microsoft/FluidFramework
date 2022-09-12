@@ -7,10 +7,10 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
 
 export interface ITaskManagerEvents extends ISharedObjectEvents {
     /**
-     * Notifies when the local client has reached or left the front of the queue.  Does not account for known pending
-     * ops, but instead only reflects the current state.
+     * Notifies when the local client has reached the front of the queue, left the queue, or a task was completed.
+     * Does not account for known pending ops, but instead only reflects the current state.
      */
-    (event: "assigned" | "lost", listener: (taskId: string) => void);
+    (event: "assigned" | "completed" | "lost", listener: (taskId: string) => void);
 }
 
 /**
@@ -58,4 +58,10 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
      * @param taskId - Identifier for the task
      */
     subscribed(taskId: string): boolean;
+
+    /**
+     * Marks a task as completed and releases all clients from its queue.
+     * @param taskId - Identifier for the task
+     */
+    complete(taskId: string): void;
 }

@@ -28,6 +28,7 @@ import { ISequencedProposal } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
@@ -177,9 +178,11 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
-    readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+    readonly submitFn: (type: MessageType, contents: string, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
+    // (undocumented)
+    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)

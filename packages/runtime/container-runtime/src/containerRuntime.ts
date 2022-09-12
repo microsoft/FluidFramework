@@ -365,14 +365,6 @@ export interface ISummaryRuntimeOptions {
     summaryConfigOverrides?: ISummaryConfiguration;
 
     /**
-     *  @deprecated - this option will not be supported on the next versions.
-     * Flag that disables putting channels in isolated subtrees for each data store
-     * and the root node when generating a summary if set to true.
-     * Defaults to FALSE (enabled) for now.
-     */
-    disableIsolatedChannels?: boolean;
-
-    /**
      *  @deprecated - use `summaryConfigOverrides.initialSummarizerDelayMs` instead.
      *  Delay before first attempt to spawn summarizing container.
     */
@@ -861,12 +853,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly dataStores: DataStores;
 
-    /**
-     * True if generating summaries with isolated channels is
-     * explicitly disabled. This only affects how summaries are written,
-     * and is the single source of truth for this container.
-     */
-    public readonly disableIsolatedChannels: boolean;
     /** The last message processed at the time of the last summary. */
     private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
@@ -969,9 +955,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
         this.messageAtLastSummary = metadata?.message;
-
-        // Default to false (enabled).
-        this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
 
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
@@ -1407,7 +1390,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Increment the summary number for the next summary that will be generated.
             summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
-            disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             ...this.garbageCollector.getMetadata(),
             // The last message processed at the time of summary. If there are no new messages, use the message from the
             // last summary.
@@ -1974,10 +1956,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const summarizeResult = this.dataStores.createSummary(telemetryContext);
-        if (!this.disableIsolatedChannels) {
-            // Wrap data store summaries in .channels subtree.
-            wrapSummaryInChannelsTree(summarizeResult);
-        }
+        // Wrap data store summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
+
         this.addContainerStateToSummary(
             summarizeResult,
             true /* fullTree */,
@@ -2003,13 +1984,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummarizeInternalResult> {
         const summarizeResult = await this.dataStores.summarize(fullTree, trackState, telemetryContext);
-        let pathPartsForChildren: string[] | undefined;
 
-        if (!this.disableIsolatedChannels) {
-            // Wrap data store summaries in .channels subtree.
-            wrapSummaryInChannelsTree(summarizeResult);
-            pathPartsForChildren = [channelsTreeName];
-        }
+        // Wrap data store summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
+        const pathPartsForChildren = [channelsTreeName];
+
         this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
         return {
             ...summarizeResult,
@@ -2333,7 +2312,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Counting dataStores and handles
             // Because handles are unchanged dataStores in the current logic,
             // summarized dataStore count is total dataStore count minus handle count
-            const dataStoreTree = this.disableIsolatedChannels ? summaryTree : summaryTree.tree[channelsTreeName];
+            const dataStoreTree = summaryTree.tree[channelsTreeName];
 
             assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
             const handleCount = Object.values(dataStoreTree.tree).filter(
@@ -2420,7 +2399,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let clientSequenceNumber: number;
             try {
-                clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
+                clientSequenceNumber = this.submitSummaryMessage(summaryMessage);
             } catch (error) {
                 return { stage: "upload", ...uploadData, error };
             }
@@ -2588,24 +2567,30 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private submitSystemMessage(
-        type: MessageType,
-        contents: any) {
+    private submitMessageCore(type: MessageType, contents: any, batch: boolean, metaData?: any) {
         this.verifyNotClosed();
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
-        // System message should not be sent in the middle of the batch.
-        // That said, we can preserve existing behavior by not flushing existing buffer.
-        // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
-        const middleOfBatch = this.currentlyBatching() && this.needsFlush;
-        if (middleOfBatch) {
-            this.mc.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
-        }
-
         return this.context.submitFn(
             type,
-            contents,
-            middleOfBatch);
+            // back-compat: ADO #1385: remove this check in future and make unconditional
+            this.context.submitSummaryFn === undefined ? contents : JSON.stringify(contents),
+            batch,
+            metaData);
+    }
+
+    private submitSummaryMessage(contents: ISummaryContent) {
+        // System message should not be sent in the middle of the batch.
+        assert(this.flushMode !== FlushMode.TurnBased || !this.needsFlush, "System op in the middle of a batch");
+        // back-compat: ADO #1385: Make this call unconditional in the future
+        if (this.context.submitSummaryFn !== undefined) {
+            return this.context.submitSummaryFn(contents);
+        } else {
+            return this.submitMessageCore(
+                MessageType.Summarize,
+                contents,
+                false); // batch
+            }
     }
 
     private submitRuntimeMessage(
@@ -2614,11 +2599,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         batch: boolean,
         contentLength: number,
         serializedContent?: string,
-        appData?: any,
+        metaData?: any,
     ) {
-        this.verifyNotClosed();
-        assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
-
         if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
             serializedContent &&
             contentLength > this.runtimeOptions.compressionOptions.minimumSize
@@ -2647,19 +2629,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 contents: shouldCompress ? compressedContent : contents,
             };
 
-            return this.context.submitFn(
+            return this.submitMessageCore(
                 MessageType.Operation,
                 compressedPayload,
                 batch,
-                { ...appData, compressed: shouldCompress });
+                { ...metaData, compressed: shouldCompress });
         }
 
         const payload: ContainerRuntimeMessage = { type, contents };
-        return this.context.submitFn(
+        return this.submitMessageCore(
             MessageType.Operation,
             payload,
             batch,
-            appData);
+            metaData);
     }
 
     /**

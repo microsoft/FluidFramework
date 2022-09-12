@@ -26,6 +26,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Signature from  `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
 - [Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
+- [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
 
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
@@ -45,6 +46,11 @@ This field has been deprecated and will be removed in a future breaking change. 
 
 ### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
+
+### Add assertion that prevents sending op while processing another op
+`preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
+
+# 2.0.0
 
 ### Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface
 `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
@@ -107,6 +113,7 @@ bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and
 - [Marker.toString simplified](#markertostring-simplified)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
 - [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [waitIntervalCollection removed](#waitintervalcollection-removed)
 - [OldestClientObserver moved to @fluid-experimental/oldest-client-observer](#oldestclientobserver-moved-to-@fluid-experimental/oldest-client-observer)
 - [Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
 - [Remove deprecated data structures from `@fluidframework/sequence`](#remove-deprecated-data-structures-from-fluidframeworksequence)
@@ -221,6 +228,11 @@ The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is n
 `SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
 To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
 The corresponding method on `IMergeTreeTexHelper` will also be removed.
+
+### `waitIntervalCollection` removed
+
+`SharedSegmentSequence.waitIntervalCollection` has been removed.
+Use `getIntervalCollection` instead, which has the same semantics but is synchronous.
 
 ### OldestClientObserver moved to @fluid-experimental/oldest-client-observer
 The `OldestClientObserver` class and its associated interfaces have been removed from @fluid-experimental/task-manager and moved to the new package @fluid-experimental/oldest-client-observer. Please migrate all imports to @fluid-experimental/oldest-client-observer.

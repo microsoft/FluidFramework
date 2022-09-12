@@ -92,3 +92,17 @@ export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
     }
     return true;
 }
+
+/**
+ * Utility for dictionaries whose values are lists.
+ * Gets the list associated with the provided key, if it exists.
+ * Otherwise, creates an entry with an empty list, and returns that list.
+ */
+ export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
+	let collection = map.get(key);
+	if (collection === undefined) {
+		collection = [];
+		map.set(key, collection);
+	}
+	return collection;
+}

@@ -13,8 +13,16 @@ export type TreeType = TreeSchemaIdentifier;
 /**
  * The empty key ("") is used for unnamed relationships, such as the indexer
  * of an explicit array node.
+ *
+ * This key is a hint that this field is the primary function of the node,
+ * and in some abstractions the APIs for this field should be inlined onto the node.
+ *
+ * TODO:
+ * This has to be a LocalFieldKey since different nodes will have different FieldSchema for it.
+ * This makes it prone to collisions and suggests
+ * that this intention may be better conveyed by metadata on the TreeViewSchema.
  */
-export const EmptyKey: FieldKey = brand("");
+export const EmptyKey: LocalFieldKey = brand("");
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).

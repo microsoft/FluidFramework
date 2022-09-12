@@ -10,7 +10,7 @@ import ReactDOM from "react-dom";
 
 import { InventoryListView } from "../src/view/inventoryView";
 import { InventoryListContainerRuntimeFactory } from "../src/modelVersion1";
-import { IInventoryListContainer } from "../src/modelInterfaces";
+import type { IInventoryListAppModel } from "../src/modelInterfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 // Since this is a single page Fluid application we are generating a new document id
@@ -34,7 +34,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const container = await getSessionStorageContainer(documentId, containerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
-    const model = await requestFluidObject<IInventoryListContainer>(
+    const model = await requestFluidObject<IInventoryListAppModel>(
         container,
         { url: "", headers: { containerRef: container } },
     );
