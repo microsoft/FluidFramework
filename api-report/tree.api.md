@@ -338,7 +338,7 @@ export interface FieldSchema {
     readonly types?: TreeTypeSet;
 }
 
-// @public (undocumented)
+// @public
 export const enum FieldScope {
     // (undocumented)
     global = "fields",
