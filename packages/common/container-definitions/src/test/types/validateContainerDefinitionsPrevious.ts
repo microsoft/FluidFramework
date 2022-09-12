@@ -203,6 +203,7 @@ declare function get_current_EnumDeclaration_ContainerErrorType():
 declare function use_old_EnumDeclaration_ContainerErrorType(
     use: TypeOnly<old.ContainerErrorType>);
 use_old_EnumDeclaration_ContainerErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_ContainerErrorType());
 
 /*
@@ -961,6 +962,7 @@ declare function get_current_InterfaceDeclaration_IGenericError():
 declare function use_old_InterfaceDeclaration_IGenericError(
     use: TypeOnly<old.IGenericError>);
 use_old_InterfaceDeclaration_IGenericError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericError());
 
 /*
@@ -1393,6 +1395,7 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: TypeOnly<old.IThrottlingWarning>);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*
@@ -1417,6 +1420,7 @@ declare function get_current_InterfaceDeclaration_IUsageError():
 declare function use_old_InterfaceDeclaration_IUsageError(
     use: TypeOnly<old.IUsageError>);
 use_old_InterfaceDeclaration_IUsageError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUsageError());
 
 /*

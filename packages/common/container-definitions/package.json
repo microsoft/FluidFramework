@@ -83,6 +83,18 @@
       },
       "InterfaceDeclaration_IContainerContext": {
         "forwardCompat": false
+      },
+      "EnumDeclaration_ContainerErrorType": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IGenericError": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IThrottlingWarning": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IUsageError": {
+        "backCompat": false
       }
     }
   }
