@@ -160,6 +160,21 @@ export async function npmCheckUpdates(
                 updatedDependencies[dep] = newRange;
             }
         }
+
+        // const modifiedFiles = await context.gitRepo.getModifiedFiles();
+        // for (const jsonPath of modifiedFiles) {
+        //     if (path.basename(jsonPath) === "package.json") {
+        //         // eslint-disable-next-line no-await-in-loop
+        //         const { name } = await readJsonAsync(jsonPath);
+        //         const pkg = context.fullPackageMap.get(name);
+        //         if (pkg === undefined) {
+        //             log?.verbose(`Package not found in context: ${name}`);
+        //             continue;
+        //         }
+
+        //         updatedPackages.push(pkg);
+        //     }
+        // }
     }
 
     log?.info(`${upgradeLogLines.size} released dependencies found on npm:`);

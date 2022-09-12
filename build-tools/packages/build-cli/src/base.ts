@@ -5,8 +5,13 @@
 
 import { Context, getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
-// eslint-disable-next-line import/no-internal-modules
-import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces";
+import {
+    FlagInput,
+    OutputFlags,
+    ParserOutput,
+    PrettyPrintableError,
+    // eslint-disable-next-line import/no-internal-modules
+} from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import { rootPathFlag } from "./flags";
 import { indentString } from "./lib";
@@ -155,6 +160,26 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     /** @deprecated Use {@link BaseCommand.warning} instead. */
     public warn(input: string | Error): string | Error {
         return super.warn(input);
+    }
+
+    public error(
+        input: string | Error,
+        options: { code?: string | undefined; exit: false } & PrettyPrintableError,
+    ): void;
+
+    public error(
+        input: string | Error,
+        options?:
+            | ({ code?: string | undefined; exit?: number | undefined } & PrettyPrintableError)
+            | undefined,
+    ): never;
+
+    public error(input: unknown, options?: unknown): void {
+        if (typeof input === "string") {
+            return super.error(chalk.red(input), options as any);
+        }
+
+        return super.error(input as Error, options as any);
     }
 
     /** Logs a verbose log statement. */

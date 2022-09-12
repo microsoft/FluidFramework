@@ -54,7 +54,7 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
     // First, check if any prereleases have released versions on npm
     let { updatedPackages, updatedDependencies } = await npmCheckUpdates(
         context,
-        releaseGroup!,
+        releaseGroup,
         [...packagesToBump],
         "current",
         /* prerelease */ true,
@@ -65,11 +65,17 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
     // Divide the updated dependencies into individual packages and release groups
     const updatedReleaseGroups = new Set<string>();
     const updatedDeps = new Set<string>();
-    for (const p of updatedDependencies) {
-        if (p.monoRepo === undefined) {
-            updatedDeps.add(p.name);
+    for (const p of Object.keys(updatedDependencies)) {
+        const pkg = context.fullPackageMap.get(p);
+        if (pkg === undefined) {
+            log.verbose(`Package not in context: ${p}`);
+            continue;
+        }
+
+        if (pkg.monoRepo === undefined) {
+            updatedDeps.add(pkg.name);
         } else {
-            updatedReleaseGroups.add(p.monoRepo.kind);
+            updatedReleaseGroups.add(pkg.monoRepo.kind);
         }
     }
 
@@ -84,11 +90,12 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
         // efficient ways to do this but this is simple.
         ({ updatedPackages, updatedDependencies } = await npmCheckUpdates(
             context,
-            releaseGroup!,
+            releaseGroup,
             [...packagesToBump],
             "current",
             /* prerelease */ true,
             /* writeChanges */ true,
+            /* no logger */
         ));
     }
 
