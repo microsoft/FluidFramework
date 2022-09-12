@@ -468,6 +468,8 @@ describe("Garbage Collection Tests", () => {
 
         beforeEach(async () => {
             // Set up the reference graph such that all nodes are referenced. Add in a couple of cycles in the graph.
+            // 0 - 1 - 2 - 3
+            //      \- 0    \- 0
             defaultGCData.gcNodes["/"] = [nodes[0]];
             defaultGCData.gcNodes[nodes[0]] = [nodes[1]];
             defaultGCData.gcNodes[nodes[1]] = [nodes[0], nodes[2]];
@@ -485,13 +487,12 @@ describe("Garbage Collection Tests", () => {
         ) => {
             // Validates that no unexpected event has been fired.
             function validateNoUnexpectedEvents() {
-                assert(
-                    !mockLogger.matchAnyEvent([
+                mockLogger.assertMatchNone([
                         { eventName: revivedEventName },
                         { eventName: changedEventName },
                         { eventName: loadedEventName },
                         { eventName: deleteEventName },
-                    ]),
+                    ],
                     "unexpected events logged",
                 );
             }
