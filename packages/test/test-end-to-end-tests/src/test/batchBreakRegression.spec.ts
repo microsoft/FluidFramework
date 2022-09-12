@@ -147,7 +147,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
     describe("client sends invalid batches ", () => {
-        itExpects.skip("Batch end without start",
+        itExpects("Batch end without start",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "Delta stream submit" },
         ],
