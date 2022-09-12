@@ -42,15 +42,6 @@ export enum MessageType {
 }
 
 /**
- * Available compression algorithms that the runtime can use to compress
- * and decompress ops. 
- * @experimental Not ready for use
- */
-export enum CompressionAlgorithm {
-    LZ4 = "lz4"
-}
-
-/**
  * Messages to track latency trace
  */
 export interface ITrace {
@@ -104,7 +95,7 @@ export interface IDocumentMessage {
      * The compression algorithm that was used to compress the op.
      * @experimental Not ready for use
      */
-    compression?: CompressionAlgorithm;
+    compression?: string;
 }
 
 /**
@@ -180,6 +171,12 @@ export interface ISequencedDocumentMessage {
      * @alpha
      */
     expHash1?: string;
+
+    /**
+     * The compression algorithm that was used to compress this op.
+     * @experimental Not ready for use.
+     */
+    compression?: string;
 }
 
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
