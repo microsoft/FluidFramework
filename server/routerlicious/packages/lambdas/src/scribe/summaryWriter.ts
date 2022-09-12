@@ -514,6 +514,9 @@ export class SummaryWriter implements ISummaryWriter {
         // Some ops would be missing if we switch cluster during routing.
         // We need to load these mssing ops from the last summary.
         const missingOps = await this.getSummaryOps(from, to, logTail, lastSummaryMessages);
+        if (missingOps) {
+            Lumberjack.info(`Fetched the missing ops from the last summary`, this.lumberProperties);
+        }
         const fullLogTail = missingOps ?
             (missingOps.concat(logTail)).sort((op1, op2) => op1.sequenceNumber - op2.sequenceNumber) :
             logTail;
@@ -541,7 +544,6 @@ export class SummaryWriter implements ISummaryWriter {
         if (lt - gt <= 1) {
             return [];
         }
-        Lumberjack.info(`Fetching the missing ops from the last summary`, this.lumberProperties);
         const logtailSequenceNumbers = logTail.map((ms) => ms.sequenceNumber);
         const missingOps = lastSummaryMessages?.filter((ms) =>
             !(logtailSequenceNumbers.includes(ms.sequenceNumber)));
