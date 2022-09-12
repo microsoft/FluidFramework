@@ -66,7 +66,7 @@ export interface ITestObjectProvider {
     defaultCodeDetails: IFluidCodeDetails;
     opProcessingController: IOpProcessingController;
 
-    ensureSynchronized(): Promise<void>;
+    ensureSynchronized(timeoutDuration?: number): Promise<void>;
     reset(): void;
 
     documentId: string;
@@ -393,8 +393,13 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._documentCreated = false;
     }
 
-    public async ensureSynchronized() {
-        return this._loaderContainerTracker.ensureSynchronized();
+    public async ensureSynchronized(timeoutDuration?: number) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (!timeoutDuration) {
+            return this._loaderContainerTracker.ensureSynchronized();
+        } else {
+            return this._loaderContainerTracker.ensureSynchronizedWithTimeout?.(timeoutDuration);
+        }
     }
 
     public async waitContainerToCatchUp(container: IContainer) {

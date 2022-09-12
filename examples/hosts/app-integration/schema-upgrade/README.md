@@ -63,8 +63,8 @@ As mentioned above, the `ModelLoader` is able to load directly to a container mo
 Similarly, the view used on a model must be compatible with that model.  A view loader can inspect the model and load the appropriate view.  This portion is still under development, but will likely be similar to the model loading flow.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
-<!-- The getting started instructions are automatically generated.
-To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 

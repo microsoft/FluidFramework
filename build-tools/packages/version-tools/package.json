@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/version-tools",
-  "version": "0.4.3000",
+  "version": "0.4.5000",
   "description": "Versioning tools for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -68,7 +68,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@oclif/core": "^1.9.5",
+    "@oclif/core": "~1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
@@ -79,7 +79,7 @@
     "table": "^6.8.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@microsoft/api-extractor": "^7.22.2",
     "@types/chai": "^4",

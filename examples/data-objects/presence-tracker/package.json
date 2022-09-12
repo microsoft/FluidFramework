@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/presence-tracker",
-  "version": "2.0.0-internal.1.1.0",
+  "version": "2.0.0-internal.1.2.0",
   "private": true,
   "description": "Example Data Object that tracks page focus for Audience members using signals.",
   "homepage": "https://fluidframework.com",
@@ -37,14 +37,14 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-experimental/data-objects": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/data-objects": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/tinylicious-client": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "fluid-framework": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/tinylicious-client": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "fluid-framework": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
