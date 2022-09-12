@@ -101,9 +101,13 @@ export function getGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, 
     return newField;
 }
 
+/**
+ * The scope of a {@link FieldKey}.
+ */
 export const enum FieldScope {
     local = "fields",
     // TODO: separate this from local fields by giving it a different name.
+    // For now these are the same meaning GenericTreeNode actually only has one field.
     global = "fields",
 }
 
