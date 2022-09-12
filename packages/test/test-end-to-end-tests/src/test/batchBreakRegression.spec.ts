@@ -147,7 +147,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
     describe("client sends invalid batches ", () => {
-        itExpects("Batch end without start",
+        itExpects.skip("Batch end without start",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
         ],
@@ -252,7 +252,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             await runAndValidateBatch(provider, proxyDsf, this.timeout());
         });
 
-        itExpects("force nack",
+        itExpects.skip("force nack",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
         ],
@@ -268,8 +268,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                                 const newMessages = [...messages];
                                 const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
                                 if (batchEndIndex >= 1) {
+                                    // set reference seq number to below min seq so the server nacks the batch
                                     newMessages[batchEndIndex] =
-                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: 0 };
+                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: -1 };
                                     ds.submit(newMessages);
                                 } else {
                                     ds.submit(newMessages);
