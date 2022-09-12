@@ -14,4 +14,4 @@ const fsl = fs.readFile(machineDefinitionFile).toString();
 /**
  * An FSL state machine that encodes the Fluid release process.
  */
-export const FluidReleaseMachineDefinition = createStateMachine(fsl);
+export const FluidReleaseMachine = createStateMachine(fsl);

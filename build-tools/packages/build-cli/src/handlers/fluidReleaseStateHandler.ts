@@ -41,24 +41,94 @@ import {
 } from "./promptFunctions";
 import { doBumpReleasedDependencies, doReleaseGroupBump } from "./doFunctions";
 
+/**
+ * Data that is passed to all the handling functions for the {@link FluidReleaseMachine}. This data is intended to be
+ * used only within the {@link FluidReleaseStateHandler}.
+ */
 export interface FluidReleaseStateHandlerData {
+    /**
+     * The {@link Context}.
+     */
     context?: Context;
+
+    /**
+     * The release group or package that is being released.
+     */
     releaseGroup?: ReleaseGroup | ReleasePackage;
+
+    /**
+     * The version scheme used by the release group or package being released.
+     */
     versionScheme?: VersionScheme;
+
+    /**
+     * The bump type used for this release.
+     */
     bumpType?: VersionBumpType;
+
+    /**
+     * An {@link InstructionalPromptWriter} that the command can use to display instructional prompts.
+     */
     promptWriter?: InstructionalPromptWriter;
+
+    /**
+     * The version being released.
+     */
     releaseVersion?: string;
+
+    /**
+     * True if all optional checks should be skipped.
+     */
     shouldSkipChecks?: boolean;
+
+    /**
+     * True if repo policy should be checked.
+     */
     shouldCheckPolicy?: boolean;
+
+    /**
+     * True if the branch names should be checked.
+     */
     shouldCheckBranch?: boolean;
+
+    /**
+     * True if the branch must be up-to-date with the remote.
+     */
     shouldCheckBranchUpdate?: boolean;
+
+    /**
+     * True if changes should be committed automatically.
+     */
     shouldCommit?: boolean;
+
+    /**
+     * True if `npm install` should be run on changed release groups and packages.
+     */
     shouldInstall?: boolean;
+
+    /**
+     * True if the main and next branches should be checked to confirm that they are merged.
+     */
     shouldCheckMainNextIntegrated?: boolean;
+
+    /**
+     * The {@link Command} class that represents the release command, which is {@link ReleaseCommand}. This is used to
+     * get the command name and arguments for printing instructions to run the command again.
+     */
     command?: Command;
-    exitFunc?: any;
+
+    /**
+     * A function that the state handlers can call to exit the application if needed. If this is undefined then the
+     * handler function will not exit the app itself.
+     */
+    exitFunc?: (code?: number) => void;
 }
 
+/**
+ * A state handler for the {@link FluidReleaseMachine}. It uses the {@link InitFailedStateHandler} as a base class so
+ * the Init and Failed states are handled by that class. The logic for the individual handler functions is not within
+ * this class; it only acts as a "router" to route to the correct function based on the current state.
+ */
 export class FluidReleaseStateHandler extends InitFailedStateHandler {
     // eslint-disable-next-line complexity
     async handleState(
@@ -209,8 +279,7 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
             case "PromptToCommitBump":
             case "PromptToCommitDeps":
             case "PromptToCommitReleasedDepsBump": {
-                result = true;
-                // result = await promptToCommitChanges(state, machine, testMode, log, data);
+                result = await promptToCommitChanges(state, machine, testMode, log, data);
                 break;
             }
 
@@ -223,6 +292,10 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
                 if (testMode) return true;
 
                 log.errorLog(`Not yet implemented`);
+                if (data.exitFunc !== undefined) {
+                    data.exitFunc(101);
+                }
+
                 break;
             }
 

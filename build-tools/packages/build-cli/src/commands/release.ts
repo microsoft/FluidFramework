@@ -14,7 +14,7 @@ import {
 } from "../flags";
 import { FluidReleaseStateHandler, FluidReleaseStateHandlerData, StateHandler } from "../handlers";
 import { PromptWriter } from "../instructionalPromptWriter";
-import { StateMachineCommand, FluidReleaseMachineDefinition } from "../machines";
+import { StateMachineCommand, FluidReleaseMachine } from "../machines";
 
 /**
  * Releases a package or release group. This command is mostly scaffolding and setting up the state machine, handlers,
@@ -23,7 +23,7 @@ import { StateMachineCommand, FluidReleaseMachineDefinition } from "../machines"
  */
 
 export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends StateMachineCommand<T> {
-    machine = FluidReleaseMachineDefinition;
+    machine = FluidReleaseMachine;
     data: FluidReleaseStateHandlerData = {};
     handler: StateHandler | undefined;
 

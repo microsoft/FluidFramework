@@ -361,34 +361,34 @@ Releases a package or release group.
 
 ```
 USAGE
-  $ flub release [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-S
-    semver|internal|virtualPatch] [-x | --install | --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
+  $ flub release [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-x | --install |
+    --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
 
 FLAGS
-  -S, --versionScheme=<option>  Version scheme to use.
-                                <options: semver|internal|virtualPatch>
-  -g, --releaseGroup=<option>   release group
-                                <options: client|server|azure|build-tools>
-  -p, --package=<value>         Name of package.
-  -t, --bumpType=<option>       Version bump type.
-                                <options: major|minor|patch>
-  -v, --verbose                 Verbose logging.
-  -x, --skipChecks              Skip all checks.
-  --[no-]branchCheck            Check that the current branch is correct.
-  --[no-]commit                 Commit changes to a new branch.
-  --[no-]install                Update lockfiles by running 'npm install' automatically.
-  --[no-]policyCheck            Check that the local repo complies with all policy.
-  --[no-]updateCheck            Check that the local repo is up to date with the remote.
+  -g, --releaseGroup=<option>  release group
+                               <options: client|server|azure|build-tools>
+  -p, --package=<value>        Name of package.
+  -t, --bumpType=<option>      Version bump type.
+                               <options: major|minor|patch>
+  -v, --verbose                Verbose logging.
+  -x, --skipChecks             Skip all checks.
+  --[no-]branchCheck           Check that the current branch is correct.
+  --[no-]commit                Commit changes to a new branch.
+  --[no-]install               Update lockfiles by running 'npm install' automatically.
+  --[no-]policyCheck           Check that the local repo complies with all policy.
+  --[no-]updateCheck           Check that the local repo is up to date with the remote.
 
 DESCRIPTION
   Releases a package or release group.
 
-  First the release group's dependencies are checked. If any of the dependencies are also in the repo, then they're
-  checked for the latest release version. If the dependencies have not yet been released, then the command prompts to
-  perform the release of the dependency, then run the release command again.
+  The release command ensures that a release branch is in good condition, then walks the user through releasing a
+  package or release group.
+
+  The command runs a number of checks automatically to make sure . If any of the dependencies are also in the repo, then
+  they're checked for the latest release version. If the dependencies have not yet been released, then the command
+  prompts to perform the release of the dependency, then run the release command again.
 
   This process is continued until all the dependencies have been released, after which the release group itself is
-
   released.
 ```
 

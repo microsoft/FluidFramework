@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { FluidReleaseMachineDefinition } from "./fluidReleaseMachine";
+export { FluidReleaseMachine } from "./fluidReleaseMachine";
 export { StateMachineCommand } from "../stateMachineCommand";
 export type { MachineState } from "./types";
