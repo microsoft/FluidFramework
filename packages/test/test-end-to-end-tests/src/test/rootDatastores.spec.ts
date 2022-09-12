@@ -396,8 +396,10 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     });
 
     describe("Legacy root datastores to aliased datastores conversion", () => {
-        const oldVersion = "0.59.0";
-        beforeEach(async () => ensurePackageInstalled(oldVersion, 0, /* force */ true));
+        const oldVersion = "1.0.0";
+        beforeEach(async () => {
+            await ensurePackageInstalled(oldVersion, 0, /* force */ false);
+        });
         afterEach(async () => reset());
 
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>

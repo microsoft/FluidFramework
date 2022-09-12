@@ -9,7 +9,7 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
 
 export interface IDataStoreContextsEvents extends IEvent {
-    (event: "addBoundOrRemoted", listener: (context: FluidDataStoreContext) => void);
+    (event: "add", listener: (context: FluidDataStoreContext, deferred: Deferred<void>) => void);
 }
 
 export class DataStoreContexts
@@ -19,6 +19,7 @@ export class DataStoreContexts
 
     /** Attached and loaded context proxies */
     private readonly _contexts = new Map<string, FluidDataStoreContext>();
+    private readonly pendingMaybeRootContexts: Map<string, Deferred<void>> = new Map<string, Deferred<void>>();
 
     /**
      * List of pending context waiting either to be bound or to arrive from another client.
@@ -170,10 +171,27 @@ export class DataStoreContexts
         assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
 
         this._contexts.set(id, context);
-        this.emit("addBoundOrRemoted", context);
+        this.emit("add", context, this.trackPendingMaybeRootContext(id));
 
         // Resolve the deferred immediately since this context is not unbound
         this.ensureDeferred(id);
         this.resolveDeferred(id);
+    }
+
+    public trackPendingMaybeRootContext(id: string): Deferred<void> {
+        const result = new Deferred<void>();
+        this.pendingMaybeRootContexts.set(id, result);
+        return result;
+    }
+
+    public async waitIfTracked(id: string) {
+        const deferred = this.pendingMaybeRootContexts.get(id);
+        if (deferred === undefined) {
+            return;
+        }
+
+        return deferred.promise.then(() => {
+            this.pendingMaybeRootContexts.delete(id);
+        });
     }
 }

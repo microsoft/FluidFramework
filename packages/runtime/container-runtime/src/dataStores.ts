@@ -38,7 +38,7 @@ import {
 import { ChildLogger, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
-import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
+import { assert, Deferred, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
@@ -108,23 +108,9 @@ export class DataStores implements IDisposable {
             this.reverseAliasMap.entries.length === this.aliasMap.entries.length,
             "The alias to id mapping must be bijective");
 
-        // back-compat:
-        // - Older documents will have legacy root datastores
-        // - Older runtimes will still create legacy root datastores
-        // This event handler will catch whenever a datastore is attached and if it is root and not already aliased,
-        // it will be virtually aliased by mapping it to itself in the alias map.
+        // back-compat
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        contexts.on("addBoundOrRemoted", async (context: FluidDataStoreContext) => {
-            const isRoot = await context.isRoot();
-            const id = context.id;
-            if (!isRoot || this.reverseAliasMap.get(id) !== undefined) {
-                // Nothing to do, the datastore is either non-root or already aliased
-                return;
-            }
-
-            this.aliasMap.set(id, id);
-            this.reverseAliasMap.set(id, id);
-        });
+        contexts.on("add", this.maybeAliasLegacyRootDataStore);
 
         const baseGCDetailsP = new LazyPromise(async () => {
             return getBaseGCDetails();
@@ -195,6 +181,22 @@ export class DataStores implements IDisposable {
             referencedDataStoreCount: fluidDataStores.size - unreferencedDataStoreCount,
         };
     }
+
+    // back-compat:
+    // - Older documents will have legacy root datastores
+    // - Older runtimes will still create legacy root datastores
+    // This event handler will catch whenever a datastore is attached and if it is root and not already aliased,
+    // it will be virtually aliased by mapping it to itself in the alias map.
+    maybeAliasLegacyRootDataStore = async (context: FluidDataStoreContext, deferred: Deferred<void>) => {
+        const isRoot = await context.isRoot();
+        const id = context.id;
+        if (isRoot && this.reverseAliasMap.get(id) === undefined) {
+            this.aliasMap.set(id, id);
+            this.reverseAliasMap.set(id, id);
+        }
+
+        deferred.resolve();
+    };
 
     public get aliases(): ReadonlyMap<string, string> {
         return this.aliasMap;
@@ -463,6 +465,7 @@ export class DataStores implements IDisposable {
             throw responseToException(create404Response(request), request);
         }
 
+        await this.contexts.waitIfTracked(id);
         return context;
     }
 
