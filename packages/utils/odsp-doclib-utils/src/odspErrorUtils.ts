@@ -101,7 +101,7 @@ export interface OdspErrorResponse {
     };
 }
 
-/** Redirect error from ODSP  */
+/** Error encapsulating the error response from ODSP containing the redirect location when a resource has moved  */
 export class OdspRedirectError extends LoggingError {
     readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
     readonly canRetry = false;
