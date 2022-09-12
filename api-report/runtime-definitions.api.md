@@ -307,11 +307,10 @@ export interface ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
     invalidate(sequenceNumber: number): void;
-    loadBaseSummary(snapshot: ISnapshotTree, readAndParseBlob: <T>(id: string) => Promise<T>): Promise<ISnapshotTree>;
-    loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 
 // @public (undocumented)

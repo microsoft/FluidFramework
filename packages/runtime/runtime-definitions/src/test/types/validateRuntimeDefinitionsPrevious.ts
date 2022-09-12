@@ -835,6 +835,7 @@ declare function get_old_InterfaceDeclaration_ISummarizerNode():
 declare function use_current_InterfaceDeclaration_ISummarizerNode(
     use: TypeOnly<current.ISummarizerNode>);
 use_current_InterfaceDeclaration_ISummarizerNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerNode());
 
 /*
@@ -847,6 +848,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerNode():
 declare function use_old_InterfaceDeclaration_ISummarizerNode(
     use: TypeOnly<old.ISummarizerNode>);
 use_old_InterfaceDeclaration_ISummarizerNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerNode());
 
 /*
@@ -907,6 +909,7 @@ declare function get_old_InterfaceDeclaration_ISummarizerNodeWithGC():
 declare function use_current_InterfaceDeclaration_ISummarizerNodeWithGC(
     use: TypeOnly<current.ISummarizerNodeWithGC>);
 use_current_InterfaceDeclaration_ISummarizerNodeWithGC(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerNodeWithGC());
 
 /*
