@@ -123,7 +123,7 @@ async function runAndValidateBatch(
                 });
             }
 
-            assert.equal(container.closed, true, "container should not be closed");
+            assert.equal(container.closed, false, "container should not be closed");
             assert.equal(container.isDirty, false, "container should not be dirty");
 
             for (let i = 0; i < 10; i++) {
