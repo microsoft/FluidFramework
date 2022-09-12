@@ -158,13 +158,15 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
     }
 
     // Reset the cursor state
-    cursor.upToField();
     cursor.upToNode();
     cursor.upToField();
     cursor.upToNode();
     cursor.upToField();
     cursor.upToNode();
     cursor.upToField();
+    cursor.upToNode();
+    cursor.upToField();
+    cursor.upToNode();
 }
 
 describe("ITreeCursor", () => {
