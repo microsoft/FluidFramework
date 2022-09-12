@@ -107,7 +107,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.5000 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.4.5000 win32-x64 node-v14.18.1
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -404,7 +404,8 @@ USAGE
 
 FLAGS
   -v, --verbose      Verbose logging.
-  --dirname=<value>  [default: /home/tylerbu/code/FluidFramework/build-tools/packages/build-cli/dist/commands/run]
+  --dirname=<value>  [default:
+                     C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\dist\commands\run]
                      Directory
 
 DESCRIPTION
