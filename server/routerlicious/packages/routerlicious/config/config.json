@@ -108,7 +108,7 @@
         "socketIo": {
             "perMessageDeflate": true
         },
-        "sessionStickinessDurationMs": 3600000
+        "sessionStickinessDurationMs": 10800000
     },
     "client": {
         "type": "browser",

@@ -55,6 +55,7 @@ export class SummaryWriter implements ISummaryWriter {
         private readonly summaryStorage: IGitManager,
         private readonly opStorage: ICollection<ISequencedOperationMessage>,
         private readonly enableWholeSummaryUpload: boolean,
+        private readonly lastSummaryMessages: ISequencedDocumentMessage[],
         private readonly maxRetriesOnError: number = 6,
     ) {
         this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
@@ -179,7 +180,7 @@ export class SummaryWriter implements ISummaryWriter {
 
             // Generate a tree of logTail starting from protocol sequence number to summarySequenceNumber
             const logTailEntries = await requestWithRetry(
-                async () => this.generateLogtailEntries(checkpoint.protocolState.sequenceNumber, op.sequenceNumber + 1, pendingOps),
+                async () => this.generateLogtailEntries(checkpoint.protocolState.sequenceNumber, op.sequenceNumber + 1, pendingOps, this.lastSummaryMessages),
                 "writeClientSummary_generateLogtailEntries",
                 this.lumberProperties,
                 shouldRetryNetworkError,
@@ -373,7 +374,8 @@ export class SummaryWriter implements ISummaryWriter {
                 async () => this.generateLogtailEntries(
                     currentProtocolHead,
                     op.sequenceNumber + 1,
-                    pendingOps),
+                    pendingOps,
+                    this.lastSummaryMessages),
                 "writeServiceSummary_generateLogtailEntries",
                 this.lumberProperties,
                 shouldRetryNetworkError,
@@ -505,20 +507,43 @@ export class SummaryWriter implements ISummaryWriter {
     private async generateLogtailEntries(
         from: number,
         to: number,
-        pending: ISequencedOperationMessage[]): Promise<ITreeEntry[]> {
+        pending: ISequencedOperationMessage[],
+        lastSummaryMessages: ISequencedDocumentMessage[] | undefined): Promise<ITreeEntry[]> {
         const logTail = await this.getLogTail(from, to, pending);
+
+        // Some ops would be missing if we switch cluster during routing.
+        // We need to load these mssing ops from the last summary.
+        const missingOps = await this.getSummaryOps(from, to, logTail, lastSummaryMessages);
+        const fullLogTail = missingOps ? (missingOps.concat(logTail)).sort((ms) => ms.sequenceNumber) : logTail;
+
         const logTailEntries: ITreeEntry[] = [
             {
                 mode: FileMode.File,
                 path: "logTail",
                 type: TreeEntry.Blob,
                 value: {
-                    contents: JSON.stringify(logTail),
+                    contents: JSON.stringify(fullLogTail),
                     encoding: "utf-8",
                 },
             },
         ];
         return logTailEntries;
+    }
+
+    private async getSummaryOps(
+        gt: number,
+        lt: number,
+        logTail: ISequencedDocumentMessage[],
+        lastSummaryMessages: ISequencedDocumentMessage[] | undefined):
+        Promise<ISequencedDocumentMessage[] | undefined> {
+        if (lt - gt <= 1) {
+            return [];
+        }
+        Lumberjack.info(`Fetching the missing ops from the last summary`, this.lumberProperties);
+        const logtailSequenceNumbers = logTail.map((ms) => ms.sequenceNumber);
+        const missingOps = lastSummaryMessages?.filter((ms) =>
+            !(logtailSequenceNumbers.includes(ms.sequenceNumber)));
+        return missingOps;
     }
 
     private async getLogTail(
