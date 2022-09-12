@@ -4,23 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
+
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { bufferToString } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
     ContainerRuntime,
     Summarizer,
     ISummarizer,
     ISummarizeResults,
-    ISummaryRuntimeOptions, DefaultSummaryConfiguration, SummaryCollection } from "@fluidframework/container-runtime";
+    ISummaryRuntimeOptions,
+    DefaultSummaryConfiguration,
+    SummaryCollection,
+} from "@fluidframework/container-runtime";
+import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { ConnectionState } from "@fluidframework/container-loader";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 
 const defaultDataStoreId = "default";
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));

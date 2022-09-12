@@ -155,9 +155,12 @@ describe("SharedString", () => {
 
             // Verify that the simple marker can be retrieved via id.
             const simpleMarker = sharedString.getMarkerFromId("markerId");
-            assert.equal(simpleMarker.type, "Marker", "Could not get simple marker");
-            assert.equal(simpleMarker.properties?.markerId, "markerId", "markerId is incorrect");
-            assert.equal(simpleMarker.properties?.markerSimpleType, "markerKeyValue", "markerSimpleType is incorrrect");
+            assert.equal(simpleMarker?.type, "Marker", "Could not get simple marker");
+            assert.equal(simpleMarker?.properties?.markerId, "markerId", "markerId is incorrect");
+            assert.equal(
+                simpleMarker?.properties?.markerSimpleType,
+                "markerKeyValue", "markerSimpleType is incorrrect",
+            );
 
             // Insert a tile marker.
             sharedString.insertMarker(
