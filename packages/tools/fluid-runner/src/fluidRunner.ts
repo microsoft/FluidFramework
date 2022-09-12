@@ -57,7 +57,6 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                 }
 
                 let result: IExportFileResponse;
-                // codeLoader argument always takes precedence
                 if (argv.codeLoader) {
                     result = await parseBundleAndExportFile(
                         argv.codeLoader,
@@ -90,7 +89,9 @@ function validateProvidedArgs(
     codeLoader?: string,
     fluidFileConverter?: IFluidFileConverter,
 ): string | undefined {
-    // ! TODO: We most likely shouldn't allow both to be provided (this should be considered incorrect usage)
+    if (codeLoader !== undefined && fluidFileConverter !== undefined) {
+        return "\"codeLoader\" and \"fluidFileConverter\" cannot both be provided. See \"fluidRunner.ts\" for details.";
+    }
     if (codeLoader === undefined && fluidFileConverter === undefined) {
         // eslint-disable-next-line max-len
         return "\"codeLoader\" must be provided if there is no explicit \"fluidFileConverter\". See \"fluidRunner.ts\" for details.";
