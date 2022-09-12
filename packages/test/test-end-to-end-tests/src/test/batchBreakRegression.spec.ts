@@ -268,8 +268,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                                 const newMessages = [...messages];
                                 const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
                                 if (batchEndIndex >= 1) {
+                                    // set reference seq number to below min seq so the server nacks the batch
                                     newMessages[batchEndIndex] =
-                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: 0 };
+                                        { ... newMessages[batchEndIndex], referenceSequenceNumber: -1 };
                                     ds.submit(newMessages);
                                 } else {
                                     ds.submit(newMessages);
