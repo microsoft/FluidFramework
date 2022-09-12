@@ -23,6 +23,7 @@ import { SnapshotLegacy } from "../snapshotlegacy";
 import { TextSegment } from "../textSegment";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -115,6 +116,21 @@ export class TestClient extends Client {
                 }
             });
         };
+    }
+
+    /**
+     * @internal
+     */
+    public obliterateRange(
+        start: number,
+        end: number,
+        refSeq: number,
+        clientId: number,
+        seq: number,
+        overwrite = false,
+        opArgs: IMergeTreeDeltaOpArgs,
+    ): void {
+        this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
     }
 
     public getText(start?: number, end?: number): string {

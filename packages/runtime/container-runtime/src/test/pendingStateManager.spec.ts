@@ -18,8 +18,8 @@ describe("Pending State Manager", () => {
         let rollbackShouldThrow;
         let batchManager: BatchManager;
 
-        function getMessage(payload: number) {
-            return payload as any as BatchMessage;
+        function getMessage(payload: string) {
+            return { contents: payload } as any as BatchMessage;
         }
 
         const rollBackCallback = (m: BatchMessage) => {
@@ -47,7 +47,7 @@ describe("Pending State Manager", () => {
         });
 
         it("should do nothing when rolling back nothing", () => {
-            batchManager.push(getMessage(1));
+            batchManager.push(getMessage("1"));
             const checkpoint = batchManager.checkpoint();
             checkpoint.rollback(rollBackCallback);
 
@@ -57,37 +57,37 @@ describe("Pending State Manager", () => {
 
         it("should succeed when rolling back entire pending stack", () => {
             const checkpoint = batchManager.checkpoint();
-            batchManager.push(getMessage(11));
-            batchManager.push(getMessage(22));
-            batchManager.push(getMessage(33));
+            batchManager.push(getMessage("11"));
+            batchManager.push(getMessage("22"));
+            batchManager.push(getMessage("33"));
             checkpoint.rollback(rollBackCallback);
 
             assert.strictEqual(rollbackCalled, true);
             assert.strictEqual(rollbackContent.length, 3);
-            assert.strictEqual(rollbackContent[0], 33);
-            assert.strictEqual(rollbackContent[1], 22);
-            assert.strictEqual(rollbackContent[2], 11);
+            assert.strictEqual(rollbackContent[0].contents, "33");
+            assert.strictEqual(rollbackContent[1].contents, "22");
+            assert.strictEqual(rollbackContent[2].contents, "11");
             assert.strictEqual(batchManager.empty, true);
         });
 
         it("should succeed when rolling back part of pending stack", () => {
-            batchManager.push(getMessage(11));
+            batchManager.push(getMessage("11"));
             const checkpoint = batchManager.checkpoint();
-            batchManager.push(getMessage(22));
-            batchManager.push(getMessage(33));
+            batchManager.push(getMessage("22"));
+            batchManager.push(getMessage("33"));
             checkpoint.rollback(rollBackCallback);
 
             assert.strictEqual(rollbackCalled, true);
             assert.strictEqual(rollbackContent.length, 2);
-            assert.strictEqual(rollbackContent[0], 33);
-            assert.strictEqual(rollbackContent[1], 22);
+            assert.strictEqual(rollbackContent[0].contents, "33");
+            assert.strictEqual(rollbackContent[1].contents, "22");
             assert.strictEqual(batchManager.empty, false);
         });
 
         it("should throw and close when rollback fails", () => {
             rollbackShouldThrow = true;
             const checkpoint = batchManager.checkpoint();
-            batchManager.push(getMessage(11));
+            batchManager.push(getMessage("11"));
             assert.throws(() => { checkpoint.rollback(rollBackCallback); });
 
             assert.strictEqual(rollbackCalled, true);

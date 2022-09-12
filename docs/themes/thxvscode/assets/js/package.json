@@ -8,14 +8,12 @@
     "@babel/runtime": "^7.17.2",
     "babel-loader": "^8.2.3",
     "core-js": "^3.21.1",
-    "terser-webpack-plugin": "^5.3.1",
+    "terser-webpack-plugin": "^4.0.0",
     "webpack": "^4.46.0",
     "webpack-cli": "^4.9.2"
   },
   "dependencies": {
     "bootstrap": "^3.4.1",
-    "jquery": "3.6.0",
-    "lodash": "^4.17.21",
     "stickyfilljs": "^2.1.0"
   }
 }

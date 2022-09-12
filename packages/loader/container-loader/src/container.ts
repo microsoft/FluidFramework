@@ -49,8 +49,6 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
-    isRuntimeMessage,
-    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -1583,6 +1581,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("readonly", (readonly) => {
+            this.setContextConnectedState(this.connectionState === ConnectionState.Connected, readonly);
             this.emit("readonly", readonly);
         });
 
@@ -1680,9 +1679,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Both protocol and context should not be undefined if we got so far.
 
-        if (this._context?.disposed === false) {
-            this.context.setConnectionState(state, this.clientId);
-        }
+        this.setContextConnectedState(state, this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false);
         this.protocolHandler.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
 
@@ -1755,14 +1752,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
 
-        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
-            this.mc.logger.sendTelemetryEvent(
-                { eventName: "UnpackedRuntimeMessage", type: message.type });
-        }
-        // Forward non system messages to the loaded runtime for processing
-        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
-            this.context.process(message, local, undefined);
-        }
+        // Forward messages to the loaded runtime for processing
+        this.context.process(message, local, undefined);
 
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {
@@ -1886,5 +1877,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private logContainerError(warning: ContainerWarning) {
         this.mc.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
+    }
+
+    /**
+     * Set the connected state of the ContainerContext
+     * This controls the "connected" state of the ContainerRuntime as well
+     * @param state - Is the container currently connected?
+     * @param readonly - Is the container in readonly mode?
+     */
+    private setContextConnectedState(state: boolean, readonly: boolean): void {
+        if (this._context?.disposed === false) {
+            /**
+             * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
+             * ops getting through to the DeltaManager.
+             * The ContainerRuntime's "connected" state simply means it is ok to send ops
+             * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
+             */
+            this.context.setConnectionState(state && !readonly, this.clientId);
+        }
     }
 }
