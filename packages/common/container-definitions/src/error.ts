@@ -39,7 +39,12 @@ export enum ContainerErrorType {
      * aids in safely deleting unused objects.
      */
     clientSessionExpiredError = "clientSessionExpiredError",
-}
+
+    /**
+     * Error indicating access was attempted for an object that is no longer available.
+     */
+     accessViolationError = "accessViolationError",
+    }
 
 /**
  * Base interface for all errors and warnings at container level
