@@ -11,8 +11,13 @@ const { MarkdownEmitter } = require("@fluid-tools/api-markdown-documenter");
  * @remarks Used by `./api-markdown-documenter.js`.
  */
 class HugoMarkdownEmitter extends MarkdownEmitter {
-    constructor(apiModel) {
-        super(apiModel);
+    /**
+     * @param {ApiModel} apiModel - See {@link @fluid-tools/api-markdown-documenter#MarkdownEmitter.apiModel}
+     * @param {((contextApiItem: ApiItem) => string) | undefined} generateFrontMatter - See
+     * {@link @fluid-tools/api-markdown-documenter#MarkdownEmitter.generateFrontMatter}
+     */
+    constructor(apiModel, generateFrontMatter) {
+        super(apiModel, generateFrontMatter);
     }
 
     /**
