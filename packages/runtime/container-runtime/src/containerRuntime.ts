@@ -1729,7 +1729,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
         const channel = await context.realize();
-        return channelToDataStore(channel, id, this, this.dataStores, this.mc.logger);
+        return channel;
     }
 
     public setFlushMode(mode: FlushMode): void {
