@@ -605,7 +605,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Rehydrate container, create but don't load a data store. Attach rehydrated container and load " +
             "container 2 from another loader. Then load the created dataStore from container 2, make changes to dds " +
             "in it check reflection of changes in rehydrated container",
-        async () => {
+        async function() {
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
 
@@ -613,7 +613,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
             //* Unnecessary?
-            await provider.ensureSynchronized();
+            await provider.ensureSynchronized(this.timeout() / 3);
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");

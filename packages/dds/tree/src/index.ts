@@ -77,21 +77,6 @@ export {
 } from "./domains";
 
 export {
-    Transposed,
-    TreeForestPath,
-    TreeRootPath,
-    OpId,
-    Skip,
-    ChangesetTag,
-    Effects,
-    Tiebreak,
-    ProtoNode,
-    GapCount,
-    HasOpId,
-    NodeCount,
-} from "./changeset";
-
-export {
     buildForest,
     TextCursor,
     jsonableTreeFromCursor,
@@ -105,6 +90,8 @@ export {
     FieldEditor,
     FieldChangeRebaser,
     FieldChangeEncoder,
+    NodeChangeset,
+    ValueChange,
     FieldChangeMap,
     FieldChangeset,
     FieldChange,
@@ -136,6 +123,18 @@ export {
     SequenceChangeset,
     NodePath,
     PlacePath,
+    Transposed,
+    TreeForestPath,
+    TreeRootPath,
+    OpId,
+    Skip,
+    ChangesetTag,
+    Effects,
+    Tiebreak,
+    ProtoNode,
+    GapCount,
+    HasOpId,
+    NodeCount,
 } from "./feature-libraries";
 
 export {

@@ -121,7 +121,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * @deprecated - Renamed to getBaseGCDetails.
+     * @deprecated Renamed to {@link SummarizerNodeWithGC.getBaseGCDetails}.
      */
     public getGCSummaryDetails(): IGarbageCollectionSummaryDetails {
         return this.getBaseGCDetails();
