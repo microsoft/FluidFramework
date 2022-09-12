@@ -6,18 +6,17 @@
 import * as fs from "fs";
 import path from "path";
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { createContainerAndExecute, exportFile } from "../exportFile";
-import { getSnapshotFileContent } from "../utils";
+import { parseBundleAndExportFile } from "../parseBundleAndExportFile";
 // eslint-disable-next-line import/no-internal-modules
-import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
+import { executeResult } from "./sampleCodeLoaders/sampleCodeLoader";
 
-describe("exportFile", () => {
+describe("parseBundleAndExportFile", () => {
     const folderRoot = path.join(__dirname, "../../src/test");
     const outputFolder = path.join(folderRoot, "outputFolder");
     const outputFilePath = path.join(outputFolder, "result.txt");
     const telemetryFile = path.join(outputFolder, "telemetry.txt");
     const snapshotFolder = path.join(folderRoot, "localOdspSnapshots");
+    const sampleCodeLoadersFolder = path.join(__dirname, "sampleCodeLoaders");
 
     beforeEach(() => {
         fs.mkdirSync(outputFolder);
@@ -30,8 +29,8 @@ describe("exportFile", () => {
     fs.readdirSync(snapshotFolder).forEach((snapshotFileName: string) => {
         describe(`Export using snapshot [${snapshotFileName}]`, () => {
             it("Output file is correct", async () => {
-                const exportFileResult = await exportFile(
-                    await fluidExport,
+                const exportFileResult = await parseBundleAndExportFile(
+                    path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
                     path.join(snapshotFolder, snapshotFileName),
                     outputFilePath,
                     telemetryFile,
@@ -44,24 +43,41 @@ describe("exportFile", () => {
                 const resultFileContent = fs.readFileSync(outputFilePath, { encoding: "utf-8" });
                 assert.strictEqual(resultFileContent, executeResult, "result output is not correct");
             });
-
-            it("Execution result is correct", async () => {
-                const result = await createContainerAndExecute(
-                    getSnapshotFileContent(path.join(snapshotFolder, snapshotFileName)),
-                    await fluidExport,
-                    new MockLogger(),
-                );
-                assert.deepStrictEqual(result, executeResult, "result objects do not match");
-            });
         });
     });
 
     describe("Validate arguments", () => {
         const snapshotFilePath = path.join(snapshotFolder, "odspSnapshot1.json");
 
+        it("codeLoaderBundle", async () => {
+            const result = await parseBundleAndExportFile(
+                path.join(sampleCodeLoadersFolder, "badCodeLoader.js"),
+                snapshotFilePath,
+                outputFilePath,
+                telemetryFile,
+            );
+
+            assert(!result.success, "result should not be successful");
+            assert(result.errorMessage.includes("ICodeLoaderBundle"),
+                `error message does not contain "ICodeLoaderBundle" [${result.errorMessage}]`);
+        });
+
+        it("codeLoaderBundle.fluidExport", async () => {
+            const result = await parseBundleAndExportFile(
+                path.join(sampleCodeLoadersFolder, "badFluidFileConverter.js"),
+                snapshotFilePath,
+                outputFilePath,
+                telemetryFile,
+            );
+
+            assert(!result.success, "result should not be successful");
+            assert(result.errorMessage.includes("IFluidFileConverter"),
+                `error message does not contain "IFluidFileConverter" [${result.errorMessage}]`);
+        });
+
         it("input file", async () => {
-            const result = await exportFile(
-                await fluidExport,
+            const result = await parseBundleAndExportFile(
+                path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
                 "nonExistentFile.json",
                 outputFilePath,
                 telemetryFile,
@@ -73,8 +89,8 @@ describe("exportFile", () => {
         });
 
         it("output file", async () => {
-            const result = await exportFile(
-                await fluidExport,
+            const result = await parseBundleAndExportFile(
+                path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
                 snapshotFilePath,
                 snapshotFilePath, // output file already exists
                 telemetryFile,
