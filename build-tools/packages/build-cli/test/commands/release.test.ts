@@ -4,13 +4,13 @@
  */
 
 import { test } from "@oclif/test";
-import { FluidReleaseMachineDefinition } from "../../src/machines";
+import { FluidReleaseMachine } from "../../src/machines";
 
 const knownUnhandledStates: string[] = [
     // Known unhandled states can be added here temporarily during development.
 ];
 
-const machineStates = FluidReleaseMachineDefinition.states()
+const machineStates = FluidReleaseMachine.states()
     .filter((s) => !knownUnhandledStates.includes(s))
     .sort();
 
