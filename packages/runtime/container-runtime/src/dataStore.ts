@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -151,6 +151,8 @@ class DataStore implements IDataStore {
         return this.fluidDataStoreChannel.request(request);
     }
 
+    public readonly handle?: IFluidHandle<FluidObject>;
+
     constructor(
         private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
         private readonly internalId: string,
@@ -159,6 +161,7 @@ class DataStore implements IDataStore {
         private readonly logger: ITelemetryLogger,
     ) {
         this.pendingAliases = datastores.pendingAliases;
+        this.handle = fluidDataStoreChannel.handle;
     }
 
     public get IFluidRouter() { return this.fluidDataStoreChannel; }
