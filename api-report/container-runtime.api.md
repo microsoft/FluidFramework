@@ -767,7 +767,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
-// @public (undocumented)
+// Warning: (ae-internal-missing-underscore) The name "unpackRuntimeMessage" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // (No @packageDocumentation comment for this package)

@@ -211,7 +211,8 @@
                 "dot": false,
                 "dirs": [
                     "build-tools/",
-                    "packages/tools/"
+                    "packages/tools/",
+                    "tools/"
                 ]
             },
             "Tests": {
