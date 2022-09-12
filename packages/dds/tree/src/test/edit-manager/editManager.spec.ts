@@ -388,23 +388,19 @@ describe("EditManager", () => {
     });
 
     describe("Avoids unnecessary rebases", () => {
-        it("Sequenced changes that are based on the trunk should not be rebased", () => {
-            const { manager } = editManagerFactory(new UnrebasableTestChangeRebaser());
-            const commit1: TestCommit = {
-                sessionId: peer1,
-                seqNumber: brand(1),
-                refNumber: brand(0),
-                changeset: TestChangeRebaser.mintChangeset([], 1),
-            };
-            const commit2: TestCommit = {
-                sessionId: peer1,
-                seqNumber: brand(2),
-                refNumber: brand(0),
-                changeset: TestChangeRebaser.mintChangeset([1], 2),
-            };
-            manager.addSequencedChange(commit1);
-            manager.addSequencedChange(commit2);
-        });
+        runUnitTestScenario(
+            "Sequenced changes that are based on the trunk should not be rebased",
+            [
+                { seq: 1, type: "Pull", ref: 0, from: peer1 },
+                { seq: 2, type: "Pull", ref: 0, from: peer1 },
+                { seq: 3, type: "Pull", ref: 0, from: peer1 },
+                { seq: 4, type: "Pull", ref: 3, from: peer2 },
+                { seq: 5, type: "Pull", ref: 4, from: peer2 },
+                { seq: 6, type: "Pull", ref: 5, from: peer1 },
+                { seq: 7, type: "Pull", ref: 5, from: peer1 },
+            ],
+            new UnrebasableTestChangeRebaser(),
+        );
     });
 
     /**
@@ -502,9 +498,13 @@ function* buildScenario(
     }
 }
 
-function runUnitTestScenario(title: string | undefined, steps: readonly UnitTestScenarioStep[]): void {
+function runUnitTestScenario(
+    title: string | undefined,
+    steps: readonly UnitTestScenarioStep[],
+    rebaser?: ChangeRebaser<TestChangeset>,
+): void {
     const run = () => {
-        const { manager, anchors } = editManagerFactory();
+        const { manager, anchors } = editManagerFactory(rebaser);
         /**
          * Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`)
          */
