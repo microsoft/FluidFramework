@@ -26,7 +26,6 @@ export function* generateStrings(): Generator<[string, SharedString]> {
     for (const [version, options] of supportedVersions) {
         const documentId = "fakeId";
         const dataStoreRuntime: mocks.MockFluidDataStoreRuntime = new mocks.MockFluidDataStoreRuntime();
-        // do this for the test shared string with some intervals
         const createNewSharedString = (): SharedString => {
             const string = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
             string.initializeLocal();

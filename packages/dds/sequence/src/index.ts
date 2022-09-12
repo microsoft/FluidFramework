@@ -28,6 +28,7 @@ export {
     ISerializableInterval,
     ISerializedInterval,
     SequenceInterval,
+    TestIntervalCollection,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,
 } from "./intervalCollection";

@@ -319,10 +319,6 @@ export class TestSharedString extends TestSharedSegmentSequence<SharedStringSegm
         return new TestSharedStringFactory();
     }
 
-    // public get ISharedString(): ISharedString {
-    //     return this;
-    // }
-
     private readonly mergeTreeTextHelper: IMergeTreeTextHelper;
 
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {

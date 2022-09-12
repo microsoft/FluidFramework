@@ -53,7 +53,6 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import {
     IntervalCollection,
     OldSequenceIntervalCollectionValueType,
-    // OldIntervalCollection,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
     TestIntervalCollection,
@@ -173,7 +172,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
     protected messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
-    // private readonly oldIntervalCollections: DefaultMap<OldIntervalCollection<SequenceInterval>>;
     constructor(
         protected readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
@@ -226,7 +224,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                     break;
             }
         });
-        // want to reassign this to take in docs of the old format
         this.intervalCollections = new DefaultMap(
             this.serializer,
             this.handle,
@@ -425,10 +422,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         // somehow figure out if we have an old doc format or a new doc format
         return this.intervalCollections.get(label);
     }
-
-    // public getOldIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
-    //     return this.intervalCollections.get(label);
-    // }
 
     /**
      * @returns an iterable object that enumerates the IntervalCollection labels
@@ -732,6 +725,17 @@ export class TestSharedSegmentSequence<T extends ISegment>
         return this.loadedDeferred.promise;
     }
 
+    /**
+     * Returns the length of the current sequence for the client
+     */
+     public getLength() {
+        return this.client.getLength();
+    }
+
+    public localReferencePositionToPosition(lref: ReferencePosition): number {
+        return this.client.localReferencePositionToPosition(lref);
+    }
+
     constructor(
         dataStoreRuntime: IFluidDataStoreRuntime,
         id: string,
@@ -805,7 +809,6 @@ export class TestSharedSegmentSequence<T extends ISegment>
             // this will load the header, and return a promise
             // that will resolve when the body is loaded
             // and the catchup ops are available.
-            // ********** might need to make client a property of testsharedsegmentsequence **********
             const { catchupOpsP } = await this.client.load(
                 this.runtime,
                 new ObjectStoragePartition(storage, contentPath),
