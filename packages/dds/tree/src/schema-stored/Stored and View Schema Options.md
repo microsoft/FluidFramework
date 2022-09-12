@@ -27,7 +27,7 @@ This section enumerates possible options.
 
 ## Places we can store stored schema information
 
-There are several ways to express 'stored schema'
+There are several ways to express 'stored schema'.
 
 Places we can store stored schema information:
 
