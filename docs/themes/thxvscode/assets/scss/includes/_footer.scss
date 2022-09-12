@@ -7,6 +7,7 @@ $ctaHeight: 124.7px; //200px;
 
 body {
   margin-bottom: $footerheight;
+  background-color: #2c2c32;
 }
 
 footer {
@@ -90,8 +91,7 @@ footer {
 .ctas {
   min-height: $ctaHeight;
   width: 100%;
-  position: absolute;
-  bottom: $footerheight;
+  position: relative;
   left: 0;
   display: flex;
   align-items: center;
@@ -99,6 +99,7 @@ footer {
   align-content: center;
   flex-wrap: wrap;
   flex-direction: row;
+  transform: translateY(300px);
 
   p a {
     color: $banner-link-color;
