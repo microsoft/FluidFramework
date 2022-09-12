@@ -252,7 +252,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             await runAndValidateBatch(provider, proxyDsf, this.timeout());
         });
 
-        itExpects("force nack",
+        itExpects.skip("force nack",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x29a" },
         ],
