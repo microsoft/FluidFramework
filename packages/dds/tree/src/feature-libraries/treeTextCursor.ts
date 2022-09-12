@@ -293,7 +293,7 @@ function keys(tree: JsonableTree): readonly FieldKey[] {
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
     assert(cursor.mode === CursorLocationType.Nodes, "must start at node");
     let fields: FieldMap<JsonableTree> | undefined;
-    let inField = cursor.firstNode();
+    let inField = cursor.firstField();
     while (inField) {
         fields ??= {};
         const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
