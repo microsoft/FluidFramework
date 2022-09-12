@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
+import { IDisposable, IEvent, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert, Deferred, Lazy, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
 
- export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
+export interface IDataStoreContextsEvents extends IEvent {
+    (event: "addBoundOrRemoted", listener: (context: FluidDataStoreContext) => void);
+}
+
+export class DataStoreContexts
+    extends TypedEventEmitter<IDataStoreContextsEvents>
+    implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
     private readonly notBoundContexts = new Set<string>();
 
     /** Attached and loaded context proxies */
@@ -33,7 +39,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
                     eventName: "FluidDataStoreContextDisposeError",
                     fluidDataStoreId,
                 },
-                contextError);
+                    contextError);
             });
         }
     });
@@ -41,6 +47,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     private readonly _logger: ITelemetryLogger;
 
     constructor(baseLogger: ITelemetryBaseLogger) {
+        super();
         this._logger = ChildLogger.create(baseLogger);
     }
 
@@ -163,6 +170,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
 
         this._contexts.set(id, context);
+        this.emit("addBoundOrRemoted", context);
 
         // Resolve the deferred immediately since this context is not unbound
         this.ensureDeferred(id);

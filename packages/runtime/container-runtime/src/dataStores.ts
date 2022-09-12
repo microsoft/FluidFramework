@@ -84,6 +84,7 @@ export class DataStores implements IDisposable {
     // the container runtime to other nodes.
     private readonly containerRuntimeHandle: IFluidHandle;
     private readonly pendingAliasMap: Map<string, Promise<AliasResult>> = new Map<string, Promise<AliasResult>>();
+    private readonly reverseAliasMap: Map<string, string>;
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
@@ -102,6 +103,28 @@ export class DataStores implements IDisposable {
     ) {
         this.logger = ChildLogger.create(baseLogger);
         this.containerRuntimeHandle = new FluidObjectHandle(this.runtime, "/", this.runtime.IFluidHandleContext);
+        this.reverseAliasMap = new Map(Array.from(aliasMap, (x) => [x[1], x[0]]));
+        assert(
+            this.reverseAliasMap.entries.length === this.aliasMap.entries.length,
+            "The alias to id mapping must be bijective");
+
+        // back-compat:
+        // - Older documents will have legacy root datastores
+        // - Older runtimes will still create legacy root datastores
+        // This event handler will catch whenever a datastore is attached and if it is root and not already aliased,
+        // it will be virtually aliased by mapping it to itself in the alias map.
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        contexts.on("addBoundOrRemoted", async (context: FluidDataStoreContext) => {
+            const isRoot = await context.isRoot();
+            const id = context.id;
+            if (!isRoot || this.reverseAliasMap.get(id) !== undefined) {
+                // Nothing to do, the datastore is either non-root or already aliased
+                return;
+            }
+
+            this.aliasMap.set(id, id);
+            this.reverseAliasMap.set(id, id);
+        });
 
         const baseGCDetailsP = new LazyPromise(async () => {
             return getBaseGCDetails();
@@ -175,6 +198,10 @@ export class DataStores implements IDisposable {
 
     public get aliases(): ReadonlyMap<string, string> {
         return this.aliasMap;
+    }
+
+    public isIdAliased(id: string): boolean {
+        return this.reverseAliasMap.get(id) !== undefined;
     }
 
     public get pendingAliases(): Map<string, Promise<AliasResult>> {
@@ -298,6 +325,9 @@ export class DataStores implements IDisposable {
         this.runtime.addedGCOutboundReference(this.containerRuntimeHandle, handle);
 
         this.aliasMap.set(aliasMessage.alias, context.id);
+        assert(this.reverseAliasMap.get(context.id) === undefined, "An alias is already mapped to this id");
+        this.reverseAliasMap.set(context.id, aliasMessage.alias);
+
         context.setInMemoryRoot();
         return true;
     }

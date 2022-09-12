@@ -1760,7 +1760,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const context = await this.dataStores.getDataStore(internalId, wait);
-        assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
+        assert(this.dataStores.isIdAliased(internalId), 0x12b /* "did not get root data store" */);
         return context.realize();
     }
 
