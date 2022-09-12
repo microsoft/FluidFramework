@@ -22,7 +22,11 @@ export async function timeoutAwait<T = void>(
     promise: PromiseLike<T>,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ) {
-    return Promise.race([promise, timeoutPromise<T>(() => { }, timeoutOptions)]);
+    let oResolve: (v: T) => void;
+    const tp = timeoutPromise<T>((resolve) => {
+        oResolve = resolve;
+     }, timeoutOptions);
+    return Promise.race([promise.then((v) => oResolve(v)), tp]);
 }
 
 export async function ensureContainerConnected(container: Container): Promise<void> {
