@@ -239,7 +239,7 @@ export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolve
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
 
-// @public (undocumented)
+// @public
 export function isRuntimeMessage(message: {
     type: string;
 }): boolean;
@@ -249,7 +249,7 @@ export interface ISummaryTreeAssemblerProps {
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)

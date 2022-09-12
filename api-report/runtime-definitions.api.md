@@ -107,7 +107,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 // @public (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
-    (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void): any;
+    (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;
+    // (undocumented)
+    (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
     // (undocumented)
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
@@ -129,7 +131,7 @@ export interface IEnvelope {
 export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    // @deprecated (undocumented)
+    // @deprecated
     attachGraph(): void;
     readonly attachState: AttachState;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -345,7 +347,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    // @deprecated (undocumented)
+    // @deprecated
     getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
