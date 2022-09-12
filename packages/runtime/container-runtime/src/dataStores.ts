@@ -141,7 +141,6 @@ export class DataStores implements IDisposable {
                         key,
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ),
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             } else {
                 if (typeof value !== "object") {
@@ -161,7 +160,6 @@ export class DataStores implements IDisposable {
                     makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
                     snapshotTree,
                     isRootDataStore: undefined,
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -242,12 +240,10 @@ export class DataStores implements IDisposable {
                         entries: [createAttributesBlob(
                             pkg,
                             true /* isRootDataStore */,
-                            this.runtime.disableIsolatedChannels,
                         )],
                     },
                 },
             ),
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             pkg,
         });
 
@@ -351,7 +347,6 @@ export class DataStores implements IDisposable {
             makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: isRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
         });
         this.contexts.addUnbound(context);
         return context;
@@ -372,7 +367,6 @@ export class DataStores implements IDisposable {
             makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: false,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             createProps: props,
         });
         this.contexts.addUnbound(context);

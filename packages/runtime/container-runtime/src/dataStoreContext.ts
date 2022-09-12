@@ -80,14 +80,9 @@ import {
 function createAttributes(
     pkg: readonly string[],
     isRootDataStore: boolean,
-    disableIsolatedChannels: boolean,
 ): WriteFluidDataStoreAttributes {
     const stringifiedPkg = JSON.stringify(pkg);
-    return disableIsolatedChannels ? {
-        pkg: stringifiedPkg,
-        snapshotFormatVersion: "0.1",
-        isRootDataStore,
-    } : {
+    return {
         pkg: stringifiedPkg,
         summaryFormatVersion: 2,
         isRootDataStore,
@@ -96,9 +91,8 @@ function createAttributes(
 export function createAttributesBlob(
     pkg: readonly string[],
     isRootDataStore: boolean,
-    disableIsolatedChannels: boolean,
 ): ITreeEntry {
-    const attributes = createAttributes(pkg, isRootDataStore, disableIsolatedChannels);
+    const attributes = createAttributes(pkg, isRootDataStore);
     return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
@@ -120,7 +114,6 @@ export interface IFluidDataStoreContextProps {
     readonly storage: IDocumentStorageService;
     readonly scope: FluidObject;
     readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
-    readonly disableIsolatedChannels: boolean;
     readonly pkg?: Readonly<string[]>;
 }
 
@@ -251,7 +244,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private readonly _containerRuntime: ContainerRuntime;
     public readonly storage: IDocumentStorageService;
     public readonly scope: FluidObject;
-    protected readonly disableIsolatedChannels: boolean;
     protected pkg?: readonly string[];
 
     constructor(
@@ -266,7 +258,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.id = props.id;
         this.storage = props.storage;
         this.scope = props.scope;
-        this.disableIsolatedChannels = props.disableIsolatedChannels;
         this.pkg = props.pkg;
 
         // URIs use slashes as delimiters. Handles use URIs.
@@ -463,18 +454,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const summarizeResult = await this.channel!.summarize(fullTree, trackState, telemetryContext);
-        let pathPartsForChildren: string[] | undefined;
 
-        if (!this.disableIsolatedChannels) {
-            // Wrap dds summaries in .channels subtree.
-            wrapSummaryInChannelsTree(summarizeResult);
-            pathPartsForChildren = [channelsTreeName];
-        }
+        // Wrap dds summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
+        const pathPartsForChildren = [channelsTreeName];
 
         // Add data store's attributes to the summary.
         const { pkg } = await this.getInitialSnapshotDetails();
         const isRoot = await this.isRoot();
-        const attributes = createAttributes(pkg, isRoot, this.disableIsolatedChannels);
+        const attributes = createAttributes(pkg, isRoot);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
@@ -894,16 +882,13 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         const summarizeResult = this.channel.getAttachSummary();
 
-        if (!this.disableIsolatedChannels) {
-            // Wrap dds summaries in .channels subtree.
-            wrapSummaryInChannelsTree(summarizeResult);
-        }
+        // Wrap dds summaries in .channels subtree.
+        wrapSummaryInChannelsTree(summarizeResult);
 
         // Add data store's attributes to the summary.
         const attributes = createAttributes(
             this.pkg,
             this.isInMemoryRoot(),
-            this.disableIsolatedChannels,
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 

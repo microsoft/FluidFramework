@@ -37,7 +37,7 @@
                 <!-- list all pages in area -->
                 {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
                 {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
-                <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                <li {{ if $isCurrentPage }}class="active" {{ end }} style="padding-top:5px;">
                     <a href="{{ .RelPermalink }}" {{ if $isCurrentPage }}aria-label="Current Page: {{ (default .Name .Title) | safeHTML }} " {{ end }}>
                         {{ .Title }} </a>
                 </li>

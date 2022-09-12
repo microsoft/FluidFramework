@@ -20,6 +20,7 @@ import {
     IVersion,
     IDocumentMessage,
     IQuorumClients,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
@@ -119,7 +120,8 @@ export interface IContainerContext extends IDisposable {
     readonly storage: IDocumentStorageService;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+    readonly submitFn: (type: MessageType, contents: string, batch: boolean, appData?: any) => number;
+    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

@@ -123,7 +123,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -149,7 +148,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -175,7 +173,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -201,7 +198,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -227,7 +223,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -250,7 +245,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -276,7 +270,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -302,7 +295,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -328,7 +320,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                disableIsolatedChannels: false,
             });
 
             try {

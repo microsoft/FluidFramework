@@ -1,6 +1,6 @@
 # TestModule
 
-[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestModule](./simple-suite-test/testmodule-namespace)
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestModule](./simple-suite-test/testmodule-namespace)
 
 ## Variables
 

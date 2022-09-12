@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "npm test build-cli",
+            "cwd": "${workspaceFolder}/build-tools/packages/build-cli",
+            "request": "launch",
+            "runtimeArgs": [
+                "run-script",
+                "test"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
+        {
             "name": "flub",
             "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
             "request": "launch",
