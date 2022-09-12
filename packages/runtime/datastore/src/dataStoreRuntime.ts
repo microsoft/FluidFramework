@@ -183,8 +183,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
      * Create an instance of a DataStore runtime.
      *
-     * @param dataStoreContext - context object for the runtime.
-     * @param sharedObjectRegistry - TODO: document
+     * @param dataStoreContext - Context object for the runtime.
+     * @param sharedObjectRegistry - The registry of shared objects used by this data store
      * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
      * @param initializeEntrypoint - Function to initialize the entrypoint object for the data store runtime.
      * The handle to this data store runtime will point to the object returned by this function.
