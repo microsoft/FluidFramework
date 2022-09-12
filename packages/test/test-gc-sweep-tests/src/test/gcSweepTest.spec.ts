@@ -100,7 +100,7 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
     for (let i = 0; i < numberOfTests; i++) {
         const seed = Math.random();
         const random: IRandom = makeRandom(seed);
-        it(`GC Randomization Test with Seed: ${seed}`, async () => {
+        it.skip(`GC Randomization Test with Seed: ${seed}`, async () => {
             provider = getTestObjectProvider({
                 syncSummarizer: true,
             });
@@ -161,7 +161,8 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
 
             // After creating the DataObject, the handle must be stored for it to become live.
             const createDataStoreForRandomContainer = async () => {
-                const containerDataObjectManager = await containerManager.getRandomContainer(random);
+                const container = await containerManager.getRandomContainer(random);
+                const containerDataObjectManager = new ContainerDataObjectManager(container);
                 const dataObject = await containerDataObjectManager.createDataObject();
                 await referenceHandle(containerDataObjectManager, dataObject.handle);
                 fluidObjectTracker.trackDataObject(dataObject);
@@ -169,7 +170,8 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
 
             // Stores a handle of a DataStore or DDS into a DDS
             const referenceRandomHandle = async () => {
-                const containerDataObjectManager = await containerManager.getRandomContainer(random);
+                const container = await containerManager.getRandomContainer(random);
+                const containerDataObjectManager = new ContainerDataObjectManager(container);
                 const handlePath = fluidObjectTracker.getRandomFluidObject(random);
                 const handle = await containerDataObjectManager.getHandle(handlePath);
                 await referenceHandle(containerDataObjectManager, handle);
@@ -177,7 +179,8 @@ describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
 
             // Removes a handle of a DataStore or DDS from a DDS
             const unreferenceRandomHandle = async () => {
-                const containerDataObjectManager = await containerManager.getRandomContainer(random);
+                const container = await containerManager.getRandomContainer(random);
+                const containerDataObjectManager = new ContainerDataObjectManager(container);
                 // getChannelWithHandle only gets handles that aren't removed or getting removed
                 const channelPath = handleTracker.getRemovePath(random);
                 const removedHandle = await containerDataObjectManager.removeHandle(channelPath, random);

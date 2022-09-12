@@ -31,7 +31,7 @@ import {
 } from "./channelHandler";
 
 // The BaseTestDataObject has functionality that all other data objects should derive
-export class BaseTestDataObject extends DataObject {
+export abstract class BaseTestDataObject extends DataObject {
     public static get type(): string {
         return "TestDataObject";
     }
@@ -198,7 +198,7 @@ export class HandleManager {
 }
 
 // Factories for all the channels we support
-const allFactories: IChannelFactory[] = [
+export const allFactories: IChannelFactory[] = [
     ConsensusQueue.getFactory(),
     ConsensusRegisterCollection.getFactory(),
     Ink.getFactory(),
@@ -210,7 +210,6 @@ const allFactories: IChannelFactory[] = [
     SharedString.getFactory(),
 ];
 
-// The DataObjectFactory for DataObjectManyDDSes
 export const dataObjectWithManyDDSesFactory = new DataObjectFactory(
     DataObjectManyDDSes.type,
     DataObjectManyDDSes,
