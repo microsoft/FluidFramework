@@ -2,6 +2,9 @@
 
 This document covers our chosen design from the design space defined by [Stored and View Schema Options](./Stored%20and%20View%20Schema%20Options.md).
 
+This diagram shows the schema related data for a typical Fluid Tree powered application and a document for it.
+The edges show dependencies / references.
+
 ```mermaid
 graph LR;
     subgraph "Persisted Data (Summary)"
