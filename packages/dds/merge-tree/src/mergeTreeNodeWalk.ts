@@ -173,12 +173,20 @@ export function walkAllChildSegments(
     if (startBlock.childCount === 0) {
         return true;
     }
+
+    // undefined shouldn't actually be added, but this allows subsequent check for `node.parent` to typecheck
+    // without further runtime work.
+    const ancestors = new Set<IMergeBlock | undefined>();
+    for (let cur = startBlock.parent; cur !== undefined; cur = cur.parent) {
+        ancestors.add(cur);
+    }
+
     return depthFirstNodeWalk(
         startBlock,
         startBlock.children[0],
-        startBlock.parent === undefined
+        ancestors.size === 0
             ? undefined
-            : (node) => node === startBlock.parent ? NodeAction.Exit : NodeAction.Continue,
+            : (node) => ancestors.has(node.parent) ? NodeAction.Exit : NodeAction.Continue,
         leafAction,
     );
 }
