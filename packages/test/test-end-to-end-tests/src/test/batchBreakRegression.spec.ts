@@ -16,7 +16,6 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { ILoggingError } from "@fluidframework/common-definitions";
 import { waitContainerToCatchUp } from "@fluidframework/container-loader";
 
 /**
@@ -73,11 +72,11 @@ function createFunctionOverrideProxy<T extends object>(
     });
 }
 
-async function runAndValidateBatch(
+async function runAndValidateBatchAndReturnError(
     provider: ITestObjectProvider,
     proxyDsf: IDocumentServiceFactory,
     timeout: number,
-    ): Promise<ILoggingError | undefined> {
+    ): Promise<unknown> {
     try {
         let containerUrl: string | undefined;
         {
@@ -149,9 +148,7 @@ async function runAndValidateBatch(
             assert.equal(testObject.root.get("foo"), "bar", "validate after save");
         }
     } catch (e) {
-        if (isILoggingError(e)) {
-            return e;
-        }
+        return e;
     }
 }
 
@@ -172,12 +169,12 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                     },
                 },
             });
-        await runAndValidateBatch(provider, proxyDsf, this.timeout());
+        await runAndValidateBatchAndReturnError(provider, proxyDsf, this.timeout());
     });
     it("working batch",
     async function() {
         const provider = getTestObjectProvider({ resetAfterEach: true });
-        await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
+        await runAndValidateBatchAndReturnError(provider, provider.documentServiceFactory, this.timeout());
     });
     describe("client sends invalid batches ", () => {
         itExpects("Batch end without start",
@@ -211,7 +208,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            const e = await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            const e = await runAndValidateBatchAndReturnError(provider, proxyDsf, this.timeout());
             assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
             assert(isILoggingError(e), `unexpected error type: ${e}`);
             assert.equal(e.message, "OpBatchIncomplete", e);
@@ -248,7 +245,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            const e = await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            const e = await runAndValidateBatchAndReturnError(provider, proxyDsf, this.timeout());
             assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
             assert(isILoggingError(e), `unexpected error type: ${e}`);
             assert.equal(e.message, "OpBatchIncomplete", e);
@@ -281,7 +278,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                     },
                 });
             // it's odd this doesn't fail.
-            await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            await runAndValidateBatchAndReturnError(provider, proxyDsf, this.timeout());
             assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
         });
 
@@ -314,7 +311,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            const e = await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            const e = await runAndValidateBatchAndReturnError(provider, proxyDsf, this.timeout());
             assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
             assert(isILoggingError(e), `unexpected error type: ${e}`);
             assert.equal(e.message, "0x29a", e);
@@ -375,7 +372,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            const e = await runAndValidateBatch(provider, proxyDsf, this.timeout());
+            const e = await runAndValidateBatchAndReturnError(provider, proxyDsf, this.timeout());
             assert.notDeepStrictEqual(originalBatchMessage, undefined, "batch must be found");
             assert(isILoggingError(e), `unexpected error type: ${e}`);
             assert.equal(e.message, "0x29a", e);

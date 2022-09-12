@@ -25,7 +25,7 @@
     "lint:fix": "npm run eslint:fix",
     "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
     "test": "npm run test:realsvc",
-    "test:realsvc": "npm run test:realsvc:local && npm run test:realsvc:tinylicious",
+    "test:realsvc": "concurrently npm:test:realsvc:local npm:test:realsvc:tinylicious",
     "test:realsvc:frs": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=frs --timeout=20s",
     "test:realsvc:frs:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:frs --",
     "test:realsvc:local": "npm run test:realsvc:run -- --driver=local",
