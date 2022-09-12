@@ -137,7 +137,6 @@ describe("IntervalCollection snapshotting", () => {
     });
 
     it("uses the old interval format", async () => {
-        debugger;
         const sharedString = await testLoadSharedString(containerRuntimeFactory, "1", summary);
         sharedString.getIntervalCollection("test");
     //     const intervals = Array.from(collection);
@@ -152,7 +151,6 @@ describe("IntervalCollection snapshotting", () => {
     it("creates the correct reference type on reload", async () => {
         // This is a direct regression test for an issue with interval collection deserialization logic.
         // It manifested in later failures demonstrated by the "enable operations on reload" suite.
-        debugger;
         const sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);
         const collection = sharedString.getIntervalCollection("test");
         const intervals = Array.from(collection);

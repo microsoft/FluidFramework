@@ -1128,7 +1128,6 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 
 export class IntervalCollection<TInterval extends ISerializableInterval>
     extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
-    // this definitely needs to be private or protected or something
     protected savedSerializedIntervals?: ISerializedInterval[];
     private localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback | undefined;
@@ -1653,12 +1652,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     /**
      * @internal
      */
-    public serializeInternal(): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
+    public serializeInternal(): ISerializedIntervalCollectionV2 {
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
         }
         if (Array.isArray(this.savedSerializedIntervals)) {
-            return this.localCollection.testSerialize();
+            return (this.localCollection.testSerialize() as unknown as ISerializedIntervalCollectionV2);
         }
         return this.localCollection.serialize();
     }
@@ -1741,53 +1740,57 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 }
 
-export class TestLocalIntervalCollection<TInterval extends ISerializableInterval>
- extends LocalIntervalCollection<SequenceInterval> {
-    endIntervalTree: RedBlackTree<SequenceInterval, SequenceInterval>;
-    constructor(
-        client: Client,
-        label: string,
-        helpers: IIntervalHelpers<SequenceInterval>,
-        /** Callback invoked each time one of the endpoints of an interval slides. */
-        onPositionChange?: (interval: SequenceInterval) => void,
-    ) {
-        super(client, label, helpers, onPositionChange);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>(helpers.compareEnds);
-    }
+// export class TestLocalIntervalCollection<TInterval extends ISerializableInterval>
+//  extends LocalIntervalCollection<SequenceInterval> {
+//     endIntervalTree: RedBlackTree<SequenceInterval, SequenceInterval>;
+//     constructor(
+//         client: Client,
+//         label: string,
+//         helpers: IIntervalHelpers<SequenceInterval>,
+//         /** Callback invoked each time one of the endpoints of an interval slides. */
+//         onPositionChange?: (interval: SequenceInterval) => void,
+//     ) {
+//         super(client, label, helpers, onPositionChange);
+//         // eslint-disable-next-line @typescript-eslint/unbound-method
+//         this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>(helpers.compareEnds);
+//     }
 
-    // doesn't actually return old type; returns new
-    public override serialize(): ISerializedIntervalCollectionV2 {
-        const client = this.client;
-        const intervals = this.intervalTree.intervals.keys();
-        // construct old type and cast it as new so the return type matches but we have the object that we want
-        // call sequenceinterval's serialize method to get it into the right type
-        const serialized = intervals.map((interval) => interval.serialize(client));
-        return (serialized as unknown as ISerializedIntervalCollectionV2);
-        // return {
-        //     label: this.label,
-        //     intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
-        //     version: 2,
-        // };
-    }
-}
+//     // doesn't actually return old type; returns new
+//     public override serialize(): ISerializedIntervalCollectionV2 {
+//         const client = this.client;
+//         const intervals = this.intervalTree.intervals.keys();
+//         // construct old type and cast it as new so the return type matches but we have the object that we want
+//         // call sequenceinterval's serialize method to get it into the right type
+//         const serialized = intervals.map((interval) => interval.serialize(client));
+//         return (serialized as unknown as ISerializedIntervalCollectionV2);
+//         // return {
+//         //     label: this.label,
+//         //     intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
+//         //     version: 2,
+//         // };
+//     }
+// }
 
 export class TestIntervalCollection<TInterval extends ISerializableInterval>
  extends IntervalCollection<SequenceInterval> {
     savedSerializedIntervals: ISerializedInterval[];
-    private testLocalCollection: TestLocalIntervalCollection<SequenceInterval>;
+    private testLocalCollection: LocalIntervalCollection<SequenceInterval>;
 
-    /** @internal */
-    constructor(
-        helpers: IIntervalHelpers<SequenceInterval>,
-        requiresClient: boolean,
-        emitter: IValueOpEmitter,
-        serializedIntervals: ISerializedInterval[],
-    ) {
-        super(helpers, requiresClient, emitter, serializedIntervals);
-
-        this.savedSerializedIntervals = serializedIntervals;
+    public get attached(): boolean {
+        return !!this.testLocalCollection;
     }
+
+    // /** @internal */
+    // constructor(
+    //     helpers: IIntervalHelpers<SequenceInterval>,
+    //     requiresClient: boolean,
+    //     emitter: IValueOpEmitter,
+    //     serializedIntervals: ISerializedInterval[],
+    // ) {
+    //     super(helpers, requiresClient, emitter, serializedIntervals);
+
+    //     this.savedSerializedIntervals = serializedIntervals;
+    // }
 
     /**
      * @internal
@@ -1798,7 +1801,23 @@ export class TestIntervalCollection<TInterval extends ISerializableInterval>
             throw new LoggingError("attachSequence must be called");
         }
 
-        return this.testLocalCollection.serialize();
+        // const client = this.client;
+        const intervals = this.savedSerializedIntervals;
+//         // construct old type and cast it as new so the return type matches but we have the object that we want
+//         // call sequenceinterval's serialize method to get it into the right type
+//         const serialized = intervals.map((interval) => interval.serialize(client));
+//         return (serialized as unknown as ISerializedIntervalCollectionV2);
+//         // return {
+//         //     label: this.label,
+//         //     intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
+//         //     version: 2,
+//         // };
+
+        // ***** change this to what was being returned in the serialize method *****
+        // const serialized = intervals.map((interval) => interval.serialize(client));
+
+        return (intervals as unknown as ISerializedIntervalCollectionV2);
+        // return this.testLocalCollection.serialize();
     }
 
     public attachGraph(client: Client, label: string) {
@@ -1812,7 +1831,9 @@ export class TestIntervalCollection<TInterval extends ISerializableInterval>
 
         // Instantiate the local interval collection based on the saved intervals
         this.client = client;
-        this.testLocalCollection = new TestLocalIntervalCollection<TInterval>(
+        // not sure if SequenceInterval is the right type for this?
+        // was TInterval before but that gave an error
+        this.testLocalCollection = new LocalIntervalCollection<SequenceInterval>(
             client,
             label,
             this.helpers,
@@ -1836,10 +1857,6 @@ export class TestIntervalCollection<TInterval extends ISerializableInterval>
             }
         }
         this.savedSerializedIntervals = undefined;
-    }
-
-    public get attached(): boolean {
-        return !!this.testLocalCollection;
     }
 }
 
