@@ -64,7 +64,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         containerConfig: ITestContainerConfig = testContainerConfig,
         featureGates: Record<string, ConfigTypes> = {},
     ) => {
-        provider.reset();
         const configWithFeatureGates = {
             ...containerConfig,
             loaderProps: { configProvider: configProvider(featureGates) },
@@ -77,8 +76,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
     };
-
-    const reset = async () => provider.reset();
 
     const allDataCorruption = async (containers: IContainer[]) => Promise.all(
         containers.map(async (c) => new Promise<boolean>((resolve) => c.once("closed", (error) => {
@@ -108,7 +105,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
     describe("Legacy APIs", () => {
         beforeEach(async () => setupContainers(testContainerConfig));
-        afterEach(async () => reset());
 
         it("Datastore creation with legacy API returns datastore which can be aliased", async () => {
             const ds = await createDataStoreWithProps(dataObject1, "1");
@@ -119,7 +115,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
     describe("Aliasing", () => {
         beforeEach(async () => setupContainers());
-        afterEach(async () => reset());
 
         const alias = "alias";
 
