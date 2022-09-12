@@ -203,6 +203,14 @@ export class GitRepo {
         return await this.exec(`merge-base ${source} ${target}`, `merge base ${source} and ${target} branch`);
     }
 
+    public async merge(commitId: string) {
+        return await this.exec(`merge ${commitId} --no-ff`, `merge a commit id`);
+    }
+
+    public async mergeAbort() {
+        return await this.exec(`merge --abort`, `abort the merge`);
+    }
+
     /**
      * @param commitId - Last merged commit id between two branches
      * @param target: Target branch name

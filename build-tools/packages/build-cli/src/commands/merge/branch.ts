@@ -163,11 +163,15 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
         const commitToReset = unmergedCommitList[commitSize - 1];
         const branchName = `${flags.source}-${flags.target}-${commitToReset}`;
 
-        await gitRepo.switchBranch(flags.source);
+        await gitRepo.switchBranch(flags.target);
         await gitRepo.createBranch(branchName);
-        await gitRepo.fetchBranch(flags.source, branchName);
-        await gitRepo.resetBranch(commitToReset);
+        await gitRepo.fetchBranch(flags.target, branchName);
         await gitRepo.setUpstream(branchName);
+
+        // passed a set of commit ids, return the commit id upto which the branch should get reset to
+
+
+        await gitRepo.resetBranch(commitToReset);
 
         // fetch name of owner associated to the pull request
         const data = await prInfo(flags.auth, commitToReset);
