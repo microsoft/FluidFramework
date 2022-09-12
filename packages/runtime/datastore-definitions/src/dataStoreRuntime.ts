@@ -6,7 +6,6 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
-    IFluidRouter,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
@@ -20,12 +19,15 @@ import {
     IQuorumClients,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
+import {
+    IFluidDataStoreRuntimeEntrypoint,
+    IInboundSignalMessage,
+    IProvideFluidDataStoreRegistry,
+} from "@fluidframework/runtime-definitions";
 import { IChannel } from ".";
 
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (
-        // eslint-disable-next-line @typescript-eslint/unified-signatures
         event: "disconnected" | "dispose" | "attaching" | "attached",
         listener: () => void,
     );
@@ -38,7 +40,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  */
 export interface IFluidDataStoreRuntime extends
-    IFluidRouter,
+    IFluidDataStoreRuntimeEntrypoint,
     IEventProvider<IFluidDataStoreRuntimeEvents>,
     IDisposable,
     Partial<IProvideFluidDataStoreRegistry> {

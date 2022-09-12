@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
@@ -61,6 +62,7 @@ import {
     create404Response,
     createResponseError,
     exceptionToResponse,
+    requestFluidObject,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -78,6 +80,7 @@ import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext, LocalChannelContextBase, RehydratedLocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
+import { FluidObjectHandle } from "./fluidHandle";
 
 export enum DataStoreMessageType {
     // Creates a new channel
@@ -98,6 +101,7 @@ export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
 IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
+     * @deprecated - Instantiate the class using its constructor instead.
      * Loads the data store runtime
      * @param context - The data store context
      * @param sharedObjectRegistry - The registry of shared objects used by this data store
@@ -174,10 +178,24 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // channel contexts.
     private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
+    public readonly handle?: IFluidHandle<FluidObject>;
+
+    /**
+     * Create an instance of a DataStore runtime.
+     *
+     * @param dataStoreContext - context object for the runtime.
+     * @param sharedObjectRegistry - TODO: document
+     * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
+     * @param initializeEntrypoint - Function to initialize the entrypoint object for the data store runtime.
+     * The handle to this data store runtime will point to the object returned by this function.
+     * For now, the default function will use the request pattern on the runtime to return its root object ("/").
+     */
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
+        initializeEntrypoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject> =
+            async (rt) => requestFluidObject(rt, "/"),
     ) {
         super();
 
@@ -285,6 +303,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         if (existing) {
             this.deferredAttached.resolve();
         }
+
+        this.handle = new FluidObjectHandle<FluidObject>(
+            new LazyPromise(async () => initializeEntrypoint(this)),
+            "",
+            this.objectsRoutingContext,
+            );
     }
 
     public dispose(): void {
