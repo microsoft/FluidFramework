@@ -169,15 +169,43 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
         await gitRepo.setUpstream(branchName);
 
         // passed a set of commit ids, return the commit id upto which the branch should get reset to
+        let i = 0;
+        let commit = 0;
+        while(i !== commitSize) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await gitRepo.merge(unmergedCommitList[i]);
+            } catch (error: unknown) {
+                // eslint-disable-next-line no-await-in-loop
+                await gitRepo.mergeAbort();
+                this.log(`Merge abort for ${unmergedCommitList[i]}: `, error);
+                break;
+            }
 
+            commit = i;
+            i++;
+        }
 
-        await gitRepo.resetBranch(commitToReset);
-
-        // fetch name of owner associated to the pull request
-        const data = await prInfo(flags.auth, commitToReset);
-        this.log(`Fetch pull request info for commit id ${commitToReset}: ${data}`);
-
-        const prNumber = await createPR(flags.auth, branchName, flags.target, "sonalivdeshpande");
+        let prNumber;
+        if(i === 0) {
+            this.log(`Opening a pull request for a single commit id ${unmergedCommitList[0]} as it might have merge conflicts with the ${flags.target} branch.`);
+            await gitRepo.switchBranch(flags.source);
+            await gitRepo.createBranch(`${flags.source}-${flags.target}-${unmergedCommitList[0]}`);
+            await gitRepo.fetchBranch(flags.source, `${flags.source}-${flags.target}-${unmergedCommitList[0]}`);
+            await gitRepo.setUpstream(`${flags.source}-${flags.target}-${unmergedCommitList[0]}`);
+            await gitRepo.resetBranch(unmergedCommitList[0]);
+            prNumber = await createPR(flags.auth, `${flags.source}-${flags.target}-${unmergedCommitList[0]}`, flags.target, "sonalivdeshpande");
+            // fetch name of owner associated to the pull request
+            const data = await prInfo(flags.auth, unmergedCommitList[0]);
+            this.log(`Fetch pull request info for commit id ${unmergedCommitList[0]}: ${data}`);
+            this.log(`Open pull request for commit id ${unmergedCommitList[0]}. Please resolve the merge conflicts.`);
+        } else {
+            prNumber = await createPR(flags.auth, branchName, flags.target, "sonalivdeshpande");
+            // fetch name of owner associated to the pull request
+            const data = await prInfo(flags.auth, unmergedCommitList[commit]);
+            this.log(`Fetch pull request info for commit id ${unmergedCommitList[commit]}: ${data}`);
+            this.log(`Pull request opened for pushing bulk commits`);
+        }
 
         this.log(
             `Pull request is opened against ${flags.target} with pull request number ${prNumber}`,
