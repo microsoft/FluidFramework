@@ -26,8 +26,6 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
 - [Remove `load` method from `FluidDataStoreRuntime`](#Remove-load-method-from-FluidDataStoreRuntime)
 
-FluidDataStoreRuntime
-
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
