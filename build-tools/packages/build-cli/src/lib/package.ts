@@ -15,6 +15,7 @@ import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
 import * as semver from "semver";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+import { DependencyUpdateType } from "./bump";
 
 /**
  * An object that maps package names to version strings or range strings.
@@ -31,7 +32,10 @@ export interface PackageVersionMap {
  * @param context - The {@link Context}.
  * @param releaseGroup - The release group to check.
  * @param depsToUpdate - An array of packages on which dependencies should be checked.
- * @param bumpType - The bump type.
+ * @param releaseGroupFilter - If provided, this release group won't be checked for dependencies. Set this when you are
+ * updating the dependencies on a release group across the repo. For example, if you have just released the 1.2.3 client
+ * release group, you want to bump everything in the repo to 1.2.3 except the client release group itself.
+ * @param depUpdateType - The constraint to use when deciding if updates are available.
  * @param prerelease - If true, include prerelease versions as eligible to update.
  * @param writeChanges - If true, changes will be written to the package.json files.
  * @param log - A {@link Logger}.
@@ -45,7 +49,7 @@ export async function npmCheckUpdates(
     releaseGroup: ReleaseGroup | ReleasePackage | undefined,
     depsToUpdate: ReleasePackage[] | RegExp[],
     releaseGroupFilter: ReleaseGroup | undefined,
-    bumpType: "patch" | "minor" | "current",
+    depUpdateType: DependencyUpdateType,
     // eslint-disable-next-line default-param-last
     prerelease = false,
     // eslint-disable-next-line default-param-last
@@ -121,7 +125,7 @@ export async function npmCheckUpdates(
             filter: depsToUpdate,
             cwd: repoPath,
             packageFile: `${glob}/package.json`,
-            target: bumpType === "current" ? "latest" : bumpType,
+            target: depUpdateType,
             pre: prerelease,
             upgrade: writeChanges,
             jsonUpgraded: true,

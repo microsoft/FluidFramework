@@ -18,7 +18,7 @@ import {
     releaseGroupFlag,
     semverRangeFlag,
 } from "../../flags";
-import { generateBumpDepsBranchName, npmCheckUpdates } from "../../lib";
+import { generateBumpDepsBranchName, isDependencyUpdateType, npmCheckUpdates } from "../../lib";
 import { isReleaseGroup, ReleaseGroup } from "../../releaseGroups";
 
 /**
@@ -158,14 +158,18 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         this.logHr();
         this.log("");
 
+        if(!isDependencyUpdateType(flags.bumpType) || flags.bumpType === undefined) {
+            this.error(`Unknown dependency update type: ${flags.bumpType}`);
+        }
+
         const { updatedPackages, updatedDependencies } = await npmCheckUpdates(
             context,
             flags.releaseGroup, // if undefined the whole repo will be checked
             depsToUpdate,
             args.package_or_release_group,
-            "current",
-            false,
-            true,
+            flags.bumpType,
+            /* prerelease */ flags.prerelease,
+            /* writeChanges */ true,
             this.logger,
         );
 
