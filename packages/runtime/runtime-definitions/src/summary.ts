@@ -165,20 +165,7 @@ export interface ISummarizerNode {
      * path is "/a/.channels/b", then the additional path part is ".channels".
      * @param snapshot - the base summary to parse
      */
-    loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
-    /**
-     * Does all the work of loadBaseSummaryWithoutDifferential. Additionally if
-     * the base summary is a differential summary containing handle + outstanding ops blob,
-     * then this will return the innermost base summary, and update the state by
-     * tracking the outstanding ops.
-     * @param snapshot - the base summary to parse
-     * @param readAndParseBlob - function to read and parse blobs from storage
-     * @returns the base summary to be used
-     */
-    loadBaseSummary(
-        snapshot: ISnapshotTree,
-        readAndParseBlob: <T>(id: string) => Promise<T>,
-    ): Promise<ISnapshotTree>;
+    updateBaseSummaryState(snapshot: ISnapshotTree): void;
     /**
      * Records an op representing a change to this node/subtree.
      * @param op - op of change to record
