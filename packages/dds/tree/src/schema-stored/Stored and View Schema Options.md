@@ -12,8 +12,8 @@ There is a [separate document](./Stored%20and%20View%20Schema.md) covering the s
     Any changes to this must be sequenced as Fluid ops.
     Generally implemented by storing schema information (or references to immutable publicly available schema information) in the tree DDS itself.
 -   `view schema` : a set of constraints the application wants the data to conform with when viewing/reading it.
-    Different clients may have differing view schema, even at the same time (ex: due to multiple apps using the same document, or different versions of an app during a rollout):
-    restrictions on how to stage/manage changes to view schema may vary from app to app (ex: some apps could update all clients concurrently, some could use document semantic versions, some could just rely on best effort schema on read)
+    Different clients may have differing view schema, even at the same time e.g. due to multiple apps using the same document, or different versions of an app during a rollout.
+    Restrictions on how to stage/manage changes to view schema may vary from app to app e.g. some apps could update all clients concurrently, some could use document semantic versions, and some could just rely on best effort schema on read.
 -   `context` : information about the location in the tree that adjust the constraints on what is valid there.
     For example, if looking at a node in a trait, that trait may provide the context that only a specific list of types are allowed, or that additional nodes can't be added to that trait.
     More complex context dependent schema, for example that a node of a particular type in one location in the app permits different children that it does elsewhere, can cause maintaining schema to be hard during merges.
