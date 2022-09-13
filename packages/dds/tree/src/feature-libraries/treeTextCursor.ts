@@ -285,7 +285,7 @@ export class TextCursor implements ITreeCursor {
 }
 
 function keys(tree: JsonableTree): readonly FieldKey[] {
-    return Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, false)) as FieldKey[];
+    return Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, FieldScope.local, false)) as FieldKey[];
 }
 
 /**
