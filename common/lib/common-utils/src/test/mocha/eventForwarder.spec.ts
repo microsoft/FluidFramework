@@ -27,7 +27,7 @@ describe("Loader", () => {
                 });
 
                 afterEach(() => {
-                    if (!forwarder.disposed) {
+                    if (forwarder.disposed === false) {
                         forwarder.dispose();
                     }
                 });
