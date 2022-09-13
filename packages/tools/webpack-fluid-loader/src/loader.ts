@@ -5,14 +5,12 @@
 
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { assert, BaseTelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
 import {
     AttachState,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
-    IProvideRuntimeFactory,
     IContainer,
     IFluidPackage,
     IFluidCodeDetails,
@@ -33,9 +31,8 @@ import {
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { RequestParser } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { Port } from "webpack-dev-server";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
@@ -95,37 +92,23 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule):
-    IFluidModuleWithDetails {
-    const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> =
-        fluidModule.fluidExport;
-    if (fluidModuleExport.IRuntimeFactory === undefined) {
-        const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
-        assert(dataStoreFactory !== undefined, 0x317 /* dataStoreFactory is undefined */);
+const isModuleWithDetails = (
+    fluidModule: IFluidModule | IFluidModuleWithDetails,
+): fluidModule is IFluidModuleWithDetails =>
+    (fluidModule as any).details !== undefined;
 
-        const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
-
-        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-            defaultFactory,
-            new Map([
-                [defaultFactory.type, Promise.resolve(defaultFactory)],
-            ]),
-        );
-        return {
-            module: {
-                fluidExport: {
-                    IRuntimeFactory: runtimeFactory,
-                },
-            },
-            details: { package: packageJson.name, config: { } },
-        };
+const addFakeDetailsIfNeeded = (
+    packageJson: IFluidPackage,
+    fluidModule: IFluidModule | IFluidModuleWithDetails,
+): IFluidModuleWithDetails => {
+    if (isModuleWithDetails(fluidModule)) {
+        return fluidModule;
     }
-
     return {
         module: fluidModule,
         details: { package: packageJson.name, config: { } },
     };
-}
+};
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
 function makeSideBySideDiv(divId: string) {
@@ -213,7 +196,7 @@ async function createWebLoader(
 
     await codeLoader.seedModule(
         codeDetails,
-        wrapWithRuntimeFactoryIfNeeded(codeDetails.package as IFluidPackage, fluidModule),
+        addFakeDetailsIfNeeded(codeDetails.package as IFluidPackage, fluidModule),
     );
 
     return new Loader({
