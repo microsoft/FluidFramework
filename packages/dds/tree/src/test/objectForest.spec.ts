@@ -10,14 +10,14 @@ import { strict as assert } from "assert";
 import { ObjectForest } from "../feature-libraries/object-forest";
 
 import {
-    fieldSchema, rootFieldKey,
+    fieldSchema,
     SchemaData,
     StoredSchemaRepository,
 } from "../schema-stored";
 import { IEditableForest, initializeForest, TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../domains";
 import { recordDependency } from "../dependency-tracking";
-import { clonePath, Delta, detachedFieldAsKey, JsonableTree, UpPath } from "../tree";
+import { clonePath, Delta, detachedFieldAsKey, JsonableTree, UpPath, rootFieldKey } from "../tree";
 import { jsonableTreeFromCursor } from "..";
 import { brand } from "../util";
 import { defaultSchemaPolicy, FieldKinds, isNeverField } from "../feature-libraries";
