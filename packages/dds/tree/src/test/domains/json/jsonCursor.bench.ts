@@ -121,13 +121,13 @@ const canada = generateCanada(
 
 function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
     cursor.enterField(FeatureKey);
-    cursor.enterChildNode(0);
+    cursor.enterNode(0);
     cursor.enterField(EmptyKey);
-    cursor.enterChildNode(0);
+    cursor.enterNode(0);
     cursor.enterField(GeometryKey);
-    cursor.enterChildNode(0);
+    cursor.enterNode(0);
     cursor.enterField(CoordinatesKey);
-    cursor.enterChildNode(0);
+    cursor.enterNode(0);
 
     cursor.enterField(EmptyKey);
     let result = cursor.firstNode();
@@ -146,27 +146,27 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
             assert.equal(cursor.nextNode(), true, "No Y field");
             const y = cursor.value as number;
 
-            cursor.upToField();
-            cursor.upToNode();
+            cursor.exitNode();
+            cursor.exitField();
 
             calculate(x, y);
             resultInner = cursor.nextNode();
         }
 
-        cursor.upToNode();
+        cursor.exitField();
         result = cursor.nextNode();
     }
 
     // Reset the cursor state
-    cursor.upToNode();
-    cursor.upToField();
-    cursor.upToNode();
-    cursor.upToField();
-    cursor.upToNode();
-    cursor.upToField();
-    cursor.upToNode();
-    cursor.upToField();
-    cursor.upToNode();
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
 }
 
 describe("ITreeCursor", () => {

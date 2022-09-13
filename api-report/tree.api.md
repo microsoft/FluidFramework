@@ -472,16 +472,18 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
 
 // @public
 export interface ITreeCursorNew {
-    readonly currentChunkLength: number;
-    readonly currentChunkStart: number;
-    readonly currentIndexInField: number;
-    enterChildNode(index: number): void;
+    readonly chunkLength: number;
+    readonly chunkStart: number;
     enterField(key: FieldKey): void;
+    enterNode(childIndex: number): void;
+    exitField(): void;
+    exitNode(): void;
+    readonly fieldIndex: number;
     firstField(): boolean;
     firstNode(): boolean;
-    getCurrentFieldKey(): FieldKey;
+    getFieldKey(): FieldKey;
     // (undocumented)
-    getCurrentFieldLength(): number;
+    getFieldLength(): number;
     // (undocumented)
     getPath(): UpPath | undefined;
     readonly mode: CursorLocationType;
@@ -492,8 +494,6 @@ export interface ITreeCursorNew {
     seekNodes(offset: number): boolean;
     skipPendingFields(): boolean;
     readonly type: TreeType;
-    upToField(): void;
-    upToNode(): void;
     readonly value: Value;
 }
 
@@ -1040,23 +1040,27 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
 export class TextCursorNew implements ITreeCursorNew {
     constructor(root: JsonableTree);
     // (undocumented)
-    get currentChunkLength(): number;
+    get chunkLength(): number;
     // (undocumented)
-    get currentChunkStart(): number;
-    // (undocumented)
-    get currentIndexInField(): number;
-    // (undocumented)
-    enterChildNode(index: number): void;
+    get chunkStart(): number;
     // (undocumented)
     enterField(key: FieldKey): void;
+    // (undocumented)
+    enterNode(index: number): void;
+    // (undocumented)
+    exitField(): void;
+    // (undocumented)
+    exitNode(): void;
+    // (undocumented)
+    get fieldIndex(): number;
     // (undocumented)
     firstField(): boolean;
     // (undocumented)
     firstNode(): boolean;
     // (undocumented)
-    getCurrentFieldKey(): FieldKey;
+    getFieldKey(): FieldKey;
     // (undocumented)
-    getCurrentFieldLength(): number;
+    getFieldLength(): number;
     // (undocumented)
     getPath(): UpPath | undefined;
     // (undocumented)
@@ -1073,10 +1077,6 @@ export class TextCursorNew implements ITreeCursorNew {
     skipPendingFields(): boolean;
     // (undocumented)
     get type(): TreeType;
-    // (undocumented)
-    upToField(): void;
-    // (undocumented)
-    upToNode(): void;
     // (undocumented)
     get value(): Value;
 }
