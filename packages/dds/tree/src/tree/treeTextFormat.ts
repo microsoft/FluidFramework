@@ -60,7 +60,8 @@ export interface NodeData {
  * @public
  */
 export interface GenericTreeNode<TChild> extends NodeData {
-    fields?: FieldMap<TChild>;
+    [FieldScope.local]?: FieldMap<TChild>;
+    [FieldScope.global]?: FieldMap<TChild>;
 }
 
 /**
@@ -75,10 +76,17 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
 export interface JsonableTree extends PlaceholderTree {}
 
 /**
+ * Derives the scope using the type of `key`.
+ */
+export function scopeFromKey(key: FieldKey): FieldScope {
+    return typeof key === "symbol" ? FieldScope.global : FieldScope.local;
+}
+
+/**
  * Get a field from `node`, optionally modifying the tree to create it if missing.
  */
 export function getGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, createIfMissing: boolean): T[] {
-    const children = getGenericTreeFieldMap(node, createIfMissing);
+    const children = getGenericTreeFieldMap(node, scopeFromKey(key), createIfMissing);
 
     const field = children[key as string];
     if (field !== undefined) {
@@ -94,15 +102,26 @@ export function getGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, 
 }
 
 /**
+ * The scope of a {@link FieldKey}.
+ */
+export const enum FieldScope {
+    local = "fields",
+    // TODO: separate this from local fields by giving it a different name.
+    // For now these are the same meaning GenericTreeNode actually only has one field.
+    global = "fields",
+}
+
+/**
  * Get a FieldMap from `node`, optionally modifying the tree to create it if missing.
  */
- export function getGenericTreeFieldMap<T>(node: GenericTreeNode<T>, createIfMissing: boolean): FieldMap<T> {
-    let children = node.fields;
+export function getGenericTreeFieldMap<T>(
+    node: GenericTreeNode<T>, scope: FieldScope, createIfMissing: boolean): FieldMap<T> {
+    let children = node[scope];
     if (children === undefined) {
         children = {};
         // Handle missing fields:
         if (createIfMissing) {
-            node.fields = children;
+            node[scope] = children;
         }
     }
 
@@ -113,6 +132,6 @@ export function getGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, 
  * Sets a field on `node`.
  */
 export function setGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, content: T[]): void {
-    const children = getGenericTreeFieldMap(node, true);
+    const children = getGenericTreeFieldMap(node, scopeFromKey(key), true);
     children[key as string] = content;
 }
