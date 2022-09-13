@@ -521,8 +521,8 @@ export class SummaryWriter implements ISummaryWriter {
         // Check the missing operations in the fullLogTail
         if (fullLogTail.length !== (to - from - 1)) {
             const missingOpsSequenceNumbers: number[] = [];
-            const fullLogTailSequenceNumbers = logTail.map((ms) => ms.sequenceNumber);
-            for (let i = to + 1; i < from; i++) {
+            const fullLogTailSequenceNumbers = fullLogTail.map((ms) => ms.sequenceNumber);
+            for (let i = from + 1; i < to; i++) {
                 if (!fullLogTailSequenceNumbers.includes(i)) {
                     missingOpsSequenceNumbers.push(i);
                 }
