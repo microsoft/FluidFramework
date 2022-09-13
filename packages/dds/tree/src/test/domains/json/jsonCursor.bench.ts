@@ -130,15 +130,11 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
     cursor.enterNode(0);
 
     cursor.enterField(EmptyKey);
-    let result = cursor.firstNode();
-    assert.equal(result, true, "Unexpected shape for Canada dataset");
 
-    while (result) {
+    for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
         cursor.enterField(EmptyKey);
-        let resultInner = cursor.firstNode();
-        assert.equal(resultInner, true, "Unexpected shape for Canada dataset");
 
-        while (resultInner === true) {
+        for (let resultInner = cursor.firstNode(); resultInner; resultInner = cursor.nextNode()) {
             // Read x and y values
             cursor.enterField(EmptyKey);
             assert.equal(cursor.firstNode(), true, "No X field");
@@ -150,11 +146,9 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
             cursor.exitField();
 
             calculate(x, y);
-            resultInner = cursor.nextNode();
         }
 
         cursor.exitField();
-        result = cursor.nextNode();
     }
 
     // Reset the cursor state

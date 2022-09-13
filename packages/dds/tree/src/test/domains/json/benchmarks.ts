@@ -11,15 +11,13 @@ export function sum(cursor: ITreeCursorNew): number {
     if (typeof value === "number") {
         total += value;
     }
-    let moreFields = cursor.firstField();
-    while (moreFields) {
-        let inField = cursor.firstNode();
-        while (inField) {
+
+    for (let moreFields = cursor.firstField(); moreFields; moreFields = cursor.nextField()) {
+        for (let inField = cursor.firstNode(); inField; inField = cursor.nextField()) {
             total += sum(cursor);
-            inField = cursor.nextField();
         }
-        moreFields = cursor.nextField();
     }
+
     return total;
 }
 
@@ -29,11 +27,11 @@ export function sumMap(cursor: ITreeCursorNew): number {
     if (typeof value === "number") {
         total += value;
     }
-    let moreFields = cursor.firstField();
-    while (moreFields) {
+
+    for (let moreFields = cursor.firstField(); moreFields; moreFields = cursor.nextField()) {
         forEachNode(cursor, sumMap);
-        moreFields = cursor.nextField();
     }
+
     return total;
 }
 
