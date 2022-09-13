@@ -41,6 +41,7 @@ import {
     oneDayMs,
     runGCKey,
     runSweepKey,
+    accessViolationOnSweepReadyUsageKey,
     defaultInactiveTimeoutMs,
     gcTestModeKey,
 } from "../garbageCollection";
@@ -456,7 +457,8 @@ describe("Garbage Collection Tests", () => {
         assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exactly defaultSessionExpiryDurationMs");
     });
 
-    describe("errors when unreferenced objects are used after they are inactive / deleted", () => {
+    //* ONLY
+    describe.only("errors when unreferenced objects are used after they are inactive / deleted", () => {
         // Mock node loaded and changed activity for all the nodes in the graph.
          async function updateAllNodesAndRunGC(garbageCollector: IGarbageCollector) {
             nodes.forEach((nodeId) => {
@@ -477,7 +479,7 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodes[3]] = [nodes[0]];
         });
 
-        const tests = (
+        const summarizerContainerTests = (
             timeout: number,
             revivedEventName: string,
             changedEventName: string,
@@ -553,6 +555,8 @@ describe("Garbage Collection Tests", () => {
                         { eventName: deleteEventName, timeout, id: nodes[2] },
                         { eventName: deleteEventName, timeout, id: nodes[3] },
                     );
+                } else {
+                    assert(!mockLogger.events.some((event) => event.eventName === deleteEventName), "Should not have any delete events logged");
                 }
                 expectedEvents.push(
                     { eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
@@ -830,14 +834,68 @@ describe("Garbage Collection Tests", () => {
             });
         };
 
-        describe("Inactive events", () => {
+        const mainContainerTests = (
+            timeout: number,
+            loadedEventName: string,
+            accessViolationDetectionEnabled: boolean,
+            snapshotCacheExpiryMs?: number,
+        ) => {
+            let lastCloseErrorType: string = "N/A";
+
+            const createGCOverride = (
+                baseSnapshot?: ISnapshotTree,
+                gcBlobsMap?: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase>,
+            ) => {
+                const gc2 = createGarbageCollector({ baseSnapshot, snapshotCacheExpiryMs }, gcBlobsMap, (error) => { lastCloseErrorType = error?.errorType ?? "NONE"; });
+                (gc2 as any).isSummarizerClient = false; // Main Container
+                return gc2;
+            };
+
+            it("generates events when nodes that are used after time out", async () => {
+                const garbageCollector = createGCOverride();
+
+                // Remove node 2's reference from node 1. This should make node 2 and node 3 unreferenced.
+                defaultGCData.gcNodes[nodes[1]] = [];
+
+                await garbageCollector.collectGarbage({});
+
+                // Advance the clock just before the timeout and validate no unexpected events are logged.
+                clock.tick(timeout - 1);
+                await updateAllNodesAndRunGC(garbageCollector);
+                // validateNoUnexpectedEvents();
+
+                // Expire the timeout and validate that all events for node 2 and node 3 are logged.
+                clock.tick(1);
+                await updateAllNodesAndRunGC(garbageCollector);
+                const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
+                expectedEvents.push(
+                    { eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg, unrefTime: 0 },
+                    { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg, unrefTime: 0 },
+                );
+                mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
+
+                // Even if AccessViolation Detection is not enabled, we'll still close due to session expiry
+                const expectedErrorType = accessViolationDetectionEnabled ? "accessViolationError" : "clientSessionExpiredError";
+                assert.equal(lastCloseErrorType, expectedErrorType, "Incorrect lastCloseReason after using unreferenced nodes");
+                lastCloseErrorType = "N/A"; // Reset to see it set again during Revive below
+
+                // Add reference from node 1 to node 3 and validate that we get a revived event.
+                garbageCollector.addedOutboundReference(nodes[1], nodes[3]);
+                await garbageCollector.collectGarbage({});
+
+                mockLogger.assertMatchNone([{ unrefTime: 0 }], "expected no events about unreferenced nodes on Main Container during revive");
+                assert.equal(lastCloseErrorType, accessViolationDetectionEnabled ? "accessViolationError" : "N/A", "Incorrect lastCloseReason after reviving unreferenced nodes");
+            });
+        };
+
+        describe("Inactive events (summarizer container)", () => {
             const inactiveTimeoutMs = 500;
 
             beforeEach(() => {
                 injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = inactiveTimeoutMs;
             });
 
-            tests(
+            summarizerContainerTests(
                 inactiveTimeoutMs,
                 "GarbageCollector:InactiveObject_Revived",
                 "GarbageCollector:InactiveObject_Changed",
@@ -845,15 +903,15 @@ describe("Garbage Collection Tests", () => {
             );
         });
 
-        describe("Sweep ready events", () => {
+        describe("SweepReady events (summarizer container)", () => {
             const snapshotCacheExpiryMs = 500;
             const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
 
             beforeEach(() => {
-                injectedSettings[runSessionExpiryKey] = "true";
+                injectedSettings[runSessionExpiryKey] = true;
             });
 
-            tests(
+            summarizerContainerTests(
                 sweepTimeoutMs,
                 "GarbageCollector:SweepReadyObject_Revived",
                 "GarbageCollector:SweepReadyObject_Changed",
@@ -862,6 +920,43 @@ describe("Garbage Collection Tests", () => {
                 "GarbageCollector:GCObjectDeleted",
             );
         });
+
+        describe("SweepReady usage error enabled (main container)", () => {
+            const snapshotCacheExpiryMs = 500;
+            const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
+
+            beforeEach(() => {
+                injectedSettings[runSessionExpiryKey] = true;
+                injectedSettings[accessViolationOnSweepReadyUsageKey] = true;
+            });
+
+            mainContainerTests(
+                sweepTimeoutMs,
+                "GarbageCollector:SweepReadyObject_Loaded",
+                true,
+                snapshotCacheExpiryMs,
+            );
+        });
+
+        describe("SweepReady usage error disabled (main container)", () => {
+            const snapshotCacheExpiryMs = 500;
+            const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
+
+            beforeEach(() => {
+                injectedSettings[runSessionExpiryKey] = true;
+                injectedSettings[accessViolationOnSweepReadyUsageKey] = false;
+            });
+
+            mainContainerTests(
+                sweepTimeoutMs,
+                "GarbageCollector:SweepReadyObject_Loaded",
+                false,
+                snapshotCacheExpiryMs,
+            );
+        });
+
+        //* TODO
+        // - Also test disableSweepLogKey
 
         it("generates both inactive and sweep ready events when nodes are used after time out", async () => {
             const inactiveTimeoutMs = 500;

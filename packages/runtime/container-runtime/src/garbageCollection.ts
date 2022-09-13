@@ -70,12 +70,14 @@ export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-// Feature gate key to disable expiring session after a set period of time, even if expiry value is present
+// Feature gate key to disable expiring session after a set period of time, even if expiry value is present.
 export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to write the gc blob as a handle if the data is the same.
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
-const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
+export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
+// Feature gate key to enable closing the container with AccessViolationError if SweepReady objects are used.
+export const accessViolationOnSweepReadyUsageKey = "Fluid.GarbageCollection.Dogfood.AccessViolationDetection";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -1303,12 +1305,6 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
-        // summarizer clients if they are based off of user actions (such as scrolling to content for these objects).
-        if (!this.isSummarizerClient && usageType !== "Loaded") {
-            return;
-        }
-
         // We only care about data stores and attachment blobs for this telemetry since GC only marks these objects
         // as unreferenced. Also, if an inactive DDS is used, the corresponding data store store will also be used.
         const nodeType = this.runtime.getNodeType(nodeId);
@@ -1344,11 +1340,22 @@ export class GarbageCollector implements IGarbageCollector {
         if (this.isSummarizerClient) {
             this.pendingEventsQueue.push({ ...propsToLog, usageType, state });
         } else {
-            this.mc.logger.sendErrorEvent({
-                ...propsToLog,
-                eventName: `${state}Object_${usageType}`,
-                pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-            });
+            // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
+            // summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
+            if (usageType === "Loaded") {
+                this.mc.logger.sendErrorEvent({
+                    ...propsToLog,
+                    eventName: `${state}Object_${usageType}`,
+                    pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+                });
+            }
+
+            // If AccessViolation Detection is enabed, close the main container
+            if (this.mc.config.getBoolean(accessViolationOnSweepReadyUsageKey) === true && state === "SweepReady") {
+                //* Create a proper error class
+                //* Put a prop on here indicating it's "best guess"
+                this.runtime.closeFn({ errorType: "accessViolationError", message: "SweepReady object was used! :(" });
+            }
         }
     }
 
