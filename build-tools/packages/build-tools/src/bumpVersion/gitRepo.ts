@@ -196,7 +196,7 @@ export class GitRepo {
     }
 
     /**
-     * @returns An array containing all the modified files in the repo.
+     * Returns an array containing all the modified files in the repo.
      */
     public async getModifiedFiles(): Promise<string[]> {
         const results = await this.exec(`ls-files -m --deduplicate`, `get modified files`);

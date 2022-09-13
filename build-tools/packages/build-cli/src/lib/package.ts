@@ -5,7 +5,7 @@
 
 import path from "path";
 import { Context, readJsonAsync, Logger, Package, MonoRepo } from "@fluidframework/build-tools";
-import { isPrereleaseVersion } from "@fluid-tools/version-tools";
+import { isPrereleaseVersion, ReleaseVersion } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc } from "date-fns";
 import ncu from "npm-check-updates";
@@ -23,14 +23,14 @@ import { DependencyUpdateType } from "./bump";
  * @internal
  */
 export interface PackageVersionMap {
-    [packageName: ReleasePackage]: string;
+    [packageName: ReleasePackage]: ReleaseVersion;
 }
 
 /**
  * Checks the npm registry for updates for a release group's dependencies.
  *
  * @param context - The {@link Context}.
- * @param releaseGroup - The release group to check.
+ * @param releaseGroup - The release group to check. If it is `undefined`, the whole repo is checked.
  * @param depsToUpdate - An array of packages on which dependencies should be checked.
  * @param releaseGroupFilter - If provided, this release group won't be checked for dependencies. Set this when you are
  * updating the dependencies on a release group across the repo. For example, if you have just released the 1.2.3 client
@@ -74,8 +74,8 @@ export async function npmCheckUpdates(
         // Apply to all packages in repo
         repoPath = context.repo.resolvedRoot;
 
-        for (const monorepo of context.repo.releaseGroups.values()) {
-            if (monorepo.kind === releaseGroupFilter) {
+        for (const releaseGroupRoot of context.repo.releaseGroups.values()) {
+            if (releaseGroupRoot.kind === releaseGroupFilter) {
                 log?.verbose(
                     `Skipped release group ${releaseGroupFilter} because we're updating deps on that release group.`,
                 );
@@ -83,12 +83,16 @@ export async function npmCheckUpdates(
             }
 
             log?.verbose(
-                `Adding ${monorepo.workspaceGlobs.length} globs for release group ${monorepo.kind}.`,
+                `Adding ${releaseGroupRoot.workspaceGlobs.length} globs for release group ${releaseGroupRoot.kind}.`,
             );
             searchGlobs.push(
-                ...monorepo.workspaceGlobs.map((g) =>
-                    path.join(path.relative(context.repo.resolvedRoot, monorepo.repoPath), g),
+                ...releaseGroupRoot.workspaceGlobs.map((g) =>
+                    path.join(
+                        path.relative(context.repo.resolvedRoot, releaseGroupRoot.repoPath),
+                        g,
+                    ),
                 ),
+                // Includes the root package.json, in case there are deps there that also need upgrade.
                 ".",
             );
         }
@@ -96,8 +100,6 @@ export async function npmCheckUpdates(
         for (const pkg of context.independentPackages) {
             searchGlobs.push(path.relative(context.repo.resolvedRoot, pkg.directory));
         }
-
-        // searchGlobs.push(`./**`);
     } else if (isReleaseGroup(releaseGroup)) {
         const monorepo = context.repo.releaseGroups.get(releaseGroup);
         if (monorepo === undefined) {
@@ -106,7 +108,6 @@ export async function npmCheckUpdates(
 
         repoPath = monorepo.repoPath;
         searchGlobs.push(...monorepo.workspaceGlobs, ".");
-        // searchGlobs.push(".");
     } else {
         const pkg = context.fullPackageMap.get(releaseGroup);
         if (pkg === undefined) {
@@ -139,7 +140,6 @@ export async function npmCheckUpdates(
         // npm-check-updates returns different data depending on how many packages were updated. This code detects the
         // two main cases: a single package or multiple packages.
         if (glob.endsWith("**")) {
-            // if (numResults > 1) {
             for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
                 const jsonPath = path.join(repoPath, pkgJsonPath);
                 // eslint-disable-next-line no-await-in-loop
