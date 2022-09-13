@@ -263,10 +263,10 @@ interface Branch<TChangeset> {
     localChanges: Commit<TChangeset>[];
     refSeq: SeqNumber;
     /**
-     * A branch is divergent iff it has local changes and there is a change with a `seqNumber`
+     * A branch is divergent iff it has local changes and there is a change outside the branch with a `seqNumber`
      * between the branch's `refSeq` and the `seqNumber` of the last change in the branch.
      * In other words, the ref commit followed by the local changes
-     * do not from a contiguous block in the trunk or final sequence.
+     * do not form a contiguous block in the trunk or final sequence.
      *
      * Note that a commit whose ref number does not match the latest sequence number at the time of its
      * sequencing is not necessarily divergent: if the commit is from the peer who issued the preceding commit,
