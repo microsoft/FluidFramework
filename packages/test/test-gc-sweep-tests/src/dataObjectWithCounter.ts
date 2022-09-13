@@ -16,15 +16,10 @@ import { SharedCounter } from "@fluidframework/counter";
  */
 const counterKey = "counter";
 export class DataObjectWithCounter extends DataObject {
-    private _counterHandle?: IFluidHandle<SharedCounter>;
+    private counter?: SharedCounter;
     public isRunning: boolean = false;
     public static get type(): string {
         return "OpSendingDataObject";
-    }
-
-    public get counterHandle(): IFluidHandle<SharedCounter> {
-        assert(this._counterHandle !== undefined, `CounterHandle should always be defined!`);
-        return this._counterHandle;
     }
 
     protected async initializingFirstTime(props?: any): Promise<void> {
@@ -32,13 +27,15 @@ export class DataObjectWithCounter extends DataObject {
     }
 
     protected async hasInitialized(): Promise<void> {
-        this._counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
+        const handle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
+        assert(handle !== undefined, `The counter handle should exist on initialization!`);
+        this.counter = await handle.get();
     }
 
     public async sendOp(_count: number, _random: IRandom) {
-        assert(this.counterHandle !== undefined, "Can't send ops when counter handle isn't set!");
-        const counter = await this.counterHandle.get();
-        counter.increment(1);
+        assert(this.counter !== undefined, "Can't send ops when the counter isn't initialized!");
+        assert(this.isRunning === true, `The DataObject should be running in order to generate ops!`);
+        this.counter.increment(1);
     }
 
     public stop() {
