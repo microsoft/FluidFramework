@@ -3,7 +3,6 @@
 
 // Medium screen size footer height
 $footerheight: 90px; //135px;
-$ctasTraslation: calc(100vh - $footerheight); //135px;
 $ctaHeight: 124.7px; //200px;
 
 body {
@@ -102,7 +101,6 @@ footer {
   align-content: center;
   flex-wrap: wrap;
   flex-direction: row;
-  transform: translateY($ctasTraslation);
 
   p a {
     color: $banner-link-color;
