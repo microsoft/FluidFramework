@@ -24,13 +24,9 @@ type GetOptionsType = (
 ) => string[];
 
 const getOptions: GetOptionsType = (rowData) => {
-  let enumObj;
-
-  if (Utils.isEnumArrayProperty(rowData.parent!)) {
-    enumObj = rowData.parent;
-  } else {
-    enumObj = (rowData.parent! as ContainerProperty).get(rowData.name);
-  }
+  const enumObj = Utils.isEnumArrayProperty(rowData.parent!)
+    ? rowData.parent
+    : (rowData.parent! as ContainerProperty).get(rowData.name);
 
   return Object.keys(enumObj._enumDictionary.enumEntriesById);
 };

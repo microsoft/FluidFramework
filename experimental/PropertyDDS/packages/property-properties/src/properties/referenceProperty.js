@@ -94,12 +94,9 @@ export class ReferenceProperty extends ValueProperty {
         var resolvedProperty = this.getParent().resolvePath(this.value,
             { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.ALWAYS });
 
-        if (resolvedProperty !== undefined && _.isArray(in_ids)) {
-            // Forward handling of arrays to the BaseProperty function
-            return resolvedProperty.get(in_ids, in_options);
-        } else {
-            return resolvedProperty;
-        }
+        return resolvedProperty !== undefined && _.isArray(in_ids)
+            ? resolvedProperty.get(in_ids, in_options)
+            : resolvedProperty;
     }
 
     /**
@@ -165,12 +162,10 @@ export class ReferenceProperty extends ValueProperty {
      */
     _resolvePathSegment(in_segment, in_segmentType) {
         // path segments and array tokens are no longer automatically forwarded to the referenced node
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN ||
-            in_segmentType === PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
-            return undefined;
-        } else {
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-        }
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN
+            || in_segmentType === PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
+            ? undefined
+            : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 
     // Define a property to simplify accessing the referenced path

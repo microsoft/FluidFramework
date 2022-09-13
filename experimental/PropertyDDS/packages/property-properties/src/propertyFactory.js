@@ -562,7 +562,7 @@ class PropertyFactory {
         } else if (_.isArray(in_input)) {
             input_array = in_input;
         } else {
-            throw (new Error(MSG.ATTEMPT_TO_REGISTER_WITH_BAD_ARGUMENT));
+            throw (new TypeError(MSG.ATTEMPT_TO_REGISTER_WITH_BAD_ARGUMENT));
         }
 
         if (!validateArray(input_array)) {
@@ -915,11 +915,9 @@ class PropertyFactory {
      * @returns {property-properties.PropertyTemplate|undefined} Template identified by the typeid.
      */
     getTemplate(in_typeid) {
-        if (this._localPrimitivePropertiesAndTemplates.has(in_typeid) && !TypeIdHelper.isPrimitiveType(in_typeid)) {
-            return this._localPrimitivePropertiesAndTemplates.item(in_typeid).getPropertyTemplate();
-        } else {
-            return undefined;
-        }
+        return this._localPrimitivePropertiesAndTemplates.has(in_typeid) && !TypeIdHelper.isPrimitiveType(in_typeid)
+            ? this._localPrimitivePropertiesAndTemplates.item(in_typeid).getPropertyTemplate()
+            : undefined;
     }
 
     /**
@@ -1190,7 +1188,7 @@ class PropertyFactory {
                             } else if (_.isObject(initialValue)) {
                                 Object.assign(initialValue.value, filteredChangeSet);
                             } else {
-                                throw new Error('Invalid default values specified');
+                                throw new TypeError('Invalid default values specified');
                             }
                         } else if (filteredChangeSet !== undefined) {
                             if (initialValue === undefined) {
@@ -1251,15 +1249,13 @@ class PropertyFactory {
 
                 // Insert / append the property to the parent
                 if (currentEntry.parentVarName !== undefined) {
-                    if (currentEntry.def.optional) {
-                        creationFunctionSource += `${currentEntry.parentVarName}._insert(
+                    creationFunctionSource += currentEntry.def.optional
+                        ? `${currentEntry.parentVarName}._insert(
                             ${JSON.stringify(currentEntry.def.entry.id)}, ${currentPropertyVarName}, true
-                        );\n`;
-                    } else {
-                        creationFunctionSource += `${currentEntry.parentVarName}._append(
+                        );\n`
+                        : `${currentEntry.parentVarName}._append(
                             ${currentPropertyVarName}, ${currentEntry.def.allowChildMerges}
                         );\n`;
-                    }
                 } else {
                     resultVarName = currentPropertyVarName;
                 }
@@ -1308,19 +1304,11 @@ class PropertyFactory {
                     // This is a leaf property, so if there is a default value
                     // we directly assign it here
                     if (initialValue !== undefined) {
-                        if (!_.isObject(initialValue.value)) {
-                            // We have a primitive property and thus direclty invoke the setValue function
-                            creationFunctionSource +=
-                                `${currentPropertyVarName}.setValue(${JSON.stringify(initialValue.value)});\n`;
-                        } else {
-                            // For non primitive properties, we currently use the member on the property factory,
-                            // probably we could further optimize this to directly call the correct function on the
-                            // property
-                            creationFunctionSource +=
-                                `this._setInitialValue(${currentPropertyVarName},
+                        creationFunctionSource += !_.isObject(initialValue.value)
+                            ? `${currentPropertyVarName}.setValue(${JSON.stringify(initialValue.value)}\n`
+                            : `this._setInitialValue(${currentPropertyVarName},
                                                         ${JSON.stringify(initialValue)},
                                                         false);\n`;
-                        }
                     }
 
                     // If this property is constant, we assign the constant flag

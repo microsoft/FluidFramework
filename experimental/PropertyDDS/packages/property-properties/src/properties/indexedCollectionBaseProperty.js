@@ -481,13 +481,10 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
                 if (this._containsPrimitiveTypes) {
                     changes = modifiedEntries[modifiedKeys[i]];
                     // Determine if value has changed
-                    if (this._typeid === 'Int64' || this._typeid === 'Uint64') {
-                        // For (u)int64, we will compare (Ui/I)nt64 objects with arrays [low, high]
-                        valueWasChanged = this._dynamicChildren[modifiedKeys[i]].getValueLow() !== changes[0] ||
-                            this._dynamicChildren[modifiedKeys[i]].getValueHigh() !== changes[1];
-                    } else {
-                        valueWasChanged = this._dynamicChildren[modifiedKeys[i]] !== changes;
-                    }
+                    valueWasChanged = this._typeid === 'Int64' || this._typeid === 'Uint64'
+                        ? this._dynamicChildren[modifiedKeys[i]].getValueLow() !== changes[0]
+                            || this._dynamicChildren[modifiedKeys[i]].getValueHigh() !== changes[1]
+                        : this._dynamicChildren[modifiedKeys[i]] !== changes;
                     modifiedEntriesMap = modifiedEntries;
                     if (valueWasChanged) {
                         this._dynamicChildren[modifiedKeys[i]] = this._deserializeValue(changes);

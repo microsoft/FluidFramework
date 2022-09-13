@@ -135,11 +135,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
         if (this._parent) {
             return this.getRoot()._getScope();
         } else {
-            if (this._checkedOutRepositoryInfo) {
-                return this._checkedOutRepositoryInfo.getScope();
-            } else {
-                return undefined;
-            }
+            return this._checkedOutRepositoryInfo ? this._checkedOutRepositoryInfo.getScope() : undefined;
         }
     }
 
@@ -177,11 +173,11 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     _validateRemove(in_id) {
         if (!this._dynamicChildren[in_id]) {
-            if (this._staticChildren[in_id] !== undefined) {
-                throw new Error(MSG.CANNOT_REMOVE_NON_OPTIONAL_PROP + in_id);
-            } else {
-                throw new Error((MSG.REMOVING_NON_EXISTING_KEY + in_id));
-            }
+            const error = this._staticChildren[in_id] !== undefined
+                ? new Error(MSG.CANNOT_REMOVE_NON_OPTIONAL_PROP + in_id)
+                : new Error((MSG.REMOVING_NON_EXISTING_KEY + in_id));
+
+            throw error;
         }
     }
 

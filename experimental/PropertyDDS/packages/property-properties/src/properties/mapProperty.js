@@ -53,11 +53,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection = false) {
-        if (in_hideCollection) {
-            return this._typeid;
-        } else {
-            return TypeIdHelper.createSerializationTypeId(this._typeid, 'map');
-        }
+        return in_hideCollection
+            ? this._typeid
+            : TypeIdHelper.createSerializationTypeId(this._typeid, 'map');
     }
 
     /**
@@ -211,14 +209,12 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * @protected
      */
     _resolvePathSegment(in_segment, in_segmentType) {
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-            return this._dynamicChildren[in_segment];
-        } else {
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN
+            ? this._dynamicChildren[in_segment]
+            : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(
                 this,
                 in_segment,
                 in_segmentType);
-        }
     }
 
     /**
@@ -398,11 +394,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     _getScope() {
         var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
 
-        if (scope !== undefined) {
-            return scope;
-        } else {
-            return this._scope;
-        }
+        return scope !== undefined ? scope : this._scope;
     }
 
     /**

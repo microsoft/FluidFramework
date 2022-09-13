@@ -45,11 +45,7 @@ export class PropertyTemplate {
 
         /** Size of the property (if this is an array) */
         if (params.context === 'array') {
-            if (params.length !== undefined) {
-                this.length = params.length;
-            } else {
-                this.length = 0;
-            }
+            this.length = params.length !== undefined ? params.length : 0;
         } else {
             this.length = 1;
         }
@@ -126,11 +122,7 @@ export class PropertyTemplate {
             minValue = value < minValue ? value : minValue;
         }
 
-        if (enumDictionary.enumEntriesByValue.hasOwnProperty(0)) {
-            enumDictionary.defaultValue = 0;
-        } else {
-            enumDictionary.defaultValue = minValue;
-        }
+        enumDictionary.defaultValue = enumDictionary.enumEntriesByValue.hasOwnProperty(0) ? 0 : minValue;
 
         return enumDictionary;
     }
@@ -216,7 +208,7 @@ export class PropertyTemplate {
                 (_.isObject(in_obj) !== _.isObject(target)) ||
                 (_.isArray(in_obj) !== _.isArray(target)) ||
                 !_.isObject(target)) {
-                throw new Error(
+                throw new TypeError(
                     MSG.INVALID_TARGET_PROPERTY_TEMPLATE + this.typeid,
                 );
             }
@@ -239,7 +231,7 @@ export class PropertyTemplate {
                 target = _.isArray(in_obj) ? [] : {};
                 copyMembers = true;
             } else {
-                throw new Error(
+                throw new TypeError(
                     MSG.MISSING_CASE_IN_TEMPLATE_SERIALIZATION + this.typeid,
                 );
             }

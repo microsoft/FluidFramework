@@ -166,11 +166,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     const expiryInfoToState = (expiryInfo: IExpiryInfo): IModalExpiryState => {
         const newState = {} as IModalExpiryState;
         newState.expiryState = expiryInfo.state;
-        if (expiryInfo.when) {
-            newState.expiresIn = new Date(expiryInfo.when).toLocaleString();
-        } else {
-            newState.expiresIn = "never";
-        }
+        newState.expiresIn = expiryInfo.when ? new Date(expiryInfo.when).toLocaleString() : "never";
         return newState;
     };
 
@@ -245,21 +241,18 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     // Renders the life cycle state chip or placeholder
     const renderLifeCycleState = () => {
         let lifeCycle;
-        if (modalExpiryState.expiresIn === expiryPlaceHolder) {
-            lifeCycle = (
+        lifeCycle = modalExpiryState.expiresIn === expiryPlaceHolder
+            ? (
                 <span>
                     {modalExpiryState.expiresIn}
                 </span>
-            );
-        } else {
-            lifeCycle = (
+            ) : (
                 <CustomChip
                     height={30}
                     label={lifeCycleDescriptions[modalExpiryState.expiryState]}
                     className={classNames(classes.expiryStateChip, [modalExpiryState.expiryState])}
                 />
             );
-        }
         return lifeCycle;
     };
 

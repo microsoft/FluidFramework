@@ -368,12 +368,11 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 for (var i = 0; i < in_values.length; i++) {
                     var prop = in_values[i];
 
-                    if (in_values[i] instanceof BaseProperty) {
-                        prop = in_values[i];
-                    } else {
-                        prop = Property.PropertyFactory._createProperty(
+                    prop = in_values[i] instanceof BaseProperty
+                        ? in_values[i]
+                        : Property.PropertyFactory._createProperty(
                             in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope());
-                    }
+
                     arr.push(prop);
                 }
 
@@ -532,11 +531,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         if (this._dirty) {
             if (this._dirty.dirty === undefined &&
                 this._dirty.pending === undefined) {
-                if (oldFlags === 0) {
-                    this._dirty = undefined;
-                } else {
-                    this._dirty = DIRTY_STATE_FLAGS_ARRAY[oldFlags];
-                }
+                this._dirty = oldFlags === 0 ? undefined : DIRTY_STATE_FLAGS_ARRAY[oldFlags];
             } else {
                 this._dirty.flags = oldFlags;
             }
@@ -1647,11 +1642,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection) {
-        if (in_hideCollection) {
-            return this._typeid;
-        } else {
-            return TypeIdHelper.createSerializationTypeId(this._typeid, 'array');
-        }
+        return in_hideCollection
+            ? this._typeid
+            : TypeIdHelper.createSerializationTypeId(this._typeid, 'array');
     }
 
     /**
@@ -1749,11 +1742,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     _getScope() {
         var scope = AbstractStaticCollectionProperty.prototype._getScope.call(this);
 
-        if (scope !== undefined) {
-            return scope;
-        } else {
-            return this._scope;
-        }
+        return scope !== undefined ? scope : this._scope;
     }
 
     /**

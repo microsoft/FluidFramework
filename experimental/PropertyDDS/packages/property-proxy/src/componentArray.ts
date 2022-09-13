@@ -18,11 +18,9 @@ import { forceType, Utilities } from "./utilities";
  */
 const createArrayIterator = (target: ComponentArray) => function*() {
     for (let i = 0; i < target.getProperty().getLength(); i++) {
-        if (PropertyFactory.instanceOf(target.getProperty().get(i)!, "BaseProperty")) {
-            yield PropertyProxy.proxify(target.getProperty().get(i)!);
-        } else {
-            yield target.getProperty().get(i);
-        }
+        yield (PropertyFactory.instanceOf(target.getProperty().get(i)!, "BaseProperty")
+            ? PropertyProxy.proxify(target.getProperty().get(i)!)
+            : target.getProperty().get(i));
     }
 };
 
@@ -169,11 +167,9 @@ class ComponentArray extends Array {
         } else {
             popped = this.property.pop();
         }
-        if (PropertyFactory.instanceOf(popped, "BaseProperty")) {
-            return PropertyProxy.proxify(popped);
-        } else {
-            return popped;
-        }
+        return PropertyFactory.instanceOf(popped, "BaseProperty")
+            ? PropertyProxy.proxify(popped)
+            : popped;
     }
 
     /**
@@ -204,11 +200,7 @@ class ComponentArray extends Array {
         } else {
             first = this.property.shift();
         }
-        if (PropertyFactory.instanceOf(first, "BaseProperty")) {
-            return PropertyProxy.proxify(first);
-        } else {
-            return first;
-        }
+        return PropertyFactory.instanceOf(first, "BaseProperty") ? PropertyProxy.proxify(first) : first;
     }
 
     /**

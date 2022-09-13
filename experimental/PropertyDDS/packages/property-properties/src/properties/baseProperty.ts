@@ -166,11 +166,7 @@ export abstract class BaseProperty {
      * property belongs to
      */
     protected _getScope(): string | undefined {
-        if (this._parent) {
-            return this.getRoot()._getScope();
-        } else {
-            return undefined;
-        }
+        return this._parent ? this.getRoot()._getScope() : undefined;
     }
 
     /**
@@ -818,11 +814,7 @@ export abstract class BaseProperty {
             }
             return undefined;
         });
-        if (foundPath === BREAK_TRAVERSAL) {
-            return path.join('');
-        } else {
-            return undefined;
-        }
+        return foundPath === BREAK_TRAVERSAL ? path.join('') : undefined;
     }
 
     /**
@@ -884,11 +876,7 @@ export abstract class BaseProperty {
             return this._getPathsThroughRepoRef(in_fromProperty);
         } else {
             var directPath = this._getDirectPath(in_fromProperty);
-            if (directPath !== undefined) {
-                return [directPath];
-            } else {
-                return [this._getIndirectPath(in_fromProperty)];
-            }
+            return directPath !== undefined ? [directPath] : [this._getIndirectPath(in_fromProperty)];
         }
     }
 
@@ -994,11 +982,7 @@ export abstract class BaseProperty {
         ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
         if (this._parent) {
             var result = in_callback(this._parent);
-            if (result !== BREAK_TRAVERSAL) {
-                return this._parent.traverseUp(in_callback);
-            } else {
-                return BREAK_TRAVERSAL;
-            }
+            return result !== BREAK_TRAVERSAL ? this._parent.traverseUp(in_callback) : BREAK_TRAVERSAL;
         }
 
         return undefined;
