@@ -123,8 +123,6 @@ async function runAndValidateBatch(
     }
 }
 
-// describe.only("TODO: REMOVE ME", () => { // TODO
-// Array.from({ length: 1000 }).forEach(() => {
 describeNoCompat("Batching failures", (getTestObjectProvider) => {
     it("working proxy",
     async function() {
@@ -353,5 +351,3 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         });
     });
 });
-// });
-// });
