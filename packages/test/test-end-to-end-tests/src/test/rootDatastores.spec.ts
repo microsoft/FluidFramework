@@ -397,7 +397,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
     describe("Legacy root datastores to aliased datastores conversion", () => {
         const oldVersion = "1.0.0";
-        beforeEach(async () => {
+
+        before(async () => {
             await ensurePackageInstalled(oldVersion, 0, /* force */ false);
         });
         afterEach(async () => reset());
@@ -412,25 +413,27 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             "default",
         );
 
-        const oldContainerRuntimeFactoryWithDefaultDataStore =
-            getContainerRuntimeApi(oldVersion).ContainerRuntimeFactoryWithDefaultDataStore;
+        const createOldContainer = async (): Promise<IContainer> => {
+            const oldContainerRuntimeFactoryWithDefaultDataStore =
+                getContainerRuntimeApi(oldVersion).ContainerRuntimeFactoryWithDefaultDataStore;
+            const oldRuntimeFactory =
+                new oldContainerRuntimeFactoryWithDefaultDataStore(
+                    factory,
+                    [
+                        [factory.type, Promise.resolve(factory)],
+                    ],
+                    undefined,
+                    [innerRequestHandler],
+                    runtimeOptionsForSummaries,
+                );
 
-        const oldRuntimeFactory =
-            new oldContainerRuntimeFactoryWithDefaultDataStore(
-                factory,
-                [
-                    [factory.type, Promise.resolve(factory)],
-                ],
-                undefined,
-                [innerRequestHandler],
-            );
-
-        const createOldContainer = async (): Promise<IContainer> => provider.createContainer(oldRuntimeFactory);
+            return provider.createContainer(oldRuntimeFactory);
+        };
 
         it("Old document with root datastores, new runtime will alias them", async () => {
             const oldContainer = await createOldContainer();
             const oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "/");
-            const sc = new SummaryCollection(container1.deltaManager, new TelemetryNullLogger());
+            const sc = new SummaryCollection(oldContainer.deltaManager, new TelemetryNullLogger());
             await (runtimeOf(oldDataObject) as any).createRootDataStore(packageName, "1");
             await provider.ensureSynchronized();
             const version = await waitForSummary(provider, oldContainer, sc);
