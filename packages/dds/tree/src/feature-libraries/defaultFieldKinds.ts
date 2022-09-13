@@ -284,7 +284,11 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
 };
 
 export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
-    setValue(newValue: JsonableTree): ValueChangeset;
+    /**
+     * Creates a change which replaces the current value of the field with `newValue`.
+     * `newValue` should not be mutated once passed to this call.
+     */
+    set(newValue: JsonableTree): ValueChangeset;
 }
 
 const valueFieldEditor: ValueFieldEditor = {
@@ -293,7 +297,7 @@ const valueFieldEditor: ValueFieldEditor = {
         return { changes: change };
     },
 
-    setValue: (newValue) => ({ value: newValue }),
+    set: (newValue) => ({ value: newValue }),
 };
 
 const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
