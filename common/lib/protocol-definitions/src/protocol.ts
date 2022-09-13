@@ -92,7 +92,7 @@ export interface IDocumentMessage {
     traces?: ITrace[];
 
     /**
-     * The compression algorithm that was used to compress the op.
+     * The compression algorithm that was used to compress contents of this op.
      * @experimental Not ready for use
      */
     compression?: string;
@@ -173,7 +173,7 @@ export interface ISequencedDocumentMessage {
     expHash1?: string;
 
     /**
-     * The compression algorithm that was used to compress this op.
+     * The compression algorithm that was used to compress contents of this op.
      * @experimental Not ready for use.
      */
     compression?: string;
