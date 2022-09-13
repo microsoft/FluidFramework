@@ -330,14 +330,22 @@ export class MapProperty extends IndexedCollectionBaseProperty {
                     in_options.referenceResolutionMode;
 
             var prop = this;
-            if (in_ids === PATH_TOKENS.ROOT) {
-                prop = prop.getRoot();
-            } else if (in_ids === PATH_TOKENS.UP) {
-                prop = prop.getParent();
-            } else if (in_ids === PATH_TOKENS.REF) {
-                throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
-            } else {
-                prop = prop._dynamicChildren[in_ids];
+            switch (in_ids) {
+                case PATH_TOKENS.ROOT: {
+                    prop = prop.getRoot();
+                    break;
+                }
+                case PATH_TOKENS.UP: {
+                    prop = prop.getParent();
+                    break;
+                }
+                case PATH_TOKENS.REF: {
+                    throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+                }
+                default: {
+                    prop = prop._dynamicChildren[in_ids];
+                    break;
+                }
             }
 
             // Handle automatic reference resolution

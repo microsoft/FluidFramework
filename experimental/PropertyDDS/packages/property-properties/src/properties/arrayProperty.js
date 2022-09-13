@@ -867,22 +867,27 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             return prop;
         }
 
-        if (in_position === PATH_TOKENS.ROOT) {
-            return prop.getRoot();
-        } else if (in_position === PATH_TOKENS.UP) {
-            return prop.getParent();
-        } else if (in_position === PATH_TOKENS.REF) {
-            throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
-        } else {
-            var pos = Math.floor(in_position);
-            ConsoleUtils.assert(isFinite(pos), MSG.IN_POSITION_MUST_BE_NUMBER);
-            var result = this._dataArrayGetValue(pos);
-            if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
-                if (result instanceof Property.ReferenceProperty) {
-                    result = result.ref;
-                }
+        switch (in_position) {
+            case PATH_TOKENS.ROOT: {
+                return prop.getRoot();
             }
-            return result;
+            case PATH_TOKENS.UP: {
+                return prop.getParent();
+            }
+            case PATH_TOKENS.REF: {
+                throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+            }
+            default: {
+                var pos = Math.floor(in_position);
+                ConsoleUtils.assert(isFinite(pos), MSG.IN_POSITION_MUST_BE_NUMBER);
+                var result = this._dataArrayGetValue(pos);
+                if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
+                    if (result instanceof Property.ReferenceProperty) {
+                        result = result.ref;
+                    }
+                }
+                return result;
+            }
         }
     }
 
@@ -1468,36 +1473,45 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 }
             } else if (currentArrayIndex === opStartIndex) {
                 // handle the op
-                if (op.type === ArrayChangeSetIterator.types.REMOVE) {
-                    // no need to do something (removes are just copied)
-                    iterator.next(); // we've completely consumed that op
-                } else if (op.type === ArrayChangeSetIterator.types.INSERT) {
-                    // we have to convert the inserts:
-                    var currentInsert = op.operation;
-                    var newInsert = [currentInsert[0], []];
-                    for (var j = 0; j < currentInsert[1].length; ++j) {
-                        // TODO: we don't use the data from the changeset anymore, since we directly
-                        // TODO: read the data from the array now - remove the data from the op and
-                        // TODO: replace it with just the length instead
-                        if (!this._dataArrayGetValue(opStartIndex + j)) {
-                            throw new Error('insert: invalid index');
+                switch (op.type) {
+                    case ArrayChangeSetIterator.types.REMOVE: {
+                        // no need to do something (removes are just copied)
+                        iterator.next(); // we've completely consumed that op
+                        break;
+                    }
+                    case ArrayChangeSetIterator.types.INSERT: {
+                        // we have to convert the inserts:
+                        var currentInsert = op.operation;
+                        var newInsert = [currentInsert[0], []];
+                        for (var j = 0; j < currentInsert[1].length; ++j) {
+                            // TODO: we don't use the data from the changeset anymore, since we directly
+                            // TODO: read the data from the array now - remove the data from the op and
+                            // TODO: replace it with just the length instead
+                            if (!this._dataArrayGetValue(opStartIndex + j)) {
+                                throw new Error('insert: invalid index');
+                            }
+                            newInsert[1].push(this._dataArrayGetValue(opStartIndex + j).serialize(
+                                {
+                                    'dirtyOnly': false, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
+                                    'includeReferencedRepositories': in_includeReferencedRepositories,
+                                }));
                         }
-                        newInsert[1].push(this._dataArrayGetValue(opStartIndex + j).serialize(
-                            {
-                                'dirtyOnly': false, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
-                                'includeReferencedRepositories': in_includeReferencedRepositories,
-                            }));
+                        if (!result.insert) {
+                            result.insert = [];
+                        }
+                        result.insert.push(newInsert);
+                        currentArrayIndex += currentInsert[1].length; // we've read and used these entries above
+                        iterator.next(); // we've completely consumed that op
+                        break;
                     }
-                    if (!result.insert) {
-                        result.insert = [];
+                    case ArrayChangeSetIterator.types.MODIFY: {
+                        // Prevent from looping infinitly
+                        // TODO: Might want to decide if there's something to do here
+                        iterator.next(); // we've completely consumed that op
+                        break;
                     }
-                    result.insert.push(newInsert);
-                    currentArrayIndex += currentInsert[1].length; // we've read and used these entries above
-                    iterator.next(); // we've completely consumed that op
-                } else if (op.type === ArrayChangeSetIterator.types.MODIFY) {
-                    // Prevent from looping infinitly
-                    // TODO: Might want to decide if there's something to do here
-                    iterator.next(); // we've completely consumed that op
+                    default:
+                        break;
                 }
             }
         }

@@ -81,14 +81,23 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                     return undefined;
                 }
             }
-        } else if (in_ids === PATH_TOKENS.ROOT) {
-            prop = prop.getRoot();
-        } else if (in_ids === PATH_TOKENS.UP) {
-            prop = prop.getParent();
-        } else if (in_ids === PATH_TOKENS.REF) {
-            throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
         } else {
-            throw new Error(MSG.STRING_OR_ARRAY_STRINGS + in_ids);
+            switch (in_ids) {
+                case PATH_TOKENS.ROOT: {
+                    prop = prop.getRoot();
+                    break;
+                }
+                case PATH_TOKENS.UP: {
+                    prop = prop.getParent();
+                    break;
+                }
+                case PATH_TOKENS.REF: {
+                    throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+                }
+                default: {
+                    throw new Error(MSG.STRING_OR_ARRAY_STRINGS + in_ids);
+                }
+            }
         }
 
         return prop;

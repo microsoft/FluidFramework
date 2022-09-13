@@ -201,52 +201,61 @@ export namespace PathHelper {
                     throw new Error(MSG.QUOTES_WITHIN_TOKEN + in_path);
                 }
             } else if (!inSquareBrackets) {
-                if (character === PROPERTY_PATH_DELIMITER) {
-                    // A dot symbols starts a new token
-                    storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
-
-                    allowSegmentStart = true;
-                } else if (character === "[") {
-                    // An opening square bracket starts a new token
-                    if (tokenStarted) {
+                switch (character) {
+                    case PROPERTY_PATH_DELIMITER: {
+                        // A dot symbols starts a new token
                         storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
+
+                        allowSegmentStart = true;
+                        break;
                     }
+                    case "[": {
+                        // An opening square bracket starts a new token
+                        if (tokenStarted) {
+                            storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
+                        }
 
-                    // And sets the state to inSquareBrackets
-                    inSquareBrackets = true;
-                } else if (character === "]") {
-                    throw new Error(MSG.CLOSING_BRACKET_WITHOUT_OPENING + in_path);
-                } else if (character === "*") {
-                    // Store the last token
-                    if (tokenStarted) {
-                        storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
+                        // And sets the state to inSquareBrackets
+                        inSquareBrackets = true;
+                        break;
                     }
-
-                    // Create a new dereference token
-                    tokens.push("*");
-                    if (out_types) {
-                        out_types.push(TOKEN_TYPES.DEREFERENCE_TOKEN);
+                    case "]": {
+                        throw new Error(MSG.CLOSING_BRACKET_WITHOUT_OPENING + in_path);
                     }
+                    case "*": {
+                        // Store the last token
+                        if (tokenStarted) {
+                            storeNextToken(TOKEN_TYPES.PATH_SEGMENT_TOKEN);
+                        }
 
-                    // Reset the token started flag
-                    tokenStarted = false;
-                    atStartToken = true;
-                    allowSegmentStart = false;
-                } else {
-                    if (!tokenStarted &&
-                        !allowSegmentStart &&
-                        !inSquareBrackets) {
-                        throw new Error(MSG.MISSING_DOT_AT_SEGMENT_START + in_path);
+                        // Create a new dereference token
+                        tokens.push("*");
+                        if (out_types) {
+                            out_types.push(TOKEN_TYPES.DEREFERENCE_TOKEN);
+                        }
+
+                        // Reset the token started flag
+                        tokenStarted = false;
+                        atStartToken = true;
+                        allowSegmentStart = false;
+                        break;
                     }
+                    default: {
+                        if (!tokenStarted &&
+                            !allowSegmentStart &&
+                            !inSquareBrackets) {
+                            throw new Error(MSG.MISSING_DOT_AT_SEGMENT_START + in_path);
+                        }
 
-                    currentToken += character;
+                        currentToken += character;
 
-                    // We have started parsing the token
-                    tokenStarted = true;
+                        // We have started parsing the token
+                        tokenStarted = true;
 
-                    // When a symbols appears after a closing quotation mark, we have an error
-                    if (lastTokenWasQuoted) {
-                        throw new Error(MSG.QUOTES_WITHIN_TOKEN + in_path);
+                        // When a symbols appears after a closing quotation mark, we have an error
+                        if (lastTokenWasQuoted) {
+                            throw new Error(MSG.QUOTES_WITHIN_TOKEN + in_path);
+                        }
                     }
                 }
             } else {
