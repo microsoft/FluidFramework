@@ -133,6 +133,11 @@ export function isFluidError(e: any): e is IFluidErrorBase;
 // @public
 export const isILoggingError: (x: any) => x is ILoggingError;
 
+// Warning: (ae-forgotten-export) The symbol "NormalizedLoggingError" needs to be exported by the entry point index.d.ts
+//
+// @public
+export function isNormalizedLoggingError(object: unknown): object is NormalizedLoggingError;
+
 // @public
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType;
 
@@ -165,6 +170,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     getTelemetryProperties(): ITelemetryProperties;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;
+    static typeCheck(object: unknown): object is LoggingError;
 }
 
 // @public
