@@ -427,12 +427,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         const createOldContainer = async (): Promise<IContainer> => provider.createContainer(oldRuntimeFactory);
 
-        let oldContainer: IContainer;
-        let oldDataObject: ITestFluidObject;
-
         it("Old document with root datastores, new runtime will alias them", async () => {
-            oldContainer = await createOldContainer();
-            oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "/");
+            const oldContainer = await createOldContainer();
+            const oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "/");
             const sc = new SummaryCollection(container1.deltaManager, new TelemetryNullLogger());
             await (runtimeOf(oldDataObject) as any).createRootDataStore(packageName, "1");
             await provider.ensureSynchronized();
@@ -450,7 +447,15 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         it("New document, old runtime creates root datastores, new runtime will alias them", async () => {
+            const oldContainer = await createOldContainer();
+            const oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "/");
+            const newContainer = await provider.loadTestContainer(testContainerConfig);
+            const newDataObject = await requestFluidObject<ITestFluidObject>(newContainer, "/");
 
+            await (runtimeOf(oldDataObject) as any).createRootDataStore(packageName, "1");
+            await provider.ensureSynchronized();
+
+            assert.ok(await getRootDataStore(newDataObject, "1"));
         });
     });
 });
