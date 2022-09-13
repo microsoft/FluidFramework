@@ -111,7 +111,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         if (lastCommit === undefined || newCommit.refNumber === lastCommit.seqNumber) {
             branch.isDivergent = false;
         } else {
-            branch.isDivergent ||= newCommit.sessionId !== lastCommit?.sessionId;
+            branch.isDivergent ||= newCommit.sessionId !== lastCommit.sessionId;
         }
     }
 
@@ -263,8 +263,10 @@ interface Branch<TChangeset> {
     localChanges: Commit<TChangeset>[];
     refSeq: SeqNumber;
     /**
-     * True iff the commits on the branch were not based on the commit at trunk tip at the time
-     * they were sequenced.
+     * A branch is divergent iff it has local changes and there is a change with a `seqNumber`
+     * between the branch's `refSeq` and the `seqNumber` of the last change in the branch.
+     * In other words, the ref commit followed by the local changes
+     * do not from a contiguous block in the trunk or final sequence.
      *
      * Note that a commit whose ref number does not match the latest sequence number at the time of its
      * sequencing is not necessarily divergent: if the commit is from the peer who issued the preceding commit,
@@ -274,13 +276,13 @@ interface Branch<TChangeset> {
      *
      * - A new commit `c`
      *
-     * - The function `prev(x)` that return the commit sequenced immediately before commit `x`:
+     * - The function `prev(x)` that returns the commit sequenced immediately before commit `x`:
      *
      * ```typescript
      * isDivergent(c) =
      *     prev(c) !== undefined
-     *     && c.ref != prev(c).seq
-     *     && (prev(c).peer != c.peer || isDivergent(prev(c)))
+     *     && c.refNumber !== prev(c).seqNumber
+     *     && (prev(c).sessionId !== c.sessionId || isDivergent(prev(c)))
      * ```
      */
     isDivergent: boolean;
