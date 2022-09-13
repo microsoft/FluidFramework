@@ -22,17 +22,9 @@ export interface ITreeCursor {
      */
     readonly pending: boolean;
 
-    /**
-     * Enters the first field (setting mode to `Fields`)
-     * so fields can be iterated with `nextField` and `skipPendingFields`.
-     *
-     * If there are no fields, mode is returned to `Nodes` and false is returned.
-     *
-     * Allowed when `mode` is `Nodes` and not `pending`.
-     */
-    firstField(): boolean;
+    // ********** APIs for when mode = Fields ********** //
 
-     /**
+    /**
      * Moves the "current field" forward one in an arbitrary field traversal order.
      *
      * If there is no remaining field to iterate to,
@@ -47,7 +39,17 @@ export interface ITreeCursor {
      */
     nextField(): boolean;
 
-     /**
+    /**
+     * Navigate up to parent node.
+     * Sets mode to `Nodes`
+     *
+     * Only valid when `mode` is `Fields`.
+     *
+     * TODO: what to do if at root?
+     */
+    exitField(): void;
+
+    /**
      * Moves the "current field" forward until `pending` is `false`.
      *
      * If there are no remaining field to iterate to,
@@ -58,29 +60,6 @@ export interface ITreeCursor {
      * Allowed when `mode` is `Fields`.
      */
     skipPendingFields(): boolean;
-
-    /**
-     * Moves `offset` nodes in the field.
-     * If seeking to exactly past either end,
-     * returns false and navigates up to the parent field (setting mode to `Fields`).
-     *
-     * Allowed if mode is `Nodes`.
-     */
-    seekNodes(offset: number): boolean;
-
-    /**
-     * Moves to the first node of the selected field, setting mode to `Fields`.
-     *
-     * If field is empty, returns false instead.
-     *
-     * Allowed when `mode` is `Fields`, and not `pending`.
-     */
-    firstNode(): boolean;
-
-    /**
-     * The same as `seekNodes(1)`, but might be faster.
-     */
-    nextNode(): boolean;
 
     // ********** APIs for when mode = Fields, and not pending ********** //
 
@@ -97,6 +76,15 @@ export interface ITreeCursor {
      * Allowed when `mode` is `Fields`, and not `pending`.
      */
     getFieldLength(): number;
+
+    /**
+     * Moves to the first node of the selected field, setting mode to `Fields`.
+     *
+     * If field is empty, returns false instead.
+     *
+     * Allowed when `mode` is `Fields`, and not `pending`.
+     */
+     firstNode(): boolean;
 
     /**
      * Sets current node to the node at the provided `index` of the current field.
@@ -149,24 +137,19 @@ export interface ITreeCursor {
      */
     readonly chunkLength: number;
 
-    // ********** APIs for when mode = Nodes and not pending ********** //
+    /**
+     * Moves `offset` nodes in the field.
+     * If seeking to exactly past either end,
+     * returns false and navigates up to the parent field (setting mode to `Fields`).
+     *
+     * Allowed if mode is `Nodes`.
+     */
+    seekNodes(offset: number): boolean;
 
     /**
-     * Navigate to the field with the specified `key` and set the mode to `Fields`.
-     *
-     * Only valid when `mode` is `Nodes`, and not `pending`.
+     * The same as `seekNodes(1)`, but might be faster.
      */
-    enterField(key: FieldKey): void;
-
-    /**
-     * Navigate up to parent node.
-     * Sets mode to `Nodes`
-     *
-     * Only valid when `mode` is `Fields`.
-     *
-     * TODO: what to do if at root?
-     */
-    exitField(): void;
+    nextNode(): boolean;
 
     /**
      * Navigate up to parent field.
@@ -178,6 +161,25 @@ export interface ITreeCursor {
      * TODO: Maybe merge with upToNode to make a single "Up"?
      */
     exitNode(): void;
+
+    // ********** APIs for when mode = Nodes and not pending ********** //
+
+    /**
+     * Enters the first field (setting mode to `Fields`)
+     * so fields can be iterated with `nextField` and `skipPendingFields`.
+     *
+     * If there are no fields, mode is returned to `Nodes` and false is returned.
+     *
+     * Allowed when `mode` is `Nodes` and not `pending`.
+     */
+     firstField(): boolean;
+
+    /**
+     * Navigate to the field with the specified `key` and set the mode to `Fields`.
+     *
+     * Only valid when `mode` is `Nodes`, and not `pending`.
+     */
+    enterField(key: FieldKey): void;
 
     /**
      * The type of the currently selected node.
