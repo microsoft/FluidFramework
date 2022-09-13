@@ -178,7 +178,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
      *
      * This method overrides the oclif Command error method so we can do some formatting on the strings.
      */
-     public error(
+    public error(
         input: string | Error,
         options: { code?: string | undefined; exit: false } & PrettyPrintableError,
     ): void;
@@ -194,7 +194,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
      *
      * This method overrides the oclif Command error method so we can do some formatting on the strings.
      */
-     public error(
+    public error(
         input: string | Error,
         options?:
             | ({ code?: string | undefined; exit?: number | undefined } & PrettyPrintableError)
