@@ -22,6 +22,7 @@ import {
     FieldChangeEncoder,
     NodeChangeDecoder,
     NodeChangeEncoder,
+    FieldEditor,
 } from "./modular-schema";
 
 /**
@@ -193,7 +194,7 @@ export const counter: FieldKind = new FieldKind(
     new Set(),
 );
 
-interface ValueChangeset {
+export interface ValueChangeset {
     value?: JsonableTree;
     changes?: NodeChangeset;
 }
@@ -211,7 +212,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
 
                 // The previous changes applied to a different value, so we discard them.
                 // TODO: Consider if we should represent muted changes
-                changes.length = 0;
+                childChanges.length = 0;
             }
 
             if (change.changes !== undefined) {
@@ -282,16 +283,23 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
     },
 };
 
+export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
+    setValue(newValue: JsonableTree): ValueChangeset;
+}
+
+const valueFieldEditor: ValueFieldEditor = {
+    buildChildChange: (index, change) => {
+        assert(index === 0, "Value fields only support a single child node");
+        return { changes: change };
+    },
+
+    setValue: (newValue) => ({ value: newValue }),
+};
+
 const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
     rebaser: valueRebaser,
     encoder: valueFieldEncoder,
-
-    editor: {
-        buildChildChange: (index, change) => {
-            assert(index === 0, "Value fields only support a single child node");
-            return { changes: change };
-        },
-    },
+    editor: valueFieldEditor,
 
     intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
         if (change.value !== undefined) {

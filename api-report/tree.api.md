@@ -304,6 +304,8 @@ declare namespace FieldKinds {
         noChangeHandle,
         counterHandle,
         counter,
+        ValueChangeset,
+        ValueFieldEditor,
         value,
         optional,
         sequence,
@@ -1329,12 +1331,26 @@ export interface ValueChange {
     value?: Value;
 }
 
+// @public (undocumented)
+interface ValueChangeset {
+    // (undocumented)
+    changes?: NodeChangeset;
+    // (undocumented)
+    value?: JsonableTree;
+}
+
 // @public @sealed
 class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
     // (undocumented)
     decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): T;
     // (undocumented)
     encodeForJson(formatVersion: number, change: T): JsonCompatibleReadOnly;
+}
+
+// @public (undocumented)
+interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
+    // (undocumented)
+    setValue(newValue: JsonableTree): ValueChangeset;
 }
 
 // @public
