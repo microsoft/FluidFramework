@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { DataObject } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
