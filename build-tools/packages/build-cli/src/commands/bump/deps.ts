@@ -10,7 +10,7 @@ import type { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import stripAnsi from "strip-ansi";
 import { BaseCommand } from "../../base";
-import { dependencyUpdateTypeFlag, releaseGroupFlag } from "../../flags";
+import { checkFlags, dependencyUpdateTypeFlag, releaseGroupFlag, skipCheckFlag } from "../../flags";
 import { generateBumpDepsBranchName, isDependencyUpdateType, npmCheckUpdates } from "../../lib";
 import { isReleaseGroup, ReleaseGroup } from "../../releaseGroups";
 
@@ -37,14 +37,14 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
     ];
 
     static flags = {
-        bumpType: dependencyUpdateTypeFlag({
+        updateType: dependencyUpdateTypeFlag({
             char: "t",
             description: "Bump the current version of the dependency according to this bump type.",
         }),
         prerelease: Flags.boolean({
             char: "p",
-            dependsOn: ["bumpType"],
-            description: "Bump to pre-release versions.",
+            dependsOn: ["updateType"],
+            description: "Treat prerelease versions as valid versions to update to.",
         }),
         onlyBumpPrerelease: Flags.boolean({
             description: "Only bump dependencies that are on pre-release versions.",
@@ -52,22 +52,9 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         releaseGroup: releaseGroupFlag({
             description: "Only bump dependencies within this release group.",
         }),
-        commit: Flags.boolean({
-            allowNo: true,
-            default: true,
-            description: "Commit changes to a new branch.",
-        }),
-        install: Flags.boolean({
-            allowNo: true,
-            default: true,
-            description: "Update lockfiles by running 'npm install' automatically.",
-        }),
-        skipChecks: Flags.boolean({
-            char: "x",
-            default: false,
-            description: "Skip all checks.",
-            exclusive: ["install", "commit"],
-        }),
+        commit: checkFlags.commit,
+        install: checkFlags.install,
+        skipChecks: skipCheckFlag,
         ...BaseCommand.flags,
     };
 
@@ -115,7 +102,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         }
 
         /** The version range or bump type (depending on the CLI arguments) to set. */
-        const versionToSet = flags.bumpType ?? "current";
+        const versionToSet = flags.updateType ?? "current";
 
         /** A list of package names on which to update dependencies. */
         const depsToUpdate: string[] = [];
@@ -151,8 +138,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         this.logHr();
         this.log("");
 
-        if (!isDependencyUpdateType(flags.bumpType) || flags.bumpType === undefined) {
-            this.error(`Unknown dependency update type: ${flags.bumpType}`);
+        if (!isDependencyUpdateType(flags.updateType) || flags.updateType === undefined) {
+            this.error(`Unknown dependency update type: ${flags.updateType}`);
         }
 
         const { updatedPackages, updatedDependencies } = await npmCheckUpdates(
@@ -160,7 +147,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             flags.releaseGroup, // if undefined the whole repo will be checked
             depsToUpdate,
             args.package_or_release_group,
-            flags.bumpType,
+            flags.updateType,
             /* prerelease */ flags.prerelease,
             /* writeChanges */ true,
             this.logger,
@@ -211,7 +198,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 
                 const bumpBranch = generateBumpDepsBranchName(
                     args.package_or_release_group,
-                    flags.bumpType,
+                    flags.updateType,
                     flags.releaseGroup,
                 );
                 this.log(`Creating branch ${bumpBranch}`);

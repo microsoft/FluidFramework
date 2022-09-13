@@ -137,7 +137,7 @@ Update the dependency version of a specified package or release group. That is, 
 ```
 USAGE
   $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-p -t latest|newest|greatest|minor|patch|@next|@canary]
-    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit] [-v]
+    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit |  |  | ] [-v]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group. Dependencies on these packages will be bumped.
@@ -145,8 +145,8 @@ ARGUMENTS
 FLAGS
   -g, --releaseGroup=<option>  Only bump dependencies within this release group.
                                <options: client|server|azure|build-tools>
-  -p, --prerelease             Bump to pre-release versions.
-  -t, --bumpType=<option>      Bump the current version of the dependency according to this bump type.
+  -p, --prerelease             Treat prerelease versions as valid versions to update to.
+  -t, --updateType=<option>    Bump the current version of the dependency according to this bump type.
                                <options: latest|newest|greatest|minor|patch|@next|@canary>
   -v, --verbose                Verbose logging.
   -x, --skipChecks             Skip all checks.
@@ -168,9 +168,10 @@ EXAMPLES
 
     $ flub bump deps @fluidframework/build-common -t minor -g azure
 
-  Bump dependencies on packages in the server release group to the next major prerelease in the client release group.
+  Bump dependencies on packages in the server release group to the greatest released version in the client release
+  group. Include pre-release versions.
 
-    $ flub bump deps server -g client -t major -p
+    $ flub bump deps server -g client -t greatest -p
 
   Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with
   release ranges.
