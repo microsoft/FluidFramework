@@ -8,9 +8,9 @@
     <script src="https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js"></script>
     {{- end -}}
 
-    <div id="main">
+    <div id="main" style="flex-grow: 1;display: flex;flex-direction: column;">
         {{- partial "header.html" . -}}
-        <div {{ if .IsHome}}class="home" {{ end}}>
+        <div {{ if .IsHome}}class="home" {{ end}} style="flex-grow: 1; display:flex;flex-direction:column;">
             {{- block "main" . }}{{- end }}
         </div>
     </div>

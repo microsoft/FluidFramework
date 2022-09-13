@@ -7,6 +7,9 @@ $ctaHeight: 124.7px; //200px;
 
 body {
   margin-bottom: $footerheight;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 footer {
@@ -90,7 +93,7 @@ footer {
 .ctas {
   min-height: $ctaHeight;
   width: 100%;
-  position: absolute;
+  position: relative;
   bottom: $footerheight;
   left: 0;
   display: flex;
