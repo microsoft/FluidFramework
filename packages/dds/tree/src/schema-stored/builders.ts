@@ -6,7 +6,7 @@
 import { brand, brandOpaque } from "../util";
 import {
     FieldKindIdentifier,
-    FieldSchema, GlobalFieldKey, LocalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    FieldSchema, GlobalFieldKey, LocalFieldKey, Named, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "./schema";
 
 /**
@@ -84,5 +84,15 @@ export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
         extraLocalFields: data.extraLocalFields,
         extraGlobalFields: data.extraGlobalFields ?? defaultExtraGlobalFields,
         value: data.value ?? ValueSchema.Nothing,
+    };
+}
+
+/**
+ * Helper for building {@link NamedTreeSchema}.
+ */
+ export function namedTreeSchema(data: TreeSchemaBuilder & Named<TreeSchemaIdentifier>): NamedTreeSchema {
+    return {
+        name: data.name,
+        ...treeSchema(data),
     };
 }

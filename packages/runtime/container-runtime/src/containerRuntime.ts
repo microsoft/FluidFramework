@@ -1018,7 +1018,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         if (baseSnapshot) {
-            this.summarizerNode.loadBaseSummaryWithoutDifferential(baseSnapshot);
+            this.summarizerNode.updateBaseSummaryState(baseSnapshot);
         }
 
         this.dataStores = new DataStores(
@@ -2399,7 +2399,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let clientSequenceNumber: number;
             try {
-                clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
+                clientSequenceNumber = this.submitSummaryMessage(summaryMessage);
             } catch (error) {
                 return { stage: "upload", ...uploadData, error };
             }
@@ -2567,24 +2567,30 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private submitSystemMessage(
-        type: MessageType,
-        contents: any) {
+    private submitMessageCore(type: MessageType, contents: any, batch: boolean, metaData?: any) {
         this.verifyNotClosed();
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
-        // System message should not be sent in the middle of the batch.
-        // That said, we can preserve existing behavior by not flushing existing buffer.
-        // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
-        const middleOfBatch = this.currentlyBatching() && this.needsFlush;
-        if (middleOfBatch) {
-            this.mc.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
-        }
-
         return this.context.submitFn(
             type,
-            contents,
-            middleOfBatch);
+            // back-compat: ADO #1385: remove this check in future and make unconditional
+            this.context.submitSummaryFn === undefined ? contents : JSON.stringify(contents),
+            batch,
+            metaData);
+    }
+
+    private submitSummaryMessage(contents: ISummaryContent) {
+        // System message should not be sent in the middle of the batch.
+        assert(this.flushMode !== FlushMode.TurnBased || !this.needsFlush, "System op in the middle of a batch");
+        // back-compat: ADO #1385: Make this call unconditional in the future
+        if (this.context.submitSummaryFn !== undefined) {
+            return this.context.submitSummaryFn(contents);
+        } else {
+            return this.submitMessageCore(
+                MessageType.Summarize,
+                contents,
+                false); // batch
+            }
     }
 
     private submitRuntimeMessage(
@@ -2593,11 +2599,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         batch: boolean,
         contentLength: number,
         serializedContent?: string,
-        appData?: any,
+        metaData?: any,
     ) {
-        this.verifyNotClosed();
-        assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
-
         if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
             serializedContent &&
             contentLength > this.runtimeOptions.compressionOptions.minimumSize
@@ -2626,19 +2629,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 contents: shouldCompress ? compressedContent : contents,
             };
 
-            return this.context.submitFn(
+            return this.submitMessageCore(
                 MessageType.Operation,
                 compressedPayload,
                 batch,
-                { ...appData, compressed: shouldCompress });
+                { ...metaData, compressed: shouldCompress });
         }
 
         const payload: ContainerRuntimeMessage = { type, contents };
-        return this.context.submitFn(
+        return this.submitMessageCore(
             MessageType.Operation,
             payload,
             batch,
-            appData);
+            metaData);
     }
 
     /**
@@ -2809,6 +2812,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public getPendingLocalState(): unknown {
         if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad)) {
             throw new UsageError("can't get state when offline load disabled");
+        }
+
+        if (this._orderSequentiallyCalls !== 0) {
+            throw new UsageError("can't get state during orderSequentially");
         }
 
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
