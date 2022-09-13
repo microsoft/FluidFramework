@@ -1,8 +1,10 @@
 # Shared Tree Storage
 
-> Items in a `code block` are elaborated upon in the Glossary at the end of this document.
+> Note: Items in a `code block` are elaborated upon in the Glossary at the end of this document.
 
-This document discusses plans and options for serializing the SharedTree data structure. It is important to establish that the SharedTree needs to be able to represent _very large documents_ (documents a terabyte in size, or more, are on the table). There is therefore significant complexity introduced to many of the storage approaches in order to make this kind of scalability possible. The data that needs to be stored in order to fully capture the state of the tree is as follows:
+## Overview
+
+This document discusses plans and options for serializing the SharedTree data structure. The design is motivated by SharedTree's scalability needs; a SharedTree needs to be able to hold _very_ large documents (documents on the order of terabytes are a requirement). There is therefore significant complexity introduced to many of the storage approaches in order to make this kind of scalability possible. The data that needs to be stored in order to fully capture the state of the tree is as follows:
 
 1. The nodes in the tree. This includes any metadata or attributes associated with each node (e.g. schema type, identity label) as well as the data payload of the node (e.g. its "value", if it has one)
 2. The child/parent relationships between the nodes in the tree.
@@ -15,13 +17,17 @@ Optionally, some trees may store the following information depending on the need
 6. A log of operations
 7. History information that is localized to a particular part of the tree. The simplest way to store this information might be by including it on the nodes themselves.
 
-It is a goal of SharedTree to support `partial checkouts` of the tree. This constraint has implications on the layout of the storage data. For example, item 7 in the list above might not be necessary if the full tree was always available to a client, but for a client with only a partial checkout, it must be able to access data for only the portion of the tree that it cares about.
+> Note: The remainder of this document will focus on how to store data that resides in the tree structure itself (1, 2 and 7 above).
 
-> The remainder of this document will focus on how to store data that resides in the tree structure itself (1, 2 and 7 above).
+## Virtualization
+
+Clients accessing a very large document via a SharedTree may not be able to hold the entire contents of the tree in their memory (or even their disk!). Therefore, a SharedTree must be able to `virtualize` some regions of a tree to a client without downloading all the others. The part of the tree requested by a client is its `partial checkout`.
+
+It is a goal of SharedTree to support `partial checkouts` of the tree. This constraint has implications on the layout of the storage data. For example, item 7 in the list above might not be necessary if the full tree was always available to a client, but for a client with only a partial checkout, it must be able to access data for only the portion of the tree that it cares about. Likewise, it must be able to update parts of the tree `incrementally` to minimize writes.
 
 ## Blobs and Chunks
 
-In order to allow the reading and writing of individual portions of the tree, clients split the tree into contiguous regions of nodes called `chunks` according to a chunking algorithm. For example:
+In order to allow partial checkouts, clients split the tree into contiguous regions of nodes called `chunks` according to a chunking algorithm. For example:
 
 ```mermaid
 graph TD;
@@ -51,11 +57,11 @@ graph TD;
 
 > In practice, chunks will likely contain many more nodes than in the illustration above
 
-> The chunking algorithm itself is outside the scope of this document
+> The chunking algorithm itself is outside the scope of this document. It has the constraint that chunks are contiguous and do not overlap.
 
-These chunks are the smallest units of tree that can be read from storage or written to storage individually. At the storage layer, chunks are stored in `blobs` which are uploaded to a storage service. Chunk size is determined by the client and may be smaller than blob size; multiple chunks might be stored in a single blob.
+These chunks are the smallest units of tree that can be read from storage or written to storage individually. At the storage layer, chunks are stored in `blobs` which are uploaded to the storage service. The chunk size is not necessarily equal to the blob size; multiple chunks might go into a blob, or perhaps a chunk might be split across two blobs (that must always be downloaded as a pair).
 
-In addition to chunks being the unit of data available in the storage layer, it is likely that client will also hold chunks in memory, or even write out chunks to a disk cache. These "local" chunks need not have a 1:1 correspondence with the chunks in the storage layer, or even with the chunks in other clients, so long as the client's understanding of the tree data itself agrees with all other clients.
+TODO: revisions and copy-on-write
 
 ## Node -> Chunk Lookup
 
@@ -101,7 +107,7 @@ Potential Optimizations:
 * Path keys in the B-Tree are always sub-paths of the keys in the B-Tree node above them. Eliminate this redundant shared prefix from all paths to greatly reduce the storage needed for the keys, especially for very deep trees (which will have very long paths).
 * Deduplicate/intern sections of paths within a B-Tree node that are repeated to save additional storage. This can be done with a prefix tree on each B-Tree node.
 * Store large paths out of line TODO
-* 
+*
 
 ### Logical Node Tree
 
@@ -549,7 +555,7 @@ This is a good place leverage decision encapsulation to minimize the impact if w
 
 ## Glossary
 
-- Blob: immutable binary data (e.g. a Fluid blob).
+- Blob: binary data that is uploaded to and downloaded from a storage service. Blobs are content-addressable and therefore immutable.
   > Note: Blobs may contain references to other blobs.
 - Chunk: a contiguous region of the tree. Every node in the tree belongs to a chunk. Chunks can be serialized into compact binary representations and stored in blobs; multiple chunks might fit in a single blob.
   > Note: The region of the tree captured by a chunk has a "shape". The shape of the chunk must be known to retrieve the nodes from within it. For extra efficient compaction when encoding, chunks with identical shapes can share the same shape metadata.
@@ -561,6 +567,8 @@ This is a good place leverage decision encapsulation to minimize the impact if w
   > Note: Partial checkout might be necessary for performance reasons (e.g. if the full tree is too large to fit into the client's memory), or for privacy/security reasons (e.g. multiple clients share a tree but each is only allowed access to some part of it)
 - Path: a sequence of child nodes (and/or edges) that are walked through from the root of the tree to find a specific node
 - Revision: a specific moment in the history of the tree. Every permanent change to the tree creates a new revision with a new tree state.
+- Virtualization: the process of downloading or paging in specific data in a larger collection without receiving the entire collection.
+- Incrementality: the process of uploading or updating specific data in a larger collection without overwriting the entire collection.
 
 ----
 ## Extra stuff
