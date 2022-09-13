@@ -792,7 +792,11 @@
         ],
         "no-restricted-syntax": [
             "error",
-            "ForInStatement"
+            "ForInStatement",
+            {
+                "message": "Exporting * is not permitted. You should export only named items you intend to export.",
+                "selector": "ExportAllDeclaration"
+            }
         ],
         "no-return-await": [
             "error"
