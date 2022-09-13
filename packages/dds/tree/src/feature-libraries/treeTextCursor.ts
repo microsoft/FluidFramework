@@ -86,7 +86,7 @@ export class TextCursor implements ITreeCursor {
         this.index = 0;
     }
 
-    public getCurrentFieldKey(): FieldKey {
+    public getFieldKey(): FieldKey {
         // assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         return this.siblings[this.index] as FieldKey;
     }
@@ -106,12 +106,12 @@ export class TextCursor implements ITreeCursor {
         return (this.siblingStack[height] as readonly JsonableTree[])[index];
     }
 
-    public getCurrentFieldLength(): number {
+    public getFieldLength(): number {
         // assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         return this.getField().length;
     }
 
-    public enterChildNode(index: number): void {
+    public enterNode(index: number): void {
         // assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
         const siblings = this.getField();
         // assert(index in siblings, "child must exist at index");
@@ -185,7 +185,7 @@ export class TextCursor implements ITreeCursor {
     public nextField(): boolean {
         this.index += 1;
         if (this.index === (this.siblings as []).length) {
-            this.upToNode();
+            this.exitField();
             return false;
         }
         return true;
@@ -210,7 +210,7 @@ export class TextCursor implements ITreeCursor {
         if (this.index in this.siblings) {
             return true;
         }
-            this.upToField();
+            this.exitNode();
             return false;
     }
 
@@ -232,17 +232,17 @@ export class TextCursor implements ITreeCursor {
         if (this.index < (this.siblings as []).length) {
             return true;
         }
-        this.upToField();
+        this.exitNode();
         return false;
     }
 
-    public upToNode(): void {
+    public exitField(): void {
         // assert(this.mode === CursorLocationType.Fields, "can only navigate up from field when in field");
         this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
         this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
     }
 
-    public upToField(): void {
+    public exitNode(): void {
         // assert(this.mode === CursorLocationType.Nodes, "can only navigate up from node when in node");
         this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
         this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
@@ -256,7 +256,7 @@ export class TextCursor implements ITreeCursor {
     private getField(): readonly JsonableTree[] {
         // assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
         const parent = this.getStackedNode(this.indexStack.length - 1);
-        const key: FieldKey = this.getCurrentFieldKey();
+        const key: FieldKey = this.getFieldKey();
         const field = getGenericTreeField(parent, key, false);
         return field;
     }
@@ -269,16 +269,16 @@ export class TextCursor implements ITreeCursor {
         return this.getNode().type;
     }
 
-    public get currentIndexInField(): number {
+    public get fieldIndex(): number {
         // assert(this.mode === CursorLocationType.Nodes, "can only node's index when in node");
         return this.index;
     }
 
-    public get currentChunkStart(): number {
-        return this.currentIndexInField;
+    public get chunkStart(): number {
+        return this.fieldIndex;
     }
 
-    public get currentChunkLength(): number {
+    public get chunkLength(): number {
         return 1;
     }
 }
@@ -297,7 +297,7 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
     while (inField) {
         fields ??= {};
         const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
-        fields[cursor.getCurrentFieldKey() as string] = field;
+        fields[cursor.getFieldKey() as string] = field;
         inField = cursor.nextNode();
     }
 

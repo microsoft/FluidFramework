@@ -89,14 +89,14 @@ export interface ITreeCursor {
      *
      * Allowed when `mode` is `Fields`, and not `pending`.
      */
-    getCurrentFieldKey(): FieldKey;
+    getFieldKey(): FieldKey;
 
     /**
      * @returns the number of immediate children in the current field.
      *
      * Allowed when `mode` is `Fields`, and not `pending`.
      */
-    getCurrentFieldLength(): number;
+    getFieldLength(): number;
 
     /**
      * Sets current node to the node at the provided `index` of the current field.
@@ -104,7 +104,7 @@ export interface ITreeCursor {
      * Allowed when `mode` is `Fields`, and not `pending`.
      * Sets mode to `Nodes`.
      */
-    enterChildNode(index: number): void;
+    enterNode(childIndex: number): void;
 
     // ********** APIs for when mode = Nodes ********** //
 
@@ -126,7 +126,7 @@ export interface ITreeCursor {
      *
      * Only valid when `mode` is `Nodes`.
      */
-    readonly currentIndexInField: number;
+    readonly fieldIndex: number;
 
     /**
      * Index (within its parent field) of the first node in the current chunk.
@@ -134,7 +134,7 @@ export interface ITreeCursor {
      *
      * Only valid when `mode` is `Nodes`.
      */
-    readonly currentChunkStart: number;
+    readonly chunkStart: number;
 
     /**
      * Length of current chunk.
@@ -147,7 +147,7 @@ export interface ITreeCursor {
      *
      * Only valid when `mode` is `Nodes`.
      */
-    readonly currentChunkLength: number;
+    readonly chunkLength: number;
 
     // ********** APIs for when mode = Nodes and not pending ********** //
 
@@ -166,7 +166,7 @@ export interface ITreeCursor {
      *
      * TODO: what to do if at root?
      */
-    upToNode(): void;
+    exitField(): void;
 
     /**
      * Navigate up to parent field.
@@ -177,7 +177,7 @@ export interface ITreeCursor {
      * TODO: what to do if at root?
      * TODO: Maybe merge with upToNode to make a single "Up"?
      */
-    upToField(): void;
+    exitNode(): void;
 
     /**
      * The type of the currently selected node.
