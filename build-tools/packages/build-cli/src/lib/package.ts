@@ -16,6 +16,7 @@ import type { Index } from "npm-check-updates/build/src/types/IndexType";
 import * as semver from "semver";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
+import { indentString } from "./text";
 
 /**
  * An object that maps package names to version strings or range strings.
@@ -139,7 +140,7 @@ export async function npmCheckUpdates(
 
         // npm-check-updates returns different data depending on how many packages were updated. This code detects the
         // two main cases: a single package or multiple packages.
-        if (glob.endsWith("**")) {
+        if (glob.endsWith("*")) {
             for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
                 const jsonPath = path.join(repoPath, pkgJsonPath);
                 // eslint-disable-next-line no-await-in-loop
@@ -151,7 +152,7 @@ export async function npmCheckUpdates(
                 }
 
                 for (const [dep, newRange] of Object.entries(upgradedDeps)) {
-                    upgradeLogLines.add(`    ${dep}: '${newRange}'`);
+                    upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
                     updatedDependencies[dep] = newRange;
                 }
 
@@ -170,7 +171,7 @@ export async function npmCheckUpdates(
             }
 
             for (const [dep, newRange] of Object.entries(result)) {
-                upgradeLogLines.add(`    ${dep}: '${newRange}'`);
+                upgradeLogLines.add(indentString(`${dep}: '${newRange}'`));
                 updatedDependencies[dep] = newRange;
             }
 

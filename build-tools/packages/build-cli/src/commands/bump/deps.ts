@@ -11,7 +11,12 @@ import chalk from "chalk";
 import stripAnsi from "strip-ansi";
 import { BaseCommand } from "../../base";
 import { checkFlags, dependencyUpdateTypeFlag, releaseGroupFlag, skipCheckFlag } from "../../flags";
-import { generateBumpDepsBranchName, isDependencyUpdateType, npmCheckUpdates } from "../../lib";
+import {
+    generateBumpDepsBranchName,
+    indentString,
+    isDependencyUpdateType,
+    npmCheckUpdates,
+} from "../../lib";
 import { isReleaseGroup, ReleaseGroup } from "../../releaseGroups";
 
 /**
@@ -173,12 +178,12 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             const changedVersionsString = [`Updated the following:`, ""];
 
             for (const rg of updatedReleaseGroups) {
-                changedVersionsString.push(`    ${rg} (release group)`);
+                changedVersionsString.push(indentString(`${rg} (release group)`));
             }
 
             for (const pkg of updatedPackages) {
                 if (pkg.monoRepo === undefined) {
-                    changedVersionsString.push(`    ${pkg.name}`);
+                    changedVersionsString.push(indentString(`${pkg.name}`));
                 }
             }
 
@@ -189,7 +194,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             );
 
             for (const [pkgName, ver] of Object.entries(updatedDependencies)) {
-                changedVersionsString.push(`    ${pkgName}: ${chalk.bold(ver)}`);
+                changedVersionsString.push(indentString(`${pkgName}: ${chalk.bold(ver)}`));
             }
 
             const changedVersionMessage = changedVersionsString.join("\n");
