@@ -968,6 +968,7 @@ export function singleTextCursor(root: JsonableTree): TextCursor;
 // @public (undocumented)
 export function singleTextCursorNew(root: JsonableTree): TextCursorNew;
 
+// @public (undocumented)
 export type Skip = number;
 
 // @public
