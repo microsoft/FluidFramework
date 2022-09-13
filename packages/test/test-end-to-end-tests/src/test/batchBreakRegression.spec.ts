@@ -96,6 +96,7 @@ async function runAndValidateBatch(
                 documentServiceFactory: proxyDsf,
             });
         const container = await loader.resolve({ url: containerUrl });
+        await new Promise<void>((resolve) => container.once("connected", () => resolve()));
         const testObject = await requestFluidObject<TestFluidObject>(container, "default");
         // send batch
         testObject.context.containerRuntime.orderSequentially(() => {
@@ -122,6 +123,8 @@ async function runAndValidateBatch(
     }
 }
 
+// describe.only("TODO: REMOVE ME", () => {
+// Array.from({ length: 1000 }).forEach(() => {
 describeNoCompat("Batching failures", (getTestObjectProvider) => {
     it("working proxy",
     async function() {
@@ -147,7 +150,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
     describe("client sends invalid batches ", () => {
-        itExpects.skip("Batch end without start",
+        itExpects("Batch end without start",
         [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
         ],
@@ -350,3 +353,5 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
         });
     });
 });
+// });
+// });
