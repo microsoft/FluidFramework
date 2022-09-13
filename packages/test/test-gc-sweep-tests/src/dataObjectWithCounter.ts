@@ -32,7 +32,7 @@ export class DataObjectWithCounter extends DataObject {
         this.counter = await handle.get();
     }
 
-    public async sendOp(_count: number, _random: IRandom) {
+    public async sendOp() {
         assert(this.counter !== undefined, "Can't send ops when the counter isn't initialized!");
         assert(this.isRunning === true, `The DataObject should be running in order to generate ops!`);
         this.counter.increment(1);
