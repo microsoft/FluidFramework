@@ -9,6 +9,11 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { BaseTestDataObject } from "./testDataObjects";
 
+/**
+ * DataObjectWithCounter increments a SharedCounter as a way of sending ops.
+ *
+ * The SharedCounter is retrieved via handle
+ */
 const counterKey = "counter";
 export class DataObjectWithCounter extends BaseTestDataObject {
     private _counterHandle?: IFluidHandle<SharedCounter>;
@@ -27,7 +32,6 @@ export class DataObjectWithCounter extends BaseTestDataObject {
     }
 
     protected async hasInitialized(): Promise<void> {
-        // Use this to determine the local change count
         this._counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
     }
 
