@@ -78,7 +78,7 @@ export interface ITreeCursor {
     getFieldLength(): number;
 
     /**
-     * Moves to the first node of the selected field, setting mode to `Fields`.
+     * Moves to the first node of the selected field, setting mode to `Nodes`.
      *
      * If field is empty, returns false instead.
      *
