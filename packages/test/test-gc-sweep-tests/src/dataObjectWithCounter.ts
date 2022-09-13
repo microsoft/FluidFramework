@@ -4,10 +4,10 @@
  */
 
 import { IRandom } from "@fluid-internal/stochastic-test-utils";
+import { DataObject } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { BaseTestDataObject } from "./testDataObjects";
 
 /**
  * DataObjectWithCounter increments a SharedCounter as a way of sending ops.
@@ -15,7 +15,7 @@ import { BaseTestDataObject } from "./testDataObjects";
  * The SharedCounter is retrieved via handle
  */
 const counterKey = "counter";
-export class DataObjectWithCounter extends BaseTestDataObject {
+export class DataObjectWithCounter extends DataObject {
     private _counterHandle?: IFluidHandle<SharedCounter>;
     public isRunning: boolean = false;
     public static get type(): string {
