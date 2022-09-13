@@ -15,6 +15,7 @@ import {
     detachedFieldAsKey,
     FieldKey,
     FieldMap,
+    FieldScope,
     getGenericTreeField,
     getGenericTreeFieldMap,
     JsonableTree,
@@ -99,7 +100,8 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     }
 
     get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(getGenericTreeFieldMap(this.getNode(), false)) as Iterable<FieldKey>;
+        return Object.getOwnPropertyNames(
+            getGenericTreeFieldMap(this.getNode(), FieldScope.local, false)) as Iterable<FieldKey>;
     }
 
     down(key: FieldKey, index: number): SynchronousNavigationResult {
