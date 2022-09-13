@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/*
-eslint-disable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-*/
+/* eslint disable @typescript-eslint/no-non-null-assertion */
+/* eslint disable @typescript-eslint/consistent-type-assertions */
+/* eslint disable @typescript-eslint/strict-boolean-expressions */
 
 import * as MergeTree from "@fluidframework/merge-tree";
 import { refGetRangeLabels, refHasRangeLabel, refHasRangeLabels, refHasTileLabel } from "@fluidframework/merge-tree";
@@ -868,9 +865,6 @@ export const rowIsMoribund = (rowMarker: IRowMarker) => rowMarker.properties && 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const cellIsMoribund = (cellMarker: ICellMarker) => cellMarker.properties && cellMarker.properties.moribund;
 
-/*
-eslint-enable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-*/
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
+/* eslint-enable @typescript-eslint/consistent-type-assertions */
+/* eslint-enable @typescript-eslint/strict-boolean-expressions */

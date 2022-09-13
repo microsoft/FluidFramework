@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/*
-eslint-disable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-no-bitwise,
-*/
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+/* eslint-disable no-bitwise */
 
 import { performance } from "@fluidframework/common-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -3334,9 +3331,7 @@ export class FlowView extends ui.Component {
     }
 }
 
-/*
-eslint-enable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-*/
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
+/* eslint-enable @typescript-eslint/consistent-type-assertions */
+/* eslint-enable @typescript-eslint/strict-boolean-expressions */
+/* eslint-enable no-bitwise */
