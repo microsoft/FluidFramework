@@ -33,7 +33,7 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     fallback:{
-        "url": require.resolve("url"),
+        "url": require.resolve("url/"), // note: the trailing slash is important!
         "buffer": require.resolve("buffer/") // note: the trailing slash is important!
     }
   },
