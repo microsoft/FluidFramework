@@ -76,7 +76,11 @@ export interface MergeTreeRevertibleDriver{
     getContainingSegment(pos: number): { segment: ISegment | undefined; offset: number | undefined; };
 }
 
-type InternalRevertDriver = MergeTreeRevertibleDriver & {
+/**
+ * exported for test only. should not be exported out the the package
+ * @internal
+ */
+export type InternalRevertDriver = MergeTreeRevertibleDriver & {
     __mergeTreeRevertible?: {
         detachedReferences?: EndOfTreeSegment;
         refCallbacks?: LocalReferencePosition["callbacks"]; };
@@ -254,6 +258,10 @@ function revertLocalRemove(
         let realPos = driver.localReferencePositionToPosition(tracked);
         const refSeg = tracked.getSegment();
 
+        // References which are on EndOfStringSegment don't return detached for pos,
+        // they will return the length of the merge-tree. this case just catches
+        // random references, likely not created in the revertible flow,
+        // that are tying to be reverted for some reason.
         if (realPos === DetachedReferencePosition || refSeg === undefined) {
             throw new UsageError("Cannot insert at detached references position");
         }
@@ -276,6 +284,11 @@ function revertLocalRemove(
         const insertRef: Partial<Record<"before" | "after", List<LocalReferencePosition>>> = {};
         const forward = insertSegment.ordinal < refSeg.ordinal;
         const refHandler = (lref: LocalReferencePosition) => {
+            // once we reach it keep the original reference where it is
+            // we'll move tracking groups, and remove it as a last step.
+            if (tracked === lref) {
+                return false;
+            }
             if (localSlideFilter(lref)) {
                 if (forward) {
                     const before = insertRef.before ??= new List();
@@ -284,9 +297,6 @@ function revertLocalRemove(
                     const after = insertRef.after ??= new List();
                     after.unshift(lref);
                 }
-            }
-            if (tracked === lref) {
-                return false;
             }
         };
         depthFirstNodeWalk(

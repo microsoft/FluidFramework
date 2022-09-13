@@ -68,6 +68,11 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
     });
     oldNext._prev = previousNode;
     previousNode._next = oldNext;
+    // explicitly prevent newRange from being undefined without casting,
+    // and without additional conditionals, as this is used in some perf critical areas.
+    // i could have just asserted, but that throws a non-user friendly error,
+    // so i went with a more user-friendly error, which describes the
+    // only condition that could lead to this being undefined in the current code.
     if (newRange === undefined) {
         throw new UsageError("items must not be empty");
     }

@@ -24,7 +24,7 @@ import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { LocalReferencePosition } from "../localReference";
-import { MergeTreeRevertibleDriver } from "../revertibles";
+import { InternalRevertDriver } from "../revertibles";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -378,7 +378,7 @@ export class TestClient extends Client {
 
 // the client doesn't submit ops, so this adds a callback to capture them
 export type TestClientRevertibleDriver =
-    MergeTreeRevertibleDriver & Partial<{ submitOpCallback?: (op: IMergeTreeOp | undefined) => void; }>;
+    InternalRevertDriver & Partial<{ submitOpCallback?: (op: IMergeTreeOp | undefined) => void; }>;
 
 export const createRevertDriver =
     (client: TestClient): TestClientRevertibleDriver => {

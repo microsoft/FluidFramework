@@ -6,12 +6,13 @@
 import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import random from "random-js";
-import { SegmentGroup } from "../mergeTreeNodes";
+import { ISegment, SegmentGroup } from "../mergeTreeNodes";
 import {
     appendToMergeTreeDeltaRevertibles,
     MergeTreeDeltaRevertible,
     revertMergeTreeDeltaRevertibles,
 } from "../revertibles";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import {
     removeRange,
     doOverRange,
@@ -159,13 +160,30 @@ describe("MergeTree.Client", () => {
                                 revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
                                 seq = applyMessages(seq, msgs.splice(0), clients.all, logger);
 
-                                // validate that there are no lingering/leaked references in detached references
-                                const detachedReferences =
-                                    (clientBDriver as any)?.__mergeTreeRevertible?.detachedReferences?.localRefs;
-                                assert.strictEqual(
-                                    detachedReferences?.empty ?? true,
-                                    true,
-                                    "detachedReferences not empty");
+                                walkAllChildSegments(
+                                    clients.B.mergeTree.root,
+                                    (seg: ISegment) => {
+                                        if (seg?.trackingCollection.empty === false) {
+                                            assert.notDeepStrictEqual(
+                                                seg?.trackingCollection.empty,
+                                                false,
+                                                "there should be no left over tracking group");
+                                        }
+                                        if (seg?.localRefs?.empty === false) {
+                                            assert.notDeepStrictEqual(
+                                                seg?.localRefs?.empty,
+                                                false,
+                                                "there should be no left over local references");
+                                        }
+                                    },
+                                );
+                                const detachedReferences = clientBDriver.__mergeTreeRevertible?.detachedReferences;
+                                if (detachedReferences?.localRefs?.empty === false) {
+                                    assert.notDeepStrictEqual(
+                                        detachedReferences?.localRefs?.empty,
+                                        false,
+                                        "there should be no left over local references in detached references");
+                                }
                             } catch (e) {
                                 throw logger.addLogsToError(e);
                             }

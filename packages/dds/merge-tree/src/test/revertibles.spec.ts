@@ -79,7 +79,6 @@ describe("MergeTree.Revertibles", () => {
 
         const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
         // the test logger uses these callbacks, so preserve it
-        // the test logger uses these callbacks, so preserve it
         const old = clients.B.mergeTreeDeltaCallback;
         const clientBDriver = createRevertDriver(clients.B);
         clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
@@ -108,7 +107,6 @@ describe("MergeTree.Revertibles", () => {
         const ops: ISequencedDocumentMessage[] = [];
 
         const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
-        // the test logger uses these callbacks, so preserve it
         // the test logger uses these callbacks, so preserve it
         const old = clients.B.mergeTreeDeltaCallback;
         const clientBDriver = createRevertDriver(clients.B);

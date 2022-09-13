@@ -74,12 +74,14 @@ export class TrackingGroupCollection {
     }
 
     public unlink(trackingGroup: TrackingGroup): boolean {
-        if (trackingGroup.has(this.trackable)) {
-            if (!trackingGroup.unlink(this.trackable)) {
-                return false;
+        if (this.trackingGroups.has(trackingGroup)) {
+            if (trackingGroup.has(this.trackable)) {
+                trackingGroup.unlink(this.trackable);
             }
-            return this.trackingGroups.delete(trackingGroup);
+            this.trackingGroups.delete(trackingGroup);
+            return true;
         }
+
         return false;
     }
 
