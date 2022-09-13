@@ -803,7 +803,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private _orderSequentiallyCalls: number = 0;
     private readonly _flushMode: FlushMode;
-    private needsFlush = false;
     private flushMicroTaskExists = false;
 
     private _connected: boolean;
@@ -1781,7 +1780,38 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (this.context.submitBatchFn !== undefined) {
                 const batchToSend: IBatchMessage[] = [];
                 for (const message of batch) {
-                    batchToSend.push({ contents: message.contents, metadata: message.metadata });
+                    let contents = message.contents;
+                    let metadata = message.metadata;
+                    if (this.runtimeOptions.compressionOptions.minimumSize &&
+                        this.runtimeOptions.compressionOptions.minimumSize < message.contents.length) {
+                        this.compressedOpCount++;
+                        const copiedMessage = { ...message.deserializedContent };
+
+                        const compressionStart = Date.now();
+                        const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(copiedMessage.contents));
+                        const compressedContents = compress(contentsAsBuffer);
+                        const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+                        const duration = Date.now() - compressionStart;
+
+                        if (this.compressedOpCount % 100) {
+                            this.mc.logger.sendPerformanceEvent({
+                                eventName: "compressedOp",
+                                duration,
+                                sizeBeforeCompression: message.contents.length,
+                                sizeAfterCompression: compressedContent.length,
+                            });
+                        }
+
+                        copiedMessage.contents = compressedContent;
+                        const stringifiedContents = JSON.stringify(copiedMessage);
+
+                        if (stringifiedContents.length < message.contents.length) {
+                            contents = JSON.stringify(copiedMessage);
+                            metadata = { ...message.metadata, compressed: true };
+                        }
+                    }
+
+                    batchToSend.push({ contents, metadata });
                 }
                 // returns clientSequenceNumber of last message in a batch
                 clientSequenceNumber = this.context.submitBatchFn(batchToSend);
@@ -2581,7 +2611,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
 
-<<<<<<< HEAD
         const deserializedContent: ContainerRuntimeMessage = { type, contents };
         const serializedContent = JSON.stringify(deserializedContent);
 
@@ -2597,53 +2626,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 });
             this.closeFn(error);
             throw error;
-=======
-        let clientSequenceNumber: number = -1;
-        let opMetadataInternal = opMetadata;
-
-        // We should add the "batch: true" metadata regardless of the connected state
-        if (this.currentlyBatching() && !this.needsFlush) {
-            opMetadataInternal = {
-                ...opMetadata,
-                batch: true,
-            };
-            this.needsFlush = true;
-        }
-
-        if (this.canSendOps()) {
-            const serializedContent = JSON.stringify(content);
-
-            // If in TurnBased flush mode we will trigger a flush at the next turn break
-            if (this.flushMode === FlushMode.TurnBased && !this.flushMicroTaskExists) {
-                this.flushMicroTaskExists = true;
-                // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                Promise.resolve().then(() => {
-                    this.flushMicroTaskExists = false;
-                    this.flush();
-                });
-            }
-
-            if (!serializedContent || serializedContent.length <= defaultMaxOpSizeInBytes) {
-                clientSequenceNumber = this.submitRuntimeMessage(type,
-                    content,
-                    this.currentlyBatching() /* batch */,
-                    serializedContent?.length ?? 0,
-                    serializedContent,
-                    opMetadataInternal);
-            } else {
-                // If the content length is larger than the client configured message size
-                // instead of splitting the content, we will fail by explicitly closing the container
-                this.closeFn(new GenericError(
-                    "OpTooLarge",
-                    /* error */ undefined,
-                    {
-                        length: serializedContent.length,
-                        limit: defaultMaxOpSizeInBytes,
-                    }));
-                clientSequenceNumber = -1;
-            }
->>>>>>> next
         }
 
         this.batchManager.push({
@@ -2685,62 +2667,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 MessageType.Summarize,
                 contents,
                 false); // batch
-<<<<<<< HEAD
         }
-=======
-            }
-    }
-
-    private submitRuntimeMessage(
-        type: ContainerMessageType,
-        contents: any,
-        batch: boolean,
-        contentLength: number,
-        serializedContent?: string,
-        metaData?: any,
-    ) {
-        if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
-            serializedContent &&
-            contentLength > this.runtimeOptions.compressionOptions.minimumSize
-        ) {
-            this.compressedOpCount++;
-
-            const compressionStart = Date.now();
-            const contentsAsBuffer = new TextEncoder().encode(serializedContent);
-            const compressedContents = compress(contentsAsBuffer);
-            const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
-            const duration = Date.now() - compressionStart;
-
-            if (this.compressedOpCount % 100) {
-                this.mc.logger.sendPerformanceEvent({
-                    eventName: "compressedOp",
-                    duration,
-                    sizeBeforeCompression: contentLength,
-                    sizeAfterCompression: compressedContent.length,
-                });
-            }
-
-            // Only compress the payload if it's actually smaller after compression
-            const shouldCompress = contentLength > compressedContent.length;
-            const compressedPayload: ContainerRuntimeMessage = {
-                type,
-                contents: shouldCompress ? compressedContent : contents,
-            };
-
-            return this.submitMessageCore(
-                MessageType.Operation,
-                compressedPayload,
-                batch,
-                { ...metaData, compressed: shouldCompress });
-        }
-
-        const payload: ContainerRuntimeMessage = { type, contents };
-        return this.submitMessageCore(
-            MessageType.Operation,
-            payload,
-            batch,
-            metaData);
->>>>>>> next
     }
 
     /**
