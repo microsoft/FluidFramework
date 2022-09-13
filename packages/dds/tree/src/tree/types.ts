@@ -138,3 +138,21 @@ export interface TreeValue extends Serializable {}
   * Value stored on a node.
   */
 export type Value = undefined | TreeValue;
+
+/**
+ * The fields required by a node in a tree
+ * @public
+ */
+ export interface NodeData {
+    /**
+     * A payload of arbitrary serializable data
+     */
+    value?: TreeValue;
+
+    /**
+     * The meaning of this node.
+     * Provides contexts/semantics for this node and its content.
+     * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+     */
+    readonly type: TreeSchemaIdentifier;
+}
