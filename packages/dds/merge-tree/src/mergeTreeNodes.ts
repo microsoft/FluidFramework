@@ -303,6 +303,7 @@ export interface SegmentGroup {
     previousProps?: PropertySet[];
     removedReferences?: LocalReferencePosition[];
     localSeq: number;
+    refSeq: number;
 }
 
 export class MergeNode implements IMergeNodeCommon {

@@ -967,20 +967,7 @@ export class MergeTree {
                 // Local client sees all segments, even when collaborating
                 return node.cachedLength;
             } else {
-                if (!this.localPartialsComputed) {
-                    const rebaseCollabWindow = new CollaborationWindow();
-                    rebaseCollabWindow.loadFrom(this.collabWindow);
-                    if (refSeq < this.collabWindow.minSeq) {
-                        rebaseCollabWindow.minSeq = refSeq;
-                    }
-                    this.root.partialLengths = PartialSequenceLengths.combine(
-                        this.root,
-                        rebaseCollabWindow,
-                        true,
-                        true,
-                    );
-                    this.localPartialsComputed = true;
-                }
+                this.ensureLocalPartialsComputed(refSeq);
                 // Local client should see all segments except those after localSeq.
                 return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
             }
@@ -1325,7 +1312,7 @@ export class MergeTree {
         let _segmentGroup = segmentGroup;
         if (_segmentGroup === undefined) {
             // TODO: review the cast
-            _segmentGroup = { segments: [], localSeq } as SegmentGroup;
+            _segmentGroup = { segments: [], localSeq, refSeq: this.collabWindow.currentSeq } as SegmentGroup;
             if (previousProps) {
                 _segmentGroup.previousProps = [];
             }
@@ -2098,11 +2085,11 @@ export class MergeTree {
         return segmentPosition;
     }
 
-    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
+    private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false, computeLocalPartials = false) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
-            this.localPartialsComputed = false;
-            node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow, recur);
+            this.localPartialsComputed = computeLocalPartials;
+            node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow, recur, computeLocalPartials);
         }
     }
 
@@ -2136,6 +2123,118 @@ export class MergeTree {
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
         return segRef;
+    }
+
+    private ensureLocalPartialsComputed(refSeq: number): void {
+        if (!this.localPartialsComputed) {
+            const rebaseCollabWindow = new CollaborationWindow();
+            rebaseCollabWindow.loadFrom(this.collabWindow);
+            if (refSeq < this.collabWindow.minSeq) {
+                rebaseCollabWindow.minSeq = refSeq;
+            }
+            this.root.partialLengths = PartialSequenceLengths.combine(
+                this.root,
+                rebaseCollabWindow,
+                true,
+                true,
+            );
+            this.localPartialsComputed = true;
+        }
+    }
+
+    /**
+     * Normalizes the segments nearby `segmentGroup` to be ordered as they would if the op submitting `segmentGroup`
+     * is rebased to the current sequence number.
+     * This primarily affects the ordering of adjacent segments that were removed between the original submission of
+     * the local ops and now.
+     * Consider the following sequence of events:
+     * Initial state: "hi my friend" (seq: 0)
+     * - Client 1 inserts "good " to make "hi my good friend" (op1, refSeq: 0)
+     * - Client 2 deletes "my " to make "hi friend" (op2, refSeq: 0)
+     * - op2 is sequenced giving seq 1
+     * - Client 1 disconnects and reconnects at seq: 1.
+     *
+     * At this point in time, client 1 will have segments ["hi ", Removed"my ", Local"good ", "friend"].
+     * However, the rebased op that it submits will cause client 2 to have segments
+     * ["hi ", Local"good ", Removed"my ", "friend"].
+     *
+     * The difference in ordering can be problematic for tie-breaking concurrently inserted segments in some scenarios.
+     * Rather than incur extra work tie-breaking these scenarios for all clients, when client 1 rebases its operation,
+     * it can fix up its local state to align with what would be expected of the op it resubmits.
+     */
+    public normalizeSegmentsOnRebase(segmentGroup: SegmentGroup): void {
+        // Forward and backward excursions will expand the affected normalization range,
+        // so simply taking the first segment suffices
+        const { refSeq, segments: [segment] } = segmentGroup;
+        const forwardLocalSegs: ISegment[] = [];
+        const backwardLocalSegs: ISegment[] = [];
+        const adjacentRemovedSegs: ISegment[] = [];
+        backwardExcursion(segment, (seg) => {
+            if (seg.seq === UnassignedSequenceNumber) {
+                backwardLocalSegs.push(seg);
+                return true;
+            }
+            const removalInfo = toRemovalInfo(seg);
+            if (removalInfo !== undefined &&
+                removalInfo.removedSeq !== UnassignedSequenceNumber &&
+                removalInfo.removedSeq > refSeq
+            ) {
+                adjacentRemovedSegs.push(seg);
+                return true;
+            }
+            return false;
+        });
+
+        if (adjacentRemovedSegs.length === 0) {
+            return;
+        }
+
+        forwardExcursion(segment, (seg) => {
+            if (seg.seq === UnassignedSequenceNumber) {
+                forwardLocalSegs.push(seg);
+                return true;
+            }
+            return false;
+        });
+        const consecutiveLocalSegments = [...backwardLocalSegs.reverse(), segment, ...forwardLocalSegs];
+        adjacentRemovedSegs.reverse();
+
+        const currentOrder = [...adjacentRemovedSegs, ...consecutiveLocalSegments].map(
+            (seg) => ({
+                parent: seg.parent,
+                index: seg.index,
+                ordinal: seg.ordinal,
+            }),
+        );
+
+        const newOrder = [...consecutiveLocalSegments, ...adjacentRemovedSegs];
+        // TODO: Invoke slide ref callback and test that this happens
+        for (let i = 0; i < newOrder.length; i++) {
+            const seg = newOrder[i];
+            const { parent, index, ordinal } = currentOrder[i];
+            parent?.assignChild(seg, index, false);
+            seg.ordinal = ordinal;
+        }
+
+        // Finally, update internal node bookkeeping on ancestors of the swapped nodes.
+        this.ensureLocalPartialsComputed(refSeq);
+        // Toposort would improve this by a log factor, but probably not worth the added code size
+        const depths = new Map<IMergeNode, number>();
+        const computeDepth = (block: IMergeNode): number => {
+            if (!depths.has(block)) {
+                depths.set(
+                    block,
+                    block.parent === undefined ? 0 : (1 + computeDepth(block.parent)),
+                );
+            }
+            return depths.get(block)!;
+        };
+        newOrder.forEach(computeDepth);
+        for (const [node] of Array.from(depths.entries()).sort((a, b) => b[1] - a[1])) {
+            if (!node.isLeaf()) {
+                this.nodeUpdateLengthNewStructure(node, false, true);
+            }
+        }
     }
 
     private blockUpdate(block: IMergeBlock) {

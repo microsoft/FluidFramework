@@ -531,6 +531,13 @@ describe("client.applyMsg", () => {
     });
 
     /**
+     * Regression test for an issue whereby reconnected clients could have segment orders that yielded
+     * different tiebreaking results for inserted segments. Specifically, client C's "c" segment
+     * should be considered for tiebreaking against the "b" segment as judged by the op it submitted for "c",
+     * but since client C rebased the op which inserted "c", its segments were in a meaningfully different order
+     * from other clients. This issue was fixed by making client C adjust the ordering of its segments at rebase
+     * (i.e. reconnection) time so that they align with the resubmitted op.
+Condensed view of this mismatch:
 ```
 _: Local State
 -: Deleted
@@ -539,56 +546,35 @@ _: Local State
 Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>
 sequence number represented as offset from msn. L means local.
 op types: 0) insert 1) remove 2) annotate
-op         | client A      | op         | client B      | op         | client C      | op         | client D
-           |               |            |               |            |               | L:0:D0@0   | __
-           |               |            |               |            |               |            | DD
-           |               |            |               | L:0:C0@0   | _             |            | __
-           |               |            |               |            | C             |            | DD
-1:0:D0@0   | DD            | 1:0:D0@0   | DD            | 1:0:D0@0   | _DD           | 1:0:D0@0   | DD
-           |               |            |               |            | C             |            |
-2:0:C0@0   | CDD           | 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD
-           | CDD           |            | CDD           |            | CDD           | L:2:D0@0   | ___CDD
-           |               |            |               |            |               |            | DDD
-           | CDD           |            | CDD           |            | CDD           | L:2:D0@0   | ____CDD
-           |               |            |               |            |               |            | DDDD
-3:2:D0@0   | DDDCDD        |            | CDD           | 3:2:D0@0   | DDDCDD        | 3:2:D0@0   | _DDDCDD
-           |               |            |               |            |               |            | D
-4:2:D0@0   | DDDDCDD       |            | CDD           | 4:2:D0@0   | DDDDCDD       | 4:2:D0@0   | DDDDCDD
-           | DDDDCDD       |            | CDD           |            | DDDDCDD       | L:4:D0@0   | ___DDDDCDD
-           |               |            |               |            |               |            | DDD
-           | DDDDCDD       |            | CDD           |            | DDDDCDD       | L:4:D1@6,9 | ___DDD___D
-           |               |            |               |            |               |            | DDD   ---
-5:4:D0@0   | DDDDDDDCDD    |            | CDD           |            | DDDDCDD       | 5:4:D0@0   | DDDDDD___D
-           |               |            |               |            |               |            |       ---
-6:4:D1@6,9 | DDDDDD---D    |            | CDD           |            | DDDDCDD       | 6:4:D1@6,9 | DDDDDD---D
-           | DDDDDD---D    | L:2:B0@1   | C_DD          |            | DDDDCDD       |            | DDDDDD---D
-           |               |            |  b            |            |               |            |
-           | DDDDDD---D    |            | C_DD          | L:4:C0@5   | DDDDC_DD      |            | DDDDDD---D
-           |               |            |  b            |            |      c        |            |
-           | DDDDDD---D    | 3:2:D0@0   | DDDC_DD       |            | DDDDC_DD      |            | DDDDDD---D
-           |               |            |     b         |            |      c        |            |
-           | DDDDDD---D    | 4:2:D0@0   | DDDDC_DD      |            | DDDDC_DD      |            | DDDDDD---D
-           |               |            |      b        |            |      c        |            |
-           | DDDDDD---D    | 5:4:D0@0   | DDDDDDDC_DD   |            | DDDDC_DD      |            | DDDDDD---D
-           |               |            |         b     |            |      c        |            |
-           | DDDDDD---D    | 6:4:D1@6,9 | DDDDDD- -_-D  |            | DDDDC_DD      |            | DDDDDD---D
-           |               |            |          b    |            |      c        |            |
-           | DDDDDD---D    |            | DDDDDD- -_-D  | 5:4:D0@0   | DDDDDDDC_DD   |            | DDDDDD---D
-           |               |            |          b    |            |         c     |            |
-           | DDDDDD---D    |            | DDDDDD- -_-D  | 6:4:D1@6,9 | DDDDDD- -_-D  |            | DDDDDD---D
-           |               |            |          b    |            |          c    |            |
-7:6:B0@6   | DDDDDDb ---D  | 7:6:B0@6   | DDDDDD- -b-D  | 7:6:B0@6   | DDDDDDb- -_-D | 7:6:B0@6   | DDDDDDb ---D
-           |               |            |               |            |           c   |            |
-8:6:C0@6   | DDDDDDcb ---D | 8:6:C0@6   | DDDDDDc- -b-D | 8:6:C0@6   | DDDDDDb- -c-D | 8:6:C0@6   | DDDDDDcb ---D
+op types: 0) insert 1) remove 2) annotate
+op         | client A      | op         | client C
+           |               | L:0:C0@0   | _
+           |               |            | C
+1:0:D0@0   | DD            | 1:0:D0@0   | _DD
+           |               |            | C
+2:0:C0@0   | CDD           | 2:0:C0@0   | CDD
+3:2:D0@0   | DDDCDD        | 3:2:D0@0   | DDDCDD
+4:2:D0@0   | DDDDCDD       | 4:2:D0@0   | DDDDCDD
+5:4:D0@0   | DDDDDDDCDD    |            | DDDDCDD
+6:4:D1@6,9 | DDDDDD---D    |            | DDDDCDD
+           | DDDDDD---D    | L:4:C0@5   | DDDDC_DD
+           |               |            |      c
+           | DDDDDD---D    | 5:4:D0@0   | DDDDDDDC_DD
+           |               |            |         c
+           | DDDDDD---D    | 6:4:D1@6,9 | DDDDDD- -_-D
+           |               |            |          c
+7:6:B0@6   | DDDDDDb ---D  | 7:6:B0@6   | DDDDDDb- -_-D
+           |               |            |           c
+8:6:C0@6   | DDDDDDcb ---D | 8:6:C0@6   | DDDDDDb- -c-D
 Client C does not match client A
 ```
      */
-    it.skip("Concurrent insert into removed segment across block boundary", () => {
+    it("Concurrent insert into removed segment across block boundary", () => {
         const clients = createClientsAtInitialState(
             { initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
              "A", "B", "C", "D");
 
-        const logger = new TestClientLogger(clients.all);
+        const logger = new TestClientLogger([clients.A, clients.C]);
         let seq = 0;
         const ops: ISequencedDocumentMessage[] = [];
         const perClientOps: ISequencedDocumentMessage[][] = clients.all.map(() => []);
