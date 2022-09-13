@@ -66,10 +66,8 @@ async function loadContainer(
         codeLoader,
     });
 
-    let container: IContainer;
-
     // TODO: drive new/existing creation entirely from outer
-    container = await (createNew
+    const container = await (createNew
         // We're not actually using the code proposal (our code loader always loads the same module regardless of the
         // proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
