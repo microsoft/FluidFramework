@@ -110,7 +110,7 @@ export class DataStores implements IDisposable {
 
         // back-compat
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        contexts.on("add", this.maybeAliasLegacyRootDataStore);
+        contexts.on("boundContextAdded", this.maybeAliasLegacyRootDataStore);
 
         const baseGCDetailsP = new LazyPromise(async () => {
             return getBaseGCDetails();

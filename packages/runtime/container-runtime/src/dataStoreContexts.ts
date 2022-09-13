@@ -9,7 +9,7 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
 
 export interface IDataStoreContextsEvents extends IEvent {
-    (event: "add", listener: (context: FluidDataStoreContext, deferred: Deferred<void>) => void);
+    (event: "boundContextAdded", listener: (context: FluidDataStoreContext, deferred: Deferred<void>) => void);
 }
 
 export class DataStoreContexts
@@ -145,6 +145,9 @@ export class DataStoreContexts
         assert(removed, 0x159 /* "The given id was not found in notBoundContexts to delete" */);
 
         this.resolveDeferred(id);
+        const context = this._contexts.get(id);
+        assert(context !== undefined, "Context should already be accounted for");
+        this.notifyContextAdded(context);
     }
 
     /**
@@ -173,6 +176,10 @@ export class DataStoreContexts
         });
     }
 
+    private notifyContextAdded(context: FluidDataStoreContext) {
+        this.emit("boundContextAdded", context, this.trackPendingLegacyRootContexts(context.id));
+    }
+
     /**
      * Add the given context, marking it as not local-only.
      * This could be because it's a local context that's been bound, or because it's a remote context.
@@ -183,7 +190,7 @@ export class DataStoreContexts
         assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
 
         this._contexts.set(id, context);
-        this.emit("add", context, this.trackPendingLegacyRootContexts(id));
+        this.notifyContextAdded(context);
 
         // Resolve the deferred immediately since this context is not unbound
         this.ensureDeferred(id);
