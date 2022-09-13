@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@fluid-tools/version-tools": "^0.4.5000",
-    "@fluidframework/bundle-size-tools": "^0.0.8505",
+    "@fluidframework/bundle-size-tools": "^0.4.5000",
     "async": "^3.2.0",
     "chalk": "^2.4.2",
     "commander": "^6.2.1",
