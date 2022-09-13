@@ -133,7 +133,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         assert.strictEqual(success, false, "Join session should fail if treesLatest call has failed");
     });
 
-    it("Failed fetchAndParseAsJson should not trigger unhandled rejection event", async () => {
+    it("Failed treesLatest call should not trigger unhandled rejection event", async () => {
         const treesLatestP = mockFetchSingle(
             async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
             notFound,
