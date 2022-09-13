@@ -160,21 +160,22 @@ DESCRIPTION
   packages updated can be filtered using various flags.
 
 EXAMPLES
-  Bump dependencies on @fluidframework/build-common to range ~1.2.0 across all release groups.
+  Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.
 
-    $ flub bump deps @fluidframework/build-common -n '~1.2.0'
+    $ flub bump deps @fluidframework/build-common -t latest
 
-  Bump dependencies on @fluidframework/build-common to range ^1.0.0-0 in the azure release group.
+  Bump dependencies on @fluidframework/build-common to the next minor version in the azure release group.
 
-    $ flub bump deps @fluidframework/build-common -n '^1.0.0-0' -g azure
+    $ flub bump deps @fluidframework/build-common -t minor -g azure
 
   Bump dependencies on packages in the server release group to the next major prerelease in the client release group.
 
-    $ flub bump deps server -g client -t major
+    $ flub bump deps server -g client -t major -p
 
-  Bump dependencies on server packages to the current version, replacing any pre-release ranges with release ranges.
+  Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with
+  release ranges.
 
-    $ flub bump deps server -g client -t current
+    $ flub bump deps server -t latest
 ```
 
 ## `flub check layers`

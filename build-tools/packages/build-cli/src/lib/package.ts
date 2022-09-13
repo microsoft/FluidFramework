@@ -139,6 +139,7 @@ export async function npmCheckUpdates(
         // npm-check-updates returns different data depending on how many packages were updated. This code detects the
         // two main cases: a single package or multiple packages.
         if (glob.endsWith("**")) {
+            // if (numResults > 1) {
             for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
                 const jsonPath = path.join(repoPath, pkgJsonPath);
                 // eslint-disable-next-line no-await-in-loop
@@ -159,26 +160,24 @@ export async function npmCheckUpdates(
                 }
             }
         } else {
+            const jsonPath = path.join(repoPath, glob, "package.json");
+            // eslint-disable-next-line no-await-in-loop
+            const { name } = await readJsonAsync(jsonPath);
+            const pkg = context.fullPackageMap.get(name);
+            if (pkg === undefined) {
+                log?.warning(`Package not found in context: ${name}`);
+                continue;
+            }
+
             for (const [dep, newRange] of Object.entries(result)) {
                 upgradeLogLines.add(`    ${dep}: '${newRange}'`);
                 updatedDependencies[dep] = newRange;
             }
+
+            if (Object.keys(result).length > 0) {
+                updatedPackages.push(pkg);
+            }
         }
-
-        // const modifiedFiles = await context.gitRepo.getModifiedFiles();
-        // for (const jsonPath of modifiedFiles) {
-        //     if (path.basename(jsonPath) === "package.json") {
-        //         // eslint-disable-next-line no-await-in-loop
-        //         const { name } = await readJsonAsync(jsonPath);
-        //         const pkg = context.fullPackageMap.get(name);
-        //         if (pkg === undefined) {
-        //             log?.verbose(`Package not found in context: ${name}`);
-        //             continue;
-        //         }
-
-        //         updatedPackages.push(pkg);
-        //     }
-        // }
     }
 
     log?.info(`${upgradeLogLines.size} released dependencies found on npm:`);

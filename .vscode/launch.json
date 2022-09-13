@@ -47,12 +47,14 @@
             "args": [
                 "bump",
                 "deps",
-                "build-tools",
+                "server",
                 "-t",
-                "current",
-                "-g",
-                "azure",
-                // "--no-commit",
+                "greatest",
+                "-p",
+                // "-g",
+                // "azure",
+                "--no-commit",
+                "--no-install"
             ],
         },
         {

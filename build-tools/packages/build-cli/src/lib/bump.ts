@@ -32,18 +32,17 @@ export type DependencyUpdateType =
  *
  * @internal
  */
- export function isDependencyUpdateType(str: string | undefined): str is DependencyUpdateType {
-    if(str === undefined) {
+export function isDependencyUpdateType(str: string | undefined): str is DependencyUpdateType {
+    if (str === undefined) {
         return false;
     }
 
-    if(["latest", "newest", "greatest", "minor", "patch"].includes(str)) {
+    if (["latest", "newest", "greatest", "minor", "patch"].includes(str)) {
         return true;
     }
 
     return str.startsWith("@");
 }
-
 
 /**
  * A mapping of {@link Package} to a version range string or a bump type. This interface is used for convenience.

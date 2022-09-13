@@ -81,24 +81,24 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
     static examples = [
         {
             description:
-                "Bump dependencies on @fluidframework/build-common to range ~1.2.0 across all release groups.",
-            command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -n '~1.2.0'",
+                "Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.",
+            command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t latest",
         },
         {
             description:
-                "Bump dependencies on @fluidframework/build-common to range ^1.0.0-0 in the azure release group.",
+                "Bump dependencies on @fluidframework/build-common to the next minor version in the azure release group.",
             command:
-                "<%= config.bin %> <%= command.id %> @fluidframework/build-common -n '^1.0.0-0' -g azure",
+                "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t minor -g azure",
         },
         {
             description:
                 "Bump dependencies on packages in the server release group to the next major prerelease in the client release group.",
-            command: "<%= config.bin %> <%= command.id %> server -g client -t major",
+            command: "<%= config.bin %> <%= command.id %> server -g client -t major -p",
         },
         {
             description:
-                "Bump dependencies on server packages to the current version, replacing any pre-release ranges with release ranges.",
-            command: "<%= config.bin %> <%= command.id %> server -g client -t current",
+                "Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with release ranges.",
+            command: "<%= config.bin %> <%= command.id %> server -t latest",
         },
     ];
 
@@ -158,7 +158,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         this.logHr();
         this.log("");
 
-        if(!isDependencyUpdateType(flags.bumpType) || flags.bumpType === undefined) {
+        if (!isDependencyUpdateType(flags.bumpType) || flags.bumpType === undefined) {
             this.error(`Unknown dependency update type: ${flags.bumpType}`);
         }
 
@@ -197,6 +197,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             }
 
             for (const pkg of updatedPackages) {
+                this.info(pkg.name);
                 if (pkg.monoRepo === undefined) {
                     changedVersionsString.push(`    ${pkg.name}`);
                 }
@@ -218,7 +219,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
 
                 const bumpBranch = generateBumpDepsBranchName(
                     args.package_or_release_group,
-                    flags.bumpType!,
+                    flags.bumpType,
                     flags.releaseGroup,
                 );
                 this.log(`Creating branch ${bumpBranch}`);
