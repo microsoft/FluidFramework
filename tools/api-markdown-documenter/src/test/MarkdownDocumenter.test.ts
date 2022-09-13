@@ -2,19 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 import { Suite } from "mocha";
 import * as Path from "path";
 
-import { MarkdownDocument } from "../MarkdownDocument";
-import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
-} from "../MarkdownDocumenterConfiguration";
+} from "../Configuration";
+import { MarkdownDocument } from "../MarkdownDocument";
+import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
 import { MarkdownEmitter } from "../MarkdownEmitter";
 import { renderModelDocument, renderPackageDocument } from "../rendering";
 
@@ -30,11 +30,17 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
 const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
 
 /**
- * Simple integration test that validates complete output from simple test package
+ * Simple integration test that validates complete output from simple test package.
+ *
+ * @param relativeSnapshotDirectoryPath - Path to the test output (relative to the test directory).
+ * Used when outputting raw contents, and when copying those contents to update generate / update snapshots.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
  */
 async function snapshotTest(
     relativeSnapshotDirectoryPath: string,
     config: MarkdownDocumenterConfiguration,
+    generateFrontMatter?: (contextApiItem: ApiItem) => string,
 ): Promise<void> {
     const outputDirPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
     const snapshotDirPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
@@ -46,7 +52,11 @@ async function snapshotTest(
     // Clear any existing test_temp data
     await FileSystem.ensureEmptyFolderAsync(outputDirPath);
 
-    await renderFiles(config, outputDirPath, new MarkdownEmitter(config.apiModel));
+    await renderFiles(
+        config,
+        outputDirPath,
+        new MarkdownEmitter(config.apiModel, generateFrontMatter),
+    );
 
     // Verify against expected contents
     const result = await compare(outputDirPath, snapshotDirPath, {
@@ -79,6 +89,11 @@ interface ConfigTestProps {
      * The config to use, except the `apiModel`, which will be instantiated in test set-up.
      */
     configLessApiModel: Omit<MarkdownDocumenterConfiguration, "apiModel">;
+
+    /**
+     * {@inheritDoc MarkdownEmitter.generateFrontMatter}
+     */
+    generateFrontMatter?: (contextApiItem: ApiItem) => string;
 }
 
 /**
@@ -156,6 +171,7 @@ function apiTestSuite(
                     await snapshotTest(
                         Path.join(modelName, configProps.configName),
                         markdownDocumenterConfig,
+                        configProps.generateFrontMatter,
                     );
                 });
             });
@@ -180,6 +196,7 @@ describe("api-markdown-documenter full-suite tests", () => {
         includeTopLevelDocumentHeading: false,
         documentBoundaries: [], // Render everything to package documents
         hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+        emptyTableCellText: "---",
     };
 
     /**
@@ -209,6 +226,7 @@ describe("api-markdown-documenter full-suite tests", () => {
             ApiItemKind.Variable,
         ],
         hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+        emptyTableCellText: "📝",
     };
 
     const configs: ConfigTestProps[] = [
@@ -219,6 +237,8 @@ describe("api-markdown-documenter full-suite tests", () => {
         {
             configName: "flat-config",
             configLessApiModel: flatConfig,
+            generateFrontMatter: (apiItem) =>
+                `<!--- This is sample front-matter for API item "${apiItem.displayName}" -->`,
         },
         {
             configName: "sparse-config",

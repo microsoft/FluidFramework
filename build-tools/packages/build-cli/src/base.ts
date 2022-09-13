@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Context, getResolvedFluidRoot, GitRepo, Logger } from "@fluidframework/build-tools";
+import { Context, getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import { rootPathFlag } from "./flags";
+import { indentString } from "./lib";
+import { CommandLogger } from "./logging";
 
 // This is needed to get type safety working in derived classes.
 // https://github.com/oclif/oclif.github.io/pull/142
@@ -20,17 +22,20 @@ export type InferredFlagsType<T> = T extends FlagInput<infer F>
  * A base command that sets up common flags that all commands should have. All commands should have this class in their
  * inheritance chain.
  */
-export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Command {
+export abstract class BaseCommand<T extends typeof BaseCommand.flags>
+    extends Command
+    implements CommandLogger
+{
     static flags = {
         root: rootPathFlag(),
-        timer: Flags.boolean({
-            default: false,
-            hidden: true,
-        }),
         verbose: Flags.boolean({
             char: "v",
             description: "Verbose logging.",
             required: false,
+        }),
+        timer: Flags.boolean({
+            default: false,
+            hidden: true,
         }),
     };
 
@@ -54,7 +59,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
     }
 
     private _context: Context | undefined;
-    private _logger: Logger | undefined;
+    private _logger: CommandLogger | undefined;
 
     async init() {
         this.parsedOutput = await this.parse(this.ctor);
@@ -74,19 +79,21 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
     /**
      * @returns A default logger that can be passed to core functions enabling them to log using the command logging
      * system */
-    protected get logger(): Logger {
+    protected get logger(): CommandLogger {
         if (this._logger === undefined) {
             this._logger = {
                 info: (msg: string | Error) => {
                     this.log(msg.toString());
                 },
                 warning: this.warn.bind(this),
-                error: (msg: string | Error) => {
+                errorLog: (msg: string | Error) => {
                     this.errorLog(msg);
                 },
                 verbose: (msg: string | Error) => {
                     this.verbose(msg);
                 },
+                logHr: this.logHr.bind(this),
+                logIndent: this.logIndent.bind(this),
             };
         }
 
@@ -120,33 +127,38 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
     }
 
     /** Output a horizontal rule. */
-    protected logHr() {
+    public logHr() {
         this.log("=".repeat(72));
     }
 
     /** Log a message with an indent. */
-    protected logIndent(input: string, indent = 2) {
-        this.log(`${this.indent(indent)}${input}`);
+    public logIndent(input: string, indentNumber = 2) {
+        const message = indentString(input, indentNumber);
+        this.info(message);
     }
 
-    /** Indent text by prepending spaces. */
-    protected indent(indent = 2): string {
-        return " ".repeat(indent);
+    public info(message: string | Error) {
+        this.log(`INFO: ${message}`);
     }
 
     /** Logs an error without exiting. */
-    protected errorLog(message: string | Error) {
+    public errorLog(message: string | Error) {
         this.log(chalk.red(`ERROR: ${message}`));
     }
 
     /** Logs a warning. */
-    protected warning(message: string | Error): string | Error {
-        this.log(chalk.yellow(`WARNING: ${message}`));
+    public warning(message: string | Error): string | Error {
+        super.warn(chalk.yellow(`WARNING: ${message}`));
         return message;
     }
 
+    /** @deprecated Use {@link BaseCommand.warning} instead. */
+    public warn(input: string | Error): string | Error {
+        return super.warn(input);
+    }
+
     /** Logs a verbose log statement. */
-    protected verbose(message: string | Error): string | Error {
+    public verbose(message: string | Error): string | Error {
         if (this.baseFlags.verbose === true) {
             if (typeof message === "string") {
                 this.log(chalk.grey(`VERBOSE: ${message}`));

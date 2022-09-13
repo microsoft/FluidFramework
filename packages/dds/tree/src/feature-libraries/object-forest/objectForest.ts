@@ -52,6 +52,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         );
     }
 
+    public forgetAnchor(anchor: Anchor): void {
+        this.anchors.forget(anchor);
+    }
+
     applyDelta(delta: Delta.Root): void {
         // TODO: refactor object forest to use root node above detached fields, like how PathNode works.
         // Then factor out this editing code to work on any such JsonableTree.
@@ -331,6 +335,7 @@ class Cursor extends RootedTextCursor implements ITreeSubscriptionCursor {
 
     free(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);
+        this.forest.currentCursors.delete(this);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 

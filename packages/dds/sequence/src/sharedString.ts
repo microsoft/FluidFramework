@@ -224,7 +224,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * @deprecated - use the free function `getTextAndMarkers` exported by this package instead.
+     * @deprecated Use the free function {@link getTextAndMarkers} exported by this package instead.
      */
     public getTextAndMarkers(label: string) {
         const segmentWindow = this.client.getCollabWindow();
@@ -251,7 +251,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * @deprecated - use `getTextWithPlaceholders` instead.
+     * @deprecated Use {@link SharedString.getTextWithPlaceholders} instead.
      */
     public getTextRangeWithPlaceholders(start: number, end: number) {
         return this.getTextWithPlaceholders(start, end);

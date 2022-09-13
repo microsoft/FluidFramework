@@ -14,18 +14,25 @@ import { Value } from "./types";
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
-/** A singleton which represents a permanently invalid location (i.e. there is never a node there) */
+/**
+ * A singleton which represents a permanently invalid location (i.e. there is never a node there)
+ */
 const NeverAnchor: Anchor = brand(0);
 
 /**
  * Collection of Anchors at a specific revision.
  *
  * See {@link Rebaser} for how to update across revisions.
+ *
+ * @sealed
  */
 export class AnchorSet {
-    // Incrementing counter to give each anchor in this set a unique index for its identifier.
-    // "0" is reserved for the `NeverAnchor`
+    /**
+     * Incrementing counter to give each anchor in this set a unique index for its identifier.
+     * "0" is reserved for the `NeverAnchor`.
+     */
     private anchorCounter = 1;
+
     /**
      * Special root node under which all anchors in this anchor set are transitively parented.
      * This does not appear in the UpPaths (instead they use undefined for the root).
@@ -38,6 +45,7 @@ export class AnchorSet {
      * TODO: check for and enforce this.
      */
     private readonly root = new PathNode(this, EmptyKey, 0, undefined);
+
     // TODO: anchor system could be optimized a bit to avoid the maps (Anchor is ref to Path, path has ref count).
     // For now use this more encapsulated approach with maps.
     private readonly anchorToPath: Map<Anchor, PathNode> = new Map();

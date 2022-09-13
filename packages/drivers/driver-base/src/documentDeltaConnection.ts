@@ -81,14 +81,16 @@ export class DocumentDeltaConnection
         assert(this._disposed || this.socket.connected, 0x244 /* "Socket is closed, but connection is not!" */);
         return this._disposed;
     }
+
     /**
      * Flag to indicate whether the DocumentDeltaConnection is expected to still be capable of sending messages.
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
     private readonly mc: MonitoringContext;
+
     /**
-     * @deprecated - Implementors should manage their own logger or monitoring context
+     * @deprecated Implementors should manage their own logger or monitoring context
      */
     protected get logger(): ITelemetryLogger {
         return this.mc.logger;

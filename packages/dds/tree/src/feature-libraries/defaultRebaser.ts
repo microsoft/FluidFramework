@@ -5,8 +5,8 @@
 
 import { AnchorSet, Delta, UpPath, Value } from "../tree";
 import { ChangeRebaser } from "../rebase";
-import { Contravariant, Covariant, Invariant } from "../util";
-import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../change-family";
+import { Contravariant, Covariant, Invariant, JsonCompatible } from "../util";
+import { ChangeEncoder, ChangeFamily } from "../change-family";
 
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditor, DefaultChangeset> {
     readonly encoder = defaultChangeEncoder;

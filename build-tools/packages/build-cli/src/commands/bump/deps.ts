@@ -200,7 +200,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                     this.error("Install failed.");
                 }
             } else {
-                this.warn(`Skipping installation. Lockfiles might be outdated.`);
+                this.warning(`Skipping installation. Lockfiles might be outdated.`);
             }
 
             const changedVersionsString: string[] = [];
@@ -212,11 +212,10 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             const changedVersionMessage = changedVersionsString.join("\n");
             if (shouldCommit) {
                 const commitMessage = `Bump dependencies\n\n${changedVersionMessage}`;
-                assert(flags.bumpType !== undefined, `Bump type is undefined.`);
 
                 const bumpBranch = generateBumpDepsBranchName(
                     args.package_or_release_group,
-                    flags.bumpType,
+                    flags.bumpType ?? "current",
                     flags.releaseGroup,
                 );
                 this.log(`Creating branch ${bumpBranch}`);
@@ -226,7 +225,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                     `You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
                 );
             } else {
-                this.warn(`Skipping commit. You'll need to manually commit changes.`);
+                this.warning(`Skipping commit. You'll need to manually commit changes.`);
             }
 
             this.finalMessages.push(

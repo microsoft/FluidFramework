@@ -7,13 +7,19 @@ import { assert } from "@fluidframework/common-utils";
 import { FieldKey, TreeType, Value } from "../tree";
 
 export const enum TreeNavigationResult {
-    /** Attempt to navigate cursor to a key or index that is outside the client's view. */
+    /**
+     * Attempt to navigate cursor to a key or index that is outside the client's view.
+     */
     NotFound = -1,
 
-    /** Attempt to navigate cursor to a portion of the tree that has not yet been loaded. */
+    /**
+     * Attempt to navigate cursor to a portion of the tree that has not yet been loaded.
+     */
     Pending = 0,
 
-    /** ITreeReader successfully navigated to the desired node. */
+    /**
+     * ITreeReader successfully navigated to the desired node.
+     */
     Ok = 1,
 }
 
@@ -37,7 +43,9 @@ export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigati
  * Default chunks of size 1, and "node" shape?
  */
 export interface ITreeCursor<TResult = TreeNavigationResult> {
-    /** Select the child located at the given key and index. */
+    /**
+     * Select the child located at the given key and index.
+     */
     down(key: FieldKey, index: number): TResult;
 
     /**
@@ -45,10 +53,14 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
      */
     seek(offset: number): TResult;
 
-    /** Select the parent of the currently selected node. */
+    /**
+     * Select the parent of the currently selected node.
+     */
     up(): TResult;
 
-    /** The type of the currently selected node. */
+    /**
+     * The type of the currently selected node.
+     */
     readonly type: TreeType;
 
     /**
@@ -58,10 +70,14 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
      * */
     keys: Iterable<FieldKey>;
 
-    /** @returns the number of immediate children for the given key of the currently selected node. */
+    /**
+     * @returns the number of immediate children for the given key of the currently selected node.
+     */
     length(key: FieldKey): number;
 
-    /** value associated with the currently selected node. */
+    /**
+     * value associated with the currently selected node.
+     */
     readonly value: Value;
 }
 
@@ -73,7 +89,8 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
  * @returns array resulting from applying `f` to each item of field `key` on `cursor`'s current node.
  * Returns an empty array if the field is empty or not present (which are considered the same).
  */
-export function mapCursorField<T>(cursor: ITreeCursor, key: FieldKey, f: (cursor: ITreeCursor) => T): T[] {
+export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor, key: FieldKey, f: (cursor: TCursor) => T): T[] {
     const output: T[] = [];
     let result = cursor.down(key, 0);
     if (result !== TreeNavigationResult.Ok) {
@@ -87,6 +104,25 @@ export function mapCursorField<T>(cursor: ITreeCursor, key: FieldKey, f: (cursor
         result = cursor.seek(1);
     }
     assert(result === TreeNavigationResult.NotFound, 0x34f /* expected enumeration to end at end of field */);
+    cursor.up();
+    return output;
+}
+
+export function reduceField<T>(
+    cursor: ITreeCursor, key: FieldKey, initial: T, f: (cursor: ITreeCursor, initial: T) => T): T {
+    let output: T = initial;
+    let result = cursor.down(key, 0);
+    if (result !== TreeNavigationResult.Ok) {
+        assert(result === TreeNavigationResult.NotFound, "pending not supported in reduceField");
+        // This has to be special cased (and not fall through the code below)
+        // since the call to `up` needs to be skipped.
+        return output;
+    }
+    while (result === TreeNavigationResult.Ok) {
+        output = (f(cursor, output));
+        result = cursor.seek(1);
+    }
+    assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
     cursor.up();
     return output;
 }
