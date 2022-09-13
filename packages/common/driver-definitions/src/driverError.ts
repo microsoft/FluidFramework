@@ -138,7 +138,8 @@ export interface IDriverBasicError extends IDriverErrorBase {
     | DriverErrorType.writeError
     | DriverErrorType.fetchFailure
     | DriverErrorType.incorrectServerResponse
-    | DriverErrorType.fileOverwrittenInStorage;
+    | DriverErrorType.fileOverwrittenInStorage
+    | DriverErrorType.fluidInvalidSchema;
     readonly statusCode?: number;
 }
 
