@@ -11,7 +11,7 @@
 {{/* printf "%#v" $menu */}}
 
 <nav id="docs-navbar" aria-label="Topics" class="docs-nav visible-md visible-lg">
-    <ul class="nav" id="main-nav" style="overflow: hidden;">
+    <ul class="nav" id="main-nav">
         {{ if $sectionTitle }}
         <li {{ if eq .Kind "section" }} class="active" {{ end }}>
             <a class="docs-home" href="/{{ $mainURL }}" {{ if eq .Kind "section" }}
