@@ -118,8 +118,6 @@ export function detectBumpType(
         throw new Error(`Invalid version: ${v2}`);
     }
 
-    // const scheme = detectVersionScheme(v1Parsed);
-    // let publicVer: semver.SemVer;
     if (isInternalVersionScheme(v1, true)) {
         const [, internalVer] = fromInternalScheme(v1, true);
         v1Parsed = internalVer;

@@ -189,7 +189,7 @@ export class GitRepo {
         const results = pattern === undefined || pattern.length === 0
             ? await this.exec(`tag -l --sort=-committerdate`, `get all tags`)
             : await this.exec(`tag -l "${pattern}" --sort=-committerdate`, `get tags ${pattern}`);
-        const tags = results.split("\n").filter(t => t !== undefined && t !== "" && t !== null).splice(0, 100);
+        const tags = results.split("\n").filter(t => t !== undefined && t !== "" && t !== null);
 
         this.log?.verbose(`Found ${tags.length} tags.`)
         return tags;
