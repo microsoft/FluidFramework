@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITaskManager } from "@fluid-experimental/task-manager";
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
 /**
@@ -33,6 +34,11 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
      * @param id - the container id
      */
     finalizeMigration(id: string): Promise<void>;
+
+    /**
+     * TaskManager DDS to facilitate the migration execution.
+     */
+    readonly taskManager: ITaskManager;
 
     /**
      * The version string of the proposed new version to use, if one has been proposed.

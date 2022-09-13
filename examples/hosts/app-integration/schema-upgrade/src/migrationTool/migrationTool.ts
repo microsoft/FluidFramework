@@ -37,7 +37,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         return this._crc;
     }
 
-    private get taskManager() {
+    public get taskManager() {
         if (this._taskManager === undefined) {
             throw new Error("Couldn't retrieve the TaskManager");
         }

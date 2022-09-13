@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ITaskManager } from "@fluid-experimental/task-manager";
 
 import type {
     DataTransformationCallback,
@@ -27,6 +28,11 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
     public get migrationState(): MigrationState {
         return this._currentModel.migrationTool.migrationState;
+    }
+
+    private readonly migrationTaskId = "migrationTask";
+    public get taskManager(): ITaskManager {
+        return this._currentModel.migrationTool.taskManager;
     }
 
     /**
@@ -85,6 +91,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             throw new Error("Expect an accepted version before migration starts");
         }
 
+        let migratedModel: IMigratableModel | undefined;
+
         const doTheMigration = async () => {
             // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Currently
             // this fails the migration gracefully and emits an event so the app developer can know they're stuck.
@@ -100,7 +108,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             }
 
             const createResponse = await this.modelLoader.createDetached(acceptedVersion);
-            const migratedModel: IMigratableModel = createResponse.model;
+            migratedModel = createResponse.model;
 
             const exportedData = await migratable.exportData();
 
@@ -131,38 +139,11 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             }
             await migratedModel.importData(transformedData);
 
-            // Before attaching, let's check to make sure no one else has already done the migration
-            // To avoid creating unnecessary extra containers.
-            if (migratable.migrationTool.migrationState === "migrated") {
-                this._migrationP = undefined;
-                migratedModel.close();
-                this.takeAppropriateActionForCurrentMigratable();
-                return;
-            }
-
             // TODO: Support retry
-            // TODO: Use TaskManager here to reduce container noise.  Specifically -- all clients should race up to
-            // this point (so they're all prepared to do the migration) but should wait for the task lock before
-            // attempting the attach() to minimize the chance that multiple containers are created on the service.
             const containerId = await createResponse.attach();
-
-            // Again, it could be the case that someone else finished the migration during our attach.
-            // Casting to MigrationState because TS doesn't understand that the state may have changed during the
-            // above await.
-            if (migratable.migrationTool.migrationState as MigrationState === "migrated") {
-                this._migrationP = undefined;
-                migratedModel.close();
-                this.takeAppropriateActionForCurrentMigratable();
-                return;
-            }
 
             // TODO: Support retry
             await migratable.migrationTool.finalizeMigration(containerId);
-
-            // If someone else finalized the migration before us, we should close the one we created.
-            if (migratable.migrationTool.newContainerId !== containerId) {
-                migratedModel.close();
-            }
 
             // Note that we do not assume the migratedModel is the correct new one, and let it fall out of scope
             // intentionally.  This is because if we don't win the race to set the container, it will be the wrong
@@ -172,11 +153,39 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
             this._migrationP = undefined;
 
+            this.taskManager.off("lost", exitMigration);
+            this.taskManager.off("completed", exitMigration);
+            this.taskManager.off("assigned", onAssigned);
+            this.taskManager.complete(this.migrationTaskId);
+
             this.takeAppropriateActionForCurrentMigratable();
         };
 
+        const exitMigration = (taskId: string) => {
+            if (taskId !== this.migrationTaskId) {
+                return;
+            }
+            this.taskManager.off("lost", exitMigration);
+            this.taskManager.off("completed", exitMigration);
+            this.taskManager.off("assigned", onAssigned);
+            migratedModel?.close();
+            this._migrationP = undefined;
+            this.takeAppropriateActionForCurrentMigratable();
+        };
+
+        const onAssigned = (taskId: string) => {
+            if (taskId !== this.migrationTaskId) {
+                return;
+            }
+            this._migrationP = doTheMigration().catch(console.error);
+        };
+
+        this.taskManager.on("lost", exitMigration);
+        this.taskManager.on("completed", exitMigration);
+        this.taskManager.on("assigned", onAssigned);
+        this.taskManager.subscribeToTask(this.migrationTaskId);
+
         this.emit("migrating");
-        this._migrationP = doTheMigration().catch(console.error);
     };
 
     private readonly ensureLoading = () => {
