@@ -512,8 +512,8 @@ export class SummaryWriter implements ISummaryWriter {
         const logTail = await this.getLogTail(from, to, pending);
 
         // Some ops would be missing if we switch cluster during routing.
-        // We need to load these mssing ops from the last summary.
-        const missingOps = await this.getSummaryOps(from, to, logTail, lastSummaryMessages);
+        // We need to load these missing ops from the last summary.
+        const missingOps = await this.getMissingOpsFromLastSummaryLogtail(from, to, logTail, lastSummaryMessages);
         const fullLogTail = missingOps ?
             (missingOps.concat(logTail)).sort((op1, op2) => op1.sequenceNumber - op2.sequenceNumber) :
             logTail;
@@ -522,10 +522,13 @@ export class SummaryWriter implements ISummaryWriter {
         if (fullLogTail.length !== (to - from - 1)) {
             const missingOpsSequenceNumbers: number[] = [];
             const fullLogTailSequenceNumbers = fullLogTail.map((ms) => ms.sequenceNumber);
+            let j = 0;
             for (let i = from + 1; i < to; i++) {
-                if (!fullLogTailSequenceNumbers.includes(i)) {
-                    missingOpsSequenceNumbers.push(i);
+                if (i === fullLogTailSequenceNumbers[j]) {
+                    j++;
+                    continue;
                 }
+                missingOpsSequenceNumbers.push(i);
             }
             Lumberjack.error(`Missing ops in the fullLogTail: ${JSON.stringify(missingOpsSequenceNumbers)}`
                 , this.lumberProperties);
@@ -545,18 +548,19 @@ export class SummaryWriter implements ISummaryWriter {
         return logTailEntries;
     }
 
-    private async getSummaryOps(
+    private async getMissingOpsFromLastSummaryLogtail(
         gt: number,
         lt: number,
         logTail: ISequencedDocumentMessage[],
         lastSummaryMessages: ISequencedDocumentMessage[] | undefined):
         Promise<ISequencedDocumentMessage[] | undefined> {
         if (lt - gt <= 1) {
-            return [];
+            return undefined;
         }
-        const logtailSequenceNumbers = logTail.map((ms) => ms.sequenceNumber);
+        const logtailSequenceNumbers = new Set();
+        logTail.forEach((ms) => logtailSequenceNumbers.add(ms.sequenceNumber));
         const missingOps = lastSummaryMessages?.filter((ms) =>
-            !(logtailSequenceNumbers.includes(ms.sequenceNumber)));
+            !(logtailSequenceNumbers.has(ms.sequenceNumber)));
         return missingOps;
     }
 

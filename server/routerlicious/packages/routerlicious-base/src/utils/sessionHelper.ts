@@ -7,7 +7,7 @@ import { ISession, NetworkError } from "@fluidframework/server-services-client";
 import { IDocument, ICollection } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
-const defaultSessionStickinessDurationMs = 180 * 60 * 1000; // 180 minutes
+const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 
 /**
  * Create a new session for a document that does not have a session defined,
