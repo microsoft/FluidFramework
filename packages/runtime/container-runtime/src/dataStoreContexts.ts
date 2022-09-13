@@ -163,12 +163,12 @@ export class DataStoreContexts
     }
 
     private async waitIfTrackedForAliasConversion(id: string) {
-        const deferred = this.pendingLegacyRootContexts.get(id);
-        if (deferred === undefined) {
+        const marker = this.pendingLegacyRootContexts.get(id);
+        if (marker === undefined) {
             return;
         }
 
-        return deferred.promise.then(() => {
+        return marker.promise.then(() => {
             this.pendingLegacyRootContexts.delete(id);
         });
     }
