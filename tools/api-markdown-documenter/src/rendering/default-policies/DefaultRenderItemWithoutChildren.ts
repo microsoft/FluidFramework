@@ -5,7 +5,7 @@
 import { ApiItem } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 
 /**
  * Default policy for rendering doc sections for API item kinds that do not have child contents.

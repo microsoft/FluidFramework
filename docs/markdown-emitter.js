@@ -11,8 +11,13 @@ const { MarkdownEmitter } = require("@fluid-tools/api-markdown-documenter");
  * @remarks Used by `./api-markdown-documenter.js`.
  */
 class HugoMarkdownEmitter extends MarkdownEmitter {
-    constructor(apiModel) {
-        super(apiModel);
+    /**
+     * @param {ApiModel} apiModel - See {@link @fluid-tools/api-markdown-documenter#MarkdownEmitter.apiModel}
+     * @param {((contextApiItem: ApiItem) => string) | undefined} generateFrontMatter - See
+     * {@link @fluid-tools/api-markdown-documenter#MarkdownEmitter.generateFrontMatter}
+     */
+    constructor(apiModel, generateFrontMatter) {
+        super(apiModel, generateFrontMatter);
     }
 
     /**
@@ -73,7 +78,26 @@ class HugoMarkdownEmitter extends MarkdownEmitter {
     }
 
     /**
-     * Override base logic to make use of Hugo callouts for note boxes
+     * Override base logic to make use of Hugo callouts for note boxes.
+     *
+     * @override
+     */
+     writeAlert(docAlert, context) {
+        const writer = context.writer;
+
+        writer.ensureNewLine();
+
+        writer.writeLine(`{{% callout ${docAlert.type ?? 'note'} ${docAlert.title ?? ''} %}}`);
+
+        this.writeNode(docAlert.content, context, false);
+        writer.ensureNewLine();
+
+        writer.writeLine('{{% /callout %}}');
+        writer.writeLine();
+    }
+
+    /**
+     * Override base logic to make use of Hugo callouts for note boxes.
      *
      * @override
      */
@@ -82,10 +106,7 @@ class HugoMarkdownEmitter extends MarkdownEmitter {
 
         writer.ensureNewLine();
 
-        const title = docNoteBox.title ?? "";
-        const type = title.toLowerCase() === "deprecated" ? "warning" : "note";
-
-        writer.writeLine(`{{% callout ${type} ${title} %}}`);
+        writer.writeLine('{{% callout note %}}');
 
         this.writeNode(docNoteBox.content, context, false);
         writer.ensureNewLine();

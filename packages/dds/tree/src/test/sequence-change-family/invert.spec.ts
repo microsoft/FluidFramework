@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { Transposed as T } from "../../changeset";
 import {
+    Transposed as T,
     DUMMY_INVERSE_VALUE,
     DUMMY_INVERT_TAG,
     sequenceChangeRebaser,

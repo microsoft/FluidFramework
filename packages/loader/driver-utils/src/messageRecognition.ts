@@ -23,7 +23,7 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
         case MessageType.Reject:
         case MessageType.NoOp:
         case MessageType2.Accept:
-            case MessageType.Summarize:
+        case MessageType.Summarize:
             return true;
         default:
             return false;
@@ -31,11 +31,10 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
 }
 
 /**
- *
+ * Tells if message was sent by container runtime
+ * // ADO #1385: To be moved to container-definitions
  * @param message-message
- * @returns whether or not the message type is one listed below
- * "op"
- * "summarize"
+ * @returns whether the message is a runtime message
  */
 export function isRuntimeMessage(message: { type: string; }): boolean {
     return message.type === MessageType.Operation;
@@ -52,7 +51,7 @@ enum RuntimeMessage {
 }
 
 /**
- *
+ * @deprecated - this API should not be used!
  * @param message-message
  * @returns whether or not the message type is one listed below (legacy)
  * "component"

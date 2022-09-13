@@ -5,11 +5,11 @@
 
 import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
+import { ChangeEncoder, ChangeFamily } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet, Delta, FieldKey } from "../../tree";
-import { brand, makeArray, RecursiveReadonly } from "../../util";
+import { brand, makeArray, RecursiveReadonly, JsonCompatible } from "../../util";
 
 interface NonEmptyTestChangeset {
     /**
@@ -236,7 +236,9 @@ const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1));
 
 type TestCommit = Commit<TestChangeset>;
 
-/** Represents the minting and sending of a new local change. */
+/**
+ * Represents the minting and sending of a new local change.
+ */
 interface UnitTestPushStep {
     type: "Push";
     /**
@@ -247,7 +249,9 @@ interface UnitTestPushStep {
     seq?: number;
 }
 
-/** Represents the sequencing of a local change. */
+/**
+ * Represents the sequencing of a local change.
+ */
 interface UnitTestAckStep {
     type: "Ack";
     /**
@@ -258,17 +262,23 @@ interface UnitTestAckStep {
     seq: number;
 }
 
-/** Represents the reception of a (sequenced) peer change */
+/**
+ * Represents the reception of a (sequenced) peer change
+ */
 interface UnitTestPullStep {
     type: "Pull";
-    /** The sequence number for this change. */
+    /**
+     * The sequence number for this change.
+     */
     seq: number;
     /**
      * The sequence number of the latest change that the issuer of this change knew about
      * at the time they issued this change.
      */
     ref: number;
-    /** The ID of the peer that issued the change. */
+    /**
+     * The ID of the peer that issued the change.
+     */
     from: SessionId;
     /**
      * The delta which should be produced by the `EditManager` when it receives this change.
@@ -399,11 +409,17 @@ describe("EditManager", () => {
  * State needed by the scenario builder.
  */
 interface ScenarioBuilderState {
-    /** The ref number of the last commit made by each peer (0 for peers that have made no commits). */
+    /**
+     * The ref number of the last commit made by each peer (0 for peers that have made no commits).
+     */
     peerRefs: number[];
-    /** The sequence number of the last sequenced commit. */
+    /**
+     * The ref number of the last commit made by each peer (0 for peers that have made no commits).
+     */
     seq: number;
-    /** The number of local changes that have yet to be acked. */
+    /**
+     * The number of local changes that have yet to be acked.
+     */
     inFlight: number;
 }
 
@@ -457,19 +473,33 @@ function* buildScenario(
 function runUnitTestScenario(title: string | undefined, steps: readonly UnitTestScenarioStep[]): void {
     const run = () => {
         const { manager, anchors } = editManagerFactory();
-        /** Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`) */
+        /**
+         * Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`)
+         */
         const localCommits: TestCommit[] = [];
-        /** Ordered list of intentions that the manager has been made aware of (i.e., `pushed ⋃ pulled`). */
+        /**
+         * Ordered list of intentions that the manager has been made aware of (i.e., `pushed ⋃ pulled`).
+         */
         let knownToLocal: number[] = [];
-        /** Ordered list of intentions that have been sequenced (i.e., `acked ⋃ pulled`) */
+        /**
+         * Ordered list of intentions that have been sequenced (i.e., `acked ⋃ pulled`)
+         */
         const trunk: number[] = [];
-        /** The sequence number of the most recent sequenced commit that the manager is aware of */
+        /**
+         * The sequence number of the most recent sequenced commit that the manager is aware of
+         */
         let localRef: number = 0;
-        /** The sequence number of the last sequenced in the scenario. */
+        /**
+         * The sequence number of the last sequenced in the scenario.
+         */
         const finalSequencedEdit = [...steps].reverse().find((s) => s.type !== "Push")?.seq ?? 0;
-        /** The Ack steps of the scenario */
+        /**
+         * The Ack steps of the scenario
+         */
         const acks = steps.filter((s) => s.type === "Ack") as readonly UnitTestAckStep[];
-        /** Index of the "Ack" step in `acks` that matches the next encountered "Push" step */
+        /**
+         * Index of the "Ack" step in `acks` that matches the next encountered "Push" step
+         */
         let iNextAck = 0;
         for (const step of steps) {
             const type = step.type;
@@ -514,13 +544,19 @@ function runUnitTestScenario(title: string | undefined, steps: readonly UnitTest
                 }
                 case "Pull": {
                     const seq = step.seq;
-                    /** Filter that includes changes that were on the trunk of the issuer of this commit. */
+                    /**
+                     * Filter that includes changes that were on the trunk of the issuer of this commit.
+                     */
                     const peerTrunkChangesFilter = (s: UnitTestScenarioStep) =>
                         s.type !== "Push" && s.seq <= step.ref;
-                    /** Filter that includes changes that were local to the issuer of this commit. */
+                    /**
+                     * Filter that includes changes that were local to the issuer of this commit.
+                     */
                     const peerLocalChangesFilter = (s: UnitTestScenarioStep) =>
                         s.type === "Pull" && s.seq > step.ref && s.seq < step.seq && s.from === step.from;
-                    /** Changes that were known to the peer at the time it authored this commit. */
+                    /**
+                     * Changes that were known to the peer at the time it authored this commit.
+                     */
                     const knownToPeer: number[] = [
                         ...steps.filter(peerTrunkChangesFilter),
                         ...steps.filter(peerLocalChangesFilter),
@@ -531,7 +567,9 @@ function runUnitTestScenario(title: string | undefined, steps: readonly UnitTest
                         refNumber: brand(step.ref),
                         changeset: TestChangeRebaser.mintChangeset(knownToPeer, seq),
                     };
-                    /** Ordered list of intentions for local changes */
+                    /**
+                     * Ordered list of intentions for local changes
+                     */
                     const localIntentions = localCommits.map((c) => c.seqNumber);
                     // When a peer commit is received we expect the update to be equivalent to the
                     // retraction of any local changes, followed by the peer changes, followed by the

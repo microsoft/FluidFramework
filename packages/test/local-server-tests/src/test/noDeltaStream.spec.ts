@@ -120,7 +120,7 @@ describe("No Delta Stream", () => {
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-        assert.strictEqual(dataObject.runtime.connected, true, "dataObject.runtime.connected");
+        assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
         assert.strictEqual(dataObject.runtime.clientId, "storage-only client", "dataObject.runtime.clientId");
 
         assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
@@ -171,7 +171,7 @@ describe("No Delta Stream", () => {
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-        assert.strictEqual(dataObject.runtime.connected, true, "dataObject.runtime.connected");
+        assert.strictEqual(dataObject.runtime.connected, false, "dataObject.runtime.connected");
         assert.strictEqual(dataObject.runtime.clientId, "storage-only client", "dataObject.runtime.clientId");
 
         assert.strictEqual(dataObject.root.get("test"), "key", "mapKey");
