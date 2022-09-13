@@ -131,17 +131,22 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         return this._context;
     }
 
-    /** Output a horizontal rule. */
+    /** Outputs a horizontal rule. */
     public logHr() {
         this.log("=".repeat(72));
     }
 
-    /** Log a message with an indent. */
+    /**
+     *  Logs a message with an indent.
+     */
     public logIndent(input: string, indentNumber = 2) {
         const message = indentString(input, indentNumber);
         this.info(message);
     }
 
+    /**
+     * Logs an informational message.
+     */
     public info(message: string | Error) {
         this.log(`INFO: ${message}`);
     }
@@ -173,6 +178,40 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
      *
      * This method overrides the oclif Command error method so we can do some formatting on the strings.
      */
+     public error(
+        input: string | Error,
+        options: { code?: string | undefined; exit: false } & PrettyPrintableError,
+    ): void;
+
+    /**
+     * Logs an error and exits the process. If you don't want to exit the process use {@link BaseCommand.errorLog}
+     * instead.
+     *
+     * @param input - an Error or a error message string,
+     * @param options - options for the error handler.
+     *
+     * @remarks
+     *
+     * This method overrides the oclif Command error method so we can do some formatting on the strings.
+     */
+     public error(
+        input: string | Error,
+        options?:
+            | ({ code?: string | undefined; exit?: number | undefined } & PrettyPrintableError)
+            | undefined,
+    ): never;
+
+    /**
+     * Logs an error and exits the process. If you don't want to exit the process use {@link BaseCommand.errorLog}
+     * instead.
+     *
+     * @param input - an Error or a error message string,
+     * @param options - options for the error handler.
+     *
+     * @remarks
+     *
+     * This method overrides the oclif Command error method so we can do some formatting on the strings.
+     */
     public error(input: unknown, options?: unknown): void {
         if (typeof input === "string") {
             return super.error(chalk.red(input), options as any);
@@ -180,18 +219,6 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
 
         return super.error(input as Error, options as any);
     }
-
-    public error(
-        input: string | Error,
-        options: { code?: string | undefined; exit: false } & PrettyPrintableError,
-    ): void;
-
-    public error(
-        input: string | Error,
-        options?:
-            | ({ code?: string | undefined; exit?: number | undefined } & PrettyPrintableError)
-            | undefined,
-    ): never;
 
     /** Logs a verbose log statement. */
     public verbose(message: string | Error): string | Error {
