@@ -187,7 +187,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
      * @param initializeEntrypoint - Function to initialize the entrypoint object for the data store runtime.
      * The handle to this data store runtime will point to the object returned by this function.
-     * For now, the default function will use the request pattern on the runtime to return its root object ("/").
      */
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
