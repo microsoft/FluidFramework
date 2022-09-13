@@ -9,9 +9,10 @@ import { AzureClient } from "..";
 import { AzureLocalConnectionConfig, AzureRemoteConnectionConfig } from "../interfaces";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
-// This function will determine if local or remote mode is required (based on FLUID_CLIENT),
-// and return a new AzureClient instance based on the mode by setting the Connection config
-// accordingly.
+/**
+ * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
+ * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
+ */
 export function createAzureClient(userID?: string, userName?: string): AzureClient {
     const useAzure = process.env.FLUID_CLIENT === "azure";
     const tenantId = useAzure
