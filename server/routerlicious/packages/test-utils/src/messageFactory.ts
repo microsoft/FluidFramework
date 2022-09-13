@@ -84,7 +84,8 @@ export class MessageFactory {
             referenceSequenceNumber,
             traces: [],
             type,
-        };
+            compression: undefined,
+        } as any;
         return operation;
     }
 
