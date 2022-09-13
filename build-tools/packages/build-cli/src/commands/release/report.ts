@@ -32,13 +32,32 @@ const DEFAULT_MIN_VERSION = "0.0.0";
  * released.
  */
 export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseReportCommand.flags> {
-    static description = "Generate a release report.";
-    static examples = ["<%= config.bin %> <%= command.id %>"];
+    static summary = "Generates a report of Fluid Framework releases.";
+    static description = `The release report command is used to produce a report of all the packages that were released and their current version. After a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the most recent version.
+
+    The command will prompt you to select versions for a package or release group in the event that multiple versions have recently been released.`;
+
+    static examples = [
+        {
+            description: "Generate a minimal release report and display it in the terminal.",
+            command: "<%= config.bin %> <%= command.id %> ",
+        },
+        {
+            description: "Generate a minimal release report and output it to stdout as JSON.",
+            command: "<%= config.bin %> <%= command.id %> --json",
+        },
+        {
+            description: "Output a release report to 'report.json'.",
+            command: "<%= config.bin %> <%= command.id %> -o report.json",
+        },
+        {
+            description: "Output a full release report to 'report.json'.",
+            command: "<%= config.bin %> <%= command.id %> -f -o report.json",
+        },
+    ];
+
     static enableJsonFlag = true;
     static flags = {
-        // previous: Flags.boolean({
-        //     description: "Report the previous release versions instead of the latest.",
-        // }),
         days: Flags.integer({
             char: "d",
             description: "The number of days to look back for releases to report.",
@@ -61,7 +80,9 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         }),
         full: Flags.boolean({
             char: "f",
-            description: "Output a full report.",
+            description:
+                "Output a full report. A full report includes additional metadata for each package, including the time of the release, the type of release (patch, minor, major), and whether the release is new.",
+            dependsOn: ["output"],
         }),
         ...BaseCommand.flags,
     };
@@ -115,7 +136,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         /* eslint-enable no-await-in-loop */
 
         const report: ReleaseReport = await this.generateReleaseReport(versionData);
-        // const minReport: MinimalReleaseReport = this.generateMinimalReport(versionData);
         const packageList: PackageVersionList = await this.generatePackageList(versionData);
         const tableData = this.generateReleaseTable(versionData);
 
