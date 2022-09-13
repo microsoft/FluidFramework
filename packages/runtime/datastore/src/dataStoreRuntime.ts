@@ -62,7 +62,6 @@ import {
     create404Response,
     createResponseError,
     exceptionToResponse,
-    requestFluidObject,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -194,8 +193,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
-        initializeEntrypoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject> =
-            async (rt) => requestFluidObject(rt, "/"),
+        initializeEntrypoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -304,11 +302,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.deferredAttached.resolve();
         }
 
-        this.handle = new FluidObjectHandle<FluidObject>(
-            new LazyPromise(async () => initializeEntrypoint(this)),
-            "",
-            this.objectsRoutingContext,
-            );
+        if (initializeEntrypoint) {
+            this.handle = new FluidObjectHandle<FluidObject>(
+                new LazyPromise(async () => initializeEntrypoint(this)),
+                "",
+                this.objectsRoutingContext,
+                );
+        }
     }
 
     public dispose(): void {
