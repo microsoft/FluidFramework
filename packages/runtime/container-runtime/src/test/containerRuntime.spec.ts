@@ -75,6 +75,7 @@ describe("Runtime", () => {
                     let mockContext: Partial<IContainerContext>;
                     const submittedOpsMetdata: any[] = [];
                     const containerErrors: ICriticalContainerError[] = [];
+                    let opFakeSequenceNumber = 1;
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
                             attachState: AttachState.Attached,
@@ -90,7 +91,7 @@ describe("Runtime", () => {
                             updateDirtyContainerState: (_dirty: boolean) => { },
                             submitFn: (_type: MessageType, _contents: any, _batch: boolean, appData?: any) => {
                                 submittedOpsMetdata.push(appData);
-                                return 1;
+                                return opFakeSequenceNumber++;
                             },
                             connected: true,
                         };
@@ -120,6 +121,7 @@ describe("Runtime", () => {
                         );
                         containerErrors.length = 0;
                         submittedOpsMetdata.length = 0;
+                        opFakeSequenceNumber = 1;
                     });
 
                     it("Can't call flush() inside orderSequentially's callback", () => {
@@ -192,13 +194,17 @@ describe("Runtime", () => {
                         containerRuntime.orderSequentially(() => {
                             containerRuntime.submitDataStoreOp("1", "test");
                             containerRuntime.submitDataStoreOp("2", "test");
+                            containerRuntime.submitDataStoreOp("3", "test");
                         });
+                        (containerRuntime as any).flush();
 
-                        assert.strictEqual(submittedOpsMetdata.length, 2, "2 messages should be sent");
+                        assert.strictEqual(submittedOpsMetdata.length, 3, "3 messages should be sent");
                         assert.strictEqual(submittedOpsMetdata[0].batch, true,
                             "first message should be the batch start");
                         assert.strictEqual(submittedOpsMetdata[1], undefined,
                             "second message should not hold batch info");
+                        assert.strictEqual(submittedOpsMetdata[2].batch, false,
+                            "third message should be the batch end");
                     });
                 });
             }));
