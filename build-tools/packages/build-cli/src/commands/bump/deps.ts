@@ -4,20 +4,13 @@
  */
 
 import { FluidRepo } from "@fluidframework/build-tools";
-import { isVersionBumpTypeExtended } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import type { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
-import * as semver from "semver";
 import stripAnsi from "strip-ansi";
 import { BaseCommand } from "../../base";
-import {
-    bumpTypeExtendedFlag,
-    dependencyUpdateTypeFlag,
-    releaseGroupFlag,
-    semverRangeFlag,
-} from "../../flags";
+import { dependencyUpdateTypeFlag, releaseGroupFlag } from "../../flags";
 import { generateBumpDepsBranchName, isDependencyUpdateType, npmCheckUpdates } from "../../lib";
 import { isReleaseGroup, ReleaseGroup } from "../../releaseGroups";
 
@@ -92,8 +85,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         },
         {
             description:
-                "Bump dependencies on packages in the server release group to the next major prerelease in the client release group.",
-            command: "<%= config.bin %> <%= command.id %> server -g client -t major -p",
+                "Bump dependencies on packages in the server release group to the greatest released version in the client release group. Include pre-release versions.",
+            command: "<%= config.bin %> <%= command.id %> server -g client -t greatest -p",
         },
         {
             description:
@@ -197,7 +190,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             }
 
             for (const pkg of updatedPackages) {
-                this.info(pkg.name);
                 if (pkg.monoRepo === undefined) {
                     changedVersionsString.push(`    ${pkg.name}`);
                 }
