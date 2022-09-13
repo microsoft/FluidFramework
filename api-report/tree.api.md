@@ -273,8 +273,8 @@ export interface FieldEditor<TChangeset> {
     buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
 
-// @public (undocumented)
-export type FieldKey = LocalFieldKey | GlobalFieldKey;
+// @public
+export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
 
 // @public @sealed
 export class FieldKind {
@@ -345,6 +345,14 @@ export interface FieldSchema {
 }
 
 // @public
+export const enum FieldScope {
+    // (undocumented)
+    global = "fields",
+    // (undocumented)
+    local = "fields"
+}
+
+// @public
 const forbidden: FieldKind;
 
 // @public
@@ -361,7 +369,9 @@ export type GapCount = number;
 // @public
 export interface GenericTreeNode<TChild> extends NodeData {
     // (undocumented)
-    fields?: FieldMap<TChild>;
+    [FieldScope.local]?: FieldMap<TChild>;
+    // (undocumented)
+    [FieldScope.global]?: FieldMap<TChild>;
 }
 
 // @public
@@ -371,8 +381,10 @@ export function getEditableTree(forest: IEditableForest): [EditableTreeContext, 
 export const getTypeSymbol: unique symbol;
 
 // @public
-export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
-}
+export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
+
+// @public
+export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
 
 // @public (undocumented)
 export interface HasOpId {
@@ -574,6 +586,9 @@ export const jsonString: NamedTreeSchema;
 
 // @public (undocumented)
 export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema>;
+
+// @public (undocumented)
+export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
 // @public
 function lastWriteWinsRebaser<TChange>(data: {
@@ -893,7 +908,7 @@ export interface RootField {
 }
 
 // @public
-export const rootFieldKey: BrandedType<string, "tree.GlobalFieldKey">;
+export const rootFieldKey: GlobalFieldKey;
 
 // @public
 export interface SchemaData extends SchemaDataReader {
@@ -999,6 +1014,9 @@ export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
     updateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): void;
     updateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): void;
 }
+
+// @public (undocumented)
+export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol;
 
 // @public
 export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;

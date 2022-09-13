@@ -12,6 +12,7 @@ import {
 import {
     FieldKey,
     FieldMap,
+    FieldScope,
     getGenericTreeField,
     getGenericTreeFieldMap,
     JsonableTree,
