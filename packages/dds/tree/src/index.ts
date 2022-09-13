@@ -47,9 +47,15 @@ export {
     brandOpaque,
     ValueFromBranded,
     NameFromBranded,
+    JsonCompatibleReadOnly,
+    JsonCompatible,
 } from "./util";
 
-export { ChangeEncoder, JsonCompatibleReadOnly, JsonCompatible } from "./change-family";
+export {
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+} from "./change-family";
 
 export {
     Rebaser,
@@ -57,6 +63,11 @@ export {
     RevisionTag,
     ChangesetFromChangeRebaser,
 } from "./rebase";
+
+export {
+    ICheckout,
+    TransactionResult,
+} from "./checkout";
 
 export {
     cursorToJsonObject,
@@ -73,10 +84,60 @@ export {
     emptyField,
     neverTree,
     FieldKinds,
-    ChangeHandler,
+    ModularChangeFamily,
+    ModularEditBuilder,
+    FieldChangeHandler,
+    FieldEditor,
+    FieldChangeRebaser,
+    FieldChangeEncoder,
+    NodeChangeset,
+    ValueChange,
+    FieldChangeMap,
+    FieldChangeset,
+    FieldChange,
+    ToDelta,
+    UpPathWithFieldKinds,
+    NodeChangeComposer,
+    NodeChangeInverter,
+    NodeChangeRebaser,
+    NodeChangeEncoder,
+    NodeChangeDecoder,
     FieldKind,
     Multiplicity,
     isNeverField,
     FullSchemaPolicy,
+    UnwrappedEditableField,
+    EditableTreeContext,
+    UnwrappedEditableTree,
+    EditableTreeOrPrimitive,
+    EditableTree,
+    getEditableTree,
+    isPrimitiveValue,
+    isPrimitive,
+    getTypeSymbol,
+    valueSymbol,
+    proxyTargetSymbol,
     defaultSchemaPolicy,
+    PrimitiveValue,
+    SequenceEditBuilder,
+    SequenceChangeset,
+    NodePath,
+    PlacePath,
+    Transposed,
+    TreeForestPath,
+    TreeRootPath,
+    OpId,
+    Skip,
+    ChangesetTag,
+    Effects,
+    Tiebreak,
+    ProtoNode,
+    GapCount,
+    HasOpId,
+    NodeCount,
 } from "./feature-libraries";
+
+export {
+    ISharedTree,
+    SharedTreeFactory,
+} from "./shared-tree";

@@ -103,7 +103,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly disableIsolatedChannels: boolean;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
@@ -458,7 +457,7 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
     gcStats?: IGCStats;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public
@@ -620,19 +619,17 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
-    // @deprecated (undocumented)
-    disableIsolatedChannels?: boolean;
-    // @deprecated (undocumented)
+    // @deprecated
     disableSummaries?: boolean;
-    // @deprecated (undocumented)
+    // @deprecated
     initialSummarizerDelayMs?: number;
     // @deprecated (undocumented)
     maxOpsSinceLastSummary?: number;
-    // @deprecated (undocumented)
+    // @deprecated
     summarizerClientElection?: boolean;
     // Warning: (ae-forgotten-export) The symbol "ISummarizerOptions" needs to be exported by the entry point index.d.ts
     //
-    // @deprecated (undocumented)
+    // @deprecated
     summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
     summaryConfigOverrides?: ISummaryConfiguration;
 }
@@ -661,7 +658,7 @@ export enum RuntimeHeaders {
     wait = "wait"
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export enum RuntimeMessage {
     // (undocumented)
     Alias = "alias",
@@ -770,8 +767,10 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
-// @public (undocumented)
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage;
+// Warning: (ae-internal-missing-underscore) The name "unpackRuntimeMessage" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // (No @packageDocumentation comment for this package)
 

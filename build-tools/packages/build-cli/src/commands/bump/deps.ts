@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { FluidRepo, isMonoRepoKind, VersionBag } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
@@ -10,8 +11,12 @@ import { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import * as semver from "semver";
 import { BaseCommand } from "../../base";
-import { bumpTypeFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
-import { bumpPackageDependencies, PackageWithRangeSpec } from "../../lib";
+import { bumpTypeExtendedFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
+import {
+    generateBumpDepsBranchName,
+    bumpPackageDependencies,
+    PackageWithRangeSpec,
+} from "../../lib";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -40,7 +45,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             char: "n",
             exclusive: ["bumpType"],
         }),
-        bumpType: bumpTypeFlag({
+        bumpType: bumpTypeExtendedFlag({
             char: "t",
             description: "Bump the current version of the dependency according to this bump type.",
             exclusive: ["version"],
@@ -169,6 +174,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                     this.error(`versionOrBump cannot be undefined.`);
                 }
 
+                assert(pkg !== undefined, "Package is undefined.");
+
                 const rangeSpec: PackageWithRangeSpec = { pkg, rangeOrBumpType: versionOrBump };
                 return [pkg.name, rangeSpec];
             }),
@@ -182,6 +189,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                 packageNewVersionMap,
                 flags.prerelease,
                 flags.onlyBumpPrerelease,
+                /* updateWithinSameReleaseGroup */ false,
                 changedPackages,
             );
         }
@@ -192,7 +200,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                     this.error("Install failed.");
                 }
             } else {
-                this.warn(`Skipping installation. Lockfiles might be outdated.`);
+                this.warning(`Skipping installation. Lockfiles might be outdated.`);
             }
 
             const changedVersionsString: string[] = [];
@@ -204,7 +212,12 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             const changedVersionMessage = changedVersionsString.join("\n");
             if (shouldCommit) {
                 const commitMessage = `Bump dependencies\n\n${changedVersionMessage}`;
-                const bumpBranch = `dep_${Date.now()}`;
+
+                const bumpBranch = generateBumpDepsBranchName(
+                    args.package_or_release_group,
+                    flags.bumpType ?? "current",
+                    flags.releaseGroup,
+                );
                 this.log(`Creating branch ${bumpBranch}`);
                 await context.createBranch(bumpBranch);
                 await context.gitRepo.commit(commitMessage, "Error committing");
@@ -212,7 +225,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                     `You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
                 );
             } else {
-                this.warn(`Skipping commit. You'll need to manually commit changes.`);
+                this.warning(`Skipping commit. You'll need to manually commit changes.`);
             }
 
             this.finalMessages.push(
@@ -220,7 +233,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                 `${changedVersionMessage}`,
             );
         } else {
-            console.log(chalk.red("No dependencies need to be updated."));
+            this.log(chalk.red("No dependencies need to be updated."));
         }
 
         if (this.finalMessages.length > 0) {

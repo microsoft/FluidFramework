@@ -11,20 +11,20 @@ export type LoggingFunction = (msg: string | Error, ...args: unknown[]) => void;
 export interface Logger {
     info: LoggingFunction,
     warning: LoggingFunction,
-    error: LoggingFunction,
-    verbose: LoggingFunction
+    errorLog: LoggingFunction,
+    verbose: LoggingFunction,
 }
 
 export const defaultLogger: Logger = {
-    info: logStatus,
-    warning: logStatus,
-    error: logError,
-    verbose: logVerbose
+    info,
+    warning,
+    errorLog,
+    verbose
 }
 
-export function logVerbose(msg: string | Error) {
+function verbose(msg: string | Error) {
     if (commonOptions.verbose) {
-        logStatus(msg);
+        info(msg);
     }
 }
 
@@ -43,10 +43,14 @@ function log(msg: string | Error, logFunc: LoggingFunction) {
     logFunc(chalk.yellow(`[${hours}:${mins}:${secs}] `) + msg);
 }
 
-export function logStatus(msg: string | Error) {
+function info(msg: string | Error) {
     log(msg, console.log);
 }
 
-export function logError(msg: string | Error) {
-    log(`ERROR: ${msg}`, console.error);
+function warning(msg: string | Error) {
+    log(`${chalk.yellow(`WARNING`)}: ${msg}`, console.log);
+}
+
+function errorLog(msg: string | Error) {
+    log(`${chalk.red(`ERROR`)}: ${msg}`, console.error);
 }

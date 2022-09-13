@@ -10,6 +10,7 @@ import {
     IChannelServices,
     IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICheckout, TransactionResult } from "../checkout";
 import {
     defaultSchemaPolicy,
@@ -27,14 +28,21 @@ import { Checkout as TransactionCheckout, runSynchronousTransaction } from "../t
 import { AnchorSet } from "../tree";
 
 /**
+ * Collaboratively editable tree distributed datastructure,
+ * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
+ *
+ * See [the README](../../README.md) for details.
+ */
+export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject{}
+
+/**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
  * TODO: expose or implement Checkout.
  */
-export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
-implements ICheckout<SequenceEditBuilder> {
+class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily> implements ISharedTree {
     public readonly forest: IForestSubscription;
     /**
      * Rather than implementing TransactionCheckout, have a member that implements it.
@@ -76,7 +84,7 @@ implements ICheckout<SequenceEditBuilder> {
 }
 
 /**
- * A channel factory that creates {@link SharedTree}s.
+ * A channel factory that creates {@link ISharedTree}s.
  */
  export class SharedTreeFactory implements IChannelFactory {
     public type: string = "SharedTree";
@@ -98,7 +106,7 @@ implements ICheckout<SequenceEditBuilder> {
         return tree;
     }
 
-    public create(runtime: IFluidDataStoreRuntime, id: string): IChannel {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
         const tree = new SharedTree(id, runtime, this.attributes, "SharedTree");
         tree.initializeLocal();
         return tree;
