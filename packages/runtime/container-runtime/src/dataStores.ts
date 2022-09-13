@@ -465,7 +465,6 @@ export class DataStores implements IDisposable {
             throw responseToException(create404Response(request), request);
         }
 
-        await this.contexts.waitIfTracked(id);
         return context;
     }
 

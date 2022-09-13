@@ -19,7 +19,7 @@ export class DataStoreContexts
 
     /** Attached and loaded context proxies */
     private readonly _contexts = new Map<string, FluidDataStoreContext>();
-    private readonly pendingMaybeRootContexts: Map<string, Deferred<void>> = new Map<string, Deferred<void>>();
+    private readonly pendingLegacyRootContexts: Map<string, Deferred<void>> = new Map<string, Deferred<void>>();
 
     /**
      * List of pending context waiting either to be bound or to arrive from another client.
@@ -124,6 +124,7 @@ export class DataStoreContexts
             return undefined;
         }
 
+        await this.waitIfTrackedForAliasConversion(id);
         return deferredContext.promise;
     }
 
@@ -161,6 +162,17 @@ export class DataStoreContexts
         deferred.resolve(context);
     }
 
+    private async waitIfTrackedForAliasConversion(id: string) {
+        const deferred = this.pendingLegacyRootContexts.get(id);
+        if (deferred === undefined) {
+            return;
+        }
+
+        return deferred.promise.then(() => {
+            this.pendingLegacyRootContexts.delete(id);
+        });
+    }
+
     /**
      * Add the given context, marking it as not local-only.
      * This could be because it's a local context that's been bound, or because it's a remote context.
@@ -171,27 +183,21 @@ export class DataStoreContexts
         assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
 
         this._contexts.set(id, context);
-        this.emit("add", context, this.trackPendingMaybeRootContext(id));
+        this.emit("add", context, this.trackPendingLegacyRootContexts(id));
 
         // Resolve the deferred immediately since this context is not unbound
         this.ensureDeferred(id);
         this.resolveDeferred(id);
     }
 
-    public trackPendingMaybeRootContext(id: string): Deferred<void> {
-        const result = new Deferred<void>();
-        this.pendingMaybeRootContexts.set(id, result);
-        return result;
-    }
-
-    public async waitIfTracked(id: string) {
-        const deferred = this.pendingMaybeRootContexts.get(id);
-        if (deferred === undefined) {
-            return;
+    public trackPendingLegacyRootContexts(id: string): Deferred<void> {
+        let marker = this.pendingLegacyRootContexts.get(id);
+        if (marker !== undefined) {
+            return marker;
         }
 
-        return deferred.promise.then(() => {
-            this.pendingMaybeRootContexts.delete(id);
-        });
+        marker = new Deferred<void>();
+        this.pendingLegacyRootContexts.set(id, marker);
+        return marker;
     }
 }
