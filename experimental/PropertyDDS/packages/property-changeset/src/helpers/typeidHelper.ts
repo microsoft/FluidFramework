@@ -151,11 +151,9 @@ export namespace TypeIdHelper {
             return `${in_context}<>`;
         } else {
             if (in_enum) {
-                if (in_context === "" || in_context === "single") {
-                    return `enum<${in_typeid}>`;
-                } else {
-                    return `${in_context}<enum<${in_typeid}>>`;
-                }
+                return in_context === "" || in_context === "single"
+                    ? `enum<${in_typeid}>`
+                    : `${in_context}<enum<${in_typeid}>>`;
             } else {
                 return `${in_context}<${in_typeid}>`;
             }
@@ -180,13 +178,9 @@ export namespace TypeIdHelper {
      * @return The type of the referenced property
      */
     export function extractReferenceTargetTypeIdFromReference(in_typeid: string): string { // in_enum
-        if (in_typeid.substr(0, 10) === "Reference<") {
-            // Extract the type from the TypeID
-            return in_typeid.substr(10, in_typeid.length - 11);
-        } else {
-            // This is a typeless reference, we allow all types
-            return "BaseProperty";
-        }
+        return in_typeid.substr(0, 10) === "Reference<"
+            ? in_typeid.substr(10, in_typeid.length - 11)
+            : "BaseProperty";
     }
 
     /**
@@ -208,11 +202,9 @@ export namespace TypeIdHelper {
      */
     export function extractTypeId(in_typeid): string {
         const matches = in_typeid.match(/\<(.*?)\>/);
-        if (matches !== null && matches.length > 0) {
-            return matches[0].replace(/[\<\>]/gi, "");
-        } else {
-            return in_typeid;
-        }
+        return matches !== null && matches.length > 0
+            ? matches[0].replace(/[\<\>]/gi, "")
+            : in_typeid;
     }
 
     /**

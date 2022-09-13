@@ -133,11 +133,9 @@ export class SortedCollection<T> extends Collection<T> {
      */
     getNearestNextItem(in_key: string) {
         const closestNextIndex = this._binarySearchNearestIndex(this._sortedKeys, in_key.toString());
-        if (closestNextIndex === this.getCount()) {
-            return undefined;
-        } else {
-            return this.item(this._sortedKeys[closestNextIndex]);
-        }
+        return closestNextIndex === this.getCount()
+            ? undefined
+            : this.item(this._sortedKeys[closestNextIndex]);
     }
 
     /**
@@ -149,10 +147,8 @@ export class SortedCollection<T> extends Collection<T> {
      */
     getNearestPreviousItem(in_key: string | number) {
         const closestPreviousIndex = this._binarySearchNearestIndex(this._sortedKeys, in_key.toString());
-        if (closestPreviousIndex === 0) {
-            return undefined;
-        } else {
-            return this.item(this._sortedKeys[closestPreviousIndex - 1]);
-        }
+        return closestPreviousIndex === 0
+            ? undefined
+            : this.item(this._sortedKeys[closestPreviousIndex - 1]);
     }
 }

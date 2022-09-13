@@ -32,11 +32,9 @@ export class DeterministicRandomGenerator {
      */
     constructor(in_seed: string | number) {
         // Initialize the internal state from the given initial guid
-        if (_.isString(in_seed)) {
-            this._guid1 = GuidUtils.guidToUint32x4(in_seed);
-        } else {
-            this._guid1 = GuidUtils.guidToUint32x4(calculateHash(String(in_seed)));
-        }
+        this._guid1 = _.isString(in_seed)
+            ? GuidUtils.guidToUint32x4(in_seed)
+            : GuidUtils.guidToUint32x4(calculateHash(String(in_seed)));
         this._guid2 = new Uint32Array(4);
         this._guid2[0] = (this._guid1[0] + 1) >>> 0;
         this._guid2[1] = (this._guid1[1] + 1) >>> 0;
@@ -78,15 +76,9 @@ export class DeterministicRandomGenerator {
         if (in_max === undefined) {
             return this._guid1[0];
         } else {
-            if (in_max < 16777619) {
-                // The random generator doesn't seem to be very good.
-                // It is quite biased (e.g. it generates too many even numbers)
-                // this is a hack to solve at least this problem, but we probably should
-                // instead use a different approach alltogether
-                return ((this._guid1[0]) % 16777619) % in_max;
-            } else {
-                return this._guid1[0] % in_max;
-            }
+            return in_max < 16777619
+                ? ((this._guid1[0]) % 16777619) % in_max
+                : this._guid1[0] % in_max;
         }
     }
 }

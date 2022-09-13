@@ -162,13 +162,11 @@ export namespace Utils {
                                 let nextSegmentToPushInParentStack = in_context.getLastSegment();
                                 // Note: we don't quote the path string here, since the paths
                                 // in a ChangeSet are already quoted, if necessary
-                                if (currentTypeIdContext === "map" ||
+                                in_context._lastSegmentString = currentTypeIdContext === "map" ||
                                     currentTypeIdContext === "array" ||
-                                    currentTypeIdContext === "set") {
-                                    in_context._lastSegmentString = `[${escapedSegment}]`;
-                                } else {
-                                    in_context._lastSegmentString = pathSeparator + escapedSegment;
-                                }
+                                    currentTypeIdContext === "set"
+                                    ? `[${escapedSegment}]`
+                                    : pathSeparator + escapedSegment;
                                 in_context._fullPath = currentPath + in_context.getLastSegmentString();
 
                                 // Store the typeid and nested ChangeSet
@@ -635,13 +633,11 @@ export namespace Utils {
             const escapedSegment = in_escape && isString(in_segment) ? PathHelper.quotePathSegmentIfNeeded(in_segment) : in_segment;
             let nextSegmentToPushInParentStack = in_context._lastSegment;
             // Note: we don't quote the path string here, since the paths in a ChangeSet are already quoted, if necessary
-            if (currentTypeIdContext === "map" ||
+            in_context._lastSegmentString = currentTypeIdContext === "map" ||
                 currentTypeIdContext === "array" ||
-                currentTypeIdContext === "set") {
-                in_context._lastSegmentString = `[${escapedSegment}]`;
-            } else {
-                in_context._lastSegmentString = pathSeparator + escapedSegment;
-            }
+                currentTypeIdContext === "set"
+                ? `[${escapedSegment}]`
+                : pathSeparator + escapedSegment;
             in_context._fullPath = currentPath + in_context._lastSegmentString;
 
             // Store the typeid and nested ChangeSet
@@ -970,11 +966,9 @@ export namespace Utils {
          */
         getPostLastSegment(): number | string {
             if (this._propertyContainerType === "array" && isNumber(this._lastSegment) && this._arrayIteratorOffset !== undefined) {
-                if (this._operationType === "remove") {
-                    return this._lastSegment + this._arrayIteratorOffset - this._arrayLocalIndex;
-                } else {
-                    return this._lastSegment + this._arrayIteratorOffset;
-                }
+                return this._operationType === "remove"
+                    ? this._lastSegment + this._arrayIteratorOffset - this._arrayLocalIndex
+                    : this._lastSegment + this._arrayIteratorOffset;
             } else {
                 return this._lastSegment;
             }
@@ -1216,13 +1210,7 @@ export namespace Utils {
             context._typeid = in_changeSet.typeid;
         } else {
             // if we're given an extra rootTypeId, use that
-            if (in_params.rootTypeid) {
-                context._typeid = in_params.rootTypeid;
-            } else {
-                // By default, we assume that a ChangeSet without a typeid affects a NodeProperty, since that is the default
-                // for a repository root
-                context._typeid = "NodeProperty";
-            }
+            context._typeid = in_params.rootTypeid ? in_params.rootTypeid : "NodeProperty";
         }
         context._nestedChangeSet = in_changeSet;
         context._parentNestedChangeSet = in_changeSet;
@@ -1254,13 +1242,7 @@ export namespace Utils {
             context._typeid = in_changeSet.typeid;
         } else {
             // if we're given an extra rootTypeId, use that
-            if (in_params.rootTypeid) {
-                context._typeid = in_params.rootTypeid;
-            } else {
-                // By default, we assume that a ChangeSet without a typeid affects a NodeProperty, since that is the default
-                // for a repository root
-                context._typeid = "NodeProperty";
-            }
+            context._typeid = in_params.rootTypeid ? in_params.rootTypeid : "NodeProperty";
         }
         context._nestedChangeSet = in_changeSet;
         context._parentNestedChangeSet = in_changeSet;
@@ -1349,13 +1331,10 @@ export namespace Utils {
                     return;
                 }
 
-                let operationScope;
-                if (in_context.getPropertyContainerType() !== "template") {
-                    operationScope = userData[in_context.getOperationType()] = userData[in_context.getOperationType()] ||
-                        (in_context.getPropertyContainerType() === "array" ? [] : {});
-                } else {
-                    operationScope = userData;
-                }
+                const operationScope = in_context.getPropertyContainerType() !== "template"
+                    ? (userData[in_context.getOperationType()] = userData[in_context.getOperationType()]
+                        || (in_context.getPropertyContainerType() === "array" ? [] : {}))
+                    : userData;
 
                 if (TypeIdHelper.isPrimitiveType(in_context.getTypeid())) {
                     // This is a primitive type, we store it under its name in the result
@@ -1630,13 +1609,11 @@ export namespace Utils {
         };
 
         const _toCallbackParam = (pathLevels) => {
-            if (legacyPaths) {
+            return legacyPaths
                 // If a user provided objects as paths, they would expect objects in their callbacks as well.
                 // So, we transform the parameter to an object, which is not very performant but is backwards compatible.
-                return _convertMapToLevel(pathLevels);
-            } else {
-                return pathLevels;
-            }
+                ? _convertMapToLevel(pathLevels)
+                : pathLevels;
         };
 
         if (!(in_paths instanceof Map)) {
@@ -1814,18 +1791,14 @@ export namespace Utils {
                         parentPath += PathHelper.quotePathSegmentIfNeeded(segment);
                         changeSetToPopulate = pathToChangeSet[parentPath] || changeSetToPopulate;
                     } else if (index < tokenizedPath.length - 1) {
-                        if (context.getContainerStack()[index] !== "set" && context.getContainerStack()[index] !== "map") {
-                            parentPath += `.${PathHelper.quotePathSegmentIfNeeded(segment)}`;
-                        } else {
-                            parentPath += `[${PathHelper.quotePathSegmentIfNeeded(segment)}]`;
-                        }
+                        parentPath += context.getContainerStack()[index] !== "set" && context.getContainerStack()[index] !== "map"
+                            ? `.${PathHelper.quotePathSegmentIfNeeded(segment)}`
+                            : `[${PathHelper.quotePathSegmentIfNeeded(segment)}]`;
                         changeSetToPopulate = pathToChangeSet[parentPath] || changeSetToPopulate;
                     } else {
-                        if (context.getContainerStack()[index] !== "set" && context.getContainerStack()[index] !== "map") {
-                            parentPath += `.${PathHelper.quotePathSegmentIfNeeded(segment)}`;
-                        } else {
-                            parentPath += `[${PathHelper.quotePathSegmentIfNeeded(segment)}]`;
-                        }
+                        parentPath += context.getContainerStack()[index] !== "set" && context.getContainerStack()[index] !== "map"
+                            ? `.${PathHelper.quotePathSegmentIfNeeded(segment)}`
+                            : `[${PathHelper.quotePathSegmentIfNeeded(segment)}]`;
                         fullPath = parentPath;
                     }
                     pathsToDelete.push(parentPath);

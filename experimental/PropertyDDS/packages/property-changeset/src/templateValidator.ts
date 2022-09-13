@@ -772,24 +772,20 @@ const _processValidationResults = function(in_template: PropertySchema) {
                         error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data
                             } does not match that pattern`;
                     } else if ("pattern" && regexTypeId.test(error.dataPath)) {
-                        if (error.schemaPath === "#/definitions/typed-reference-typeid/pattern") {
-                            error.message = "";
-                        } else {
-                            error.message = `${error.dataPath} should follow this pattern: <namespace>:<typeid>-<version> ` +
+                        error.message = error.schemaPath === "#/definitions/typed-reference-typeid/pattern"
+                            ? ""
+                            : `${error.dataPath} should follow this pattern: <namespace>:<typeid>-<version> ` +
                                 `(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
                                 `Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
                                 `Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
                                 `RelationshipProperty). '${error.data}' is not valid`;
-                        }
                     }
                     break;
 
                 case "enum":
-                    if (regexTypeId.test(error.dataPath)) {
-                        error.message = "";
-                    } else {
-                        error.message = `${error.dataPath} should match one of the following: ${error.schema}`;
-                    }
+                    error.message = regexTypeId.test(error.dataPath)
+                        ? ""
+                        : `${error.dataPath} should match one of the following: ${error.schema}`;
                     break;
 
                 case "type":

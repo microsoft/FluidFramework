@@ -363,18 +363,14 @@ export namespace PathHelper {
      * @returns quoted path string
      */
     export const quotePathSegmentIfNeeded = function(in_pathSegment: string): string {
-        if (in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
+        return in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
             in_pathSegment.indexOf('"') !== -1 ||
             in_pathSegment.indexOf("\\") !== -1 ||
             in_pathSegment.indexOf("/") !== -1 ||
             in_pathSegment.indexOf("*") !== -1 ||
             in_pathSegment.indexOf("[") !== -1 ||
             in_pathSegment.indexOf("]") !== -1 ||
-            in_pathSegment.length === 0) {
-            return quotePathSegment(in_pathSegment);
-        } else {
-            return in_pathSegment;
-        }
+            in_pathSegment.length === 0 ? quotePathSegment(in_pathSegment) : in_pathSegment;
     };
 
     /**
@@ -439,11 +435,9 @@ export namespace PathHelper {
      */
     export const getChildAbsolutePathCanonical = function(in_parentAbsolutePathCanonical: string, in_childId: string): string {
         const childPath = quotePathSegmentIfNeeded(String(in_childId));
-        if (in_parentAbsolutePathCanonical) {
-            return (in_parentAbsolutePathCanonical + PROPERTY_PATH_DELIMITER + childPath);
-        } else {
-            return childPath;
-        }
+        return in_parentAbsolutePathCanonical
+            ? (in_parentAbsolutePathCanonical + PROPERTY_PATH_DELIMITER + childPath)
+            : childPath;
     };
 
     export enum CoverageExtent {

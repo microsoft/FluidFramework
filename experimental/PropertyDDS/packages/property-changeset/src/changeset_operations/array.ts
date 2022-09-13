@@ -183,11 +183,7 @@ const getRangeForAppliedOperation = function(
 
     io_resultingRange.begin = in_operation.operation[0];
     io_resultingRange.op._absoluteBegin = in_operation.operation[0];
-    if (in_flag !== undefined) {
-        io_resultingRange.flag = in_flag;
-    } else {
-        io_resultingRange.flag = ArrayChangeSetRangeType.completeB;
-    }
+    io_resultingRange.flag = in_flag !== undefined ? in_flag : ArrayChangeSetRangeType.completeB;
 
     switch (in_operation.type) {
         case ArrayChangeSetIterator.types.INSERT:
@@ -204,11 +200,9 @@ const getRangeForAppliedOperation = function(
             let numberOfRemovedElements = getOpLength(in_operation.operation);
 
             io_resultingRange.end = in_operation.operation[0] + numberOfRemovedElements;
-            if (Array.isArray(in_operation.operation[1])) {
-                io_resultingRange.op.operation[1] = in_operation.operation[1].slice();
-            } else {
-                io_resultingRange.op.operation[1] = in_operation.operation[1];
-            }
+            io_resultingRange.op.operation[1] = Array.isArray(in_operation.operation[1])
+                ? in_operation.operation[1].slice()
+                : in_operation.operation[1];
             io_resultingRange.removeInsertOperation = in_operation.removeInsertOperation;
             return;
         case ArrayChangeSetIterator.types.MODIFY:
@@ -502,19 +496,13 @@ const splitOverlapping = function(
                 io_resultingSegment.op = undefined; // This is used to indicate that we don't need any operation
 
                 if (io_rangeB.op.operation[1].length === rangeLength) {
-                    if (io_rangeA.op.operation[1].length === rangeLength) {
-                        // We consume both A and B
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.completeAcompleteB;
-                    } else {
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.completeBpartOfA;
-                    }
+                    io_resultingSegment.flag = io_rangeA.op.operation[1].length === rangeLength
+                        ? ArrayChangeSetRangeType.completeAcompleteB
+                        : ArrayChangeSetRangeType.completeBpartOfA;
                 } else {
-                    if (io_rangeA.op.operation[1].length === rangeLength) {
-                        // We consume A and leave a part of B
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.completeApartOfB;
-                    } else {
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.partOfApartOfB;
-                    }
+                    io_resultingSegment.flag = io_rangeA.op.operation[1].length === rangeLength
+                        ? ArrayChangeSetRangeType.completeApartOfB
+                        : ArrayChangeSetRangeType.partOfApartOfB;
                 }
                 // cut the remaining segment entry
                 if (io_resultingSegment.flag === ArrayChangeSetRangeType.partOfApartOfB ||
@@ -887,12 +875,7 @@ const handleCombinations = function(in_segment: SegmentType, in_isPrimitiveType:
                 }
                 case ArrayChangeSetIterator.types.REMOVE: {
                     // Attention: B removes A completely, kill A to avoid zero inserts
-                    let opBLen;
-                    if (isNumber(opB.operation[1])) {
-                        opBLen = opB.operation[1];
-                    } else {
-                        opBLen = opB.operation[1].length;
-                    }
+                    const opBLen = isNumber(opB.operation[1]) ? opB.operation[1] : opB.operation[1].length;
                     if (opBLen !== opA.operation[1].length) {
                         throw new Error("handleCombinations: insert-remove: unequal number of affected entries");
                     }
@@ -1134,17 +1117,8 @@ const handleRebaseCombinations = function(
                 case ArrayChangeSetIterator.types.REMOVE: {
                     // Remove already in A, no need to add the same again -> write nop
 
-                    let opBLen; let opALen;
-                    if (isNumber(opB.operation[1])) {
-                        opBLen = opB.operation[1];
-                    } else {
-                        opBLen = opB.operation[1].length;
-                    }
-                    if (isNumber(opA.operation[1])) {
-                        opALen = opA.operation[1];
-                    } else {
-                        opALen = opA.operation[1].length;
-                    }
+                    const opBLen = isNumber(opB.operation[1]) ? opB.operation[1] : opB.operation[1].length;
+                    const opALen = isNumber(opA.operation[1]) ? opA.operation[1] : opA.operation[1].length;
 
                     if (opBLen !== opALen) {
                         throw new Error("handleRebaseCombinations: remove-remove: unequal number of affected entries, " +
