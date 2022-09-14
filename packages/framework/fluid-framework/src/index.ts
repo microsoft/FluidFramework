@@ -8,9 +8,9 @@
  * a corresponding service client package.
  * For example:
  *
- * - `@fluidframework/azure-client`
+ * - {@link https://www.npmjs.com/package/@fluidframework/azure-client | @fluidframework/azure-client}
  *
- * - `@fluidframework/tinylicious-client`
+ * - {@link https://www.npmjs.com/package/@fluidframework/tinylicious-client | @fluidframework/tinylicious-client}
  *
  * It contains necessary types and functionality for creating and loading
  * {@link https://fluidframework.com/docs/build/containers/ | Containers}.
