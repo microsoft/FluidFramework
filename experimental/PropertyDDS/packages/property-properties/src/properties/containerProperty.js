@@ -68,9 +68,9 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Appends a property
      *
-     * @param {String | property-properties.BaseProperty } in_id - The id under which the property is added. This parameter is
-     *                                                   optional. For NamedProperties it can be omitted. In that case
-     *                                                   the GUID of the named property will be used.
+     * @param {String | property-properties.BaseProperty } in_id - The id under which the property is added.
+     * This parameter is optional. For NamedProperties it can be omitted. In that case the GUID of the named
+     * property will be used.
      *
      * @param {property-properties.BaseProperty} [in_property] - The property to add
      * @throws if in_id is not a string or a number
@@ -217,9 +217,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * Removes an entry with the given key
      *
      * @param {string} in_key - key of the entry
-     * @param {boolean} in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
-     *     When batching updates, this can be prevented via this flag.
+     * @param {boolean} in_reportToView - By default, the dirtying will always be reported to the checkout view and
+     * trigger a modified event there. When batching updates, this can be prevented via this flag.
      */
     _removeByKey(in_key, in_reportToView) {
         this._checkIsNotReadOnly(true);
@@ -288,8 +287,11 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     }
 
     /**
-     * Given an object that mirrors a PSet Template, assign the properties
-     * eg.
+     * Given an object that mirrors a PSet Template, assign the properties.
+     *
+     * E.g.
+     *
+     * ```
      * <pre>
      * Templates = {
      *   properties: [
@@ -298,9 +300,12 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      *   ]
      * }
      * </pre>
-     * You would update the values like
-     * `baseProperty.setValues({foo: 'hello', bar: {baz: 1}});`
-     * WARNING: not completely implemented for all types
+     * ```
+     *
+     * You would update the values like: `baseProperty.setValues({foo: 'hello', bar: {baz: 1}});`
+     *
+     * WARNING: not completely implemented for all types.
+     *
      * @param {object} in_properties - The properties you would like to assign
      * @private
      */

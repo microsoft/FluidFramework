@@ -4,8 +4,7 @@
  */
 
 /**
- * @fileoverview
- * Declaration of the PropertyFactory class
+ * @fileoverview Declaration of the PropertyFactory class.
  * Responsible for creating property sets and registering property templates
  */
 
@@ -1469,7 +1468,7 @@ class PropertyFactory {
      * @param {string} in_typeid - The type unique identifier
      * @param {string} in_id - The id of the property to create
      * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrConstructor -
-     *        the Template/Property for this in_typeid
+     * the Template/Property for this in_typeid
      * @param {string|undefined} in_scope - The scope in which the property typeid is defined
      *
      * @returns {property-properties.BaseProperty} The property that serves as parent for the properties in the template
@@ -1794,7 +1793,7 @@ class PropertyFactory {
      * @param {property-properties.PropertyTemplate} in_template - template for the property
      * @param {string} in_scope - The scope in which in_template is defined in
      * @param {boolean} in_allowChildMerges - Whether merging of children (nested properties) is allowed.
-     *                                        This is used for extending inherited properties.
+     * This is used for extending inherited properties.
      * @param {Object} out_propertyDef - The created property definition
      * @private
      */
@@ -1869,18 +1868,18 @@ class PropertyFactory {
      * Checks whether the template with typeid in_templateTypeid inherits from the template in in_baseTypeid
      *
      * Note: By default, this also returns true if in_templateTypeid === in_baseTypeid, since in most use cases
-     *       the user wants to check whether a given template has all members as another template and so this is
-     *       true for the template itself
+     * the user wants to check whether a given template has all members as another template and so this is
+     * true for the template itself
      *
      * @param {string} in_templateTypeid - Template for which we want to check, whether in_baseTypeid is a parent
      * @param {string} in_baseTypeid - The base template to check for
      * @param {object} [in_options] - Additional options
      * @param {boolean} [in_options.includeSelf=true] - Also return true if in_templateTypeid === in_baseTypeid
      * @param {property-properties.Workspace} [in_options.workspace] - A checked out workspace to check against. If supplied,
-     *  the function will check against the schemas that have been registered within the workspace
+     * the function will check against the schemas that have been registered within the workspace
      * @throws if no template is found for in_templateTypeid
      * @returns {boolean} True if in_baseTypeid is a parent of in_templateTypeid or
-     *                   if (in_includeSelf == true and in_templateTypeid == in_baseTypeid)
+     * if (in_includeSelf == true and in_templateTypeid == in_baseTypeid)
      */
     inheritsFrom(in_templateTypeid, in_baseTypeid, in_options) {
         const cachedInheritance = this._inheritanceCache[in_templateTypeid];
@@ -1923,12 +1922,10 @@ class PropertyFactory {
      * @param {string} in_typeid - typeid of the template
      * @param {object} [in_options] - Additional options
      * @param {boolean} [in_options.includeBaseProperty=false] - Include BaseProperty as parent.
-     *                                                   Everything implicitly inherits
-     *                                                   from BaseProperty, but it is not explicitly listed in the
-     *                                                   template, so it is only included if explicitly requested
+     * Everything implicitly inherits from BaseProperty, but it is not explicitly listed in the template,
+     * so it is only included if explicitly requested.
      * @param {property-properties.Workspace} [in_options.workspace] - A checked out workspace to check against.
-     *                                                   If supplied, the function will check against the
-     *                                                   schemas that have been registered within the workspace
+     * If supplied, the function will check against the schemas that have been registered within the workspace.
      * @throws if no template found for in_typeid. Make sure it is registered first.
      * @returns {Array.<string>} typeids of all inherited types (in unspecified order)
      */
@@ -2013,7 +2010,8 @@ class PropertyFactory {
      * sessions, when trying out different templates.
      *
      * @protected
-     * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_template - The template to reregister
+     * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_template -
+     * The template to reregister
      */
     _reregister(in_template) {
         var typeid = in_template.typeid;
@@ -2057,7 +2055,7 @@ class PropertyFactory {
     * @public
     * @param {Object} in_options - the store settings.
     * @param {getBearerTokenFn} in_options.getBearerToken - Function that accepts a callback.
-    *     Function that should be called with an error or the OAuth2 bearer token representing the user.
+    * Function that should be called with an error or the OAuth2 bearer token representing the user.
     * @param {string} in_options.url - The root of the url used in the request to retrieve PropertySet schemas.
     *
     * @returns {Promise} Return an empty promise when checkout resolve or reject with error.
@@ -2110,6 +2108,8 @@ class PropertyFactory {
      * @public
      *
      * @returns {Promise} A promise that resolves to an object with the following structure:
+     *
+     * ```json
      * {
      *  errors: {
      *    typeid1: errors,
@@ -2122,7 +2122,7 @@ class PropertyFactory {
      *    typeidn: []  array of templates
      *   }
      * }
-     *
+     * ```
      */
     async resolveSchemas() {
         // Only one queue at a time can be processed.

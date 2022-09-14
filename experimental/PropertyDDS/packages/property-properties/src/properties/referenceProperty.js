@@ -67,7 +67,7 @@ export class ReferenceProperty extends ValueProperty {
      * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
      * should this function behave during reference resolution?
      * @returns {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if
-     *    it could not be resolved
+     * it could not be resolved
      */
     get(in_ids, in_options) {
         in_options = in_options || {};
@@ -132,8 +132,8 @@ export class ReferenceProperty extends ValueProperty {
      * Sets the reference to point to the given property object or to be equal to the given path string.
      *
      * @param {property-properties.BaseProperty|undefined|String} in_value - The property to assign to the reference or
-     *   the path to this property. If undefined is passed, the reference will be set to an empty string to
-     *   indicate an empty reference.
+     * the path to this property. If undefined is passed, the reference will be set to an empty string to
+     * indicate an empty reference.
      * @throws if property is read only
      * @throws if in_value is defined, but is not a property or a string.
      */
@@ -148,8 +148,8 @@ export class ReferenceProperty extends ValueProperty {
      * Sets the reference to point to the given property object or to be equal to the given path string.
      *
      * @param {property-properties.BaseProperty|undefined|String} in_value - The property to assign to the reference or
-     *   the path to this property. If undefined is passed, the reference will be set to an empty string to
-     *   indicate an empty reference.
+     * the path to this property. If undefined is passed, the reference will be set to an empty string to
+     * indicate an empty reference.
      * @throws if property is read only
      * @throws if in_value is defined but is not a property or a string.
      */
@@ -181,8 +181,8 @@ export class ReferenceProperty extends ValueProperty {
      * Validates the input and does as much as possible to return a string representing a path.
      *
      * @param {property-properties.BaseProperty|undefined|String} in_value - Contains the property to be set or
-     *  the path to this property. If undefined is passed, the reference will be set to an empty string to
-     *  indicate an empty reference.
+     * the path to this property. If undefined is passed, the reference will be set to an empty string to
+     * indicate an empty reference.
      * @returns {string} The path
      * @throws if in_value is defined, but is not a property or a string.
      */

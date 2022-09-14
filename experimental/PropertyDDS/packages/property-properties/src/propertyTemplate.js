@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 /**
- * @fileoverview
- * Declaration of the PropertyTemplate module
- * PropertyTemplate is used to describe a static property
+ * @fileoverview Declaration of the PropertyTemplate module.
+ * PropertyTemplate is used to describe a static property.
  */
 const _ = require('lodash');
 const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
@@ -22,15 +21,15 @@ export class PropertyTemplate {
      * @param {string} in_params.name - Name of the property
      * @param {string} in_params.typeid - The type identifier
      * @param {number=} [in_params.length=1] - The length of the property. Only valid if
-     *   the property is an array, otherwise the length defaults to 1
+     * the property is an array, otherwise the length defaults to 1
      * @param {string} in_params.context - The type of property this template represents
-     *   i.e. array, hash, etc.
+     * i.e. array, hash, etc.
      * @param {Array.<object>} in_params.properties - List of property templates that
-     *   are used to define children properties
+     * are used to define children properties
      * @param {Array.<object>} in_params.constants - List of property templates that
-     *   are used to define constant properties and their values
+     * are used to define constant properties and their values
      * @param {Array.<string>} in_params.inherits - List of property template typeids that this
-     *   PropertyTemplate inherits from
+     * PropertyTemplate inherits from
      *
      * @constructor
      * @protected

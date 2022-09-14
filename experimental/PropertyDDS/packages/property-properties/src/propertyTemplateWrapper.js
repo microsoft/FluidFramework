@@ -4,9 +4,8 @@
  */
 
 /**
- * @fileoverview
- * Declaration of the PropertyTemplateWrapper module
- * PropertyTemplateWrapper is used to wrap a property template and perform internal optimizations
+ * @fileoverview Declaration of the PropertyTemplateWrapper module.
+ * PropertyTemplateWrapper is used to wrap a property template and perform internal optimizations.
  */
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const _ = require('lodash');

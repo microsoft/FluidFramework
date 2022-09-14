@@ -6,6 +6,7 @@
 /**
  * @fileoverview Abstract base class for indexed collections (sets and maps)
  */
+
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const { MSG } = require('@fluid-experimental/property-common').constants;
@@ -52,8 +53,8 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Removes the dirtiness flag from this property
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
-     *                                                                       will be removed
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean
+     * If none are supplied, all will be removed.
      * @private
      */
     _cleanDirty(in_flags) {
@@ -80,8 +81,8 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Removes the dirtiness flag from this property and recursively from all of its children
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
-     *                                                                       will be removed
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean.
+     * If none are supplied, all will be removed.
      */
     cleanDirty(in_flags) {
         in_flags = in_flags !== undefined ? in_flags : BaseProperty.MODIFIED_STATE_FLAGS.DIRTY |
@@ -190,11 +191,10 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Removes an entry with the given key
      *
-     * @param {string} in_key -
-     *     key of the entry
-     * @param {boolean} in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
-     *     When batching updates, this can be prevented via this flag.
+     * @param {string} in_key - key of the entry
+     * @param {boolean} in_reportToView - By default, the dirtying will always be reported to the checkout view and
+     * trigger a modified event there.
+     * When batching updates, this can be prevented via this flag.
      */
     _removeByKey(in_key, in_reportToView) {
         this._checkIsNotReadOnly(false);
@@ -235,16 +235,13 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
+     * @param {boolean} in_dirtyOnly - Only include dirty entries in the serialization
+     * @param {boolean} in_includeRootTypeid - Include the typeid of the root of the hierarchy
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] - The type of dirtiness to use
+     * when reporting dirty changes. By default this is `PENDING_CHANGE`.
      * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
+     * function will descend into referenced repositories.
+     * WARNING: if there are loops in the references this can result in an infinite loop.
      *
      * @return {Object} The serialized representation of this property
      * @private

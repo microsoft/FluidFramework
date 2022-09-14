@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
+
 import _ from 'lodash';
 import {
     ChangeSet,
@@ -271,8 +273,7 @@ export abstract class BaseProperty {
      * do the same for its parent. This does not clear any flag, it only sets.
      *
      * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
-     *                          and trigger a modified event there. When batching updates, this
-     *                          can be prevented via this flag.
+     * and trigger a modified event there. When batching updates, this can be prevented via this flag.
      * @param in_callingChild - The child which is dirtying its parent
      * @param in_flags - The flags to set.
      * @private
@@ -439,8 +440,8 @@ export abstract class BaseProperty {
 
     /**
      * Removes the dirtiness flag from this property
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
-     *                                                                       will be removed
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean.
+     * If none are supplied all will be removed.
      * @private
      */
     _cleanDirty(in_flags) {
@@ -451,8 +452,7 @@ export abstract class BaseProperty {
     /**
      * Removes the dirtiness flag from this property and recursively from all of its children
      *
-     * @param in_flags - The flags to clean, if none are supplied all
-     *                                                                       will be removed
+     * @param in_flags - The flags to clean. If none are supplied all will be removed.
      */
     cleanDirty(in_flags: MODIFIED_STATE_FLAGS) {
         var dirtyChildren = this._getDirtyChildren(in_flags);
@@ -703,8 +703,7 @@ export abstract class BaseProperty {
      * Repeatedly calls back the given function with human-readable string
      * representations of the property and of its sub-properties.
      * @param {string} indent - Leading spaces to create the tree representation
-     * @param {string} externalId - Name of the current property at the upper level.
-     *                              Used for arrays.
+     * @param {string} externalId - Name of the current property at the upper level. Used for arrays.
      * @param {function} printFct - Function to call for printing each property
      */
     _prettyPrint(indent, externalId, printFct) {
@@ -736,8 +735,7 @@ export abstract class BaseProperty {
      * Returns the possible paths from the given from_property to this property. If multiple paths
      * through multiple repository references are possible, returns more than one path.
      *
-     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
-     *     path is computed
+     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the path is computed
      * @return {Array<string | undefined>} The paths between from_property and this property
      * will return an empty array if trying to get the path from a child repo to a parent repo.
      * @private
@@ -792,9 +790,8 @@ export abstract class BaseProperty {
      * Returns the possible paths from the given in_fromProperty to this property. If no direct paths
      * exist, it returns an indirect path between the two properties.
      *
-     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
-     *     path is computed
-     * @return {string} The path between the given in_fromProperty and this property
+     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the path is computed.
+     * @return {string} The path between the given in_fromProperty and this property.
      * @private
      */
     _getIndirectPath(in_fromProperty) {
@@ -821,9 +818,8 @@ export abstract class BaseProperty {
      * Returns the path from the given in_fromProperty to this property if a direct path
      * exists between the two properties. Otherwise returns undefined.
      *
-     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
-     *     path is computed
-     * @return {string} The path between the given in_fromProperty and this property
+     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the path is computed.
+     * @return {string} The path between the given in_fromProperty and this property.
      * @private
      */
     _getDirectPath(in_fromProperty) {
@@ -864,9 +860,8 @@ export abstract class BaseProperty {
     /**
      * Returns the possible paths from the given in_fromProperty to this property.
      *
-     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
-     *     path is computed
-     * @return {Array<string>} The paths between the given in_fromProperty and this property
+     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the path is computed.
+     * @return {Array<string>} The paths between the given in_fromProperty and this property.
      * @private
      */
     _getAllRelativePaths(in_fromProperty) {
@@ -885,15 +880,20 @@ export abstract class BaseProperty {
      * If more than one paths exist (as might be the case with multiple repository references
      * pointing to the same repository), it will return the first valid path found.
      * For example, if you have this structure:
+     *
+     * ```
      * <code>prop1
      * --prop2
      * ----prop3</code>
-     * and call: <code>prop1.getRelativePath(prop3);</code>
+     * ```
+     *
+     * and call: `<code>prop1.getRelativePath(prop3);</code>`
+     *
      * You will get the path from prop3 to prop1, which would be '../../'
-     * @param in_fromProperty - The property from which the
-     *     path is computed
-     * @returns The path between the given in_fromProperty and this property
-     * @throws if in_fromProperty is not a property
+     *
+     * @param in_fromProperty - The property from which the path is computed.
+     * @returns The path between the given in_fromProperty and this property.
+     * @throws If in_fromProperty is not a property.
      */
     getRelativePath(in_fromProperty: BaseProperty): string {
         ConsoleUtils.assert(in_fromProperty instanceof BaseProperty, MSG.IN_FROMPROPERTY_MUST_BE_PROPERTY);
@@ -911,8 +911,7 @@ export abstract class BaseProperty {
     }
 
     /**
-     * Returns the path from the root of the workspace to this node
-     * (including a slash at the beginning)
+     * Returns the path from the root of the workspace to this node (including a slash at the beginning).
      *
      * @return {string} The path from the root
      */
@@ -973,10 +972,10 @@ export abstract class BaseProperty {
      * Traverses the property hierarchy upwards until the a node without parent is reached
      *
      * @param {Function} in_callback - Callback to invoke for each of the parents. The traversal can be stopped
-     *                                 by returning BaseProperty.BREAK_TRAVERSAL
+     * by returning BaseProperty.BREAK_TRAVERSAL
      * @throws if in_callback is not a function.
      * @return {string|undefined} Returns BaseProperty.BREAK_TRAVERSAL, if the traversal didn't reach the root,
-     *                            otherwise undefined
+     * otherwise `undefined`.
      */
     traverseUp(in_callback) {
         ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
@@ -996,10 +995,8 @@ export abstract class BaseProperty {
     /**
      * Returns all children which are dirty (this only returns direct children, it does not travers recursively)
      *
-     * @param in_flags - Which types of dirtiness are we looking for?
-     *                   If none is given, all types are regarded as
-     *                   dirty
-     * @returns The list of keys identifying the dirty children
+     * @param in_flags - Which types of dirtiness are we looking for? If none is given, all types are regarded as dirty.
+     * @returns The list of keys identifying the dirty children.
      */
     private _getDirtyChildren(in_flags: MODIFIED_STATE_FLAGS): string[] {
         return [];
@@ -1019,8 +1016,7 @@ export abstract class BaseProperty {
      *
      * @param in_callback - Callback to invoke for every child
      * @param in_pathFromTraversalStart - Path from the root of the traversal to this node
-     * @returns Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
-     *                            otherwise undefined
+     * @returns Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted, otherwise `undefined`.
      * @private
      */
     _traverse(in_callback: Function, in_pathFromTraversalStart: string): string | undefined {
@@ -1033,7 +1029,7 @@ export abstract class BaseProperty {
      * of the property and the passed in normalized property
      *
      * @param in_serializedObj - The serialized changeset to apply to this node. This has to be a normalized change-set
-     *     (only containing insertions and property assignments. Deletes and Modify must not appear)
+     * (only containing insertions and property assignments. Deletes and Modify must not appear)
      * @param in_filteringOptions - The filtering options to consider while deserializing the property.
      * @param in_createChangeSet - Should a changeset be created for this deserialization?
      * @param in_reportToView - Usually the dirtying should be reported to the view and trigger a modified event there.
@@ -1055,13 +1051,12 @@ export abstract class BaseProperty {
      * Sets the property to the state in the given normalized changeset
      *
      * @param in_serializedObj - The serialized changeset to apply. This
-     *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
+     * has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
      * @param in_reportToView - Usually the dirtying should be reported to the view
-     *     and trigger a modified event there. When batching updates, this can be prevented via this flag.
+     * and trigger a modified event there. When batching updates, this can be prevented via this flag.
      * @param in_filteringOptions - The filtering options to consider while deserializing the property.
      * @param in_createChangeSet - Should a changeset be created for this deserialization?
-     * @returns ChangeSet with the changes that actually were performed during the
-     *     deserialization
+     * @returns ChangeSet with the changes that actually were performed during the deserialization.
      */
     _deserialize(
         in_serializedObj: SerializedChangeSet,
@@ -1077,12 +1072,11 @@ export abstract class BaseProperty {
      *
      * @param in_dirtyOnly - Only include dirty entries in the serialization
      * @param in_includeRootTypeid - Include the typeid of the root of the hierarchy
-     * @param in_dirtinessType -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
+     * @param in_dirtinessType - The type of dirtiness to use when reporting dirty changes. By default this is
+     * `PENDING_CHANGE`.
      * @param in_includeReferencedRepositories - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
+     * function will descend into referenced repositories.
+     * WARNING: if there are loops in the references this can result in an infinite loop.
      *
      * @returns The serialized representation of this property
      */
@@ -1191,8 +1185,7 @@ export abstract class BaseProperty {
      * Dirties this node and all of its children
      *
      * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
-     *                                             and trigger a modified event there. When batching updates, this
-     *                                             can be prevented via this flag.
+     * and trigger a modified event there. When batching updates, this can be prevented via this flag.
      * @private
      */
     _setDirtyTree(in_reportToView = true) {

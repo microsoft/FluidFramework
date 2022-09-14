@@ -263,7 +263,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      * See {@link SetProperty.setValues}
      * @param {NamedProperty[]|NamedNodeProperty[]|Object[]} in_properties - The list of properties to add to the list
      * @param {Boolean} in_typed - If the set's items have a typeid and a value then create the
-     *   properties with that typeid, else use the set's typeid (support polymorphic items).
+     * properties with that typeid, else use the set's typeid (support polymorphic items).
      * @private
      */
     _setValuesInternal(in_properties, in_typed) {

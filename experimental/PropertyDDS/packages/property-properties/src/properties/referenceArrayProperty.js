@@ -55,7 +55,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      * should this function behave during reference resolution?
      *
      * @returns {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if
-     *    it could not be resolved
+     * it could not be resolved
      */
     get(in_ids, in_options) {
         in_options = in_options || {};
