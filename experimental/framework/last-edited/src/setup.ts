@@ -12,7 +12,7 @@ import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
  * Default implementation of {@link setupLastEditedTrackerForContainer}'s `shouldDiscardMessageFn` parameter,
  * which tells that all messages other than {@link @fluidframework/container-runtime#ContainerMessageType.Alias},
  * {@link @fluidframework/container-runtime#ContainerMessageType.Attach}, and
- * {@link {@link @fluidframework/container-runtime#ContainerMessageType.FluidDataStoreOp} type messages should be
+ * {@link @fluidframework/container-runtime#ContainerMessageType.FluidDataStoreOp} type messages should be
  * discarded.
  */
 const shouldDiscardMessageDefault = (message: ISequencedDocumentMessage) =>
