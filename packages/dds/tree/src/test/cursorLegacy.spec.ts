@@ -10,7 +10,6 @@ import { ITreeCursor, TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../domains";
 import { recordDependency } from "../dependency-tracking";
 import { clonePath, Delta, detachedFieldAsKey, EmptyKey, FieldKey, JsonableTree, UpPath } from "../tree";
-import { jsonableTreeFromCursor } from "../..";
 import { brand } from "../util";
 
 const testCases = [

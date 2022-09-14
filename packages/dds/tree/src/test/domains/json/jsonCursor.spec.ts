@@ -8,7 +8,7 @@ import { Jsonable } from "@fluidframework/datastore-definitions";
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
 import { FieldKey } from "../../../tree";
-import { testCursors, testJsonCompatibleCursor } from "../../cursor.spec";
+import { testCursors, testJsonCompatibleCursor } from "../../cursorLegacy.spec";
 
 testJsonCompatibleCursor("JsonCursor", {
     factory: (data?: Jsonable) => new JsonCursor(data),
