@@ -4,13 +4,13 @@
  */
 
 import { FieldChangeHandler } from "../modular-schema";
-import { SequenceChange } from "./format";
+import { Changeset } from "./format";
 import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
 import { sequenceFieldChangeEncoder } from "./sequenceFieldChangeEncoder";
 import { sequenceFieldEditor } from "./sequenceEditBuilder";
 import { sequenceFieldToDelta } from "./sequenceFieldToDelta";
 
-export type SequenceFieldChangeHandler = FieldChangeHandler<SequenceChange>;
+export type SequenceFieldChangeHandler = FieldChangeHandler<Changeset>;
 
 export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
     rebaser: sequenceFieldChangeRebaser,

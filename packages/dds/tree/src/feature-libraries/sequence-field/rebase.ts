@@ -32,10 +32,10 @@ import { MarkListFactory } from "./markListFactory";
  * - Support for slices is not implemented.
  */
 export function rebase(
-    change: F.SequenceChange,
-    base: F.SequenceChange,
+    change: F.Changeset,
+    base: F.Changeset,
     rebaseChild: NodeChangeRebaser,
-): F.SequenceChange {
+): F.Changeset {
     return rebaseMarkList(change, base, rebaseChild);
 }
 

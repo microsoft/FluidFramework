@@ -31,7 +31,7 @@ export const DUMMY_INVERSE_VALUE = "Dummy inverse value";
  * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */
-export function invert(change: F.SequenceChange, invertChild: NodeChangeInverter): F.SequenceChange {
+export function invert(change: F.Changeset, invertChild: NodeChangeInverter): F.Changeset {
     // TODO: support the input change being a squash
     const opIdToTag = (id: F.OpId): F.ChangesetTag => {
         return DUMMY_INVERT_TAG;

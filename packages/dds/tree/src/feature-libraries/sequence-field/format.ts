@@ -7,7 +7,7 @@ import { JsonableTree as F } from "../../tree";
 import { NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
-export type SequenceChange<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
+export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
 
 export type MarkList<TNodeChange = NodeChangeType, TMark = Mark<TNodeChange>> = TMark[];
 

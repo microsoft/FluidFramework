@@ -150,14 +150,8 @@ interface DeltaInsertModification {
      * The modifications to make to the inserted subtree.
      * May be empty.
      */
-    fields: InsertedFieldsMarksMap;
+    fields: Delta.FieldMarks;
 }
-
-/**
- * A map of marks to be applied to inserted fields.
- */
-type InsertedFieldsMarksMap = Delta.FieldMarks<InsertedFieldsMark>;
-type InsertedFieldsMark = Delta.Skip | Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify;
 
 /**
  * Converts inserted content into the format expected in Delta instances.
@@ -176,12 +170,8 @@ type InsertedFieldsMark = Delta.Skip | Delta.ModifyInserted | Delta.MoveIn | Del
 function applyOrCollectModifications(
     node: Delta.ProtoNode,
     changes: F.NodeChangeType,
-): InsertedFieldsMarksMap {
+): Delta.FieldMarks {
     fail(ERR_NOT_IMPLEMENTED);
 }
 
 const ERR_NOT_IMPLEMENTED = "Not implemented";
-const ERR_TOMB_IN_INSERT = "Encountered a concurrent deletion in inserted content";
-const ERR_MOD_ON_MISSING_FIELD = "Encountered a modification that targets a non-existent field on an inserted tree";
-const ERR_REVIVE_ON_INSERT = "Encountered a Revive mark in an inserted field";
-const ERR_RETURN_ON_INSERT = "Encountered a Return mark in an inserted field";

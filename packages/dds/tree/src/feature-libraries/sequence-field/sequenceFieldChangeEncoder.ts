@@ -6,17 +6,17 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
 import { FieldChangeEncoder, NodeChangeDecoder, NodeChangeEncoder } from "../modular-schema";
-import { SequenceChange } from "./format";
+import { Changeset } from "./format";
 import { isSkipMark } from "./utils";
 
-export const sequenceFieldChangeEncoder: FieldChangeEncoder<SequenceChange> = {
+export const sequenceFieldChangeEncoder: FieldChangeEncoder<Changeset> = {
     encodeForJson,
     decodeJson,
 };
 
 function encodeForJson(
     formatVersion: number,
-    markList: SequenceChange,
+    markList: Changeset,
     encodeChild: NodeChangeEncoder,
 ): JsonCompatibleReadOnly {
     const jsonMarks: JsonCompatible[] = [];
@@ -58,9 +58,9 @@ function decodeJson(
     formatVersion: number,
     change: JsonCompatibleReadOnly,
     decodeChild: NodeChangeDecoder,
-): SequenceChange {
-    const marks: SequenceChange = [];
-    const array = change as SequenceChange<JsonCompatibleReadOnly>;
+): Changeset {
+    const marks: Changeset = [];
+    const array = change as Changeset<JsonCompatibleReadOnly>;
     for (const mark of array) {
         if (isSkipMark(mark)) {
             marks.push(mark);

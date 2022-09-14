@@ -31,11 +31,11 @@ import {
  * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */
-export function compose(changes: F.SequenceChange[], composeChild: NodeChangeComposer): F.SequenceChange {
+export function compose(changes: F.Changeset[], composeChild: NodeChangeComposer): F.Changeset {
     if (changes.length === 1) {
         return changes[0];
     }
-    let composed: F.SequenceChange = [];
+    let composed: F.Changeset = [];
     for (const change of changes) {
         composed = composeMarkLists(composed, change, composeChild);
     }

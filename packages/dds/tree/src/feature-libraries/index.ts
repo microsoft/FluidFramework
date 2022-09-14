@@ -15,6 +15,11 @@ export {
 	jsonableTreeFromCursor as jsonableTreeFromCursorNew,
 } from "./treeTextCursor";
 export * from "./sequence-change-family";
+
+// Split this up into separate import and export for compatibility with API-Extractor.
+import * as SequenceField from "./sequence-field";
+export { SequenceField };
+
 export * from "./defaultSchema";
 export {
     isNeverField,
