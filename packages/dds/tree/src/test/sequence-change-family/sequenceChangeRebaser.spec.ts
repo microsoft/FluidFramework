@@ -35,7 +35,7 @@ describe("SequenceChangeFamily", () => {
     describe("A ↷ [B, B⁻¹] === A", () => {
         for (const [name1, mark1] of testMarks) {
             for (const [name2, mark2] of testMarks) {
-                if (name2 === "Delete#########") {
+                if (name2 === "Delete") {
                     it.skip(`${name1} ↷ [${name2}, ${name2}⁻¹] => ${name1}`, () => {
                         /**
                          * These cases are currently disabled because:
@@ -56,7 +56,6 @@ describe("SequenceChangeFamily", () => {
                                 const inv = sequenceChangeRebaser.invert(change2);
                                 const r1 = sequenceChangeRebaser.rebase(change1, change2);
                                 const r2 = sequenceChangeRebaser.rebase(r1, inv);
-                                console.debug(`o1: ${offset1} o2: ${offset2}`);
                                 assert.deepEqual(r2, change1);
                             }
                         }
