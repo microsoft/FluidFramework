@@ -7,12 +7,11 @@ import { strict as assert } from "assert";
 
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { ITreeCursor, TreeNavigationResult } from "../forest";
-import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../domains";
-import { recordDependency } from "../dependency-tracking";
-import { clonePath, Delta, detachedFieldAsKey, EmptyKey, FieldKey, JsonableTree, UpPath } from "../tree";
+import { JsonCursor, cursorToJsonObject } from "../domains";
+import { EmptyKey, FieldKey } from "../tree";
 import { brand } from "../util";
 
-const testCases = [
+export const jsonCompatibleCursorTestCases: [string, Jsonable][] = [
     ["null", [null]],
     ["boolean", [true, false]],
     ["integer", [Number.MIN_SAFE_INTEGER - 1, 0, Number.MAX_SAFE_INTEGER + 1]],
@@ -44,28 +43,21 @@ const testCases = [
     }]],
 ];
 
-interface CursorTestOptions {
-    /**
-     * Creates the cursor to be tested with or without provided data.
-     */
-    factory: (data?: Jsonable) => ITreeCursor;
-    /**
-     * Extract the contents of the given ITreeCursor as the original data type.
-     * Assumes that ITreeCursor contains only unaugmented JsonTypes.
-     */
-    // cursorToExpected: (cursor: ITreeCursor) => Jsonable;
-    checkAdditionalRoundTripRequirements?: (clone: Jsonable, expected: Jsonable) => void;
-}
-
-export function testJsonCompatibleCursor<T>(suiteName: string, options: CursorTestOptions): void {
-    const {
-        factory,
-        checkAdditionalRoundTripRequirements,
-    } = options;
-
+/**
+ * Tests the provided cursor factor with Jsonable data. The cursor must be JSON compatible.
+ * @param suiteName - The name of the test suite to create.
+ * @param factory - Creates the cursor to be tested with or without provided data.
+ * @param checkAdditionalRoundTripRequirements - Extract the contents of the given ITreeCursor as the original data
+ *                                               type. Assumes that ITreeCursor contains only unaugmented JsonTypes.
+ */
+export function testJsonCompatibleCursor<T>(
+    suiteName: string,
+    factory: (data?: Jsonable) => ITreeCursor,
+    checkAdditionalRoundTripRequirements?: (clone: Jsonable, expected: Jsonable) => void,
+): void {
     describe(`${suiteName} cursor implementation`, () => {
         describe("extract roundtrip", () => {
-            for (const [name, testValues] of testCases) {
+            for (const [name, testValues] of jsonCompatibleCursorTestCases) {
                 for (const expected of testValues) {
                     it(`${name}: ${JSON.stringify(expected)}`, () => {
                         const cursor = factory(expected);
@@ -235,24 +227,42 @@ export function testJsonCompatibleCursor<T>(suiteName: string, options: CursorTe
     });
 }
 
+function traverseNode(cursor: ITreeCursor) {
+    // Keep track of current node value to check it during ascent
+    const originalNodeValue = cursor.value;
+
+    for (const key of cursor.keys) {
+        const expectedKeyLength = cursor.length(key);
+        let actualChildNodesTraversed = 0;
+
+        const initialResult = cursor.down(key, 0);
+        if (initialResult !== TreeNavigationResult.Ok) {
+            break;
+        }
+
+        for (
+            let result: TreeNavigationResult = initialResult;
+            result === TreeNavigationResult.Ok;
+            result = cursor.seek(1)
+        ) {
+            actualChildNodesTraversed++;
+            traverseNode(cursor);
+        }
+
+        cursor.up();
+        assert.equal(cursor.value, originalNodeValue);
+        assert.equal(actualChildNodesTraversed, expectedKeyLength, "Could not traverse expected number of children");
+    }
+}
+
 export function testCursors(
     suiteName: string,
     cursors: { cursorName: string; cursor: ITreeCursor; }[]) {
-    describe.only(`${suiteName} cursor functionality`, () => {
+    describe(`${suiteName} cursor functionality`, () => {
         for (const { cursorName, cursor } of cursors) {
             describe(`${cursorName}`, () => {
-                it("can traverse the tree", () => {
-                    const navigationStack = [];
-
-                    while (cursor.keys !== undefined) {
-                        navigationStack.push(cursor.value);
-
-                        for (const key of cursor.keys) {
-                            for (let index = 0; index < cursor.length(key); index++) {
-                                assert.equal(cursor.down(key, index), TreeNavigationResult.Ok);
-                            }
-                        }
-                    }
+                it("tree can be traversed", () => {
+                    traverseNode(cursor);
                 });
             });
         }

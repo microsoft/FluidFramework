@@ -7,27 +7,14 @@ import { Jsonable } from "@fluidframework/datastore-definitions";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
-import { FieldKey } from "../../../tree";
-import { testCursors, testJsonCompatibleCursor } from "../../cursorLegacy.spec";
+import { jsonCompatibleCursorTestCases, testCursors, testJsonCompatibleCursor } from "../../cursorLegacy.spec";
 
-testJsonCompatibleCursor("JsonCursor", {
-    factory: (data?: Jsonable) => new JsonCursor(data),
-});
+testJsonCompatibleCursor("JsonCursor", (data?: Jsonable) => new JsonCursor(data));
 
-testCursors("JsonCursor", [
-    {
-        cursorName: "composite",
-        cursor: new JsonCursor(
-            { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [] }] },
-        ),
-    },
-]);
-
-testCursors("JsonCursor", [
-    {
-        cursorName: "composite",
-        cursor: new JsonCursor(
-            { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [] }] },
-        ),
-    },
-]);
+testCursors(
+    "JsonCursor",
+    jsonCompatibleCursorTestCases.map(([name, data]) => ({
+        cursorName: name,
+        cursor: new JsonCursor(data),
+    })),
+);
