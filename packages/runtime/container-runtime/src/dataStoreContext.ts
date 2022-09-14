@@ -814,11 +814,9 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
             // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
             const formatVersion = getAttributesFormatVersion(attributes);
             if (formatVersion < 1) {
-                if (attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")) {
-                    pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
-                } else {
-                    pkgFromSnapshot = [attributes.pkg];
-                }
+                pkgFromSnapshot = attributes.pkg.startsWith("[\"") && attributes.pkg.endsWith("\"]")
+                    ? JSON.parse(attributes.pkg) as string[]
+                    : [attributes.pkg];
             } else {
                 pkgFromSnapshot = JSON.parse(attributes.pkg) as string[];
             }

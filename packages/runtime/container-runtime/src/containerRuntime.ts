@@ -540,9 +540,12 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 
 /**
  * Unpacks runtime messages
- * @internal - no promises RE back-compat - this is internal API.
+ *
+ * @remarks This API makes no promises regarding backward-compatability. This is internal API.
  * @param message - message (as it observed in storage / service)
  * @returns unpacked runtime message
+ *
+ * @internal
  */
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
     if (message.type === MessageType.Operation) {
@@ -896,11 +899,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
             return true;
         }
-        if (this.summaryConfiguration.state !== "disabled") {
-            return this.summaryConfiguration.summarizerClientElection === true;
-        } else {
-            return false;
-        }
+        return this.summaryConfiguration.state !== "disabled"
+            ? this.summaryConfiguration.summarizerClientElection === true
+            : false;
     }
     private readonly maxOpsSinceLastSummary: number;
     private getMaxOpsSinceLastSummary(): number {
@@ -909,11 +910,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary !== undefined) {
             return this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary;
         }
-        if (this.summaryConfiguration.state !== "disabled") {
-            return this.summaryConfiguration.maxOpsSinceLastSummary;
-        } else {
-            return 0;
-        }
+        return this.summaryConfiguration.state !== "disabled"
+            ? this.summaryConfiguration.maxOpsSinceLastSummary
+            : 0;
     }
 
     private readonly initialSummarizerDelayMs: number;
@@ -923,11 +922,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.initialSummarizerDelayMs !== undefined) {
             return this.runtimeOptions.summaryOptions.initialSummarizerDelayMs;
         }
-        if (this.summaryConfiguration.state !== "disabled") {
-            return this.summaryConfiguration.initialSummarizerDelayMs;
-        } else {
-            return 0;
-        }
+        return this.summaryConfiguration.state !== "disabled"
+            ? this.summaryConfiguration.initialSummarizerDelayMs
+            : 0;
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
@@ -1320,15 +1317,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
                 const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
-                if (blob) {
-                    return {
+                return blob
+                    ? {
                         status: 200,
                         mimeType: "fluid/object",
                         value: blob,
-                    };
-                } else {
-                    return create404Response(request);
-                }
+                    } : create404Response(request);
             } else if (requestParser.pathParts.length > 0) {
                 const dataStore = await this.getDataStoreFromRequest(id, request);
                 const subRequest = requestParser.createSubRequest(1);
@@ -2707,14 +2701,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this.batchManager.empty, "System op in the middle of a batch");
 
         // back-compat: ADO #1385: Make this call unconditional in the future
-        if (this.context.submitSummaryFn !== undefined) {
-            return this.context.submitSummaryFn(contents);
-        } else {
-            return this.context.submitFn(
+        return this.context.submitSummaryFn !== undefined
+            ? this.context.submitSummaryFn(contents)
+            : this.context.submitFn(
                 MessageType.Summarize,
                 contents,
-                false); // batch
-        }
+                false);
     }
 
     /**

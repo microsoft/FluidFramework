@@ -52,11 +52,7 @@ export class ScheduleManager {
             this.deltaScheduler.batchBegin(message);
 
             const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
-            if (batch) {
-                this.batchClientId = message.clientId;
-            } else {
-                this.batchClientId = undefined;
-            }
+            this.batchClientId = batch ? message.clientId : undefined;
         }
     }
 
