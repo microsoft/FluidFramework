@@ -31,6 +31,7 @@ type NextFn = (err?: Error | null | undefined | string, result?: unknown) => voi
  * @alias property-changeset.Utils
  * @class
 */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Utils {
     export type OperationType = "modify" | "insert" | "remove";
     export type PropertyContainerType = "array" | "map" | "set" | "root" | "NodeProperty" | "template";
@@ -49,23 +50,23 @@ export namespace Utils {
          */
         userData?: { [key: string]: any; };
         /**
-         *  The operation that has been applied to the root of the ChangeSet (either 'insert' or 'modify')
+         * The operation that has been applied to the root of the ChangeSet (either 'insert' or 'modify')
          */
         rootOperation?: OperationType;
         /**
-         *  The full typeid for the Property at the root of the ChangeSet
+         * The full typeid for the Property at the root of the ChangeSet
          */
         rootTypeid?: string;
     }
 
     /**
-        * Traverses a ChangeSet recursively and invokes the callback for each visited property.
-        *
-        * @param in_preCallback - The (pre-order) callback function that is invoked for each property
-        * @param in_postCallback - The (post-order) callback function that is invoked for each property
-        * @param in_context -  The traversal context for the currently processed property
-        * @param in_levelCallback - A callback for when a node is reached
-        */
+    * Traverses a ChangeSet recursively and invokes the callback for each visited property.
+    *
+    * @param in_preCallback - The (pre-order) callback function that is invoked for each property
+    * @param in_postCallback - The (post-order) callback function that is invoked for each property
+    * @param in_context -  The traversal context for the currently processed property
+    * @param in_levelCallback - A callback for when a node is reached
+    */
     function _traverseChangeSetRecursivelyAsync(
         in_preCallback: (
             context: TraversalContext,
@@ -1497,65 +1498,78 @@ export namespace Utils {
     /**
      * Invoke a callback for all nested ChangeSets that correspond to a set of user supplied tokenized paths.
      *
-     * @param in_paths -
-     *     A map or object which contains the tokenized paths as nested elements. Common path segment are thus shared.
-     *     NOTE: It is recommended to use Map as it provides better performance.
-     *     For example, for these three paths:
-     *     'entry1'
-     *     'nested.entry2'
-     *     'nested.entry3'
+     * @param in_paths - A map or object which contains the tokenized paths as nested elements.
+     * Common path segment are thus shared.
      *
-     *     Using a map for paths would look like this:
-     *     new Map([
-     *       ['entry', new Map()],
-     *       ['nested', new Map([
-     *         ['entry2', new Map()],
-     *         ['entry3', new Map()]
-     *       ])]
-     *     ])
+     * NOTE: It is recommended to use Map as it provides better performance.
+     * For example, for these three paths:
      *
-     *     While using objects for paths would look like this:
-     *     {
-     *       entry: {},
-     *       nested: {
-     *         entry2: {}
-     *         entry3: {}
-     *       }
-     *     }
+     * - 'entry1'
      *
-     *     The element under the path, will be provided to the callback. If you have to pass additional data
-     *     to the callback, you can add private data by prefixing it with __ and setting
-     *     in_options.escapeLeadingDoubleUnderscore to true.
-     *     In case you do that, bear in mind that paths that refer to changeSet properties that have at least
-     *     two underscores as prefix in its id, should contain an extra underscore character as prefix:
-     *     | Path in changeSet | Path in paths |
-     *     |       path0       |      path0    | (unescaped)
-     *     |      _path1       |     _path1    | (unescaoed)
-     *     |     __path2       |   ___path2    | (escaped with one extra leading underscore)
-     *     |    ___path3       |  ____path3    | (also escaped, the same applies to N underscores where N >= 2)
-     * @param in_changeSet -
-     *     The ChangeSet to process
-     * @param in_callback -
-     *     The function to invoke at the registered paths (it is called both for the interior and the leaf nodes). The
-     *     callback will be called for each node with the following parameters:
-     *     context - The current TraversalContext as returned by Utils.traverseChangeSetRecursively. Can be used for
-     *               querying the current Property type, operation, etc.
-     *     currentSubPaths - a subset of the tokenized paths passed in as input to this
-     *                       function that still need to be processed from the current node
-     *     currentTokenizedPath - the tokenized path leading to the current node
-     *     contractedPathSegment - True if the current node is inside a contracted path segment
-    *                              (e.g. currentTokenizedPath is ['foo'], coming from the
-    *                              changeset segment 'foo.bar'), false otherwise. If true, the
-    *                              typeid from the context parameter may not be valid at the
-    *                              current node. Callbacks may ignore this if they are not
-    *                              concerned with the type.
-     * @param in_options -
-     * @param in_options.rootOperation - The operation that has been applied to the root of the ChangeSet (either 'insert' or 'modify')
+     * - 'nested.entry2'
+     *
+     * - 'nested.entry3'
+     *
+     * Using a map for paths would look like this:
+     *
+     * ```typescript
+     * new Map([
+     *   ['entry', new Map()],
+     *   ['nested', new Map([
+     *     ['entry2', new Map()],
+     *     ['entry3', new Map()]
+     *   ])]
+     * ])
+     * ```
+     *
+     * While using objects for paths would look like this:
+     *
+     * ```typescript
+     * {
+     *   entry: {},
+     *   nested: {
+     *     entry2: {}
+     *     entry3: {}
+     *   }
+     * }
+     * ```
+     *
+     * The element under the path, will be provided to the callback. If you have to pass additional data
+     * to the callback, you can add private data by prefixing it with __ and setting
+     * in_options.escapeLeadingDoubleUnderscore to true.
+     * In case you do that, bear in mind that paths that refer to changeSet properties that have at least
+     * two underscores as prefix in its id, should contain an extra underscore character as prefix:
+     *
+     * ```
+     * | Path in changeSet | Path in paths |
+     * |       path0       |      path0    | (unescaped)
+     * |      _path1       |     _path1    | (unescaoed)
+     * |     __path2       |   ___path2    | (escaped with one extra leading underscore)
+     * |    ___path3       |  ____path3    | (also escaped, the same applies to N underscores where N >= 2)
+     * ```
+     * @param in_changeSet - The ChangeSet to process
+     * @param in_callback - The function to invoke at the registered paths (it is called both for the interior and the
+     * leaf nodes). The callback will be called for each node with the following parameters:
+     *
+     * - `context`: The current TraversalContext as returned by Utils.traverseChangeSetRecursively.
+     * Can be used for querying the current Property type, operation, etc.
+     *
+     * - `currentSubPaths`: A subset of the tokenized paths passed in as input to this function that still need to be
+     * processed from the current node
+     *
+     * - `currentTokenizedPath`: The tokenized path leading to the current node
+     *
+     * - `contractedPathSegment`: True if the current node is inside a contracted path segment (e.g.
+     * currentTokenizedPath is ['foo'], coming from the changeset segment 'foo.bar'), false otherwise. If true, the
+     * typeid from the context parameter may not be valid at the current node. Callbacks may ignore this if they are
+     * not concerned with the type.
+     *
+     * @param in_options.rootOperation - The operation that has been applied to the root of the ChangeSet
+     * (either 'insert' or 'modify')
      * @param in_options.rootTypeid - The full type of the root Property of the ChangeSet
-     * @param in_options.escapeLeadingDoubleUnderscore -
-     *     If this is set to true, keys which start with '__' will be escaped (by adding an additional '_') before the
-     *     lookup into the paths map. This frees the keyspace with duplicated underscores for the use by the calling
-     *     application.
+     * @param in_options.escapeLeadingDoubleUnderscore - If this is set to true, keys which start with '__' will be
+     * escaped (by adding an additional '_') before the lookup into the paths map. This frees the keyspace with
+     * duplicated underscores for the use by the calling application.
      */
     export function getChangesToTokenizedPaths(
         in_paths: Map<string, Map<string, any>> | { [key: string]: any; },
