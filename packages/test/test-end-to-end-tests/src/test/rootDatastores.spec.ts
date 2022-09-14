@@ -406,7 +406,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         const isIdAliased = (id: string, dataObject: ITestFluidObject) =>
             (runtimeOf(dataObject) as any).dataStores.isIdAliased(id) as boolean;
 
-
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
             runtime.IFluidHandleContext.resolveHandle(request);
         const mapId = "map";
