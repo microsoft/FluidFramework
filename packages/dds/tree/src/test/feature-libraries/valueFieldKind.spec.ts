@@ -62,7 +62,7 @@ describe("Value field changesets", () => {
             change1,
         );
 
-        const childComposer = (changes: NodeChangeset[]) => {
+        const childComposer = (changes: NodeChangeset[]): NodeChangeset => {
             assert(changes.length === 2);
             assert.deepEqual(changes, [nodeChange1, nodeChange2]);
             return nodeChange3;
@@ -75,6 +75,20 @@ describe("Value field changesets", () => {
             ),
             childChange3,
         );
+    });
+
+    it("can invert children", () => {
+        const childInverter = (child: NodeChangeset): NodeChangeset => {
+            assert.deepEqual(child, nodeChange1);
+            return nodeChange2;
+        };
+
+        const inverted = fieldHandler.rebaser.invert(
+            change1WithChildChange,
+            childInverter,
+        ) as FieldKinds.ValueChangeset;
+
+        assert.deepEqual(inverted.changes, nodeChange2);
     });
 
     it("can be rebased", () => {
