@@ -245,7 +245,7 @@ export class SessionIdNormalizer<TRangeObject> {
 	 * Locals: [-1, -2,  X,  -4,  X]
 	 * Finals: [ 0,  1,  2,   5,  9]
 	 *
-     * ^final ID 9 is not contiguous and does not have a corresponding local ID
+	 * ^final ID 9 is not contiguous and does not have a corresponding local ID
 	 */
 	public addFinalIds(firstFinal: FinalCompressedId, lastFinal: FinalCompressedId, rangeObject: TRangeObject): void {
 		assert(lastFinal >= firstFinal, 'Malformed normalization range.');
