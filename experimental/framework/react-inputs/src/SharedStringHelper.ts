@@ -91,8 +91,7 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
                 }
                 const changeStartPosition = op.pos1;
                 const changeLength = (op.seg as string).length;
-                let newPosition: number;
-                newPosition = oldPosition <= changeStartPosition
+                const newPosition = oldPosition <= changeStartPosition
                     // Position is unmoved by the insertion if it is before the insertion's start
                     ? oldPosition
                     // Position is moved by the length of the insertion if it is after the insertion's start
