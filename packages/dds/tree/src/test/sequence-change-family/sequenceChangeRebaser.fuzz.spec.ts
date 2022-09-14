@@ -17,59 +17,68 @@ const random = makeRandom(4521357);
 
 const fooKey = brand<FieldKey>("foo");
 const keySet = new Set([fooKey]);
-const pathGen = (seed: number) => generateRandomUpPath(keySet, seed, 0, 1);
+const pathGen = (seed: number) => generateRandomUpPath(keySet, seed, 1, 3);
 
 const generateChange = (seed: number) => generateRandomChange(seed, pathGen);
 
-const batchCount = 40;
+const batchCount = 20;
 const batchSize = 5;
 
-describe("SequenceChangeRebaser - Fuzz", () => {
-    it.skip("Simple changes", () => {
+// These tests are skipped because the SequenceChangeRebaser is not yet ready for this level of testing.
+describe.skip("SequenceChangeRebaser - Fuzz", () => {
+    describe("Simple changes", () => {
         for (let i = 0; i < batchCount; i++) {
-            const changes = new Set<T.LocalChangeset>();
-            for (let j = 0; j < batchSize; j++) {
-                const change = generateRandomChange(
-                    random.integer(1, 1000000),
-                    pathGen,
-                );
-                changes.add(change);
-            }
-            const output = verifyChangeRebaser(
-                sequenceChangeRebaser,
-                changes,
-                isEquivalent,
-            );
-            expectKnownFailures(output);
-        }
-    });
-
-    it.skip("Combined changes", () => {
-        for (let i = 0; i < batchCount; i++) {
-            const changes = new Set<T.LocalChangeset>();
-            for (let j = 0; j < batchSize; j++) {
-                try {
-                    const change = generateFuzzyCombinedChange(
-                        sequenceChangeRebaser,
-                        generateChange,
-                        random.integer(1, 1000000),
-                        5,
+            const seed = random.integer(1, 1000000);
+            it(`seed: ${seed}`, () => {
+                const innerRandom = makeRandom(seed);
+                const changes = new Set<T.LocalChangeset>();
+                for (let j = 0; j < batchSize; j++) {
+                    const change = generateRandomChange(
+                        innerRandom.integer(1, 1000000),
+                        pathGen,
                     );
                     changes.add(change);
-                } catch (error) {
-                    assert(error instanceof Error && error.message === "Not implemented");
                 }
-            }
-            const output = verifyChangeRebaser(
-                sequenceChangeRebaser,
-                changes,
-                isEquivalent,
-            );
-            expectKnownFailures(output);
+                const output = verifyChangeRebaser(
+                    sequenceChangeRebaser,
+                    changes,
+                    isEquivalent,
+                );
+                expectKnownFailures(output);
+            });
         }
     });
 
-    it.skip("Known issue", () => {
+    describe("Combined changes", () => {
+        for (let i = 0; i < batchCount; i++) {
+            const seed = random.integer(1, 1000000);
+            it(`seed: ${seed}`, () => {
+                const innerRandom = makeRandom(seed);
+                const changes = new Set<T.LocalChangeset>();
+                for (let j = 0; j < batchSize; j++) {
+                    try {
+                        const change = generateFuzzyCombinedChange(
+                            sequenceChangeRebaser,
+                            generateChange,
+                            innerRandom.integer(1, 1000000),
+                            5,
+                        );
+                        changes.add(change);
+                    } catch (error) {
+                        assert(error instanceof Error && error.message === "Not implemented");
+                    }
+                }
+                const output = verifyChangeRebaser(
+                    sequenceChangeRebaser,
+                    changes,
+                    isEquivalent,
+                );
+                expectKnownFailures(output);
+            });
+        }
+    });
+
+    it("Known issue", () => {
         const type: TreeSchemaIdentifier = brand("Node");
         const insertChange = asForest([
             2,
