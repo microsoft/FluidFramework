@@ -964,6 +964,32 @@ export class MergeTree {
         }
     }
 
+    /**
+     * @internal
+     *
+     * Compute local partial length information
+     *
+     * Public only for use by internal tests
+     */
+    public computeLocalPartials(refSeq: number) {
+        if (this.localPartialsComputed) {
+            return;
+        }
+
+        const rebaseCollabWindow = new CollaborationWindow();
+        rebaseCollabWindow.loadFrom(this.collabWindow);
+        if (refSeq < this.collabWindow.minSeq) {
+            rebaseCollabWindow.minSeq = refSeq;
+        }
+        this.root.partialLengths = PartialSequenceLengths.combine(
+            this.root,
+            rebaseCollabWindow,
+            true,
+            true,
+        );
+        this.localPartialsComputed = true;
+    }
+
     private nodeLength(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
         if ((!this.collabWindow.collaborating) || (this.collabWindow.clientId === clientId)) {
             if (node.isLeaf()) {
@@ -972,20 +998,7 @@ export class MergeTree {
                 // Local client sees all segments, even when collaborating
                 return node.cachedLength;
             } else {
-                if (!this.localPartialsComputed) {
-                    const rebaseCollabWindow = new CollaborationWindow();
-                    rebaseCollabWindow.loadFrom(this.collabWindow);
-                    if (refSeq < this.collabWindow.minSeq) {
-                        rebaseCollabWindow.minSeq = refSeq;
-                    }
-                    this.root.partialLengths = PartialSequenceLengths.combine(
-                        this.root,
-                        rebaseCollabWindow,
-                        true,
-                        true,
-                    );
-                    this.localPartialsComputed = true;
-                }
+                this.computeLocalPartials(refSeq);
                 // Local client should see all segments except those after localSeq.
                 return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
             }
