@@ -31,8 +31,9 @@ type SiblingsOrKey = readonly MapTree[] | readonly FieldKey[];
 /**
  * An ITreeCursor implementation for MapTree.
  *
- * TODO: object-forest's cursor is mostly a superset of this functionality.
- * Maybe do a refactoring to deduplicate this.
+ * TODO:
+ * This is based off of TextCursor,
+ * and likely could be further optimized by taking a different approach using map iterators.
  */
 class MapCursor implements ITreeCursor {
     /**

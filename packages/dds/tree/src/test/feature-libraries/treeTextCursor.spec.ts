@@ -96,10 +96,11 @@ function testTreeFormat<T>(
                     const convertedData: T = fromCursor(inputCursor);
                     const cursor = toCursor(convertedData);
 
-                    // Check constructed cursor has the correct content, by reading it into a jsonableTree
+                    // Check constructed cursor has the correct content, by reading it into a jsonableTree.
                     const jsonableClone = jsonableTreeFromCursor(cursor);
                     assert.deepEqual(jsonableClone, jsonableData);
                 });
+                // TODO: test rest of cursor API (getPath, enterNode, enterField etc).
             }
         });
     });
