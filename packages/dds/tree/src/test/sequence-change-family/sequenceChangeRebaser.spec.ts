@@ -14,6 +14,7 @@ import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
+import { asForest } from "./cases";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
@@ -27,12 +28,6 @@ const testMarks: [string, T.Mark][] = [
 ];
 deepFreeze(testMarks);
 
-function asForest(markList: T.MarkList): SequenceChangeset {
-    return {
-        marks: { root: markList },
-    };
-}
-
 describe("SequenceChangeFamily", () => {
     /**
      * This test simulates rebasing over an do-undo pair.
@@ -40,7 +35,7 @@ describe("SequenceChangeFamily", () => {
     describe("A ↷ [B, B⁻¹] === A", () => {
         for (const [name1, mark1] of testMarks) {
             for (const [name2, mark2] of testMarks) {
-                if (name2 === "Delete") {
+                if (name2 === "Delete#########") {
                     it.skip(`${name1} ↷ [${name2}, ${name2}⁻¹] => ${name1}`, () => {
                         /**
                          * These cases are currently disabled because:
@@ -61,6 +56,7 @@ describe("SequenceChangeFamily", () => {
                                 const inv = sequenceChangeRebaser.invert(change2);
                                 const r1 = sequenceChangeRebaser.rebase(change1, change2);
                                 const r2 = sequenceChangeRebaser.rebase(r1, inv);
+                                console.debug(`o1: ${offset1} o2: ${offset2}`);
                                 assert.deepEqual(r2, change1);
                             }
                         }

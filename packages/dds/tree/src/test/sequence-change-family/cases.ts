@@ -38,6 +38,12 @@ export function setChildValueTo(value: Value): SequenceChangeset {
     };
 }
 
+export function asForest(markList: T.MarkList): SequenceChangeset {
+    return {
+        marks: { root: markList },
+    };
+}
+
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
 
