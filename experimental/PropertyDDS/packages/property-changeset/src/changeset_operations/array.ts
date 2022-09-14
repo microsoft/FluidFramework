@@ -26,14 +26,45 @@ const { isPrimitiveType } = TypeIdHelper;
  * @enum number
  */
 enum ArrayChangeSetRangeType {
-    completeA, // a complete operation of change set A
-    completeB, // a complete operation of change set B
-    partOfA, // a partial operation of change set A
-    partOfB, // a partial operation of change set B
-    completeApartOfB, // a complete operation of change set A overlapping with a partial operation of change set B
-    completeBpartOfA, // a complete operation of change set B overlapping with a partial operation of change set A
-    completeAcompleteB, // a complete operation of change set A overlapping a complete operation of change set B
-    partOfApartOfB, // a partial operation of change set A, a partial operation of change set B
+    /**
+     * A complete operation of change set A.
+     */
+    completeA,
+
+    /**
+     * A complete operation of change set B.
+     */
+    completeB,
+
+    /**
+     * A partial operation of change set A.
+     */
+    partOfA,
+
+    /**
+     * A partial operation of change set B.
+     */
+    partOfB,
+
+    /**
+     * A complete operation of change set A overlapping with a partial operation of change set B.
+     */
+    completeApartOfB,
+
+    /**
+     * A complete operation of change set B overlapping with a partial operation of change set A.
+     */
+    completeBpartOfA,
+
+    /**
+     * A complete operation of change set A overlapping a complete operation of change set B.
+     */
+    completeAcompleteB,
+
+    /**
+     * A partial operation of change set A, a partial operation of change set B.
+     */
+    partOfApartOfB,
 }
 
 interface SegmentType<T = GenericOperation, K = GenericOperation, L = GenericOperation> {
