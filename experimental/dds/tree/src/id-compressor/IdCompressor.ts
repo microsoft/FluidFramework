@@ -89,19 +89,19 @@ interface IdCluster {
 	 * Final IDs assigned override strings within this cluster.
 	 * These are one of the following:
 	 *
-     * 1. The override string
+	 * 1. The override string
 	 *
-     * 2. The override string and external override details. This occurs when local IDs corresponding to the same
-     * override string are created by different sessions before any have been finalized. This can occur due to
-     * concurrency or offline. In this case, the string is stored for the final ID that got sequenced first, and that
-     * final ID is stored associated with all subsequent final IDs with the same override.
+	 * 2. The override string and external override details. This occurs when local IDs corresponding to the same
+	 * override string are created by different sessions before any have been finalized. This can occur due to
+	 * concurrency or offline. In this case, the string is stored for the final ID that got sequenced first, and that
+	 * final ID is stored associated with all subsequent final IDs with the same override.
 	 *
-     * When a final ID which is safely reserved via consensus as part of a cluster (but is not yet sequenced) is
-     * allocated with an override, this collection will be temporarily inaccurate as it will not contain an entry for
-     * that final ID. This absence indicates the uncertainty about what the final ID associated with that override will
-     * be after finalizing the range (which could change due to unification of a concurrent duplicate override).
-     * This table will be adjusted to reflect the override when that final ID is finalized via consensus, and
-     * decompression will use `clustersAndOverridesInversion` until that point.
+	 * When a final ID which is safely reserved via consensus as part of a cluster (but is not yet sequenced) is
+	 * allocated with an override, this collection will be temporarily inaccurate as it will not contain an entry for
+	 * that final ID. This absence indicates the uncertainty about what the final ID associated with that override will
+	 * be after finalizing the range (which could change due to unification of a concurrent duplicate override).
+	 * This table will be adjusted to reflect the override when that final ID is finalized via consensus, and
+	 * decompression will use `clustersAndOverridesInversion` until that point.
 	 */
 	overrides?: Map<FinalCompressedId, string | UnifiedOverride>;
 }
