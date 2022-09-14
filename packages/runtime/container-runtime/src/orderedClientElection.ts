@@ -208,11 +208,17 @@ export interface IOrderedClientElectionEvents extends IEvent {
 export interface ISerializedElection {
     /** Sequence number at the time of the latest election. */
     readonly electionSequenceNumber: number;
-    /** Most recently elected client id. This is either:
+
+    /**
+     * Most recently elected client id. This is either:
+     *
      * 1. the interactive elected parent client, in which case electedClientId === electedParentId,
-     *  and the SummaryManager on the elected client will spawn a summarizer client, or
-     * 2. the non-interactive summarizer client itself. */
+     * and the SummaryManager on the elected client will spawn a summarizer client, or
+     *
+     * 2. the non-interactive summarizer client itself.
+     */
     readonly electedClientId: string | undefined;
+
     /** Most recently elected parent client id. This is always an interactive client. */
     readonly electedParentId: string | undefined;
 }
