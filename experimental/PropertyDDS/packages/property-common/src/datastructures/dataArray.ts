@@ -335,11 +335,12 @@ class UniversalDataArray extends BaseDataArray {
     }
 
     /**
- * helper function to write array values into another array at a given offset
- * @param array - target array
- * @param values - the values we need to write
- * @param offset - starting index in target array
- */
+     * Helper function to write array values into another array at a given offset.
+     *
+     * @param array - The target array.
+     * @param values - The values we need to write.
+     * @param offset - The starting index in target array.
+     */
     private arraySet(array, values, offset = 0) {
         let index = 0;
         values.forEach(function(value) {
@@ -349,9 +350,9 @@ class UniversalDataArray extends BaseDataArray {
     }
 
     /**
-     * Insert the content of an array into the DataArray
-     * @param in_offset - The target index
-     * @param in_array - The array to be inserted
+     * Insert the content of an array into the DataArray.
+     * @param in_offset - The target index.
+     * @param in_array - The array to be inserted.
      */
     insertRange(in_offset: number, in_array: any[]) {
         this._buffer.splice.call(this._buffer, ...[in_offset, 0].concat(in_array));
@@ -359,9 +360,9 @@ class UniversalDataArray extends BaseDataArray {
     }
 
     /**
-     * remove a range of elements from the array
-     * @param in_offset - start of the range
-     * @param in_deleteCount - number of elements to be removed
+     * Eemove a range of elements from the array.
+     * @param in_offset - The start of the range.
+     * @param in_deleteCount - The number of elements to be removed.
      */
     removeRange(in_offset: number, in_deleteCount: number) {
         if (in_offset + in_deleteCount < (this._buffer.length as number) + 1) {
@@ -373,10 +374,10 @@ class UniversalDataArray extends BaseDataArray {
     }
 
     /**
-     * Set this array values to be equal to in_array values
+     * Set this array values to be equal to in_array values.
      * @param in_offset - An optional offset in this array to begin start
-     *                  setting this arrays values to in_array values.
-     * @param in_array - the input array
+     * setting this arrays values to in_array values.
+     * @param in_array - The input array.
      */
     set(in_offset: number, in_array) {
         if (in_array instanceof ArrayBuffer || in_array instanceof Array || in_array instanceof this.getBufferCtor()) {
@@ -463,10 +464,9 @@ class StringDataArray extends BaseDataArray {
     }
 
     /**
-     * Set this array values to be equal to in_string values
-     * @param in_offset - The offset in this array to begin start
-     *                  setting this arrays values to in_string values.
-     * @param in_string - the input string
+     * Set this array values to be equal to in_string values.
+     * @param in_offset - The offset in this array to begin start setting this arrays values to in_string values.
+     * @param in_string - The input string.
      */
     set(in_offset: number, in_string: string) {
         this._buffer =
@@ -526,10 +526,9 @@ class BoolDataArray extends UniversalDataArray {
     }
 
     /**
-     * Set this array values to be equal to in_array values
-     * @param in_offset - An optional offset in this array to begin start
-     *                  setting this arrays values to in_array values.
-     * @param in_array - the input array
+     * Set this array values to be equal to in_array values.
+     * @param in_offset - An optional offset in this array to begin start setting this arrays values to in_array values.
+     * @param in_array - The input array.
      */
     set(in_offset: number, in_array) {
         if (in_array instanceof ArrayBuffer || in_array instanceof Array || in_array instanceof this.getBufferCtor()) {

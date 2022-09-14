@@ -4,8 +4,10 @@
  */
 
 /**
- * @fileoverview A chronometer implementation backed by a high resolution timer. Implementation
- *   falls back to milliseconds precision when high resolution timers are not supported.
+ * A chronometer implementation backed by a high resolution timer.
+ * The implementation falls back to milliseconds precision when high resolution timers are not supported.
+ *
+ * @fileoverview
  */
 
 declare let process: any;
@@ -134,7 +136,6 @@ if (typeof process !== "undefined" && typeof process.hrtime !== "undefined") {
 /**
  * Creates and starts a new Chronometer.
  */
-
 export class Chronometer {
     constructor() {
         this.start();
@@ -151,7 +152,10 @@ export class Chronometer {
      * Stops the chronometer. Stopped chronometers can be reused by calling {@link Chronometer.start} again.
      *
      * @returns The chronometer instance, so that callers can do this:
-     *   let elapsedMS = chrono.stop().elapsedMS();
+     *
+     * ```javascript
+     * let elapsedMS = chrono.stop().elapsedMS();
+     * ```
      */
     stop(): Chronometer {
         impl._stop.call(this);
@@ -160,9 +164,9 @@ export class Chronometer {
 
     /**
      * @returns How many microseconds have elapsed between the last call to {@link Chronometer.start}
-     *   (or the chronometer creation), and {@link Chronometer.stop}. Implementations that are not precise
-     *   enough may return "elapsedMilliSec() * 1000". Measuring elapsed time causes the chronometer
-     *   to be stopped if required (if the chrono is not stopped when this method is called).
+     * (or the chronometer creation), and {@link Chronometer.stop}. Implementations that are not precise
+     * enough may return "elapsedMilliSec() * 1000". Measuring elapsed time causes the chronometer
+     * to be stopped if required (if the chrono is not stopped when this method is called).
      */
     elapsedMicroSec(): number {
         return impl._elapsedMicroSec.call(this);
@@ -170,9 +174,9 @@ export class Chronometer {
 
     /**
      * @returns How many milliseconds have elapsed between the last call to {@link Chronometer.start}
-     *   (or the chronometer creation), and {@link Chronometer.stop}. Measuring elapsed time causes the
-     *   chronometer to be stopped if required (if the chrono is not stopped when this method is
-     *   called).
+     * (or the chronometer creation), and {@link Chronometer.stop}. Measuring elapsed time causes the
+     * chronometer to be stopped if required (if the chrono is not stopped when this method is
+     * called).
      */
     elapsedMilliSec(): number {
         return impl._elapsedMilliSec.call(this);
@@ -180,9 +184,9 @@ export class Chronometer {
 
     /**
      * @returns How many seconds have elapsed between the last call to {@link Chronometer.start}
-     *   (or the chronometer creation), and {@link Chronometer.stop}. Measuring elapsed time causes the
-     *   chronometer to be stopped if required (if the chrono is not stopped when this method is
-     *   called).
+     * (or the chronometer creation), and {@link Chronometer.stop}. Measuring elapsed time causes the
+     * chronometer to be stopped if required (if the chrono is not stopped when this method is
+     * called).
      */
     elapsedSec(): number {
         return impl._elapsedSec.call(this);
@@ -191,10 +195,12 @@ export class Chronometer {
     /**
      * A utility function to measure promise execution time.
      * @param promiseFn - A function that returns a promise whose execution time is to be
-     *   measured.
+     * measured.
      * @returns A Promise that resolves with an object with properties:
-     *    - chrono A stopped chronometer instance from which to get the elapsed time,
-     *    - result The resolved result of the promise returned by promiseFn
+     *
+     * - chrono: A stopped chronometer instance from which to get the elapsed time,
+     *
+     * - result: The resolved result of the promise returned by promiseFn
      */
     static async timePromise<T>(promiseFn: () => Promise<T>): Promise<{ chrono: Chronometer; result: T; }> {
         const chrono = new Chronometer();
