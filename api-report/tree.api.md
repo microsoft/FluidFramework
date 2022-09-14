@@ -1401,7 +1401,7 @@ class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
 
 // @public (undocumented)
 interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
-    set(newValue: JsonableTree): ValueChangeset;
+    set(newValue: ITreeCursor): ValueChangeset;
 }
 
 // @public

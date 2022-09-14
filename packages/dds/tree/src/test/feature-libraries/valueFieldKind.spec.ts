@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { FieldKinds, NodeChangeset } from "../../feature-libraries";
+import { FieldKinds, NodeChangeset, singleTextCursor } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
@@ -23,8 +23,8 @@ const childChange2 = { changes: nodeChange2 };
 const childChange3 = { changes: nodeChange3 };
 
 describe("Value field changesets", () => {
-    const change1 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(tree1);
-    const change2 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(tree2);
+    const change1 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(singleTextCursor(tree1));
+    const change2 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(singleTextCursor(tree2));
     const simpleChildComposer = (changes: NodeChangeset[]) => {
         assert.equal(changes.length, 1);
         return changes[0];

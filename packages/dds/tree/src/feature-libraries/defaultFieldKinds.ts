@@ -5,6 +5,7 @@
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { ChangeEncoder } from "../change-family";
+import { ITreeCursor } from "../forest";
 import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, Delta, JsonableTree } from "../tree";
 import { brand, clone, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
@@ -24,6 +25,7 @@ import {
     NodeChangeEncoder,
     FieldEditor,
 } from "./modular-schema";
+import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 
 /**
  * Encoder for changesets which carry no information.
@@ -286,9 +288,8 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
 export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
     /**
      * Creates a change which replaces the current value of the field with `newValue`.
-     * `newValue` should not be mutated once passed to this call.
      */
-    set(newValue: JsonableTree): ValueChangeset;
+    set(newValue: ITreeCursor): ValueChangeset;
 }
 
 const valueFieldEditor: ValueFieldEditor = {
@@ -297,7 +298,7 @@ const valueFieldEditor: ValueFieldEditor = {
         return { changes: change };
     },
 
-    set: (newValue) => ({ value: newValue }),
+    set: (newValue: ITreeCursor) => ({ value: jsonableTreeFromCursor(newValue) }),
 };
 
 const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
