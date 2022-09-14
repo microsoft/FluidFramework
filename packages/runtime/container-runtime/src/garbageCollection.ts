@@ -34,6 +34,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
+    IConfigProvider,
     loggerToMonitoringContext,
     MonitoringContext,
     PerformanceEvent,
@@ -76,8 +77,24 @@ export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionEx
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-// Feature gate key to enable closing the container if SweepReady objects are used.
-export const closeOnSweepReadyUsageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
+/**
+ * Feature gate key to enable closing the container if SweepReady objects are used.
+ * Only known values are accepted, otherwise return undefined.
+ *
+ * mainContainer: Detect these errors only in the main container
+ */
+ export const sweepReadyUsageDetectionSetting = {
+    read(config: IConfigProvider): "mainContainer" | undefined {
+        const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
+        const value = config.getString(sweepReadyUsageDetectionKey);
+        switch (value) {
+            case "mainContainer":
+                return value;
+            default:
+                return undefined;
+        }
+    },
+};
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -1351,7 +1368,7 @@ export class GarbageCollector implements IGarbageCollector {
             }
 
             // If SweepReady Usage Detection is enabed, close the main container
-            if (this.mc.config.getBoolean(closeOnSweepReadyUsageKey) === true && state === "SweepReady") {
+            if (state === "SweepReady" && sweepReadyUsageDetectionSetting.read(this.mc.config) === "mainContainer") {
                 //* Create a proper error class
                 //* Put a prop on here indicating it's "best guess"
                 // eslint-disable-next-line max-len

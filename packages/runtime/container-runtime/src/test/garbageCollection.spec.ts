@@ -41,13 +41,15 @@ import {
     oneDayMs,
     runGCKey,
     runSweepKey,
-    closeOnSweepReadyUsageKey,
     defaultInactiveTimeoutMs,
     gcTestModeKey,
     disableSweepLogKey,
 } from "../garbageCollection";
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
+
+/** @see - sweepReadyUsageDetectionSetting */
+const SweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
 
 type GcWithPrivates = IGarbageCollector & {
     readonly gcEnabled: boolean;
@@ -967,7 +969,7 @@ describe("Garbage Collection Tests", () => {
 
             beforeEach(() => {
                 injectedSettings[runSessionExpiryKey] = true;
-                injectedSettings[closeOnSweepReadyUsageKey] = true;
+                injectedSettings[SweepReadyUsageDetectionKey] = "mainContainer";
             });
 
             mainContainerTests(
@@ -984,7 +986,6 @@ describe("Garbage Collection Tests", () => {
 
             beforeEach(() => {
                 injectedSettings[runSessionExpiryKey] = true;
-                injectedSettings[closeOnSweepReadyUsageKey] = false;
             });
 
             mainContainerTests(
