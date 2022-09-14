@@ -395,11 +395,9 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     public async ensureSynchronized(timeoutDuration?: number) {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!timeoutDuration) {
-            return this._loaderContainerTracker.ensureSynchronized();
-        } else {
-            return this._loaderContainerTracker.ensureSynchronizedWithTimeout?.(timeoutDuration);
-        }
+        return !timeoutDuration
+            ? this._loaderContainerTracker.ensureSynchronized()
+            : this._loaderContainerTracker.ensureSynchronizedWithTimeout?.(timeoutDuration);
     }
 
     public async waitContainerToCatchUp(container: IContainer) {
