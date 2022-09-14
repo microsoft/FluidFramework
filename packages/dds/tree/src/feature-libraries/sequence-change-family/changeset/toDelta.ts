@@ -195,8 +195,11 @@ type InsertedFieldsMark = Delta.Skip | Delta.Modify | Delta.MoveIn | Delta.MoveI
 /**
  * Converts inserted content into the format expected in Delta instances.
  * This involves applying the following changes:
+ *
  * - Updating node values
+ *
  * - Inserting new subtrees within the inserted content
+ *
  * - Deleting parts of the inserted content
  *
  * The only kind of change that is not applied by this function is MoveIn.
@@ -204,7 +207,7 @@ type InsertedFieldsMark = Delta.Skip | Delta.Modify | Delta.MoveIn | Delta.MoveI
  * @param node - The subtree to apply modifications to. Updated in place.
  * @param modify - The modifications to either apply or collect.
  * @returns The remaining modifications that the consumer of the Delta will apply on the given node. May be empty if
- *   all modifications are applied by the function.
+ * all modifications are applied by the function.
  */
 function applyOrCollectModifications(
     node: Delta.ProtoNode,

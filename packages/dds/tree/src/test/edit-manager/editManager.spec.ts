@@ -406,9 +406,11 @@ describe("EditManager", () => {
     /**
      * This test case effectively tests most of the scenarios covered by the other test cases.
      * Despite that, it's good to keep the other tests cases for the following reasons:
+     *
      * - They are easier to read and debug.
+     *
      * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
-     *   but this one doesn't, then there might be something wrong with this test).
+     * but this one doesn't, then there might be something wrong with this test).
      */
     it("Combinatorial test", () => {
         const meta = {

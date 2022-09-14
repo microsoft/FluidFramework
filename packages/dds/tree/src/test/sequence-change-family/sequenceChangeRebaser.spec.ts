@@ -44,12 +44,14 @@ describe("SequenceChangeFamily", () => {
                     it.skip(`${name1} ↷ [${name2}, ${name2}⁻¹] => ${name1}`, () => {
                         /**
                          * These cases are currently disabled because:
+                         *
                          * - Marks that affect existing content are removed instead of muted
-                         *   when rebased over the deletion of that content. This prevents us
-                         *   from then reinstating the mark when rebasing over the revive.
+                         * when rebased over the deletion of that content. This prevents us
+                         * from then reinstating the mark when rebasing over the revive.
+                         *
                          * - Tombs are not added when rebasing an insert over a gap that is
-                         *   immediately left of deleted content. This prevents us from being able to
-                         *   accurately track the position of the insert.
+                         * immediately left of deleted content. This prevents us from being able to
+                         * accurately track the position of the insert.
                          */
                     });
                 } else {
