@@ -20,7 +20,7 @@ describe("SharedTree", () => {
         const value = "42";
 
         // Apply an edit to the first tree which inserts a node with a value
-        insertTestValue(provider.trees[0], value);
+        setTestValue(provider.trees[0], value);
 
         // Ensure that the first tree has the state we expect
         assert.equal(getTestValue(provider.trees[0]), value);
@@ -37,7 +37,7 @@ describe("SharedTree", () => {
         const [summarizingTree] = provider.trees;
         const summarize = await provider.enableManualSummarization();
         const value = 42;
-        insertTestValue(summarizingTree, value);
+        setTestValue(summarizingTree, value);
         await summarize();
         await provider.ensureSynchronized();
         const loadingTree = await provider.createTree();
@@ -51,7 +51,7 @@ describe("SharedTree", () => {
             const [tree1, tree2] = provider.trees;
 
             // Insert node
-            insertTestValue(tree1, value);
+            setTestValue(tree1, value);
 
             await provider.ensureSynchronized();
 
@@ -87,8 +87,8 @@ describe("SharedTree", () => {
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link getTestValue} to read the value.
  */
-function insertTestValue(tree: ISharedTree, value: TreeValue): void {
-    // Apply an edit to the first tree which inserts a node with a value
+function setTestValue(tree: ISharedTree, value: TreeValue): void {
+    // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
         editor.insert({
@@ -102,15 +102,15 @@ function insertTestValue(tree: ISharedTree, value: TreeValue): void {
 }
 
 /**
- * Reads a value in a tree set by {@link insertTestValue} if it exists
+ * Reads a value in a tree set by {@link setTestValue} if it exists
  */
-function getTestValue(tree: ISharedTree): TreeValue | undefined {
-    const readCursor = tree.forest.allocateCursor();
-    const destination = tree.forest.root(tree.forest.rootField);
-    const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
+function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
+    const readCursor = forest.allocateCursor();
+    const destination = forest.root(forest.rootField);
+    const cursorResult = forest.tryMoveCursorTo(destination, readCursor);
     const { value } = readCursor;
     readCursor.free();
-    tree.forest.forgetAnchor(destination);
+    forest.forgetAnchor(destination);
     if (cursorResult === TreeNavigationResult.Ok) {
         return value;
     }

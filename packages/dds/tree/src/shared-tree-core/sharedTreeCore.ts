@@ -263,21 +263,21 @@ export type SummaryElementStringifier = (contents: unknown) => string;
  */
 export type SummaryElementParser = (contents: string) => unknown;
 
-/** Compose an {@link IChannelStorageService} which prefixes all paths before forwarding them to the original service */
+/**
+ * Compose an {@link IChannelStorageService} which prefixes all paths before forwarding them to the original service
+ */
 function scopeStorageService(service: IChannelStorageService, ...pathElements: string[]): IChannelStorageService {
-    function scopePath(path: string): string {
-        return `${pathElements.join("/")}/${path}`;
-    }
+    const scope = `${pathElements.join("/")}/`;
 
     return {
         async readBlob(path: string): Promise<ArrayBufferLike> {
-            return service.readBlob(scopePath(path));
+            return service.readBlob(`${scope}${path}`);
         },
         async contains(path) {
-            return service.contains(scopePath(path));
+            return service.contains(`${scope}${path}`);
         },
         async list(path) {
-            return service.list(scopePath(path));
+            return service.list(`${scope}${path}`);
         },
     };
 }

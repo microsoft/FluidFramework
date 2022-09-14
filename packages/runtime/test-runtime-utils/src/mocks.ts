@@ -631,7 +631,9 @@ export class MockSharedObjectServices implements IChannelServices {
     }
 }
 
-/** Populate the given `contents` object with all paths/values in a summary tree */
+/**
+ * Populate the given `contents` object with all paths/values in a summary tree
+ */
 function setContentsFromSummaryTree({ tree }: ISummaryTree, path: string, contents: { [key: string]: string; }): void {
     for (const [key, value] of Object.entries(tree)) {
         switch (value.type) {
