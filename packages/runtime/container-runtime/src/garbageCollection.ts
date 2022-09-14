@@ -35,7 +35,9 @@ import {
 import {
     ChildLogger,
     IConfigProvider,
+    IFluidErrorBase,
     loggerToMonitoringContext,
+    LoggingError,
     MonitoringContext,
     PerformanceEvent,
     TelemetryDataTag,
@@ -324,6 +326,19 @@ export class UnreferencedStateTracker {
         this.clearTimers();
         this._state = UnreferencedState.Active;
     }
+}
+
+/**
+ * Error class raised when a SweepReady object is used, indicating a bug in how
+ * references are managed in the container by the application, or a bug in how
+ * GC tracks those references.
+ *
+ * There's a chance for false positives when this error is raised by a Main Container,
+ * since only the Summarizer has the latest truth about unreferenced node tracking
+ */
+class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
+    /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
+    public errorType: string = "objectUsedAfterMarkedForDeletionError";
 }
 
 /**
@@ -1369,10 +1384,10 @@ export class GarbageCollector implements IGarbageCollector {
 
             // If SweepReady Usage Detection is enabed, close the main container
             if (state === "SweepReady" && sweepReadyUsageDetectionSetting.read(this.mc.config) === "mainContainer") {
-                //* Create a proper error class
-                //* Put a prop on here indicating it's "best guess"
-                // eslint-disable-next-line max-len
-                this.runtime.closeFn({ errorType: "objectUsedAfterMarkedForDeletionError", message: "SweepReady object was used! :(" });
+                const error = new SweepReadyUsageError(
+                    "SweepReady object used in Non-Summarizer Container",
+                    { errorDetails: JSON.stringify(propsToLog) });
+                this.runtime.closeFn(error);
             }
         }
     }
