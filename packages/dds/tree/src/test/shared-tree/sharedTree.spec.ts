@@ -106,5 +106,45 @@ describe("SharedTree", () => {
                 tree2.forest.forgetAnchor(destination);
             }
         });
+
+        it("can insert multiple nodes", async () => {
+            const provider = await TestTreeProvider.create(2);
+            const [tree1, tree2] = provider.trees;
+
+            // Insert nodes
+            tree1.runTransaction((forest, editor) => {
+                editor.insert({
+                    parent: undefined,
+                    parentField: detachedFieldAsKey(forest.rootField),
+                    parentIndex: 0,
+                }, singleTextCursor({ type: brand("Test"), value: 1 }));
+                return TransactionResult.Apply;
+            });
+
+            tree1.runTransaction((forest, editor) => {
+                editor.insert({
+                    parent: undefined,
+                    parentField: detachedFieldAsKey(forest.rootField),
+                    parentIndex: 1,
+                }, singleTextCursor({ type: brand("Test"), value: 2 }));
+                return TransactionResult.Apply;
+            });
+
+            await provider.ensureSynchronized();
+
+            // Validate insertion
+            {
+                const readCursor = tree2.forest.allocateCursor();
+                const destination = tree2.forest.root(tree2.forest.rootField);
+                const cursorResult = tree2.forest.tryMoveCursorTo(destination, readCursor);
+                assert.equal(cursorResult, TreeNavigationResult.Ok);
+                assert.equal(readCursor.value, 1);
+                assert.equal(readCursor.seek(1), TreeNavigationResult.Ok);
+                assert.equal(readCursor.value, 2);
+                assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+                readCursor.free();
+                tree2.forest.forgetAnchor(destination);
+            }
+        });
     });
 });

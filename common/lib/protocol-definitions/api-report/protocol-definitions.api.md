@@ -48,11 +48,8 @@ export interface IBlob {
 
 // @public
 export interface IBranchOrigin {
-    // (undocumented)
     id: string;
-    // (undocumented)
     minimumSequenceNumber: number;
-    // (undocumented)
     sequenceNumber: number;
 }
 
@@ -161,19 +158,12 @@ export interface IDocumentAttributes {
 
 // @public
 export interface IDocumentMessage {
-    // (undocumented)
     clientSequenceNumber: number;
-    // (undocumented)
     contents: any;
-    // (undocumented)
     metadata?: any;
-    // (undocumented)
     referenceSequenceNumber: number;
-    // (undocumented)
     serverMetadata?: any;
-    // (undocumented)
     traces?: ITrace[];
-    // (undocumented)
     type: string;
 }
 
@@ -193,11 +183,8 @@ export interface IHelpMessage {
 
 // @public (undocumented)
 export interface INack {
-    // (undocumented)
     content: INackContent;
-    // (undocumented)
     operation: IDocumentMessage | undefined;
-    // (undocumented)
     sequenceNumber: number;
 }
 
@@ -217,9 +204,7 @@ export interface IProcessMessageResult {
 
 // @public
 export interface IProposal {
-    // (undocumented)
     key: string;
-    // (undocumented)
     value: any;
 }
 
@@ -306,33 +291,20 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 // @public
 export interface ISequencedDocumentMessage {
-    // (undocumented)
     clientId: string;
-    // (undocumented)
     clientSequenceNumber: number;
-    // (undocumented)
     contents: any;
     // @alpha
     expHash1?: string;
-    // (undocumented)
     metadata?: any;
-    // (undocumented)
     minimumSequenceNumber: number;
-    // (undocumented)
     origin?: IBranchOrigin;
-    // (undocumented)
     referenceSequenceNumber: number;
-    // (undocumented)
     sequenceNumber: number;
-    // (undocumented)
     serverMetadata?: any;
-    // (undocumented)
     term: number | undefined;
-    // (undocumented)
     timestamp: number;
-    // (undocumented)
     traces?: ITrace[];
-    // (undocumented)
     type: string;
 }
 
@@ -503,11 +475,8 @@ export interface ITokenService {
 
 // @public
 export interface ITrace {
-    // (undocumented)
     action: string;
-    // (undocumented)
     service: string;
-    // (undocumented)
     timestamp: number;
 }
 
@@ -554,31 +523,18 @@ export interface IVersion {
 
 // @public (undocumented)
 export enum MessageType {
-    // (undocumented)
     ClientJoin = "join",
-    // (undocumented)
     ClientLeave = "leave",
-    // (undocumented)
     Control = "control",
-    // (undocumented)
     NoClient = "noClient",
-    // (undocumented)
     NoOp = "noop",
-    // (undocumented)
     Operation = "op",
-    // (undocumented)
     Propose = "propose",
-    // (undocumented)
     Reject = "reject",
-    // (undocumented)
     RemoteHelp = "remoteHelp",
-    // (undocumented)
     RoundTrip = "tripComplete",
-    // (undocumented)
     Summarize = "summarize",
-    // (undocumented)
     SummaryAck = "summaryAck",
-    // (undocumented)
     SummaryNack = "summaryNack"
 }
 

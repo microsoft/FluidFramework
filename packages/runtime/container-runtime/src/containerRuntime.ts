@@ -1792,7 +1792,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
         const batch = this.batchManager.popBatch();
+        this.flushBatch(batch);
 
+        assert(this.batchManager.empty, "reentrancy");
+    }
+
+    protected flushBatch(batch: BatchMessage[]): void {
         const length = batch.length;
 
         if (length > 1) {
@@ -1854,8 +1859,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
             clientSequenceNumber++;
         }
-
-        assert(this.batchManager.empty, "reentrancy");
 
         this.pendingStateManager.onFlush();
     }
@@ -2643,28 +2646,52 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.logger.sendErrorEvent({ eventName: "SubmitOpInReadonly" });
         }
 
+        const message: BatchMessage = {
+            contents: serializedContent,
+            deserializedContent,
+            metadata,
+            localOpMetadata,
+            referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+        };
+
         try {
-            this.batchManager.push({
-                contents: serializedContent,
-                deserializedContent,
-                metadata,
-                localOpMetadata,
-                referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-            });
+            // If this is attach message for new data store, and we are in a batch, send this op out of order
+            // Is it safe:
+            //    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
+            //    They become visible only when aliased, or handle to some sub-element of newly created datastore
+            //    is stored in some DDS, i.e. only after some other op.
+            // Why:
+            //    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
+            //    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
+            //    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
+            //    these issues.
+            // Cons:
+            //    With large batches, relay service may throttle clients. Clients may disconnect while throttled.
+            //    This change creates new possibility of a lot of newly created data stores never being referenced
+            //    because client died before it had a change to submit the rest of the ops. This will create more
+            //    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
+            // Please note that this does not change file format, so it can be disabled in the future if this
+            // optimization no longer makes sense (for example, batch compression may make it less appealing).
+            if (this._flushMode === FlushMode.TurnBased && type === ContainerMessageType.Attach &&
+                    this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
+                this.flushBatch([message]);
+            } else {
+                this.batchManager.push(message);
+                if (this._flushMode !== FlushMode.TurnBased) {
+                    this.flush();
+                } else if (!this.flushTrigger) {
+                    this.flushTrigger = true;
+                    // Queue a microtask to detect the end of the turn and force a flush.
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    Promise.resolve().then(() => {
+                        this.flushTrigger = false;
+                        this.flush();
+                    });
+                }
+            }
         } catch (error) {
             this.closeFn(error as GenericError);
             throw error;
-        }
-        if (this._flushMode !== FlushMode.TurnBased) {
-            this.flush();
-        } else if (!this.flushTrigger) {
-            this.flushTrigger = true;
-            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.resolve().then(() => {
-                this.flushTrigger = false;
-                this.flush();
-            });
         }
 
         if (this.isContainerMessageDirtyable(type, contents)) {

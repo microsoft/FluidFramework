@@ -74,7 +74,7 @@ export function generateToken(
         iat: now,
         exp: now + lifetime,
         ver,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         jti: uuid(),
     };
 
@@ -96,9 +96,9 @@ export function generateToken(
  */
 export function generateUser(): IUser {
     const randomUser = {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         id: uuid(),
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         name: uuid(),
     };
 

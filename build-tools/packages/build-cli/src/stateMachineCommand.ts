@@ -130,9 +130,6 @@ export abstract class StateMachineCommand<
                 if (this.machine.state_is_final(state)) {
                     this.verbose(`Exiting. Final state: ${state}`);
                     this.exit();
-
-                    // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
-                    // process.exit();
                 }
 
                 // eslint-disable-next-line no-constant-condition
