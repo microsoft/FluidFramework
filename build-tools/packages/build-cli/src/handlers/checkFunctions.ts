@@ -412,11 +412,23 @@ export const checkReleaseGroupIsBumped: StateHandlerFunction = async (
     const { context, releaseGroup, releaseVersion } = data;
     assert(context !== undefined, "Context is undefined.");
 
+    context.repo.reload();
     const rgVersion = context.getVersion(releaseGroup!);
     if (rgVersion === releaseVersion) {
-        log.warning(
-            `Release group ${releaseGroup} has not yet been bumped. It is at version ${rgVersion}; current released version ${releaseVersion}`,
-        );
+
+        const releaseFromNonReleaseBranchQuestion: inquirer.ConfirmQuestion = {
+            type: "confirm",
+            name: "releaseFromNonReleaseBranch",
+            message: `By default, versions are bumped, then a release branch is created. However, you can skip creating a release branch if you intend to release directly from a non-release branch.\n\nDo you want to release directly from a non-release branch? If you are releasing a single package, you should answer "yes".`,
+            default: false,
+        };
+
+        const answer = await inquirer.prompt(releaseFromNonReleaseBranchQuestion);
+        if (answer.releaseFromNonReleaseBranch === true) {
+            BaseStateHandler.signalSuccess(machine, state);
+            return true;
+        }
+
         BaseStateHandler.signalFailure(machine, state);
         return true;
     }
@@ -426,7 +438,8 @@ export const checkReleaseGroupIsBumped: StateHandlerFunction = async (
 };
 
 /**
- * Checks that the main and next branches are integrated.
+ * Checks that the version of the release group or package in the repo has already been released. If this check
+ * succeeds, it means that a bump is needed to bump the repo to the next version.
  *
  * @param state - The current state machine state.
  * @param machine - The state machine.

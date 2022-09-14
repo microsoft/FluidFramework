@@ -8,6 +8,7 @@ export {
     generateBumpDepsBranchName,
     createBumpBranch,
     getDefaultBumpTypeForBranch,
+    getReleaseTypeForReleaseGroup,
     generateReleaseBranchName,
 } from "./branches";
 export {

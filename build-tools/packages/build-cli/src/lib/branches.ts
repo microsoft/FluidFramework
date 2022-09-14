@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Context } from "@fluidframework/build-tools";
+import { Context, MonoRepoKind } from "@fluidframework/build-tools";
 import {
     bumpVersionScheme,
     detectVersionScheme,
@@ -135,8 +135,8 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
     const releaseBranchVersion =
         scheme === "virtualPatch"
             ? toVirtualPatchScheme(
-                  `${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
-              ).version
+                `${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
+            ).version
             : `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
     branchPath.push(releaseBranchVersion);
 
@@ -162,4 +162,19 @@ export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType
     if (branchName.startsWith("release/")) {
         return "patch";
     }
+}
+
+/**
+ * @internal
+ */
+export function getReleaseTypeForReleaseGroup(releaseGroupOrPackage: ReleaseGroup | ReleasePackage): "direct" | "releaseBranches" {
+    if (!isReleaseGroup(releaseGroupOrPackage)) {
+        return "direct";
+    }
+
+    if ([MonoRepoKind.BuildTools].includes(releaseGroupOrPackage)) {
+        return "direct";
+    }
+
+    return "releaseBranches";
 }
