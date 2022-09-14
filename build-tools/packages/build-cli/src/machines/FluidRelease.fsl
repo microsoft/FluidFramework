@@ -1,5 +1,6 @@
 machine_name: "Fluid Unified Release Process";
 
+// BEGIN SHARED INIT
 Init 'success'
 => CheckShouldRunOptionalChecks;
 
@@ -21,60 +22,12 @@ CheckHasRemote
 CheckBranchUpToDate
 ] 'failure' => Failed;
 
-// ChecksDone
-AskForReleaseType 'patch'
-// => AskConfirmReleaseReport 'patch'
-=> DoPatchRelease;
-
-AskForReleaseType 'minor'
-=> DoMinorRelease;
-
-AskForReleaseType 'major'
-=> DoMajorRelease;
-
-DoMajorRelease 'success'
-=> CheckBranchName 'success'
-=> CheckMainNextIntegrated 'success'
-=> CheckReleaseGroupIsBumped 'success'
-=> CheckReleaseIsDone 'success'
-=> CheckNoPrereleaseDependencies;
-
-DoMinorRelease 'success'
-=> CheckBranchName2 'success'
-=> CheckReleaseGroupIsBumped;
-
-DoPatchRelease 'success'
-=> CheckBranchName3 'success'
-=> CheckReleaseGroupIsBumped;
-
-CheckMainNextIntegrated 'failure'
-=> PromptToIntegrateNext;
-
-CheckReleaseIsDone 'failure'
-=> PromptToRelease;
-
-CheckReleaseGroupIsBumped 'failure'
-=> DoReleaseGroupBump;
-
-[
-CheckBranchName
-CheckBranchName3
-] 'failure'
-=> CheckReleaseBranchDoesNotExist 'success' // No release branch found
-=> PromptToRelease;
-
-CheckBranchName2 'failure'
-=> Failed;
-
-CheckReleaseBranchDoesNotExist 'failure'
-=> Failed;
-
 CheckNoPrereleaseDependencies 'failure'
-// for DoBumpReleasedDependencies, success means that there were none to bump
-// failure means there were bumps and thus local changes that need to be merged
 => DoBumpReleasedDependencies;
+// END SHARED INIT
 
-// DoBumpReleasedDependencies
+
+// BEGIN DoBumpReleasedDependencies
 DoBumpReleasedDependencies 'success' // No dependencies to bump
 => CheckNoPrereleaseDependencies2 'success'
 => CheckShouldCommitDeps 'success'
@@ -86,33 +39,120 @@ DoBumpReleasedDependencies 'failure' // Dependencies were bumped
 
 DoBumpReleasedDependencies
 ~> Failed;
+// END DoBumpReleasedDependencies
 
-// DoReleaseGroupBump
+
+// BEGIN PATCH RELEASE
+AskForReleaseType 'patch'
+=> DoPatchRelease 'success'
+=> CheckDoesReleaseFromReleaseBranch 'success'
+=> CheckOnReleaseBranch 'success'
+=> CheckReleaseIsDone 'success'
+=> CheckReleaseGroupIsBumpedPatch 'success'
+=> CheckTypeTestPrepare 'success'
+=> CheckTypeTestGenerate 'success'
+=> ReleaseComplete;
+
+CheckDoesReleaseFromReleaseBranch => 'failure'
+CheckReleaseIsDone;
+
+CheckOnReleaseBranch => 'failure'
+Failed;
+
+CheckReleaseIsDone 'failure'
+=> PromptToRelease;
+
+CheckReleaseGroupIsBumpedPatch 'failure'
+=> DoReleaseGroupBump;
+
 DoReleaseGroupBump 'success'
 => CheckShouldCommitBump 'success'
 => PromptToPRBump;
 
-CheckShouldRunOptionalChecks 'failure'
-=> CheckNoPrereleaseDependencies;
-
 CheckShouldCommitBump 'failure'
 => PromptToCommitBump;
 
-CheckShouldCommitDeps 'failure'
-=> PromptToCommitDeps;
+[
+CheckTypeTestPrepare
+CheckTypeTestGenerate
+] 'failure'
+=> PromptToRunTypeTests;
+// END PATCH RELEASE
 
-CheckNoPrereleaseDependencies3 'success'
-=> CheckShouldCommitReleasedDepsBump 'success'
-=> PromptToPRReleasedDepsBump;
+// BEGIN MINOR RELEASE
+AskForReleaseType 'minor'
+=> DoMinorRelease 'success'
+=> CheckDoesReleaseFromReleaseBranch2 'success'
+=> CheckOnReleaseBranch2 'success'
+=> CheckReleaseGroupIsBumpedPatch2 'success'
+=> CheckReleaseIsDone2 'success'
+=> CheckTypeTestPrepare2 'success'
+=> CheckTypeTestGenerate2 'success'
+=> ReleaseComplete;
 
-CheckNoPrereleaseDependencies2 'failure'
-=> PromptToReleaseDeps;
+CheckDoesReleaseFromReleaseBranch2 'failure'
+=> CheckReleaseIsDone2;
 
-CheckShouldCommitReleasedDepsBump 'failure'
-=> PromptToCommitReleasedDepsBump;
+CheckReleaseGroupIsBumpedPatch2 'failure'
+=> DoReleaseGroupBump;
+
+CheckOnReleaseBranch2 'failure'
+=> CheckReleaseGroupIsBumpedMinor 'success'
+=> CheckReleaseBranchExists 'success'
+=> CheckReleaseIsDone;
+
+CheckReleaseBranchExists 'failure'
+=> PromptToCreateReleaseBranch;
+
+CheckReleaseIsDone2 'failure'
+=> PromptToRelease;
+
+CheckReleaseGroupIsBumpedMinor 'failure'
+=> DoReleaseGroupBump;
+// END MINOR RELEASE
+
+
+// BEGIN MAJOR RELEASE
+AskForReleaseType 'major'
+=> DoMajorRelease 'success'
+=> CheckDoesReleaseFromReleaseBranch3 'success'
+=> CheckMainNextIntegrated 'failure'
+=> CheckOnReleaseBranch3 'success'
+=> Failed;
+
+CheckDoesReleaseFromReleaseBranch3 'failure'
+=> CheckReleaseIsDone3 'success'
+=> PromptToRelease;
+
+CheckOnReleaseBranch3 'failure'
+=> CheckBranchName 'success'
+=> PromptToIntegrateNext;
+
+CheckBranchName 'failure'
+=> Failed;
+
+CheckMainNextIntegrated 'success'
+=> CheckReleaseIsDone3 'failure'
+=> PromptToRunMinorReleaseCommand;
+// END MAJOR RELEASE
 
 
 // visual styling
+state DoMajorRelease: {
+   background-color : steelblue;
+   text-color       : white;
+};
+
+state DoMinorRelease: {
+   background-color : steelblue;
+   text-color       : white;
+};
+
+state DoPatchRelease: {
+   background-color : steelblue;
+   text-color       : white;
+};
+
 state DoReleaseGroupBump: {
    background-color : steelblue;
    text-color       : white;

@@ -135,8 +135,8 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
     const releaseBranchVersion =
         scheme === "virtualPatch"
             ? toVirtualPatchScheme(
-                `${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
-            ).version
+                  `${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
+              ).version
             : `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
     branchPath.push(releaseBranchVersion);
 
@@ -167,13 +167,15 @@ export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType
 /**
  * @internal
  */
-export function getReleaseTypeForReleaseGroup(releaseGroupOrPackage: ReleaseGroup | ReleasePackage): "direct" | "releaseBranches" {
+export function getReleaseTypeForReleaseGroup(
+    releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
+): "direct" | "releaseBranches" | "interactive" {
     if (!isReleaseGroup(releaseGroupOrPackage)) {
         return "direct";
     }
 
     if ([MonoRepoKind.BuildTools].includes(releaseGroupOrPackage)) {
-        return "direct";
+        return "interactive";
     }
 
     return "releaseBranches";
