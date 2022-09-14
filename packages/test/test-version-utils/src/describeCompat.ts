@@ -40,7 +40,7 @@ function createCompatSuite(
                         config.containerRuntime,
                         config.dataRuntime,
                     );
-                    // eslint-disable-next-line @typescript-eslint/no-invalid-this
+
                     Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
                 });
                 tests.bind(this)((options?: ITestObjectProviderOptions) => {
@@ -50,9 +50,17 @@ function createCompatSuite(
                     }
                     return provider;
                 });
-                // eslint-disable-next-line prefer-arrow-callback
+
                 afterEach(function(done: Mocha.Done) {
-                    done(getUnexpectedLogErrorException(provider.logger, "Use itExpects to specify expected errors. "));
+                    const logErrors = getUnexpectedLogErrorException(provider.logger);
+                    // if the test failed for another reason
+                    // then we don't need to check errors
+                    // and fail the after each as well
+                    if (this.currentTest?.state === "passed") {
+                        done(logErrors);
+                    } else {
+                        done();
+                    }
                     if (resetAfterEach) {
                         provider.reset();
                     }

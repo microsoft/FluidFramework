@@ -186,22 +186,22 @@ export function testJsonCompatibleCursor<T>(suiteName: string, options: CursorTe
 
             function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
                 assert(0 <= index && index < cursor.length(key),
-                    `.length() must include index of existing child '${key}[${index}]'.`);
+                    `.length() must include index of existing child '${String(key)}[${index}]'.`);
 
                 assert.equal(cursor.down(key, index), TreeNavigationResult.Ok,
-                    `Must navigate to child '${key}[${index}]'.`);
+                    `Must navigate to child '${String(key)}[${index}]'.`);
             }
 
             function expectNotFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
                 assert(!(index >= 0) || index >= cursor.length(key),
-                    `.length() must exclude index of missing child '${key}[${index}]'.`);
+                    `.length() must exclude index of missing child '${String(key)}[${index}]'.`);
 
                 assert.equal(cursor.down(key, index), TreeNavigationResult.NotFound,
-                    `Must return 'NotFound' for missing child '${key}[${index}]'`);
+                    `Must return 'NotFound' for missing child '${String(key)}[${index}]'`);
             }
 
             it("Missing key in map returns NotFound", () => {
-                const cursor = factory({ [foundKey as string]: true });
+                const cursor = new JsonCursor({ [foundKey as string]: true });
                 expectNotFound(cursor, notFoundKey);
 
                 // A failed navigation attempt should leave the cursor in a valid state.  Verify
@@ -210,7 +210,7 @@ export function testJsonCompatibleCursor<T>(suiteName: string, options: CursorTe
             });
 
             it("Out of bounds map index returns NotFound", () => {
-                const cursor = factory({ [foundKey as string]: true });
+                const cursor = new JsonCursor({ [foundKey as string]: true });
                 expectNotFound(cursor, foundKey, 1);
 
                 // A failed navigation attempt should leave the cursor in a valid state.  Verify
@@ -219,7 +219,7 @@ export function testJsonCompatibleCursor<T>(suiteName: string, options: CursorTe
             });
 
             it("Empty array must not contain 0th item", () => {
-                const cursor = factory([]);
+                const cursor = new JsonCursor([]);
                 expectNotFound(cursor, EmptyKey, 0);
             });
 

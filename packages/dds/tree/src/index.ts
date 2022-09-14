@@ -12,7 +12,7 @@ export {
     EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
     UpPath, Anchor, RootField, ChildCollection,
     ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
-    Delta,
+    Delta, rootFieldKey, FieldScope, GlobalFieldKeySymbol, symbolFromKey, keyFromSymbol,
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -23,13 +23,15 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     SynchronousNavigationResult,
+    ITreeCursorNew,
+    CursorLocationType,
 } from "./forest";
 
 export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
     FieldSchema, ValueSchema, TreeSchema,
     StoredSchemaRepository, FieldKindIdentifier,
-    rootFieldKey, TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
 } from "./schema-stored";
 
 export {
@@ -118,6 +120,9 @@ export {
     valueSymbol,
     proxyTargetSymbol,
     defaultSchemaPolicy,
+    singleTextCursorNew,
+    TextCursorNew,
+    jsonableTreeFromCursorNew,
     PrimitiveValue,
     SequenceEditBuilder,
     SequenceChangeset,
