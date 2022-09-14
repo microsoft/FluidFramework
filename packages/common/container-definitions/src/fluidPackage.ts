@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
- /**
-  * Specifies an environment on Fluid property of a IFluidPackage
-  */
+/**
+ * Specifies an environment on Fluid property of a IFluidPackage.
+ */
 export interface IFluidPackageEnvironment {
 
     /**
@@ -23,7 +23,7 @@ export interface IFluidPackageEnvironment {
         /**
          * General access for extended fields as specific usages will
          * likely have additional infornamation like a definition
-         * of Library, the entrypoint for umd packages
+         * of Library, the entrypoint for umd packages.
          */
         [key: string]: unknown;
     };
