@@ -34,8 +34,8 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl, InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
-import { getUrlResolver } from "./multiResolver";
-import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
+import { getUrlResolver } from "./getUrlResolver";
+import { deltaConns, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
