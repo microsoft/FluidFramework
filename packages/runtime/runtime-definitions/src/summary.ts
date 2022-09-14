@@ -212,7 +212,8 @@ export interface ISummarizerNode {
  *
  * `getGCData`: A new API that can be used to get the garbage collection data for this node.
  *
- * `summarize`: Added a trackState flag which indicates whether the summarizer node should track the state of the summary or not.
+ * `summarize`: Added a trackState flag which indicates whether the summarizer node should track the state of the
+ * summary or not.
  *
  * `createChild`: Added the following params:
  *
