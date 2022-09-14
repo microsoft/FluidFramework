@@ -14,11 +14,11 @@ import { GuidUtils } from "./guidUtils";
 import { calculateHash } from "./hashCalculator";
 
 /**
- * Random number generator that creates a deterministic sequence of random numbers based on an initial seed GUID
+ * Random number generator that creates a deterministic sequence of random numbers based on an initial seed GUID.
  *
- * Warning: This is a very straight forward implementation based on the hashCombine4xUint32 function. It probably
- *          doesn't produce very high quality random numbers (do not use this for cryptography!) and it is not very
- *          efficient.
+ * @remarks Warning: This is a very straight forward implementation based on the hashCombine4xUint32 function.
+ * It probably doesn't produce very high quality random numbers (do not use this for cryptography!) and it is not very
+ * efficient.
  */
 export class DeterministicRandomGenerator {
     _guid1: Uint32Array;
@@ -27,8 +27,7 @@ export class DeterministicRandomGenerator {
 
     /**
      * @param in_seed - The initial seed (it can be either a GUID or a number)
-     * which is used to initialize the random number generator
-     *
+     * which is used to initialize the random number generator.
      */
     constructor(in_seed: string | number) {
         // Initialize the internal state from the given initial guid
@@ -45,11 +44,12 @@ export class DeterministicRandomGenerator {
     }
 
     /**
-     * Creates a floating point random number
+     * Creates a floating point random number.
      *
-     * @param in_max - If supplied the returned number will be 0 \<= number \< in_max. If none is given
-     *                               in_max = 1 is assumed
-     * @returns The random number
+     * @param in_max - If supplied the returned number will be 0 \<= number \< `in_max`.
+     * If none is given, `in_max` = 1 is assumed.
+     *
+     * @returns The random number.
      */
     random(in_max = 1.0) {
         const randomInteger = this.irandom();
@@ -57,11 +57,12 @@ export class DeterministicRandomGenerator {
     }
 
     /**
-     * Creates an integer point random number
+     * Creates an integer point random number.
      *
-     * @param in_max - If supplied the returned number will be 0 \<= number \< in_max. If none is given
-     *                                      in_max = 14294967296 (2^32) is assumed
-     * @returns The random number
+     * @param in_max - If supplied the returned number will be 0 \<= number \< `in_max`.
+     * If none is given, `in_max` = 14294967296 (2^32) is assumed.
+     *
+     * @returns The random number.
      */
     irandom(in_max?: number): number {
         // Create a new hash
