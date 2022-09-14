@@ -99,9 +99,9 @@ export const after = (
     }
 
     if (options.mode === "docker" || options.mode === "r11s" || options.mode === "tinylicious") {
-        options.bearerSecret = options.bearerSecret || config.get("fluid:webpack:bearerSecret");
+        options.bearerSecret = options.bearerSecret ?? config.get("fluid:webpack:bearerSecret");
         if (options.mode !== "tinylicious") {
-            options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId") || "fluid";
+            options.tenantId = options.tenantId ?? config.get("fluid:webpack:tenantId") ?? "fluid";
             options.enableWholeSummaryUpload =
                 options.enableWholeSummaryUpload ?? config.get("fluid:webpack:enableWholeSummaryUpload") ?? false;
             if (typeof options.enableWholeSummaryUpload === "string") {
@@ -109,17 +109,17 @@ export const after = (
             }
             options.tenantSecret = options.mode === "docker"
                 ? options.tenantSecret
-                    || config.get("fluid:webpack:docker:tenantSecret")
-                    || "create-new-tenants-if-going-to-production"
-                : options.tenantSecret || config.get("fluid:webpack:tenantSecret");
+                    ?? config.get("fluid:webpack:docker:tenantSecret")
+                    ?? "create-new-tenants-if-going-to-production"
+                : options.tenantSecret ?? config.get("fluid:webpack:tenantSecret");
             if (options.mode === "r11s") {
-                options.discoveryEndpoint = options.discoveryEndpoint || config.get("fluid:webpack:discoveryEndpoint");
-                options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");
+                options.discoveryEndpoint = options.discoveryEndpoint ?? config.get("fluid:webpack:discoveryEndpoint");
+                options.fluidHost = options.fluidHost ?? config.get("fluid:webpack:fluidHost");
             }
         }
     }
 
-    options.npm = options.npm || config.get("fluid:webpack:npm");
+    options.npm = options.npm ?? config.get("fluid:webpack:npm");
 
     console.log(options);
 
