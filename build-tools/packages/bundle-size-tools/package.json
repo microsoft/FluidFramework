@@ -14,8 +14,17 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run build:genver && npm run build:compile",
+    "build:clean": "rimraf dist *.tsbuildinfo",
+    "build:compile": "npm run build:clean && npm run tsc && npm run build:copy",
+    "build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
+    "build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
+    "build:docs": "api-extractor run --local",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:full",
+    "build:genver": "gen-version",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc -b"
   },
   "dependencies": {
     "azure-devops-node-api": "^11.2.0",

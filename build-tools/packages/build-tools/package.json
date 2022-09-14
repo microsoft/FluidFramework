@@ -87,7 +87,6 @@
     "@types/rimraf": "^2.0.3",
     "@types/semver": "^7.3.10",
     "@types/shelljs": "^0.8.8",
-    "@types/webpack": "^4.41.22",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
