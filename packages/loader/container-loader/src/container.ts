@@ -1636,11 +1636,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
                 }
             }
-            if (this.firstConnection) {
-                connectionInitiationReason = "InitialConnect";
-            } else {
-                connectionInitiationReason = "AutoReconnect";
-            }
+            connectionInitiationReason = this.firstConnection ? "InitialConnect" : "AutoReconnect";
         }
 
         this.mc.logger.sendPerformanceEvent({
