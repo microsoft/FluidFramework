@@ -10,8 +10,14 @@ import {
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import {
+    describeNoCompat,
+    ensurePackageInstalled,
+    getContainerRuntimeApi,
+    itExpects,
+} from "@fluidframework/test-version-utils";
 import { ContainerErrorType, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
     ContainerMessageType,
@@ -19,13 +25,16 @@ import {
     IAckedSummary,
     SummaryCollection,
     DefaultSummaryConfiguration,
+    IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { SharedMap } from "@fluidframework/map";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -51,6 +60,22 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             gcOptions: {
                 gcAllowed: true,
             },
+        },
+    };
+    const runtimeOptionsForSummaries: IContainerRuntimeOptions = {
+        summaryOptions: {
+            summaryConfigOverrides: {
+                ...DefaultSummaryConfiguration,
+                ...{
+                    minIdleTime: IdleDetectionTime,
+                    maxIdleTime: IdleDetectionTime,
+                    maxTime: IdleDetectionTime * 12,
+                    initialSummarizerDelayMs: 10,
+                },
+            },
+        },
+        gcOptions: {
+            gcAllowed: true,
         },
     };
 
@@ -105,6 +130,17 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             runtime.once("dispose", () => reject(new Error("Runtime disposed")));
             (runtime as any).submit(ContainerMessageType.Alias, { id: alias }, resolve);
         }).catch((error) => new Error(error.message));
+
+    const waitForSummary = async (
+        testObjectProvider: ITestObjectProvider,
+        container: IContainer,
+        summaryCollection: SummaryCollection,
+    ): Promise<string> => {
+        await testObjectProvider.ensureSynchronized();
+        const ackedSummary: IAckedSummary =
+            await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
+        return ackedSummary.summaryAck.contents.handle;
+    };
 
     describe("Legacy APIs", () => {
         beforeEach(async () => setupContainers(testContainerConfig));
@@ -329,36 +365,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             "different containers from snapshot", async () => {
                 await setupContainers({
                     ...testContainerConfig,
-                    runtimeOptions: {
-                        summaryOptions: {
-                            summaryConfigOverrides: {
-                                ...DefaultSummaryConfiguration,
-                                ...{
-                                    minIdleTime: IdleDetectionTime,
-                                    maxIdleTime: IdleDetectionTime,
-                                    maxTime: IdleDetectionTime * 12,
-                                    initialSummarizerDelayMs: 10,
-                                },
-                            },
-                        },
-                        gcOptions: {
-                            gcAllowed: true,
-                        },
-                    },
+                    runtimeOptions: runtimeOptionsForSummaries,
                 });
-
-                // andre4i: Move this into test utils or something. Same as for other
-                // flavors of this function across the end to end tests
-                const waitForSummary = async (
-                    testObjectProvider: ITestObjectProvider,
-                    container: IContainer,
-                    summaryCollection: SummaryCollection,
-                ): Promise<string> => {
-                    await testObjectProvider.ensureSynchronized();
-                    const ackedSummary: IAckedSummary =
-                        await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
-                    return ackedSummary.summaryAck.contents.handle;
-                };
 
                 const sc = new SummaryCollection(container1.deltaManager, new TelemetryNullLogger());
                 const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
@@ -385,5 +393,64 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 assert.equal(aliasResult3, "Conflict");
                 assert.ok(await getRootDataStore(dataObject3, alias));
             });
+    });
+
+    describe("Legacy root datastores to aliased datastores conversion", () => {
+        const oldVersion = "1.2.5";
+
+        before(async () => {
+            await ensurePackageInstalled(oldVersion, 0, /* force */ false);
+        });
+        afterEach(async () => reset());
+
+        const isIdAliased = (id: string, dataObject: ITestFluidObject) =>
+            (runtimeOf(dataObject) as any).dataStores.isIdAliased(id) as boolean;
+
+
+        const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+            runtime.IFluidHandleContext.resolveHandle(request);
+        const mapId = "map";
+        const factory: TestFluidObjectFactory = new TestFluidObjectFactory(
+            [
+                [mapId, SharedMap.getFactory()],
+            ],
+            "default",
+        );
+
+        const createOldContainer = async (): Promise<IContainer> => {
+            const oldContainerRuntimeFactoryWithDefaultDataStore =
+                getContainerRuntimeApi(oldVersion).ContainerRuntimeFactoryWithDefaultDataStore;
+            const oldRuntimeFactory =
+                new oldContainerRuntimeFactoryWithDefaultDataStore(
+                    factory,
+                    [
+                        [factory.type, Promise.resolve(factory)],
+                    ],
+                    undefined,
+                    [innerRequestHandler],
+                    runtimeOptionsForSummaries,
+                );
+
+            return provider.createContainer(oldRuntimeFactory);
+        };
+
+        it("Old document with root datastores, new runtime will alias them", async () => {
+            const oldContainer = await createOldContainer();
+            const oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "/");
+            const sc = new SummaryCollection(oldContainer.deltaManager, new TelemetryNullLogger());
+            await (runtimeOf(oldDataObject) as any).createRootDataStore(packageName, "1");
+            await provider.ensureSynchronized();
+            const version = await waitForSummary(provider, oldContainer, sc);
+
+            const newContainer = await provider.loadTestContainer(
+                testContainerConfig,
+                {
+                    [LoaderHeader.version]: version,
+                }, // requestHeader
+            );
+
+            const newDataObject = await requestFluidObject<ITestFluidObject>(newContainer, "/");
+            assert.ok(isIdAliased("1", newDataObject));
+        });
     });
 });

@@ -81,6 +81,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
     readonly disableIsolatedChannels?: true;
     /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
     readonly summaryNumber?: number;
+    /** Whether the runtime has already converted legacy root datastores to aliased datastores */
+    readonly existingRootDataStoresAliased?: boolean;
 }
 
 export interface ICreateContainerMetadata {

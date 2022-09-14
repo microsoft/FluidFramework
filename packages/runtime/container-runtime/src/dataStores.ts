@@ -63,11 +63,8 @@ type PendingAliasResolve = (success: boolean) => void;
 export class DataStores implements IDisposable {
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
-    // 0.24 back-compat attachingBeforeSummary
-    public readonly attachOpFiredForDataStore = new Set<string>();
-
+    private readonly attachOpFiredForDataStore = new Set<string>();
     private readonly logger: ITelemetryLogger;
-
     private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
     public readonly containerLoadStats: {
@@ -84,6 +81,7 @@ export class DataStores implements IDisposable {
     // the container runtime to other nodes.
     private readonly containerRuntimeHandle: IFluidHandle;
     private readonly pendingAliasMap: Map<string, Promise<AliasResult>> = new Map<string, Promise<AliasResult>>();
+    private readonly reverseAliasMap: Map<string, string>;
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
@@ -102,6 +100,10 @@ export class DataStores implements IDisposable {
     ) {
         this.logger = ChildLogger.create(baseLogger);
         this.containerRuntimeHandle = new FluidObjectHandle(this.runtime, "/", this.runtime.IFluidHandleContext);
+        this.reverseAliasMap = new Map(Array.from(aliasMap, (x) => [x[1], x[0]]));
+        assert(
+            this.reverseAliasMap.entries.length === this.aliasMap.entries.length,
+            "The alias to id mapping must be bijective");
 
         const baseGCDetailsP = new LazyPromise(async () => {
             return getBaseGCDetails();
@@ -175,6 +177,10 @@ export class DataStores implements IDisposable {
 
     public get aliases(): ReadonlyMap<string, string> {
         return this.aliasMap;
+    }
+
+    public isIdAliased(id: string): boolean {
+        return this.reverseAliasMap.get(id) !== undefined;
     }
 
     public get pendingAliases(): Map<string, Promise<AliasResult>> {
@@ -677,6 +683,16 @@ export class DataStores implements IDisposable {
             return GCNodeType.DataStore;
         }
         return GCNodeType.SubDataStore;
+    }
+
+    public async aliasExistingRootDataStores() {
+        for (const [id, context] of this.contexts) {
+            const isRoot = await context.isRoot();
+            if (isRoot && this.reverseAliasMap.get(id) === undefined) {
+                this.aliasMap.set(id, id);
+                this.reverseAliasMap.set(id, id);
+            }
+        }
     }
 }
 

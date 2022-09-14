@@ -512,6 +512,7 @@ interface IPendingRuntimeState {
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
+const disableAliasingExistingRootDataStores = "Fluid.ContainerRuntime.DisableAliasingExistingRootDataStores";
 
 const defaultFlushMode = FlushMode.TurnBased;
 
@@ -725,7 +726,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         await runtime.getSnapshotBlobs();
-
+        await runtime.aliasExistingRootDataStores();
         return runtime;
     }
 
@@ -936,6 +937,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * a summary is generated.
      */
     private nextSummaryNumber: number;
+    private existingRootDataStoresAliased: boolean | undefined;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -960,6 +962,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
         this.messageAtLastSummary = metadata?.message;
+        this.existingRootDataStoresAliased = metadata?.existingRootDataStoresAliased;
 
         this._connected = this.context.connected;
         this.chunkMap = new Map<string, string[]>(chunks);
@@ -1401,6 +1404,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no new messages, use the message from the
             // last summary.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.messageAtLastSummary,
+            existingRootDataStoresAliased: this.existingRootDataStoresAliased,
         };
         addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
     }
@@ -2668,7 +2672,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (this._flushMode === FlushMode.TurnBased && type === ContainerMessageType.Attach &&
-                    this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
                 this.flushBatch([message]);
             } else {
                 this.batchManager.push(message);
@@ -2785,25 +2789,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // It should only be done by the summarizerNode, if required.
         const snapshotTreeFetcher = async () => {
             const fetchResult = await this.fetchSnapshotFromStorage(
-             ackHandle,
-             summaryLogger,
-             {
-                 eventName: "RefreshLatestSummaryGetSnapshot",
-                 ackHandle,
-                 summaryRefSeq,
-                 fetchLatest: false,
-             });
-             return fetchResult.snapshotTree;
-         };
-         const result = await this.summarizerNode.refreshLatestSummary(
-             proposalHandle,
-             summaryRefSeq,
-             snapshotTreeFetcher,
-             readAndParseBlob,
-             summaryLogger,
-         );
+                ackHandle,
+                summaryLogger,
+                {
+                    eventName: "RefreshLatestSummaryGetSnapshot",
+                    ackHandle,
+                    summaryRefSeq,
+                    fetchLatest: false,
+                });
+            return fetchResult.snapshotTree;
+        };
+        const result = await this.summarizerNode.refreshLatestSummary(
+            proposalHandle,
+            summaryRefSeq,
+            snapshotTreeFetcher,
+            readAndParseBlob,
+            summaryLogger,
+        );
 
-         // Notify the garbage collector so it can update its latest summary state.
+        // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
     }
 
@@ -3000,6 +3004,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throw new UsageError(`Summary heuristic configuration property "${prop}" cannot be less than 0`);
             }
         }
+    }
+
+    private async aliasExistingRootDataStores() {
+        if (this.existingRootDataStoresAliased === true ||
+            this.mc.config.getBoolean(disableAliasingExistingRootDataStores) === true) {
+            return;
+        }
+
+        return this.dataStores.aliasExistingRootDataStores().then(() => this.existingRootDataStoresAliased = true);
     }
 }
 
