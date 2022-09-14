@@ -240,8 +240,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 
     // Renders the life cycle state chip or placeholder
     const renderLifeCycleState = () => {
-        let lifeCycle;
-        lifeCycle = modalExpiryState.expiresIn === expiryPlaceHolder
+        return modalExpiryState.expiresIn === expiryPlaceHolder
             ? (
                 <span>
                     {modalExpiryState.expiresIn}
@@ -253,7 +252,6 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
                     className={classNames(classes.expiryStateChip, [modalExpiryState.expiryState])}
                 />
             );
-        return lifeCycle;
     };
 
     // Renders the main view of the modal
