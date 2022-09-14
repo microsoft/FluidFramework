@@ -158,7 +158,7 @@ declare namespace Delta {
         ProtoNode_2 as ProtoNode,
         MoveId,
         Offset,
-        FieldMap_2 as FieldMap,
+        FieldMap,
         FieldMarks,
         MarkType
     }
@@ -325,17 +325,17 @@ export interface FieldLocation {
     readonly parent: ForestLocation;
 }
 
+// @public (undocumented)
+type FieldMap<T> = Map<FieldKey, T>;
+
 // @public
-export interface FieldMap<TChild> {
+export interface FieldMapObject<TChild> {
     // (undocumented)
     [key: string]: TChild[];
 }
 
 // @public (undocumented)
-type FieldMap_2<T> = Map<FieldKey, T>;
-
-// @public (undocumented)
-type FieldMarks = FieldMap_2<MarkList>;
+type FieldMarks = FieldMap<MarkList>;
 
 // @public (undocumented)
 export interface FieldSchema {
@@ -369,9 +369,9 @@ export type GapCount = number;
 // @public
 export interface GenericTreeNode<TChild> extends NodeData {
     // (undocumented)
-    [FieldScope.local]?: FieldMap<TChild>;
+    [FieldScope.local]?: FieldMapObject<TChild>;
     // (undocumented)
-    [FieldScope.global]?: FieldMap<TChild>;
+    [FieldScope.global]?: FieldMapObject<TChild>;
 }
 
 // @public

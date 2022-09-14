@@ -11,55 +11,31 @@ import {
 } from "../forest";
 import {
     FieldKey,
-    FieldMapObject,
-    genericTreeKeys,
-    getGenericTreeField,
-    JsonableTree,
     TreeType,
     UpPath,
     Value,
+    MapTree,
+    getMapTreeField,
 } from "../tree";
 import { fail } from "../util";
 
 /**
- * This module provides support for reading and writing a human readable (and editable) tree format.
- *
- * This implementation can handle all trees (so it does not need a fallback for any special cases),
- * and is not optimized.
- *
- * It's suitable for testing and debugging,
- * though it could also reasonably be used as a fallback for edge cases or for small trees.
- *
- * TODO: Use placeholders.
- * build / add operations should be able to include detached ranges instead of children directly.
- * summaries should be able to reference unloaded chunks instead of having children directly.
- * Leverage placeholders in the types below to accomplish this.
- * Determine how this relates to Cursor: should cursor be generic over placeholder values?
- * (Could use them for errors to allow non erroring cursors?)
- *
- * Note:
- * Currently a lot of Tree's codebase is using json for serialization.
- * Because putting json strings inside json works poorly (adds lots of escaping),
- * for now this library actually outputs and inputs the Json compatible type JsonableTree
- * rather than actual strings.
+ * @returns an ITreeCursor for a single MapTree.
  */
-
-/**
- * @returns a TextCursor for a single JsonableTree.
- */
-export function singleTextCursor(root: JsonableTree): TextCursor {
-    return new TextCursor(root);
+export function singleMapTreeCursor(root: MapTree): ITreeCursor {
+    return new MapCursor(root);
 }
 
-type SiblingsOrKey = readonly JsonableTree[] | readonly FieldKey[];
+type SiblingsOrKey = readonly MapTree[] | readonly FieldKey[];
 
 /**
- * An ITreeCursor implementation for JsonableTree.
+ * An ITreeCursor implementation for MapTree.
  *
- * TODO: object-forest's cursor is mostly a superset of this functionality.
- * Maybe do a refactoring to deduplicate this.
+ * TODO:
+ * This is based off of TextCursor,
+ * and likely could be further optimized by taking a different approach using map iterators.
  */
-export class TextCursor implements ITreeCursor {
+class MapCursor implements ITreeCursor {
     /**
      * Indices traversed to visit this node: does not include current level (which is stored in `index`).
      * Even indexes are of nodes and odd indexes are for fields.
@@ -81,7 +57,7 @@ export class TextCursor implements ITreeCursor {
     /**
      * Might start at special root where fields are detached sequences.
      */
-    public constructor(root: JsonableTree) {
+    public constructor(root: MapTree) {
         this.siblings = [root];
         this.index = 0;
     }
@@ -101,9 +77,9 @@ export class TextCursor implements ITreeCursor {
         return this.indexStack[height];
     }
 
-    private getStackedNode(height: number): JsonableTree {
+    private getStackedNode(height: number): MapTree {
         const index = this.getStackedNodeIndex(height);
-        return (this.siblingStack[height] as readonly JsonableTree[])[index];
+        return (this.siblingStack[height] as readonly MapTree[])[index];
     }
 
     public getFieldLength(): number {
@@ -192,7 +168,7 @@ export class TextCursor implements ITreeCursor {
     }
 
     public firstField(): boolean {
-        const fields = genericTreeKeys(this.getNode());
+        const fields = [...this.getNode().fields.keys()]; // TODO: don't convert this to array here.
         if (fields.length === 0) {
             return false;
         }
@@ -248,16 +224,16 @@ export class TextCursor implements ITreeCursor {
         this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
     }
 
-    private getNode(): JsonableTree {
+    private getNode(): MapTree {
         // assert(this.mode === CursorLocationType.Nodes, "can only get node when in node");
-        return (this.siblings as JsonableTree[])[this.index];
+        return (this.siblings as MapTree[])[this.index];
     }
 
-    private getField(): readonly JsonableTree[] {
+    private getField(): readonly MapTree[] {
         // assert(this.mode === CursorLocationType.Fields, "can only get field when in fields");
         const parent = this.getStackedNode(this.indexStack.length - 1);
         const key: FieldKey = this.getFieldKey();
-        const field = getGenericTreeField(parent, key, false);
+        const field = getMapTreeField(parent, key, false);
         return field;
     }
 
@@ -284,30 +260,21 @@ export class TextCursor implements ITreeCursor {
 }
 
 /**
- * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
+ * Extract a MapTree from the contents of the given ITreeCursor's current node.
  */
-export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
+export function mapTreeFromCursor(cursor: ITreeCursor): MapTree {
     assert(cursor.mode === CursorLocationType.Nodes, "must start at node");
-    let fields: FieldMapObject<JsonableTree> | undefined;
-    let inField = cursor.firstField();
-    while (inField) {
-        fields ??= {};
-        const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
-        fields[cursor.getFieldKey() as string] = field;
-        inField = cursor.nextNode();
+    const fields: Map<FieldKey, MapTree[]> = new Map();
+    for (let inField = cursor.firstField(); inField; inField = cursor.nextNode()) {
+        const field: MapTree[] = mapCursorField(cursor, mapTreeFromCursor);
+        fields.set(cursor.getFieldKey(), field);
     }
 
-    const node: JsonableTree = {
+    const node: MapTree = {
         type: cursor.type,
         value: cursor.value,
         fields,
     };
-    // Normalize object by only including fields that are required.
-    if (fields === undefined) {
-        delete node.fields;
-    }
-    if (node.value === undefined) {
-        delete node.value;
-    }
+
     return node;
 }

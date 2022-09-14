@@ -14,10 +14,9 @@ import {
     DetachedField,
     detachedFieldAsKey,
     FieldKey,
-    FieldMap,
-    FieldScope,
+    FieldMapObject,
+    genericTreeKeys,
     getGenericTreeField,
-    getGenericTreeFieldMap,
     JsonableTree,
     TreeType,
     UpPath,
@@ -100,8 +99,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     }
 
     get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(
-            getGenericTreeFieldMap(this.getNode(), FieldScope.local, false)) as Iterable<FieldKey>;
+        return genericTreeKeys(this.getNode());
     }
 
     down(key: FieldKey, index: number): SynchronousNavigationResult {
@@ -192,7 +190,7 @@ export class RootedTextCursor extends TextCursor {
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
-    let fields: FieldMap<JsonableTree> | undefined;
+    let fields: FieldMapObject<JsonableTree> | undefined;
     for (const key of cursor.keys) {
         fields ??= {};
         const field: JsonableTree[] = mapCursorField(cursor, key, jsonableTreeFromCursor);
