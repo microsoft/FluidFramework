@@ -623,6 +623,20 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await ensureContainerConnected(container2);
     });
 
+    it("cannot capture the pending local state during ordersequentially", async () => {
+        const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+        dataStore1.context.containerRuntime.orderSequentially(() => {
+            map.set("key1", "value1");
+            map.set("key2", "value2");
+            assert.throws(() => {
+                container1.closeAndGetPendingLocalState();
+            }, "Should throw for incomplete batch");
+            map.set("key3", "value3");
+            map.set("key4", "value4");
+        });
+    });
+
     itExpects("waits for previous container's leave message", [
         { eventName: "fluid:telemetry:Container:connectedStateRejected" },
         { eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },

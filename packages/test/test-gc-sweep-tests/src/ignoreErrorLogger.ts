@@ -3,39 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils";
-import { ITelemetryBaseEvent, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 
 /**
  * Ignores certain error types (does not pay attention to count)
  * Potentially, we may want to raise the severity of telemetry as an error. i.e - inactiveObjectX telemetry
  */
 export class IgnoreErrorLogger extends EventAndErrorTrackingLogger {
-    private readonly ignoredEvents: Map<string, ITelemetryGenericEvent> = new Map();
-
-    public ignoreExpectedEventTypes(...anyIgnoredEvents: ITelemetryGenericEvent[]) {
-        for (const event of anyIgnoredEvents) {
-            this.ignoredEvents.set(event.eventName, event);
-        }
-    }
+    public readonly events: ITelemetryBaseEvent[] = [];
+    public readonly inactiveObjectEvents: ITelemetryBaseEvent[] = [];
+    public readonly errorEvents: ITelemetryBaseEvent[] = [];
+    public readonly errorEventStats: { [key: string]: number; } = {};
 
     send(event: ITelemetryBaseEvent): void {
-        if (this.ignoredEvents.has(event.eventName)) {
-            let matches = true;
-            const ie = this.ignoredEvents.get(event.eventName);
-            assert(ie !== undefined);
-            for (const key of Object.keys(ie)) {
-                if (ie[key] !== event[key]) {
-                    matches = false;
-                    break;
-                }
-            }
-            if (matches) {
-                event.category = "generic";
-            }
+        this.events.push(event);
+        if (event.eventName.includes("InactiveObject")) {
+            this.inactiveObjectEvents.push(event);
         }
 
-        super.send(event);
+        // Ignore all errors, otherwise we only run one test.
+        if (event.category === "error") {
+            const count = this.errorEventStats[event.eventName] ?? 0;
+            this.errorEventStats[event.eventName] = count + 1;
+            this.errorEvents.push(event);
+        }
     }
 }

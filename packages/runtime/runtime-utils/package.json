@@ -97,8 +97,13 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
+      "InterfaceDeclaration_IRootSummarizerNode": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
       "InterfaceDeclaration_IRootSummarizerNodeWithGC": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }
