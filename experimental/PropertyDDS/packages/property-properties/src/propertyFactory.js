@@ -8,6 +8,7 @@
  * Declaration of the PropertyFactory class
  * Responsible for creating property sets and registering property templates
  */
+
 const _ = require('lodash');
 const fastestJSONCopy = require('fastest-json-copy');
 const deepCopy = fastestJSONCopy.copy;
@@ -117,8 +118,7 @@ const { LazyLoadedProperties } = require('./properties/lazyLoadedProperties');
  * @constructor
  * @protected
  *
- * @param {bool} skipSemver - flag passed to the constructor of the
- * TemplateValidator. Skips semver validation
+ * @param {bool} skipSemver - Flag passed to the constructor of the TemplateValidator. Skips semver validation.
  *
  * @ignore
  */
@@ -398,11 +398,12 @@ class PropertyFactory {
         /** A cache of functions that create the properties */
         this._cachedCreationFunctions = new Map();
 
-        /** Usually we will  use the precompiled creation functions, but those all share the same constant properties.
-         *  Since it is allowed to overwrite constants via default values, we have to explicitly instantiate new
-         *  property instances for constants. Since the constants themselves may contain nested property instances,
-         *  we use this flag to indicate that for all nested properties, we do not want to use the precompiled
-         *  instantiation functions.
+        /**
+         * Usually we will  use the precompiled creation functions, but those all share the same constant properties.
+         * Since it is allowed to overwrite constants via default values, we have to explicitly instantiate new
+         * property instances for constants. Since the constants themselves may contain nested property instances,
+         * we use this flag to indicate that for all nested properties, we do not want to use the precompiled
+         * instantiation functions.
          */
         this._forceInstantion = false;
 
@@ -413,9 +414,9 @@ class PropertyFactory {
     * Add a listener for a given type of event.
     *
     * @param {string} eventName - A string representing the type of event upon which the
-    *   listener will be notified.
+    * listener will be notified.
     * @param {function} eventListener - The function to call when the "type" of event
-    *   is emitted.
+    * is emitted.
     * @public
     */
     addListener(eventName, eventListener) {
@@ -427,10 +428,10 @@ class PropertyFactory {
     * an event 'removeListener' will be emitted.
     *
     * @param {string} eventName - A string representing the type of event on which the
-    *   listener was attached.
+    * listener was attached.
     * @param {function} eventListener - The function to remove from the list of functions
     * @public
-    * */
+    */
     removeListener(eventName, eventListener) {
         this._eventEmitter.removeListener(eventName, eventListener);
     }
@@ -631,14 +632,21 @@ class PropertyFactory {
      * Here we compare the incoming template with its previous/next version in the
      * local and remote registry with the intent of detecting semver violations.
      * The semver rules for templates are as follows:
-     * - If the template structure has been altered (delete/modify existing field) then the MAJOR version should be bumped
-     * - If the template structure has been extended (add new fields) then the MINOR version should be bumped
-     * - If the annotation field has been updated then the PATCH version should be bumped
+     *
+     * - If the template structure has been altered (delete/modify existing field) then the MAJOR version should be
+     * bumped.
+     *
+     * - If the template structure has been extended (add new fields) then the MINOR version should be bumped.
+     *
+     * - If the annotation field has been updated then the PATCH version should be bumped.
+     *
      * If any of these rules have been broken then a warning message is printed onto the console.
-     * @param {object|property-properties.PropertyTemplate} in_template - the template to compare against
-     *  its previous or next versions
+     *
+     * @param {object|property-properties.PropertyTemplate} in_template - The template to compare against
+     * its previous or next versions.
      * @param {boolean} in_compareRemote - Flag indicating whether we want to compare the given
-     *  template against the remote registry
+     * template against the remote registry.
+     *
      * @private
      */
     _validateSemver(in_template, in_compareRemote) {

@@ -539,12 +539,10 @@ function runUnitTestScenario(
                 case "Push": {
                     let seq = step.seq;
                     if (seq === undefined) {
-                        if (iNextAck < acks.length) {
-                            seq = acks[iNextAck].seq;
-                        } else {
+                        seq = iNextAck < acks.length
+                            ? acks[iNextAck].seq
                             // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-                            seq = finalSequencedEdit + 1 + iNextAck - acks.length;
-                        }
+                            : finalSequencedEdit + 1 + iNextAck - acks.length;
                     }
                     iNextAck += 1;
                     const changeset = TestChangeRebaser.mintChangeset(knownToLocal, seq);

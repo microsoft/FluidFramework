@@ -25,7 +25,7 @@ import {
     SummaryElementStringifier,
 } from "../../shared-tree-core";
 import { AnchorSet } from "../../tree";
-import { DefaultChangeFamily, DefaultChangeset, DefaultRebaser } from "../../feature-libraries";
+import { DefaultChangeFamily, DefaultChangeset } from "../../feature-libraries";
 
 describe("SharedTreeCore", () => {
     it("summarizes without indexes", async () => {
