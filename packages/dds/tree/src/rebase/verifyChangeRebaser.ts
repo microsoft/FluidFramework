@@ -3,62 +3,66 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
 import { ChangeRebaser } from ".";
 
 export type Passed = "Passed";
+
+export interface Error<TChange> {
+    changes: [TChange, TChange, TChange] | [TChange, TChange] | TChange;
+    error: string;
+}
 
 export interface OutputType<TChange> {
     /**
      * "Passed" iff `(A ○ B) ○ C = A (B ○ C) = A ○ B ○ C`,
      * otherwise a triple that violates the axiom.
      */
-    composeAssociativity: Passed | [TChange, TChange, TChange];
+    composeAssociativity: Passed | Error<TChange>[];
     /**
      * "Passed" iff `A ↷ (B ○ C) = (A ↷ B) ↷ C`,
      * otherwise a triple that violates the axiom.
      */
-    rebaseLeftDistributivity: Passed | [TChange, TChange, TChange];
+    rebaseLeftDistributivity: Passed | Error<TChange>[];
     /**
      * "Passed" iff `(A ○ B) ↷ C = (A ↷ C) ○ (B ↷ (A⁻¹ ○ C ○ (A ↷ C)) ↷ C)`,
      * otherwise a triple that violates the axiom.
      */
-    rebaseRightDistributivity: Passed | [TChange, TChange, TChange];
+    rebaseRightDistributivity: Passed | Error<TChange>[];
     /**
      * "Passed" iff `(A ↷ B) ↷ B⁻¹ = A`,
      * otherwise a pair that violates the axiom.
      */
-    rebaseOverDoUndoPairIsNoOp: Passed | [TChange, TChange];
+    rebaseOverDoUndoPairIsNoOp: Passed | Error<TChange>[];
     /**
      * "Passed" iff `((A ↷ B) ↷ B⁻¹) ↷ B = A ↷ B`,
      * otherwise a pair that violates the axiom.
      */
-    rebaseOverUndoRedoPairIsNoOp: Passed | [TChange, TChange];
+    rebaseOverUndoRedoPairIsNoOp: Passed | Error<TChange>[];
     /**
      * "Passed" iff `A ○ A⁻¹ = ε` where `ε` is the empty change,
      * otherwise a change that violates the axiom.
      */
-    composeWithInverseIsNoOp: Passed | TChange;
+    composeWithInverseIsNoOp: Passed | Error<TChange>[];
     /**
      * "Passed" iff `A ○ ε` is equal to `ε ○ A` which equals to `A` where `ε` is the empty change,
      * otherwise a change that violates the axiom.
      */
-    composeWithEmptyIsNoOp: Passed | TChange;
+    composeWithEmptyIsNoOp: Passed | Error<TChange>[];
      /**
      * "Passed" iff `(A ↷ ε) = A`,
      * otherwise a change that violates the axiom.
      */
-    rebaseOverEmptyIsNoOp: Passed | TChange;
+    rebaseOverEmptyIsNoOp: Passed | Error<TChange>[];
     /**
      * "Passed" iff `(ε ↷ A) = ε`,
      * otherwise a change that violates the axiom.
      */
-    rebaseEmptyIsEmpty: Passed | TChange;
+    rebaseEmptyIsEmpty: Passed | Error<TChange>[];
      /**
      * "Passed" iff `ε⁻¹ = ε`,
      * otherwise a change that violates the axiom.
      */
-    emptyInverseIsEmpty: Passed | TChange;
+    emptyInverseIsEmpty: Passed | Error<TChange>[];
 
 }
 
@@ -72,7 +76,6 @@ export function verifyChangeRebaser<TChange>(
     rebaser: ChangeRebaser<TChange>,
     changes: ReadonlySet<TChange>,
     isEquivalent: (a: TChange, b: TChange) => boolean,
-    saveErrors?: string,
 ): OutputType<TChange> {
     const rebase = rebaser.rebase.bind(rebaser);
     const compose = rebaser.compose.bind(rebaser);
@@ -91,245 +94,313 @@ export function verifyChangeRebaser<TChange>(
         emptyInverseIsEmpty: "Passed",
     };
 
-    const errors = new Map();
-
     for (const changeA of changes) {
-        try {
-            if (!isComposeWithInverseEqualsEmpty(changeA)) {
-                output.composeWithInverseIsNoOp = changeA;
+        const requirement1 = isComposeWithInverseEqualsEmpty(changeA);
+        if (!requirement1) {
+            if (output.composeWithInverseIsNoOp !== "Passed") {
+                output.composeWithInverseIsNoOp.push(requirement1);
+            } else {
+                output.composeWithInverseIsNoOp = [requirement1];
             }
-        } catch (err) {
-            const errorObj = {
-                changes: changeA,
-                requirementCheck: "isComposeWithInverseEqualsEmpty",
-                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-            };
-            errors.set(String(errors.size), errorObj);
         }
-        try {
-            if (!isComposeWithEmptyNoOp(changeA)) {
-                output.composeWithEmptyIsNoOp = changeA;
+        const requirement2 = isComposeWithEmptyNoOp(changeA);
+        if (!requirement2) {
+            if (output.composeWithEmptyIsNoOp !== "Passed") {
+                output.composeWithEmptyIsNoOp.push(requirement2);
+            } else {
+                output.composeWithEmptyIsNoOp = [requirement2];
             }
-        } catch (err) {
-            const errorObj = {
-                changes: changeA,
-                requirementCheck: "isComposeWithEmptyNoOp",
-                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-            };
-            errors.set(String(errors.size), errorObj);
         }
-        try {
-            if (!isRebaseOverEmptyNoOp(changeA)) {
-                output.rebaseOverEmptyIsNoOp = changeA;
+        const requirement3 = isRebaseOverEmptyNoOp(changeA);
+        if (!requirement3) {
+            if (output.rebaseOverEmptyIsNoOp !== "Passed") {
+                output.rebaseOverEmptyIsNoOp.push(requirement3);
+            } else {
+                output.rebaseOverEmptyIsNoOp = [requirement3];
             }
-        } catch (err) {
-            const errorObj = {
-                changes: changeA,
-                requirementCheck: "isRebaseOverEmptyNoOp",
-                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-            };
-            errors.set(String(errors.size), errorObj);
         }
-        try {
-            if (!isRebaseEmptyEmpty(changeA)) {
-                output.rebaseEmptyIsEmpty = changeA;
+        const requirement4 = isRebaseEmptyEmpty(changeA);
+        if (!requirement4) {
+            if (output.rebaseEmptyIsEmpty !== "Passed") {
+                output.rebaseEmptyIsEmpty.push(requirement4);
+            } else {
+                output.rebaseEmptyIsEmpty = [requirement4];
             }
-        } catch (err) {
-            const errorObj = {
-                changes: changeA,
-                requirementCheck: "isRebaseEmptyEmpty",
-                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-            };
-            errors.set(String(errors.size), errorObj);
         }
-        try {
-            if (!isEmptyInverseEmpty(changeA)) {
-                output.emptyInverseIsEmpty = changeA;
+        const requirement5 = isEmptyInverseEmpty(changeA);
+        if (!requirement5) {
+            if (output.emptyInverseIsEmpty !== "Passed") {
+                output.emptyInverseIsEmpty.push(requirement5);
+            } else {
+                output.emptyInverseIsEmpty = [requirement5];
             }
-        } catch (err) {
-            const errorObj = {
-                changes: changeA,
-                requirementCheck: "isEmptyInverseEmpty",
-                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-            };
-            errors.set(String(errors.size), errorObj);
         }
         for (const changeB of changes) {
-            try {
-                if (!isRebaseOverDoUndoPairNoOp(changeA, changeB)) {
-                    output.rebaseOverDoUndoPairIsNoOp = [changeA, changeB];
+            const requirement6 = isRebaseOverDoUndoPairNoOp(changeA, changeB);
+            if (!requirement6) {
+                if (output.rebaseOverDoUndoPairIsNoOp !== "Passed") {
+                    output.rebaseOverDoUndoPairIsNoOp.push(requirement6);
+                } else {
+                    output.rebaseOverDoUndoPairIsNoOp = [requirement6];
                 }
-            } catch (err) {
-                const errorObj = {
-                    changes: [changeA, changeB],
-                    requirementCheck: "isRebaseOverDoUndoPairNoOp",
-                    error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-                };
-                errors.set(String(errors.size), errorObj);
             }
-            try {
-                if (!isRebaseOverUndoRedoPairNoOp(changeA, changeB)) {
-                    output.rebaseOverUndoRedoPairIsNoOp = [changeA, changeB];
+            const requirement7 = isRebaseOverUndoRedoPairNoOp(changeA, changeB);
+            if (!requirement7) {
+                if (output.rebaseOverUndoRedoPairIsNoOp !== "Passed") {
+                    output.rebaseOverUndoRedoPairIsNoOp.push(requirement7);
+                } else {
+                    output.rebaseOverUndoRedoPairIsNoOp = [requirement7];
                 }
-            } catch (err) {
-                const errorObj = {
-                    changes: [changeA, changeB],
-                    requirementCheck: "isRebaseOverUndoRedoPairNoOp",
-                    error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-                };
-                errors.set(String(errors.size), errorObj);
             }
             for (const changeC of changes) {
-                try {
-                    if (!isRebaseLeftDistributive(changeA, changeB, changeC)) {
-                        output.rebaseLeftDistributivity = [changeA, changeB, changeC];
+                const requirement8 = isRebaseLeftDistributive(changeA, changeB, changeC);
+                if (!requirement8) {
+                    if (output.rebaseLeftDistributivity !== "Passed") {
+                        output.rebaseLeftDistributivity.push(requirement8);
+                    } else {
+                        output.rebaseLeftDistributivity = [requirement8];
                     }
-                } catch (err) {
-                    const errorObj = {
-                        changes: [changeA, changeB, changeC],
-                        requirementCheck: "isRebaseLeftDistributive",
-                        error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-                    };
-                    errors.set(String(errors.size), errorObj);
                 }
-                try {
-                    if (!isComposeAssociative(changeA, changeB, changeC)) {
-                        output.composeAssociativity = [changeA, changeB, changeC];
+                const requirement9 = isComposeAssociative(changeA, changeB, changeC);
+                if (!requirement9) {
+                    if (output.composeAssociativity !== "Passed") {
+                        output.composeAssociativity.push(requirement9);
+                    } else {
+                        output.composeAssociativity = [requirement9];
                     }
-                } catch (err) {
-                    const errorObj = {
-                        changes: [changeA, changeB, changeC],
-                        requirementCheck: "isComposeAssociative",
-                        error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-                    };
-                    errors.set(String(errors.size), errorObj);
                 }
-                try {
-                    if (!isRebaseRightDistributive(changeA, changeB, changeC)) {
-                        output.rebaseRightDistributivity = [changeA, changeB, changeC];
+                const requirement10 = isRebaseRightDistributive(changeA, changeB, changeC);
+                if (!requirement10) {
+                    if (output.rebaseRightDistributivity !== "Passed") {
+                        output.rebaseRightDistributivity.push(requirement10);
+                    } else {
+                        output.rebaseRightDistributivity = [requirement10];
                     }
-                } catch (err) {
-                    const errorObj = {
-                        changes: [changeA, changeB, changeC],
-                        requirementCheck: "isRebaseRightDistributive",
-                        error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-                    };
-                    errors.set(String(errors.size), errorObj);
                 }
             }
         }
-    }
-    if (saveErrors) {
-        fs.writeFile(
-            saveErrors,
-            JSON.stringify(Array.from(errors.entries())),
-            (err: any) => {
-            if (err) {
-                console.log(err);
-            }
-        });
     }
 
     return output;
 
     // Requirement testing the rebasing of composed changes and rebased changes.
     function isRebaseLeftDistributive(changeA: TChange, changeB: TChange, changeC: TChange) {
-        const rebaseChangeset1 = rebase(
-            changeA,
-            compose([changeB, changeC]),
-        );
-        const rebaseChangeset2 = rebase(
-            rebase(changeA, changeB),
-            changeC,
-        );
-        return isEquivalent(rebaseChangeset1, rebaseChangeset2);
+        try {
+            const rebaseChangeset1 = rebase(
+                changeA,
+                compose([changeB, changeC]),
+            );
+            const rebaseChangeset2 = rebase(
+                rebase(changeA, changeB),
+                changeC,
+            );
+            const reqFailure: Error<TChange> = {
+                changes: [changeA, changeB, changeC],
+                error: "requirement failure",
+            };
+            const equivalent = isEquivalent(rebaseChangeset1, rebaseChangeset2);
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: [changeA, changeB, changeC],
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 
     // Requirement checking different ordering of composed changes
     function isComposeAssociative(changeA: TChange, changeB: TChange, changeC: TChange) {
-        const changeset1 = compose([
-            changeA,
-            compose([changeB, changeC]),
-        ]);
-        const changeset2 = compose([
-            compose([changeA, changeB]),
-            changeC,
-        ]);
-        const changeset3 = compose([changeA, changeB, changeC]);
-        return isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeset3);
+        try {
+            const changeset1 = compose([
+                changeA,
+                compose([changeB, changeC]),
+            ]);
+            const changeset2 = compose([
+                compose([changeA, changeB]),
+                changeC,
+            ]);
+            const changeset3 = compose([changeA, changeB, changeC]);
+            const reqFailure: Error<TChange> = {
+                changes: [changeA, changeB, changeC],
+                error: "requirement failure",
+            };
+            const equivalent = isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeset3);
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: [changeA, changeB, changeC],
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 
     function isRebaseRightDistributive(changeA: TChange, changeB: TChange, changeC: TChange) {
-        const changeset1 = rebase(
-            compose([changeA, changeB]),
-            changeC,
-        );
-        const changeset2 = compose([
-            rebase(changeA, changeC),
-            rebase(
-                changeB,
-                compose([
-                    invert(changeA),
-                    changeC,
-                    rebase(changeA, changeC),
-                ]),
-            ),
-        ]);
-        return isEquivalent(changeset1, changeset2);
+        try {
+            const changeset1 = rebase(
+                compose([changeA, changeB]),
+                changeC,
+            );
+            const changeset2 = compose([
+                rebase(changeA, changeC),
+                rebase(
+                    changeB,
+                    compose([
+                        invert(changeA),
+                        changeC,
+                        rebase(changeA, changeC),
+                    ]),
+                ),
+            ]);
+            const reqFailure: Error<TChange> = {
+                changes: [changeA, changeB, changeC],
+                error: "requirement failure",
+            };
+            const equivalent = isEquivalent(changeset1, changeset2);
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: [changeA, changeB, changeC],
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 
     // requirement for do-undo pair
     function isRebaseOverDoUndoPairNoOp(changeA: TChange, changeB: TChange) {
-        const inv = invert(changeB);
-        const r1 = rebase(changeA, changeB);
-        const r2 = rebase(r1, inv);
-        return isEquivalent(r2, changeA);
+        try {
+            const inv = invert(changeB);
+            const r1 = rebase(changeA, changeB);
+            const r2 = rebase(r1, inv);
+            const equivalent = isEquivalent(r2, changeA);
+            const reqFailure: Error<TChange> = {
+                changes: [changeA, changeB],
+                error: "requirement failure",
+            };
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: [changeA, changeB],
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 
     // requirement for sandwich rebasing
     function isRebaseOverUndoRedoPairNoOp(changeA: TChange, changeB: TChange) {
-        const invB = invert(changeB);
-        const r1 = rebase(changeA, changeB);
-        const r2 = rebase(r1, invB);
-        const r3 = rebase(r2, changeB);
-        return isEquivalent(r3, r1);
+        try {
+            const invB = invert(changeB);
+            const r1 = rebase(changeA, changeB);
+            const r2 = rebase(r1, invB);
+            const r3 = rebase(r2, changeB);
+            const reqFailure: Error<TChange> = {
+                changes: [changeA, changeB],
+                error: "requirement failure",
+            };
+            const equivalent = isEquivalent(r3, r1);
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: [changeA, changeB],
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 
     // requirement for compose of a change with it's inverse.
     function isComposeWithInverseEqualsEmpty(changeA: TChange) {
-        const changeset = compose([
-            changeA,
-            invert(changeA),
-        ]);
-        return isEquivalent(changeset, compose([]));
+        try {
+            const changeset = compose([
+                changeA,
+                invert(changeA),
+            ]);
+            const reqFailure: Error<TChange> = {
+                changes: changeA,
+                error: "requirement failure",
+            };
+            const equivalent = isEquivalent(changeset, compose([]));
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: changeA,
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 
     // compose([ε, A]) => A && compose([A, ε]) => A
     function isComposeWithEmptyNoOp(changeA: TChange) {
-        const noOp = compose([]);
-        const changeset1 = compose([changeA, noOp]);
-        const changeset2 = compose([noOp, changeA]);
-        return isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeA);
+        try {
+            const noOp = compose([]);
+            const changeset1 = compose([changeA, noOp]);
+            const changeset2 = compose([noOp, changeA]);
+            const reqFailure: Error<TChange> = {
+                changes: changeA,
+                error: "requirement failure",
+            };
+            const equivalent = isEquivalent(changeset1, changeset2) && isEquivalent(changeset1, changeA);
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: changeA,
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 
     // rebase(A, ε) => A
     function isRebaseOverEmptyNoOp(changeA: TChange) {
-        const noOp = compose([]);
-        const changeset = rebase(changeA, noOp);
-        return isEquivalent(changeset, changeA);
+        try {
+            const noOp = compose([]);
+            const changeset = rebase(changeA, noOp);
+            const reqFailure: Error<TChange> = {
+                changes: changeA,
+                error: "requirement failure",
+            };
+            const equivalent = isEquivalent(changeset, changeA);
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: changeA,
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 
     // rebase(ε, A) => ε
     function isRebaseEmptyEmpty(changeA: TChange) {
-        const noOp = compose([]);
-        const changeset = rebase(noOp, changeA);
-        return isEquivalent(changeset, noOp);
+        try {
+            const noOp = compose([]);
+            const changeset = rebase(noOp, changeA);
+            const reqFailure: Error<TChange> = {
+                changes: changeA,
+                error: "requirement failure",
+            };
+            const equivalent = isEquivalent(changeset, noOp);
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: changeA,
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 
     // invert(ε) => ε
     function isEmptyInverseEmpty(changeA: TChange) {
-        const noOp = compose([]);
-        const changeset = invert(noOp);
-        return isEquivalent(changeset, noOp);
+        try {
+            const noOp = compose([]);
+            const changeset = invert(noOp);
+            const reqFailure: Error<TChange> = {
+                changes: changeA,
+                error: "requirement failure",
+            };
+            const equivalent = isEquivalent(changeset, noOp);
+            return equivalent ? true : reqFailure;
+        } catch (err) {
+            return {
+                changes: changeA,
+                error: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            };
+        }
     }
 }

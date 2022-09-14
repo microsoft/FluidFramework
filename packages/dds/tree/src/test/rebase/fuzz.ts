@@ -44,14 +44,26 @@ enum Operation {
         const operation = random.integer(Operation.Rebase, Operation.Invert) as Operation;
         switch (operation) {
             case Operation.Rebase:
-                change = rebase(change, changeGenerator(random.real()));
-                break;
+                try {
+                    change = rebase(change, changeGenerator(random.real()));
+                    break;
+                } catch {
+                    return change;
+                }
             case Operation.Compose:
-                change = compose([change, changeGenerator(random.real())]);
-                break;
+                try {
+                    change = compose([change, changeGenerator(random.real())]);
+                    break;
+                } catch {
+                    return change;
+                }
             case Operation.Invert:
-                change = invert(change);
-                break;
+                try {
+                    change = invert(change);
+                    break;
+                } catch {
+                    return change;
+                }
             default: unreachableCase(operation);
         }
     }
