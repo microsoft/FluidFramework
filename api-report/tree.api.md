@@ -29,6 +29,9 @@ export class AnchorSet {
 }
 
 // @public
+function applyModifyToInsert(node: ProtoNode_2, modify: Modify): Map<FieldKey, MarkList>;
+
+// @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @public
@@ -137,6 +140,7 @@ interface Delete {
 declare namespace Delta {
     export {
         inputLength,
+        applyModifyToInsert,
         Root,
         empty,
         Mark,
@@ -255,7 +259,7 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChangeRebaser<TChangeset> {
     compose(changes: TChangeset[], composeChild: NodeChangeComposer): TChangeset;
     // (undocumented)
-    invert(changes: TChangeset, invertChild: NodeChangeInverter): TChangeset;
+    invert(change: TChangeset, invertChild: NodeChangeInverter): TChangeset;
     rebase(change: TChangeset, over: TChangeset, rebaseChild: NodeChangeRebaser): TChangeset;
 }
 
@@ -299,6 +303,8 @@ declare namespace FieldKinds {
         noChangeHandle,
         counterHandle,
         counter,
+        ValueChangeset,
+        ValueFieldEditor,
         value,
         optional,
         sequence,
@@ -1377,12 +1383,25 @@ export interface ValueChange {
     value?: Value;
 }
 
+// @public (undocumented)
+interface ValueChangeset {
+    // (undocumented)
+    changes?: NodeChangeset;
+    // (undocumented)
+    value?: JsonableTree;
+}
+
 // @public @sealed
 class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
     // (undocumented)
     decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): T;
     // (undocumented)
     encodeForJson(formatVersion: number, change: T): JsonCompatibleReadOnly;
+}
+
+// @public (undocumented)
+interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
+    set(newValue: ITreeCursor): ValueChangeset;
 }
 
 // @public
