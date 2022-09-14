@@ -115,7 +115,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 }
 
 // @public
-export interface IDataStore extends IFluidDataStoreRuntimeEntrypoint {
+export interface IDataStore extends IFluidRouter {
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -126,7 +126,7 @@ export interface IEnvelope {
 }
 
 // @public
-export interface IFluidDataStoreChannel extends IFluidDataStoreRuntimeEntrypoint, IDisposable {
+export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     // @deprecated (undocumented)
@@ -222,12 +222,6 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
     // (undocumented)
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
-}
-
-// @public (undocumented)
-export interface IFluidDataStoreRuntimeEntrypoint extends IFluidRouter {
-    // (undocumented)
-    readonly handle?: IFluidHandle<FluidObject>;
 }
 
 // @public

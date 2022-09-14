@@ -74,6 +74,7 @@ import {
     InboundAttachMessage,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
+    IFluidDataStoreChannel,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
     IEnvelope,
@@ -88,7 +89,6 @@ import {
     IAttachMessage,
     IDataStore,
     ITelemetryContext,
-    IFluidDataStoreRuntimeEntrypoint,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -1723,13 +1723,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.processSignal(envelope.address, transformed, local);
     }
 
-    public async getRootDataStore(id: string, wait = true): Promise<IFluidDataStoreRuntimeEntrypoint> {
+    public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+        return this.getRootDataStoreChannel(id, wait);
+    }
+
+    private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
-        const channel = await context.realize();
-        return channel;
+        return context.realize();
     }
 
     public setFlushMode(mode: FlushMode): void {
@@ -1888,12 +1891,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
-        const channel = await this.dataStores
-            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], uuid())
-            .realize();
+        const internalId = uuid();
         return channelToDataStore(
-            channel,
-            channel.id,
+            await this._createDataStore(pkg, internalId),
+            internalId,
             this,
             this.dataStores,
             this.mc.logger);
@@ -1920,6 +1921,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
         return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
+    }
+
+    private async _createDataStore(
+        pkg: string | string[],
+        id = uuid(),
+        props?: any,
+    ): Promise<IFluidDataStoreChannel> {
+        return this.dataStores
+            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
+            .realize();
     }
 
     private canSendOps() {

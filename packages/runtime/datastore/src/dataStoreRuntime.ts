@@ -5,7 +5,6 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
-    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
@@ -79,7 +78,6 @@ import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext, LocalChannelContextBase, RehydratedLocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
-import { FluidObjectHandle } from "./fluidHandle";
 
 export enum DataStoreMessageType {
     // Creates a new channel
@@ -100,7 +98,6 @@ export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
 IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     /**
-     * @deprecated - Instantiate the class using its constructor instead.
      * Loads the data store runtime
      * @param context - The data store context
      * @param sharedObjectRegistry - The registry of shared objects used by this data store
@@ -177,22 +174,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // channel contexts.
     private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
-    public readonly handle?: IFluidHandle<FluidObject>;
-
-    /**
-     * Create an instance of a DataStore runtime.
-     *
-     * @param dataStoreContext - Context object for the runtime.
-     * @param sharedObjectRegistry - The registry of shared objects used by this data store
-     * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
-     * @param initializeEntrypoint - Function to initialize the entrypoint object for the data store runtime.
-     * The handle to this data store runtime will point to the object returned by this function.
-     */
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
-        initializeEntrypoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -299,14 +284,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         // If it's existing we know it has been attached.
         if (existing) {
             this.deferredAttached.resolve();
-        }
-
-        if (initializeEntrypoint) {
-            this.handle = new FluidObjectHandle<FluidObject>(
-                new LazyPromise(async () => initializeEntrypoint(this)),
-                "",
-                this.objectsRoutingContext,
-                );
         }
     }
 
