@@ -54,7 +54,7 @@
     "test:jest:report": "assign-test-ports && lerna run test:jest --concurrency 4 --stream --no-bail --no-sort -- -- --ci --reporters=default --reporters=jest-junit",
     "test:mocha": "lerna run test:mocha --stream --no-bail --no-sort -- -- --color",
     "test:mocha:bail": "lerna run test:mocha --stream",
-    "test:mocha:report": "lerna run test:mocha --stream --no-bail --no-sort -- -- --timeout 4s --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
+    "test:mocha:report": "lerna run test:mocha --stream --no-bail --no-sort -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
     "test:realsvc": "lerna run test:realsvc --stream --no-bail --no-sort",
     "test:realsvc:report": "lerna run test:realsvc:report --stream --no-bail --no-sort",
     "test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
