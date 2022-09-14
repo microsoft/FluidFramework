@@ -278,21 +278,17 @@ export class SummaryWriter implements ISummaryWriter {
                     this.maxRetriesOnError);
                 uploadHandle = commit.sha;
 
-                if (existingRef) {
-                    await requestWithRetry(
+                await (existingRef ? requestWithRetry(
                         async () => this.summaryStorage.upsertRef(this.documentId, uploadHandle),
                         "writeClientSummary_upsertRef",
                         this.lumberProperties,
                         shouldRetryNetworkError,
-                        this.maxRetriesOnError);
-                } else {
-                    await requestWithRetry(
+                        this.maxRetriesOnError) : requestWithRetry(
                         async () => this.summaryStorage.createRef(this.documentId, uploadHandle),
                         "writeClientSummary_createRef",
                         this.lumberProperties,
                         shouldRetryNetworkError,
-                        this.maxRetriesOnError);
-                }
+                        this.maxRetriesOnError));
             }
             clientSummaryMetric.success(`Client summary success`);
             return {

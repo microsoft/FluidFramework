@@ -3,25 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
-import { ITreeCursor, reduceField, TreeNavigationResult } from "../../../forest";
-import { EmptyKey, FieldKey } from "../../../tree";
+import { forEachNode, ITreeCursorNew } from "../../../forest";
 
-export function sum(cursor: ITreeCursor): number {
+export function sum(cursor: ITreeCursorNew): number {
     let total = 0;
     const value = cursor.value;
     if (typeof value === "number") {
         total += value;
     }
-    for (const key of cursor.keys) {
-        total += reduceField(cursor, key, total, sum);
+
+    for (let moreFields = cursor.firstField(); moreFields; moreFields = cursor.nextField()) {
+        for (let inField = cursor.firstNode(); inField; inField = cursor.nextField()) {
+            total += sum(cursor);
+        }
     }
+
+    return total;
+}
+
+export function sumMap(cursor: ITreeCursorNew): number {
+    let total = 0;
+    const value = cursor.value;
+    if (typeof value === "number") {
+        total += value;
+    }
+
+    for (let moreFields = cursor.firstField(); moreFields; moreFields = cursor.nextField()) {
+        forEachNode(cursor, sumMap);
+    }
+
     return total;
 }
 
 export function averageLocation(
-    cursor: ITreeCursor,
-    extractCoordinates: (cursor: ITreeCursor, calculate: (x: number, y: number) => void) => number,
+    cursor: ITreeCursorNew,
+    extractCoordinates: (cursor: ITreeCursorNew, calculate: (x: number, y: number) => void) => number,
 ): [number, number] {
     let count = 0;
     let xTotal = 0;

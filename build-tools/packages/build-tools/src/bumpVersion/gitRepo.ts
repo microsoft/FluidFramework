@@ -4,10 +4,11 @@
  */
 
 import { parseISO } from "date-fns";
+import { Logger } from "../common/logging";
 import { exec, execNoError } from "./utils";
 
 export class GitRepo {
-    constructor(public readonly resolvedRoot: string) {
+    constructor(public readonly resolvedRoot: string, protected readonly log?: Logger) {
     }
 
     private async getRemotes() {
@@ -180,7 +181,25 @@ export class GitRepo {
      * @param pattern - Pattern of tags to get.
      */
     public async getAllTags(pattern?: string): Promise<string[]> {
-        const results = pattern === undefined ? await this.exec(`tag -l`, `get all tags`) : await this.exec(`tag -l "${pattern}"`, `get tags ${pattern}`);
+        if(pattern === undefined || pattern.length === 0) {
+            this.log?.verbose(`Reading git tags from repo.`)
+        } else {
+            this.log?.verbose(`Reading git tags from repo using pattern: '${pattern}'`);
+        }
+        const results = pattern === undefined || pattern.length === 0
+            ? await this.exec(`tag -l --sort=-committerdate`, `get all tags`)
+            : await this.exec(`tag -l "${pattern}" --sort=-committerdate`, `get tags ${pattern}`);
+        const tags = results.split("\n").filter(t => t !== undefined && t !== "" && t !== null);
+
+        this.log?.verbose(`Found ${tags.length} tags.`)
+        return tags;
+    }
+
+    /**
+     * Returns an array containing all the modified files in the repo.
+     */
+    public async getModifiedFiles(): Promise<string[]> {
+        const results = await this.exec(`ls-files -m --deduplicate`, `get modified files`);
         return results.split("\n").filter(t => t !== undefined && t !== "" && t !== null);
     }
 
