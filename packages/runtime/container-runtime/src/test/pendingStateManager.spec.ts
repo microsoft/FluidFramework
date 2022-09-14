@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { FlushMode } from "@fluidframework/runtime-definitions";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -102,14 +101,14 @@ describe("Pending State Manager", () => {
         beforeEach(async () => {
             pendingStateManager = new PendingStateManager({
                 applyStashedOp: () => { throw new Error(); },
-                clientId: () => clientId,
+                clientId: () => undefined,
                 close: (error?: ICriticalContainerError) => closeError = error,
                 connected: () => true,
                 flush: () => { },
-                flushMode: () => FlushMode.TurnBased,
                 reSubmit: () => { },
-                setFlushMode: () => { },
-            }, FlushMode.TurnBased, undefined);
+                rollback: () => { },
+                orderSequentially: () => { },
+            }, undefined);
         });
 
         const submitBatch = (messages: Partial<ISequencedDocumentMessage>[]) => {
@@ -176,61 +175,6 @@ describe("Pending State Manager", () => {
             process(messages);
             assert(closeError instanceof DataProcessingError);
             assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
-            assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
-        });
-
-        it("batch missing begin message will call close", () => {
-            const messages: Partial<ISequencedDocumentMessage>[] = [
-                {
-                    clientId,
-                    type: MessageType.Operation,
-                    clientSequenceNumber: 0,
-                    referenceSequenceNumber: 0,
-                }, {
-                    clientId,
-                    type: MessageType.Operation,
-                    clientSequenceNumber: 1,
-                    referenceSequenceNumber: 0,
-                }, {
-                    clientId,
-                    type: MessageType.Operation,
-                    metadata: { batch: false },
-                    clientSequenceNumber: 2,
-                    referenceSequenceNumber: 0,
-                },
-            ];
-
-            submitBatch(messages);
-            process(messages);
-            assert(closeError instanceof DataProcessingError);
-            assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, false);
-            assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, true);
-        });
-
-        it("batch missing markers will call close", () => {
-            const messages: Partial<ISequencedDocumentMessage>[] = [
-                {
-                    clientId,
-                    type: MessageType.Operation,
-                    clientSequenceNumber: 0,
-                    referenceSequenceNumber: 0,
-                }, {
-                    clientId,
-                    type: MessageType.Operation,
-                    clientSequenceNumber: 1,
-                    referenceSequenceNumber: 0,
-                }, {
-                    clientId,
-                    type: MessageType.Operation,
-                    clientSequenceNumber: 2,
-                    referenceSequenceNumber: 0,
-                },
-            ];
-
-            submitBatch(messages);
-            process(messages);
-            assert(closeError instanceof DataProcessingError);
-            assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, false);
             assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
         });
 
