@@ -17,8 +17,10 @@ import { rootPathFlag } from "./flags";
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
 
-// This is needed to get type safety working in derived classes.
-// https://github.com/oclif/oclif.github.io/pull/142
+/**
+ * @remarks This is needed to get type safety working in derived classes.
+ * See {@link https://github.com/oclif/oclif.github.io/pull/142}.
+ */
 export type InferredFlagsType<T> = T extends FlagInput<infer F>
     ? F & { json: boolean | undefined }
     : any;
@@ -83,7 +85,8 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
 
     /**
      * @returns A default logger that can be passed to core functions enabling them to log using the command logging
-     * system */
+     * system
+     */
     protected get logger(): CommandLogger {
         if (this._logger === undefined) {
             this._logger = {
@@ -137,7 +140,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     }
 
     /**
-     *  Logs a message with an indent.
+     * Logs a message with an indent.
      */
     public logIndent(input: string, indentNumber = 2) {
         const message = indentString(input, indentNumber);
