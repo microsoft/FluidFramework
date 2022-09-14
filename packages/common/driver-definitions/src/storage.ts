@@ -121,7 +121,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * Returns the snapshot tree.
      * @param version - Version of the snapshot to be fetched.
      * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
-     *  in debugging purposes to see why this call was made.
+     * in debugging purposes to see why this call was made.
      */
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 

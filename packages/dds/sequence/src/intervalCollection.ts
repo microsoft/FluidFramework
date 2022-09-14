@@ -1107,12 +1107,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     ) {
         super();
 
-        if (Array.isArray(serializedIntervals)) {
-            this.savedSerializedIntervals = serializedIntervals;
-        } else {
-            this.savedSerializedIntervals =
-                serializedIntervals.intervals.map((i) => decompressInterval(i, serializedIntervals.label));
-        }
+        this.savedSerializedIntervals = Array.isArray(serializedIntervals)
+            ? serializedIntervals
+            : serializedIntervals.intervals.map((i) => decompressInterval(i, serializedIntervals.label));
     }
 
     public attachGraph(client: Client, label: string) {
