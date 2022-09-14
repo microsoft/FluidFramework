@@ -240,7 +240,7 @@ export class UnreferencedStateTracker {
         /** The current reference timestamp used to track how long this node has been unreferenced for. */
         currentReferenceTimestampMs: number,
         /** The time after which node transitions to SweepReady state; undefined if session expiry is disabled. */
-        private readonly sweepTimeoutMs?: number,
+        private readonly sweepTimeoutMs: number | undefined,
     ) {
         if (this.sweepTimeoutMs !== undefined) {
             assert(this.inactiveTimeoutMs <= this.sweepTimeoutMs,
@@ -440,6 +440,22 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly getLastSummaryTimestampMs: () => number | undefined;
     /** Returns true if connection is active, i.e. it's "write" connection and the runtime is connected. */
     private readonly activeConnection: () => boolean;
+
+    /** Returns a list of all the configurations for garbage collection. */
+    private get configs() {
+        return {
+            gcEnabled: this.gcEnabled,
+            sweepEnabled: this.sweepEnabled,
+            runGC: this.shouldRunGC,
+            runSweep: this.shouldRunSweep,
+            writeAtRoot: this._writeDataAtRoot,
+            testMode: this.testMode,
+            sessionExpiry: this.sessionExpiryTimeoutMs,
+            inactiveTimeout: this.inactiveTimeoutMs,
+            trackGCState: this.trackGCState,
+            ...this.gcOptions,
+        };
+    }
 
     protected constructor(createParams: IGarbageCollectorCreateParams) {
         this.runtime = createParams.runtime;
@@ -666,6 +682,12 @@ export class GarbageCollector implements IGarbageCollector {
             }
 
             const baseState = await baseSummaryStateP;
+            /**
+             * The base state will not be present if the container is loaded from:
+             * 1. The first summary created by the detached container.
+             * 2. A summary that was generated with GC disabled.
+             * 3. A summary that was generated before GC even existed.
+             */
             if (baseState === undefined) {
                 return;
             }
@@ -724,23 +746,17 @@ export class GarbageCollector implements IGarbageCollector {
         if (this.isSummarizerClient) {
             this.mc.logger.sendTelemetryEvent({
                 eventName: "GarbageCollectorLoaded",
-                gcConfigs: JSON.stringify({
-                    gcEnabled: this.gcEnabled,
-                    sweepEnabled: this.sweepEnabled,
-                    runGC: this.shouldRunGC,
-                    runSweep: this.shouldRunSweep,
-                    writeAtRoot: this._writeDataAtRoot,
-                    testMode: this.testMode,
-                    sessionExpiry: this.sessionExpiryTimeoutMs,
-                    inactiveTimeout: this.inactiveTimeoutMs,
-                    existing: createParams.existing,
-                    trackGCState: this.trackGCState,
-                    ...this.gcOptions,
-                }),
+                gcConfigs: JSON.stringify(this.configs),
             });
         }
     }
 
+    /**
+     * Called when the connection state of the runtime changes, i.e., it connects or disconnects. GC subscribes to this
+     * to initialize the base state for non-summarizer clients so that they can track inactive / sweep ready nodes.
+     * @param connected - Whether the runtime connected / disconnected.
+     * @param clientId - The clientId of this runtime.
+     */
     public setConnectionState(connected: boolean, clientId?: string | undefined): void {
         /**
          * For non-summarizer clients, initialize the base state when the container becomes active, i.e., it transitions
@@ -757,20 +773,7 @@ export class GarbageCollector implements IGarbageCollector {
                     error,
                     "FailedToInitializeGC",
                 );
-                dpe.addTelemetryProperties({
-                    gcConfigs: JSON.stringify({
-                        gcEnabled: this.gcEnabled,
-                        sweepEnabled: this.sweepEnabled,
-                        runGC: this.shouldRunGC,
-                        runSweep: this.shouldRunSweep,
-                        writeAtRoot: this._writeDataAtRoot,
-                        testMode: this.testMode,
-                        sessionExpiry: this.sessionExpiryTimeoutMs,
-                        inactiveTimeout: this.inactiveTimeoutMs,
-                        trackGCState: this.trackGCState,
-                        ...this.gcOptions,
-                    }),
-                });
+                dpe.addTelemetryProperties({ gcConfigs: JSON.stringify(this.configs) });
                 throw dpe;
             });
         }
@@ -790,7 +793,7 @@ export class GarbageCollector implements IGarbageCollector {
             fullGC?: boolean;
         },
     ): Promise<IGCStats | undefined> {
-        const { fullGC = this.gcOptions.runFullGC === true || this.summaryStateNeedsReset } = options;
+        const fullGC = options.fullGC ?? (this.gcOptions.runFullGC === true || this.summaryStateNeedsReset);
         const logger = options.logger
             ? ChildLogger.create(options.logger, undefined, { all: { completedGCRuns: () => this.completedRuns } })
             : this.mc.logger;
@@ -809,7 +812,7 @@ export class GarbageCollector implements IGarbageCollector {
             logger.sendErrorEvent({
                 eventName: "CollectGarbageCalledWithoutTimestamp",
             });
-            return;
+            return undefined;
         }
 
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
