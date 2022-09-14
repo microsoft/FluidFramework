@@ -199,12 +199,9 @@ function tileShift(
         }
     } else {
         const block = <IHierBlock>node;
-        let marker: Marker;
-        if (searchInfo.tilePrecedesPos) {
-            marker = <Marker>block.rightmostTiles[searchInfo.tileLabel];
-        } else {
-            marker = <Marker>block.leftmostTiles[searchInfo.tileLabel];
-        }
+        const marker = searchInfo.tilePrecedesPos
+            ? <Marker>block.rightmostTiles[searchInfo.tileLabel]
+            : <Marker>block.leftmostTiles[searchInfo.tileLabel];
         if (marker !== undefined) {
             searchInfo.tile = marker;
         }
@@ -496,11 +493,7 @@ export class MergeTree {
     public localNetLength(segment: ISegment, refSeq?: number, localSeq?: number) {
         const removalInfo = toRemovalInfo(segment);
         if (localSeq === undefined) {
-            if (removalInfo !== undefined) {
-                return 0;
-            } else {
-                return segment.cachedLength;
-            }
+            return removalInfo !== undefined ? 0 : segment.cachedLength;
         }
 
         assert(refSeq !== undefined, 0x398 /* localSeq provided for local length without refSeq */);
@@ -661,11 +654,7 @@ export class MergeTree {
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
                             } else {
                                 holdNodes.push(segment);
-                                if (this.localNetLength(segment) > 0) {
-                                    prevSegment = segment;
-                                } else {
-                                    prevSegment = undefined;
-                                }
+                                prevSegment = this.localNetLength(segment) > 0 ? segment : undefined;
                             }
                         } else {
                             holdNodes.push(segment);
@@ -868,9 +857,10 @@ export class MergeTree {
     }
 
     /**
-     * @internal must only be used by client
-     * @param segment - The segment to slide from
-     * @returns The segment to
+     * @remarks Must only be used by client.
+     * @param segment - The segment to slide from.
+     * @returns The segment to.
+     * @internal
      */
     public _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined {
         if (!segment || !isRemovedAndAcked(segment)) {
@@ -957,11 +947,7 @@ export class MergeTree {
     }
 
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
-        if ((this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)) {
-            return node.partialLengths!.getPartialLength(refSeq, clientId);
-        } else {
-            return node.cachedLength;
-        }
+        return (this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId) ? node.partialLengths!.getPartialLength(refSeq, clientId) : node.cachedLength;
     }
 
     private nodeLength(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
@@ -1009,11 +995,7 @@ export class MergeTree {
                     ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= refSeq)))) {
                     // Segment happened by reference sequence number or segment from requesting client
                     if (removalInfo !== undefined) {
-                        if (removalInfo.removedClientIds.includes(clientId)) {
-                            return 0;
-                        } else {
-                            return segment.cachedLength;
-                        }
+                        return removalInfo.removedClientIds.includes(clientId) ? 0 : segment.cachedLength;
                     } else {
                         return segment.cachedLength;
                     }
@@ -1105,12 +1087,11 @@ export class MergeTree {
     // TODO: filter function
     /**
      * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-
+     *
      * @param startPos - Position at which to start the search
      * @param clientId - clientId dictating the perspective to search from
      * @param tileLabel - Label of the tile to search for
      * @param tilePrecedesPos - Whether the desired tile comes before (true) or after (false) `startPos`
-     * @returns
      */
     public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
         const searchInfo: IReferenceSearchInfo = {

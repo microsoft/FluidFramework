@@ -173,11 +173,7 @@ export class Client {
         const annotateOp =
             createAnnotateMarkerOp(marker, props, combiningOp)!;
 
-        if (this.applyAnnotateRangeOp({ op: annotateOp })) {
-            return annotateOp;
-        } else {
-            return undefined;
-        }
+        return this.applyAnnotateRangeOp({ op: annotateOp }) ? annotateOp : undefined;
     }
     /**
      * Annotates the range with the provided properties
@@ -667,11 +663,7 @@ export class Client {
         return this.clientNameToIds.get(longClientId)!.data;
     }
     getLongClientId(shortClientId: number) {
-        if (shortClientId >= 0) {
-            return this.shortClientIdMap[shortClientId];
-        } else {
-            return "original";
-        }
+        return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
     }
     addLongClientId(longClientId: string) {
         this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
@@ -1015,11 +1007,7 @@ export class Client {
 
     private getLocalSequenceNumber() {
         const segWindow = this.getCollabWindow();
-        if (segWindow.collaborating) {
-            return UnassignedSequenceNumber;
-        } else {
-            return UniversalSequenceNumber;
-        }
+        return segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
     }
     localTransaction(groupOp: IMergeTreeGroupMsg) {
         for (const op of groupOp.ops) {
