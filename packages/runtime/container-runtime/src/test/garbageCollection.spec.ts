@@ -41,7 +41,7 @@ import {
     oneDayMs,
     runGCKey,
     runSweepKey,
-    accessViolationOnSweepReadyUsageKey,
+    closeOnSweepReadyUsageKey,
     defaultInactiveTimeoutMs,
     gcTestModeKey,
     disableSweepLogKey,
@@ -855,7 +855,7 @@ describe("Garbage Collection Tests", () => {
         const mainContainerTests = (
             timeout: number,
             loadedEventName: string,
-            accessViolationDetectionEnabled: boolean,
+            sweepReadyUsageDetectionEnabled: boolean,
             snapshotCacheExpiryMs: number,
         ) => {
             let lastCloseErrorType: string = "N/A";
@@ -895,8 +895,8 @@ describe("Garbage Collection Tests", () => {
                 assert(!mockLogger.events.some((event) => event.eventName === "GarbageCollector:GCObjectDeleted"), "Should not have any delete events logged for Main Container");
                 mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
 
-                // Even if AccessViolation Detection is not enabled, we'll still close due to session expiry
-                const expectedErrorType = accessViolationDetectionEnabled ? "accessViolationError" : "clientSessionExpiredError";
+                // Even if SweepReady Usage Detection is not enabled, we'll still close due to session expiry
+                const expectedErrorType = sweepReadyUsageDetectionEnabled ? "objectUsedAfterMarkedForDeletionError" : "clientSessionExpiredError";
                 assert.equal(lastCloseErrorType, expectedErrorType, "Incorrect lastCloseReason after using unreferenced nodes");
                 lastCloseErrorType = "N/A"; // Reset to see it set again during Revive below
 
@@ -905,7 +905,7 @@ describe("Garbage Collection Tests", () => {
                 await garbageCollector.collectGarbage({});
 
                 mockLogger.assertMatchNone([{ unrefTime: 0 }], "expected no events about unreferenced nodes on Main Container during revive");
-                assert.equal(lastCloseErrorType, accessViolationDetectionEnabled ? "accessViolationError" : "N/A", "Incorrect lastCloseReason after reviving unreferenced nodes");
+                assert.equal(lastCloseErrorType, sweepReadyUsageDetectionEnabled ? "objectUsedAfterMarkedForDeletionError" : "N/A", "Incorrect lastCloseReason after reviving unreferenced nodes");
             });
         };
 
@@ -967,7 +967,7 @@ describe("Garbage Collection Tests", () => {
 
             beforeEach(() => {
                 injectedSettings[runSessionExpiryKey] = true;
-                injectedSettings[accessViolationOnSweepReadyUsageKey] = true;
+                injectedSettings[closeOnSweepReadyUsageKey] = true;
             });
 
             mainContainerTests(
@@ -984,7 +984,7 @@ describe("Garbage Collection Tests", () => {
 
             beforeEach(() => {
                 injectedSettings[runSessionExpiryKey] = true;
-                injectedSettings[accessViolationOnSweepReadyUsageKey] = false;
+                injectedSettings[closeOnSweepReadyUsageKey] = false;
             });
 
             mainContainerTests(

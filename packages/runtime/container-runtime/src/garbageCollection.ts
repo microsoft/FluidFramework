@@ -76,8 +76,8 @@ export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionEx
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-// Feature gate key to enable closing the container with AccessViolationError if SweepReady objects are used.
-export const accessViolationOnSweepReadyUsageKey = "Fluid.GarbageCollection.Dogfood.AccessViolationDetection";
+// Feature gate key to enable closing the container if SweepReady objects are used.
+export const closeOnSweepReadyUsageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -1350,11 +1350,12 @@ export class GarbageCollector implements IGarbageCollector {
                 });
             }
 
-            // If AccessViolation Detection is enabed, close the main container
-            if (this.mc.config.getBoolean(accessViolationOnSweepReadyUsageKey) === true && state === "SweepReady") {
+            // If SweepReady Usage Detection is enabed, close the main container
+            if (this.mc.config.getBoolean(closeOnSweepReadyUsageKey) === true && state === "SweepReady") {
                 //* Create a proper error class
                 //* Put a prop on here indicating it's "best guess"
-                this.runtime.closeFn({ errorType: "accessViolationError", message: "SweepReady object was used! :(" });
+                // eslint-disable-next-line max-len
+                this.runtime.closeFn({ errorType: "objectUsedAfterMarkedForDeletionError", message: "SweepReady object was used! :(" });
             }
         }
     }
