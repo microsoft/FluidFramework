@@ -1443,7 +1443,7 @@ export class SegmentGroupCollection {
     // (undocumented)
     get empty(): boolean;
     // (undocumented)
-    enqueue(segmentGroup: SegmentGroup, sourceSegment?: ISegment): void;
+    enqueue(segmentGroup: SegmentGroup): void;
     // (undocumented)
     pop?(): SegmentGroup | undefined;
     // (undocumented)
