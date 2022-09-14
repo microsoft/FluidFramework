@@ -29,10 +29,9 @@ import {
     IContainerLoadMode,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
-    DataCorruptionError,
-    extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
 } from "@fluidframework/container-utils";
@@ -61,7 +60,6 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
-    IProcessMessageResult,
     IProtocolState,
     IQuorumClients,
     IQuorumProposals,
@@ -1694,16 +1692,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         switch (type) {
             case MessageType.Operation:
                 return this.submitMessage(
                     type,
-                    // back-compat: ADO #1385: pass content as-is in future.
-                    typeof contents === "string" ? contents : JSON.stringify(contents),
+                    JSON.stringify(contents),
                     batch,
                     metadata);
-            // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
             case MessageType.Summarize:
                 return this.submitSummaryMessage(contents as unknown as ISummaryContent);
             default:
@@ -1712,6 +1709,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     { messageType: type }));
                 return -1;
         }
+    }
+
+    /** @returns clientSequenceNumber of last message in a batch */
+    private submitBatch(batch: IBatchMessage[]): number {
+        let clientSequenceNumber = -1;
+        for (const message of batch) {
+            clientSequenceNumber = this.submitMessage(
+                MessageType.Operation,
+                message.contents,
+                true, // batch
+                message.metadata);
+        }
+        this._deltaManager.flush();
+        return clientSequenceNumber;
     }
 
     private submitSummaryMessage(summary: ISummaryContent) {
@@ -1738,25 +1749,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
+    private processRemoteMessage(message: ISequencedDocumentMessage) {
         const local = this.clientId === message.clientId;
 
         // Allow the protocol handler to process the message
-        let result: IProcessMessageResult = { immediateNoOp: false };
-        try {
-            result = this.protocolHandler.processMessage(message, local);
-        } catch (error) {
-            this.close(wrapError(error, (errorMessage) =>
-                new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
-        }
+        const result = this.protocolHandler.processMessage(message, local);
 
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
             this.mc.logger.sendTelemetryEvent(
                 { eventName: "UnpackedRuntimeMessage", type: message.type });
         }
         // Forward non system messages to the loaded runtime for processing
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
             this.context.process(message, local);
         }
@@ -1785,8 +1788,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.emit("op", message);
-
-        return result;
     }
 
     private submitSignal(message: any) {
@@ -1863,6 +1864,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
+            (batch: IBatchMessage[]) => this.submitBatch(batch),
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,

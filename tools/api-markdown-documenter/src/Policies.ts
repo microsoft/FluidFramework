@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
-import { ApiItem, ApiItemKind, ApiPackage } from "@microsoft/api-extractor-model";
+import { ApiDeclaredItem, ApiItem, ApiItemKind, ApiPackage } from "@microsoft/api-extractor-model";
 
 import { ApiMemberKind, getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
 
@@ -196,6 +196,13 @@ export interface PolicyOptions {
      * @defaultValue {@link DefaultPolicies.defaultPackageFilterPolicy}
      */
     packageFilterPolicy?: PackageFilterPolicy;
+
+    /**
+     * Contents to display in what would otherwise be empty table cells.
+     *
+     * @defaultValue ""
+     */
+    emptyTableCellText?: string;
 }
 
 export namespace DefaultPolicies {
@@ -266,6 +273,17 @@ export namespace DefaultPolicies {
         switch (apiItem.kind) {
             case ApiItemKind.Model:
                 return "API Overview";
+            case ApiItemKind.CallSignature:
+            case ApiItemKind.ConstructSignature:
+            case ApiItemKind.IndexSignature:
+                // For signature items, the display-name is not particularly useful information
+                // ("(constructor)", "(call)", etc.).
+                // Instead, we will use a cleaned up variation on the type signature.
+                let signatureExcerpt = (apiItem as ApiDeclaredItem).excerpt.text;
+                if (signatureExcerpt.endsWith(";")) {
+                    signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);
+                }
+                return signatureExcerpt;
             default:
                 return apiItem.displayName;
         }
@@ -308,4 +326,5 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
     headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
     linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
     packageFilterPolicy: DefaultPolicies.defaultPackageFilterPolicy,
+    emptyTableCellText: "",
 };
