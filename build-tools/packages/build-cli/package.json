@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/build-cli",
-  "version": "0.4.5000",
+  "version": "0.4.6000",
   "description": "Build tools for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -70,8 +70,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.4.5000",
-    "@fluidframework/build-tools": "^0.4.5000",
+    "@fluid-tools/version-tools": "^0.4.6000",
+    "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/bundle-size-tools": "^0.0.8505",
     "@oclif/core": "~1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
@@ -96,7 +96,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@types/chai": "^4",
     "@types/inquirer": "^8.2.1",

@@ -188,11 +188,6 @@ interface DeltaInsertModification {
 }
 
 /**
- * A map of marks to be applied to inserted fields.
- */
-type InsertedFieldsMark = Delta.Skip | Delta.Modify | Delta.MoveIn | Delta.MoveInAndModify;
-
-/**
  * Converts inserted content into the format expected in Delta instances.
  * This involves applying the following changes:
  * - Updating node values
@@ -220,7 +215,7 @@ function applyOrCollectModifications(
         for (const key of Object.keys(modifyFields)) {
             const brandedKey: FieldKey = brand(key);
             const outNodes = protoFields[key] ?? fail(ERR_MOD_ON_MISSING_FIELD);
-            const outMarks = new OffsetListFactory<InsertedFieldsMark>();
+            const outMarks = new OffsetListFactory<Delta.Mark>();
             let index = 0;
             for (const mark of modifyFields[key]) {
                 if (isSkipMark(mark)) {

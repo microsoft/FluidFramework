@@ -33,7 +33,7 @@ export interface FieldChangeRebaser<TChangeset> {
       * @returns the inverse of `changes`.
       * See {@link ChangeRebaser} for details.
       */
-     invert(changes: TChangeset, invertChild: NodeChangeInverter): TChangeset;
+     invert(change: TChangeset, invertChild: NodeChangeInverter): TChangeset;
 
      /**
       * Rebase `change` over `over`.
