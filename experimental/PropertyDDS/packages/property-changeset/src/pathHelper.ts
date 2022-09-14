@@ -16,6 +16,7 @@ export type PathTree = Map<String, PathTree>;
 /**
  * Helper functions for string processing
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace PathHelper {
 
     const RE_ALL_OPEN_SQUARE_BRACKETS = new RegExp("[[]", "g");

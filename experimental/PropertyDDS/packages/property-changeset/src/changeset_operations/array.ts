@@ -1060,8 +1060,8 @@ const arraysHaveSameValues = function(in_arr1: arrayModifyList[1], in_arr2: arra
  * remove | change          | change           | change           |
  *        | [rem orig. data]| (note the user)  | [rem dupl. rem]  |
  * -------|-----------------+------------------+------------------|
- *```
-
+ * ```
+ *
  * @param {{opA:{}, opB:{}}} in_segment - The two ops to be combined
  * @param {Array.<property-changeset.ChangeSet.ConflictInfo>} out_conflicts - A list of paths that resulted in
  * conflicts together with the type of the conflict
