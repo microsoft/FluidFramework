@@ -13,6 +13,7 @@ import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IBatchMessage } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
@@ -111,6 +112,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // (undocumented)
     flush(): void;
+    // Warning: (ae-forgotten-export) The symbol "BatchMessage" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    protected flushBatch(batch: BatchMessage[]): void;
     // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)
@@ -767,7 +772,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
-// @public (undocumented)
+// Warning: (ae-internal-missing-underscore) The name "unpackRuntimeMessage" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // (No @packageDocumentation comment for this package)

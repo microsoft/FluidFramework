@@ -1,127 +1,47 @@
 # Stored and View Schema
 
-This document generally covers where we can store schemas, and how they can be used, and not the specifics of what the schemas actually do.
-Another way to put that is this is about what the Fluid tree needs from a schema system, and what options that leaves for how such a schema system could work. It is not about how to use those options to actually build a schema system and thus not what options the schema system exposes to application authors.
+This document covers our chosen design from the design space defined by [Stored and View Schema Options](./Stored%20and%20View%20Schema%20Options.md).
 
-An example schema system is included which does take a position on exactly what the schema system could do, but it's more intended as a demonstration of how a usable schema system could meet the requirements of view and stored schema as defined in this document and not as a final design: it makes lots of subjective choices while the point of this document is to define the solution space.
+This diagram shows the schema related data for a typical Fluid Tree powered application and a document for it.
+The edges show dependencies/references.
 
-# Definitions
+```mermaid
+graph LR;
+    subgraph "Persisted Data (Summary)"
+        stored[Stored Schema]
+        stored-->fieldMap["Field Schema Map"]
+        fieldMap--Keys-->GlobalFieldKeys
+        fieldMap--Values-->FieldSchema["Global FieldSchema"]
+        stored-->treeMap["Tree Schema Map"]
+        treeMap--Keys-->TreeSchemaIdentifiers
+        treeMap--Values-->TreeSchema
+        tree[Tree]
+        tree-.->TreeSchemaIdentifiers
+        tree-.->GlobalFieldKeys
+    end
+    subgraph "Application Code"
+        init["Container"]-->app
+        init-->Schematize
+        init-->Configuration
+        Configuration-->Adapters["Schema Adapters"]-->view
+        Adapters-->legacy["Legacy Schema"]
+        Configuration-->view
+        app["Application Logic"]
+        app-->view
+        view["View Schema"]
+        view-->vfieldMap["Field Schema Map"]
+        vfieldMap--Keys-->vGlobalFieldKeys["GlobalFieldKeys"]
+        vfieldMap--Values-->vFieldSchema["Global FieldSchema"]
+        view-->vtreeMap["Tree Schema Map"]
+        vtreeMap--Keys-->vTreeSchemaIdentifiers["TreeSchemaIdentifiers"]
+        vtreeMap--Values-->vTreeSchema["TreeSchema"]
+    end
+```
 
--   `stored data` : data stored in the Fluid container by the tree DDS.
--   `stored schema` : a set of constraints it is valid to assume the `stored data` meets, and that must be maintained when editing (including through conflicts) by the tree DDS itself.
-    All users of the tree must agree on this if they are editors.
-    Any changes to this must be sequenced as Fluid ops.
-    Generally implemented by storing schema information (or references to immutable publicly available schema information) in the tree DDS itself.
--   `view schema` : a set of constraints the application wants the data to conform with when viewing/reading it.
-    Different clients may have differing view schema, even at the same time (ex: due to multiple apps using the same document, or different versions of an app during a rollout):
-    restrictions on how to stage/manage changes to view schema may vary from app to app (ex: some apps could update all clients concurrently, some could use document semantic versions, some could just rely on best effort schema on read)
--   `context` : information about the location in the tree that adjust the constraints on what is valid there.
-    For example, if looking at a node in a trait, that trait may provide the context that only a specific list of types are allowed, or that additional nodes can't be added to that trait.
-    More complex context dependent schema, for example that a node of a particular type in one location in the app permits different children that it does elsewhere, can cause maintaining schema to be hard during merges.
-    While nothing in this document (other than the specific example schema system) restricts what could be used in the context, we will assume that non-local context based constraints
-    (ex: everything other than a type putting rules on what can go immediately under that type, and do not depend on its parent) will not be included, at least initially.
-    Such systems (for example parametric types) can be added later if desired.
+The `Application Code`'s schema (the "View Schema") are code, and thus can include TypeScript types for the schema.
+The "Stored Schema" from the documents are data, and thus do not contain TypeScript types.
 
-# The Design Space
-
-This section enumerates possible options.
-
-## Places we can store stored schema information
-
-There are several ways to express 'stored schema'
-
-Places we can store stored schema information:
-
--   Inline in whatever place is referring to it (see list below)
--   As stored data
--   Hard coded into the shared-tree DDS (constraints like the tree being a tree instead of a DAG fall into this)
--   Injected via a shared-tree subclass or other Fluid configuration (schema data / constraints shipped as code)
--   In some external repository: the repository defines an append only namespace of schema
-    This repository is known about by shared-tree somehow (any of the other items in this list could contain the reference to the repository)
-
-## Places that can refer to/apply stored schema:
-
--   At the root (ex: shared-tree, a subclass, or its configuration), which can be special cased to apply some rules, possibly recursively, to the root.
--   Declaratively on nodes of a specific type: Nodes in the tree are typed, so similar to the above, the tree can be configured to apply specific schema based on type of the nodes.
-
-    This forces all nodes of the same type to have the same schema: it's not contextual but easily handles open polymorphism (ex: a child that's allowed to be anything as long as it's in schema for its type).
--   In other schema: For example, a schema can apply specific schema to its children.
-
-    This allows for `contextual schema` (under one parent the same type might have different rules compared to under another parent).
-
-Note that it's possible to refer to schema in a way that's unambiguous, but code handling the data might not always have the schema.
-For example, document could refer to a schema by its hash, or name in an append only namespace.
-This can have interesting implications for updates to new schema (ex: one client adds data using a schema shipped as code that another client does not have).
-Some of the options do not have this issue (inline, central repository (assuming you are ok going down if it goes down and schema are not cached), and in stored data).
-
-# Options to Support
-
-That's a lot of options all of which have use-cases. Long term, at least basic support for all of them may make sense but a much smaller subset can be supported initially while supporting most use-cases pretty well.
-
-Requirements for this initial version should include:
-
--   Make adoption of different constraint/schema systems optional and incremental: all of these different options should be opt in, and easy to add to and existing application if desired.
--   Provide a schema-on-read system (ex: schematize) that can give an application a nice interface to the data, including validation and error handling.
-
-    Anytime the view schema and stored schema are different, this can allow the app to function as well as possible (detect and handle out of schema data, both on read and on edit, as localized as permitted by the provided error handlers).
--   Provide at least one way to customize the stored schema (schema-on-write), which can at least do type based constraints.
--   Have at least one good design pattern that apps can use to handle schema migrations for each method they use to enforce/specify schema (make sure this supports a roll out process where clients have mixed code versions and old documents will be supportable forever).
-
-# Expected Usage Patterns
-
-I suspect most data will be handled in one of the two following approaches:
-
--   pure schema-on-read: no customization of stored schema
--   almost pure schema-on-write: only using schema-on-read to assist with schema migration so their view schema doesn't have to deal with old formats (which unavoidably pile up in the stored schema).
-
-    They may additionally use schema-on-read to enforce/fix some invariants the stored schema system isn't expressive enough to declare (referential integrity for graph-like references, numeric ranges, and any other application level invariants that are desired)
-
-Note that while many apps might do mostly one or the other, a reasonable design pattern is to take one approach for some data, and the other approach for the rest.
-For example, the core parts of a document might take a schema-on-write approach but allow extensible metadata that is handled with schema-on-read. This is a great place for different applications using the same document to store their data if they want to be less formal about versioning, and do best effort interop with each other's metadata.
-
-# Example/Proposed Design
-
-This design shows an easy to implement MVP, and is not intended to have document or API compatibility with what we do longer term.
-
-It minimally implements the requirements from [Options to Support](#options-to-support) while being extensible in the future.
-It can be subsetted for use in earlier milestones, and could be extended for later ones, see [Schedule](#schedule).
-
-This design is intentionally minimal while still being useful.
-Features not needed for minimal strongly typed application use or the JSON and XML domain schema are not included.
-
-## Schema Representation
-
-The MVP should include a simple schema system, usable as an MVP for both `stored schema` and `view schema`. One possible such schema system is included in [schema.ts](./schema.ts).
-
-## Use as `Stored Schema`
-
--   Writers: When inserting new content and updating modified nodes, shared-tree can check them against the schema in the document.
-
-    Each node has a type that can reference a schema. For stored nodes, this is a stored schema and it must exist in the document.
-    If you insert something into a document that does not currently have schemas for its types, you also have to include the schema as part of the edit.
-
-    For example, if you add support for tables to whiteboards, old documents will not have this schema, so part of inserting a table will require updating the schema to allow them (if the document is explicit about which item types are allowed), as well as adding the table schema itself.
-
-    This is necessary because otherwise adding a new type could break existing data which might not even be downloaded on the current client.
-    In [schema.ts](./schema.ts), `TreeSchema` and `FieldSchema` can be added to an edit op to be used as `stored schema`.
-
-    Note: It's possible to add a schema that is compatible with all possible data (assuming the children themselves are compatible with their own types).
-    Applications which wish to rely entirely on schema-on-read for some or all of their data can use this pattern for all `stored schema` and only use their actual developer authored schema as `view schema`.
--   Change application: changes can conflict if they violate the schema (or maybe only check at the end of a transaction? Or at special marked places and at end?).
-
-    Change application could (someday) adjust behavior based on the schema (ex: provide set semantics to a sequence) or have schema specific edits but the initial version will just detect violations and mark them as conflicted.
-
-### Ways to update existing schema:
-
--   Could support op that changes a schema in a way where all data that was accepted by the old schema is accepted by the new one (ex: add optional fields (if compatible with extra fields), move required field into extraFields, add a type to a field).
--   Could even do things like apply a change to all nodes with a specific type to enable edits which modify a schema and update data atomically (ex: alter table like from sql). This does not work with partial checkouts well.
-
-## Use as `View Schema`
-
--   Document load: The application can check that their view schema matches their stored schema and that the root has supported content.
-
-    See `checkCompatibility` in [schema.ts](./schema.ts) for an example of how this could work.
--   Let the app provide handlers/converters to adapt data that does not match the desired view schema (ex: support old formats), and apply them through Schematize.
+When the Container is loaded, Schematize uses the Schema Adapters to present the Tree from the document (which complies with the Stored Schema) as a Tree complying with the View Schema. Then the application logic can use the per schema TypeScript types to have type safe schema aware access to the tree.
 
 ## Schema Evolution Design Pattern
 
@@ -129,7 +49,7 @@ To support making changes to schema used in existing documents:
 
 If existing data will always be compatible with the new schema (new schema permits a superset of what the old one did):
 
--   Author new, more flexible schema to apply to the same type identifier if applicable.
+-   Update view schema to accept the new format (must still support the old format).
 -   Ensure the app can properly handle documents containing the new format but does not switch documents to the new format.
     There are a few approaches (TODO: we should pick one of these, and document how to actually do it cleanly):
     -   Use new schema as the view schema, and be careful when editing.
@@ -164,9 +84,9 @@ During the migration, both can be kept and a test can be used to confirm that th
 
 Once the migration is done, all code depending on the old schema can be deleted which should just be:
 
-- the old schema itself
-- support for creating data in that format when inserting it into the document
-- the above mentioned test
+-   the old schema itself
+-   support for creating data in that format when inserting it into the document
+-   the above mentioned test
 
 The two schema could be kept straight by calling them `*CompatibilitySchema` and `*Schema` respectively.
 
@@ -293,9 +213,9 @@ Some approaches for bounded open polymorphism at the applications level:
 
     The application can compute a closed set of types which meet it's requirements:
 
-    - structural e.g. require specific fields
-    - nominal: Specific types opt in to some named set of types they want to be included in.
-    - behavioral: All types supporting some specific functionality/[behavior](https://en.wikipedia.org/wiki/Aspect-oriented_programming)).
+    -   structural e.g. require specific fields
+    -   nominal: Specific types opt in to some named set of types they want to be included in.
+    -   behavioral: All types supporting some specific functionality/[behavior](https://en.wikipedia.org/wiki/Aspect-oriented_programming)).
 
     This can be used to programmatically construct a schema using closed polymorphism while exposing it as open polymorphism to the application authors/schema language.
     This has the issue that different applications might come up with different sets of types so this approach is mainly suitable for view schema.
@@ -307,19 +227,24 @@ Some approaches for bounded open polymorphism at the applications level:
     -   initially use the same schema used for view and update later (ex: when a different app performs an edit inserting something the first app doesn't support)
     -   just list the minimal set of types actually used in the document in that field, and update the field schema to allow new types when needed used.
     -   use open polymorphism
+
 -   The above, but hand code the type lists.
 
     It should be possible to get build errors if you don't update it, so this should be practical if all allowed types are statically known when building the app (ex: no dynamically loaded plugins that add extra types).
+
 -   Use open polymorphism in the stored and view schema. Handle unexpected values in the app.
 -   Build a nominal open polymorphism system into the schema, allowing types to explicitly declare they are a member of a particular typeset/interface.
 
     Compatibility between stored and view schema can include checking these align.
+
 -   Add a structural constraints that can be applied to field's children.
     There are a few design choices for this:
+
     -   How deep does it go?
         -   Allow constraints to apply further constraints on the children recursively.
         -   Allow only constraining the immediate children beyond the constraints their type implies.
     -   Are the constraints applied to types or values?
+
         -   Types: compute, based only on the schema, which types are allowed under which constraints.
             This only permits types where all possible values meet the constraints. `allowsTreeSuperset` can compute if a type is allowed.
         -   Values: compute, based only on the value, if it's allowed under which constraints.
@@ -340,15 +265,7 @@ we can gain this benefit by implementing it as syntactic sugar for some reuse me
 
 # Schedule
 
-What work we need to do for each milestone in #8273
-
-## M0
-
-This document.
-
-## M1
-
-The architecture should account for this document and near and long term ideas.
+What work we need to do for each milestone in the [roadmap](../../docs/roadmap.md).
 
 ## M2
 

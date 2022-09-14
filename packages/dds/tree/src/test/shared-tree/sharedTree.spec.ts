@@ -52,4 +52,99 @@ describe("SharedTree", () => {
         const joinedLaterTree = await provider.createTree();
         validateTree(joinedLaterTree);
     });
+
+    describe("Editing", () => {
+        it("can insert and delete a node", async () => {
+            const value = "42";
+            const provider = await TestTreeProvider.create(2);
+            const [tree1, tree2] = provider.trees;
+
+            // Insert node
+            tree1.runTransaction((forest, editor) => {
+                const writeCursor = singleTextCursor({ type: brand("Test"), value });
+                editor.insert({
+                    parent: undefined,
+                    parentField: detachedFieldAsKey(forest.rootField),
+                    parentIndex: 0,
+                }, writeCursor);
+                return TransactionResult.Apply;
+            });
+
+            await provider.ensureSynchronized();
+
+            // Validate insertion
+            {
+                const readCursor = tree2.forest.allocateCursor();
+                const destination = tree2.forest.root(tree2.forest.rootField);
+                const cursorResult = tree2.forest.tryMoveCursorTo(destination, readCursor);
+                assert.equal(cursorResult, TreeNavigationResult.Ok);
+                assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+                assert.equal(readCursor.value, value);
+                readCursor.free();
+                tree2.forest.forgetAnchor(destination);
+            }
+
+            // Delete node
+            tree1.runTransaction((forest, editor) => {
+                editor.delete({
+                    parent: undefined,
+                    parentField: detachedFieldAsKey(forest.rootField),
+                    parentIndex: 0,
+                }, 1);
+                return TransactionResult.Apply;
+            });
+
+            await provider.ensureSynchronized();
+
+            // Validate deletion
+            {
+                const readCursor = tree2.forest.allocateCursor();
+                const destination = tree2.forest.root(tree2.forest.rootField);
+                const cursorResult = tree2.forest.tryMoveCursorTo(destination, readCursor);
+                assert.equal(cursorResult, TreeNavigationResult.NotFound);
+                readCursor.free();
+                tree2.forest.forgetAnchor(destination);
+            }
+        });
+
+        it("can insert multiple nodes", async () => {
+            const provider = await TestTreeProvider.create(2);
+            const [tree1, tree2] = provider.trees;
+
+            // Insert nodes
+            tree1.runTransaction((forest, editor) => {
+                editor.insert({
+                    parent: undefined,
+                    parentField: detachedFieldAsKey(forest.rootField),
+                    parentIndex: 0,
+                }, singleTextCursor({ type: brand("Test"), value: 1 }));
+                return TransactionResult.Apply;
+            });
+
+            tree1.runTransaction((forest, editor) => {
+                editor.insert({
+                    parent: undefined,
+                    parentField: detachedFieldAsKey(forest.rootField),
+                    parentIndex: 1,
+                }, singleTextCursor({ type: brand("Test"), value: 2 }));
+                return TransactionResult.Apply;
+            });
+
+            await provider.ensureSynchronized();
+
+            // Validate insertion
+            {
+                const readCursor = tree2.forest.allocateCursor();
+                const destination = tree2.forest.root(tree2.forest.rootField);
+                const cursorResult = tree2.forest.tryMoveCursorTo(destination, readCursor);
+                assert.equal(cursorResult, TreeNavigationResult.Ok);
+                assert.equal(readCursor.value, 1);
+                assert.equal(readCursor.seek(1), TreeNavigationResult.Ok);
+                assert.equal(readCursor.value, 2);
+                assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+                readCursor.free();
+                tree2.forest.forgetAnchor(destination);
+            }
+        });
+    });
 });

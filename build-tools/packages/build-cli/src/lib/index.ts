@@ -12,7 +12,9 @@ export {
 } from "./branches";
 export {
     bumpPackageDependencies,
-    bumpVersion as bumpReleaseGroup,
+    bumpReleaseGroup,
+    DependencyUpdateType,
+    isDependencyUpdateType,
     PackageWithRangeSpec,
 } from "./bump";
 export {
@@ -23,8 +25,10 @@ export {
     getVersionFromTag,
     isReleased,
     npmCheckUpdates,
+    PackageVersionMap,
     PreReleaseDependencies,
     sortVersions,
     VersionDetails,
 } from "./package";
 export { difference } from "./sets";
+export { getIndent, indentString } from "./text";

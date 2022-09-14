@@ -14,10 +14,16 @@ import { ISequencedClient } from "./clients";
  * the proposal.
  */
 export interface IProposal {
-    // The key for the proposal
+    /**
+     * The key for the proposal.
+     */
     key: string;
 
-    // The value of the proposal
+    /**
+     * The value of the proposal.
+     */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any;
 }
 
@@ -54,6 +60,8 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
         listener: (
             sequenceNumber: number,
             key: string,
+            // TODO: use `unknown` instead.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             value: any,
             approvalSequenceNumber: number,
         ) => void,
@@ -78,10 +86,14 @@ export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, ID
  * Interface for tracking proposals in the Quorum.
  */
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     propose(key: string, value: any): Promise<void>;
 
     has(key: string): boolean;
 
+    // TODO: return `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     get(key: string): any;
 }
 
