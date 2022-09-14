@@ -10,7 +10,6 @@ import {
     AuthorizationError,
     createGenericNetworkError,
     isOnline,
-    FluidInvalidSchemaError,
     RetryableError,
     NonRetryableError,
     OnlineStatus,
@@ -233,9 +232,6 @@ export function createOdspNetworkError(
             error = createGenericNetworkError(
                 errorMessage, { canRetry: true, retryAfterMs }, driverProps);
             break;
-    }
-    if (innerMostErrorCode === "fluidInvalidSchema") {
-        error = new FluidInvalidSchemaError(errorMessage, false, driverProps);
     }
     enrichOdspError(error, response, facetCodes, undefined, redirectLocation);
     return error;

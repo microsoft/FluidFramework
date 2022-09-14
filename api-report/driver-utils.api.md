@@ -188,9 +188,9 @@ export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asse
 
 // @public
 export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
-    constructor(message: string, canRetry: boolean, props: DriverErrorTelemetryProps);
+    constructor(message: string, props: DriverErrorTelemetryProps);
     // (undocumented)
-    readonly canRetry: boolean;
+    readonly canRetry = false;
     // (undocumented)
     readonly errorType = DriverErrorType.fluidInvalidSchema;
 }

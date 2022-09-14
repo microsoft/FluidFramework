@@ -66,10 +66,10 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
  */
  export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     readonly errorType = DriverErrorType.fluidInvalidSchema;
+    readonly canRetry = false;
 
     constructor(
         message: string,
-        readonly canRetry: boolean,
         props: DriverErrorTelemetryProps,
     ) {
         super(message, props);
