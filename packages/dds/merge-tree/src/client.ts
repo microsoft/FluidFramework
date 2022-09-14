@@ -911,8 +911,8 @@ export class Client {
     }
 
     /**
-     *  Given an pending operation and segment group, regenerate the op, so it
-     *  can be resubmitted
+     * Given an pending operation and segment group, regenerate the op, so it
+     * can be resubmitted
      * @param resetOp - The op to reset
      * @param segmentGroup - The segment group associated with the op
      */

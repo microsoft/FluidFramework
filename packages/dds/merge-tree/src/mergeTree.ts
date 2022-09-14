@@ -348,7 +348,7 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
     }
 
     /**
-     * @deprecated  for internal use only. public export will be removed.
+     * @deprecated For internal use only. public export will be removed.
      * @internal
      */
     public addNodeReferences(mergeTree: MergeTree, node: IMergeNode) {
@@ -377,7 +377,7 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 }
 
 /**
- * @deprecated  for internal use only. public export will be removed.
+ * @deprecated For internal use only. public export will be removed.
  * @internal
  */
  export interface ClientSeq {
@@ -386,7 +386,7 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 }
 
 /**
- * @deprecated  for internal use only. public export will be removed.
+ * @deprecated For internal use only. public export will be removed.
  * @internal
  */
  export const clientSeqComparer: Comparer<ClientSeq> = {
@@ -395,7 +395,7 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 };
 
 /**
- * @deprecated  for internal use only. public export will be removed.
+ * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export interface LRUSegment {
@@ -404,7 +404,7 @@ export interface LRUSegment {
 }
 
 /**
- * @deprecated  for internal use only. public export will be removed.
+ * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export class MergeTree {
@@ -487,8 +487,8 @@ export class MergeTree {
      * Compute the net length of this segment from a local perspective.
      * @param segment - Segment whose length to find
      * @param localSeq - localSeq at which to find the length of this segment. If not provided,
-     *     default is to consider the local client's current perspective. Only local sequence
-     *     numbers corresponding to un-acked operations give valid results.
+     * default is to consider the local client's current perspective. Only local sequence
+     * numbers corresponding to un-acked operations give valid results.
      */
     public localNetLength(segment: ISegment, refSeq?: number, localSeq?: number) {
         const removalInfo = toRemovalInfo(segment);
@@ -947,7 +947,9 @@ export class MergeTree {
     }
 
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
-        return (this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId) ? node.partialLengths!.getPartialLength(refSeq, clientId) : node.cachedLength;
+        return (this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)
+            ? node.partialLengths!.getPartialLength(refSeq, clientId)
+            : node.cachedLength;
     }
 
     private nodeLength(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
@@ -2101,7 +2103,7 @@ export class MergeTree {
     }
 
     /**
-     *  Walk the segments up to the current segment and calculate its position
+     * Walk the segments up to the current segment and calculate its position
      */
     private findRollbackPosition(segment: ISegment) {
         let segmentPosition = 0;
