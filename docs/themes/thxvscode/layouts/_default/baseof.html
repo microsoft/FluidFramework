@@ -10,7 +10,7 @@
 
     <div id="main" style="flex-grow: 1;display: flex;flex-direction: column;">
         {{- partial "header.html" . -}}
-        <div {{ if .IsHome}}class="home" {{ end}} style="flex-grow: 1; display:flex;flex-direction:column;">
+        <div {{ if .IsHome}}class="home" {{ end}} style="flex-grow: 1; display:flex;">
             {{- block "main" . }}{{- end }}
         </div>
     </div>

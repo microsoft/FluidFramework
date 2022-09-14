@@ -100,8 +100,8 @@ footer {
   align-items: center;
   justify-content: center;
   align-content: center;
-  flex-wrap: wrap;
-  flex-direction: row;
+  flex-direction: column;
+  flex-grow: 1;
 
   p a {
     color: $banner-link-color;
