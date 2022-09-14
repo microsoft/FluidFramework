@@ -4,125 +4,240 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, TreeType, Value } from "../tree";
-
-export const enum TreeNavigationResult {
-    /**
-     * Attempt to navigate cursor to a key or index that is outside the client's view.
-     */
-    NotFound = -1,
-
-    /**
-     * Attempt to navigate cursor to a portion of the tree that has not yet been loaded.
-     */
-    Pending = 0,
-
-    /**
-     * ITreeReader successfully navigated to the desired node.
-     */
-    Ok = 1,
-}
-
-/**
- * TreeNavigationResult, but never "Pending".
- * Can be used when data is never pending.
- */
-export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
+import { FieldKey, TreeType, UpPath, Value } from "../tree";
 
 /**
  * A stateful low-level interface for reading tree data.
- *
- * TODO: Needs rules around invalidation/mutation of the underlying tree.
- * Should either be documented here, or each producer should document them
- * (and likely via returning a sub-interface with documentation on the subject).
- *
- * TODO: Needs a way to efficiently clone Cursor so patterns like lazy tree reification can be implemented efficiently.
- *
- * TODO: add optional fast path APIs for more efficient handling when supported by underlying format and reader.
- * Leverage "chunks" and "shape" for this, and skip to next chunk with seek (chunk length).
- * Default chunks of size 1, and "node" shape?
  */
-export interface ITreeCursor<TResult = TreeNavigationResult> {
+export interface ITreeCursor {
     /**
-     * Select the child located at the given key and index.
+     * What kind of place the cursor is at.
+     * Determines which operations are allowed.
      */
-    down(key: FieldKey, index: number): TResult;
+    readonly mode: CursorLocationType;
+
+    /*
+     * True iff the current field or node (depending on mode) is "pending",
+     * meaning that it has not been downloaded.
+     */
+    readonly pending: boolean;
+
+    // ********** APIs for when mode = Fields ********** //
 
     /**
-     * Moves `offset` entries in the field.
+     * Moves the "current field" forward one in an arbitrary field traversal order.
+     *
+     * If there is no remaining field to iterate to,
+     * returns false and navigates up to the parent setting the mode to `Nodes`.
+     *
+     * Order of fields is only guaranteed to be consistent thorough a single iteration.
+     *
+     * If skipPending, skip past fields which are currently pending.
+     * This can be used to skip to the end of a large number of consecutive pending fields.
+     *
+     * Allowed when `mode` is `Fields`.
      */
-    seek(offset: number): TResult;
+    nextField(): boolean;
 
     /**
-     * Select the parent of the currently selected node.
+     * Navigate up to parent node.
+     * Sets mode to `Nodes`
+     *
+     * Only valid when `mode` is `Fields`.
+     *
+     * TODO: what to do if at root?
      */
-    up(): TResult;
+    exitField(): void;
+
+    /**
+     * Moves the "current field" forward until `pending` is `false`.
+     *
+     * If there are no remaining field to iterate to,
+     * returns false and navigates up to the parent setting the mode to `Nodes`.
+     *
+     * Order of fields is only guaranteed to be consistent thorough a single iteration.
+     *
+     * Allowed when `mode` is `Fields`.
+     */
+    skipPendingFields(): boolean;
+
+    // ********** APIs for when mode = Fields, and not pending ********** //
+
+    /**
+     * Returns the FieldKey for the current field.
+     *
+     * Allowed when `mode` is `Fields`, and not `pending`.
+     */
+    getFieldKey(): FieldKey;
+
+    /**
+     * @returns the number of immediate children in the current field.
+     *
+     * Allowed when `mode` is `Fields`, and not `pending`.
+     */
+    getFieldLength(): number;
+
+    /**
+     * Moves to the first node of the selected field, setting mode to `Nodes`.
+     *
+     * If field is empty, returns false instead.
+     *
+     * Allowed when `mode` is `Fields`, and not `pending`.
+     */
+     firstNode(): boolean;
+
+    /**
+     * Sets current node to the node at the provided `index` of the current field.
+     *
+     * Allowed when `mode` is `Fields`, and not `pending`.
+     * Sets mode to `Nodes`.
+     */
+    enterNode(childIndex: number): void;
+
+    // ********** APIs for when mode = Nodes ********** //
+
+    /**
+     * @returns a path to the current node.
+     *
+     * Only valid when `mode` is `Nodes`.
+     * Assumes this cursor has a root node where its field keys are actually detached sequences.
+     * If the cursor is not rooted at such a node,
+     * calling this function is invalid, and the returned UpPath (if any) may not be meaningful.
+     * This requirement exists because {@link UpPath}s are absolute paths
+     * and thus must be rooted in a detached sequence.
+     * TODO: consider adding an optional base path to append to remove/clarify this restriction.
+     */
+    getPath(): UpPath | undefined;
+
+    /**
+     * Index (within its parent field) of the current node.
+     *
+     * Only valid when `mode` is `Nodes`.
+     */
+    readonly fieldIndex: number;
+
+    /**
+     * Index (within its parent field) of the first node in the current chunk.
+     * Always less than or equal to `currentIndexInField`.
+     *
+     * Only valid when `mode` is `Nodes`.
+     */
+    readonly chunkStart: number;
+
+    /**
+     * Length of current chunk.
+     * Since an entire chunk always has the same `pending` value,
+     * can be used to help skip over all of a pending chunk at once.
+     *
+     * TODO:
+     * Add optional APIs to access underlying chunks so readers can
+     * accelerate processing of chunk formats they understand.
+     *
+     * Only valid when `mode` is `Nodes`.
+     */
+    readonly chunkLength: number;
+
+    /**
+     * Moves `offset` nodes in the field.
+     * If seeking to exactly past either end,
+     * returns false and navigates up to the parent field (setting mode to `Fields`).
+     *
+     * Allowed if mode is `Nodes`.
+     */
+    seekNodes(offset: number): boolean;
+
+    /**
+     * The same as `seekNodes(1)`, but might be faster.
+     */
+    nextNode(): boolean;
+
+    /**
+     * Navigate up to parent field.
+     * Sets mode to `Fields`
+     *
+     * Same as seek Number.POSITIVE_INFINITY, but only valid when `mode` is `Nodes`.
+     *
+     * TODO: what to do if at root?
+     * TODO: Maybe merge with upToNode to make a single "Up"?
+     */
+    exitNode(): void;
+
+    // ********** APIs for when mode = Nodes and not pending ********** //
+
+    /**
+     * Enters the first field (setting mode to `Fields`)
+     * so fields can be iterated with `nextField` and `skipPendingFields`.
+     *
+     * If there are no fields, mode is returned to `Nodes` and false is returned.
+     *
+     * Allowed when `mode` is `Nodes` and not `pending`.
+     */
+     firstField(): boolean;
+
+    /**
+     * Navigate to the field with the specified `key` and set the mode to `Fields`.
+     *
+     * Only valid when `mode` is `Nodes`, and not `pending`.
+     */
+    enterField(key: FieldKey): void;
 
     /**
      * The type of the currently selected node.
+     *
+     * Only valid when `mode` is `Nodes`, and not `pending`.
      */
     readonly type: TreeType;
 
     /**
-     * @returns the keys of the currently selected node.
-     * TODO: ordering invariants: Consistent over time? Consistent across nodes? Sorted?
-     * TODO: empty fields: are they always omitted here? Sometimes omitted? Depends on field kind and schema?
-     * */
-    keys: Iterable<FieldKey>;
-
-    /**
-     * @returns the number of immediate children for the given key of the currently selected node.
-     */
-    length(key: FieldKey): number;
-
-    /**
-     * value associated with the currently selected node.
+     * The value associated with the currently selected node.
+     *
+     * Only valid when `mode` is `Nodes`, and not `pending`.
      */
     readonly value: Value;
 }
 
+export const enum CursorLocationType {
+    /**
+     * Can iterate through nodes in a field.
+     * At a "current node".
+     */
+    Nodes,
+
+    /**
+     * Can iterate through fields of a node.
+     * At a "current field".
+     */
+    Fields,
+}
+
+export interface ITreeCursorSynchronous extends ITreeCursor{
+    readonly pending: false;
+}
+
 /**
  * @param cursor - tree whose field will be visited.
- * @param key - the field to visit.
  * @param f - builds output from field member, which will be selected in cursor when cursor is provided.
  *  If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
- * @returns array resulting from applying `f` to each item of field `key` on `cursor`'s current node.
+ * @returns array resulting from applying `f` to each item of the current field on `cursor`.
  * Returns an empty array if the field is empty or not present (which are considered the same).
  */
-export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
-    cursor: TCursor, key: FieldKey, f: (cursor: TCursor) => T): T[] {
+export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) => T): T[] {
     const output: T[] = [];
-    let result = cursor.down(key, 0);
-    if (result !== TreeNavigationResult.Ok) {
-        assert(result === TreeNavigationResult.NotFound, 0x34e /* pending not supported in mapCursorField */);
-        // This has to be special cased (and not fall through the code below)
-        // since the call to `up` needs to be skipped.
-        return [];
-    }
-    while (result === TreeNavigationResult.Ok) {
-        output.push(f(cursor));
-        result = cursor.seek(1);
-    }
-    assert(result === TreeNavigationResult.NotFound, 0x34f /* expected enumeration to end at end of field */);
-    cursor.up();
+    forEachNode(cursor, (c) => { output.push(f(c)); });
     return output;
 }
 
-export function reduceField<T>(
-    cursor: ITreeCursor, key: FieldKey, initial: T, f: (cursor: ITreeCursor, initial: T) => T): T {
-    let output: T = initial;
-    let result = cursor.down(key, 0);
-    if (result !== TreeNavigationResult.Ok) {
-        assert(result === TreeNavigationResult.NotFound, "pending not supported in reduceField");
-        // This has to be special cased (and not fall through the code below)
-        // since the call to `up` needs to be skipped.
-        return output;
+/**
+ * @param cursor - cursor at a field whose nodes will be visited.
+ * @param f - For on each node.
+ *  If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ */
+export function forEachNode(
+    cursor: ITreeCursor, f: (cursor: ITreeCursor) => void): void {
+    assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
+    let inField = cursor.firstNode();
+    while (inField) {
+        f(cursor);
+        inField = cursor.nextField();
     }
-    while (result === TreeNavigationResult.Ok) {
-        output = (f(cursor, output));
-        result = cursor.seek(1);
-    }
-    assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
-    cursor.up();
-    return output;
 }

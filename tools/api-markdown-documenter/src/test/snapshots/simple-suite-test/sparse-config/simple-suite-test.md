@@ -45,6 +45,7 @@ const foo = bar;
 |  [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) | An empty interface |
 |  [TestInterface](docs/simple-suite-test/testinterface-interface) | Test interface |
 |  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithIndexSignature](docs/simple-suite-test/testinterfacewithindexsignature-interface) | An interface with an index signature. |
 |  [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
 ## Classes

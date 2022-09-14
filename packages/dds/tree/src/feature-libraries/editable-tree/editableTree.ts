@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/common-utils";
-import { Value, Anchor } from "../../tree";
+import { Value, Anchor, rootFieldKey } from "../../tree";
 import {
     IEditableForest, TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState,
 } from "../../forest";
 import { brand } from "../../util";
 import {
-    FieldSchema, rootFieldKey, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema,
+    FieldSchema, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema,
 } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
