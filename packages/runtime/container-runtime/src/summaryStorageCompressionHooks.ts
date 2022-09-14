@@ -12,12 +12,12 @@ import { getBlobAtPath, listBlobPaths, replaceSummaryObject, SummaryStorageHooks
 import { BlobHeaderBuilder, readBlobHeader, skipHeader, writeBlobHeader } from "./summaryBlobProtocol";
 
 export enum Algorithms {
-    NONE = 1,
+    None = 1,
     LZ4 = 2,
-    DEFLATE = 3,
+    Deflate = 3,
 }
 
-const ALGORITHM_KEY = "ALG";
+const algorithmKey = "ALG";
 
 function summaryBlobReplacer(key: string, value: SummaryObject) {
     if (value.type === SummaryType.Blob) {
@@ -93,10 +93,10 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
 
     private encodeBlob(file: ArrayBufferLike): ArrayBufferLike {
         let compressed: ArrayBufferLike;
-        if (this._algorithm === Algorithms.NONE) {
+        if (this._algorithm === Algorithms.None) {
             return file;
         } else
-            if (this._algorithm === Algorithms.DEFLATE) {
+            if (this._algorithm === Algorithms.Deflate) {
                 compressed = deflate(file) as ArrayBufferLike;
             } else
                 if (this._algorithm === Algorithms.LZ4) {
@@ -105,7 +105,7 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
                     throw Error(`Unknown Algorithm ${this._algorithm}`);
                 }
         const headerBuilder: BlobHeaderBuilder = new BlobHeaderBuilder();
-        headerBuilder.addField(ALGORITHM_KEY, this._algorithm.toString(10));
+        headerBuilder.addField(algorithmKey, this._algorithm.toString(10));
         return writeBlobHeader(headerBuilder.build(), compressed);
     }
 
@@ -126,8 +126,8 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         }
         let decompressed: ArrayBufferLike;
         const input = skipHeader(compressedEncoded);
-        const myAlgorithm = Number(header.getValue(ALGORITHM_KEY));
-        if (myAlgorithm === Algorithms.DEFLATE) {
+        const myAlgorithm = Number(header.getValue(algorithmKey));
+        if (myAlgorithm === Algorithms.Deflate) {
             decompressed = inflate(input) as ArrayBufferLike;
         } else
             if (myAlgorithm === Algorithms.LZ4) {
