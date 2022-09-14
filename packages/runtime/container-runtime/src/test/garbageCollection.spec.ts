@@ -44,6 +44,7 @@ import {
     accessViolationOnSweepReadyUsageKey,
     defaultInactiveTimeoutMs,
     gcTestModeKey,
+    disableSweepLogKey,
 } from "../garbageCollection";
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
@@ -485,8 +486,9 @@ describe("Garbage Collection Tests", () => {
             changedEventName: string,
             loadedEventName: string,
             snapshotCacheExpiryMs?: number,
-            deleteEventName?: string,
+            expectDeleteLogs?: boolean,
         ) => {
+            const deleteEventName = "GarbageCollector:GCObjectDeleted";
             // Validates that no unexpected event has been fired.
             function validateNoUnexpectedEvents() {
                 mockLogger.assertMatchNone([
@@ -533,7 +535,7 @@ describe("Garbage Collection Tests", () => {
                 validateNoUnexpectedEvents();
             });
 
-            it("generates events when nodes that are used after time out", async () => {
+            it("generates events for nodes that are used after time out", async () => {
                 const garbageCollector = createGCOverride();
 
                 // Remove node 2's reference from node 1. This should make node 2 and node 3 unreferenced.
@@ -550,7 +552,8 @@ describe("Garbage Collection Tests", () => {
                 clock.tick(1);
                 await updateAllNodesAndRunGC(garbageCollector);
                 const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
-                if (deleteEventName) {
+
+                if (expectDeleteLogs) {
                     expectedEvents.push(
                         { eventName: deleteEventName, timeout, id: nodes[2] },
                         { eventName: deleteEventName, timeout, id: nodes[3] },
@@ -622,8 +625,10 @@ describe("Garbage Collection Tests", () => {
                 clock.tick(1);
                 await updateAllNodesAndRunGC(garbageCollector);
                 const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
-                if (deleteEventName) {
+                if (expectDeleteLogs) {
                     expectedEvents.push({ eventName: deleteEventName, timeout, id: nodes[3] });
+                } else {
+                    assert(!mockLogger.events.some((event) => event.eventName === deleteEventName), "Should not have any delete events logged");
                 }
                 expectedEvents.push(
                     { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
@@ -673,11 +678,13 @@ describe("Garbage Collection Tests", () => {
 
                 await garbageCollector.collectGarbage({});
                 // Validate that the sweep ready event is logged when GC runs after load.
-                if (deleteEventName) {
+                if (expectDeleteLogs) {
                     mockLogger.assertMatch(
                         [{ eventName: deleteEventName, timeout, id: nodes[3] }],
                         "sweep ready event not generated as expected",
                     );
+                } else {
+                    mockLogger.assertMatchNone([{ eventName: deleteEventName }], "Should not have any delete events logged");
                 }
 
                 // Validate that all events are logged as expected.
@@ -735,11 +742,13 @@ describe("Garbage Collection Tests", () => {
                 await garbageCollector.collectGarbage({});
 
                 // Validate that the sweep ready event is logged when GC runs after load.
-                if (deleteEventName) {
+                if (expectDeleteLogs) {
                     mockLogger.assertMatch(
                         [{ eventName: deleteEventName, timeout, id: nodes[3] }],
                         "sweep ready event not generated as expected",
                     );
+                } else {
+                    mockLogger.assertMatchNone([{ eventName: deleteEventName }], "Should not have any delete events logged");
                 }
 
                 // Validate that all events are logged as expected.
@@ -807,7 +816,7 @@ describe("Garbage Collection Tests", () => {
 
                 await garbageCollector.collectGarbage({});
                  // Validate that the sweep ready event is logged when GC runs after load.
-                 if (deleteEventName) {
+                 if (expectDeleteLogs) {
                     mockLogger.assertMatch(
                         [
                             { eventName: deleteEventName, timeout, id: nodes[1] },
@@ -816,6 +825,8 @@ describe("Garbage Collection Tests", () => {
                         ],
                         "sweep ready event not generated as expected",
                     );
+                } else {
+                    mockLogger.assertMatchNone([{ eventName: deleteEventName }], "Should not have any delete events logged");
                 }
 
                 // Validate that all events are logged as expected.
@@ -834,11 +845,18 @@ describe("Garbage Collection Tests", () => {
             });
         };
 
+        function updateAllNodes(garbageCollector) {
+            nodes.forEach((nodeId) => {
+                garbageCollector.nodeUpdated(nodeId, "Changed", Date.now(), testPkgPath);
+                garbageCollector.nodeUpdated(nodeId, "Loaded", Date.now(), testPkgPath);
+            });
+        }
+
         const mainContainerTests = (
             timeout: number,
             loadedEventName: string,
             accessViolationDetectionEnabled: boolean,
-            snapshotCacheExpiryMs?: number,
+            snapshotCacheExpiryMs: number,
         ) => {
             let lastCloseErrorType: string = "N/A";
 
@@ -851,27 +869,30 @@ describe("Garbage Collection Tests", () => {
                 return gc2;
             };
 
-            it("generates events when nodes that are used after time out", async () => {
+            it("generates events and closes container when nodes that are used after time out", async () => {
                 const garbageCollector = createGCOverride();
 
                 // Remove node 2's reference from node 1. This should make node 2 and node 3 unreferenced.
                 defaultGCData.gcNodes[nodes[1]] = [];
 
+                //* Doesn't this generate events? (e.g. Deleted events)
+                //* Should load from base snapshot with unreferenced states insteaed.
                 await garbageCollector.collectGarbage({});
 
                 // Advance the clock just before the timeout and validate no unexpected events are logged.
                 clock.tick(timeout - 1);
-                await updateAllNodesAndRunGC(garbageCollector);
-                // validateNoUnexpectedEvents();
+                updateAllNodes(garbageCollector);
+                mockLogger.assertMatchNone([{ eventName: loadedEventName }], "expected no loaded events yet");
 
                 // Expire the timeout and validate that all events for node 2 and node 3 are logged.
                 clock.tick(1);
-                await updateAllNodesAndRunGC(garbageCollector);
+                updateAllNodes(garbageCollector);
                 const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
                 expectedEvents.push(
                     { eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg, unrefTime: 0 },
                     { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg, unrefTime: 0 },
                 );
+                assert(!mockLogger.events.some((event) => event.eventName === "GarbageCollector:GCObjectDeleted"), "Should not have any delete events logged for Main Container");
                 mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
 
                 // Even if AccessViolation Detection is not enabled, we'll still close due to session expiry
@@ -917,7 +938,26 @@ describe("Garbage Collection Tests", () => {
                 "GarbageCollector:SweepReadyObject_Changed",
                 "GarbageCollector:SweepReadyObject_Loaded",
                 snapshotCacheExpiryMs,
-                "GarbageCollector:GCObjectDeleted",
+                true, // expectDeleteLogs
+            );
+        });
+
+        describe("SweepReady events - Delete log disabled (summarizer container)", () => {
+            const snapshotCacheExpiryMs = 500;
+            const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
+
+            beforeEach(() => {
+                injectedSettings[runSessionExpiryKey] = true;
+                injectedSettings[disableSweepLogKey] = true;
+            });
+
+            summarizerContainerTests(
+                sweepTimeoutMs,
+                "GarbageCollector:SweepReadyObject_Revived",
+                "GarbageCollector:SweepReadyObject_Changed",
+                "GarbageCollector:SweepReadyObject_Loaded",
+                snapshotCacheExpiryMs,
+                false, // expectDeleteLogs
             );
         });
 
