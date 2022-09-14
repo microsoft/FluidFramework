@@ -197,21 +197,6 @@ function testForest(suiteName: string, factory: (schema: StoredSchemaRepository)
             assert(forest.anchors.isEmpty());
         });
 
-        it("reads only one node", async () => {
-            // This is a regression test for a scenario in which the
-            // cursor would allow navigation past the end of the field
-            const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
-            const content: JsonableTree[] = [{ type: jsonObject.name }];
-            initializeForest(forest, content);
-            const readCursor = forest.allocateCursor();
-            const destination = forest.root(forest.rootField);
-            const cursorResult = forest.tryMoveCursorTo(destination, readCursor);
-            assert.equal(cursorResult, TreeNavigationResult.Ok);
-            assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
-            readCursor.free();
-            forest.forgetAnchor(destination);
-        });
-
         // TODO: test more kinds of deltas, including moves.
 
         describe("top level invalidation", () => {

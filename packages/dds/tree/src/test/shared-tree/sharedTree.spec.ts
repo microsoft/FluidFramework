@@ -12,6 +12,31 @@ import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
 
 describe("SharedTree", () => {
+    it("reads only one node", async () => {
+        // This is a regression test for a scenario in which a transaction would apply its delta twice,
+        // inserting two nodes instead of just one
+        const provider = await TestTreeProvider.create(1);
+        provider.trees[0].runTransaction((f, editor) => {
+            const writeCursor = singleTextCursor({ type: brand("LonelyNode") });
+            editor.insert({
+                parent: undefined,
+                parentField: detachedFieldAsKey(f.rootField),
+                parentIndex: 0,
+            }, writeCursor);
+
+            return TransactionResult.Apply;
+        });
+
+        const { forest } = provider.trees[0];
+        const readCursor = forest.allocateCursor();
+        const destination = forest.root(provider.trees[0].forest.rootField);
+        const cursorResult = forest.tryMoveCursorTo(destination, readCursor);
+        assert.equal(cursorResult, TreeNavigationResult.Ok);
+        assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
+        readCursor.free();
+        forest.forgetAnchor(destination);
+    });
+
     it("can be connected to another tree", async () => {
         const provider = await TestTreeProvider.create(2);
         assert(provider.trees[0].isAttached());
