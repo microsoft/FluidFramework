@@ -23,6 +23,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
+    "ci:build:docs": "api-extractor run",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc -b"
   },
@@ -38,6 +39,7 @@
     "@types/jszip": "^3.4.1",
     "@types/msgpack-lite": "^0.1.8",
     "@types/node": "^14.18.0",
-    "@types/pako": "^2.0.0"
+    "@types/pako": "^2.0.0",
+    "@microsoft/api-extractor": "^7.22.2"
   }
 }
