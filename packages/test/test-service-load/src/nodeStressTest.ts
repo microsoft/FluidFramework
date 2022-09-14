@@ -105,8 +105,7 @@ async function orchestratorProcess(
         undefined,
         args.browserAuth);
 
-    let url;
-    url = await (args.testId !== undefined && args.createTestId === false
+    const url = await (args.testId !== undefined && args.createTestId === false
         ? testDriver.createContainerUrl(args.testId)
         // If no testId is provided, (or) if testId is provided but createTestId is not false, then
         // create a file;
