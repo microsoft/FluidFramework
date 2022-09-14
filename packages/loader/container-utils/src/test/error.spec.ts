@@ -90,7 +90,6 @@ describe("Errors", () => {
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
-            assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "Inherited error message");
             assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property", "telemetryProps should be copied when wrapping");
         });
