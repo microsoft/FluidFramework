@@ -173,6 +173,6 @@ function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number
     cursor.up();
 }
 
-describe("ITreeCursor", () => {
+describe("ITreeCursor(Legacy)", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
 });
