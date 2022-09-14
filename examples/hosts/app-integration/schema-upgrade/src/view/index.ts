@@ -4,4 +4,4 @@
  */
 
 export * from "./debugView";
-export * from "./modelView";
+export * from "./appView";

@@ -88,7 +88,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly logger: ITelemetryLogger,
-        private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
@@ -228,8 +227,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         }
 
         // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
-        // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
-        if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
+        if (count === 1 && (blobid === null || blobid === this.documentId)) {
             const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
             const odspSnapshotCacheValue: ISnapshotContents = await PerformanceEvent.timedExecAsync(
                 this.logger,
@@ -275,7 +273,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                         // Based on the concurrentSnapshotFetch policy:
                         // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
                         // or grab the cache value and then the network value if the cache value returns undefined.
-                        if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
+                        // For summarizer which could call this during refreshing of summary parent, always use the cache
+                        // first. Also for other clients, if it is not critical path which is determined by firstVersionCall,
+                        // then also check the cache first.
+                        if (this.firstVersionCall && this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                             const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions, scenarioName);
 
                             // Ensure that failures on both paths are ignored initially.
@@ -306,11 +307,18 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                             // while the first caller is awaiting later async code in this block.
 
                             retrievedSnapshot = await cachedSnapshotP;
-
-                            method = retrievedSnapshot !== undefined ? "cache" : "network";
-
-                            if (retrievedSnapshot === undefined) {
-                                retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, scenarioName);
+                            if (retrievedSnapshot !== undefined) {
+                                method = "cache";
+                            } else {
+                                method = "network";
+                                const options: ISnapshotOptions = { ...hostSnapshotOptions };
+                                // Don't fetch the blobs/deltas if it is not the first call. By default server will add
+                                // blobs and deltas to the response.
+                                if (!this.firstVersionCall) {
+                                    options.blobs = 0;
+                                    options.deltas = 0;
+                                }
+                                retrievedSnapshot = await this.fetchSnapshot(options, scenarioName);
                             }
                         }
                     }
@@ -322,10 +330,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                 },
             );
 
-            // Successful call, make network calls only
+            // Don't override ops which were fetched during initial load, since we could still need them.
+            const id = this.initializeFromSnapshot(odspSnapshotCacheValue, this.firstVersionCall);
             this.firstVersionCall = false;
-            const id = this.initializeFromSnapshot(odspSnapshotCacheValue);
-
             return id ? [{ id, treeId: undefined! }] : [];
         }
 
@@ -545,7 +552,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                 this.snapshotUrl!,
                 storageToken,
                 id,
-                this.fetchFullSnapshot,
                 !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                 this.logger,
                 snapshotDownloader,

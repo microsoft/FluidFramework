@@ -47,7 +47,8 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     ) { }
 
     public setLocalSessionId(id: SessionId) {
-        assert(this.localSessionId === undefined || this.localSessionId === id, "Local session ID cannot be changed");
+        assert(this.localSessionId === undefined || this.localSessionId === id,
+            0x3a1 /* Local session ID cannot be changed */);
         this.localSessionId = id;
     }
 
@@ -56,7 +57,11 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public getLastSequencedChange(): TChangeset {
-        return this.trunk[this.trunk.length - 1].changeset;
+        return (this.getLastCommit() ?? fail("No sequenced changes")).changeset;
+    }
+
+    public getLastCommit(): Commit<TChangeset> | undefined {
+        return this.trunk[this.trunk.length - 1];
     }
 
     public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
@@ -68,7 +73,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             const lastSeqNumber = this.trunk[this.trunk.length - 1].seqNumber;
             assert(
                 newCommit.seqNumber > lastSeqNumber,
-                "Incoming remote op sequence# <= local collabWindow's currentSequence#",
+                0x3a2 /* Incoming remote op sequence# <= local collabWindow's currentSequence# */,
             );
         }
         if (newCommit.sessionId === this.localSessionId) {
@@ -85,7 +90,8 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 
         const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
         this.updateBranch(branch, newCommit.refNumber);
-        const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit.changeset, branch);
+        const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit, branch);
+        this.addCommitToBranch(branch, newCommit);
 
         // Note: we never use the refNumber of a commit in the trunk
         this.trunk.push({
@@ -93,9 +99,20 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             changeset: newChangeFullyRebased,
         });
 
-        branch.localChanges.push(newCommit);
-
         return this.changeFamily.intoDelta(this.rebaseLocalBranch(newChangeFullyRebased));
+    }
+
+    /**
+     * Add `newCommit` to the tip of the `branch` and updates the branch's `isDivergent` flag.
+     */
+    public addCommitToBranch(branch: Branch<TChangeset>, newCommit: Commit<TChangeset>): void {
+        branch.localChanges.push(newCommit);
+        const lastCommit = this.getLastCommit();
+        if (lastCommit === undefined || newCommit.refNumber === lastCommit.seqNumber) {
+            branch.isDivergent = false;
+        } else {
+            branch.isDivergent ||= newCommit.sessionId !== lastCommit.sessionId;
+        }
     }
 
     public addLocalChange(change: TChangeset): Delta.Root {
@@ -108,11 +125,16 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         return this.changeFamily.intoDelta(change);
     }
 
-    private rebaseChangeFromBranchToTrunk(changeToRebase: TChangeset, branch: Branch<TChangeset>): TChangeset {
+    private rebaseChangeFromBranchToTrunk(commitToRebase: Commit<TChangeset>, branch: Branch<TChangeset>): TChangeset {
+        if (!branch.isDivergent && commitToRebase.sessionId === this.getLastCommit()?.sessionId) {
+            // The new commit is not divergent and therefore doesn't need to be rebased.
+            return commitToRebase.changeset;
+        }
+
         const changeRebasedToRef = branch.localChanges.reduceRight(
             (newChange, branchCommit) =>
                 this.changeFamily.rebaser.rebase(newChange, this.changeFamily.rebaser.invert(branchCommit.changeset)),
-            changeToRebase,
+            commitToRebase.changeset,
         );
 
         return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
@@ -159,7 +181,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     private updateBranch(branch: Branch<TChangeset>, newRef: SeqNumber) {
         const trunkChanges = this.getCommitsAfterAndUpToInclusive(branch.refSeq, newRef);
         if (trunkChanges.length === 0) {
-            assert(branch.refSeq === newRef, "Expected trunk changes");
+            assert(branch.refSeq === newRef, 0x3a3 /* Expected trunk changes */);
             // This early return avoids rebasing the branch changes over an empty sandwich.
             return;
         }
@@ -231,7 +253,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 
     private getOrCreateBranch(sessionId: SessionId, refSeq: SeqNumber): Branch<TChangeset> {
         if (!this.branches.has(sessionId)) {
-            this.branches.set(sessionId, { localChanges: [], refSeq });
+            this.branches.set(sessionId, { localChanges: [], refSeq, isDivergent: false });
         }
         return this.branches.get(sessionId) as Branch<TChangeset>;
     }
@@ -240,6 +262,30 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 interface Branch<TChangeset> {
     localChanges: Commit<TChangeset>[];
     refSeq: SeqNumber;
+    /**
+     * A branch is divergent iff it has local changes and there is a change outside the branch with a `seqNumber`
+     * between the branch's `refSeq` and the `seqNumber` of the last change in the branch.
+     * In other words, the ref commit followed by the local changes
+     * do not form a contiguous block in the trunk or final sequence.
+     *
+     * Note that a commit whose ref number does not match the latest sequence number at the time of its
+     * sequencing is not necessarily divergent: if the commit is from the peer who issued the preceding commit,
+     * and that preceding commit was not divergent, then the new commit is not divergent either.
+     *
+     * More formally, given:
+     *
+     * - A new commit `c`
+     *
+     * - The function `prev(x)` that returns the commit sequenced immediately before commit `x`:
+     *
+     * ```typescript
+     * isDivergent(c) =
+     *     prev(c) !== undefined
+     *     && c.refNumber !== prev(c).seqNumber
+     *     && (prev(c).sessionId !== c.sessionId || isDivergent(prev(c)))
+     * ```
+     */
+    isDivergent: boolean;
 }
 const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
     "Received a sequenced change from the local session despite having no local changes";

@@ -33,6 +33,7 @@ describe("Runtime", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
+                    attachState: AttachState.Attached,
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorumClients(),
                     taggedLogger: new MockLogger(),
@@ -74,6 +75,7 @@ describe("Runtime", () => {
                     const containerErrors: ICriticalContainerError[] = [];
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
+                            attachState: AttachState.Attached,
                             deltaManager: new MockDeltaManager(),
                             quorum: new MockQuorumClients(),
                             taggedLogger: new MockLogger(),
@@ -185,6 +187,7 @@ describe("Runtime", () => {
 
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
+                            attachState: AttachState.Attached,
                             deltaManager: new MockDeltaManager(),
                             quorum: new MockQuorumClients(),
                             taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
@@ -240,7 +243,8 @@ describe("Runtime", () => {
                     const pendingState = {
                         pending: {
                             pendingStates: [{
-                                type: "attach",
+                                type: "message",
+                                messageType: ContainerMessageType.BlobAttach,
                                 content: {},
                             }],
                         },
@@ -312,7 +316,7 @@ describe("Runtime", () => {
         });
 
         describe("Pending state progress tracking", () => {
-            const maxReconnects = 15;
+            const maxReconnects = 7;
 
             let containerRuntime: ContainerRuntime;
             const mockLogger = new MockLogger();
@@ -320,6 +324,7 @@ describe("Runtime", () => {
             const getMockContext = (): Partial<IContainerContext> => {
                 return {
                     clientId: "fakeClientId",
+                    attachState: AttachState.Attached,
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorumClients(),
                     taggedLogger: mockLogger,
@@ -424,8 +429,8 @@ describe("Runtime", () => {
                     assert.strictEqual(error.getTelemetryProperties().pendingMessages, maxReconnects);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
-                        attempts: 7,
-                        pendingMessages: 7,
+                        attempts: 3,
+                        pendingMessages: 3,
                     }]);
                 });
 
@@ -442,7 +447,7 @@ describe("Runtime", () => {
                     assert.equal(containerErrors.length, 0);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
-                        attempts: 7,
+                        attempts: 3,
                         pendingMessages: 1,
                     }]);
                 });
@@ -520,8 +525,8 @@ describe("Runtime", () => {
                     assert.strictEqual(error.getTelemetryProperties().pendingMessages, maxReconnects);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
-                        attempts: 7,
-                        pendingMessages: 7,
+                        attempts: 3,
+                        pendingMessages: 3,
                     }]);
                 });
         });
@@ -530,6 +535,7 @@ describe("Runtime", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
+                    attachState: AttachState.Attached,
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorumClients(),
                     taggedLogger: new MockLogger(),

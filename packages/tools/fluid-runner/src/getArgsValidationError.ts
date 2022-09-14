@@ -7,27 +7,21 @@ import * as fs from "fs";
 
 export function getArgsValidationError(
     inputFile: string,
-    outputFolder: string,
-    scenario: string,
+    outputFile: string,
 ): string | undefined {
     // Validate input file
     if (!inputFile) {
         // TODO: Do not log file name. It can be customer content
-        return "Input file name is missing.";
+        return "Input file name argument is missing.";
     } else if (!fs.existsSync(inputFile)) {
         return "Input file does not exist.";
     }
 
     // Validate output file
-    if (!outputFolder) {
-        return "Output folder name is missing.";
-    } else if (!fs.existsSync(outputFolder)) {
-        return "Output folder does not exist.";
-    }
-
-    // Validate scenario name
-    if (!scenario) {
-        return "Scenario name is missing.";
+    if (!outputFile) {
+        return "Output file argument is missing.";
+    } else if (fs.existsSync(outputFile)) {
+        return `Output file already exists [${outputFile}].`;
     }
 
     return undefined;

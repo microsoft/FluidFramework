@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/core-interfaces",
-  "version": "2.0.0-internal.1.1.0",
+  "version": "2.0.0-internal.1.2.0",
   "description": "Fluid object interfaces",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -30,7 +30,6 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "npm run test:types",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
@@ -38,8 +37,8 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/build-tools": "^0.3.1000",
+    "@fluidframework/build-common": "^1.0.0",
+    "@fluidframework/build-tools": "^0.4.4000",
     "@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@^1.1.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@microsoft/api-extractor": "^7.22.2",

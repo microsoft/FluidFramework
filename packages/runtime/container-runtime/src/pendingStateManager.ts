@@ -11,9 +11,9 @@ import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { wrapError } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
+import { pkgVersion } from "./packageVersion";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -68,10 +68,6 @@ export interface IRuntimeStateHandler{
         content: any,
         localOpMetadata: unknown,
         opMetadata: Record<string, unknown> | undefined): void;
-    rollback(
-        type: ContainerMessageType,
-        content: any,
-        localOpMetadata: unknown): void;
 }
 
 /**
@@ -232,7 +228,11 @@ export class PendingStateManager implements IDisposable {
 
             // then we push onto pendingStates which will cause PendingStateManager to resubmit when we connect
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pendingStates.push(this.initialStates.shift()!);
+            const firstPendingState = this.initialStates.shift()!;
+            this.pendingStates.push(firstPendingState);
+            if (firstPendingState.type === "message") {
+                this._pendingMessagesCount++;
+            }
         }
     }
 
@@ -266,6 +266,7 @@ export class PendingStateManager implements IDisposable {
         }
 
         this._pendingMessagesCount--;
+        assert(this._pendingMessagesCount >= 0, "positive");
 
         // Post-processing part - If we are processing a batch then this could be the last message in the batch.
         this.maybeProcessBatchEnd(message);
@@ -368,38 +369,28 @@ export class PendingStateManager implements IDisposable {
         } else {
             // Get the batch metadata from the last message in the batch.
             const batchEndMetadata = message.metadata?.batch;
-            assert(batchBeginMetadata === true, 0x16f /* "Did not receive batch begin metadata" */);
-            assert(batchEndMetadata === false, 0x170 /* "Did not receive batch end metadata" */);
+            if (batchBeginMetadata !== true || batchEndMetadata !== false) {
+                this.stateHandler.close(DataProcessingError.create(
+                    "Pending batch inconsistency", // Formerly known as asserts 0x16f and 0x170
+                    "processPendingLocalMessage",
+                    message,
+                    {
+                        runtimeVersion: pkgVersion,
+                        batchClientId: this.pendingBatchBeginMessage.clientId,
+                        clientId: this.stateHandler.clientId(),
+                        hasBatchStart: batchBeginMetadata === true,
+                        hasBatchEnd: batchEndMetadata === false,
+                        messageType: message.type,
+                        batchStartSequenceNumber: this.pendingBatchBeginMessage.clientSequenceNumber,
+                        pendingMessagesCount: this.pendingMessagesCount,
+                        nextPendingState: nextPendingState.type,
+                    }));
+            }
         }
 
         // Clear the pending batch state now that we have processed the entire batch.
         this.pendingBatchBeginMessage = undefined;
         this.isProcessingBatch = false;
-    }
-
-    /**
-     * Capture the pending state at this point
-     */
-    public checkpoint() {
-        const checkpointHead = this.pendingStates.peekBack();
-        return {
-            rollback: () => {
-                try {
-                    while (this.pendingStates.peekBack() !== checkpointHead) {
-                        this.rollbackNextPendingState();
-                    }
-                } catch (err) {
-                    const error = wrapError(err, (message) => {
-                        return DataProcessingError.create(
-                            `RollbackError: ${message}`,
-                            "checkpointRollback",
-                            undefined) as DataProcessingError;
-                    });
-                    this.stateHandler.close(error);
-                    throw error;
-                }
-            },
-        };
     }
 
     /**
@@ -409,31 +400,6 @@ export class PendingStateManager implements IDisposable {
         const nextPendingState = this.pendingStates.peekFront();
         assert(!!nextPendingState, 0x171 /* "No pending state found for the remote message" */);
         return nextPendingState;
-    }
-
-    /**
-     * Undo the last pending state
-     */
-    private rollbackNextPendingState() {
-        const pendingStatesCount = this.pendingStates.length;
-        if (pendingStatesCount === 0) {
-            return;
-        }
-
-        this._pendingMessagesCount--;
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pendingState = this.pendingStates.pop()!;
-        switch (pendingState.type) {
-            case "message":
-                this.stateHandler.rollback(
-                    pendingState.messageType,
-                    pendingState.content,
-                    pendingState.localOpMetadata);
-                break;
-            default:
-                throw new Error(`Can't rollback state ${pendingState.type}`);
-        }
     }
 
     /**
