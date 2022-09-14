@@ -1483,7 +1483,8 @@ class PropertyFactory {
         };
 
         if (this.inheritsFrom(in_typeid, 'NamedProperty', { scope: in_scope })) {
-            params.id = in_id || null; // An id of NULL means that the GUID of the property is used if it is a named property
+            // An id of NULL means that the GUID of the property is used if it is a named property
+            params.id = in_id || null;
         }
 
         const wrapper = this._getWrapper(in_typeid, undefined, in_scope);

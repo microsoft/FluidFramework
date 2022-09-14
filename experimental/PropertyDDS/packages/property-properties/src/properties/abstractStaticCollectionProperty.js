@@ -10,13 +10,13 @@ const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const { BREAK_TRAVERSAL, PATH_TOKENS } = BaseProperty;
+
 /**
  * This class serves as a view to read, write and listen to changes in an
  * object's value field. To do this we simply keep a pointer to the object and
  * its associated data field that we are interested in. If no data field is
  * present this property will fail constructing.
  */
-
 export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * @param {Object=} in_params - The parameters
@@ -364,7 +364,9 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Given an object that mirrors a PSet Template, assigns the properties to the values
      * found in that object.
-     * eg.
+     * E.g.
+     *
+     * ```
      * <pre>
      * Templates = {
      *   properties: [
@@ -373,6 +375,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      *   ]
      * }
      * </pre>
+     * ```
      *
      * @param {object} in_values - The object containing the nested values to assign
      * @throws If in_values is not an object (or in the case of ArrayProperty, an array)
@@ -549,16 +552,13 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Serialize the property into a changeSet
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
+     * @param {boolean} in_dirtyOnly - Only include dirty entries in the serialization
+     * @param {boolean} in_includeRootTypeid - Include the typeid of the root of the hierarchy
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] - The type of dirtiness to
+     * use when reporting dirty changes. By default this is `PENDING_CHANGE`.
      * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
+     * function will descend into referenced repositories.
+     * WARNING: if there are loops in the references this can result in an infinite loop.
      *
      * @return {Object} The serialized representation of this property
      * @private
@@ -610,14 +610,13 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Sets the property to the state in the given normalized changeset
      *
-     * @param { property-changeset.SerializedChangeSet} in_serializedObj - The serialized changeset to apply to this node. This
-     *     has to be an normalized change-set (only containing additions and property assignments. Deletes and Modify
-     *     must not appear)
-     * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
-     *                                             and trigger a modified event there. When batching updates, this
-     *                                             can be prevented via this flag.
-     * @return {property-changeset.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
-     *     deserialization
+     * @param { property-changeset.SerializedChangeSet} in_serializedObj - The serialized changeset to apply to this
+     * node. This has to be an normalized change-set (only containing additions and property assignments.
+     * Deletes and Modify must not appear)
+     * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout
+     * view and trigger a modified event there. When batching updates, this can be prevented via this flag.
+     * @return {property-changeset.SerializedChangeSet} ChangeSet with the changes that actually were performed during
+     * the deserialization.
      */
     _deserialize(in_serializedObj, in_reportToView) {
         var changeSet = {};

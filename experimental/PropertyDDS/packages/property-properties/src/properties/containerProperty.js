@@ -16,7 +16,6 @@ const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProper
 
 /**
  * A property object that allows to add child properties dynamically.
- *
  */
 export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
@@ -142,8 +141,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Removes the given property
      *
-     * @param {string|property-properties.BaseProperty} in_property - The property to remove
-     *                                                          (either its id or the whole property).
+     * @param {string|property-properties.BaseProperty} in_property - The property to remove (either its id or the
+     * whole property).
      * @throws if trying to remove an entry that does not exist
      * @return {property-properties.BaseProperty} the property removed.
      */
@@ -247,8 +246,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * Gets the information to which CheckedOutRepositoryInfo object this root property belongs.
      * Note: these functions should only be used internally (within the PropertySets library)
      *
-     * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo|undefined} If this is the root of the checked out
-     *     hierarchy, this will return the checkout
+     * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo|undefined} If this is the root of the
+     * checked out hierarchy, this will return the checkout.
      * @protected
      */
     _getCheckedOutRepositoryInfo() {

@@ -71,7 +71,7 @@ interface IBasePropertyParams {
     properties: BaseProperty[];
 
     // TODO: UNUSED PARAMETER ??
-    /**  List of property template typeids that this PropertyTemplate inherits from */
+    /** List of property template typeids that this PropertyTemplate inherits from */
     inherits: string[];
 }
 
@@ -100,7 +100,6 @@ interface ISerializeOptions {
  * Thus, with the filtering options, it is NOT possible to prevent a part of a ChangeSet from being
  * processed (in `applyChangeSet()` for example), it is NOT possible to prevent a property from being
  * created by a direct call to a function like `deserialize()` or `createProperty()`.
- *
  */
 export abstract class BaseProperty {
     protected _id: string | undefined;
@@ -173,8 +172,8 @@ export abstract class BaseProperty {
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
-     * @param in_hideCollection - if true the collection type (if applicable) will be omitted
-     *                since that is not applicable here, this param is ignored
+     * @param in_hideCollection - if true the collection type (if applicable) will be omitted since that is not
+     * applicable here, this param is ignored.
      * @returns The typeid
      */
     getFullTypeid(in_hideCollection = false): string {
@@ -341,7 +340,6 @@ export abstract class BaseProperty {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             currentNode._tree &&
             currentNode._tree.notificationDelayScope === 0 &&
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             currentNode._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY)
         ) {
             currentNode._tree._reportDirtinessToView();
