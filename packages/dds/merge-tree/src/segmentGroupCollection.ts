@@ -21,9 +21,16 @@ export class SegmentGroupCollection {
         return this.segmentGroups.empty();
     }
 
-    public enqueue(segmentGroup: SegmentGroup) {
+    public enqueue(segmentGroup: SegmentGroup, sourceSegment?: ISegment) {
         this.segmentGroups.enqueue(segmentGroup);
         segmentGroup.segments.push(this.segment);
+        if (segmentGroup.previousProps && sourceSegment) {
+            // duplicate the previousProps for the new segment if it's split from an existing one
+            const index = segmentGroup.segments.indexOf(sourceSegment);
+            if (index !== -1) {
+                segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
+            }
+        }
     }
 
     public dequeue(): SegmentGroup | undefined {
@@ -39,6 +46,6 @@ export class SegmentGroupCollection {
     }
 
     public copyTo(segment: ISegment) {
-        this.segmentGroups.walk((sg) => segment.segmentGroups.enqueue(sg));
+        this.segmentGroups.walk((sg) => segment.segmentGroups.enqueue(sg, this.segment));
     }
 }
