@@ -10,11 +10,7 @@ export {
     getDefaultBumpTypeForBranch,
     generateReleaseBranchName,
 } from "./branches";
-export {
-    bumpPackageDependencies,
-    bumpVersion as bumpReleaseGroup,
-    PackageWithRangeSpec,
-} from "./bump";
+export { bumpPackageDependencies, bumpReleaseGroup, PackageWithRangeSpec } from "./bump";
 export {
     getAllVersions,
     getPreReleaseDependencies,
@@ -28,3 +24,4 @@ export {
     VersionDetails,
 } from "./package";
 export { difference } from "./sets";
+export { getIndent, indentString } from "./text";

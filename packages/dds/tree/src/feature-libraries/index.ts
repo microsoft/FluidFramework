@@ -4,6 +4,7 @@
  */
 
 export * from "./object-forest";
+export * from "./editable-tree";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
 export * from "./schemaIndex";
@@ -17,10 +18,14 @@ export {
     FieldChangeHandler,
     FieldChangeRebaser,
     FieldChangeEncoder,
+    FieldEditor,
+    NodeChangeset,
+    ValueChange,
     FieldChangeMap,
     FieldChange,
     FieldChangeset,
     ToDelta,
+    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,

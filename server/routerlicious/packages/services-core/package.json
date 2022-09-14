@@ -39,7 +39,7 @@
     "nconf": "^0.12.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",

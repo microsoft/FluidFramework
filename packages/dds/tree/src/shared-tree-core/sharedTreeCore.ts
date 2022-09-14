@@ -38,7 +38,9 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
     extends SharedObject<ISharedTreeCoreEvents> {
     public readonly editManager: EditManager<TChange, TChangeFamily>;
 
-    /** All {@link SummaryElement}s that are present on any {@link Index}es in this DDS */
+    /**
+     * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
+     */
     private readonly summaryElements: SummaryElement[];
 
     /**

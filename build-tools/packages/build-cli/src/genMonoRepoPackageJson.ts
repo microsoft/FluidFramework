@@ -88,7 +88,7 @@ async function generateMonoRepoPackageLockJson(
     const markTopLevelNonDev = (dep: string, ref: string, topRef: string) => {
         const item = repoPackageLockJson.dependencies[dep];
         if (item !== undefined) {
-            logger.error(
+            logger.errorLog(
                 `Missing ${dep} in lock file referenced by ${ref} from ${topRef} in ${monoRepo.kind.toLowerCase()}`,
             );
         }
@@ -145,7 +145,9 @@ function processDependencies(
         const existing = repoPackageJson.dependencies[dep];
         if (existing) {
             if (existing !== version) {
-                logger.error(`Dependency version mismatch for ${dep}: ${existing} and ${version}`);
+                logger.errorLog(
+                    `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
+                );
             }
 
             continue;
@@ -174,7 +176,9 @@ function processDevDependencies(
         const existing = repoPackageJson.dependencies[dep] ?? repoPackageJson.devDependencies[dep];
         if (existing) {
             if (existing !== version) {
-                logger.error(`Dependency version mismatch for ${dep}: ${existing} and ${version}`);
+                logger.errorLog(
+                    `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
+                );
             }
 
             continue;

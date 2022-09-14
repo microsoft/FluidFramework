@@ -28,6 +28,6 @@ export interface IGarbageCollectionDetailsBase {
 }
 
 /**
- * @deprecated - Kept for back-compat. This has been renamed to {@link IGarbageCollectionDetailsBase}.
+ * @deprecated Kept for backwards-compatabiliy. This has been renamed to {@link IGarbageCollectionDetailsBase}.
  */
 export type IGarbageCollectionSummaryDetails = IGarbageCollectionDetailsBase;

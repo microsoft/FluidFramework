@@ -122,10 +122,10 @@ describe("Schema Comparison", () => {
             value: ValueSchema.Nothing,
         }));
         assert(isNeverTree(defaultSchemaPolicy, repo, neverTree2));
-        repo.updateFieldSchema(brandOpaque<GlobalFieldKey>("never"), neverField);
+        repo.updateFieldSchema(brand("never"), neverField);
         assert(isNeverTree(defaultSchemaPolicy, repo, {
             localFields: emptyMap,
-            globalFields: new Set([brandOpaque<GlobalFieldKey>("never")]),
+            globalFields: new Set([brand("never")]),
             extraLocalFields: emptyField,
             extraGlobalFields: true,
             value: ValueSchema.Serializable,

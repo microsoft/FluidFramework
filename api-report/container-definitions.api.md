@@ -84,6 +84,14 @@ export interface IAudienceOwner extends IAudience {
 }
 
 // @public
+export interface IBatchMessage {
+    // (undocumented)
+    contents: string;
+    // (undocumented)
+    metadata: Record<string, unknown> | undefined;
+}
+
+// @public
 export interface ICodeAllowList {
     // (undocumented)
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
@@ -180,7 +188,9 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
-    readonly submitFn: (type: MessageType, contents: string, batch: boolean, appData?: any) => number;
+    readonly submitBatchFn: (batch: IBatchMessage[]) => number;
+    // @deprecated (undocumented)
+    readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)

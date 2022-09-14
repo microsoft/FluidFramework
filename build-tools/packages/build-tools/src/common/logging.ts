@@ -11,14 +11,14 @@ export type LoggingFunction = (msg: string | Error, ...args: unknown[]) => void;
 export interface Logger {
     info: LoggingFunction,
     warning: LoggingFunction,
-    error: LoggingFunction,
-    verbose: LoggingFunction
+    errorLog: LoggingFunction,
+    verbose: LoggingFunction,
 }
 
 export const defaultLogger: Logger = {
     info,
     warning,
-    error,
+    errorLog,
     verbose
 }
 
@@ -51,6 +51,6 @@ function warning(msg: string | Error) {
     log(`${chalk.yellow(`WARNING`)}: ${msg}`, console.log);
 }
 
-function error(msg: string | Error) {
+function errorLog(msg: string | Error) {
     log(`${chalk.red(`ERROR`)}: ${msg}`, console.error);
 }

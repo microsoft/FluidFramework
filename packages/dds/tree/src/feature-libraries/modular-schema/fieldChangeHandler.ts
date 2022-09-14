@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { JsonCompatibleReadOnly } from "../../change-family";
 import { FieldKindIdentifier } from "../../schema-stored";
-import { Delta } from "../../tree";
-import { Brand, Invariant } from "../../util";
+import { Delta, FieldKey, Value } from "../../tree";
+import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -16,6 +15,7 @@ export interface FieldChangeHandler<TChangeset> {
     _typeCheck?: Invariant<TChangeset>;
     rebaser: FieldChangeRebaser<TChangeset>;
     encoder: FieldChangeEncoder<TChangeset>;
+    editor: FieldEditor<TChangeset>;
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
     // TODO
@@ -54,23 +54,39 @@ export interface FieldChangeEncoder<TChangeset> {
      decodeJson(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder): TChangeset;
 }
 
-export type ToDelta = (child: FieldChangeMap) => Delta.Root;
+export interface FieldEditor<TChangeset> {
+    /**
+     * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
+     */
+    buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
+}
 
-export type NodeChangeInverter = (change: FieldChangeMap) => FieldChangeMap;
+export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+
+export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 export type NodeChangeRebaser = (
-    change: FieldChangeMap,
-    baseChange: FieldChangeMap
-) => FieldChangeMap;
+    change: NodeChangeset,
+    baseChange: NodeChangeset
+) => NodeChangeset;
 
-export type NodeChangeComposer = (changes: FieldChangeMap[]) => FieldChangeMap;
-export type NodeChangeEncoder = (change: FieldChangeMap) => JsonCompatibleReadOnly;
-export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => FieldChangeMap;
+export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
+export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
+export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
-// TODO: Replace with Map<FieldKey, FieldChanges>
-export interface FieldChangeMap {
-    [key: string]: FieldChange;
+export interface NodeChangeset {
+    fieldChanges?: FieldChangeMap;
+    valueChange?: ValueChange;
 }
+
+export interface ValueChange {
+    /**
+     * Can be left unset to represent the value being cleared.
+     */
+    value?: Value;
+}
+
+export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
      fieldKind: FieldKindIdentifier;

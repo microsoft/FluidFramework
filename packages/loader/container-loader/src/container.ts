@@ -29,10 +29,9 @@ import {
     IContainerLoadMode,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
-    DataCorruptionError,
-    extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
 } from "@fluidframework/container-utils";
@@ -50,8 +49,6 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
-    isRuntimeMessage,
-    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -61,7 +58,6 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
-    IProcessMessageResult,
     IProtocolState,
     IQuorumClients,
     IQuorumProposals,
@@ -1585,6 +1581,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("readonly", (readonly) => {
+            this.setContextConnectedState(this.connectionState === ConnectionState.Connected, readonly);
             this.emit("readonly", readonly);
         });
 
@@ -1682,9 +1679,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Both protocol and context should not be undefined if we got so far.
 
-        if (this._context?.disposed === false) {
-            this.context.setConnectionState(state, this.clientId);
-        }
+        this.setContextConnectedState(state, this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false);
         this.protocolHandler.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
 
@@ -1694,16 +1689,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         switch (type) {
             case MessageType.Operation:
                 return this.submitMessage(
                     type,
-                    // back-compat: ADO #1385: pass content as-is in future.
-                    typeof contents === "string" ? contents : JSON.stringify(contents),
+                    JSON.stringify(contents),
                     batch,
                     metadata);
-            // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
             case MessageType.Summarize:
                 return this.submitSummaryMessage(contents as unknown as ISummaryContent);
             default:
@@ -1712,6 +1706,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     { messageType: type }));
                 return -1;
         }
+    }
+
+    /** @returns clientSequenceNumber of last message in a batch */
+    private submitBatch(batch: IBatchMessage[]): number {
+        let clientSequenceNumber = -1;
+        for (const message of batch) {
+            clientSequenceNumber = this.submitMessage(
+                MessageType.Operation,
+                message.contents,
+                true, // batch
+                message.metadata);
+        }
+        this._deltaManager.flush();
+        return clientSequenceNumber;
     }
 
     private submitSummaryMessage(summary: ISummaryContent) {
@@ -1738,28 +1746,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
+    private processRemoteMessage(message: ISequencedDocumentMessage) {
         const local = this.clientId === message.clientId;
 
         // Allow the protocol handler to process the message
-        let result: IProcessMessageResult = { immediateNoOp: false };
-        try {
-            result = this.protocolHandler.processMessage(message, local);
-        } catch (error) {
-            this.close(wrapError(error, (errorMessage) =>
-                new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
-        }
+        const result = this.protocolHandler.processMessage(message, local);
 
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
-            this.mc.logger.sendTelemetryEvent(
-                { eventName: "UnpackedRuntimeMessage", type: message.type });
-        }
-        // Forward non system messages to the loaded runtime for processing
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
-            this.context.process(message, local, undefined);
-        }
+        // Forward messages to the loaded runtime for processing
+        this.context.process(message, local, undefined);
 
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {
@@ -1785,8 +1779,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         this.emit("op", message);
-
-        return result;
     }
 
     private submitSignal(message: any) {
@@ -1863,6 +1855,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
+            (batch: IBatchMessage[]) => this.submitBatch(batch),
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,
@@ -1884,5 +1877,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private logContainerError(warning: ContainerWarning) {
         this.mc.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
+    }
+
+    /**
+     * Set the connected state of the ContainerContext
+     * This controls the "connected" state of the ContainerRuntime as well
+     * @param state - Is the container currently connected?
+     * @param readonly - Is the container in readonly mode?
+     */
+    private setContextConnectedState(state: boolean, readonly: boolean): void {
+        if (this._context?.disposed === false) {
+            /**
+             * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
+             * ops getting through to the DeltaManager.
+             * The ContainerRuntime's "connected" state simply means it is ok to send ops
+             * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
+             */
+            this.context.setConnectionState(state && !readonly, this.clientId);
+        }
     }
 }
