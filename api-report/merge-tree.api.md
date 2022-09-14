@@ -1210,23 +1210,43 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 }
 
 // @public
-export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> {
+export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<T, string> {
     // (undocumented)
-    addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T): void;
+    protected findItemPosition(item: T): {
+        exists: boolean;
+        index: number;
+    };
     // (undocumented)
-    has(item: T): boolean;
-    // (undocumented)
-    get items(): readonly T[];
-    // (undocumented)
-    remove(item: T): boolean;
-    // (undocumented)
-    get size(): number;
+    protected getKey(item: T): string;
 }
 
 // @public (undocumented)
 export type SortedSegmentSetItem = ISegment | LocalReferencePosition | {
     readonly segment: ISegment;
 };
+
+// @public (undocumented)
+export abstract class SortedSet<T, U extends string | number> {
+    // (undocumented)
+    addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void;
+    // (undocumented)
+    protected findItemPosition(item: T): {
+        exists: boolean;
+        index: number;
+    };
+    // (undocumented)
+    protected abstract getKey(t: T): U;
+    // (undocumented)
+    has(item: T): boolean;
+    // (undocumented)
+    get items(): readonly T[];
+    // (undocumented)
+    protected readonly keySortedItems: T[];
+    // (undocumented)
+    remove(item: T): boolean;
+    // (undocumented)
+    get size(): number;
+}
 
 // @public (undocumented)
 export class Stack<T> {
