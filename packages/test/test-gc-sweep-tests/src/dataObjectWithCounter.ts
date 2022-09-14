@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
+import { allFactories } from "./testDataObjects";
 
 /**
  * DataObjectWithCounter increments a SharedCounter as a way of sending ops.
@@ -18,7 +19,7 @@ export class DataObjectWithCounter extends DataObject {
     private counter?: SharedCounter;
     public isRunning: boolean = false;
     public static get type(): string {
-        return "OpSendingDataObject";
+        return "DataObjectWithCounter";
     }
 
     protected async initializingFirstTime(props?: any): Promise<void> {
@@ -41,3 +42,10 @@ export class DataObjectWithCounter extends DataObject {
         this.isRunning = false;
     }
 }
+
+export const dataObjectWithCounterFactory = new DataObjectFactory(
+    DataObjectWithCounter.type,
+    DataObjectWithCounter,
+    allFactories,
+    {},
+);
