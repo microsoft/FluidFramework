@@ -841,23 +841,29 @@ class PropertyFactory {
     }
 
     /**
-     * Validate a template
+     * Validate a template.
      * Check that the template is syntactically correct as well as semantically correct.
-     * @param {object|property-properties.PropertyTemplate} in_template - The template to check against
-     * @returns {object|undefined} map of key-value pairs
-     *  where the path of the invalid property is the key and the value is the error message
-     *  i.e.
-     *  <pre>
-     *    {
-     *      'isValid': true or false,
-     *      'typeid': 'The typeid of the object being parsed',
-     *      'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
-     *        'in the document', 'but not resolved from the local cache' ],
-     *      'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
-     *      'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
-     *      ...
-     *    }
-     *  </pre>
+     *
+     * @param {object|property-properties.PropertyTemplate} in_template - The template to check against.
+     *
+     * @returns {object|undefined} map of key-value pairs where the path of the invalid property is the key,
+     * and the value is the error message.
+     *
+     * i.e.
+     *
+     * ```
+     * <pre>
+     *   {
+     *     'isValid': true or false,
+     *     'typeid': 'The typeid of the object being parsed',
+     *     'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
+     *       'in the document', 'but not resolved from the local cache' ],
+     *     'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
+     *     'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
+     *     ...
+     *   }
+     * </pre>
+     * ```
      */
     validate(in_template) {
         return this._templateValidator.validate(in_template);
@@ -871,7 +877,7 @@ class PropertyFactory {
      * @param {string} [in_scope] - The scope in which the property typeid is defined
      *
      * @returns {property-properties.PropertyTemplate|object|property-properties.BaseProperty|undefined}
-     *     Template/Property identified by the typeid.
+     * Template/Property identified by the typeid.
      */
     _get(in_typeid, in_context, in_scope = undefined) {
         var templateOrProperty = this._getWrapper(in_typeid, in_context, in_scope);

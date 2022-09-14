@@ -6,6 +6,7 @@
 /**
  * @fileoverview Definition of the set property class
  */
+
 const { PathHelper, TypeIdHelper } = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const _ = require('lodash');
@@ -15,6 +16,7 @@ const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProper
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 
 var PATH_TOKENS = BaseProperty.PATH_TOKENS;
+
 /**
  * A SetProperty is a collection class that can contain an unordered set of properties. These properties
  * must derive from NamedProperty and their URN is used to identify them within the set.
@@ -53,14 +55,18 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     }
 
     /**
-    * Returns an object with all the nested values contained in this property
-    * @return {object} an object representing the values of your property
-    * for example: {
+    * Returns an object with all the nested values contained in this property.
+    * @return {object} An object representing the values of your property.
+    * For example:
+    *
+    * ```json
+    * {
     *   position: {
     *    x: 2,
     *    y: 5
     *   }
     * }
+    * ```
     */
     getValues() {
         var ids = this.getIds();
@@ -133,11 +139,13 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     }
 
     /**
-     * Adds a property to the set
-     * - If the property's key exists, the entry is replaced with new one.
-     * - If the property's key does not exist, the property is appended.*
+     * Adds a property to the set.
      *
-     * @param {NamedProperty|NamedNodeProperty|Object} in_property - The property to add to the list
+     * - If the property's key exists, the entry is replaced with new one.
+     *
+     * - If the property's key does not exist, the property is appended.
+     *
+     * @param {NamedProperty|NamedNodeProperty|Object} in_property - The property to add to the list.
      */
     set(in_property) {
         this._checkIsNotReadOnly(true);
