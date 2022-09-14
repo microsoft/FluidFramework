@@ -1809,6 +1809,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new LoggingError("client does not exist");
         }
         const segoff = { segment: lref.getSegment(), offset: lref.getOffset() };
+        if (segoff.segment?.localRefs?.has(lref) !== true) {
+            return undefined;
+        }
         const newSegoff = this.client.getSlideToSegment(segoff);
         const value: { segment: ISegment | undefined; offset: number | undefined; } | undefined
             = (segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset) ? undefined : newSegoff;

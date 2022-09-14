@@ -39,3 +39,10 @@ export * from "./segmentPropertiesManager";
 export * from "./sortedSegmentSet";
 export * from "./textSegment";
 export * from "./referencePositions";
+export {
+    MergeTreeDeltaRevertible,
+    MergeTreeRevertibleDriver,
+    appendToMergeTreeDeltaRevertibles,
+    discardMergeTreeDeltaRevertible,
+    revertMergeTreeDeltaRevertibles,
+} from "./revertibles";

@@ -71,7 +71,8 @@
         "backCompat": false
       },
       "InterfaceDeclaration_ISharedString": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "ClassDeclaration_SequenceEvent": {
         "backCompat": false
@@ -86,7 +87,8 @@
         "backCompat": false
       },
       "ClassDeclaration_SharedString": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "ClassDeclaration_SharedNumberSequence": {
         "backCompat": false
@@ -95,10 +97,12 @@
         "backCompat": false
       },
       "ClassDeclaration_SharedSegmentSequence": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "ClassDeclaration_SharedSequence": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "TypeAliasDeclaration_SharedStringSegment": {
         "backCompat": false
