@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { ITreeCursor, TreeNavigationResult } from "../forest";
-import { JsonCursor, cursorToJsonObject } from "../domains";
 import { EmptyKey, FieldKey } from "../tree";
 import { brand } from "../util";
 
@@ -53,6 +52,7 @@ export const jsonCompatibleCursorTestCases: [string, Jsonable][] = [
 export function testJsonCompatibleCursor<T>(
     suiteName: string,
     factory: (data?: Jsonable) => ITreeCursor,
+    cursorToJsonable: (cursor: ITreeCursor) => Jsonable,
     checkAdditionalRoundTripRequirements?: (clone: Jsonable, expected: Jsonable) => void,
 ): void {
     describe(`${suiteName} cursor implementation`, () => {
@@ -62,12 +62,12 @@ export function testJsonCompatibleCursor<T>(
                     it(`${name}: ${JSON.stringify(expected)}`, () => {
                         const cursor = factory(expected);
 
-                        assert.deepEqual(cursorToJsonObject(cursor), expected,
+                        assert.deepEqual(cursorToJsonable(cursor), expected,
                             `${suiteName} results must match source.`);
 
                         // Read tree a second time to verify that the previous traversal returned the cursor's
                         // internal state machine to the root (i.e., stacks should be empty.)
-                        const secondResult = cursorToJsonObject(cursor);
+                        const secondResult = cursorToJsonable(cursor);
                         assert.deepEqual(secondResult, expected,
                             `${suiteName} must return same results on second traversal.`);
 
@@ -79,7 +79,7 @@ export function testJsonCompatibleCursor<T>(
 
         describe("keys", () => {
             it("object", () => {
-                assert.deepEqual([...new JsonCursor({}).keys], []);
+                assert.deepEqual([...factory({}).keys], []);
                 assert.deepEqual([...factory({}).keys], []);
                 assert.deepEqual([...factory({ x: {} }).keys], ["x"]);
                 assert.deepEqual(new Set(factory({ x: {}, test: 6 }).keys), new Set(["x", "test"]));
@@ -192,7 +192,7 @@ export function testJsonCompatibleCursor<T>(
             }
 
             it("Missing key in map returns NotFound", () => {
-                const cursor = new JsonCursor({ [foundKey as string]: true });
+                const cursor = factory({ [foundKey as string]: true });
                 expectNotFound(cursor, notFoundKey);
 
                 // A failed navigation attempt should leave the cursor in a valid state.  Verify
@@ -201,7 +201,7 @@ export function testJsonCompatibleCursor<T>(
             });
 
             it("Out of bounds map index returns NotFound", () => {
-                const cursor = new JsonCursor({ [foundKey as string]: true });
+                const cursor = factory({ [foundKey as string]: true });
                 expectNotFound(cursor, foundKey, 1);
 
                 // A failed navigation attempt should leave the cursor in a valid state.  Verify
@@ -210,7 +210,7 @@ export function testJsonCompatibleCursor<T>(
             });
 
             it("Empty array must not contain 0th item", () => {
-                const cursor = new JsonCursor([]);
+                const cursor = factory([]);
                 expectNotFound(cursor, EmptyKey, 0);
             });
 
