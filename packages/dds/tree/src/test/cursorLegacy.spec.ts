@@ -9,6 +9,7 @@ import { Jsonable } from "@fluidframework/datastore-definitions";
 import { ITreeCursor, TreeNavigationResult } from "../forest";
 import { EmptyKey, FieldKey } from "../tree";
 import { brand } from "../util";
+import { cursorToJsonObject } from "../domains";
 
 export const jsonCompatibleCursorTestCases: [string, Jsonable][] = [
     ["null", [null]],
@@ -52,7 +53,6 @@ export const jsonCompatibleCursorTestCases: [string, Jsonable][] = [
 export function testJsonCompatibleCursor<T>(
     suiteName: string,
     factory: (data?: Jsonable) => ITreeCursor,
-    cursorToJsonable: (cursor: ITreeCursor) => Jsonable,
     checkAdditionalRoundTripRequirements?: (clone: Jsonable, expected: Jsonable) => void,
 ): void {
     describe(`${suiteName} cursor implementation`, () => {
@@ -62,12 +62,12 @@ export function testJsonCompatibleCursor<T>(
                     it(`${name}: ${JSON.stringify(expected)}`, () => {
                         const cursor = factory(expected);
 
-                        assert.deepEqual(cursorToJsonable(cursor), expected,
+                        assert.deepEqual(cursorToJsonObject(cursor), expected,
                             `${suiteName} results must match source.`);
 
                         // Read tree a second time to verify that the previous traversal returned the cursor's
                         // internal state machine to the root (i.e., stacks should be empty.)
-                        const secondResult = cursorToJsonable(cursor);
+                        const secondResult = cursorToJsonObject(cursor);
                         assert.deepEqual(secondResult, expected,
                             `${suiteName} must return same results on second traversal.`);
 
