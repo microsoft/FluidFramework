@@ -21,7 +21,7 @@ import { createContainer, getContainer } from "./getContainer";
  * @param containerRuntimeFactory - The container factory to be loaded in the container.
  * @param createNew - A flag indicating whether a new container should be created.
  * @param tinyliciousPort - An optional port to connect to the tinylicious server.
- *                          When not provided, the default port 7070 will be used.
+ * When not provided, the default port 7070 will be used.
  * @returns - A tuple of the container instance and the container ID associated with it.
  */
 export async function getTinyliciousContainer(
@@ -33,8 +33,7 @@ export async function getTinyliciousContainer(
     const tokenProvider = new InsecureTinyliciousTokenProvider();
     const urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
-    let container: IContainer;
-    container = await (createNew
+    const container = await (createNew
         ? createContainer({
             documentServiceFactory,
             urlResolver,

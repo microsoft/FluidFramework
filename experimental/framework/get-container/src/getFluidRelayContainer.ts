@@ -37,8 +37,7 @@ export async function getFluidRelayContainer(
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
     const urlResolver = new InsecureTinyliciousUrlResolver();
 
-    let container: IContainer;
-    container = await (createNew
+    const container = await (createNew
         ? createContainer({
             documentServiceFactory,
             urlResolver,
