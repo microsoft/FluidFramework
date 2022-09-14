@@ -14,17 +14,16 @@ export {
     ISummaryConfigurationDisableSummarizer,
     ISummaryConfigurationDisableHeuristics,
     IContainerRuntimeOptions,
-    IPendingRuntimeState,
     IRootSummaryTreeWithStats,
     isRuntimeMessage,
     RuntimeMessage,
     unpackRuntimeMessage,
-    ScheduleManager,
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
+    ICompressionRuntimeOptions,
 } from "./containerRuntime";
 export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -40,6 +39,7 @@ export {
     IPendingMessage,
     IPendingState,
 } from "./pendingStateManager";
+export { ScheduleManager } from "./scheduleManager";
 export { Summarizer } from "./summarizer";
 export {
     EnqueueSummarizeResult,
@@ -54,6 +54,7 @@ export {
     INackSummaryResult,
     IOnDemandSummarizeOptions,
     IProvideSummarizer,
+    IRefreshSummaryAckOptions,
     ISubmitSummaryOpResult,
     ISubmitSummaryOptions,
     ISummarizeOptions,

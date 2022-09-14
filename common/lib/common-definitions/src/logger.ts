@@ -31,6 +31,7 @@ export type TelemetryEventPropertyType =
     value: TValue,
     tag: string,
 }
+
 /**
  * JSON-serializable properties, which will be logged with telemetry.
  */

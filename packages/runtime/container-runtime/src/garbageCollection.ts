@@ -61,13 +61,11 @@ export const gcTreeKey = "gc";
 export const gcBlobPrefix = "__gc";
 
 // Feature gate key to turn GC on / off.
-const runGCKey = "Fluid.GarbageCollection.RunGC";
+export const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Feature gate key to turn GC sweep on / off.
-// const runSweepKey = "Fluid.GarbageCollection.RunSweep";
+export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to turn GC test mode on / off.
-const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-// Feature gate key to write GC data at the root of the summary tree.
-const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
+export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to expire a session after a set period of time.
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 // Feature gate key to disable expiring session after a set period of time, even if expiry value is present
@@ -80,7 +78,7 @@ const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
-const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
+export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
@@ -125,7 +123,7 @@ export interface IGarbageCollectionRuntime {
     /** Returns the garbage collection data of the runtime. */
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     /** After GC has run, called to notify the runtime of routes that are used in it. */
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     /** After GC has run, called to delete objects in the runtime whose routes are unused. */
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     /** Returns a referenced timestamp to be used to track unreferenced nodes. */
@@ -142,8 +140,6 @@ export interface IGarbageCollector {
     readonly shouldRunGC: boolean;
     /** Tells whether the GC state in summary needs to be reset in the next summary. */
     readonly summaryStateNeedsReset: boolean;
-    /** Tells whether GC data should be written to the root of the summary tree. */
-    readonly writeDataAtRoot: boolean;
     readonly trackGCState: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
@@ -190,14 +186,14 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /** The state of node that is unreferenced. */
-const UnreferencedState = {
+export const UnreferencedState = {
     /** The node is active, i.e., it can become referenced again. */
     Active: "Active",
     /** The node is inactive, i.e., it should not become referenced. */
     Inactive: "Inactive",
     /** The node is ready to be deleted by the sweep phase. */
     SweepReady: "SweepReady",
-};
+} as const;
 export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
 
 /** The event that is logged when unreferenced node is used after a certain time. */
@@ -220,14 +216,16 @@ interface IUnreferencedEventProps {
  * Helper class that tracks the state of an unreferenced node such as the time it was unreferenced and if it can
  * be deleted by the sweep phase.
  */
-class UnreferencedStateTracker {
+export class UnreferencedStateTracker {
     private _state: UnreferencedState = UnreferencedState.Active;
     public get state(): UnreferencedState {
         return this._state;
     }
 
-    private inactiveTimer: Timer | undefined;
-    private sweepTimer: ReturnType<typeof setTimeout> | undefined;
+    /** Timer to indicate when an unreferenced object is considered Inactive */
+    private readonly inactiveTimer: TimerWithNoDefaultTimeout;
+    /** Timer to indicate when an unreferenced object is Sweep-Ready */
+    private readonly sweepTimer: TimerWithNoDefaultTimeout;
 
     constructor(
         public readonly unreferencedTimestampMs: number,
@@ -238,8 +236,29 @@ class UnreferencedStateTracker {
         /** The current reference timestamp; undefined if no ops have ever been processed which can happen in tests. */
         currentReferenceTimestampMs?: number,
     ) {
-        // If there is no current reference timestamp, don't track the node's unreferenced state. This will happen
-        // later when updateTracking is called with a reference timestamp.
+        if (this.sweepTimeoutMs !== undefined) {
+            assert(this.inactiveTimeoutMs <= this.sweepTimeoutMs,
+                0x3b0 /* inactive timeout must not be greater than the sweep timeout */);
+        }
+
+        this.sweepTimer = new TimerWithNoDefaultTimeout(
+            () => {
+                this._state = UnreferencedState.SweepReady;
+                assert(!this.inactiveTimer.hasTimer, 0x3b1 /* inactiveTimer still running after sweepTimer fired! */);
+            },
+        );
+
+        this.inactiveTimer = new TimerWithNoDefaultTimeout(() => {
+            this._state = UnreferencedState.Inactive;
+
+            // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
+            if (this.sweepTimeoutMs !== undefined) {
+                this.sweepTimer.restart(this.sweepTimeoutMs - this.inactiveTimeoutMs);
+            }
+        });
+
+        // If there is no current reference timestamp, can't track the node's unreferenced state at this time.
+        // This will happen later when updateTracking is called with a reference timestamp.
         if (currentReferenceTimestampMs !== undefined) {
             this.updateTracking(currentReferenceTimestampMs);
         }
@@ -260,42 +279,21 @@ class UnreferencedStateTracker {
         // Also, start a timer for the sweep timeout.
         if (unreferencedDurationMs >= this.inactiveTimeoutMs) {
             this._state = UnreferencedState.Inactive;
-            this.clearTimers();
+            this.inactiveTimer.clear();
 
             if (this.sweepTimeoutMs !== undefined) {
-                setLongTimeout(
-                    this.sweepTimeoutMs - unreferencedDurationMs,
-                    () => { this._state = UnreferencedState.SweepReady; },
-                    (timer) => { this.sweepTimer = timer; },
-                );
+                this.sweepTimer.restart(this.sweepTimeoutMs - unreferencedDurationMs);
             }
             return;
         }
 
-        // The node is still active. Start the inactive timer for the remaining duration.
-        const remainingDurationMs = this.inactiveTimeoutMs - unreferencedDurationMs;
-        if (this.inactiveTimer === undefined) {
-            const inactiveTimeoutHandler = () => {
-                this._state = UnreferencedState.Inactive;
-                // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
-                if (this.sweepTimeoutMs !== undefined) {
-                    setLongTimeout(
-                        this.sweepTimeoutMs - this.inactiveTimeoutMs,
-                        () => { this._state = UnreferencedState.SweepReady; },
-                        (timer) => { this.sweepTimer = timer; },
-                    );
-                }
-            };
-            this.inactiveTimer = new Timer(remainingDurationMs, () => inactiveTimeoutHandler());
-        }
-        this.inactiveTimer.restart(remainingDurationMs);
+        // The node is still active. Ensure the inactive timer is running with the proper remaining duration.
+        this.inactiveTimer.restart(this.inactiveTimeoutMs - unreferencedDurationMs);
     }
 
     private clearTimers() {
-        this.inactiveTimer?.clear();
-        if (this.sweepTimer !== undefined) {
-            clearTimeout(this.sweepTimer);
-        }
+        this.inactiveTimer.clear();
+        this.sweepTimer.clear();
     }
 
     /** Stop tracking this node. Reset the unreferenced timers and state, if any. */
@@ -368,14 +366,6 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly mc: MonitoringContext;
 
     /**
-     * Tells whether the GC data should be written to the root of the summary tree.
-     */
-    private _writeDataAtRoot: boolean = true;
-    public get writeDataAtRoot(): boolean {
-        return this._writeDataAtRoot;
-    }
-
-    /**
      * Tells whether the initial GC state needs to be reset. This can happen under 2 conditions:
      * 1. The base snapshot contains GC state but GC is disabled. This will happen the first time GC is disabled after
      *    it was enabled before. GC state needs to be removed from summary and all nodes should be marked referenced.
@@ -412,8 +402,8 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly baseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
-    // The timeout responsible for closing the container when the session has expired
-    private sessionExpiryTimer?: ReturnType<typeof setTimeout>;
+    // The Timer responsible for closing the container when the session has expired
+    private sessionExpiryTimer: Timer | undefined;
 
     // Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
     // per event per node.
@@ -484,7 +474,7 @@ export class GarbageCollector implements IGarbageCollector {
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
             this.sweepEnabled = this.gcOptions.sweepAllowed === true;
 
-            // Set the Session Expiry only if the flag is enabled or the test option is set.
+            // Set the Session Expiry only if the flag is enabled and GC is enabled.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
             }
@@ -497,11 +487,11 @@ export class GarbageCollector implements IGarbageCollector {
                 this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
             const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
 
-            setLongTimeout(
+            this.sessionExpiryTimer = new Timer(
                 timeoutMs,
                 () => { this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs)); },
-                (timer) => { this.sessionExpiryTimer = timer; },
             );
+            this.sessionExpiryTimer.start();
 
             // TEMPORARY: Hardcode a default of 2 days which is the value used in the ODSP driver.
             // This unblocks the Sweep Log (see logSweepEvents function).
@@ -557,21 +547,16 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
         if (this.sweepTimeoutMs !== undefined && this.inactiveTimeoutMs > this.sweepTimeoutMs) {
-            throw new UsageError("inactive timeout should not be greated than the sweep timeout");
+            throw new UsageError("inactive timeout should not be greater than the sweep timeout");
         }
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
 
-        // GC state is written into root of the summary tree by default. Can be overridden via feature flag for now.
-        this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? true;
-
-        if (this._writeDataAtRoot) {
-            // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
-            // contain GC tree and GC is enabled.
-            const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
-            this.initialStateNeedsReset = gcTreePresent !== this.shouldRunGC;
-        }
+        // The GC state needs to be reset if the base snapshot contains GC tree and GC is disabled or it doesn't
+        // contain GC tree and GC is enabled.
+        const gcTreePresent = baseSnapshot?.trees[gcTreeKey] !== undefined;
+        this.initialStateNeedsReset = gcTreePresent !== this.shouldRunGC;
 
         // Get the GC state from the GC blob in the base snapshot. Use LazyPromise because we only want to do
         // this once since it involves fetching blobs from storage which is expensive.
@@ -583,8 +568,6 @@ export class GarbageCollector implements IGarbageCollector {
             // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
             const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
             if (gcSnapshotTree !== undefined) {
-                // If the GC tree is written at root, we should also do the same.
-                this._writeDataAtRoot = true;
                 const baseGCState = await getGCStateFromSnapshot(
                     gcSnapshotTree,
                     readAndParseBlob,
@@ -688,7 +671,7 @@ export class GarbageCollector implements IGarbageCollector {
             const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
             const baseGCDetailsMap = unpackChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
-            // Currently, the nodes may write the GC data. So, we need to update it's base GC details with the
+            // Currently, the nodes may write the GC data. So, we need to update its base GC details with the
             // unreferenced timestamp. Once we start writing the GC data here, we won't need to do this anymore.
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 if (nodeData.unreferencedTimestampMs !== undefined) {
@@ -708,7 +691,6 @@ export class GarbageCollector implements IGarbageCollector {
             sweepEnabled: this.sweepEnabled,
             runGC: this.shouldRunGC,
             runSweep: this.shouldRunSweep,
-            writeAtRoot: this._writeDataAtRoot,
             testMode: this.testMode,
             sessionExpiry: this.sessionExpiryTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
@@ -791,7 +773,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Update the current state and update the runtime of all routes or ids that used as per the GC run.
         const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
         this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
-        this.runtime.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
+        this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
         // Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will
         // delete these objects here instead.
@@ -986,10 +968,8 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     public dispose(): void {
-        if (this.sessionExpiryTimer !== undefined) {
-            clearTimeout(this.sessionExpiryTimer);
-            this.sessionExpiryTimer = undefined;
-        }
+        this.sessionExpiryTimer?.clear();
+        this.sessionExpiryTimer = undefined;
     }
 
     /**
@@ -1073,7 +1053,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.newReferencesSinceLastRun,
         );
 
-        if (this.writeDataAtRoot && missingExplicitReferences.length > 0) {
+        if (missingExplicitReferences.length > 0) {
             missingExplicitReferences.forEach((missingExplicitReference) => {
                 const event: ITelemetryPerformanceEvent = {
                     eventName: "gcUnknownOutboundReferences",
@@ -1416,25 +1396,20 @@ function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollec
     return sortedGCState;
 }
 
-/**
- * setLongTimeout is used for timeouts longer than setTimeout's ~24.8 day max
- * @param timeoutMs - the total time the timeout needs to last in ms
- * @param timeoutFn - the function to execute when the timer ends
- * @param setTimerFn - the function used to update your timer variable
- */
-function setLongTimeout(
-    timeoutMs: number,
-    timeoutFn: () => void,
-    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
-) {
-    // The setTimeout max is 24.8 days before looping occurs.
-    const maxTimeout = 2147483647;
-    let timer: ReturnType<typeof setTimeout>;
-    if (timeoutMs > maxTimeout) {
-        const newTimeoutMs = timeoutMs - maxTimeout;
-        timer = setTimeout(() => setLongTimeout(newTimeoutMs, timeoutFn, setTimerFn), maxTimeout);
-    } else {
-        timer = setTimeout(() => timeoutFn(), timeoutMs);
+/** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
+class TimerWithNoDefaultTimeout extends Timer {
+    constructor(
+        private readonly callback: () => void,
+    ) {
+        // The default timeout/handlers will never be used since start/restart pass overrides below
+        super(0, () => { throw new Error("DefaultHandler should not be used"); });
     }
-    setTimerFn(timer);
+
+    start(timeoutMs: number) {
+        super.start(timeoutMs, this.callback);
+    }
+
+    restart(timeoutMs: number): void {
+        super.restart(timeoutMs, this.callback);
+    }
 }

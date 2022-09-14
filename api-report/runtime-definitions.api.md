@@ -40,7 +40,7 @@ export const blobCountPropertyName = "BlobCount";
 export const channelsTreeName = ".channels";
 
 // @public (undocumented)
-export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>) => ISummarizerNodeWithGC;
+export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
 
 // @public (undocumented)
 export type CreateChildSummarizerNodeParam = {
@@ -88,7 +88,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly clientDetails: IClientDetails;
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // @internal @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IDataStore>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
@@ -141,7 +141,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     readonly visibilityState?: VisibilityState_2;
 }
@@ -166,13 +166,11 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
-    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
+    getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
-    // @deprecated (undocumented)
-    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
@@ -250,9 +248,6 @@ export interface IGarbageCollectionState {
     };
 }
 
-// @public @deprecated (undocumented)
-export type IGarbageCollectionSummaryDetails = IGarbageCollectionDetailsBase;
-
 // @public
 export interface IInboundSignalMessage extends ISignalMessage {
     // (undocumented)
@@ -312,11 +307,10 @@ export interface ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
     invalidate(sequenceNumber: number): void;
-    loadBaseSummary(snapshot: ISnapshotTree, readAndParseBlob: <T>(id: string) => Promise<T>): Promise<ISnapshotTree>;
-    loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;
     summarize(fullTree: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 
 // @public (undocumented)
@@ -337,16 +331,13 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     summarizeInternalFn: SummarizeInternalFn,
     id: string,
     createParam: CreateChildSummarizerNodeParam,
-    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
+    config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
-    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    // @deprecated (undocumented)
-    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public

@@ -5,18 +5,28 @@
 
 /* eslint-disable no-bitwise */
 
-import { RandomCtor, Random } from "best-random";
+import { Random } from "best-random";
+
+// Perf: We avoid the use of an ES6 'class' for a modest performance gain, but allow the use
+//       of the 'new' keyword using a ctor interface (node 12? x64).
+
+/**
+ * Construct a new instance of the XSadd random number generator, seeding it with up to
+ * four 32b integers.  If no seeds are provided, the PRNG is non-deterministically seeded
+ * using Math.random().
+ */
+export type XSaddCtor = new (seed0?: number, seed1?: number, seed2?: number, seed3?: number) => Random;
 
 /**
  * XORSHIFT-ADD (XSadd) is a non-cryptographic PRNG that is tiny, fast, seedable, and has
  * acceptable statistical properties for most test applications.
  *
  * In particular, uint32 output from XSadd passes the BigCrush suite of TestU01, but fails
- * if the bits are reversed due to weaknesses in the lower bits.
+ * if the bits are reversed due to weakness in the lower bits.
  *
  * See: http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/XSADD/
  */
-export const XSadd: RandomCtor =
+export const XSadd: XSaddCtor =
     function(...seed: number[]): Random {
         // eslint-disable-next-line no-param-reassign
         seed = seed.length
@@ -24,11 +34,14 @@ export const XSadd: RandomCtor =
             : [...new Array(4)].map(() => (Math.random() * 0x100000000) | 0);
 
         // Scramble the seeds using an LCG w/Borosh-Niederreiter multiplier.  This reduces correlation
-        // between similar initial seeds.  Continue scrambling until at least one seed is non-zero
-        // to avoid the fixed point at state { 0, 0, 0, 0 }.
+        // between similar initial seeds.  This also helps to avoid unintentionally encountering low bit
+        // counts with simple seeds like { 0, 0, 0, 0 }.
+        //
+        // To avoid a fixed point at state { x: 0, y: 0, z: 0, w: 0 }, continue scrambling until at least
+        // one seed is non-zero.
         for (let i = 1; (i < 8) || (seed[0] | seed[1] | seed[2] | seed[3]) === 0; i++) {
             const seed_i = seed[(i - 1) & 3];
-            seed[i & 3] ^= i + Math.imul(0x6C078965, (seed_i ^ (seed_i >>> 30)) >>> 0) >>> 0;
+            seed[i & 3] ^= i + Math.imul(0x6C078965, (seed_i ^ (seed_i >>> 30)));
         }
 
         const s = {

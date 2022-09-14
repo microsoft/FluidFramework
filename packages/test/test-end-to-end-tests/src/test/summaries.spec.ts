@@ -4,23 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
+
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { bufferToString } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
     ContainerRuntime,
     Summarizer,
     ISummarizer,
     ISummarizeResults,
-    ISummaryRuntimeOptions, DefaultSummaryConfiguration, SummaryCollection } from "@fluidframework/container-runtime";
+    ISummaryRuntimeOptions,
+    DefaultSummaryConfiguration,
+    SummaryCollection,
+} from "@fluidframework/container-runtime";
+import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { ConnectionState } from "@fluidframework/container-loader";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 
 const defaultDataStoreId = "default";
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
@@ -188,7 +192,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
     });
 
     it("should generate summary tree", async () => {
-        const container = await createContainer(provider, { disableIsolatedChannels: false });
+        const container = await createContainer(provider, {});
         const defaultDataStore = await requestFluidObject<ITestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 
@@ -233,50 +237,6 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         assert(dataStoreChannelsTree?.type === SummaryType.Tree, "Expected .channels tree in default data store.");
 
         const defaultDdsNode = dataStoreChannelsTree.tree.root;
-        assert(defaultDdsNode?.type === SummaryType.Tree, "Expected default root DDS in summary.");
-        assert(!defaultDdsNode.unreferenced, "Default root DDS should be referenced.");
-        assert(defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
-            "Expected .attributes blob in default root DDS summary tree.");
-    });
-
-    it("Should generate summary tree with isolated channels disabled", async () => {
-        const container = await createContainer(provider, { disableIsolatedChannels: true });
-        const defaultDataStore = await requestFluidObject<ITestDataObject>(container, defaultDataStoreId);
-        const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
-        await provider.ensureSynchronized();
-
-        const { stats, summary } = await containerRuntime.summarize({
-            runGC: false,
-            fullTree: false,
-            trackState: false,
-            summaryLogger: new TelemetryNullLogger(),
-        });
-
-        // Validate stats
-        assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
-        // .component, and .attributes blobs
-        assert(stats.blobNodeCount >= 2, `Stats expected at least 2 blob nodes, but had ${stats.blobNodeCount}.`);
-        // root node, default data store, and default root dds
-        assert(stats.treeNodeCount >= 3, `Stats expected at least 3 tree nodes, but had ${stats.treeNodeCount}.`);
-
-        // Validate summary
-        assert(!summary.unreferenced, "Root summary should be referenced.");
-        assert(summary.tree[channelsTreeName] === undefined, "Unexpected .channels tree in summary root.");
-
-        const defaultDataStoreNode = summary.tree[defaultDataStore._context.id];
-        assert(defaultDataStoreNode?.type === SummaryType.Tree, "Expected default data store tree in summary.");
-        assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
-        assert(defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
-            "Expected .component blob in default data store summary tree.");
-        const attributes = readBlobContent(defaultDataStoreNode.tree[".component"].content) as Record<string, unknown>;
-        assert(attributes.snapshotFormatVersion === "0.1", "Datastore attributes snapshotFormatVersion should be 0.1");
-        assert(attributes.summaryFormatVersion === undefined, "Unexpected datastore attributes summaryFormatVersion");
-        assert(attributes.disableIsolatedChannels === undefined,
-            "Unexpected datastore attributes disableIsolatedChannels");
-        assert(defaultDataStoreNode.tree[channelsTreeName] === undefined,
-            "Unexpected .channels tree in default data store.");
-
-        const defaultDdsNode = defaultDataStoreNode.tree.root;
         assert(defaultDdsNode?.type === SummaryType.Tree, "Expected default root DDS in summary.");
         assert(!defaultDdsNode.unreferenced, "Default root DDS should be referenced.");
         assert(defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
@@ -332,7 +292,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
     it("TelemetryContext is populated with data", async () => {
         const mockLogger = new MockLogger();
-        const container = await createContainer(provider, { disableIsolatedChannels: true }, mockLogger);
+        const container = await createContainer(provider, {}, mockLogger);
         const defaultDataStore = await requestFluidObject<ITestDataObject>(container, defaultDataStoreId);
         const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
         await provider.ensureSynchronized();
@@ -496,7 +456,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
             "Summary Parent should match ack handle of previous summary");
     });
 
-    it.skip("Single commit summary/Last summary should not be discarded due to missing SummaryOp", async function() {
+    it("Single commit summary/Last summary should not be discarded due to missing SummaryOp", async function() {
         if (provider.driver.type !== "odsp") {
             this.skip();
         }

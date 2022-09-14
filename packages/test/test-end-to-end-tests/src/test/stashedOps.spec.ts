@@ -14,7 +14,7 @@ import {
     reservedTileLabelsKey,
 } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { SharedString } from "@fluidframework/sequence";
+import { getTextAndMarkers, SharedString } from "@fluidframework/sequence";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
     ChannelFactoryRegistry,
@@ -48,7 +48,6 @@ const testContainerConfig: ITestContainerConfig = {
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{
-                    idleTime: 5000,
                     maxTime: 5000 * 12,
                     maxAckWaitTime: 120000,
                     maxOps: 1,
@@ -82,7 +81,7 @@ const getPendingStateWithoutClose = (container: IContainer): string => {
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
-const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
+const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback = () => undefined) => {
     const container = await args.loadTestContainer(testContainerConfig);
     await ensureContainerConnected(container);
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -111,7 +110,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     return pendingState;
 };
 
-async function loadOffline(provider: ITestObjectProvider, request: IRequest, pendingLocalState: string):
+async function loadOffline(provider: ITestObjectProvider, request: IRequest, pendingLocalState?: string):
     Promise<{ container: IContainer; connect: () => void; }> {
     const p = new Deferred();
     const documentServiceFactory = provider.driver.createDocumentServiceFactory();
@@ -141,7 +140,8 @@ async function loadOffline(provider: ITestObjectProvider, request: IRequest, pen
     const loader = provider.createLoader(
         [[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
         { documentServiceFactory });
-    return { container: await loader.resolve(request, pendingLocalState), connect: () => p.resolve(undefined) };
+    const container = await loader.resolve(request, pendingLocalState ?? await getPendingOps(provider, false));
+    return { container, connect: () => p.resolve(undefined) };
 }
 
 // Introduced in 0.37
@@ -554,10 +554,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         const simpleMarker1 = string1.getMarkerFromId("markerId");
+
         assert.strictEqual(simpleMarker1?.type, "Marker", "Could not get simple marker");
         assert.strictEqual(simpleMarker1?.properties?.markerId, "markerId", "markerId is incorrect");
         assert.strictEqual(simpleMarker1?.properties?.markerSimpleType, "markerKeyValue");
-        const parallelMarkers1 = string1.getTextAndMarkers("tileLabel");
+        const parallelMarkers1 = getTextAndMarkers(string1, "tileLabel");
         const parallelMarker1 = parallelMarkers1.parallelMarkers[0];
         assert.strictEqual(parallelMarker1.type, "Marker", "Could not get tile marker");
         assert.strictEqual(parallelMarker1.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
@@ -566,7 +567,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(simpleMarker2?.type, "Marker", "Could not get simple marker");
         assert.strictEqual(simpleMarker2?.properties?.markerId, "markerId", "markerId is incorrect");
         assert.strictEqual(simpleMarker2?.properties?.markerSimpleType, "markerKeyValue");
-        const parallelMarkers2 = string2.getTextAndMarkers("tileLabel");
+        const parallelMarkers2 = getTextAndMarkers(string2, "tileLabel");
         const parallelMarker2 = parallelMarkers2.parallelMarkers[0];
         assert.strictEqual(parallelMarker2.type, "Marker", "Could not get tile marker");
         assert.strictEqual(parallelMarker2.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
@@ -620,6 +621,20 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         const container2 = await loader.resolve({ url }, pendingOps);
         await ensureContainerConnected(container2);
+    });
+
+    it("cannot capture the pending local state during ordersequentially", async () => {
+        const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+        dataStore1.context.containerRuntime.orderSequentially(() => {
+            map.set("key1", "value1");
+            map.set("key2", "value2");
+            assert.throws(() => {
+                container1.closeAndGetPendingLocalState();
+            }, "Should throw for incomplete batch");
+            map.set("key3", "value3");
+            map.set("key4", "value4");
+        });
     });
 
     itExpects("waits for previous container's leave message", [
@@ -771,10 +786,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("offline blob upload", async function() {
-        // load offline container
-        const offlineState = await loader.resolve({ url })
-            .then(async (c) => c.closeAndGetPendingLocalState());
-        const container = await loadOffline(provider, { url }, offlineState);
+        const container = await loadOffline(provider, { url });
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
         const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
@@ -790,6 +802,33 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
         assert.strictEqual(bufferToString(await map2.get("blob handle").get(), "utf8"), "blob contents");
+    });
+
+    it("stashed changes with blobs", async function() {
+        const container = await loadOffline(provider, { url });
+        const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
+        const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+        // Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
+        const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
+        map.set("blob handle 1", handle);
+
+        const stashedChanges = container.container.closeAndGetPendingLocalState();
+
+        const container3 = await loadOffline(provider, { url }, stashedChanges);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3.container, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+
+        // Blob is accessible locally while offline
+        assert.strictEqual(bufferToString(await map3.get("blob handle 1").get(), "utf8"), "blob contents 1");
+
+        container3.connect();
+        await ensureContainerConnected(container3.container);
+        await provider.ensureSynchronized();
+
+        // Blob is uploaded and accessible by all clients
+        assert.strictEqual(bufferToString(await map1.get("blob handle 1").get(), "utf8"), "blob contents 1");
+        assert.strictEqual(bufferToString(await map3.get("blob handle 1").get(), "utf8"), "blob contents 1");
     });
 
     it("offline attach", async function() {
@@ -876,7 +915,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     // TODO: https://github.com/microsoft/FluidFramework/issues/10729
-    it.skip("works with summary while offline", async function() {
+    it("works with summary while offline", async function() {
         map1.set("test op 1", "test op 1");
         await waitForSummary();
 
@@ -898,7 +937,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     // TODO: https://github.com/microsoft/FluidFramework/issues/10729
-    it.skip("can stash between summary op and ack", async function() {
+    it("can stash between summary op and ack", async function() {
         map1.set("test op 1", "test op 1");
         const container = await provider.loadTestContainer(testContainerConfig);
         const pendingOps = await new Promise<string>((resolve, reject) => container.on("op", (op) => {

@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
@@ -13,11 +16,10 @@ import {
     CreateChildSummarizerNodeFn,
     CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+
 import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
 
@@ -121,8 +123,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                writeGCDataAtRoot: true,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -148,8 +148,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                writeGCDataAtRoot: true,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -175,8 +173,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                writeGCDataAtRoot: true,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -202,8 +198,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                writeGCDataAtRoot: true,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -229,8 +223,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                writeGCDataAtRoot: true,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -253,8 +245,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                writeGCDataAtRoot: true,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -280,8 +270,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                writeGCDataAtRoot: true,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -307,8 +295,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                writeGCDataAtRoot: true,
-                disableIsolatedChannels: false,
             });
 
             try {
@@ -334,8 +320,6 @@ describe("Data Store Creation Tests", () => {
                 makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
-                writeGCDataAtRoot: true,
-                disableIsolatedChannels: false,
             });
 
             try {

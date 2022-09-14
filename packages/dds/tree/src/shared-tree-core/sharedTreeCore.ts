@@ -3,17 +3,30 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     IChannelAttributes, IChannelStorageService, IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ITelemetryContext, ISummaryTreeWithStats, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { toDelta } from "../changeset";
-import { ChangeRebaser, FinalFromChangeRebaser, Rebaser, RevisionTag } from "../rebase";
+import { mergeStats } from "@fluidframework/runtime-utils";
+import { IFluidSerializer, ISharedObjectEvents, SharedObject } from "@fluidframework/shared-object-base";
+import { ChangeFamily } from "../change-family";
+import { Commit, EditManager } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
-import { fail } from "../util";
-import { LazyPageTree } from "./lazyPageTree";
+import { brand } from "../util";
+
+/**
+ * The events emitted by a {@link SharedTreeCore}
+ *
+ * TODO: Add/remove events
+ */
+export interface ISharedTreeCoreEvents extends ISharedObjectEvents {
+    (event: "updated", listener: () => void): unknown;
+}
+
+// TODO: How should the format version be determined?
+const formatVersion = 0;
 
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
@@ -21,16 +34,12 @@ import { LazyPageTree } from "./lazyPageTree";
  * TODO: actually implement
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
-export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>> extends LazyPageTree {
-    public readonly rebaser: Rebaser<TChangeRebaser>;
+export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TChange>>
+    extends SharedObject<ISharedTreeCoreEvents> {
+    public readonly editManager: EditManager<TChange, TChangeFamily>;
 
-    /**
-     * The revision that is currently viewed as the head of the local branch.
-     * Updated when calling by the indexes' newLocalState.
-     */
-    private localState: RevisionTag;
-
-    private sequencedRevision: RevisionTag;
+    /** All {@link SummaryElement}s that are present on any {@link Index}es in this DDS */
+    private readonly summaryElements: SummaryElement[];
 
     /**
      * @param id - The id of the shared object
@@ -38,9 +47,9 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
      * @param attributes - Attributes of the shared object
      */
     public constructor(
-        private readonly indexes: Index<FinalFromChangeRebaser<TChangeRebaser>>[],
-        changeRebaser: TChangeRebaser,
-        private readonly anchors: AnchorSet,
+        private readonly indexes: Index<TChange>[],
+        public readonly changeFamily: TChangeFamily,
+        anchors: AnchorSet,
 
         // Base class arguments
         id: string,
@@ -48,54 +57,118 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
         attributes: IChannelAttributes,
         telemetryContextPrefix: string) {
         super(id, runtime, attributes, telemetryContextPrefix);
-        this.rebaser = new Rebaser(changeRebaser);
-        this.localState = this.rebaser.empty;
-        this.sequencedRevision = this.rebaser.empty;
+
+        // TODO: clientId may not exist at SharedTree creation.
+        // Should we change EditManager to not need the client ID? Can we create the edit manager once we are connected?
+        this.editManager = new EditManager(changeFamily, anchors);
+        if (this.runtime.clientId !== undefined) {
+            this.editManager.setLocalSessionId(this.runtime.clientId);
+        }
+
+        this.summaryElements = indexes.map((i) => i.summaryElement).filter((e): e is SummaryElement => e !== undefined);
+        assert(
+            new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
+            0x350 /* Index summary element keys must be unique */,
+        );
     }
 
     // TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
     // We might want to not subclass it, or override/reimplement most of its functionality.
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-        // TODO: Do something like this loop for most of the methods in here.
-        for (const index of this.indexes) {
-            index.summaryElement?.getAttachSummary((contents) => this.serializer.stringify(contents, this.handle));
+        let stats = mergeStats();
+        const summary: ISummaryTree = {
+            type: SummaryType.Tree,
+            tree: {},
+        };
+        stats.treeNodeCount += 1;
+
+        // Merge the summaries of all indexes together under a single ISummaryTree
+        const indexSummaryTree: ISummaryTree["tree"] = {};
+        for (const summaryElement of this.summaryElements) {
+            const { stats: elementStats, summary: elementSummary } = summaryElement.getAttachSummary(
+                (contents) => serializer.stringify(contents, this.handle),
+                undefined,
+                undefined,
+                telemetryContext,
+            );
+            indexSummaryTree[summaryElement.key] = elementSummary;
+            stats = mergeStats(stats, elementStats);
         }
-        throw new Error("Method not implemented.");
+
+        summary.tree.indexes = {
+            type: SummaryType.Tree,
+            tree: indexSummaryTree,
+        };
+        stats.treeNodeCount += 1;
+
+        return {
+            stats,
+            summary,
+        };
     }
 
     protected async loadCore(services: IChannelStorageService): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const changes = fail("Method not implemented.");
-        const srcRevision = fail("Method not implemented.");
-        const [sequencedRevision, finalChange] = this.rebaser.rebase(changes, srcRevision, this.sequencedRevision);
-        for (const index of this.indexes) {
-            index.sequencedChange?.(finalChange);
-        }
-        this.sequencedRevision = sequencedRevision;
+        const loadIndexes = this.summaryElements
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            .map((summaryElement) => summaryElement.load(services, (contents) => this.serializer.parse(contents)));
 
-        const newLocalRevisionHead = fail("TODO: rebase local changes onto new sequencedRevision");
-        this.updateLocalState(newLocalRevisionHead);
+        await Promise.all(loadIndexes);
     }
+
+    protected onConnect() {
+        assert(this.runtime.clientId !== undefined, 0x3a5 /* Expected clientId to be defined once connected */);
+        this.editManager.setLocalSessionId(this.runtime.clientId);
+    }
+
+    public submitEdit(edit: TChange): void {
+        const delta = this.editManager.addLocalChange(edit);
+        for (const index of this.indexes) {
+            index.newLocalChange?.(edit);
+            index.newLocalState?.(delta);
+        }
+
+        this.submitLocalMessage(this.changeFamily.encoder.encodeForJson(formatVersion, edit));
+    }
+
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+        const changes = this.changeFamily.encoder.decodeJson(formatVersion, message.contents);
+        const commit: Commit<TChange> = {
+            sessionId: message.clientId,
+            seqNumber: brand(message.sequenceNumber),
+            refNumber: brand(message.referenceSequenceNumber),
+            changeset: changes,
+        };
+
+        const delta = this.editManager.addSequencedChange(commit);
+        const sequencedChange = this.editManager.getLastSequencedChange();
+        for (const index of this.indexes) {
+            index.sequencedChange?.(sequencedChange);
+            index.newLocalState?.(delta);
+        }
+    }
+
     protected onDisconnect() {
         throw new Error("Method not implemented.");
     }
+
     protected applyStashedOp(content: any): unknown {
         throw new Error("Method not implemented.");
     }
 
-    // TODO: custom getGCData.
-
-    // TODO: call this after local or remote edits.
-    private updateLocalState(revision: RevisionTag): void {
-        // TODO: maybe unify these two calls into rebaser as an optimziation.
-        this.rebaser.rebaseAnchors(this.anchors, this.localState, revision);
-        const delta = toDelta(this.rebaser.getResolutionPath(this.localState, revision));
-        for (const index of this.indexes) {
-            index.newLocalState?.(delta);
+    public getGCData(fullGC?: boolean): IGarbageCollectionData {
+        const gcNodes: IGarbageCollectionData["gcNodes"] = {};
+        for (const summaryElement of this.summaryElements) {
+            for (const [id, routes] of Object.entries(summaryElement.getGCData(fullGC).gcNodes)) {
+                gcNodes[id] ??= [];
+                for (const route of routes) {
+                    gcNodes[id].push(route);
+                }
+            }
         }
-        this.localState = revision;
+
+        return {
+            gcNodes,
+        };
     }
 }
 

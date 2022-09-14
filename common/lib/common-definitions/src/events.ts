@@ -3,17 +3,38 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Base interface for event emitters.
+ */
 export interface IEvent {
-    // the event emitter polyfill and the node event emitter have different event types:
-    // string | symbol vs. string | number
-    // so for our typing we'll contrain to string, so we work with both
+    /**
+     * Base event emitter signature.
+     *
+     * @remarks The event emitter polyfill and the node event emitter have different event types:
+     * `string | symbol` vs. `string | number`.
+     *
+     * So for our typing we'll contrain to string, that way we work with both.
+     *
+     * @eventProperty
+     */
     (event: string, listener: (...args: any[]) => void);
 }
 
+/**
+ * Base interface for error event emitters.
+ */
 export interface IErrorEvent extends IEvent {
+    /**
+     * Base error event emitter signature.
+     *
+     * @eventProperty
+     */
     (event: "error", listener: (message: any) => void);
 }
 
+/**
+ * Base interface for event providers.
+ */
 export interface IEventProvider<TEvent extends IEvent> {
     /**
      * Registers a callback to be invoked when the corresponding event is triggered.
@@ -61,7 +82,7 @@ export type ExtendEventProvider<
     IEventProvider<TBaseEvent> &
     IEventProvider<TEvent>;
 
-// These types handle replacing IEventThisPlaceHolder with this, so we can
+// These types handle replacing IEventThisPlaceHolder with `this`, so we can
 // support polymorphic `this`. For instance if an event wanted to be:
 // (event: "some-event", listener:(target: this)=>void)
 //

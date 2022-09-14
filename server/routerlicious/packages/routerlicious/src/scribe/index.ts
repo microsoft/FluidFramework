@@ -12,6 +12,7 @@ import {
     IDocument,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
+    IServiceConfiguration,
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
@@ -44,7 +45,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
     let globalDb;
     if (globalDbEnabled) {
-        const globalDbMongoManager = new MongoManager(factory, false, null, true);
+        const globalDbReconnect = config.get("mongo:globalDbReconnect") as boolean ?? false;
+        const globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
         globalDb = await globalDbMongoManager.getDatabase();
     }
 
@@ -96,13 +98,21 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         kafkaMaxBatchSize,
         kafkaSslCACertFilePath);
 
+    const externalOrdererUrl = config.get("worker:serverUrl");
+    const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
+    const serviceConfiguration: IServiceConfiguration = {
+        ...DefaultServiceConfiguration,
+        externalOrdererUrl,
+        enforceDiscoveryFlow,
+    };
+
     return new ScribeLambdaFactory(
         operationsDbManager,
         collection,
         scribeDeltas,
         producer,
         tenantManager,
-        DefaultServiceConfiguration,
+        serviceConfiguration,
         enableWholeSummaryUpload);
 }
 

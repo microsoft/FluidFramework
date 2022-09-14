@@ -189,7 +189,7 @@ export class OdspDocumentService implements IDocumentService {
                 },
                 () => {
                     assert(this.relayServiceTenantAndSessionId !== undefined,
-                        "relayServiceTenantAndSessionId should be present");
+                        0x37b /* relayServiceTenantAndSessionId should be present */);
                     return this.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),

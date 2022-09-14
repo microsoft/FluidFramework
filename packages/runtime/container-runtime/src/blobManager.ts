@@ -9,7 +9,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, bufferToString, Deferred, stringToBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -102,6 +102,8 @@ interface PendingBlob {
     uploadP: Promise<ICreateBlobResponse>;
 }
 
+export interface IPendingBlobs { [id: string]: { blob: string; }; }
+
 export class BlobManager {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
@@ -154,10 +156,22 @@ export class BlobManager {
         // of the format `/<BlobManager.basePath>/<blobId>`.
         private readonly gcNodeUpdated: (blobPath: string) => void,
         private readonly runtime: IBlobManagerRuntime,
+        stashedBlobs: IPendingBlobs = {},
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "BlobManager");
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
+
+        // Begin uploading stashed blobs from previous container instance
+        Object.entries(stashedBlobs).forEach(([localId, entry]) => {
+            const blob = stringToBuffer(entry.blob, "base64");
+            this.pendingBlobs.set(localId, {
+                blob,
+                status: PendingBlobStatus.OfflinePendingUpload,
+                handleP: new Deferred(),
+                uploadP: this.uploadBlob(localId, blob),
+            });
+        });
     }
 
     private get pendingOfflineUploads() {
@@ -219,7 +233,7 @@ export class BlobManager {
         // For a detached container, entries are inserted into the redirect table with an undefined storage ID.
         // For an attached container, entries are inserted w/storage ID after the BlobAttach op round-trips.
         assert(!undefinedValueInTable || this.runtime.attachState === AttachState.Detached && ids.size === 0,
-            "'redirectTable' must contain only undefined while detached / defined values while attached");
+            0x382 /* 'redirectTable' must contain only undefined while detached / defined values while attached */);
 
         return ids as Set<string>;
     }
@@ -231,7 +245,7 @@ export class BlobManager {
         }
         let storageId;
         if (this.runtime.attachState === AttachState.Detached) {
-            assert(this.redirectTable.has(blobId), "requesting unknown blobs");
+            assert(this.redirectTable.has(blobId), 0x383 /* requesting unknown blobs */);
 
             // Blobs created while the container is detached are stored in IDetachedBlobStorage.
             // The 'IDocumentStorageService.readBlob()' call below will retrieve these via localId.
@@ -256,7 +270,7 @@ export class BlobManager {
 
     private getBlobHandle(id: string): IFluidHandle<ArrayBufferLike> {
         assert(this.redirectTable.has(id) || this.pendingBlobs.has(id),
-            "requesting handle for unknown blob");
+            0x384 /* requesting handle for unknown blob */);
         return new BlobHandle(
             `${BlobManager.basePath}/${id}`,
             this.routeContext,
@@ -282,7 +296,7 @@ export class BlobManager {
             await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
         }
         assert(this.runtime.attachState === AttachState.Attached,
-            "For clarity and paranoid defense against adding future attachment states");
+            0x385 /* For clarity and paranoid defense against adding future attachment states */);
 
         // Create a local ID for each blob. This is used to support blobs if/when the client goes
         // offline since we don't have the ID from storage yet. If online flow succeeds this won't be used.
@@ -314,7 +328,7 @@ export class BlobManager {
         const entry = this.pendingBlobs.get(localId);
         assert(entry?.status === PendingBlobStatus.OnlinePendingUpload ||
             entry?.status === PendingBlobStatus.OfflinePendingUpload,
-            "Must have pending blob entry for uploaded blob");
+            0x386 /* Must have pending blob entry for uploaded blob */);
         entry.storageId = response.id;
         if (this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
@@ -348,7 +362,7 @@ export class BlobManager {
 
     private async onUploadReject(localId: string, error) {
         const entry = this.pendingBlobs.get(localId);
-        assert(!!entry, "Must have pending blob entry for blob which failed to upload");
+        assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
         if (!this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 this.transitionToOffline(localId);
@@ -363,11 +377,11 @@ export class BlobManager {
     }
 
     private transitionToOffline(localId: string) {
-        assert(!this.runtime.connected, "Must only transition to offline flow while runtime is disconnected");
+        assert(!this.runtime.connected, 0x388 /* Must only transition to offline flow while runtime is disconnected */);
         const entry = this.pendingBlobs.get(localId);
-        assert(!!entry, "No pending blob entry");
+        assert(!!entry, 0x389 /* No pending blob entry */);
         assert([PendingBlobStatus.OnlinePendingUpload, PendingBlobStatus.OnlinePendingOp].includes(entry.status),
-            "Blob must be in online flow to transition to offline flow");
+            0x38a /* Blob must be in online flow to transition to offline flow */);
 
         entry.status = entry.status === PendingBlobStatus.OnlinePendingUpload
             ? PendingBlobStatus.OfflinePendingUpload
@@ -388,14 +402,14 @@ export class BlobManager {
      * @param metadata - op metadata containing storage and/or local IDs
      */
     public reSubmit(metadata: Record<string, unknown> | undefined) {
-        assert(!!metadata, "Resubmitted ops must have metadata");
+        assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
         const { blobId, localId }: { blobId?: string; localId?: string; } = metadata;
         if (!blobId) {
-            assert(!!localId, "Submitted BlobAttach ops must have a blobId or localId");
+            assert(!!localId, 0x38c /* Submitted BlobAttach ops must have a blobId or localId */);
             // We submitted this op while offline. The blob should have been uploaded by now.
             const pendingEntry = this.pendingBlobs.get(localId);
             assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
-                !!pendingEntry?.storageId, "blob must be uploaded before resubmitting BlobAttach op");
+                !!pendingEntry?.storageId, 0x38d /* blob must be uploaded before resubmitting BlobAttach op */);
             return this.sendBlobAttachOp(pendingEntry.storageId, localId);
         }
         return this.sendBlobAttachOp(blobId, localId);
@@ -413,10 +427,13 @@ export class BlobManager {
             if (message.metadata.localId === undefined) {
                 // Since there is no local ID, we know this op was submitted while online.
                 const waitingBlobs = this.opsInFlight.get(message.metadata.blobId);
-                assert(!!waitingBlobs, "local online BlobAttach op with no pending blob");
+                assert(!!waitingBlobs, 0x38e /* local online BlobAttach op with no pending blob */);
                 waitingBlobs.forEach((localId) => {
                     const pendingBlobEntry = this.pendingBlobs.get(localId);
-                    assert(pendingBlobEntry !== undefined, "local online BlobAttach op with no pending blob entry");
+                    assert(
+                        pendingBlobEntry !== undefined,
+                        0x38f, /* local online BlobAttach op with no pending blob entry */
+                    );
 
                     // It's possible we transitioned to offline flow while waiting for this op.
                     if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
@@ -497,7 +514,7 @@ export class BlobManager {
         // Note that because of de-duping, there can be multiple localIds that all redirect to the same storageId or
         // a blob may be referenced via its storageId handle.
         for (const [localId, storageId] of this.redirectTable) {
-            assert(!!storageId, "Must be attached to get GC data");
+            assert(!!storageId, 0x390 /* Must be attached to get GC data */);
             // Add node for the localId and add a route to the storageId node. The storageId node will have been
             // added above when adding nodes for this.blobIds.
             gcData.gcNodes[this.getBlobGCNodePath(localId)] = [this.getBlobGCNodePath(storageId)];
@@ -554,12 +571,21 @@ export class BlobManager {
     public setRedirectTable(table: Map<string, string>) {
         assert(this.runtime.attachState === AttachState.Detached,
             0x252 /* "redirect table can only be set in detached container" */);
-        assert(this.redirectTable.size === table.size, "Redirect table size must match BlobManager's local ID count");
+        assert(this.redirectTable.size === table.size,
+            0x391 /* Redirect table size must match BlobManager's local ID count */);
         for (const [localId, storageId] of table) {
             assert(this.redirectTable.has(localId), 0x254 /* "unrecognized id in redirect table" */);
             this.redirectTable.set(localId, storageId);
             // set identity (id -> id) entry
             this.redirectTable.set(storageId, storageId);
         }
+    }
+
+    public getPendingBlobs(): IPendingBlobs {
+        const blobs = {};
+        for (const [key, entry] of this.pendingBlobs) {
+            blobs[key] = { blob: bufferToString(entry.blob, "base64") };
+        }
+        return blobs;
     }
 }

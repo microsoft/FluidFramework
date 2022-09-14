@@ -23,7 +23,7 @@ export enum FileMode {
     Symlink = "120000"
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IActorClient {
     // (undocumented)
     sub: string;
@@ -312,6 +312,8 @@ export interface ISequencedDocumentMessage {
     clientSequenceNumber: number;
     // (undocumented)
     contents: any;
+    // (undocumented)
+    data?: string;
     // @alpha
     expHash1?: string;
     // (undocumented)
@@ -457,7 +459,7 @@ export interface ISummaryProposal {
     summarySequenceNumber: number;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ISummaryTokenClaims {
     // (undocumented)
     act: IActorClient;
@@ -475,7 +477,6 @@ export interface ISummaryTree {
     };
     // (undocumented)
     type: SummaryType.Tree;
-    // (undocumented)
     unreferenced?: true;
 }
 
@@ -491,13 +492,12 @@ export interface ITokenClaims {
     ver: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ITokenProvider {
-    // (undocumented)
     isValid(): boolean;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITokenService {
     // (undocumented)
     extractClaims(token: string): ITokenClaims;
@@ -557,6 +557,8 @@ export interface IVersion {
 // @public (undocumented)
 export enum MessageType {
     // (undocumented)
+    Accept = "accept",
+    // (undocumented)
     ClientJoin = "join",
     // (undocumented)
     ClientLeave = "leave",
@@ -570,12 +572,6 @@ export enum MessageType {
     Operation = "op",
     // (undocumented)
     Propose = "propose",
-    // (undocumented)
-    Reject = "reject",
-    // (undocumented)
-    RemoteHelp = "remoteHelp",
-    // (undocumented)
-    RoundTrip = "tripComplete",
     // (undocumented)
     Summarize = "summarize",
     // (undocumented)
@@ -603,10 +599,10 @@ export enum ScopeType {
     SummaryWrite = "summary:write"
 }
 
-// @public (undocumented)
+// @public
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
-// @public (undocumented)
+// @public
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 // @public
@@ -625,10 +621,10 @@ export namespace SummaryType {
     const Attachment: Attachment;
 }
 
-// @public (undocumented)
+// @public
 export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
-// @public (undocumented)
+// @public
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
 // @public

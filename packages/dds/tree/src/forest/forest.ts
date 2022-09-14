@@ -4,8 +4,8 @@
  */
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
-import { SchemaRepository } from "../schema";
-import { DetachedField } from "../tree";
+import { StoredSchemaRepository } from "../schema-stored";
+import { Anchor, DetachedField } from "../tree";
 import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
 /**
@@ -35,7 +35,7 @@ export interface IForestSubscription extends Dependee {
      *
      * The root's schema is tracked under {@link rootFieldKey}.
      */
-    readonly schema: SchemaRepository & Dependee;
+    readonly schema: StoredSchemaRepository;
 
     readonly rootField: DetachedField;
 
@@ -47,7 +47,7 @@ export interface IForestSubscription extends Dependee {
     /**
      * Anchor at the beginning of a root field.
      */
-    root(range: DetachedField): ForestAnchor;
+    root(range: DetachedField): Anchor;
 
     /**
      * If observer is provided, it will be invalidated if the value returned from this changes
@@ -56,8 +56,8 @@ export interface IForestSubscription extends Dependee {
      * It is an error not to free `cursorToMove` before the next edit.
      * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
      */
-    tryGet(
-        destination: ForestAnchor,
+    tryMoveCursorTo(
+        destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
         observer?: ObservingDependent
     ): TreeNavigationResult;
@@ -102,7 +102,7 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
      * Construct an `Anchor` which the IForestSubscription will keep rebased to `current`.
      * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
      */
-    buildAnchor(): ForestAnchor;
+    buildAnchor(): Anchor;
 
     /**
      * Current state.
@@ -114,27 +114,6 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
      */
     // TODO: maybe support this.
     // getParentInfo(id: NodeId): TreeLocation;
-}
-
-/**
- * Pointer to a location in a Forest which IForestSubscription will keep rebased onto `current`.
- *
- * TODO:Performance:
- * An implementation might prefer to de-duplicate
- * Anchors and thus use a ref count instead of allocating an object for each one.
- * This could be enabled by removing "state".
- */
-export interface ForestAnchor {
-    /**
-     * Release any resources this Anchor is holding onto.
-     * After doing this, further use of this object other than reading `state` is forbidden (undefined behavior).
-     */
-    free(): void;
-
-    /**
-     * Current state.
-     */
-    readonly state: ITreeSubscriptionCursorState;
 }
 
 export enum ITreeSubscriptionCursorState {

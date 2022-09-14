@@ -20,7 +20,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
+    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
@@ -105,7 +105,6 @@ export class Client {
     applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
-    // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
@@ -120,7 +119,7 @@ export class Client {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage): {
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -134,7 +133,7 @@ export class Client {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getOrAddShortClientId(longClientId: string): number;
-    getPosition(segment: ISegment): number;
+    getPosition(segment: ISegment | undefined, localSeq?: number): number;
     // (undocumented)
     getPropertiesAtPosition(pos: number): PropertySet | undefined;
     // (undocumented)
@@ -163,7 +162,6 @@ export class Client {
     }>;
     // (undocumented)
     localOps: number;
-    // (undocumented)
     localReferencePositionToPosition(lref: ReferencePosition): number;
     // (undocumented)
     localTime: number;
@@ -187,7 +185,6 @@ export class Client {
     posFromRelativePos(relativePos: IRelativePosition): number;
     rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
-    // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
@@ -272,6 +269,9 @@ export function createMap<T>(): MapLike<T>;
 
 // @public
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
+
+// @public (undocumented)
+export function debugMarkerToString(marker: Marker): string;
 
 // @public (undocumented)
 export const DetachedReferencePosition = -1;
@@ -374,21 +374,17 @@ export interface IMarkerModifiedAction {
     (marker: Marker): void;
 }
 
-// @public (undocumented)
+// @public
 export interface IMergeBlock extends IMergeNodeCommon {
     // (undocumented)
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-    // (undocumented)
     childCount: number;
-    // (undocumented)
     children: IMergeNode[];
     // (undocumented)
     hierBlock(): IHierBlock | undefined;
     // (undocumented)
     needsScour?: boolean;
     // Warning: (ae-forgotten-export) The symbol "PartialSequenceLengths" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
     partialLengths?: PartialSequenceLengths;
     // (undocumented)
     setOrdinal(child: IMergeNode, index: number): void;
@@ -397,14 +393,12 @@ export interface IMergeBlock extends IMergeNodeCommon {
 // @public (undocumented)
 export type IMergeNode = IMergeBlock | ISegment;
 
-// @public (undocumented)
+// @public
 export interface IMergeNodeCommon {
     cachedLength: number;
-    // (undocumented)
     index: number;
     // (undocumented)
     isLeaf(): this is ISegment;
-    // (undocumented)
     ordinal: string;
     // (undocumented)
     parent?: IMergeBlock;
@@ -518,11 +512,6 @@ export interface IMergeTreeSegmentDelta {
 export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
-    // (undocumented)
-    getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number): {
-        parallelText: string[];
-        parallelMarkers: Marker[];
-    };
 }
 
 // @public (undocumented)
@@ -624,11 +613,10 @@ export interface IRelativePosition {
     offset?: number;
 }
 
-// @public (undocumented)
+// @public
 export interface IRemovalInfo {
-    // (undocumented)
+    localRemovedSeq?: number;
     removedClientIds: number[];
-    // (undocumented)
     removedSeq: number;
 }
 
@@ -636,28 +624,21 @@ export interface IRemovalInfo {
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
+    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
-    // (undocumented)
     clientId: number;
     // (undocumented)
     clone(): ISegment;
-    // (undocumented)
     localRefs?: LocalReferenceCollection;
-    // (undocumented)
     localRemovedSeq?: number;
-    // (undocumented)
     localSeq?: number;
-    // (undocumented)
     properties?: PropertySet;
-    // (undocumented)
     propertyManager?: PropertiesManager;
     // (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
-    // (undocumented)
     seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
@@ -732,10 +713,12 @@ export class LocalReferenceCollection {
     split(offset: number, splitSeg: ISegment): void;
 }
 
-// @public (undocumented)
+// @public @sealed (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
 }
 
 // @public (undocumented)
@@ -908,11 +891,18 @@ export class PropertiesManager {
     // (undocumented)
     ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
     // (undocumented)
-    addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean): PropertySet | undefined;
+    addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
     hasPendingProperties(): boolean;
+}
+
+// @public (undocumented)
+export enum PropertiesRollback {
+    None = 0,
+    Rewrite = 2,
+    Rollback = 1
 }
 
 // Warning: (ae-internal-missing-underscore) The name "Property" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1050,7 +1040,7 @@ export interface ReferencePosition {
     refType: ReferenceType;
 }
 
-// @public (undocumented)
+// @public
 export enum ReferenceType {
     // (undocumented)
     NestBegin = 2,
@@ -1062,13 +1052,9 @@ export enum ReferenceType {
     RangeEnd = 32,
     // (undocumented)
     Simple = 0,
-    // (undocumented)
     SlideOnRemove = 64,
-    // (undocumented)
     StayOnRemove = 128,
-    // (undocumented)
     Tile = 1,
-    // (undocumented)
     Transient = 256
 }
 
@@ -1138,13 +1124,17 @@ export interface SegmentGroup {
     // (undocumented)
     localSeq: number;
     // (undocumented)
+    previousProps?: PropertySet[];
+    // (undocumented)
+    removedReferences?: LocalReferencePosition[];
+    // (undocumented)
     segments: ISegment[];
 }
 
 // @public (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
-    // (undocumented)
+    // @deprecated (undocumented)
     clear(): void;
     // (undocumented)
     copyTo(segment: ISegment): void;
@@ -1154,6 +1144,8 @@ export class SegmentGroupCollection {
     get empty(): boolean;
     // (undocumented)
     enqueue(segmentGroup: SegmentGroup): void;
+    // (undocumented)
+    pop?(): SegmentGroup | undefined;
     // (undocumented)
     get size(): number;
 }
@@ -1171,9 +1163,7 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 }
 
 // @public
-export class SortedSegmentSet<T extends ISegment | {
-    readonly segment: ISegment;
-} = ISegment> {
+export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T): void;
     // (undocumented)
@@ -1185,6 +1175,11 @@ export class SortedSegmentSet<T extends ISegment | {
     // (undocumented)
     get size(): number;
 }
+
+// @public (undocumented)
+export type SortedSegmentSetItem = ISegment | LocalReferencePosition | {
+    readonly segment: ISegment;
+};
 
 // @public (undocumented)
 export class Stack<T> {
@@ -1238,25 +1233,30 @@ export class TextSegment extends BaseSegment {
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
 // @public (undocumented)
+export type Trackable = ISegment | LocalReferencePosition;
+
+// @public (undocumented)
 export class TrackingGroup {
     constructor();
     // (undocumented)
-    has(segment: ISegment): boolean;
+    has(trackable: Trackable): boolean;
     // (undocumented)
-    link(segment: ISegment): void;
-    // (undocumented)
+    link(trackable: Trackable): void;
+    // @deprecated (undocumented)
     get segments(): readonly ISegment[];
     // (undocumented)
     get size(): number;
     // (undocumented)
-    unlink(segment: ISegment): void;
+    get tracked(): readonly Trackable[];
+    // (undocumented)
+    unlink(segment: Trackable): void;
 }
 
 // @public (undocumented)
 export class TrackingGroupCollection {
-    constructor(segment: ISegment);
+    constructor(trackable: Trackable);
     // (undocumented)
-    copyTo(segment: ISegment): void;
+    copyTo(trackable: Trackable): void;
     // (undocumented)
     get empty(): boolean;
     // (undocumented)

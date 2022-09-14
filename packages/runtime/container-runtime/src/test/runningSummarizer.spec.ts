@@ -58,7 +58,6 @@ describe("Runtime", () => {
             };
             const summaryConfig: ISummaryConfiguration = {
                 state: "enabled",
-                idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
@@ -117,7 +116,7 @@ describe("Runtime", () => {
                     summaryProposal,
                 };
                 mockDeltaManager.emit("op", {
-                    contents,
+                    data: JSON.stringify(contents),
                     type: MessageType.SummaryAck,
                     sequenceNumber: ++lastRefSeq,
                 });
@@ -135,7 +134,7 @@ describe("Runtime", () => {
                     message: "test-nack",
                 };
                 mockDeltaManager.emit("op", {
-                    contents,
+                    data: JSON.stringify(contents),
                     type: MessageType.SummaryNack,
                     sequenceNumber: ++lastRefSeq,
                 });
@@ -757,7 +756,7 @@ describe("Runtime", () => {
                     assert(!ackNackResult.success, "on-demand summary should fail");
                     assert(ackNackResult.data?.summaryNackOp.type === MessageType.SummaryNack,
                         "should be nack");
-                    assert(ackNackResult.data.summaryNackOp.contents.message === "test-nack",
+                    assert(JSON.parse((ackNackResult.data.summaryNackOp as any).data).message === "test-nack",
                         "summary nack error should be test-nack");
                 });
 

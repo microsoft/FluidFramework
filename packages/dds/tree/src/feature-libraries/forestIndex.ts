@@ -22,8 +22,6 @@ import { jsonableTreeFromCursor } from "./treeTextCursor";
 
 /** The storage key for the blob in the summary containing tree data */
 const treeBlobKey = "ForestTree";
-/** The storage key for the blob in the summary containing schema data */
-const schemaBlobKey = "ForestSchema";
 
 /**
  * Index which provides an editable forest for the current state for the document.
@@ -35,15 +33,14 @@ const schemaBlobKey = "ForestSchema";
  * Used to capture snapshots of document for summaries.
  */
 export class ForestIndex implements Index<unknown>, SummaryElement {
-    readonly key: string = "Forest";
+    public readonly key = "Forest";
 
-    readonly summaryElement?: SummaryElement = this;
+    public readonly summaryElement?: SummaryElement = this;
 
     private readonly cursor: ITreeSubscriptionCursor;
 
     // Note that if invalidation happens when these promises are running, you may get stale results.
     private readonly treeBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
-    private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
 
     public constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly forest: IEditableForest) {
         this.cursor = this.forest.allocateCursor();
@@ -55,13 +52,6 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
             // For now we are not chunking the data, and instead put it in a single blob:
             // TODO: use lower level API to avoid blob manager?
             return this.runtime.uploadBlob(IsoBuffer.from(treeText));
-        });
-        this.schemaBlob = cachedValue(async (observer) => {
-            recordDependency(observer, this.forest.schema);
-            const schemaText = this.getSchemaString();
-
-            // For now we are not chunking the the schema, but still put it in a reusable blob:
-            return this.runtime.uploadBlob(IsoBuffer.from(schemaText));
         });
     }
 
@@ -81,28 +71,15 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         // (since we don't save them, and they should not exist outside transactions).
         const rootAnchor = this.forest.root(this.forest.rootField);
         const roots: JsonableTree[] = [];
-        let result = this.forest.tryGet(rootAnchor, this.cursor);
+        let result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
         while (result === TreeNavigationResult.Ok) {
             roots.push(jsonableTreeFromCursor(this.cursor));
             result = this.cursor.seek(1);
         }
         this.cursor.clear();
-        assert(result === TreeNavigationResult.NotFound, "Unsupported navigation result");
+        assert(result === TreeNavigationResult.NotFound, 0x34b /* Unsupported navigation result */);
 
         return JSON.stringify(roots);
-    }
-
-    /**
-     * Synchronous monolithic summarization of schema content.
-     *
-     * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
-     *
-     * @returns a snapshot of the forest schema as a string.
-     */
-     private getSchemaString(): string {
-        const { treeSchema, globalFieldSchema } = this.forest.schema;
-        throw new Error("Method not implemented.");
-        return `TODO: actual format ${treeSchema}, ${globalFieldSchema}`;
     }
 
     public getAttachSummary(
@@ -111,7 +88,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
-        return this.summarizeCore(stringify, this.getSchemaString(), this.getTreeString());
+        return this.summarizeCore(stringify, this.getTreeString());
     }
 
     public async summarize(
@@ -120,18 +97,15 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats> {
-        const [schemaBlobHandle, treeBlobHandle] = await Promise.all([this.schemaBlob.get(), this.treeBlob.get()]);
-        return this.summarizeCore(stringify, schemaBlobHandle, treeBlobHandle);
+        const treeBlobHandle = await this.treeBlob.get();
+        return this.summarizeCore(stringify, treeBlobHandle);
     }
 
     private summarizeCore(
         stringify: SummaryElementStringifier,
-        schema: string | IFluidHandle<ArrayBufferLike>,
         tree: string | IFluidHandle<ArrayBufferLike>,
     ): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
-        const serializedSchemaBlobHandle = stringify(schema);
-        builder.addBlob(schemaBlobKey, serializedSchemaBlobHandle);
         const serializedTreeBlobHandle = stringify(tree);
         builder.addBlob(treeBlobKey, serializedTreeBlobHandle);
         return builder.getSummaryTree();
@@ -148,17 +122,12 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     }
 
     public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
-        const [_schemaBuffer, treeBuffer] = await Promise.all([
-            services.readBlob(schemaBlobKey),
-            services.readBlob(treeBlobKey),
-        ]);
-        const tree = parse(bufferToString(treeBuffer, "utf8")) as string;
-        const placeholderTree = JSON.parse(tree) as JsonableTree[];
-
-        initializeForest(this.forest, placeholderTree);
-
-        // TODO: use schema to initialize forest.schema
-        // const schema = parse(bufferToString(_schemaBuffer, "utf8")) as string;
-        throw new Error("Method not implemented.");
+        if (await services.contains(treeBlobKey)) {
+            const treeBuffer = await services.readBlob(treeBlobKey);
+            const treeBufferString = bufferToString(treeBuffer, "utf8");
+            const tree = parse(treeBufferString) as string;
+            const placeholderTree = JSON.parse(tree) as JsonableTree[];
+            initializeForest(this.forest, placeholderTree);
+        }
     }
 }

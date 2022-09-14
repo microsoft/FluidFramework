@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-/* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
+/* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
 import {
@@ -15,6 +15,7 @@ import {
 } from "./constants";
 import {
      LocalReferenceCollection,
+     LocalReferencePosition,
 } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
@@ -27,6 +28,7 @@ import {
     MergeTreeDeltaType,
     ReferenceType,
 } from "./ops";
+import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
 import {
     clone,
@@ -42,26 +44,55 @@ import {
     refGetTileLabels,
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
-import { PropertiesManager } from "./segmentPropertiesManager";
+import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
 
+/**
+ * Common properties for a node in a merge tree.
+ */
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
     /**
      * The length of the contents of the node.
      */
     cachedLength: number;
+    /**
+     * The index of this node in its parent's list of children.
+     */
     index: number;
+    /**
+     * A string that can be used for comparing the location of this node to other `MergeNode`s in the same tree.
+     * `a.ordinal < b.ordinal` if and only if `a` comes before `b` in a pre-order traversal of the tree.
+     */
     ordinal: string;
     isLeaf(): this is ISegment;
 }
 
 export type IMergeNode = IMergeBlock | ISegment;
 
-// Node with segments as children
+/**
+ * Internal (i.e. non-leaf) node in a merge tree.
+ */
 export interface IMergeBlock extends IMergeNodeCommon {
     needsScour?: boolean;
+    /**
+     * Number of direct children of this node
+     */
     childCount: number;
+    /**
+     * Array of child nodes.
+     *
+     * @remarks To avoid reallocation, this is always initialized to have maximum length as deemed by
+     * the merge tree's branching factor. Use `childCount` to determine how many children this node actually has.
+     */
     children: IMergeNode[];
+    /**
+     * Supports querying the total length of all descendants of this IMergeBlock from the perspective of any
+     * (clientId, seq) within the collab window.
+     *
+     * @remarks This is only optional for implementation reasons (internal nodes can be created/moved without
+     * immediately initializing the partial lengths). Aside from mid-update on tree operations, these lengths
+     * objects are always defined.
+     */
     partialLengths?: PartialSequenceLengths;
     hierBlock(): IHierBlock | undefined;
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
@@ -75,10 +106,27 @@ export interface IHierBlock extends IMergeBlock {
     rangeStacks: RangeStackMap;
 }
 
+/**
+ * Contains removal information associated to an {@link ISegment}.
+ */
 export interface IRemovalInfo {
+    /**
+     * Local seq at which this segment was removed, if the removal is yet-to-be acked.
+     */
+    localRemovedSeq?: number;
+    /**
+     * Seq at which this segment was removed.
+     */
     removedSeq: number;
+    /**
+     * List of client IDs that have removed this segment.
+     * The client that actually removed the segment (i.e. whose removal op was sequenced first) is stored as the first
+     * client in this list. Other clients in the list have all issued concurrent ops to remove the segment.
+     * @remarks When this list has length \> 1, this is referred to as the "overlapping remove" case.
+     */
     removedClientIds: number[];
 }
+
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
     if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
         return maybe as IRemovalInfo;
@@ -89,23 +137,52 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 
 /**
  * A segment representing a portion of the merge tree.
+ * Segments are leaf nodes of the merge tree and contain data.
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
+    /**
+     * Manages pending local state for properties on this segment.
+     */
     propertyManager?: PropertiesManager;
+    /**
+     * Local seq at which this segment was inserted. If this is defined, `seq` will be UnassignedSequenceNumber.
+     * Once the segment is acked, this field is cleared.
+     */
     localSeq?: number;
+    /**
+     * Local seq at which this segment was removed. If this is defined, `removedSeq` will initially be set to
+     * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
+     * will be updated to the seq at which that client removed this segment.
+     *
+     * Like `localSeq`, this field is cleared once the local removal of the segment is acked.
+     */
     localRemovedSeq?: number;
-    seq?: number;  // If not present assumed to be previous to window min
+    /**
+     * Seq at which this segment was inserted.
+     * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
+     */
+    seq?: number;
+    /**
+     * Short clientId for the client that inserted this segment.
+     */
     clientId: number;
+    /**
+     * Local references added to this segment.
+     */
     localRefs?: LocalReferenceCollection;
+    /**
+     * Properties that have been added to this segment via annotation.
+     */
     properties?: PropertySet;
     addProperties(
         newProps: PropertySet,
         op?: ICombiningOp,
         seq?: number,
         collabWindow?: CollaborationWindow,
+        rollback?: PropertiesRollback,
     ): PropertySet | undefined;
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
@@ -223,6 +300,8 @@ export interface MergeTreeStats {
 
 export interface SegmentGroup {
     segments: ISegment[];
+    previousProps?: PropertySet[];
+    removedReferences?: LocalReferencePosition[];
     localSeq: number;
 }
 
@@ -264,28 +343,15 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
     }
 
     public setOrdinal(child: IMergeNode, index: number) {
-        let childCount = this.childCount;
-        if (childCount === 8) {
-            childCount = 7;
-        }
-        assert((childCount >= 1) && (childCount <= 7), 0x040 /* "Child count is not within [1,7] range!" */);
-        let localOrdinal: number;
-        const ordinalWidth = 1 << (MaxNodesInBlock - (childCount + 1));
-        if (index === 0) {
-            localOrdinal = ordinalWidth - 1;
-        } else {
-            const prevOrd = this.children[index - 1].ordinal;
-            const prevOrdCode = prevOrd.charCodeAt(prevOrd.length - 1);
-            localOrdinal = prevOrdCode + ordinalWidth;
-        }
-        child.ordinal = this.ordinal + String.fromCharCode(localOrdinal);
-        assert(child.ordinal.length === (this.ordinal.length + 1), 0x041 /* "Unexpected child ordinal length!" */);
-        if (index > 0) {
-            assert(
-                child.ordinal > this.children[index - 1].ordinal,
-                0x042, /* "Child ordinal <= previous sibling ordinal!" */
+        const childCount = this.childCount;
+        assert((childCount >= 1) && (childCount <= MaxNodesInBlock),
+            0x040 /* "Child count is not within [1,8] range!" */);
+        child.ordinal = computeHierarchicalOrdinal(
+            MaxNodesInBlock,
+            childCount,
+            this.ordinal,
+            index === 0 ? undefined : this.children[index - 1]?.ordinal,
             );
-        }
     }
 
     public assignChild(child: IMergeNode, index: number, updateOrdinal = true) {
@@ -312,7 +378,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public localSeq?: number;
     public localRemovedSeq?: number;
 
-    public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
+    public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number,
+        collabWindow?: CollaborationWindow, rollback: PropertiesRollback = PropertiesRollback.None) {
         if (!this.propertyManager) {
             this.propertyManager = new PropertiesManager();
         }
@@ -325,6 +392,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             op,
             seq,
             collabWindow && collabWindow.collaborating,
+            rollback,
         );
     }
 
@@ -396,7 +464,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 leafSegment.parent = this.parent;
 
                 // Give the leaf a temporary yet valid ordinal.
-                // when this segment is put in the tree, it will get it's real ordinal,
+                // when this segment is put in the tree, it will get its real ordinal,
                 // but this ordinal meets all the necessary invariants for now.
                 leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 
@@ -507,71 +575,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
     }
 
     toString() {
-        let bbuf = "";
-        if (refTypeIncludesFlag(this, ReferenceType.Tile)) {
-            bbuf += "Tile";
-        }
-        if (refTypeIncludesFlag(this, ReferenceType.NestBegin)) {
-            if (bbuf.length > 0) {
-                bbuf += "; ";
-            }
-            bbuf += "RangeBegin";
-        }
-        if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
-            if (bbuf.length > 0) {
-                bbuf += "; ";
-            }
-            bbuf += "RangeEnd";
-        }
-        let lbuf = "";
-        const id = this.getId();
-        if (id) {
-            bbuf += ` (${id}) `;
-        }
-        const tileLabels = refGetTileLabels(this);
-        if (tileLabels) {
-            lbuf += "tile -- ";
-            for (let i = 0, len = tileLabels.length; i < len; i++) {
-                const tileLabel = tileLabels[i];
-                if (i > 0) {
-                    lbuf += "; ";
-                }
-                lbuf += tileLabel;
-            }
-        }
-        const rangeLabels = refGetRangeLabels(this);
-        if (rangeLabels) {
-            let rangeKind = "begin";
-            if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
-                rangeKind = "end";
-            }
-            if (tileLabels) {
-                lbuf += " ";
-            }
-            lbuf += `range ${rangeKind} -- `;
-            const labels = rangeLabels;
-            for (let i = 0, len = labels.length; i < len; i++) {
-                const rangeLabel = labels[i];
-                if (i > 0) {
-                    lbuf += "; ";
-                }
-                lbuf += rangeLabel;
-            }
-        }
-        let pbuf = "";
-        if (this.properties) {
-            pbuf += JSON.stringify(this.properties, (key, value) => {
-                // Avoid circular reference when stringifying makers containing handles.
-                // (Substitute a debug string instead.)
-                const handle = !!value && value.IFluidHandle;
-
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return handle
-                    ? `#Handle(${handle.routeContext.path}/${handle.path})`
-                    : value;
-            });
-        }
-        return `M ${bbuf}: ${lbuf} ${pbuf}`;
+        return `M${this.getId()}`;
     }
 
     protected createSplitSegmentAt(pos: number) {
@@ -653,4 +657,72 @@ export interface SegmentAccumulator {
 export interface MinListener {
     minRequired: number;
     onMinGE(minSeq: number): void;
+}
+
+export function debugMarkerToString(marker: Marker): string {
+    let bbuf = "";
+    if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {
+        bbuf += "Tile";
+    }
+    if (refTypeIncludesFlag(marker, ReferenceType.NestBegin)) {
+        if (bbuf.length > 0) {
+            bbuf += "; ";
+        }
+        bbuf += "RangeBegin";
+    }
+    if (refTypeIncludesFlag(marker, ReferenceType.NestEnd)) {
+        if (bbuf.length > 0) {
+            bbuf += "; ";
+        }
+        bbuf += "RangeEnd";
+    }
+    let lbuf = "";
+    const id = marker.getId();
+    if (id) {
+        bbuf += ` (${id}) `;
+    }
+    const tileLabels = refGetTileLabels(marker);
+    if (tileLabels) {
+        lbuf += "tile -- ";
+        for (let i = 0, len = tileLabels.length; i < len; i++) {
+            const tileLabel = tileLabels[i];
+            if (i > 0) {
+                lbuf += "; ";
+            }
+            lbuf += tileLabel;
+        }
+    }
+    const rangeLabels = refGetRangeLabels(marker);
+    if (rangeLabels) {
+        let rangeKind = "begin";
+        if (refTypeIncludesFlag(marker, ReferenceType.NestEnd)) {
+            rangeKind = "end";
+        }
+        if (tileLabels) {
+            lbuf += " ";
+        }
+        lbuf += `range ${rangeKind} -- `;
+        const labels = rangeLabels;
+        for (let i = 0, len = labels.length; i < len; i++) {
+            const rangeLabel = labels[i];
+            if (i > 0) {
+                lbuf += "; ";
+            }
+            lbuf += rangeLabel;
+        }
+    }
+    let pbuf = "";
+    if (marker.properties) {
+        pbuf += JSON.stringify(marker.properties, (key, value) => {
+            // Avoid circular reference when stringifying makers containing handles.
+            // (Substitute a debug string instead.)
+            const handle = !!value && value.IFluidHandle;
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return handle
+                ? `#Handle(${handle.routeContext.path}/${handle.path})`
+                : value;
+        });
+    }
+    return `M ${bbuf}: ${lbuf} ${pbuf}`;
 }

@@ -190,7 +190,7 @@ export class ConnectionStateHandler {
             this.waitEvent?.end({ source });
 
             assert(this.catchUpMonitor !== undefined,
-                "catchUpMonitor should always be set if pendingClientId is set");
+                0x37d /* catchUpMonitor should always be set if pendingClientId is set */);
             this.catchUpMonitor.on("caughtUp", this.transitionToConnectedState);
         } else {
             // Adding this event temporarily so that we can get help debugging if something goes wrong.

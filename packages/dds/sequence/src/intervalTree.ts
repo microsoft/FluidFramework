@@ -20,18 +20,56 @@ export interface AugmentedIntervalNode {
 
 export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
 
+/**
+ * Basic interval abstraction
+ */
 export interface IInterval {
+    /**
+     * @returns a new interval object with identical semantics.
+     */
     clone(): IInterval;
+    /**
+     * Compares this interval to `b` with standard comparator semantics:
+     * - returns -1 if this is less than `b`
+     * - returns 1 if this is greater than `b`
+     * - returns 0 if this is equivalent to `b`
+     * @param b - Interval to compare against
+     */
     compare(b: IInterval): number;
+    /**
+     * Compares the start endpoint of this interval to `b`'s start endpoint.
+     * Standard comparator semantics apply.
+     * @param b - Interval to compare against
+     */
     compareStart(b: IInterval): number;
+    /**
+     * Compares the end endpoint of this interval to `b`'s end endpoint.
+     * Standard comparator semantics apply.
+     * @param b - Interval to compare against
+     */
     compareEnd(b: IInterval): number;
+    /**
+     * @internal
+     * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
+     */
     modify(
         label: string,
         start: number | undefined,
         end: number | undefined,
-        op?: ISequencedDocumentMessage
+        op?: ISequencedDocumentMessage,
+        localSeq?: number
     ): IInterval | undefined;
+    /**
+     * @returns whether this interval overlaps with `b`.
+     * Since intervals are inclusive, this includes cases where endpoints are equal.
+     */
     overlaps(b: IInterval): boolean;
+    /**
+     * @internal
+     * Unions this interval with `b`, returning a new interval.
+     * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
+     * intermediate values between the two intervals.
+     */
     union(b: IInterval): IInterval;
 }
 

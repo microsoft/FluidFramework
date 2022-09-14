@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: elastalert-auth
-data:
-  smtp_auth.yaml: |
-    user: sender_email_address
-    password: sender_email_address_password

@@ -21,18 +21,16 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     FieldLocation,
     ForestLocation,
     ITreeSubscriptionCursor,
-    ForestAnchor,
     ITreeSubscriptionCursorState,
     SynchronousNavigationResult,
 } from "./forest";
 
 export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
-    FieldSchema, ValueSchema, TreeSchema, FieldKind,
-    emptyField, neverTree,
-    SchemaRepository, StoredSchemaRepository,
-    rootFieldKey,
-} from "./schema";
+    FieldSchema, ValueSchema, TreeSchema,
+    StoredSchemaRepository, FieldKindIdentifier,
+    rootFieldKey, TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+} from "./schema-stored";
 
 export {
     Brand,
@@ -45,15 +43,25 @@ export {
     Covariant,
     ExtractFromOpaque,
     isAny,
+    brand,
+    brandOpaque,
+    ValueFromBranded,
+    NameFromBranded,
 } from "./util";
+
+export {
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+    JsonCompatibleReadOnly,
+    JsonCompatible,
+} from "./change-family";
 
 export {
     Rebaser,
     ChangeRebaser,
     RevisionTag,
-    ChangeFromChangeRebaser,
-    FinalFromChangeRebaser,
-    ChangeSetFromChangeRebaser,
+    ChangesetFromChangeRebaser,
 } from "./rebase";
 
 export {
@@ -67,4 +75,27 @@ export {
     buildForest,
     TextCursor,
     jsonableTreeFromCursor,
+    singleTextCursor,
+    emptyField,
+    neverTree,
+    FieldKinds,
+    ModularChangeFamily,
+    ModularEditBuilder,
+    FieldChangeHandler,
+    FieldChangeRebaser,
+    FieldChangeEncoder,
+    FieldChangeMap,
+    FieldChangeset,
+    FieldChange,
+    ToDelta,
+    NodeChangeComposer,
+    NodeChangeInverter,
+    NodeChangeRebaser,
+    NodeChangeEncoder,
+    NodeChangeDecoder,
+    FieldKind,
+    Multiplicity,
+    isNeverField,
+    FullSchemaPolicy,
+    defaultSchemaPolicy,
 } from "./feature-libraries";

@@ -35,9 +35,12 @@
     "cSpell.words": [
         "injective",
         "losslessly",
+        "mitigations",
+        "multinomial",
+        "nonfinite",
         "pseudorandomly",
         "unaugmented"
     ],
     "editor.detectIndentation": true,
-    "editor.insertSpaces": false, // Use detectIndentation instead
+    "editor.insertSpaces": true, // Use detectIndentation instead
 }

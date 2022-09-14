@@ -4,10 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+
+import { stringToBuffer } from "@fluidframework/common-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
     describeFullCompat,
@@ -15,8 +19,7 @@ import {
     ITestDataObject,
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+
 import { defaultGCConfig } from "./gcTestConfigs";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
@@ -201,13 +204,6 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
         it("marks default data store as referenced", async () => {
             await validateDataStoreReferenceState(
                 provider, containerRuntime, deleteContent, mainDataStore._context.id, true /* referenced */);
-        });
-
-        it("marks root data stores as referenced", async () => {
-            const rootDataStore = await requestFluidObject<ITestDataObject>(
-                await containerRuntime.createRootDataStore(TestDataObjectType, "rootDataStore"), "");
-            await validateDataStoreReferenceState(
-                provider, containerRuntime, deleteContent, rootDataStore._context.id, true /* referenced */);
         });
 
         it("marks non-root data stores as referenced / unreferenced correctly", async () => {

@@ -15,7 +15,7 @@ import {
     ITaggedTelemetryPropertyType,
     TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
-import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     CachedConfigProvider,
     loggerIsMonitoringContext,
@@ -278,7 +278,7 @@ export class ChildLogger extends TelemetryLogger {
     /**
      * Create child logger
      * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
-     * is created, but it does not sends telemetry events anywhere.
+     * is created, but it does not send telemetry events anywhere.
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
      * @param propertyGetters - Getters to add additional properties to all events
@@ -531,7 +531,7 @@ export class PerformanceEvent {
  * Logger that is useful for UT
  * It can be used in places where logger instance is required, but events should be not send over.
  */
- export class TelemetryUTLogger implements ITelemetryLogger {
+export class TelemetryUTLogger implements ITelemetryLogger {
     public send(event: ITelemetryBaseEvent): void {
     }
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
@@ -604,4 +604,28 @@ function convertToBasePropertyType(x: any): TelemetryEventPropertyType | null {
             }
             return null;
     }
+
+ * Null logger
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
+    /**
+     * Send an event with the logger
+     *
+     * @param event - the event to send
+     */
+    public send(event: ITelemetryBaseEvent): void {
+        return;
+    }
+}
+
+/**
+ * Null logger
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+export class TelemetryNullLogger implements ITelemetryLogger {
+    public send(event: ITelemetryBaseEvent): void {}
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
 }
