@@ -745,7 +745,8 @@ export class GarbageCollector implements IGarbageCollector {
         /**
          * For non-summarizer clients, initialize the base state when the container becomes active, i.e., it transitions
          * to "write" mode. This will ensure that the container's own join op is processed and there is a recent
-         * reference timestamp that will be used to update the state of unreferenced nodes.
+         * reference timestamp that will be used to update the state of unreferenced nodes. Also, all trailing ops which
+         * could affect the GC state will have been processed.
          *
          * Ideally, this initialization should only be done for summarizer client. However, we are currently rolling out
          * sweep in phases and we want to track when inactive and sweep ready objects are used in any client.
