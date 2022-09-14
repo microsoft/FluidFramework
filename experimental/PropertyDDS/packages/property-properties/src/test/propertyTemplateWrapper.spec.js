@@ -4,7 +4,7 @@
  */
 
 /* globals */
-
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test the functions of a PropertyTemplateWrapper object
  *    described in /src/property_template_wrapper.js

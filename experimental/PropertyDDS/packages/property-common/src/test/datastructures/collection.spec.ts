@@ -46,6 +46,7 @@ describe("collection", function() {
 
         expect(collection.bulkAdd(objectToAdd)).to.equal(collection);
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
 
         expect(itemExists).to.equal(true);
@@ -75,6 +76,7 @@ describe("collection", function() {
         collection.bulkAdd(objectToAdd);
         collection.bulkRemove(objectToAdd);
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
 
         expect(itemExists).to.equal(false);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /* globals assert */
-
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test ValueProperty
  *    object described in /src/properties/valueProperty.js

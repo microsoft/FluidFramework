@@ -37,7 +37,7 @@ class BaseDataArray {
         }
         // The 'eslint-...' is used to disable the rule that requires
         // constructors to start with a capitalized letter.
-        this._buffer = new this.bufferConstructor(this.size);
+        this._buffer = new this.bufferConstructor(this.size); // eslint-disable-line new-cap
     }
 
     /**
@@ -232,7 +232,7 @@ class BaseDataArray {
         // target buffer with the desired new size
         // The 'eslint-...' is used to disable the rule that requires
         // constructors to start with a capitalized letter.
-        const newBuffer = new in_bufferCtor(in_newSize);
+        const newBuffer = new in_bufferCtor(in_newSize); // eslint-disable-line new-cap
         const oldSize = in_buffer.length;
         const oldBuffer = in_buffer;
         const isShrinking = oldSize > in_newSize;

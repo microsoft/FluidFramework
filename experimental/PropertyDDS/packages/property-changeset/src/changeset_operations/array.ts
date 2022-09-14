@@ -330,7 +330,7 @@ const _copyOperation = function(in_sourceOperation: NoneNOPOperation, in_targetO
  * overlapping range or
  * (partial) A or B
  */
-
+// eslint-disable-next-line complexity
 const splitOverlapping = function(
     io_rangeA: OperationRangeInsert | OperationRangeRemove,
     io_rangeB: OperationRangeInsert | OperationRangeRemove,

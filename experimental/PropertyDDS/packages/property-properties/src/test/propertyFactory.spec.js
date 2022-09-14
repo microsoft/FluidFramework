@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 /* globals sinon */
+/* eslint-disable no-unused-expressions */
 
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { generateGUID } = require('@fluid-experimental/property-common').GuidUtils;

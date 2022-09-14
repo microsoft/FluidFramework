@@ -33,7 +33,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
                 ? storeFactories
                 : storeFactories.concat(defaultStoreFactory)
             ).map(
-
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
     }
 

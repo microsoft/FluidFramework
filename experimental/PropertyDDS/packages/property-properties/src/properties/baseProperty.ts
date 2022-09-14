@@ -332,17 +332,19 @@ export abstract class BaseProperty {
     // TODO: Cleaner way to make the property tree aware of the DDS hosting it.
     // Currently, this._tree is set in SharedPropertyTree constructor.
     _reportDirtinessToView() {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         let currentNode: BaseProperty = this;
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         while (currentNode._parent) {
             currentNode = currentNode._parent;
         }
 
         if (
-
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             currentNode._tree &&
             currentNode._tree.notificationDelayScope === 0 &&
-
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             currentNode._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY)
         ) {
             currentNode._tree._reportDirtinessToView();

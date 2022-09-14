@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 /* globals */
+/* eslint-disable no-unused-expressions, max-len */
 
 let _;
 let PropertyFactory;

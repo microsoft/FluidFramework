@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test the functions of 64 bit Uinteger properties
  *    described in /src/shared/property_sets/properties/int_property.js

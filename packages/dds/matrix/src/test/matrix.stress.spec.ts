@@ -92,7 +92,7 @@ describe("Matrix", () => {
                 const matrix0 = matrices[0];
 
                 // Initialize PRNG with given seed.
-
+                // eslint-disable-next-line @typescript-eslint/unbound-method
                 const float64 = new Random(seed).float64;
 
                 // Returns a pseudorandom 32b integer in the range [0 .. max).
