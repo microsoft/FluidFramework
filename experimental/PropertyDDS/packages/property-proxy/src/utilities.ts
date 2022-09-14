@@ -33,6 +33,7 @@ export function forceType<T>(value: any | T): value is T {
  * Utility class for the PropertyProxy proxy that consolidates commonly used functionality.
  * @hidden
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Utilities {
     /**
     * Wraps a function with push/pophNotificationDelayScope.

@@ -38,21 +38,18 @@ export async function getFluidRelayContainer(
     const urlResolver = new InsecureTinyliciousUrlResolver();
 
     let container: IContainer;
-    if (createNew) {
-        container = await createContainer({
+    container = await (createNew
+        ? createContainer({
             documentServiceFactory,
             urlResolver,
             containerRuntimeFactory,
             request: createAzureCreateNewRequest(),
-        });
-    } else {
-        container = await getContainer({
+        }) : getContainer({
             documentServiceFactory,
             urlResolver,
             containerRuntimeFactory,
             request: { url: documentId },
-        });
-    }
+        }));
     const resolved = container.resolvedUrl;
     ensureFluidResolvedUrl(resolved);
     const containerId = resolved.id;

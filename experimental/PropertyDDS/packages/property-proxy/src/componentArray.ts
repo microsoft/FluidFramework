@@ -37,7 +37,7 @@ const prepareElementsForInsertion =
 
 /**
  * ComponentArray extends Array to work directly on the data stored in PropertyDDS.
- *  No local copy of the data is maintained.
+ * No local copy of the data is maintained.
  * Serves as input for the {@link ComponentArrayProxyHandler}.
  * @extends Array
  * @hidden
