@@ -3,22 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { Machine } from "jssm";
-
 /**
- * A StateHandler is an object that can handle states.
+ * A type representing state machine states. It is an alias of string and used to make API signatures clearer.
+ *
+ * @remarks
+ *
+ * In the future this may become a string enum.
  */
-export interface StateHandler {
-    handleState: (state: string) => Promise<boolean>;
-    parentHandler?: StateHandler;
-}
-
-/**
- * A StateMachine combines an actual machine with known state and actions which are used to test that all states and
- * actions are accounted for. Note that this doesn't ensure all states are handled.
- */
-export interface StateMachine extends StateHandler {
-    knownActions: string[];
-    knownStates: string[];
-    machine: Machine<unknown>;
-}
+export type MachineState = string;
