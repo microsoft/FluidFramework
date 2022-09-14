@@ -1286,9 +1286,8 @@ export namespace Utils {
      * @param in_callback - A callback that is used to emit every template
      * @param in_finalizer - A callback that is called when enumeration is completed
      *
-     * @returns All templates that appear in the ChangeSet
-     *   The returned object has members key (string), corresponding to the type and value with the
-     *   definition (object)
+     * @returns All templates that appear in the ChangeSet.
+     * The returned object has members key (string), corresponding to the type and value with the definition (object)
      */
     export function enumerateSchemas(in_changeSet: SerializedChangeSet, in_callback: (arg0: { key: string; value: any; }, arg1: ErrorCallback<Error>) => void, in_finalizer: ErrorCallback<Error>): string[] {
         const result = [];
@@ -1418,10 +1417,13 @@ export namespace Utils {
      * @param in_changeSet - The ChangeSet to process
      * @param in_excludetypeids - Exclude all typeids from the returned ChangeSet
      * @throws if path is invalid.
-     * @returns The changes that are applied to the given path
+     * @returns The changes that are applied to the given path.
+     *
+     * ```
      * <pre>
      * {insert: Object|undefined, modify: Object|undefined, remove: boolean|undefined}
      * </pre>
+     * ```
      */
     export function getChangesByPath(in_path: string, in_root, in_changeSet: SerializedChangeSet, in_excludetypeids: boolean): object {
         // if we're asked for the root, just return the root (in a modify)
@@ -1727,32 +1729,37 @@ export namespace Utils {
      * Given a change set, this function will filter it based on a series of paths.
      * The final ChangeSet will only include the paths in question starting from the root of
      * the ChangeSet.
-     * For Example,
-     *   Given the following change set
-     *      'insert': {
-     *        'String': {
-     *          'string1': 'hello',
-     *          'string2': 'world
-     *        }
-     *      }
-     *   And the path
-     *     ['string1']
-     *   the resulting ChangeSet will be
-     *     'insert': {
-     *       'String': {
-     *         'string1': 'hello'
-     *       }
-     *     }
+     *
+     * @example Given the following change set:
+     *
+     * ```json
+     * 'insert': {
+     *  'String': {
+     *      'string1': 'hello',
+     *      'string2': 'world
+     *  }
+     * }
+     * ```
+     *
+     * And the path `['string1']`, the resulting ChangeSet will be:
+     *
+     * ```json
+     * 'insert': {
+     *  'String': {
+     *      'string1': 'hello'
+     *  }
+     * }
+     * ```
      *
      * NOTE: Paths that traverse through sets and arrays are not supported.
      *
-     * @param in_changeSet - The changeset to parse
+     * @param in_changeSet - The changeset to parse.
      * @param in_paths - List of paths to filter by. This can either be passed
-     *     as a flat array of paths or as a Map with the tokenized, tree structured paths, see the
-     *     documentation of getChangesToTokenizedPaths for an example.
-     *     Note: duplicate paths will be ignored including ones that encompasse other paths
+     * as a flat array of paths or as a Map with the tokenized, tree structured paths, see the
+     * documentation of getChangesToTokenizedPaths for an example.
+     * Note: duplicate paths will be ignored including ones that encompasse other paths.
      *
-     * @throws if a path given resolves into an array or set
+     * @throws If a path given resolves into an array or set.
      * @returns - Filtered ChangeSet
      */
     export function getFilteredChangeSetByPaths(in_changeSet: SerializedChangeSet, in_paths: PathsType): SerializedChangeSet {
@@ -1958,7 +1965,7 @@ export namespace Utils {
      *
      * @param in_paths - An array with paths
      * @returns {Map} A tree structured representation of the tokenized paths that can be
-     *     passed to getChangesToTokenizedPaths and getFilteredChangeSetByPaths.
+     * passed to getChangesToTokenizedPaths and getFilteredChangeSetByPaths.
      */
     export function convertPathArrayToTree(in_paths: string[]): PathTree {
         in_paths = Array.isArray(in_paths) ? in_paths : [in_paths];
@@ -2006,22 +2013,27 @@ export namespace Utils {
      * Given a change set, this function will filter it based on a series of paths.
      * The final ChangeSet will exclude the paths in question starting from the root of
      * the ChangeSet.
-     * For Example,
-     *   Given the following change set
-     *      'insert': {
-     *        'String': {
-     *          'string1': 'hello',
-     *          'string2': 'world
-     *        }
-     *      }
-     *   And the path
-     *     ['string1']
-     *   the resulting ChangeSet will be
-     *     'insert': {
-     *       'String': {
-     *         'string2': 'world'
-     *       }
-     *     }
+     *
+     * @example Given the following change set:
+     *
+     * ```json
+     * 'insert': {
+     *  'String': {
+     *      'string1': 'hello',
+     *      'string2': 'world
+     *  }
+     * }
+     * ```
+     *
+     * And the path `['string1']`, the resulting ChangeSet will be:
+     *
+     * ```json
+     * 'insert': {
+     *  'String': {
+     *      'string2': 'world'
+     *  }
+     * }
+     * ```
      *
      * NOTE: Paths that traverse through sets and arrays are not supported.
      *
@@ -2060,7 +2072,8 @@ export namespace Utils {
 
     /**
      * Extract all paths from the ChangeSet in a flattened list and include the operations and typeid information.
-     * NOTE: The paths returned also include the parent. i.e. the path 'nodeProp.subproperty' will result in
+     * @remarks NOTE: The paths returned also include the parent. i.e. the path 'nodeProp.subproperty' will result in:
+     * ```json
      * {
      *   nodeProp: {
      *    operation: 'modify',
@@ -2071,6 +2084,8 @@ export namespace Utils {
      *    typeid: { typeid: 'Float32', context: 'single', isEnum: false }
      *   }
      * }
+     * ```
+     *
      * @param in_changeSet - The changeset to extract paths from
      * @param in_options - Set of options
      * @param in_options.includeOperation - Flag to include the operation

@@ -28,6 +28,7 @@ export declare interface ExtractedContext {
  * @public
  * @description Helper functions to work with typeid strings
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace TypeIdHelper {
     /**
      * Checks whether the given type is a primitive type.

@@ -52,6 +52,7 @@ const _fastIsEmptyObject = function(in_object: any): boolean {
     return true;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ChangeSetIndexedCollectionFunctions {
     /**
      * Applies a ChangeSet to a given indexed collection property (recursively). The ChangeSet is assumed to be relative

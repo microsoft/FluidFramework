@@ -1021,21 +1021,27 @@ const arraysHaveSameValues = function(in_arr1: arrayModifyList[1], in_arr2: arra
  *
  * We have to handle the conflicting rebase changes. The changes we do, are summarized in this table.
  * Other is the modified, rebased (on own) changeset.
+ *
+ * ```
  *                   BASE
  *                  /    \
  *                 /      \
  *               OWN      OTHER
+ * ```
  *
  * gets rebased to:
  *
+ * ```
  *                 BASE
  *                  /
  *               OWN
  *                  \
  *                OTHER
+ * ```
  *
  * conflict default behavior in ()
  *
+ * ```
  * -------|-----------------+------------------+------------------|
  *    \Own|    insert       |       modify     |     remove       |
  *     \  |                 |                  |                  |
@@ -1054,7 +1060,8 @@ const arraysHaveSameValues = function(in_arr1: arrayModifyList[1], in_arr2: arra
  * remove | change          | change           | change           |
  *        | [rem orig. data]| (note the user)  | [rem dupl. rem]  |
  * -------|-----------------+------------------+------------------|
- *
+ *```
+
  * @param {{opA:{}, opB:{}}} in_segment - The two ops to be combined
  * @param {Array.<property-changeset.ChangeSet.ConflictInfo>} out_conflicts - A list of paths that resulted in
  * conflicts together with the type of the conflict
@@ -1316,8 +1323,8 @@ const applyRebaseSegment = function(
     }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ChangeSetArrayFunctions {
-
     /**
      * Applies a changeset to a given array property. The ChangeSet is assumed to be relative to the same
      * property root and it will be applied behind the base ChangeSet (assuming that the changes are relative to the
@@ -1612,21 +1619,27 @@ export namespace ChangeSetArrayFunctions {
      *
      * We have to handle the conflicting rebase changes. The changes we do, are summarized in this table.
      * Other is the modified, rebased (on own) changeset.
+     *
+     * ```
      *                   BASE
      *                  /    \
      *                 /      \
      *               OWN      OTHER
+     * ```
      *
      * gets rebased to:
      *
+     * ```
      *                 BASE
      *                  /
      *               OWN
      *                  \
      *                OTHER
+     * ```
      *
      * conflict default behavior in ()
      *
+     * ```
      * -------|-----------------+------------------+------------------|----------------|
      *    \Own|    insert       |       modify     |     remove       |   String set   |
      *     \  |                 |                  |                  |                |
@@ -1647,6 +1660,7 @@ export namespace ChangeSetArrayFunctions {
      *  set   |           'other's set overwrites whatever happend before              |
      *        |                 |                  |                  |                |
      * --------------------------------------------------------------------------------|
+     * ```
      *
      * @param in_ownPropertyChangeSet - The ChangeSet for the property stored in this object
      * @param io_rebasePropertyChangeSetParent - The Array containing the ChangeSet for the property to be rebased
@@ -1654,7 +1668,6 @@ export namespace ChangeSetArrayFunctions {
      * @param in_basePath - Base path to get to the property processed by this function
      * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict
      */
-
     export function _rebaseChangeSetForString(
         in_ownPropertyChangeSet: SerializedChangeSet,
         io_rebasePropertyChangeSetParent: SerializedChangeSet,
