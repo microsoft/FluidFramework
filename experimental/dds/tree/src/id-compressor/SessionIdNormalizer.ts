@@ -16,6 +16,7 @@ import { SerializedSessionIdNormalizer } from './persisted-types';
  * that normalizeLocalToFinal(locals[i]) === finals[i] and vice versa.
  * Below is an example to illustrate how various mappings can arise:
  *
+ * ```
  *     +- Creation Index
  *    /     +- Locals
  *   /     /    +- Finals
@@ -32,13 +33,16 @@ import { SerializedSessionIdNormalizer } from './persisted-types';
  * 8  |     | 13
  * 9  |     | 14
  * 10 | -11 |     ----- A local ID is allocated. It has no corresponding final ID since it has not been acked.
+ * ```
  *
  * Note that in this example, some IDs (those at indices 2, 3, 4, 6, 8, and 9) have no local form. The ID at index 10 has no final form.
  * These kinds of "gaps" occur due to the timing of allocation calls on the client and how they relate to finalization/cluster creation,
  * which depends on receiving an ack/sequence number from the server. Given this context, "session space" can be thought of as:
  *
+ * ```
  * 		for each index in the range of IDs created by a session:
  * 			the local form if it exists, otherwise the final form
+ * ```
  *
  * This class is designed to efficiently build and query these mappings by leveraging the facts that much of the range (in both local and
  * final space) is uninterrupted by "gaps" and can be compactly represented by a (first, last) pair and is easily binary searched for
