@@ -107,13 +107,11 @@ export const after = (
             if (typeof options.enableWholeSummaryUpload === "string") {
                 options.enableWholeSummaryUpload = options.enableWholeSummaryUpload === "true";
             }
-            if (options.mode === "docker") {
-                options.tenantSecret = options.tenantSecret
+            options.tenantSecret = options.mode === "docker"
+                ? options.tenantSecret
                     || config.get("fluid:webpack:docker:tenantSecret")
-                    || "create-new-tenants-if-going-to-production";
-            } else {
-                options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
-            }
+                    || "create-new-tenants-if-going-to-production"
+                : options.tenantSecret || config.get("fluid:webpack:tenantSecret");
             if (options.mode === "r11s") {
                 options.discoveryEndpoint = options.discoveryEndpoint || config.get("fluid:webpack:discoveryEndpoint");
                 options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");

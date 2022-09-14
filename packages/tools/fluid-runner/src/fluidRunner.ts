@@ -4,7 +4,7 @@
  */
 
 import * as yargs from "yargs";
-import { exportFile, IExportFileResponse } from "./exportFile";
+import { exportFile } from "./exportFile";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
 
