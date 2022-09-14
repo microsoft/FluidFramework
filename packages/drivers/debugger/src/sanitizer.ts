@@ -483,7 +483,9 @@ export class Sanitizer {
     }
 
     fixDeltaOp(deltaOp: any) {
-        deltaOp.seg = typeof deltaOp.seg === "string" ? this.replaceText(deltaOp.seg) : this.replaceObject(deltaOp.seg, this.mergeTreeExcludedKeys);
+        deltaOp.seg = typeof deltaOp.seg === "string"
+            ? this.replaceText(deltaOp.seg)
+            : this.replaceObject(deltaOp.seg, this.mergeTreeExcludedKeys);
     }
 
     /**
