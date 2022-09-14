@@ -246,7 +246,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         if (query._id) {
             const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
             if (json) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return JSON.parse(json);
             }
         } else {
@@ -264,7 +263,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
                         continue;
                     }
                 }
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
                 return value;
             }
         }

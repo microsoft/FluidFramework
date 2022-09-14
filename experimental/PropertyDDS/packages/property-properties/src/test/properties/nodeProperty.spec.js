@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /* globals assert, sinon */
-/* eslint-disable no-unused-expressions */
+
 /**
  * @fileoverview In this file, we will test the NodeProperty
  *    object described in properties/nodeProperty.js

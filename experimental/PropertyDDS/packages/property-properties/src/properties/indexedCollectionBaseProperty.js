@@ -366,7 +366,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * @inheritdoc
      */
-    // eslint-disable-next-line complexity
+
     _deserialize(in_serializedObj, in_reportToView,
                  in_filteringOptions, in_createChangeSet) {
         var currentEntries = this._dynamicChildren;

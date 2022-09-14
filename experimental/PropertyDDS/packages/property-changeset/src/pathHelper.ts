@@ -45,7 +45,7 @@ export namespace PathHelper {
      *
      * @returns the tokens from the path string
      */
-    export const tokenizePathString = function(in_path: string, out_types?: TOKEN_TYPES[]): string[] { // eslint-disable-line complexity
+    export const tokenizePathString = function(in_path: string, out_types?: TOKEN_TYPES[]): string[] {
         const tokens = [];
         let currentToken = "";
 

@@ -21,7 +21,6 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         const server = reqUrl.hostname.toLowerCase();
         let contents: IOdspUrlParts | undefined;
         if (fluidOfficeAndOneNoteServers.includes(server)) {
-            // eslint-disable-next-line @typescript-eslint/no-use-before-define
             contents = await initializeFluidOfficeOrOneNote(reqUrl);
         } else if (server === "www.office.com") {
             const getRequiredParam = (name: string): string => {
@@ -57,7 +56,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
 
 async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlParts | undefined> {
     const pathname = urlSource.pathname;
-    // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+
     const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/);
     if (siteDriveItemMatch === null) {
         return undefined;
