@@ -989,8 +989,10 @@ export class TemplateValidator {
  * 2. typeid must end in a valid semver string.
  *
  * 3. When both in_template (B) and in_templatePrevious (A) are supplied:
- *    3a. Semver is identical only if content is identical.
- *    3b. B's semver >= A's semver
+ *
+ * - 3a. Semver is identical only if content is identical.
+ *
+ * - 3b. B's semver >= A's semver
  *
  * Additionally, the following soft rules will produce warnings when violated:
  *
@@ -1107,9 +1109,9 @@ export class TemplateValidator {
      *
      * 3. When both in_template (B) and in_templatePrevious (A) are supplied:
      *
-     *    3a. Semver is identical only if content is identical.
+     * - 3a. Semver is identical only if content is identical.
      *
-     *    3b. B's semver >= A's semver
+     * - 3b. B's semver >= A's semver
      *
      * Additionally, the following soft rules will produce warnings when violated:
      *

@@ -476,7 +476,7 @@ export namespace PathHelper {
      * @param in_basePath - The property's absolute path in canonical form
      * @param in_paths - The array of paths that must cover the property and its children
      * @returns The coverage of the property and its children. For a coverage of
-     *    'FULLY_COVERED', only the first matching path is returned.
+     * 'FULLY_COVERED', only the first matching path is returned.
      */
     export const getPathCoverage = function(in_basePath: string, in_paths: string[]): BasePathCoverage {
         // First, check if the base path is entirely included in one of the paths

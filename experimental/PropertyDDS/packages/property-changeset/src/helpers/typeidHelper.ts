@@ -209,14 +209,14 @@ export namespace TypeIdHelper {
     }
 
     /**
-     * Check wether the in_typeid inherits from the in_baseTypeid
+     * Check wether the in_typeid inherits from the in_baseTypeid.
      *
-     *  Note: By default, this also returns true if in_typeid === in_baseTypeid.
+     * @remarks Note: By default, this also returns true if in_typeid === in_baseTypeid.
      *
-     * @param in_typeid - Typeid for which we want to check, whethwe in_baseTypeid is a parent
-     * @param in_baseTypeid - The base typeId to check for
-     * @throws if in_typeid or in_baseTypeid are not native typeid
-     * @returns True if in_baseTypeid is a parent of in_typeid
+     * @param in_typeid - Typeid for which we want to check, whethwe in_baseTypeid is a parent.
+     * @param in_baseTypeid - The base typeId to check for.
+     * @throws If in_typeid or in_baseTypeid are not native typeid.
+     * @returns True if in_baseTypeid is a parent of in_typeid.
      */
     export function nativeInheritsFrom(in_typeid: string, in_baseTypeid: string): boolean {
         if (!in_typeid || !in_baseTypeid) {
