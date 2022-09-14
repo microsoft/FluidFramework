@@ -61,11 +61,10 @@ export namespace ChangeSetIndexedCollectionFunctions {
      *
      * @param io_basePropertyChanges - The ChangeSet describing the initial state
      * @param in_appliedPropertyChanges - The ChangeSet to apply to this state
-     * @param in_typeid - The typeid of the contents collection
-     *                                                                        (without the collection type)
+     * @param in_typeid - The typeid of the contents collection (without the collection type).
      * @param in_options - Optional additional parameters
      * @param in_options.applyAfterMetaInformation - Additional meta information which help later to obtain
-     *                                                       more compact changeset during the apply operation
+     * more compact changeset during the apply operation.
      *
      * @private
      */
@@ -396,19 +395,18 @@ export namespace ChangeSetIndexedCollectionFunctions {
     };
 
     /**
-     * Performs the rebase operation for set and map collections
+     * Performs the rebase operation for set and map collections.
      *
-     * @param in_ownPropertyChangeSet - The ChangeSet for this collection
-     * @param io_rebasePropertyChangeSet - The ChangeSet for the collection to be rebased
-     * @param in_basePath - Base path to get to the property processed by this function
-     * @param in_typeid - The typeid of the contents collection (without the collection type)
-     * @param in_useSquareBracketsInPath -
-     *     If set to true, paths will be created using the angular brackets syntax (for
-     *     arrays), otherwise dots will be used (for NodeProperties)
-     * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict
-     * @param in_options - Optional additional parameters
+     * @param in_ownPropertyChangeSet - The ChangeSet for this collection.
+     * @param io_rebasePropertyChangeSet - The ChangeSet for the collection to be rebased.
+     * @param in_basePath - Base path to get to the property processed by this function.
+     * @param in_typeid - The typeid of the contents collection (without the collection type).
+     * @param in_useSquareBracketsInPath - If set to true, paths will be created using the angular brackets syntax (for
+     * arrays), otherwise dots will be used (for NodeProperties).
+     * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict.
+     * @param in_options - Optional additional parameters.
      * @param in_options.applyAfterMetaInformation - Additional meta information which help later to obtain
-     *                                                       more compact changeset during the apply operation
+     * more compact changeset during the apply operation.
      *
      * @private
      */
