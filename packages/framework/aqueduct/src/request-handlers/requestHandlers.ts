@@ -74,9 +74,7 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
  * Returns a 404 error for any other url.
  */
 export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, request: IRequest): IResponse {
-    if (request.url === "" || request.url === "/" || request.url.startsWith("/?")) {
-        return { mimeType: "fluid/object", status: 200, value: fluidObject };
-    } else {
-        return create404Response(request);
-    }
+    return request.url === "" || request.url === "/" || request.url.startsWith("/?")
+        ? { mimeType: "fluid/object", status: 200, value: fluidObject }
+        : create404Response(request);
 }
