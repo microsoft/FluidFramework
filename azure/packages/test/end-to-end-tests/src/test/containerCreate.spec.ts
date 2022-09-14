@@ -6,22 +6,11 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
-import { generateUser } from "@fluidframework/server-services-client";
-import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { AzureLocalConnectionConfig } from "../interfaces";
-import { AzureClient } from "../AzureClient";
+import { AzureClient } from "@fluidframework/azure-client";
+import { createAzureClient } from "./AzureClientFactory";
 
-function createAzureClient(): AzureClient {
-    const connectionProps: AzureLocalConnectionConfig = {
-        tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
-        endpoint: "http://localhost:7070",
-        type: "local",
-    };
-    return new AzureClient({ connection: connectionProps });
-}
-
-describe("AzureClient", () => {
+describe("Container create scenarios", () => {
     const connectTimeoutMs = 1000;
     let client: AzureClient;
     let schema: ContainerSchema;
@@ -158,7 +147,6 @@ describe("AzureClient", () => {
             errorFn,
             "Azure Client can load a non-existent container",
         );
-        // eslint-disable-next-line require-atomic-updates
         console.error = consoleErrorFn;
     });
 });
