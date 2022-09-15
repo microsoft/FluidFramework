@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
     FetchSource,
+    IDocumentService,
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     ISummaryContext,
@@ -19,14 +21,54 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDetachedBlobStorage } from "./loader";
+import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
+import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 
 /**
  * This class wraps the actual storage and make sure no wrong apis are called according to
  * container attach state.
  */
-export class ContainerStorageAdapter implements IDocumentStorageService {
+export class ContainerStorageAdapter implements IDocumentStorageService, IDisposable {
     private readonly blobContents: { [id: string]: ArrayBufferLike; } = {};
-    constructor(private readonly storageGetter: () => IDocumentStorageService) {}
+    private _storageService: IDocumentStorageService & IDisposable;
+
+    constructor(
+        detachedBlobStorage: IDetachedBlobStorage | undefined,
+        private readonly logger: ITelemetryLogger,
+        private readonly captureProtocolSummary?: () => ISummaryTree,
+    ) {
+        this._storageService = new DetachedStorageWrapper(detachedBlobStorage, logger);
+    }
+
+    disposed: boolean = false;
+    dispose(error?: Error | undefined): void {
+        this._storageService?.dispose(error);
+        this.disposed = true;
+    }
+
+    public async connectStorageService(
+        service: IDocumentService,
+        ): Promise<void> {
+        if (!(this._storageService instanceof DetachedStorageWrapper)) {
+            return;
+        }
+
+        assert(service !== undefined, 0x1ef /* "services must be defined" */);
+        const storageService = await service.connectToStorage();
+
+        this._storageService =
+            new RetriableDocumentStorageService(storageService, this.logger);
+
+        if (this.captureProtocolSummary !== undefined) {
+            this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
+            this._storageService =
+                new ProtocolTreeStorageService(this._storageService, this.captureProtocolSummary);
+        }
+
+        // ensure we did not lose that policy in the process of wrapping
+        assert(storageService.policies?.minBlobSize === this._storageService.policies?.minBlobSize,
+            0x0e0 /* "lost minBlobSize policy" */);
+    }
 
     public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
         this.getBlobContents(snapshotTree);
@@ -45,17 +87,17 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         // back-compat 0.40 containerRuntime requests policies even in detached container if storage is present
         // and storage is always present in >=0.41.
         try {
-            return this.storageGetter().policies;
+            return this._storageService.policies;
         } catch (e) {}
         return undefined;
     }
 
     public get repositoryUrl(): string {
-        return this.storageGetter().repositoryUrl;
+        return this._storageService.repositoryUrl;
     }
 
     public async getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null> {
-        return this.storageGetter().getSnapshotTree(version, scenarioName);
+        return this._storageService.getSnapshotTree(version, scenarioName);
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -63,7 +105,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         if (blob !== undefined) {
             return blob;
         }
-        return this.storageGetter().readBlob(id);
+        return this._storageService.readBlob(id);
     }
 
     public async getVersions(
@@ -72,19 +114,19 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         scenarioName?: string,
         fetchSource?: FetchSource,
     ): Promise<IVersion[]> {
-        return this.storageGetter().getVersions(versionId, count, scenarioName, fetchSource);
+        return this._storageService.getVersions(versionId, count, scenarioName, fetchSource);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        return this.storageGetter().uploadSummaryWithContext(summary, context);
+        return this._storageService.uploadSummaryWithContext(summary, context);
     }
 
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        return this.storageGetter().downloadSummary(handle);
+        return this._storageService.downloadSummary(handle);
     }
 
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        return this.storageGetter().createBlob(file);
+        return this._storageService.createBlob(file);
     }
 }
 
@@ -92,18 +134,33 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
  * Storage which only supports createBlob() and readBlob(). This is used with IDetachedBlobStorage to support
  * blobs in detached containers.
  */
-export class BlobOnlyStorage implements IDocumentStorageService {
+class DetachedStorageWrapper implements IDocumentStorageService, IDisposable {
     constructor(
-        private readonly blobStorage: IDetachedBlobStorage,
+        private readonly detachedStorage: IDetachedBlobStorage | undefined,
         private readonly logger: ITelemetryLogger,
     ) { }
 
+    disposed: boolean = false;
+    dispose(error?: Error | undefined): void {
+        this.disposed = true;
+    }
+
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        return this.blobStorage.createBlob(content);
+        return this.verifyStorage().createBlob(content);
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        return this.blobStorage.readBlob(blobId);
+        return this.verifyStorage().readBlob(blobId);
+    }
+
+    private verifyStorage(): IDetachedBlobStorage {
+        if (this.detachedStorage === undefined) {
+            this.logger.sendErrorEvent({
+                eventName: "NoRealStorageInDetachedContainer",
+            });
+            throw new Error("Real storage calls not allowed in Unattached container");
+        }
+        return this.detachedStorage;
     }
 
     public get policies(): IDocumentStorageServicePolicies | undefined {

@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable, ITelemetryLogger, ITelemetryProperties,
+     ITelemetryLogger, ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -94,9 +94,7 @@ import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import { ConnectionStateHandler } from "./connectionStateHandler";
-import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
-import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
-import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
+import { ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
 import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
@@ -398,20 +396,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _attachState = AttachState.Detached;
 
-    private readonly _storage: ContainerStorageAdapter;
+    private readonly storageService: ContainerStorageAdapter;
     public get storage(): IDocumentStorageService {
-        return this._storage;
+        return this.storageService;
     }
 
-    private _storageService: IDocumentStorageService & IDisposable | undefined;
-    private get storageService(): IDocumentStorageService {
-        if (this._storageService === undefined) {
-            throw new Error("Attempted to access storageService before it was defined");
-        }
-        return this._storageService;
-    }
-
-    private readonly clientDetailsOverride: IClientDetails | undefined;
+    readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
     private _initialClients: ISignalClient[] | undefined;
@@ -659,19 +649,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this._deltaManager = this.createDeltaManager();
-        this._storage = new ContainerStorageAdapter(
-            () => {
-                if (this.attachState !== AttachState.Attached) {
-                    if (this.loader.services.detachedBlobStorage !== undefined) {
-                        return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.mc.logger);
-                    }
-                    this.mc.logger.sendErrorEvent({
-                        eventName: "NoRealStorageInDetachedContainer",
-                    });
-                    throw new Error("Real storage calls not allowed in Unattached container");
-                }
-                return this.storageService;
-            },
+        this.storageService = new ContainerStorageAdapter(
+            this.loader.services.detachedBlobStorage,
+            this.mc.logger,
+            this.options.summarizeProtocolTree === true
+                ? () => this.captureProtocolSummary()
+                : undefined,
         );
 
         const isDomAvailable = typeof document === "object" &&
@@ -771,7 +754,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                 this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-                this._storageService?.dispose();
+                this.storageService.dispose();
 
                 // Notify storage about critical errors. They may be due to disconnect between client & server knowledge
                 // about file, like file being overwritten in storage, but client having stale local cache.
@@ -893,7 +876,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const resolvedUrl = this.service.resolvedUrl;
                 ensureFluidResolvedUrl(resolvedUrl);
                 this._resolvedUrl = resolvedUrl;
-                await this.connectStorageService();
+                await this.storageService.connectStorageService(this.service);
 
                 if (hasAttachmentBlobs) {
                     // upload blobs to storage
@@ -1144,10 +1127,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         if (!pendingLocalState) {
-            await this.connectStorageService();
+            await this.storageService.connectStorageService(this.service);
         } else {
             // if we have pendingLocalState we can load without storage; don't wait for connection
-            this.connectStorageService().catch((error) => this.close(error));
+            this.storageService.connectStorageService(this.service).catch((error) => this.close(error));
         }
 
         this._attachState = AttachState.Attached;
@@ -1300,15 +1283,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
-        this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
-        const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
+        this.storageService.loadSnapshotForRehydratingContainer(snapshotTree);
+        const attributes = await this.getDocumentAttributes(this.storageService, snapshotTree);
 
         await this.attachDeltaManagerOpHandler(attributes);
 
         // Initialize the protocol handler
         const baseTree = getProtocolSnapshotTree(snapshotTree);
         const qValues = await readAndParse<[string, ICommittedProposal][]>(
-            this._storage,
+            this.storageService,
             baseTree.blobs.quorumValues,
         );
         const codeDetails = getCodeDetailsFromQuorumValues(qValues);
@@ -1328,28 +1311,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         this.setLoaded();
-    }
-
-    private async connectStorageService(): Promise<void> {
-        if (this._storageService !== undefined) {
-            return;
-        }
-
-        assert(this.service !== undefined, 0x1ef /* "services must be defined" */);
-        const storageService = await this.service.connectToStorage();
-
-        this._storageService =
-            new RetriableDocumentStorageService(storageService, this.mc.logger);
-
-        if (this.options.summarizeProtocolTree === true) {
-            this.mc.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
-            this._storageService =
-                new ProtocolTreeStorageService(this._storageService, () => this.captureProtocolSummary());
-        }
-
-        // ensure we did not lose that policy in the process of wrapping
-        assert(storageService.policies?.minBlobSize === this.storageService.policies?.minBlobSize,
-            0x0e0 /* "lost minBlobSize policy" */);
     }
 
     private async getDocumentAttributes(
