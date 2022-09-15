@@ -598,22 +598,22 @@ export class GarbageCollector implements IGarbageCollector {
                 return undefined;
             }
 
-            // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
-            const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
-            if (gcSnapshotTree !== undefined) {
-                // If the GC tree is written at root, we should also do the same.
-                this._writeDataAtRoot = true;
-                const baseGCState = await getGCStateFromSnapshot(
-                    gcSnapshotTree,
-                    readAndParseBlob,
-                );
-                if (this.trackGCState) {
-                    this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(baseGCState));
-                }
-                return baseGCState;
-            }
-
             try {
+                // For newer documents, GC data should be present in the GC tree in the root of the snapshot.
+                const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
+                if (gcSnapshotTree !== undefined) {
+                    // If the GC tree is written at root, we should also do the same.
+                    this._writeDataAtRoot = true;
+                    const baseGCState = await getGCStateFromSnapshot(
+                        gcSnapshotTree,
+                        readAndParseBlob,
+                    );
+                    if (this.trackGCState) {
+                        this.latestSerializedSummaryState = JSON.stringify(generateSortedGCState(baseGCState));
+                    }
+                    return baseGCState;
+                }
+
                 // back-compat - Older documents will have the GC blobs in each data store's summary tree. Get them and
                 // consolidate into IGarbageCollectionState format.
                 // Add a node for the root node that is not present in older snapshot format.
@@ -777,9 +777,7 @@ export class GarbageCollector implements IGarbageCollector {
          * sweep in phases and we want to track when inactive and sweep ready objects are used in any client.
          */
         if (this.activeConnection() && !this.isSummarizerClient && this.shouldRunGC) {
-            this.initializeBaseStateP.catch((error) => {
-                throw error;
-            });
+            this.initializeBaseStateP.catch((error) => {});
         }
     }
 
