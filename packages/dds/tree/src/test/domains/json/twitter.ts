@@ -19,6 +19,7 @@ import {
 */
 
 export namespace TwitterStatus {
+    // Shared tree keys that map to the type used by the TwitterStatus type/dataset
     export const statusesKey: FieldKey = brand("statuses");
     export const retweetCountKey: FieldKey = brand("retweet_count");
     export const favoriteCountKey: FieldKey = brand("favorite_count");

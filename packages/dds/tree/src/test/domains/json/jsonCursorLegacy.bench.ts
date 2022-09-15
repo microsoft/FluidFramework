@@ -20,7 +20,7 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { defaultSchemaPolicy, singleTextCursorNew } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
-import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./canada";
+import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum } from "./benchmarksLegacy";
 import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
 
@@ -138,10 +138,10 @@ const canada = generateCanada(
         : [2, 10]);
 
 function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
-    cursor.down(FeatureKey, 0);
+    cursor.down(Canada.FeatureKey, 0);
     cursor.down(EmptyKey, 0);
-    cursor.down(GeometryKey, 0);
-    cursor.down(CoordinatesKey, 0);
+    cursor.down(Canada.GeometryKey, 0);
+    cursor.down(Canada.CoordinatesKey, 0);
 
     let result = cursor.down(EmptyKey, 0);
     assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");

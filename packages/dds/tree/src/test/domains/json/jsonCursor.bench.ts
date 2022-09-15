@@ -13,7 +13,7 @@ import {
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
 import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
-import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./canada";
+import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
 
@@ -123,13 +123,13 @@ const canada = generateCanada(
         : [2, 10]);
 
 function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
-    cursor.enterField(FeatureKey);
+    cursor.enterField(Canada.FeatureKey);
     cursor.enterNode(0);
     cursor.enterField(EmptyKey);
     cursor.enterNode(0);
-    cursor.enterField(GeometryKey);
+    cursor.enterField(Canada.GeometryKey);
     cursor.enterNode(0);
-    cursor.enterField(CoordinatesKey);
+    cursor.enterField(Canada.CoordinatesKey);
     cursor.enterNode(0);
 
     cursor.enterField(EmptyKey);
