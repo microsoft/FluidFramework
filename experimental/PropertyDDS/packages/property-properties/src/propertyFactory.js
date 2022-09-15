@@ -1318,7 +1318,7 @@ class PropertyFactory {
                     // we directly assign it here
                     if (initialValue !== undefined) {
                         creationFunctionSource += !_.isObject(initialValue.value)
-                            ? `${currentPropertyVarName}.setValue(${JSON.stringify(initialValue.value)}\n`
+                            ? `${currentPropertyVarName}.setValue(${JSON.stringify(initialValue.value)})\n`
                             : `this._setInitialValue(${currentPropertyVarName},
                                                         ${JSON.stringify(initialValue)},
                                                         false);\n`;
