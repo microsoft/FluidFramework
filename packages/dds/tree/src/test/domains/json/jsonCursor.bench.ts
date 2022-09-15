@@ -16,7 +16,7 @@ import { jsonableTreeFromCursorNew } from "../../../feature-libraries";
 import { FieldKey } from "../../../tree";
 import { brand } from "../../../util";
 import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./canada";
-import { averageLocation, sum, sumMap } from "./benchmarks";
+import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -91,7 +91,7 @@ function bench(
                 ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
                 ["sum", sum],
                 ["sum-map", sumMap],
-                ["averageLocation", averageLocation],
+                ["averageTwoValues", averageTwoValues],
             ];
 
         for (const [consumerName, consumer] of consumers) {
@@ -170,45 +170,30 @@ function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number
     const statusesKey: FieldKey = brand("statuses");
     const retweetCountKey: FieldKey = brand("retweet_count");
     const favoriteCountKey: FieldKey = brand("favorite_count");
+
     cursor.enterField(statusesKey); // move from root to field
     cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
-    cursor.enterField(EmptyKey); // enter array itself,
-    // cursor.enterNode(0); // enter first value in the array
-
-    // cursor.enterField(GeometryKey);
-    // cursor.enterNode(0);
-    // cursor.enterField(CoordinatesKey);
-    // cursor.enterNode(0);
-
-    // cursor.enterField(EmptyKey);
+    cursor.enterField(EmptyKey); // enter the array field at the node,
 
     for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-        cursor.enterField(EmptyKey);
-
-        // cursor.enterField(retweetCountKey);
+        cursor.enterField(retweetCountKey);
+        cursor.enterNode(0);
         const retweetCount = cursor.value as number;
-
-        // const favoriteCount = cursor.value as number;
-        // assert.equal(cursor.firstNode(), true, "No retweet_count field");
-
-        // for (let resultInner = cursor.firstNode(); resultInner; resultInner = cursor.nextNode()) {
-        //     // Read x and y values
-        //     cursor.enterField(EmptyKey);
-        //     assert.equal(cursor.firstNode(), true, "No X field");
-        //     const x = cursor.value as number;
-        //     assert.equal(cursor.nextNode(), true, "No Y field");
-        //     const y = cursor.value as number;
-
-        //     cursor.exitNode();
-        //     cursor.exitField();
-
-        //     calculate(x, y);
-        // }
-
+        cursor.exitNode();
         cursor.exitField();
+
+        cursor.enterField(favoriteCountKey);
+        cursor.enterNode(0);
+        const favoriteCount = cursor.value;
+        cursor.exitNode();
+        cursor.exitField();
+        calculate(retweetCount, favoriteCount as number);
     }
 
     // Reset the cursor state
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
 }
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.

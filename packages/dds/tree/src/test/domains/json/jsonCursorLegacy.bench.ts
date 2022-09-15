@@ -21,7 +21,8 @@ import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
 import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./canada";
-import { averageLocation, sum } from "./benchmarksLegacy";
+import { averageTwoValues, sum } from "./benchmarksLegacy";
+import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -106,7 +107,7 @@ function bench(
             ["cursorToJsonObject", cursorToJsonObject],
             ["jsonableTreeFromCursor", jsonableTreeFromCursor],
             ["sum", sum],
-            ["averageLocation", averageLocation],
+            ["averageTwoValues", averageTwoValues],
         ];
 
         for (const [consumerName, consumer] of consumers) {
@@ -173,6 +174,32 @@ function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number
     cursor.up();
 }
 
+function extractAvgValsFromTwitter(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
+    cursor.down(TwitterStatus.statusesKey, 0);
+
+    let result = cursor.down(EmptyKey, 0);
+    while (result === TreeNavigationResult.Ok) {
+        cursor.down(TwitterStatus.retweetCountKey, 0);
+        const retweetCount = cursor.value as number;
+        cursor.up();
+
+        cursor.down(TwitterStatus.favoriteCountKey, 0);
+        const favoriteCount = cursor.value as number;
+        cursor.up();
+        calculate(retweetCount, favoriteCount);
+
+        result = cursor.seek(1);
+    }
+
+    // Reset the cursor state
+    cursor.up();
+    cursor.up();
+    cursor.up();
+}
+
+// The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
+    bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
 });

@@ -4,6 +4,8 @@
  */
 
 import { IRandom, makeRandom, SpaceEfficientWordMarkovChain } from "@fluid-internal/stochastic-test-utils";
+import { FieldKey } from "../../../tree";
+import { brand } from "../../../util";
 import {
     createAlphabetFromUnicodeRange,
     getRandomEnglishString,
@@ -15,6 +17,12 @@ import {
 * This file contains logic to generate a JSON file that is statistically similar to the well-known
 * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
 */
+
+export namespace TwitterStatus {
+    export const statusesKey: FieldKey = brand("statuses");
+    export const retweetCountKey: FieldKey = brand("retweet_count");
+    export const favoriteCountKey: FieldKey = brand("favorite_count");
+}
 
 /* eslint-disable @rushstack/no-new-null */
 export interface TwitterStatus {
