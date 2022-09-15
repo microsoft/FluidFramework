@@ -252,7 +252,7 @@ stages:
               inputs:
                 command: 'custom'
                 workingDir: ${{ parameters.buildDirectory }}
-                customCommand: 'run ci:test:coverage | tee $(Build.ArtifactStagingDirectory)/testlog.txt'
+                customCommand: 'run ci:test:coverage > testlog.txt'
             # Some webpacked file using externals introduce file name with quotes in them
             # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
             # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
@@ -297,7 +297,7 @@ stages:
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - test log
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/testlog.txt'
+              PathtoPublish: 'testlog.txt'
               ArtifactName: 'testlog'
               publishLocation: 'Container'
 
