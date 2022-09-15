@@ -45,8 +45,8 @@ describe("Garbage Collection Tests", () => {
             tracker = new UnreferencedStateTracker(
                 0 /* unreferencedTimestampMs */,
                 10 /* inactiveTimeoutMs */,
-                20 /* sweepTimeoutMs */,
                 startTimestamp /* currentReferenceTimestampMs */,
+                20 /* sweepTimeoutMs */,
             );
             assert.equal(tracker.state, startState, `Wrong starting state`);
             let lastTime = startTimestamp;
@@ -135,24 +135,12 @@ describe("Garbage Collection Tests", () => {
             });
         });
 
-        it("No currentReferenceTimestampMs in constructor - Only leaves Active after calling updateTracking", () => {
-            tracker = new UnreferencedStateTracker(
-                0 /* unreferencedTimestampMs */,
-                3 /* inactiveTimeoutMs */,
-                7 /* sweepTimeoutMs */,
-            );
-            assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
-            clock.tick(100);
-            assert.equal(tracker.state, UnreferencedState.Active, "Should stay active without currentReferenceTimestampMs");
-            tracker.updateTracking(10);
-            assert.equal(tracker.state, UnreferencedState.SweepReady, "Future currentReferenceTimestampMs via updateTracking should trigger state change");
-        });
         it("Non-zero unreferencedTimestampMs properly offsets", () => {
             tracker = new UnreferencedStateTracker(
                 10 /* unreferencedTimestampMs */,
                 3 /* inactiveTimeoutMs */,
-                7 /* sweepTimeoutMs */,
                 11 /* currentReferenceTimestampMs */,
+                7 /* sweepTimeoutMs */,
             );
             assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
             clock.tick(5);
@@ -164,8 +152,8 @@ describe("Garbage Collection Tests", () => {
             tracker = new UnreferencedStateTracker(
                 0 /* unreferencedTimestampMs */,
                 10 /* inactiveTimeoutMs */,
-                12 /* sweepTimeoutMs */,
                 0 /* currentReferenceTimestampMs */,
+                12 /* sweepTimeoutMs */,
             );
             assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
             tracker.updateTracking(10);
@@ -179,8 +167,8 @@ describe("Garbage Collection Tests", () => {
             tracker = new UnreferencedStateTracker(
                 0 /* unreferencedTimestampMs */,
                 20 /* inactiveTimeoutMs */,
-                undefined /* sweepTimeoutMs */,
                 5 /* currentReferenceTimestampMs */,
+                undefined /* sweepTimeoutMs */,
             );
             assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
             const timerClearSpy: SinonSpy = spy((tracker as any).inactiveTimer, "clear");
@@ -195,8 +183,8 @@ describe("Garbage Collection Tests", () => {
             tracker = new UnreferencedStateTracker(
                 0 /* unreferencedTimestampMs */,
                 10 /* inactiveTimeoutMs */,
-                undefined /* sweepTimeoutMs */,
                 0 /* currentReferenceTimestampMs */,
+                undefined /* sweepTimeoutMs */,
             );
             assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
             clock.tick(5); // at T5, 5 to go
