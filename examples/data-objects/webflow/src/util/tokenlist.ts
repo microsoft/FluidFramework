@@ -15,7 +15,7 @@ export function findToken(tokenList: string, token: string) {
 
             if (start === 0 || tokenList.charCodeAt(start - 1) === CharCode.space) {
                 const end = start + token.length;
-
+                // eslint-disable-next-line max-len
                 if (end === tokenList.length || end < tokenList.length && tokenList.charCodeAt(end) === CharCode.space) {
                     return { start, end };
                 }

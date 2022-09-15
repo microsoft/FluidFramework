@@ -124,7 +124,6 @@
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
-    "@rushstack/eslint-plugin": "^0.10.0",
     "c8": "^7.7.1",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
@@ -164,8 +163,5 @@
         ]
       }
     }
-  },
-  "dependencies": {
-    "eslint": "^8.23.1"
   }
 }

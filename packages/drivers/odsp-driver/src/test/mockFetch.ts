@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/ban-types */
 import assert from "assert";
 import { stub } from "sinon";
 import * as fetchModule from "node-fetch";

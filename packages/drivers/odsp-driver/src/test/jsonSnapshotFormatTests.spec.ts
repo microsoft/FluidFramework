@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { IOdspSnapshot } from "../contracts";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";

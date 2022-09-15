@@ -225,6 +225,7 @@ const unsafe = {
         return res as UntypedProduct<T>;
     },
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     restrict<T extends object, Props extends (keyof T)[]>(object: T, ...props: Props) {
         const res: Partial<Restrict<T, Props>> = {};
         for (const key of props) {

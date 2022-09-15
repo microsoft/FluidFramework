@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /* globals describe */
-
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test the map property
  *    object described in /src/properties/mapProperty.js

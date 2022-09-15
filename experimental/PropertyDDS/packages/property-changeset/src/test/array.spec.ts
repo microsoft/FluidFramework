@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview Tests for the array changeset operations
  */

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 /* eslint no-unused-expressions: 0 */
-
+/* eslint-disable no-undef */
+/* eslint-disable max-nested-callbacks */
 /**
  * @fileoverview In this file, we will test template validation.
  */

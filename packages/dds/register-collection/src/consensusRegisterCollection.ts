@@ -93,7 +93,7 @@ export class ConsensusRegisterCollection<T>
      * @param id - optional name of the consensus register collection
      * @returns newly create consensus register collection (but not attached yet)
      */
-
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, ConsensusRegisterCollectionFactory.Type) as ConsensusRegisterCollection<T>;
     }
@@ -321,6 +321,7 @@ export class ConsensusRegisterCollection<T>
     }
 
     private parse(content: string, serializer: IFluidSerializer): any {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return serializer.parse(content);
     }
 

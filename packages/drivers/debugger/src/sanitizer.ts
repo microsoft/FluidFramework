@@ -122,6 +122,7 @@ class ChunkedOpProcessor {
 
         this.concatenatedLength = contentsString.length;
         try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return JSON.parse(contentsString);
         } catch (e) {
             this.debugMsg(contentsString);
@@ -311,7 +312,7 @@ export class Sanitizer {
                 input[i] = this.replaceObject(value);
             }
         }
-
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return input;
     }
 
@@ -321,7 +322,7 @@ export class Sanitizer {
      * @param input - The object to sanitize
      * @param excludedKeys - object keys for which to skip replacement when not in fullScrub
      */
-
+    // eslint-disable-next-line @typescript-eslint/ban-types
     replaceObject(input: object | null, excludedKeys: Set<string> = this.defaultExcludedKeys): object | null {
         // File might contain actual nulls
         if (input === null || input === undefined) {
@@ -355,6 +356,7 @@ export class Sanitizer {
      */
     replaceAny(input: any, excludedKeys: Set<string> = this.defaultExcludedKeys): any {
         if (input === null || input === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return input;
         }
 
@@ -368,7 +370,7 @@ export class Sanitizer {
         }
 
         // Don't run replacement on any other types
-
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return input;
     }
 

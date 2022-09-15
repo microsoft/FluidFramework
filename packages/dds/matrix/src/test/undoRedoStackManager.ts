@@ -51,6 +51,7 @@ class Stack<T> {
 class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
     public push(item: Stack<IRevertible> | undefined) {
         if (item !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             item.itemPushedCallback = () => this.callItemPushedCallback;
         }
         super.push(item);
