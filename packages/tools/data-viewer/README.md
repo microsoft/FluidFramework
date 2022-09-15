@@ -1,0 +1,15 @@
+# @fluid-tools/data-viewer
+
+TODO
+
+<!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+## Usage
+
+TODO
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- Links -->
