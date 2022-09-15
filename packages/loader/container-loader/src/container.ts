@@ -1760,7 +1760,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         // Forward non system messages to the loaded runtime for processing
         if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
-            this.context.process(message, local, undefined);
+            this.context.process(message, local);
         }
 
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
