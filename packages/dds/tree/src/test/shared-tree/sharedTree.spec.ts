@@ -82,6 +82,7 @@ describe("SharedTree", () => {
 
             // Validate insertion
             assert.equal(getTestValue(tree2), value);
+            assert.equal(getTestValue(tree1), value);
 
             // Delete node
             tree1.runTransaction((forest, editor) => {
@@ -173,6 +174,7 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
     const readCursor = forest.allocateCursor();
     const destination = forest.root(forest.rootField);
     const cursorResult = forest.tryMoveCursorTo(destination, readCursor);
+    assert.equal(readCursor.seek(1), TreeNavigationResult.NotFound);
     const { value } = readCursor;
     readCursor.free();
     forest.forgetAnchor(destination);

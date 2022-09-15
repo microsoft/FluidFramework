@@ -124,34 +124,6 @@ function testForest(suiteName: string, factory: (schema: StoredSchemaRepository)
             assert.equal(reader.seek(1), TreeNavigationResult.NotFound);
         });
 
-        it.only("modify with offset", () => {
-            const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
-            const content: JsonableTree[] = [
-                { type: jsonObject.name, fields: { num: [{ type: jsonNumber.name, value: 1 }] } },
-            ];
-            initializeForest(forest, content);
-            const anchor = forest.root(forest.rootField);
-
-            const mark: Delta.Modify = {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[brand("num"), [{ type: Delta.MarkType.Modify, setValue: 2 }]]]),
-            };
-            const rootField = detachedFieldAsKey(forest.rootField);
-            // TODO: is this a valid delta?
-            // Such delta is created by `editManager.rebaseLocalBranch`
-            // after receiving setValue message.
-            const delta: Delta.Root = new Map([[rootField, [1, mark]]]);
-            // TODO: make type-safe
-            forest.applyDelta(delta);
-
-            // Inspect resulting tree: should just have `2`.
-            const reader = forest.allocateCursor();
-            assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
-            assert.equal(reader.down(brand("num"), 0), TreeNavigationResult.Ok);
-            assert.equal(reader.value, 2);
-            assert.equal(reader.seek(1), TreeNavigationResult.NotFound);
-        });
-
         it("anchors creation and use", () => {
             const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
             const dependent = new MockDependent("dependent");
