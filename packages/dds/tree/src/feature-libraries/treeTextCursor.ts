@@ -44,7 +44,7 @@ import { fail } from "../util";
  */
 
 /**
- * @returns a ITreeCursorSynchronous for a single JsonableTree.
+ * @returns an ITreeCursorSynchronous for a single JsonableTree.
  */
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous {
     return new TextCursor(root);
