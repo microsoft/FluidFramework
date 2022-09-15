@@ -70,6 +70,28 @@ describe("SharedTree", () => {
     });
 
     describe("Editing", () => {
+        it("does not invalidate an anchor during insert", async () => {
+            const value = "42";
+            const provider = await TestTreeProvider.create(2);
+            const [tree1] = provider.trees;
+
+            // Insert node
+            setTestValue(tree1, value);
+
+            const forest = tree1.forest;
+            const cursor = forest.allocateCursor();
+            const destination = forest.root(forest.rootField);
+            assert.equal(forest.tryMoveCursorTo(destination, cursor), TreeNavigationResult.Ok);
+            // All this might look not so complex here, but assume one gets
+            // the root anchor without knowing that it is actually the root anchor
+            const rootAnchor = cursor.buildAnchor();
+            cursor.clear();
+
+            await provider.ensureSynchronized();
+
+            assert.equal(forest.tryMoveCursorTo(rootAnchor, cursor), TreeNavigationResult.Ok);
+        });
+
         it("can insert and delete a node", async () => {
             const value = "42";
             const provider = await TestTreeProvider.create(2);
