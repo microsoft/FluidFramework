@@ -156,7 +156,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     /**
      * Ensure all tracked containers are synchronized
      */
-    public async ensureSynchronized(...containers: IContainer[]) {
+    public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
         await this.processSynchronized(undefined, ...containers);
     }
 
