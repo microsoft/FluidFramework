@@ -264,7 +264,7 @@ stages:
               inputs:
                 command: 'custom'
                 workingDir: ${{ parameters.buildDirectory }}
-                customCommand: 'run ci:test:coverage > testlog.txt'
+                customCommand: 'run ci:test:coverage'
             # Some webpacked file using externals introduce file name with quotes in them
             # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
             # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
@@ -301,15 +301,16 @@ stages:
               testResultsFiles: '**/*junit-report.xml'
               searchFolder: ${{ parameters.buildDirectory }}/nyc
               mergeTestResults: false
+              publishRunAttachments: true
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
           # Test - publish the test log as artifact
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact - test log
-            inputs:
-              PathtoPublish: 'testlog.txt'
-              ArtifactName: 'testlog'
-              publishLocation: 'Container'
+          # - task: PublishBuildArtifacts@1
+          #  displayName: Publish Artifact - test log
+          #  inputs:
+          #    PathtoPublish: 'testlog.txt'
+          #    ArtifactName: 'testlog'
+          #    publishLocation: 'Container'
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
