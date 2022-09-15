@@ -91,7 +91,13 @@ extends:
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
-
+    taskTest:
+    - ci:test:mocha
+    - ci:test:jest
+    - ci:test:realsvc:local
+    - ci:test:realsvc:tinylicious
+    - ci:test:stress:tinylicious
+    - test:copyresults
     preCG:
     - task: UseNode@1
       displayName: Use Node 14.x

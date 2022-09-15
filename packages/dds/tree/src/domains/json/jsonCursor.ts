@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
+import { JsonCompatible } from "../../util";
 import {
     ITreeCursor,
     mapCursorField,
@@ -24,6 +25,8 @@ import {
 
 /**
  * An ITreeCursor implementation used to read a Jsonable tree for testing and benchmarking.
+ *
+ * @sealed
  */
 export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     // PERF: JsonCursor maintains a stack of nodes/edges traversed.  This stack is
@@ -189,20 +192,20 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
  * Extract a JS object tree from the contents of the given ITreeCursor.
  * Assumes that ITreeCursor contains only unaugmented JsonTypes.
  */
-export function cursorToJsonObject(reader: ITreeCursor): unknown {
+export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
     const type = reader.type;
 
     switch (type) {
         case jsonNumber.name:
         case jsonBoolean.name:
         case jsonString.name:
-            return reader.value;
+            return reader.value as number | boolean | string;
         case jsonArray.name: {
             const result = mapCursorField(reader, EmptyKey, cursorToJsonObject);
             return result;
         }
         case jsonObject.name: {
-            const result: any = {};
+            const result: JsonCompatible = {};
             for (const key of reader.keys) {
                 assert(reader.down(key, 0) === TreeNavigationResult.Ok, 0x360 /* expected navigation ok */);
                 result[key as string] = cursorToJsonObject(reader);

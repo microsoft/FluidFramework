@@ -31,6 +31,8 @@ export type Brand<ValueType, Name extends string> = ValueType &
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think its true in some cases.
+ *
+ * @sealed
  */
 export abstract class BrandedType<ValueType, Name extends string> {
     protected _typeCheck?: Invariant<ValueType>;

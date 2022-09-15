@@ -295,9 +295,17 @@ export class Client {
      * serializer which keeps track of all serialized handles.
      */
     public serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void {
+        let localInserts = 0;
+        let localRemoves = 0;
         this.mergeTree.walkAllSegments(
             this.mergeTree.root,
             (seg) => {
+                if (seg.seq === UnassignedSequenceNumber) {
+                    localInserts++;
+                }
+                if (seg.removedSeq === UnassignedSequenceNumber) {
+                    localRemoves++;
+                }
                 // Only serialize segments that have not been removed.
                 if (seg.removedSeq === undefined) {
                     handleCollectingSerializer.stringify(
@@ -307,6 +315,10 @@ export class Client {
                 return true;
             },
         );
+
+        if (localInserts > 0 || localRemoves > 0) {
+            this.logger.sendErrorEvent({ eventName: "LocalEditsInProcessGCData", localInserts, localRemoves });
+        }
     }
 
     public getCollabWindow(): CollaborationWindow {

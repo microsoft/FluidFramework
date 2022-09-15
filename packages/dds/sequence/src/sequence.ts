@@ -408,8 +408,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     /**
-     * @deprecated - IntervalCollections are created on a first-write wins basis, and concurrent creates
-     * are supported. Use `getIntervalCollection` instead.
+     * @deprecated `IntervalCollection`s are created on a first-write wins basis, and concurrent creates
+     * are supported. Use {@link SharedSegmentSequence.getIntervalCollection} instead.
      */
     public async waitIntervalCollection(
         label: string,

@@ -93,14 +93,15 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     it("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
 
-        const blobOpP = new Promise<void>((resolve, reject) => container.on("op", (op) => {
-            if (op.contents?.type === ContainerMessageType.BlobAttach) {
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+
+        const blobOpP = new Promise<void>((resolve, reject) => dataStore._context.containerRuntime.on("op", (op) => {
+            if (op.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
 
-        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
         const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
 
         dataStore._root.set("my blob", blob);
@@ -121,7 +122,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
-        await provider.ensureSynchronized();
+        await provider.ensureSynchronized(this.timeout() / 3);
 
         const blobHandle = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>(testKey);
         assert(blobHandle);
@@ -172,7 +173,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         // validate on remote container, local container, and container loaded from summary
         for (const container of [container1, container2, await provider.loadTestContainer(testContainerConfig)]) {
             const dataStore2 = await requestFluidObject<ITestDataObject>(container, "default");
-            await provider.ensureSynchronized();
+            await provider.ensureSynchronized(this.timeout() / 3);
             const handle = dataStore2._root.get<IFluidHandle<SharedString>>("sharedString");
             assert(handle);
             const sharedString2 = await handle.get();
