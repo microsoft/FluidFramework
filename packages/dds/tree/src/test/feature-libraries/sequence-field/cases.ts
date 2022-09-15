@@ -24,7 +24,7 @@ export const cases: {
         { type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] },
     ],
     modify: [
-        { type: "Modify", changes: { valueChange: { value: 42 } } }
+        { type: "Modify", changes: { valueChange: { value: 42 } } },
     ],
     modify_insert: [
         1,
