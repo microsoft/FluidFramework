@@ -7,10 +7,11 @@ import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree";
 import Random from "random-js";
 import * as mocks from "@fluidframework/test-runtime-utils";
 import { SharedString, TestSharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
+import { SharedStringFactory, TestSharedStringFactory } from "../sequenceFactory";
 import { IntervalType } from "../intervalCollection";
 
 export const LocationBase: string = "src/test/snapshots/";
+export const TestLocationBase: string = "src/test/snapshots/OLD/";
 
 export const supportedVersions = new Map<string, any>([
     // the catchUpBlob had to be renamed.
@@ -120,7 +121,7 @@ export function* generateTestStrings(): Generator<[string, TestSharedString]> {
         const documentId = "fakeId";
         const dataStoreRuntime: mocks.MockFluidDataStoreRuntime = new mocks.MockFluidDataStoreRuntime();
         const createNewSharedString = (): TestSharedString => {
-            const string = new TestSharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
+            const string = new TestSharedString(dataStoreRuntime, documentId, TestSharedStringFactory.Attributes);
             string.initializeLocal();
             return string;
         };

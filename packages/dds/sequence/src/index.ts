@@ -27,6 +27,7 @@ export {
     IntervalType,
     ISerializableInterval,
     ISerializedInterval,
+    LocalIntervalCollection,
     SequenceInterval,
     TestIntervalCollection,
     ISerializedIntervalCollectionV2,

@@ -736,6 +736,15 @@ export class TestSharedSegmentSequence<T extends ISegment>
         return this.client.localReferencePositionToPosition(lref);
     }
 
+    protected initializeLocalCore() {
+        // super.initializeLocalCore();
+        this.testLoadFinished();
+    }
+
+    public getPropertiesAtPosition(pos: number) {
+        return this.client.getPropertiesAtPosition(pos);
+    }
+
     constructor(
         dataStoreRuntime: IFluidDataStoreRuntime,
         id: string,

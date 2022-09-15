@@ -898,7 +898,7 @@ class OldSequenceIntervalCollectionFactory
     implements IValueFactory<TestIntervalCollection<SequenceInterval>> {
     public load(
         emitter: IValueOpEmitter,
-        raw: ISerializedInterval[],
+        raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
     ): TestIntervalCollection<SequenceInterval> {
         const helpers: IIntervalHelpers<SequenceInterval> = {
             compareEnds: compareSequenceIntervalEnds,
@@ -906,7 +906,6 @@ class OldSequenceIntervalCollectionFactory
         };
         return new TestIntervalCollection(helpers, true, emitter, raw);
     }
-    // this is definitely going to be an issue --> still need to figure out what to do about serialieInternal
     public store(value: TestIntervalCollection<SequenceInterval>):
     ISerializedInterval[] | ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
@@ -984,10 +983,32 @@ class IntervalCollectionFactory
         return collection;
     }
 
-    public store(value: IntervalCollection<Interval>): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
+    public store(value: IntervalCollection<Interval>): ISerializedIntervalCollectionV2 {
         return value.serializeInternal();
     }
 }
+
+// class TestIntervalCollectionFactory
+//     implements IValueFactory<TestIntervalCollection<SequenceInterval>> {
+//     public load(
+//         emitter: IValueOpEmitter,
+//         raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
+//     ): TestIntervalCollection<SequenceInterval> {
+//         const helpers: IIntervalHelpers<SequenceInterval> = {
+//             // these methods are technically for the SequenceIntervalCollectionFactory,
+//             // so not sure if this is actually what I want to use or not
+//             compareEnds: compareSequenceIntervalEnds,
+//             create: createSequenceInterval,
+//         };
+//         const collection = new TestIntervalCollection<SequenceInterval>(helpers, false, emitter, raw);
+//         collection.attachGraph(undefined, "");
+//         return collection;
+//     }
+
+//     public store(value: TestIntervalCollection<SequenceInterval>): ISerializedIntervalCollectionV2 {
+//         return value.serializeInternal();
+//     }
+// }
 
 export class IntervalCollectionValueType
     implements IValueType<IntervalCollection<Interval>> {
@@ -1009,6 +1030,27 @@ export class IntervalCollectionValueType
         new IntervalCollectionFactory();
     private static readonly _ops = makeOpsMap<Interval>();
 }
+
+// export class TestIntervalCollectionValueType
+//     implements IValueType<TestIntervalCollection<Interval>> {
+//     public static Name = "sharedIntervalCollection";
+
+//     public get name(): string {
+//         return TestIntervalCollectionValueType.Name;
+//     }
+
+//     public get factory(): IValueFactory<TestIntervalCollection<Interval>> {
+//         return TestIntervalCollectionValueType._factory;
+//     }
+
+//     public get ops(): Map<string, IValueOperation<TestIntervalCollection<Interval>>> {
+//         return TestIntervalCollectionValueType._ops;
+//     }
+
+//     private static readonly _factory: IValueFactory<TestIntervalCollection<Interval>> =
+//         new TestIntervalCollectionFactory();
+//     private static readonly _ops = testMakeOpsMap<Interval>();
+// }
 
 function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<IntervalCollection<T>>> {
     const rebase = (
@@ -1054,6 +1096,51 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
             },
         ]]);
 }
+
+// function testMakeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperation<TestIntervalCollection<T>>> {
+//     const rebase = (
+//         collection: TestIntervalCollection<T>,
+//         op: IValueTypeOperationValue,
+//         localOpMetadata: IMapMessageLocalMetadata,
+//     ) => {
+//         const { localSeq } = localOpMetadata;
+//         const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
+//         const rebasedOp = { ...op, value: rebasedValue };
+//         return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
+//     };
+
+//     return new Map<string, IValueOperation<TestIntervalCollection<T>>>(
+//         [[
+//             "add",
+//             {
+//                 process: (collection, params, local, op) => {
+//                     collection.ackAdd(params, local, op);
+//                 },
+//                 rebase,
+//             },
+//         ],
+//         [
+//             "delete",
+//             {
+//                 process: (collection, params, local, op) => {
+//                     collection.ackDelete(params, local, op);
+//                 },
+//                 rebase: (collection, op, localOpMetadata) => {
+//                     // Deletion of intervals is based on id, so requires no rebasing.
+//                     return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
+//                 },
+//             },
+//         ],
+//         [
+//             "change",
+//             {
+//                 process: (collection, params, local, op) => {
+//                     collection.ackChange(params, local, op);
+//                 },
+//                 rebase,
+//             },
+//         ]]);
+// }
 
 export type DeserializeCallback = (properties: PropertySet) => void;
 
@@ -1108,7 +1195,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 export class IntervalCollection<TInterval extends ISerializableInterval>
     extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     protected savedSerializedIntervals?: ISerializedInterval[];
-    private localCollection: LocalIntervalCollection<TInterval>;
+    protected localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback | undefined;
     protected client: Client | undefined;
     private readonly pendingChangesStart: Map<string, ISerializedInterval[]> = new Map<string, ISerializedInterval[]>();
@@ -1122,7 +1209,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     constructor(
         protected readonly helpers: IIntervalHelpers<TInterval>,
         protected readonly requiresClient: boolean,
-        private readonly emitter: IValueOpEmitter,
+        protected readonly emitter: IValueOpEmitter,
         serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
     ) {
         super();
@@ -1175,7 +1262,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     /**
      * Gets the next local sequence number, modifying this client's collab window in doing so.
      */
-    private getNextLocalSeq(): number {
+    protected getNextLocalSeq(): number {
         if (this.client) {
             return ++this.client.getCollabWindow().localSeq;
         }
@@ -1714,16 +1801,16 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 export class TestIntervalCollection<TInterval extends ISerializableInterval>
  extends IntervalCollection<SequenceInterval> {
     savedSerializedIntervals: ISerializedInterval[];
-    private testLocalCollection: LocalIntervalCollection<SequenceInterval>;
+    // protected testLocalCollection: LocalIntervalCollection<SequenceInterval>;
 
     public get attached(): boolean {
-        return !!this.testLocalCollection;
+        return !!this.localCollection;
     }
 
     /**
      * @internal
      */
-    // actually returns an ISerializedInterval[], but it is casted as an ISerializableIntervalCollectionV2
+    // actually returns an ISerializedInterval[], but it is cast as an ISerializableIntervalCollectionV2
      public override serializeInternal(): ISerializedIntervalCollectionV2 {
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
@@ -1732,6 +1819,46 @@ export class TestIntervalCollection<TInterval extends ISerializableInterval>
 
         // Cast intervals as the new document format so the return type matches but we have the old format's type
         return (intervals as unknown as ISerializedIntervalCollectionV2);
+    }
+
+    /**
+     * Create a new interval and add it to the collection
+     * @param start - interval start position
+     * @param end - interval end position
+     * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
+     * @param props - properties of the interval
+     * @returns - the created interval
+     */
+     public add(
+        start: number,
+        end: number,
+        intervalType: IntervalType,
+        props?: PropertySet,
+    ) {
+        if (!this.attached) {
+            throw new LoggingError("attach must be called prior to adding intervals");
+        }
+        if (intervalType & IntervalType.Transient) {
+            throw new LoggingError("Can not add transient intervals");
+        }
+
+        const interval: SequenceInterval = this.localCollection.addInterval(start, end, intervalType, props);
+
+        if (interval) {
+            const serializedInterval = {
+                end,
+                intervalType,
+                properties: interval.properties,
+                sequenceNumber: this.client?.getCurrentSeq() ?? 0,
+                start,
+            };
+            // Local ops get submitted to the server. Remote ops have the deserializer run.
+            this.emitter.emit("add", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
+        }
+
+        this.emit("addInterval", interval, true, undefined);
+
+        return interval;
     }
 
     public attachGraph(client: Client, label: string) {
@@ -1745,7 +1872,7 @@ export class TestIntervalCollection<TInterval extends ISerializableInterval>
 
         // Instantiate the local interval collection based on the saved intervals
         this.client = client;
-        this.testLocalCollection = new LocalIntervalCollection<SequenceInterval>(
+        this.localCollection = new LocalIntervalCollection<SequenceInterval>(
             client,
             label,
             this.helpers,
@@ -1753,7 +1880,7 @@ export class TestIntervalCollection<TInterval extends ISerializableInterval>
         );
         if (this.savedSerializedIntervals) {
             for (const serializedInterval of this.savedSerializedIntervals) {
-                this.testLocalCollection.ensureSerializedId(serializedInterval);
+                this.localCollection.ensureSerializedId(serializedInterval);
                 const { start, end, intervalType, properties } = serializedInterval;
                 const interval = this.helpers.create(
                     label,
@@ -1765,7 +1892,7 @@ export class TestIntervalCollection<TInterval extends ISerializableInterval>
                     true,
                 );
                 interval.addProperties(properties);
-                this.testLocalCollection.add(interval);
+                this.localCollection.add(interval);
             }
         }
         this.savedSerializedIntervals = undefined;
@@ -1785,7 +1912,7 @@ export class TestIntervalCollection<TInterval extends ISerializableInterval>
             return;
         }
 
-        this.testLocalCollection.gatherIterationResults(results, iteratesForward, start, end);
+        this.localCollection.gatherIterationResults(results, iteratesForward, start, end);
     }
 
     public findOverlappingIntervals(startPosition: number, endPosition: number): SequenceInterval[] {
@@ -1793,7 +1920,7 @@ export class TestIntervalCollection<TInterval extends ISerializableInterval>
             throw new LoggingError("attachSequence must be called");
         }
 
-        return this.testLocalCollection.findOverlappingIntervals(startPosition, endPosition);
+        return this.localCollection.findOverlappingIntervals(startPosition, endPosition);
     }
 }
 

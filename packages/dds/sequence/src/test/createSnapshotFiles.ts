@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { generateStrings, generateTestStrings, LocationBase } from "./generateSharedStrings";
+import { generateStrings, generateTestStrings, LocationBase, TestLocationBase } from "./generateSharedStrings";
 
 for (const s of generateStrings()) {
     const summaryTree = s[1].getAttachSummary().summary;
@@ -16,5 +16,5 @@ for (const s of generateStrings()) {
 for (const s of generateTestStrings()) {
     const summaryTree = s[1].getAttachSummary().summary;
     const snapshotTree = convertSummaryTreeToITree(summaryTree);
-    fs.writeFileSync(`src/test/snapshots/OLD/${s[0]}.json`, JSON.stringify(snapshotTree, undefined, 1));
+    fs.writeFileSync(`${TestLocationBase}${s[0]}.json`, JSON.stringify(snapshotTree, undefined, 1));
 }
