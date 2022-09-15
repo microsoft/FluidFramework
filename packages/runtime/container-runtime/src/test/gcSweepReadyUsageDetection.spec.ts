@@ -10,7 +10,6 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { loggerToMonitoringContext, MockLogger, sessionStorageConfigProvider, ConfigTypes } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
-    noopStorage,
     SweepReadyUsageDetectionHandler,
 } from "../gcSweepReadyUsageDetection";
 import { oneDayMs } from "../garbageCollection";
@@ -29,11 +28,11 @@ describe("Garbage Collection Tests", () => {
         // used to inject settings into MonitoringContext, and also to mock localStorage for the handler
         let mockLocalStorage: Record<string, ConfigTypes> = {};
 
-        const createHandler = (uniqueContainerKey: string = "key1", localStorageOverride?) => new SweepReadyUsageDetectionHandler(
+        const createHandler = (uniqueContainerKey: string = "key1", forceNoopStorage: boolean = false) => new SweepReadyUsageDetectionHandler(
             uniqueContainerKey,
             loggerToMonitoringContext(mockLogger),
             (e) => { assert(e, "PRECONDITION: Only expected closure due to error"); closeErrors.push(e); },
-            localStorageOverride ?? {
+            forceNoopStorage ? undefined : {
                 getItem(key) {
                     const rawValue = mockLocalStorage[key];
                     switch (typeof rawValue) {
@@ -81,7 +80,7 @@ describe("Garbage Collection Tests", () => {
                 assert.equal(closeErrors.length, 0, "Shouldn't close if setting doesn't include 'mainContainer'");
             });
             it("NoopStorage - close the container back-to-back", () => {
-                const handler = createHandler("key1", noopStorage);
+                const handler = createHandler("key1", true /* forceNoopStorage */);
                 handler.usageDetectedInMainContainer({});
                 handler.usageDetectedInMainContainer({});
                 assert.equal(closeErrors.length, 2, `Should have closed back-to-back with noopStorage defined. errors:\n${closeErrors}`);
@@ -140,6 +139,7 @@ describe("Garbage Collection Tests", () => {
                 assert.equal(closeErrors.length, 4, `Expected both to close again after waiting 1 day`);
                 assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
             });
+            //* Test case for corrupted value in closure map (fail JSON.parse or succeed but have the wrong structure)
         });
     });
 });

@@ -47,8 +47,6 @@ export class SweepReadyUsageError extends LoggingError implements IFluidErrorBas
     public errorType: string = "objectUsedAfterMarkedForDeletionError";
 }
 
-export const noopStorage = { getItem: () => null, setItem: () => {} };
-
 /**
  * This class encapsulates the logic around what to do when a SweepReady object is used.
  * There are several tactics we plan to use in Dogfood environments to aid diagnosis of these cases:
@@ -65,6 +63,7 @@ export class SweepReadyUsageDetectionHandler {
         private readonly closeFn: (error?: ICriticalContainerError) => void,
         localStorageImpl?: Pick<Storage, "getItem" | "setItem">,
     ) {
+        const noopStorage = { getItem: () => null, setItem: () => {} };
         if (localStorageImpl !== undefined) {
             this.localStorage = localStorageImpl;
         } else {
@@ -87,8 +86,16 @@ export class SweepReadyUsageDetectionHandler {
             return;
         }
 
-        const pastClosuresMap: Record<string, { lastCloseTime: number; } | undefined> =
-            JSON.parse(this.localStorage.getItem(closuresStorageKey) ?? "{}");
+        const pastClosuresMap: Record<string, { lastCloseTime: number; } | undefined> = (() => {
+            try {
+                const rawValue = this.localStorage.getItem(closuresStorageKey);
+                return rawValue === null
+                    ? {}
+                    : JSON.parse(rawValue) as Record<string, { lastCloseTime: number; } | undefined>;
+            } catch (e) {
+                return {};
+            }
+        })();
 
         const lastCloseTime = pastClosuresMap[this.uniqueContainerKey]?.lastCloseTime;
         const blackoutPeriodDays = this.mc.config.getNumber(blackoutPeriodDaysKey);
@@ -104,7 +111,7 @@ export class SweepReadyUsageDetectionHandler {
             || Date.now() > lastCloseTime + blackoutPeriodDays * oneDayMs; // ...we've passed the blackout period
 
         if (shouldClose) {
-            // Update closures in localStorage before closing
+            // Update closures map in localStorage before closing
             pastClosuresMap[this.uniqueContainerKey] = { lastCloseTime: Date.now() };
             this.localStorage.setItem(closuresStorageKey, JSON.stringify(pastClosuresMap));
 
