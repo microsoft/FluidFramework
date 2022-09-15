@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-properties",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "definitions of properties",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -61,8 +61,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": "^0.59.2004",
-    "@fluid-experimental/property-common": "^0.59.2004",
+    "@fluid-experimental/property-changeset": "^0.59.2005",
+    "@fluid-experimental/property-common": "^0.59.2005",
     "ajv": "7.1.1",
     "async": "^3.2.0",
     "fastest-json-copy": "^1.0.1",
@@ -73,7 +73,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/mocha-test-setup": "^0.59.2004",
+    "@fluidframework/mocha-test-setup": "^0.59.2005",
     "@types/mocha": "^8.2.2",
     "chai": "^4.2.0",
     "concurrently": "^6.2.0",

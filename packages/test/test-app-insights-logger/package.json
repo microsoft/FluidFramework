@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-app-insights-logger",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "Azure Application Insights logger for Fluid tests",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/test-driver-definitions": "^0.59.2004",
+    "@fluidframework/test-driver-definitions": "^0.59.2005",
     "applicationinsights": "^2.1.9"
   },
   "devDependencies": {

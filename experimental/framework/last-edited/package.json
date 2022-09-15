@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/last-edited",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "Tracks the last edited information in the Container.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -54,19 +54,19 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.59.2004",
+    "@fluidframework/aqueduct": "^0.59.2005",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-runtime": "^0.59.2004",
-    "@fluidframework/container-runtime-definitions": "^0.59.2004",
+    "@fluidframework/container-runtime": "^0.59.2005",
+    "@fluidframework/container-runtime-definitions": "^0.59.2005",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/runtime-utils": "^0.59.2004",
-    "@fluidframework/shared-summary-block": "^0.59.2004"
+    "@fluidframework/runtime-utils": "^0.59.2005",
+    "@fluidframework/shared-summary-block": "^0.59.2005"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@fluidframework/mocha-test-setup": "^0.59.2004",
+    "@fluidframework/mocha-test-setup": "^0.59.2005",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",

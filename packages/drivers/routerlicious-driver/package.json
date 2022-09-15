@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-driver",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "Socket.IO + Git implementation of Fluid service API",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -62,14 +62,14 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-base": "^0.59.2004",
+    "@fluidframework/driver-base": "^0.59.2005",
     "@fluidframework/driver-definitions": "^0.46.1000",
-    "@fluidframework/driver-utils": "^0.59.2004",
+    "@fluidframework/driver-utils": "^0.59.2005",
     "@fluidframework/gitresources": "^0.1036.2000",
     "@fluidframework/protocol-base": "^0.1036.2000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/server-services-client": "^0.1036.2000",
-    "@fluidframework/telemetry-utils": "^0.59.2004",
+    "@fluidframework/telemetry-utils": "^0.59.2005",
     "cross-fetch": "^3.1.5",
     "json-stringify-safe": "5.0.1",
     "socket.io-client": "^4.4.1",
@@ -79,7 +79,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@fluidframework/mocha-test-setup": "^0.59.2004",
+    "@fluidframework/mocha-test-setup": "^0.59.2005",
     "@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@0.59.1000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
