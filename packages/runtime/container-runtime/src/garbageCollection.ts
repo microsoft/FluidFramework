@@ -1324,11 +1324,24 @@ export class GarbageCollector implements IGarbageCollector {
         });
     }
 
+    //* Move
+    private readonly safeLocalStorage = {
+        // eslint-disable-next-line max-len
+        read(key: string) { return typeof localStorage === "object" && localStorage !== null && localStorage[key] as string || undefined; },
+        write(key: string, value) {
+            if (typeof localStorage === "object" && localStorage !== null) {
+                localStorage[key] = value;
+            }
+        },
+    };
+
     private getSweepReadyObjectUsageClosurePolicy() {
+        //* Don't even bother doing this if ThrottlingDurationDays is 0/undefined
         const closures = (() => {
             try {
+                //* Encapsulate this in a class that holds the JSON object and can keep it in sync with localStorage
                 const rawValue =
-                    this.mc.config.getString("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures");
+                    this.safeLocalStorage.read("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures");
                 return rawValue === undefined
                     ? {}
                     : JSON.parse(rawValue) as Record<string, number | undefined>;
