@@ -32,7 +32,7 @@ const adapter: CursorAdapter<MapTree> = {
 export function mapTreeFromCursor(cursor: ITreeCursor): MapTree {
     assert(cursor.mode === CursorLocationType.Nodes, "must start at node");
     const fields: Map<FieldKey, MapTree[]> = new Map();
-    for (let inField = cursor.firstField(); inField; inField = cursor.nextNode()) {
+    for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
         const field: MapTree[] = mapCursorField(cursor, mapTreeFromCursor);
         fields.set(cursor.getFieldKey(), field);
     }
