@@ -25,20 +25,29 @@ import {
     DocSection,
 } from "@microsoft/tsdoc";
 
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { Heading } from "../../Heading";
 import { Link } from "../../Link";
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocHeading, DocList, DocNoteBox, ListKind } from "../../doc-nodes";
+import {
+    DocAlert,
+    DocAlertType,
+    DocEmphasisSpan,
+    DocHeading,
+    DocList,
+    ListKind,
+} from "../../doc-nodes";
 import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
+    getDeprecatedBlock,
     getExampleBlocks,
     getHeadingForApiItem,
     getLinkForApiItem,
     getQualifiedApiItemName,
     getReturnsBlock,
+    getSeeBlocks,
     getThrowsBlocks,
     mergeSections,
 } from "../../utilities";
@@ -74,7 +83,7 @@ export function renderSignature(
             docNodes.push(
                 new DocFencedCode({
                     configuration: config.tsdocConfiguration,
-                    code: apiItem.getExcerptWithModifiers(),
+                    code: signatureExcerpt,
                     language: "typescript",
                 }),
             );
@@ -88,6 +97,42 @@ export function renderSignature(
         }
     }
     return undefined;
+}
+
+/**
+ * Renders a section for an API item's {@link https://tsdoc.org/pages/tags/see/ | @see} comment blocks.
+ *
+ * @remarks Displayed as a "See also" heading, followed by the contents of the API item's `@see` comment blocks
+ * merged into a single section.
+ *
+ * @param apiItem - The API item whose `@see` comment blocks will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if there was any signature content to render, otherwise `undefined`.
+ */
+export function renderSeeAlso(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    const seeBlocks = getSeeBlocks(apiItem);
+    if (seeBlocks === undefined || seeBlocks.length === 0) {
+        return undefined;
+    }
+
+    const docNodes: DocNode[] = [];
+    docNodes.push(
+        renderHeading(
+            { title: "See also", id: `${getQualifiedApiItemName(apiItem)}-see-also` },
+            config,
+        ),
+    );
+
+    // Merge `@see` blocks together
+    for (const seeBlock of seeBlocks) {
+        docNodes.push(...seeBlock.nodes);
+    }
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 /**
@@ -426,19 +471,20 @@ export function renderHeading(
  *
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox {
+export function renderBetaAlert(config: Required<MarkdownDocumenterConfiguration>): DocAlert {
     const betaWarning: string =
         "This API is provided as a preview for developers and may change" +
         " based on feedback that we receive. Do not use this API in a production environment.";
 
-    return new DocNoteBox({ configuration: config.tsdocConfiguration }, [
+    return new DocAlert(
+        { configuration: config.tsdocConfiguration, type: DocAlertType.Danger },
         new DocParagraph({ configuration: config.tsdocConfiguration }, [
             new DocPlainText({
                 configuration: config.tsdocConfiguration,
                 text: betaWarning,
             }),
         ]),
-    ]);
+    );
 }
 
 /**
@@ -495,24 +541,21 @@ export function renderThrowsSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-        const throwsBlocks = getThrowsBlocks(apiItem);
-        if (throwsBlocks === undefined || throwsBlocks.length === 0) {
-            return undefined;
-        }
-
-        return new DocSection({ configuration: config.tsdocConfiguration }, [
-            renderHeading(
-                {
-                    title: "Throws",
-                    id: `${getQualifiedApiItemName(apiItem)}-throws`,
-                },
-                config,
-            ),
-            ...throwsBlocks,
-        ]);
+    const throwsBlocks = getThrowsBlocks(apiItem);
+    if (throwsBlocks === undefined || throwsBlocks.length === 0) {
+        return undefined;
     }
-    return undefined;
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        renderHeading(
+            {
+                title: "Throws",
+                id: `${getQualifiedApiItemName(apiItem)}-throws`,
+            },
+            config,
+        ),
+        ...throwsBlocks,
+    ]);
 }
 
 /**
@@ -530,20 +573,23 @@ export function renderDeprecationNoticeSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    if (
-        apiItem instanceof ApiDocumentedItem &&
-        apiItem.tsdocComment?.deprecatedBlock !== undefined
-    ) {
-        return new DocSection({ configuration: config.tsdocConfiguration }, [
-            new DocNoteBox(
-                {
-                    configuration: config.tsdocConfiguration,
-                },
-                [...apiItem.tsdocComment.deprecatedBlock.content.nodes],
-            ),
-        ]);
+    const deprecatedBlock = getDeprecatedBlock(apiItem);
+    if (deprecatedBlock === undefined) {
+        return undefined;
     }
-    return undefined;
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        new DocAlert(
+            {
+                configuration: config.tsdocConfiguration,
+                type: DocAlertType.Warning,
+                title: "Deprecated",
+            },
+            new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                ...deprecatedBlock.nodes,
+            ]),
+        ),
+    ]);
 }
 
 /**

@@ -9,12 +9,12 @@ import { compare } from "dir-compare";
 import { Suite } from "mocha";
 import * as Path from "path";
 
-import { MarkdownDocument } from "../MarkdownDocument";
-import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
-} from "../MarkdownDocumenterConfiguration";
+} from "../Configuration";
+import { MarkdownDocument } from "../MarkdownDocument";
+import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
 import { MarkdownEmitter } from "../MarkdownEmitter";
 import { renderModelDocument, renderPackageDocument } from "../rendering";
 
@@ -180,6 +180,7 @@ describe("api-markdown-documenter full-suite tests", () => {
         includeTopLevelDocumentHeading: false,
         documentBoundaries: [], // Render everything to package documents
         hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+        emptyTableCellText: "---",
     };
 
     /**
@@ -209,6 +210,7 @@ describe("api-markdown-documenter full-suite tests", () => {
             ApiItemKind.Variable,
         ],
         hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+        emptyTableCellText: "📝",
     };
 
     const configs: ConfigTestProps[] = [

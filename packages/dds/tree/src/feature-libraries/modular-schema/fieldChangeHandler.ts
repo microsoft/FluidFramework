@@ -5,7 +5,7 @@
 
 import { JsonCompatibleReadOnly } from "../../change-family";
 import { FieldKindIdentifier } from "../../schema-stored";
-import { Delta } from "../../tree";
+import { Delta, FieldKey } from "../../tree";
 import { Brand, Invariant } from "../../util";
 
 /**
@@ -67,10 +67,7 @@ export type NodeChangeComposer = (changes: FieldChangeMap[]) => FieldChangeMap;
 export type NodeChangeEncoder = (change: FieldChangeMap) => JsonCompatibleReadOnly;
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => FieldChangeMap;
 
-// TODO: Replace with Map<FieldKey, FieldChanges>
-export interface FieldChangeMap {
-    [key: string]: FieldChange;
-}
+export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
      fieldKind: FieldKindIdentifier;

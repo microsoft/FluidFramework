@@ -168,7 +168,7 @@ export function backwardExcursion(
  */
 export function walkAllChildSegments(
     startBlock: IMergeBlock,
-    leafAction: (segment: ISegment) => boolean | undefined,
+    leafAction: (segment: ISegment) => boolean | undefined | void,
 ): boolean {
     if (startBlock.childCount === 0) {
         return true;

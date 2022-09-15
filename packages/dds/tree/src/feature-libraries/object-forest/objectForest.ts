@@ -52,6 +52,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         );
     }
 
+    public forgetAnchor(anchor: Anchor): void {
+        this.anchors.forget(anchor);
+    }
+
     applyDelta(delta: Delta.Root): void {
         // TODO: refactor object forest to use root node above detached fields, like how PathNode works.
         // Then factor out this editing code to work on any such JsonableTree.

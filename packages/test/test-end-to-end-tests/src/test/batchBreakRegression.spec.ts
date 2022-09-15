@@ -122,7 +122,7 @@ async function runAndValidateBatch(
     }
 }
 
-describeNoCompat("Batching failures", (getTestObjectProvider) => {
+describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
     it("working proxy",
     async function() {
         const provider = getTestObjectProvider({ resetAfterEach: true });
