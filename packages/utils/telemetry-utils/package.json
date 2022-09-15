@@ -101,6 +101,9 @@
       },
       "EnumDeclaration_TelemetryDataTag": {
         "forwardCompat": false
+      },
+      "ClassDeclaration_MockLogger": {
+        "forwardCompat": false
       }
     }
   }

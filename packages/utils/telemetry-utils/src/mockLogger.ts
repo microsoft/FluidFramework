@@ -76,6 +76,19 @@ ${JSON.stringify(actualEvents)}`);
             }
     }
 
+    /** Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not */
+    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string) {
+        const actualEvents = this.events;
+        if (this.matchAnyEvent(disallowedEvents)) {
+            throw new Error(`${message}
+disallowed events:
+${JSON.stringify(disallowedEvents)}
+
+actual:
+${JSON.stringify(actualEvents)}`);
+            }
+    }
+
     private getMatchedEventsCount(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): number {
         let iExpectedEvent = 0;
         this.events.forEach((event) => {

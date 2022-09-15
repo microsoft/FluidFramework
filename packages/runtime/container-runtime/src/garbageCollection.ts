@@ -34,7 +34,10 @@ import {
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
+    IConfigProvider,
+    IFluidErrorBase,
     loggerToMonitoringContext,
+    LoggingError,
     MonitoringContext,
     PerformanceEvent,
     TelemetryDataTag,
@@ -70,12 +73,31 @@ export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-// Feature gate key to disable expiring session after a set period of time, even if expiry value is present
+// Feature gate key to disable expiring session after a set period of time, even if expiry value is present.
 export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to write the gc blob as a handle if the data is the same.
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
-const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
+export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
+/**
+ * Feature gate key to enable closing the container if SweepReady objects are used.
+ * Only known values are accepted, otherwise return undefined.
+ *
+ * mainContainer: Detect these errors only in the main container
+ */
+export const sweepReadyUsageDetectionSetting = {
+    read(config: IConfigProvider) {
+        const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
+        const value = config.getString(sweepReadyUsageDetectionKey);
+        if (value === undefined) {
+            return { mainContainer: false, summarizer: false };
+        }
+        return {
+            mainContainer: value.indexOf("mainContainer") >= 0,
+            summarizer: value.indexOf("summarizer") >= 0,
+        };
+    },
+};
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -302,6 +324,19 @@ export class UnreferencedStateTracker {
         this.clearTimers();
         this._state = UnreferencedState.Active;
     }
+}
+
+/**
+ * Error class raised when a SweepReady object is used, indicating a bug in how
+ * references are managed in the container by the application, or a bug in how
+ * GC tracks those references.
+ *
+ * There's a chance for false positives when this error is raised by a Main Container,
+ * since only the Summarizer has the latest truth about unreferenced node tracking
+ */
+class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
+    /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
+    public errorType: string = "unreferencedObjectUsedAfterGarbageCollected";
 }
 
 /**
@@ -1377,12 +1412,6 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
-        // summarizer clients if they are based off of user actions (such as scrolling to content for these objects).
-        if (!this.isSummarizerClient && usageType !== "Loaded") {
-            return;
-        }
-
         // We only care about data stores and attachment blobs for this telemetry since GC only marks these objects
         // as unreferenced. Also, if an inactive DDS is used, the corresponding data store store will also be used.
         const nodeType = this.runtime.getNodeType(nodeId);
@@ -1418,11 +1447,27 @@ export class GarbageCollector implements IGarbageCollector {
         if (this.isSummarizerClient) {
             this.pendingEventsQueue.push({ ...propsToLog, usageType, state });
         } else {
-            this.mc.logger.sendErrorEvent({
-                ...propsToLog,
-                eventName: `${state}Object_${usageType}`,
-                pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-            });
+            // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
+            // summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
+            if (usageType === "Loaded") {
+                this.mc.logger.sendErrorEvent({
+                    ...propsToLog,
+                    eventName: `${state}Object_${usageType}`,
+                    pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+                });
+            }
+
+            // If SweepReady Usage Detection is enabed, close the main container
+            // Once Sweep is fully implemented, this will be removed since the objects will be gone
+            // and errors will arise elsewhere in the runtime
+            if (state === UnreferencedState.SweepReady &&
+                sweepReadyUsageDetectionSetting.read(this.mc.config).mainContainer
+            ) {
+                const error = new SweepReadyUsageError(
+                    "SweepReady object used in Non-Summarizer Client",
+                    { errorDetails: JSON.stringify(propsToLog) });
+                this.runtime.closeFn(error);
+            }
         }
     }
 
