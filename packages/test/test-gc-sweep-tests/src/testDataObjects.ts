@@ -198,7 +198,7 @@ export class HandleManager {
 }
 
 // Factories for all the channels we support
-export const allFactories: IChannelFactory[] = [
+const allFactories: IChannelFactory[] = [
     ConsensusQueue.getFactory(),
     ConsensusRegisterCollection.getFactory(),
     Ink.getFactory(),
