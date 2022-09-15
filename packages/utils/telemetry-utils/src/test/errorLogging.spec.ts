@@ -329,6 +329,14 @@ describe("Error Logging", () => {
             loggingError.addTelemetryProperties({ p1: "uno" });
             assert(loggingError.getTelemetryProperties().p1 === 1);
         });
+        it("typeCheck - Correctly type checks an instace of LoggingError", () => {
+            const loggingError = new LoggingError("myMessage", { p1: 1 });
+            const normalizedLoggingError = normalizeError(loggingError);
+            const basicError = new Error("basicErrorMessage");
+            assert.strictEqual(LoggingError.typeCheck(loggingError), true, "LoggingError is a LoggingError");
+            assert.strictEqual(LoggingError.typeCheck(normalizedLoggingError), true, "Normalized Error is a LoggingError");
+            assert.strictEqual(LoggingError.typeCheck(basicError), false, "Error is not a LoggingError");
+        });
     });
     describe("extractLogSafeErrorProperties", () => {
         function createSampleError(): Error {
@@ -542,7 +550,7 @@ describe("normalizeError", () => {
             }),
             "LoggingError": () => ({
                 input: new LoggingError("boom"),
-                expectedOutput: typicalOutput("boom", "<<stack from input>>").withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+                expectedOutput: typicalOutput("boom", "<<stack from input>>"),
             }),
             "Empty object": () => ({
                 input: {},
@@ -581,7 +589,7 @@ describe("normalizeError", () => {
                 expectedOutput: typicalOutput("Symbol(Unique)", "<<natural stack>>").withExpectedTelemetryProps({ typeofError: "symbol", untrustedOrigin: 1 }),
             }),
             "function": () => ({
-                input: () => {},
+                input: () => { },
                 expectedOutput: typicalOutput("() => { }", "<<natural stack>>").withExpectedTelemetryProps({ typeofError: "function", untrustedOrigin: 1 }),
             }),
             "emptyArray": () => ({
@@ -677,9 +685,9 @@ const createExternalError = (m) => new Error(m);
 
 /** Create a simple valid Fluid error */
 const createTestError = (m) =>
-Object.assign(new LoggingError(m), {
-    errorType: "someErrorType",
-});
+    Object.assign(new LoggingError(m), {
+        errorType: "someErrorType",
+    });
 
 describe("wrapError", () => {
     it("Copy message, stack, and props", () => {
@@ -723,7 +731,7 @@ describe("wrapErrorAndLog", () => {
         wrappedByErrorInstanceId: newError.errorInstanceId,
         errorInstanceId: newError.errorInstanceId,
         error: "hello",
-     }]), "Expected the 'WrapError' event to be logged");
+    }]), "Expected the 'WrapError' event to be logged");
 });
 
 describe("Error Discovery", () => {
@@ -738,6 +746,7 @@ describe("Error Discovery", () => {
         const wrappedError = wrapError("wrap me", createTestError);
         assert(!isExternalError(wrappedError));
         assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
+        assert(!isExternalError(new LoggingError("testLoggingError")));
     });
     it("isValidLegacyError", () => {
         const validLegacyError = {
@@ -774,19 +783,19 @@ describe("Error Discovery", () => {
             assert(!isFluidErrorImpl(new LoggingError("hello")),
                 "LoggingError is not a Fluid Error (no errorType)");
             assert(!isFluidErrorImpl(
-                    Object.assign(new Error("hello"), { errorType: "someErrorType", _errorInstanceId: "12345" }),
-                ), "Error with errorType and errorInstanceId but without telemetry prop fns is not a Fluid Error");
+                Object.assign(new Error("hello"), { errorType: "someErrorType", _errorInstanceId: "12345" }),
+            ), "Error with errorType and errorInstanceId but without telemetry prop fns is not a Fluid Error");
             assert(!isFluidErrorImpl(createExternalError("hello")),
                 "Error without errorType is not a Fluid Error");
             assert(!isFluidErrorImpl(
-                    Object.assign(createTestError("hello"), { _errorInstanceId: undefined }),
-                ), "Valid Fluid Error with errorInstanceId removed is not a Fluid Error");
+                Object.assign(createTestError("hello"), { _errorInstanceId: undefined }),
+            ), "Valid Fluid Error with errorInstanceId removed is not a Fluid Error");
             assert(isFluidErrorImpl(
-                    createTestError("hello"),
-                ), "Valid Fluid Error is a Fluid Error");
+                createTestError("hello"),
+            ), "Valid Fluid Error is a Fluid Error");
             assert.equal(!isOld, isFluidErrorImpl(
-                    Object.assign(createTestError("hello"), { fluidErrorCode: undefined }),
-                ), "Old isFluidError impl should require fluidErrorCode but New should not");
+                Object.assign(createTestError("hello"), { fluidErrorCode: undefined }),
+            ), "Old isFluidError impl should require fluidErrorCode but New should not");
         });
     }
     testFluidError(isFluidError, false /* isOld */);

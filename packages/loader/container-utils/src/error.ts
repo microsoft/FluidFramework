@@ -16,7 +16,7 @@ import {
     wrapError,
     wrapErrorAndLog,
     isExternalError,
-    isNormalizedLoggingError,
+    NORMALIZED_ERROR_TYPE,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -166,8 +166,9 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         };
 
         const normalizedError = normalizeError(originalError, { props });
-
-        if (isExternalError(normalizedError) || isNormalizedLoggingError(normalizedError)) {
+        // Note that other errors may have the NORMALIZED_ERROR_TYPE errorType,
+        // but if so they are still suitable to be wrapped as DataProcessingError.
+        if (isExternalError(normalizedError) || normalizedError.errorType === NORMALIZED_ERROR_TYPE) {
             // Create a new DataProcessingError to wrap this external error
             const dataProcessingError =
                 wrapError(normalizedError, (message: string) => new DataProcessingError(message));

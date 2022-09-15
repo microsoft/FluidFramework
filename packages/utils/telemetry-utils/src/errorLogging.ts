@@ -130,12 +130,12 @@ export function normalizeError(
         fluidError.addTelemetryProperties({ typeofError: typeof (error) });
     }
 
-    const originalErrorTelemetryProps = LoggingError.typeCheck(error)
+    const errorTelemetryProps = LoggingError.typeCheck(error)
         ? error.getTelemetryProperties()
         : { untrustedOrigin: 1 }; // This will let us filter errors that did not originate from our own codebase
 
     fluidError.addTelemetryProperties({
-        ...originalErrorTelemetryProps,
+        ...errorTelemetryProps,
         ...annotations.props,
     });
 
@@ -253,14 +253,15 @@ function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
 
 /**
  * True for any error object that is an (optionally normalized) external error
- * False for any error we created and raised within the FF codebase, or wrapped in a well-known error type
+ * False for any error we created and raised within the FF codebase via LoggingError base class,
+ * or wrapped in a well-known error type
  */
 export function isExternalError(e: any): boolean {
     // LoggingErrors are an internal FF error type. However, an external error can be converted
     // into a LoggingError if it is normalized. In this case we must use the untrustedOrigin flag to
     // determine whether the original error was infact external.
     if (LoggingError.typeCheck(e)) {
-        if (isNormalizedLoggingError(e)) {
+        if ((e as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
             return e.getTelemetryProperties().untrustedOrigin === 1;
         }
         return false;
@@ -424,12 +425,11 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 }
 
 /** The Error class used when normalizing an external error */
+export const NORMALIZED_ERROR_TYPE = "genericError";
 class NormalizedLoggingError extends LoggingError {
     // errorType "genericError" is used as a default value throughout the code.
     // Note that this matches ContainerErrorType/DriverErrorType's genericError
-    static readonly normalizedErrorType = "genericError";
-
-    errorType = NormalizedLoggingError.normalizedErrorType;
+    errorType = NORMALIZED_ERROR_TYPE;
 
     constructor(
         errorProps: Pick<IFluidErrorBase,
@@ -443,14 +443,4 @@ class NormalizedLoggingError extends LoggingError {
             overwriteStack(this, errorProps.stack);
         }
     }
-}
-
-/**
- * Determines if a given object is an instance of a NormalizedLoggingError
- * @param object - any object
- * @returns - true if the object is an instance of a NormalizedLoggingError, false if not.
- */
-export function isNormalizedLoggingError(object: unknown): object is NormalizedLoggingError {
-    return LoggingError.typeCheck(object)
-        && (object as NormalizedLoggingError).errorType === NormalizedLoggingError.normalizedErrorType;
 }

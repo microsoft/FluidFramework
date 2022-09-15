@@ -133,11 +133,6 @@ export function isFluidError(e: any): e is IFluidErrorBase;
 // @public
 export const isILoggingError: (x: any) => x is ILoggingError;
 
-// Warning: (ae-forgotten-export) The symbol "NormalizedLoggingError" needs to be exported by the entry point index.d.ts
-//
-// @public
-export function isNormalizedLoggingError(object: unknown): object is NormalizedLoggingError;
-
 // @public
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType;
 
@@ -210,6 +205,9 @@ export class MultiSinkLogger extends TelemetryLogger {
     protected loggers: ITelemetryBaseLogger[];
     send(event: ITelemetryBaseEvent): void;
 }
+
+// @public
+export const NORMALIZED_ERROR_TYPE = "genericError";
 
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
