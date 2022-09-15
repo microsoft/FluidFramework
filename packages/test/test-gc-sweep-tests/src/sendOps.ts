@@ -19,7 +19,7 @@ const delayPerOpMs = 100;
  * @param count - number of ops performed
  * @param random - used to control randomization consistently across all clients
  *
- * Perform 1000 ops and then do something interesting to GC as in reference and unreference datastores
+ * Perform some count of ops and then potentially reference and unreference datastores
  */
 export async function sendOps(dataObjectWithCounter: DataObjectWithCounter, count: number, random: IRandom) {
     assert(dataObjectWithCounter.isRunning === true, "Should be running to send ops");
@@ -32,6 +32,7 @@ export async function sendOps(dataObjectWithCounter: DataObjectWithCounter, coun
             opsPerformed++;
             await delay(delayPerOpMs);
         }
-        // TODO: Do something interesting
+        // TODO: Do something interesting, here is where the randomization logic should go
+        random.integer(0, opsPerformed);
     }
 }
