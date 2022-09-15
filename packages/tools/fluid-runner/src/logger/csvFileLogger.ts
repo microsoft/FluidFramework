@@ -8,7 +8,7 @@ import path from "path";
 import readline from "readline";
 import { AsyncParser } from "json2csv";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { BaseFileLogger } from "./FileLogger";
+import { BaseFileLogger } from "./baseFileLogger";
 
 /**
  * Logger that writes events into a defined CSV file

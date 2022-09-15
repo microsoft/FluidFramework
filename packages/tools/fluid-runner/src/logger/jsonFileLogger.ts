@@ -4,7 +4,7 @@
  */
 
 import * as fs from "fs";
-import { BaseFileLogger } from "./FileLogger";
+import { BaseFileLogger } from "./baseFileLogger";
 
 export class JSONFileLogger extends BaseFileLogger {
     constructor(
