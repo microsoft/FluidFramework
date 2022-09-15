@@ -85,16 +85,17 @@ export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
  *
  * mainContainer: Detect these errors only in the main container
  */
- export const sweepReadyUsageDetectionSetting = {
-    read(config: IConfigProvider): "mainContainer" | undefined {
+export const sweepReadyUsageDetectionSetting = {
+    read(config: IConfigProvider) {
         const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
         const value = config.getString(sweepReadyUsageDetectionKey);
-        switch (value) {
-            case "mainContainer":
-                return value;
-            default:
-                return undefined;
+        if (value === undefined) {
+            return { mainContainer: false, summarizer: false };
         }
+        return {
+            mainContainer: value.indexOf("mainContainer") >= 0,
+            summarizer: value.indexOf("summarizer") >= 0,
+        };
     },
 };
 
@@ -338,7 +339,7 @@ export class UnreferencedStateTracker {
  */
 class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
     /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
-    public errorType: string = "objectUsedAfterMarkedForDeletionError";
+    public errorType: string = "unreferencedObjectUsedAfterGarbageCollected";
 }
 
 /**
@@ -1383,9 +1384,13 @@ export class GarbageCollector implements IGarbageCollector {
             }
 
             // If SweepReady Usage Detection is enabed, close the main container
-            if (state === "SweepReady" && sweepReadyUsageDetectionSetting.read(this.mc.config) === "mainContainer") {
+            // Once Sweep is fully implemented, this will be removed since the objects will be gone
+            // and errors will arise elsewhere in the runtime
+            if (state === UnreferencedState.SweepReady &&
+                sweepReadyUsageDetectionSetting.read(this.mc.config).mainContainer
+            ) {
                 const error = new SweepReadyUsageError(
-                    "SweepReady object used in Non-Summarizer Container",
+                    "SweepReady object used in Non-Summarizer Client",
                     { errorDetails: JSON.stringify(propsToLog) });
                 this.runtime.closeFn(error);
             }
