@@ -195,7 +195,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
             // Specifying a non-integer index is regarded a mal-formed path and thus throws an exception
             if (!isFinite(index)) {
-                // eslint-disable-next-line unicorn/prefer-type-error
                 throw new Error(MSG.INVALID_NON_NUMERIC_SEGMENT_IN_PATH + in_segment);
             }
 
@@ -734,7 +733,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         }
         in_offset = Math.floor(in_offset);
         if (!isFinite(in_offset)) {
-            // eslint-disable-next-line unicorn/prefer-type-error
             throw new Error(MSG.NOT_NUMBER + 'in_offset, method: ArrayProperty.setRange or .set');
         }
         ConsoleUtils.assert(in_offset >= -1 && (in_offset + in_array.length) <= this.getLength(),

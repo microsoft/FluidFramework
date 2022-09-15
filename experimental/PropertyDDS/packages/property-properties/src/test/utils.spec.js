@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 /* globals assert */
-/* eslint-disable no-unused-expressions */
-/* eslint-disable max-nested-callbacks */
-/* eslint-disable max-len */
 
 /**
  * @fileoverview In this file, we will test the utils

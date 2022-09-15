@@ -34,7 +34,6 @@ function createLocalMap(id: string) {
     return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 async function populate(directory: SharedDirectory, content: object) {
     const storage = new MockSharedObjectServices({
         header: JSON.stringify(content),

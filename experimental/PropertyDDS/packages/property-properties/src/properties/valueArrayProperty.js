@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable new-cap */
+
 /**
  * @fileoverview Definition of the valuearray property class
  */

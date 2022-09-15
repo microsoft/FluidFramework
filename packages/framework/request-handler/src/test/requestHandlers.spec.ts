@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { strict as assert } from "assert";
 import {
     IRequest,

@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions  */
-/* eslint-disable max-nested-callbacks */
+
 /**
  * @fileoverview In this file, we will test the reference properties
  *    described in /src/properties/referenceProperty.js,

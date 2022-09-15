@@ -124,7 +124,6 @@ describe("TokenList", () => {
             const expectedAdd = toToggle.filter((token) => !tokens.includes(token));
             const expectedRemove = toToggle.filter((token) => tokens.includes(token));
 
-            // eslint-disable-next-line max-len
             it(`${testCase}: [${tokenList}] ^ [${toToggle.join(" ")}] -> +[${expectedAdd.join(" ")}] -[${expectedRemove.join(" ")}]`,
                 () => {
                     const actualAdd = toToggle;

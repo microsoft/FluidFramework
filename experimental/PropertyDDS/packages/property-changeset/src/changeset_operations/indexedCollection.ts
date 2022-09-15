@@ -69,7 +69,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
      * @private
      */
     export const _performApplyAfterOnPropertyIndexedCollection = function(
-        io_basePropertyChanges: SerializedChangeSet, // eslint-disable-line complexity
+        io_basePropertyChanges: SerializedChangeSet,
         in_appliedPropertyChanges: SerializedChangeSet,
         in_typeid: string,
         in_options: ApplyChangeSetOptions) {
@@ -412,7 +412,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
      * @private
      */
     export const _rebaseIndexedCollectionChangeSetForProperty = function(
-        in_ownPropertyChangeSet: SerializedChangeSet, // eslint-disable-line complexity
+        in_ownPropertyChangeSet: SerializedChangeSet,
         io_rebasePropertyChangeSet: SerializedChangeSet,
         in_basePath: string,
         in_typeid: string,

@@ -1445,7 +1445,7 @@ class PropertyFactory {
         // This creates a class that will have the correct name in the debugger, but I am not
         // sure whether we want to use a dynamic eval for this. It might be flagged by some security scans
         // It should be safe, since we control the name of constructorClasses for properties
-        // eslint-disable-next-line no-new-func
+
         var propertyConstructorFunction = class extends in_baseConstructor { };
         propertyConstructorFunction.prototype._typeid = in_typeid;
 
@@ -1636,7 +1636,7 @@ class PropertyFactory {
                     out_propertyDef.typeid = in_propertiesEntry.typeid;
 
                     // If this is a primitive type, we create it via the registered constructor
-                    var result = new templateOrConstructor(in_propertiesEntry); // eslint-disable-line new-cap
+                    var result = new templateOrConstructor(in_propertiesEntry);
                     return result;
                 } else {
                     const templateWrapper = this._getWrapper(typeid, context, in_scope);
@@ -2062,7 +2062,7 @@ class PropertyFactory {
     */
     async initializeSchemaStore(in_options) {
         // https://regex101.com/r/TlgGJp/2
-        var regexBaseUrl = /^(https?:)?\/\/((.[-a-zA-Z0-9@:%_+~#=.]{2,256}){1,2}\.[a-z]{2,6}|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d{1,5})?(\/[-a-zA-Z0-9@:%_+.~#?&/=]*)*$/; // eslint-disable-line max-len
+        var regexBaseUrl = /^(https?:)?\/\/((.[-a-zA-Z0-9@:%_+~#=.]{2,256}){1,2}\.[a-z]{2,6}|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d{1,5})?(\/[-a-zA-Z0-9@:%_+.~#?&/=]*)*$/;
 
         if (!in_options || !in_options.getBearerToken || !_.isFunction(in_options.getBearerToken) || !in_options.url) {
             return Promise.reject(new Error(MSG.MISSING_FSS_INIT_OPTIONS));
