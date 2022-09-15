@@ -172,7 +172,7 @@ const uint32x4ToGUID = function(in_guidArray: Uint32Array | Int32Array | number[
  *
  * @param in_guid - The GUID to convert
  * @param io_result - An optional array to write the result to.
- * If no array is given, a new one gets created
+ * If no array is given, a new one gets created.
  * @returns Four 32-bit values
  *
  */

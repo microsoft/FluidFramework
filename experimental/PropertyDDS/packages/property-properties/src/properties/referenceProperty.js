@@ -95,6 +95,7 @@ export class ReferenceProperty extends ValueProperty {
             { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.ALWAYS });
 
         return resolvedProperty !== undefined && _.isArray(in_ids)
+            // Forward handling of arrays to the BaseProperty function
             ? resolvedProperty.get(in_ids, in_options)
             : resolvedProperty;
     }

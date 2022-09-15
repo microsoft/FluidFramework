@@ -11,7 +11,7 @@
  */
 
 /**
-* A typed data container that is persistable, high-performance, and can be used
+ * A typed data container that is persistable, high-performance, and can be used
  * as a backing store for collaborative property sets.
  */
 class BaseDataArray {
