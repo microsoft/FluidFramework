@@ -26,6 +26,14 @@ export * from "./visitDelta";
 export * from "./globalFieldKeySymbol";
 export * from "./mapTree";
 
+export {
+    ITreeCursor as ITreeCursorNew,
+    CursorLocationType,
+    mapCursorField as mapCursorFieldNew,
+    forEachNode,
+    ITreeCursorSynchronous,
+} from "./cursor";
+
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";
 export { Delta };

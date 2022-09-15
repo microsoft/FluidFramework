@@ -11,7 +11,6 @@ export * from "./schemaIndex";
 export * from "./treeTextCursorLegacy";
 export {
 	singleTextCursor as singleTextCursorNew,
-	TextCursor as TextCursorNew,
 	jsonableTreeFromCursor as jsonableTreeFromCursorNew,
 } from "./treeTextCursor";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";

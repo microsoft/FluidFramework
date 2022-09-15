@@ -5,24 +5,23 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    ITreeCursorNew as ITreeCursor,
-    CursorLocationType,
-    mapCursorFieldNew as mapCursorField,
-} from "../forest";
-import {
     FieldKey,
     TreeType,
     UpPath,
     Value,
     MapTree,
     getMapTreeField,
+    ITreeCursorNew as ITreeCursor,
+    CursorLocationType,
+    mapCursorFieldNew as mapCursorField,
+    ITreeCursorSynchronous,
 } from "../tree";
 import { fail } from "../util";
 
 /**
  * @returns an ITreeCursor for a single MapTree.
  */
-export function singleMapTreeCursor(root: MapTree): ITreeCursor {
+export function singleMapTreeCursor(root: MapTree): ITreeCursorSynchronous {
     return new MapCursor(root);
 }
 
@@ -35,7 +34,7 @@ type SiblingsOrKey = readonly MapTree[] | readonly FieldKey[];
  * This is based off of TextCursor,
  * and likely could be further optimized by taking a different approach using map iterators.
  */
-class MapCursor implements ITreeCursor {
+class MapCursor implements ITreeCursorSynchronous {
     /**
      * Indices traversed to visit this node: does not include current level (which is stored in `index`).
      * Even indexes are of nodes and odd indexes are for fields.
@@ -150,7 +149,7 @@ class MapCursor implements ITreeCursor {
         return this.siblingStack.length % 2 === 0 ? CursorLocationType.Nodes : CursorLocationType.Fields;
     }
 
-    public get pending(): boolean {
+    public get pending(): false {
         return false;
     }
 
