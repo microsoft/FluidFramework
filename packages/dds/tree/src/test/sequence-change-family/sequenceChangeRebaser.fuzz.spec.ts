@@ -1,8 +1,8 @@
 import { strict as assert } from "assert";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { toDelta, Transposed as T } from "../../changeset";
-import { sequenceChangeRebaser } from "../../feature-libraries";
+import { toDelta } from "../../changeset";
+import { Transposed as T, sequenceChangeRebaser } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { noFailure, OutputType, verifyChangeRebaser } from "../../rebase";
 import { Delta, FieldKey } from "../../tree";
