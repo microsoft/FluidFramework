@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-doclib-utils",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "ODSP utilities",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -62,15 +62,15 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/driver-definitions": "^0.46.1000",
-    "@fluidframework/driver-utils": "^0.59.2004",
-    "@fluidframework/odsp-driver-definitions": "^0.59.2004",
-    "@fluidframework/telemetry-utils": "^0.59.2004",
+    "@fluidframework/driver-utils": "^0.59.2005",
+    "@fluidframework/odsp-driver-definitions": "^0.59.2005",
+    "@fluidframework/telemetry-utils": "^0.59.2005",
     "node-fetch": "^2.6.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@fluidframework/mocha-test-setup": "^0.59.2004",
+    "@fluidframework/mocha-test-setup": "^0.59.2005",
     "@fluidframework/odsp-doclib-utils-previous": "npm:@fluidframework/odsp-doclib-utils@0.59.1000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",

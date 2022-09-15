@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/fetch-tool",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "Console tool to fetch Fluid data from relay service",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -29,24 +29,24 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluid-tools/fluidapp-odsp-urlresolver": "^0.59.2004",
-    "@fluidframework/azure-client": "^0.59.2004",
+    "@fluid-tools/fluidapp-odsp-urlresolver": "^0.59.2005",
+    "@fluidframework/azure-client": "^0.59.2005",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-runtime": "^0.59.2004",
-    "@fluidframework/datastore": "^0.59.2004",
+    "@fluidframework/container-runtime": "^0.59.2005",
+    "@fluidframework/datastore": "^0.59.2005",
     "@fluidframework/driver-definitions": "^0.46.1000",
-    "@fluidframework/driver-utils": "^0.59.2004",
-    "@fluidframework/odsp-doclib-utils": "^0.59.2004",
-    "@fluidframework/odsp-driver": "^0.59.2004",
-    "@fluidframework/odsp-driver-definitions": "^0.59.2004",
-    "@fluidframework/odsp-urlresolver": "^0.59.2004",
+    "@fluidframework/driver-utils": "^0.59.2005",
+    "@fluidframework/odsp-doclib-utils": "^0.59.2005",
+    "@fluidframework/odsp-driver": "^0.59.2005",
+    "@fluidframework/odsp-driver-definitions": "^0.59.2005",
+    "@fluidframework/odsp-urlresolver": "^0.59.2005",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/routerlicious-driver": "^0.59.2004",
-    "@fluidframework/routerlicious-urlresolver": "^0.59.2004",
-    "@fluidframework/runtime-definitions": "^0.59.2004",
-    "@fluidframework/telemetry-utils": "^0.59.2004",
-    "@fluidframework/test-client-utils": "^0.59.2004",
-    "@fluidframework/tool-utils": "^0.59.2004"
+    "@fluidframework/routerlicious-driver": "^0.59.2005",
+    "@fluidframework/routerlicious-urlresolver": "^0.59.2005",
+    "@fluidframework/runtime-definitions": "^0.59.2005",
+    "@fluidframework/telemetry-utils": "^0.59.2005",
+    "@fluidframework/test-client-utils": "^0.59.2005",
+    "@fluidframework/tool-utils": "^0.59.2005"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

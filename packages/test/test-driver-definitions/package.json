@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-driver-definitions",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "A driver abstraction and implementations for testing against server",
   "homepage": "https://fluidframework.com",
   "repository": {

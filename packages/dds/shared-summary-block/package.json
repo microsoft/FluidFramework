@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/shared-summary-block",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "A DDS that does not generate ops but is part of summary",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -63,18 +63,18 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore-definitions": "^0.59.2004",
-    "@fluidframework/driver-utils": "^0.59.2004",
+    "@fluidframework/datastore-definitions": "^0.59.2005",
+    "@fluidframework/driver-utils": "^0.59.2005",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/runtime-definitions": "^0.59.2004",
-    "@fluidframework/shared-object-base": "^0.59.2004"
+    "@fluidframework/runtime-definitions": "^0.59.2005",
+    "@fluidframework/shared-object-base": "^0.59.2005"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@fluidframework/mocha-test-setup": "^0.59.2004",
+    "@fluidframework/mocha-test-setup": "^0.59.2005",
     "@fluidframework/shared-summary-block-previous": "npm:@fluidframework/shared-summary-block@0.59.1000",
-    "@fluidframework/test-runtime-utils": "^0.59.2004",
+    "@fluidframework/test-runtime-utils": "^0.59.2005",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/benchmark": "^2.1.0",

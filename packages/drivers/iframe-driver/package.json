@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/iframe-driver",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "Connection Fluid service API that crosses iframe boundary",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -37,9 +37,9 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/driver-definitions": "^0.46.1000",
-    "@fluidframework/driver-utils": "^0.59.2004",
+    "@fluidframework/driver-utils": "^0.59.2005",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/telemetry-utils": "^0.59.2004",
+    "@fluidframework/telemetry-utils": "^0.59.2005",
     "comlink": "^4.3.0"
   },
   "devDependencies": {

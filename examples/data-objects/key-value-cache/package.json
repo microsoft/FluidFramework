@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/key-value-cache",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "description": "Key-value cache that runs in the node.js service",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,21 +36,21 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.59.2004",
+    "@fluidframework/aqueduct": "^0.59.2005",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.48.1000",
-    "@fluidframework/container-runtime": "^0.59.2004",
+    "@fluidframework/container-runtime": "^0.59.2005",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore": "^0.59.2004",
-    "@fluidframework/datastore-definitions": "^0.59.2004",
-    "@fluidframework/map": "^0.59.2004",
-    "@fluidframework/request-handler": "^0.59.2004",
-    "@fluidframework/runtime-definitions": "^0.59.2004",
-    "@fluidframework/runtime-utils": "^0.59.2004",
+    "@fluidframework/datastore": "^0.59.2005",
+    "@fluidframework/datastore-definitions": "^0.59.2005",
+    "@fluidframework/map": "^0.59.2005",
+    "@fluidframework/request-handler": "^0.59.2005",
+    "@fluidframework/runtime-definitions": "^0.59.2005",
+    "@fluidframework/runtime-utils": "^0.59.2005",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.59.2004",
+    "@fluid-tools/webpack-fluid-loader": "^0.59.2005",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@rushstack/eslint-config": "^2.5.1",

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/tree",
-  "version": "0.59.2004",
+  "version": "0.59.2005",
   "private": true,
   "description": "Tree",
   "homepage": "https://fluidframework.com",
@@ -66,8 +66,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@fluidframework/mocha-test-setup": "^0.59.2004",
-    "@fluidframework/test-runtime-utils": "^0.59.2004",
+    "@fluidframework/mocha-test-setup": "^0.59.2005",
+    "@fluidframework/test-runtime-utils": "^0.59.2005",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
