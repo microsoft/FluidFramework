@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { Transposed as T } from "../../changeset";
 import {
+    Transposed as T,
     sequenceChangeFamily,
     sequenceChangeRebaser,
     SequenceChangeset,

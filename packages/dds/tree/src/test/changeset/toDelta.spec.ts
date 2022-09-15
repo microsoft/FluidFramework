@@ -8,7 +8,7 @@ import {
     ProtoNode,
     toDelta as toDeltaImpl,
     Transposed as T,
-} from "../../changeset";
+} from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKey, Delta } from "../../tree";
 import { brand, brandOpaque } from "../../util";
@@ -20,7 +20,7 @@ function toDelta(changeset: T.LocalChangeset): Delta.Root {
     return delta;
 }
 
-function toTreeDelta(list: T.MarkList): Delta.MarkList<Delta.OuterMark> {
+function toTreeDelta(list: T.MarkList): Delta.MarkList {
     const fullDelta = toDelta({ marks: { root: list } });
     return fullDelta.get(rootKey) ?? assert.fail("Expected changes under the root");
 }

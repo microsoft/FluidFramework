@@ -11,6 +11,7 @@ import {
 import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
+import { DependencyUpdateType } from "./lib";
 import { isReleaseGroup } from "./releaseGroups";
 
 /**
@@ -86,6 +87,18 @@ export const bumpTypeFlag = Flags.build({
         if (isVersionBumpType(input)) {
             return input;
         }
+    },
+});
+
+/**
+ * A re-usable CLI flag to parse dependency update types.
+ */
+export const dependencyUpdateTypeFlag = Flags.build({
+    char: "t",
+    description: "Version bump type.",
+    options: ["latest", "newest", "greatest", "minor", "patch", "@next", "@canary"],
+    parse: async (input) => {
+        return input as DependencyUpdateType;
     },
 });
 

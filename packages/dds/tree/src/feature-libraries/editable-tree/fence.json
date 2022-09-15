@@ -1,0 +1,6 @@
+{
+    "tags": [ "forest-proxy" ],
+    "exports": ["index"],
+    // TODO: "feature-libraries" dependency is for defaultFieldKinds, and should be removed once proper view schema are provided.
+    "imports": ["schema-stored","tree","dependency-tracking","forest","util","feature-libraries","modular-schema"]
+}

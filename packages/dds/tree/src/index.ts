@@ -11,8 +11,8 @@ export {
 export {
     EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
     UpPath, Anchor, RootField, ChildCollection,
-    ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
-    Delta,
+    ChildLocation, FieldMapObject, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
+    Delta, rootFieldKey, FieldScope, GlobalFieldKeySymbol, symbolFromKey, keyFromSymbol,
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -23,13 +23,15 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     SynchronousNavigationResult,
+    ITreeCursorNew,
+    CursorLocationType,
 } from "./forest";
 
 export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
     FieldSchema, ValueSchema, TreeSchema,
     StoredSchemaRepository, FieldKindIdentifier,
-    rootFieldKey, TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
 } from "./schema-stored";
 
 export {
@@ -65,6 +67,11 @@ export {
 } from "./rebase";
 
 export {
+    ICheckout,
+    TransactionResult,
+} from "./checkout";
+
+export {
     cursorToJsonObject,
     JsonCursor,
     jsonTypeSchema,
@@ -82,12 +89,16 @@ export {
     ModularChangeFamily,
     ModularEditBuilder,
     FieldChangeHandler,
+    FieldEditor,
     FieldChangeRebaser,
     FieldChangeEncoder,
+    NodeChangeset,
+    ValueChange,
     FieldChangeMap,
     FieldChangeset,
     FieldChange,
     ToDelta,
+    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -97,5 +108,41 @@ export {
     Multiplicity,
     isNeverField,
     FullSchemaPolicy,
+    UnwrappedEditableField,
+    EditableTreeContext,
+    UnwrappedEditableTree,
+    EditableTreeOrPrimitive,
+    EditableTree,
+    getEditableTree,
+    isPrimitiveValue,
+    isPrimitive,
+    getTypeSymbol,
+    valueSymbol,
+    proxyTargetSymbol,
     defaultSchemaPolicy,
+    singleTextCursorNew,
+    TextCursorNew,
+    jsonableTreeFromCursorNew,
+    PrimitiveValue,
+    SequenceEditBuilder,
+    SequenceChangeset,
+    NodePath,
+    PlacePath,
+    Transposed,
+    TreeForestPath,
+    TreeRootPath,
+    OpId,
+    Skip,
+    ChangesetTag,
+    Effects,
+    Tiebreak,
+    ProtoNode,
+    GapCount,
+    HasOpId,
+    NodeCount,
 } from "./feature-libraries";
+
+export {
+    ISharedTree,
+    SharedTreeFactory,
+} from "./shared-tree";

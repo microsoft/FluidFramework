@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { jsonableTreeFromCursor, RootedTextCursor, singleTextCursor } from "../treeTextCursor";
+import { jsonableTreeFromCursor, RootedTextCursor, singleTextCursor } from "../treeTextCursorLegacy";
 import {
     DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
 } from "../../dependency-tracking";
@@ -335,6 +335,7 @@ class Cursor extends RootedTextCursor implements ITreeSubscriptionCursor {
 
     free(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);
+        this.forest.currentCursors.delete(this);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 

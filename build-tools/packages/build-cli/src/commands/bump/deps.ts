@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { FluidRepo, isMonoRepoKind, VersionBag } from "@fluidframework/build-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
-import { ArgInput } from "@oclif/core/lib/interfaces";
+import type { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
-import * as semver from "semver";
+import stripAnsi from "strip-ansi";
 import { BaseCommand } from "../../base";
-import { bumpTypeExtendedFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
+import { checkFlags, dependencyUpdateTypeFlag, releaseGroupFlag, skipCheckFlag } from "../../flags";
 import {
     generateBumpDepsBranchName,
-    bumpPackageDependencies,
-    PackageWithRangeSpec,
+    indentString,
+    isDependencyUpdateType,
+    npmCheckUpdates,
 } from "../../lib";
+import { isReleaseGroup, ReleaseGroup } from "../../releaseGroups";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -41,20 +42,14 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
     ];
 
     static flags = {
-        version: semverRangeFlag({
-            char: "n",
-            exclusive: ["bumpType"],
-        }),
-        bumpType: bumpTypeExtendedFlag({
+        updateType: dependencyUpdateTypeFlag({
             char: "t",
             description: "Bump the current version of the dependency according to this bump type.",
-            exclusive: ["version"],
         }),
         prerelease: Flags.boolean({
             char: "p",
-            dependsOn: ["bumpType"],
-            description: "Bump to pre-release versions.",
-            exclusive: ["version"],
+            dependsOn: ["updateType"],
+            description: "Treat prerelease versions as valid versions to update to.",
         }),
         onlyBumpPrerelease: Flags.boolean({
             description: "Only bump dependencies that are on pre-release versions.",
@@ -62,46 +57,33 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         releaseGroup: releaseGroupFlag({
             description: "Only bump dependencies within this release group.",
         }),
-        commit: Flags.boolean({
-            allowNo: true,
-            default: true,
-            description: "Commit changes to a new branch.",
-        }),
-        install: Flags.boolean({
-            allowNo: true,
-            default: true,
-            description: "Update lockfiles by running 'npm install' automatically.",
-        }),
-        skipChecks: Flags.boolean({
-            char: "x",
-            default: false,
-            description: "Skip all checks.",
-            exclusive: ["install", "commit"],
-        }),
+        commit: checkFlags.commit,
+        install: checkFlags.install,
+        skipChecks: skipCheckFlag,
         ...BaseCommand.flags,
     };
 
     static examples = [
         {
             description:
-                "Bump dependencies on @fluidframework/build-common to range ~1.2.0 across all release groups.",
-            command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -n '~1.2.0'",
+                "Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.",
+            command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t latest",
         },
         {
             description:
-                "Bump dependencies on @fluidframework/build-common to range ^1.0.0-0 in the azure release group.",
+                "Bump dependencies on @fluidframework/build-common to the next minor version in the azure release group.",
             command:
-                "<%= config.bin %> <%= command.id %> @fluidframework/build-common -n '^1.0.0-0' -g azure",
+                "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t minor -g azure",
         },
         {
             description:
-                "Bump dependencies on packages in the server release group to the next major prerelease in the client release group.",
-            command: "<%= config.bin %> <%= command.id %> server -g client -t major",
+                "Bump dependencies on packages in the server release group to the greatest released version in the client release group. Include pre-release versions.",
+            command: "<%= config.bin %> <%= command.id %> server -g client -t greatest -p",
         },
         {
             description:
-                "Bump dependencies on server packages to the current version, replacing any pre-release ranges with release ranges.",
-            command: "<%= config.bin %> <%= command.id %> server -g client -t current",
+                "Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with release ranges.",
+            command: "<%= config.bin %> <%= command.id %> server -t latest",
         },
     ];
 
@@ -124,98 +106,104 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             this.error("ERROR: No dependency provided.");
         }
 
-        if (flags.bumpType === undefined && semver.validRange(flags.version) === null) {
-            this.error(`ERROR: Invalid version range: ${flags.version}`);
-        }
-
         /** The version range or bump type (depending on the CLI arguments) to set. */
-        const versionToSet =
-            flags.version !== undefined && flags.version !== ""
-                ? flags.version
-                : flags.bumpType ?? "patch";
+        const versionToSet = flags.updateType ?? "current";
 
-        /** A map of package names to version OR bump type strings. */
-        const packagesToBump = new Map<string, string | undefined>();
+        /** A list of package names on which to update dependencies. */
+        const depsToUpdate: string[] = [];
 
-        if (isMonoRepoKind(args.package_or_release_group)) {
-            // if the package argument is a release group name, then constrain the list of packages to those in the
-            // release group.
-            for (const pkg of context.packagesInReleaseGroup(args.package_or_release_group)) {
-                packagesToBump.set(pkg.name, versionToSet);
-            }
+        if (isReleaseGroup(args.package_or_release_group)) {
+            depsToUpdate.push(
+                ...context.packagesInReleaseGroup(args.package_or_release_group).map((p) => p.name),
+            );
         } else {
-            // We must be bumping a single package.
-            packagesToBump.set(args.package_or_release_group, versionToSet);
+            depsToUpdate.push(args.package_or_release_group);
+            const pkg = context.fullPackageMap.get(args.package_or_release_group);
+            if (pkg === undefined) {
+                this.error(`Package not in context: ${args.package_or_release_group}`);
+            }
+
+            if (pkg.monoRepo !== undefined) {
+                const rg = pkg.monoRepo.kind;
+                this.errorLog(`${pkg.name} is part of the ${rg} release group.`);
+                this.errorLog(
+                    `If you want to update dependencies on that package, run the following command:\n\n    ${
+                        this.config.bin
+                    } ${this.id} ${rg} ${this.argv.slice(1).join(" ")}`,
+                );
+                this.exit(1);
+            }
         }
 
+        this.logHr();
         this.log(`Dependencies: ${chalk.blue(args.package_or_release_group)}`);
         this.log(`Packages: ${chalk.blueBright(flags.releaseGroup ?? "all packages")}`);
         this.log(`Prerelease: ${flags.prerelease ? chalk.green("yes") : "no"}`);
-        this.log(`Bump type: ${chalk.bold(flags.bumpType ?? `${flags.version} (exact version)`)}`);
+        this.log(`Bump type: ${chalk.bold(versionToSet)}`);
+        this.logHr();
         this.log("");
 
-        /** An array of packages on which to enumerate and update dependencies. */
-        const packagesToCheckAndUpdate = isMonoRepoKind(flags.releaseGroup)
-            ? context.packagesInReleaseGroup(flags.releaseGroup)
-            : context.repo.packages.packages;
-
-        /** A Map of package name strings to {@link PackageWithRangeSpec} that contains a {@link Package} and the
-         *  desired version range that should be set.
-         */
-        const packageNewVersionMap = new Map(
-            [...packagesToBump.entries()].map((entry) => {
-                const [pkgName, versionOrBump] = entry;
-                const pkg = context.fullPackageMap.get(pkgName);
-                if (pkg === undefined) {
-                    this.error(`No entry for ${pkgName} in fullPackageMap.`);
-                }
-
-                if (versionOrBump === undefined) {
-                    this.error(`versionOrBump cannot be undefined.`);
-                }
-
-                assert(pkg !== undefined, "Package is undefined.");
-
-                const rangeSpec: PackageWithRangeSpec = { pkg, rangeOrBumpType: versionOrBump };
-                return [pkg.name, rangeSpec];
-            }),
-        );
-
-        const changedPackages = new VersionBag();
-        for (const pkg of packagesToCheckAndUpdate) {
-            // eslint-disable-next-line no-await-in-loop
-            await bumpPackageDependencies(
-                pkg,
-                packageNewVersionMap,
-                flags.prerelease,
-                flags.onlyBumpPrerelease,
-                /* updateWithinSameReleaseGroup */ false,
-                changedPackages,
-            );
+        if (!isDependencyUpdateType(flags.updateType) || flags.updateType === undefined) {
+            this.error(`Unknown dependency update type: ${flags.updateType}`);
         }
 
-        if (changedPackages.size > 0) {
+        const { updatedPackages, updatedDependencies } = await npmCheckUpdates(
+            context,
+            flags.releaseGroup, // if undefined the whole repo will be checked
+            depsToUpdate,
+            args.package_or_release_group,
+            flags.updateType,
+            /* prerelease */ flags.prerelease,
+            /* writeChanges */ true,
+            this.logger,
+        );
+
+        if (updatedPackages.length > 0) {
             if (shouldInstall) {
-                if (!(await FluidRepo.ensureInstalled(packagesToCheckAndUpdate, false))) {
+                if (!(await FluidRepo.ensureInstalled(updatedPackages, false))) {
                     this.error("Install failed.");
                 }
             } else {
-                this.warn(`Skipping installation. Lockfiles might be outdated.`);
+                this.warning(`Skipping installation. Lockfiles might be outdated.`);
             }
 
-            const changedVersionsString: string[] = [];
-            for (const [name, version] of changedPackages) {
-                const newName = isMonoRepoKind(name) ? `${name} (release group)` : name;
-                changedVersionsString.push(`${newName.padStart(40)} -> ${version}`);
+            const updatedReleaseGroups: ReleaseGroup[] = [
+                ...new Set(
+                    updatedPackages
+                        .filter((p) => p.monoRepo !== undefined)
+                        .map((p) => p.monoRepo!.kind),
+                ),
+            ];
+
+            const changedVersionsString = [`Updated the following:`, ""];
+
+            for (const rg of updatedReleaseGroups) {
+                changedVersionsString.push(indentString(`${rg} (release group)`));
+            }
+
+            for (const pkg of updatedPackages) {
+                if (pkg.monoRepo === undefined) {
+                    changedVersionsString.push(indentString(`${pkg.name}`));
+                }
+            }
+
+            changedVersionsString.push(
+                "",
+                `Dependencies on ${chalk.blue(args.package_or_release_group)} updated:`,
+                "",
+            );
+
+            for (const [pkgName, ver] of Object.entries(updatedDependencies)) {
+                changedVersionsString.push(indentString(`${pkgName}: ${chalk.bold(ver)}`));
             }
 
             const changedVersionMessage = changedVersionsString.join("\n");
             if (shouldCommit) {
-                const commitMessage = `Bump dependencies\n\n${changedVersionMessage}`;
+                const commitMessage = stripAnsi(`Bump dependencies\n\n${changedVersionMessage}`);
 
                 const bumpBranch = generateBumpDepsBranchName(
                     args.package_or_release_group,
-                    flags.bumpType ?? "current",
+                    flags.updateType,
                     flags.releaseGroup,
                 );
                 this.log(`Creating branch ${bumpBranch}`);
@@ -225,11 +213,11 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                     `You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
                 );
             } else {
-                this.warn(`Skipping commit. You'll need to manually commit changes.`);
+                this.warning(`Skipping commit. You'll need to manually commit changes.`);
             }
 
             this.finalMessages.push(
-                `\nUpdated ${packagesToBump.size} dependencies across ${packagesToCheckAndUpdate.length} packages.\n`,
+                `\nUpdated ${depsToUpdate.length} dependencies across ${updatedPackages.length} packages.\n`,
                 `${changedVersionMessage}`,
             );
         } else {

@@ -198,7 +198,7 @@ export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 
 // @public
 export interface EmitterOptions extends IMarkdownEmitterOptions {
-    contextApiItem: ApiItem | undefined;
+    contextApiItem: ApiItem;
     getLinkUrlApiItem: (apiItem: ApiItem) => string | undefined;
     headingLevel?: number;
     logger?: Logger;
@@ -359,10 +359,12 @@ export function markdownDocumenterConfigurationWithDefaults(partialConfig: Markd
 
 // @public
 export class MarkdownEmitter extends MarkdownEmitter_2 {
-    constructor(apiModel: ApiModel);
+    constructor(apiModel: ApiModel, generateFrontMatter?: (contextApiItem: ApiItem) => string);
     protected readonly apiModel: ApiModel;
     // @virtual @override
     emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string;
+    // @virtual
+    protected readonly generateFrontMatter?: (contextApiItem: ApiItem) => string;
     // @virtual
     protected writeAlert(docAlert: DocAlert, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual

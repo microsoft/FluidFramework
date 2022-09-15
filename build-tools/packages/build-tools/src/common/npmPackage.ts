@@ -123,6 +123,9 @@ export class Package {
         return !this.packageJson.private;
     }
 
+    public get isTestPackage(): boolean {
+        return this.name.split("/")[1]?.startsWith("test-") === true;
+    }
     public get matched() {
         return this._matched;
     }
