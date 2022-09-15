@@ -526,7 +526,7 @@ export const checkShouldCommitReleasedDepsBump: StateHandlerFunction = async (
     }
 
     assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
-    const branchName = generateBumpDepsBranchName(releaseGroup, "releasedDeps");
+    const branchName = generateBumpDepsBranchName(releaseGroup, "latest");
     await context.gitRepo.createBranch(branchName);
 
     log.verbose(`Created bump branch: ${branchName}`);

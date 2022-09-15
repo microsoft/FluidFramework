@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { AzureFunctionTokenProvider } from "..";
+import {
+    AzureFunctionTokenProvider
+} from "@fluidframework/azure-client";
 
 export function createAzureTokenProvider(
     userID?: string,

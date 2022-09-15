@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Brand, Opaque } from "../util";
+import { Brand } from "../util";
 
 /**
  * Example internal schema representation types.
@@ -44,16 +44,11 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 /**
- * SchemaIdentifier for a Field "global field",
+ * SchemaIdentifier for a "global field",
  * meaning a field which has the same meaning for all usages within the document
  * (not scoped to a specific TreeSchema like LocalFieldKey).
- *
- * Note that the implementations should ensure that GlobalFieldKeys can never collide with LocalFieldKeys.
- * This can be done in several ways
- * (keeping the two classes of fields separate, name-spacing/escaping,
- * compressing one into numbers and leaving the other strings, etc.)
  */
-export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">>{}
+export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
 
 /**
  * Example for how we might want to handle values.

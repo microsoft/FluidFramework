@@ -38,7 +38,7 @@ describe("semver", () => {
         });
     });
 
-    describe("semverDiff", () => {
+    describe("detectBumpType semver", () => {
         it("major", () => {
             assert.equal(detectBumpType("0.0.1", "1.0.0"), "major");
         });
@@ -75,6 +75,62 @@ describe("semver", () => {
             assert.throws(() => detectBumpType("0.0.1+3", "0.0.1+2"));
             assert.throws(() => detectBumpType("0.0.1+2.0", "0.0.1+2"));
             assert.throws(() => detectBumpType("0.0.1+2.a", "0.0.1+2.0"));
+        });
+    });
+
+    describe("detectBumpType internal version scheme", () => {
+        it("major", () => {
+            assert.equal(detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.2.0.0"), "major");
+        });
+
+        it("minor", () => {
+            assert.equal(detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.1.1.0"), "minor");
+        });
+
+        it("patch", () => {
+            assert.equal(detectBumpType("2.0.0-internal.1.0.0", "2.0.0-internal.1.0.1"), "patch");
+        });
+
+        it("premajor bump type returns major", () => {
+            assert.equal(
+                detectBumpType("2.0.0-internal.1.0.0.82134", "2.0.0-internal.2.0.0"),
+                "major",
+            );
+        });
+
+        it("preminor bump type returns minor", () => {
+            assert.equal(
+                detectBumpType("2.0.0-internal.1.1.0.82134", "2.0.0-internal.1.2.0"),
+                "minor",
+            );
+        });
+
+        it("prepatch bump type returns patch", () => {
+            assert.equal(detectBumpType("1.1.1-foo", "1.1.2"), "patch");
+        });
+
+        it("prerelease bump type returns undefined", () => {
+            assert.isUndefined(
+                detectBumpType("2.0.0-internal.1.0.0.82134", "2.0.0-internal.1.0.0"),
+            );
+        });
+
+        it("v1 >= v2 throws", () => {
+            assert.throws(() => detectBumpType("0.0.1", "0.0.1"));
+            assert.throws(() => detectBumpType("0.0.2", "0.0.1"));
+            assert.throws(() => detectBumpType("0.0.1+0", "0.0.1"));
+            assert.throws(() => detectBumpType("0.0.1+2", "0.0.1+2"));
+            assert.throws(() => detectBumpType("0.0.1+3", "0.0.1+2"));
+            assert.throws(() => detectBumpType("0.0.1+2.0", "0.0.1+2"));
+            assert.throws(() => detectBumpType("0.0.1+2.a", "0.0.1+2.0"));
+        });
+
+        it("invalid semver v1 throws", () => {
+            assert.throws(() => detectBumpType("bad semver", "0.0.1"));
+        });
+
+        it("invalid semver v2 throws", () => {
+            assert.throws(() => detectBumpType("0.0.1", "bad semver"));
         });
     });
 

@@ -230,11 +230,7 @@ export class GitManager implements IGitManager {
         // TODO optimize the update to know up front if the ref exists
         const existingRef = await this.getRef(branch);
 
-        if (existingRef) {
-            await this.upsertRef(branch, commit.sha);
-        } else {
-            await this.createRef(branch, commit.sha);
-        }
+        await (existingRef ? this.upsertRef(branch, commit.sha) : this.createRef(branch, commit.sha));
 
         return commit;
     }

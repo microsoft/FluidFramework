@@ -111,8 +111,10 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
 
     protected async loadCore(services: IChannelStorageService): Promise<void> {
         const loadIndexes = this.summaryElements
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            .map((summaryElement) => summaryElement.load(services, (contents) => this.serializer.parse(contents)));
+            .map(async (summaryElement) => summaryElement.load(
+                scopeStorageService(services, "indexes", summaryElement.key),
+                (contents) => this.serializer.parse(contents),
+            ));
 
         await Promise.all(loadIndexes);
     }
@@ -242,11 +244,12 @@ export interface SummaryElement {
     getGCData(fullGC?: boolean): IGarbageCollectionData;
 
     /**
-     * Allows the index to perform custom loading
-     * @param services - Storage used by the index
+     * Allows the index to perform custom loading. The storage service is scoped to this index and therefore
+     * paths in this index will not collide with those in other indexes, even if they are the same string.
+     * @param service - Storage used by the index
      * @param parse - Parses serialized data from storage into runtime objects for the index
      */
-    load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void>;
+    load(service: IChannelStorageService, parse: SummaryElementParser): Promise<void>;
 }
 
 /**
@@ -258,4 +261,23 @@ export type SummaryElementStringifier = (contents: unknown) => string;
 /**
  * Parses a serialized/summarized string into an object, rehydrating any Fluid handles as necessary
  */
- export type SummaryElementParser = (contents: string) => unknown;
+export type SummaryElementParser = (contents: string) => unknown;
+
+/**
+ * Compose an {@link IChannelStorageService} which prefixes all paths before forwarding them to the original service
+ */
+function scopeStorageService(service: IChannelStorageService, ...pathElements: string[]): IChannelStorageService {
+    const scope = `${pathElements.join("/")}/`;
+
+    return {
+        async readBlob(path: string): Promise<ArrayBufferLike> {
+            return service.readBlob(`${scope}${path}`);
+        },
+        async contains(path) {
+            return service.contains(`${scope}${path}`);
+        },
+        async list(path) {
+            return service.list(`${scope}${path}`);
+        },
+    };
+}

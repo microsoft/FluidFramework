@@ -53,11 +53,9 @@ export class Historian implements IHistorian {
     }
 
     public async getHeader(sha: string): Promise<any> {
-        if (this.historianApi) {
-            return this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`, this.getQueryString());
-        } else {
-            return this.getHeaderDirect(sha);
-        }
+        return this.historianApi
+            ? this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`, this.getQueryString())
+            : this.getHeaderDirect(sha);
     }
 
     public async getFullTree(sha: string): Promise<any> {
