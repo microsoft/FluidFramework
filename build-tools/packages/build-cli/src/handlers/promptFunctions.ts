@@ -13,7 +13,6 @@ import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { StateHandlerFunction } from "./stateHandlers";
-import { uniqueCommandArgs } from "../base";
 
 /**
  * Prompt the user to queue a release build.
