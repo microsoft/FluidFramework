@@ -47,7 +47,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
      */
     constructor(
-        protected readonly value: T,
+        protected readonly value: T | Promise<T>,
         public readonly path: string,
         public readonly routeContext: IFluidHandleContext,
     ) {
@@ -55,6 +55,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     }
 
     public async get(): Promise<any> {
+        // Note that this return works whether we received a T or a Promise<T> for this.value in the constructor.
         return this.value;
     }
 

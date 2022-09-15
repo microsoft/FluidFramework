@@ -906,9 +906,9 @@ export class MergeTree {
             }
         } else {
             for (const ref of refsToSlide) {
-                ref.callbacks?.beforeSlide?.();
+                ref.callbacks?.beforeSlide?.(ref);
                 segment.localRefs?.removeLocalRef(ref);
-                ref.callbacks?.afterSlide?.();
+                ref.callbacks?.afterSlide?.(ref);
             }
         }
         // TODO is it required to update the path lengths?
