@@ -506,7 +506,7 @@ export interface ITreeCursorNew {
     readonly value: Value;
 }
 
-// @public (undocumented)
+// @public
 export interface ITreeCursorSynchronous extends ITreeCursorNew {
     // (undocumented)
     readonly pending: false;
