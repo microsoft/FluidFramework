@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import path from "path";
 import readline from "readline";
-import { AsyncParser } from "json2csv"; // TODO: import this
+import { AsyncParser } from "json2csv";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { BaseFileLogger } from "./FileLogger";
 
@@ -14,6 +14,7 @@ import { BaseFileLogger } from "./FileLogger";
  * Logger that writes events into a defined CSV file
  */
 export class CSVFileLogger extends BaseFileLogger {
+    // eslint-disable-next-line max-len
     // private readonly csvFileName = "C:\\Users\\kianthompson\\Documents\\RandomData\\fluid-runner\\src\\logger\\sample.csv";
     private readonly columns = new Set();
     private readonly tempFile = path.join(__dirname, "tempOutputFile.txt");
@@ -40,17 +41,13 @@ export class CSVFileLogger extends BaseFileLogger {
 
         const fd = fs.openSync(this.tempFile, "w");
         asyncParser.processor
-            .on("data", chunk => fs.appendFileSync(fd, chunk.toString()))
+            .on("data", (chunk) => fs.appendFileSync(fd, chunk.toString()))
             .on("end", () => fs.closeSync(fd))
-            .on("error", err => console.error(err));
+            .on("error", (err) => console.error(err));
 
-        readline.createInterface({
-            input: fs.createReadStream(this.tempFile),
-            output: process.stdout,
-            terminal: false,
-        })
-        .on("line", (line) => asyncParser.input.push(line))
-        .on("close", () => asyncParser.input.push(null));
+        readline.createInterface({ input: fs.createReadStream(this.tempFile) })
+            .on("line", (line) => { asyncParser.input.push(line); })
+            .on("close", () => { asyncParser.input.push(null); });
         await asyncParser.promise();
 
         fs.rmSync(this.tempFile);

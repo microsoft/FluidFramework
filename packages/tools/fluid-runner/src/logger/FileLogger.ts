@@ -25,23 +25,23 @@ export interface ITelemetryOptions {
     eventsPerFlush?: number;
 }
 
-export function createFileLogger(
+/**
+ * Create a ITelemetryLogger wrapped around provided IFileLogger
+ * TODO
+ */
+export function createLogger(
     filePath: string,
     outputFormat: OutputFormat = OutputFormat.JSON,
     options?: ITelemetryOptions,
-): IFileLogger {
-    if (outputFormat === OutputFormat.CSV) {
-        return new CSVFileLogger(filePath, options?.eventsPerFlush);
-    }
-    return new JSONFileLogger(filePath, options?.eventsPerFlush);
-}
+): { logger: ITelemetryLogger; fileLogger: IFileLogger; } {
+    const fileLogger = outputFormat === OutputFormat.CSV
+        ? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultFields)
+        : new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultFields);
 
-/**
- * Create a ITelemetryLogger wrapped around provided IFileLogger
- */
-export function createLogger(fileLogger: IFileLogger): ITelemetryLogger {
-    return ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp",
+    const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp",
         { all: { Event_Time: () => Date.now() } });
+
+    return { logger, fileLogger };
 }
 
 /**

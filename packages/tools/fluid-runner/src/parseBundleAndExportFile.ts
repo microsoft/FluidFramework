@@ -9,7 +9,7 @@ import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
 import { createContainerAndExecute, IExportFileResponse } from "./exportFile";
 import { getArgsValidationError } from "./getArgsValidationError";
 // eslint-disable-next-line import/no-internal-modules
-import { createFileLogger, createLogger, getTelemetryFileValidationError } from "./logger/FileLogger";
+import { createLogger, getTelemetryFileValidationError } from "./logger/FileLogger";
 import { getSnapshotFileContent } from "./utils";
 
 const clientArgsValidationError = "Client_ArgsValidationError";
@@ -30,8 +30,7 @@ export async function parseBundleAndExportFile(
         const eventName = clientArgsValidationError;
         return { success: false, eventName, errorMessage: telemetryArgError };
     }
-    const fileLogger = createFileLogger(telemetryFile);
-    const logger = createLogger(fileLogger);
+    const { fileLogger, logger } = createLogger(telemetryFile);
 
     try {
         return await PerformanceEvent.timedExecAsync(logger, { eventName: "ParseBundleAndExportFile" }, async () => {

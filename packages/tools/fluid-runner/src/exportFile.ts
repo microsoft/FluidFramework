@@ -14,7 +14,7 @@ import { IFluidFileConverter } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
 import { getSnapshotFileContent } from "./utils";
 // eslint-disable-next-line import/no-internal-modules
-import { createFileLogger, createLogger, getTelemetryFileValidationError } from "./logger/FileLogger";
+import { createLogger, getTelemetryFileValidationError } from "./logger/FileLogger";
 
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
@@ -46,8 +46,7 @@ export async function exportFile(
         const eventName = clientArgsValidationError;
         return { success: false, eventName, errorMessage: telemetryArgError };
     }
-    const fileLogger = createFileLogger(telemetryFile);
-    const logger = createLogger(fileLogger);
+    const { fileLogger, logger } = createLogger(telemetryFile);
 
     try {
         return await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {

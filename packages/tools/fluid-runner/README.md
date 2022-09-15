@@ -34,7 +34,7 @@ For some examples, see the files in the [localOdspSnapshots folder](./src/test/l
 ### Consumption
 The code around `exportFile` can be consumed in multiple different layers. It is not necessary to run all this code fully as is, and the following are some interesting code bits involved in this workflow:
 - [`createLogger(...)`](./src/logger/FileLogger.ts)
-    - Wraps a provided `FileLogger` and adds some useful telemetry data to every entry
+    - Creates and wraps an `IFileLogger` and adds some useful telemetry data to every entry
 - [`createContainerAndExecute(...)`](./src/exportFile.ts)
     - This is the core logic for running some action based on a local ODSP snapshot
 - [`getSnapshotFileContent(...)`](./src/utils.ts)
