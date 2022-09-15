@@ -5,7 +5,6 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-
 import {
     IConfigProvider,
     IFluidErrorBase,
@@ -14,15 +13,16 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { oneDayMs } from "./garbageCollection";
 
+const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
+const blackoutPeriodDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.BlackoutPeriodDays";
+const closuresStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
+
 /**
  * Feature gate key to enable closing the container if SweepReady objects are used.
- * Only known values are accepted, otherwise return undefined.
- *
- * mainContainer: Detect these errors only in the main container
+ * Value should contain keywords "mainContainer" and/or "summarizer" to enable detection in each container type
  */
 const sweepReadyUsageDetectionSetting = {
     read(config: IConfigProvider) {
-        const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
         const value = config.getString(sweepReadyUsageDetectionKey);
         if (value === undefined) {
             return { mainContainer: false, summarizer: false };
@@ -33,9 +33,6 @@ const sweepReadyUsageDetectionSetting = {
         };
     },
 };
-
-const blackoutPeriodDays = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.ThrottlingDurationDays";
-const closuresStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
 
 /**
  * Error class raised when a SweepReady object is used, indicating a bug in how
@@ -50,57 +47,39 @@ export class SweepReadyUsageError extends LoggingError implements IFluidErrorBas
     public errorType: string = "objectUsedAfterMarkedForDeletionError";
 }
 
+export const noopStorage = { getItem: () => null, setItem: () => {} };
+
+/**
+ * This class encapsulates the logic around what to do when a SweepReady object is used.
+ * There are several tactics we plan to use in Dogfood environments to aid diagnosis of these cases:
+ *  - Closing the container when either the main or summarizer client detects this kind of violation
+ *  - Throttling the frequency of these crashes via a "Blackout Period" per container per device
+ */
 export class SweepReadyUsageDetectionHandler {
-    private readonly storage: Pick<Storage, "getItem" | "setItem">;
+    private readonly localStorage: Pick<Storage, "getItem" | "setItem">;
+
     constructor(
         /** Unique key for this container for diagnostic purposes */
         private readonly uniqueContainerKey: string,
         private readonly mc: MonitoringContext,
-        localStorageImpl: Pick<Storage, "getItem" | "setItem"> | undefined,
         private readonly closeFn: (error?: ICriticalContainerError) => void,
+        localStorageImpl?: Pick<Storage, "getItem" | "setItem">,
     ) {
         if (localStorageImpl !== undefined) {
-            this.storage = localStorageImpl;
+            this.localStorage = localStorageImpl;
         } else {
-            const noopStorage = { getItem: () => null, setItem: () => {} };
             try {
                 // localStorage is not defined in Node environment so this throws
-                this.storage = localStorage ?? noopStorage;
+                this.localStorage = localStorage ?? noopStorage;
             } catch (error) {
-                this.storage = noopStorage;
+                this.localStorage = noopStorage;
             }
         }
-    }
 
-    //* Hide constructor and use this instead - return undef if required settings are missing
-    public createIfApplicable(
-    ) {
-    }
-
-    private getSweepReadyObjectUsageClosurePolicy() {
-        //* Don't even bother doing this if ThrottlingDurationDays is 0/undefined
-        const closures = (() => {
-            try {
-                //* Encapsulate this in a class that holds the JSON object and can keep it in sync with localStorage
-                const rawValue =
-                    this.storage.getItem(closuresStorageKey);
-                return rawValue === null
-                    ? {}
-                    : JSON.parse(rawValue) as Record<string, number | undefined>;
-            } catch (e) {
-                return {};
-            }
-        })();
-
-        const lastClose = closures[this.uniqueContainerKey];
-        const throttlingDurationDays = this.mc.config.getNumber(blackoutPeriodDays);
-
-        // Allow closing if...
-        const allowClose = lastClose === undefined // ...We've not closed before, or...
-            || throttlingDurationDays === undefined // ...there's no throttling duration set, or...
-            || Date.now() > lastClose + throttlingDurationDays * oneDayMs; // ...we've passed the throttling period
-
-        return { allowClose, lastClose, throttlingDurationDays, closures };
+        if (this.localStorage === noopStorage) {
+            // This means the Blackout Period logic will not work.
+            this.mc.logger.sendErrorEvent({ eventName: "SweepReadyUsageDetectionHandlerNoOpStorage" });
+        }
     }
 
     public usageDetectedInMainContainer(errorProps: ITelemetryProperties) {
@@ -108,23 +87,30 @@ export class SweepReadyUsageDetectionHandler {
             return;
         }
 
+        const pastClosuresMap: Record<string, { lastCloseTime: number; } | undefined> =
+            JSON.parse(this.localStorage.getItem(closuresStorageKey) ?? "{}");
+
+        const lastCloseTime = pastClosuresMap[this.uniqueContainerKey]?.lastCloseTime;
+        const blackoutPeriodDays = this.mc.config.getNumber(blackoutPeriodDaysKey);
+
         const error = new SweepReadyUsageError(
             "SweepReady object used in Non-Summarizer Container",
-            { errorDetails: JSON.stringify(errorProps) });
+            { errorDetails: JSON.stringify({ ...errorProps, lastCloseTime, blackoutPeriodDays }) },
+        );
 
-        const { allowClose, lastClose, throttlingDurationDays, closures } =
-            this.getSweepReadyObjectUsageClosurePolicy() ?? { allowClose: true };
-        if (allowClose) {
-            //* Also add props lastClose and throttlingDurationDays?
-            this.storage.setItem(
-                closuresStorageKey, JSON.stringify({ ...closures, [this.uniqueContainerKey]: Date.now() }));
+        // Should close if...
+        const shouldClose = lastCloseTime === undefined // ...We've not closed before, or...
+            || blackoutPeriodDays === undefined // ...there's no blackout duration set, or...
+            || Date.now() > lastCloseTime + blackoutPeriodDays * oneDayMs; // ...we've passed the blackout period
+
+        if (shouldClose) {
+            // Update closures in localStorage before closing
+            pastClosuresMap[this.uniqueContainerKey] = { lastCloseTime: Date.now() };
+            this.localStorage.setItem(closuresStorageKey, JSON.stringify(pastClosuresMap));
+
             this.closeFn(error);
         } else {
-            this.mc.logger.sendErrorEvent({
-                eventName: "IgnoringSweepReadyObjectUsage",
-                details: JSON.stringify({ lastClose, throttlingDurationDays }),
-            },
-            error);
+            this.mc.logger.sendErrorEvent({ eventName: "IgnoringSweepReadyObjectUsage" }, error);
         }
     }
 }

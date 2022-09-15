@@ -188,7 +188,6 @@ export interface IGarbageCollectorCreateParams {
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly snapshotCacheExpiryMs?: number;
-    readonly localStorageImpl?: Storage; // For tests running Node environment
 }
 
 /** The state of node that is unreferenced. */
@@ -467,7 +466,6 @@ export class GarbageCollector implements IGarbageCollector {
         this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
             uniqueContainerKey,
             this.mc,
-            createParams.localStorageImpl,
             //* double-check
             // eslint-disable-next-line @typescript-eslint/unbound-method
             this.runtime.closeFn,

@@ -10,6 +10,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { loggerToMonitoringContext, MockLogger, sessionStorageConfigProvider, ConfigTypes } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
+    noopStorage,
     SweepReadyUsageDetectionHandler,
 } from "../gcSweepReadyUsageDetection";
 import { oneDayMs } from "../garbageCollection";
@@ -19,17 +20,20 @@ describe("Garbage Collection Tests", () => {
 
     describe.only("SweepReady Usage Detection", () => {
         const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
-        const blackoutPeriodDays = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.ThrottlingDurationDays";
+        const blackoutPeriodDays = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.BlackoutPeriodDays";
         const closuresStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
         const sweepReadyUsageErrorType = "objectUsedAfterMarkedForDeletionError";
 
+        let mockLogger: MockLogger = new MockLogger();
+        let closeErrors: (ICriticalContainerError)[] = [];
         // used to inject settings into MonitoringContext, and also to mock localStorage for the handler
         let mockLocalStorage: Record<string, ConfigTypes> = {};
-        let closeErrors: (ICriticalContainerError)[] = [];
-        const createHandler = (uniqueContainerKey: string = "key1") => new SweepReadyUsageDetectionHandler(
+
+        const createHandler = (uniqueContainerKey: string = "key1", localStorageOverride?) => new SweepReadyUsageDetectionHandler(
             uniqueContainerKey,
-            loggerToMonitoringContext(new MockLogger()),
-            {
+            loggerToMonitoringContext(mockLogger),
+            (e) => { assert(e, "PRECONDITION: Only expected closure due to error"); closeErrors.push(e); },
+            localStorageOverride ?? {
                 getItem(key) {
                     const rawValue = mockLocalStorage[key];
                     switch (typeof rawValue) {
@@ -45,7 +49,6 @@ describe("Garbage Collection Tests", () => {
                     mockLocalStorage[key] = value;
                 },
             },
-            (e) => { assert(e, "PRECONDITION: Only expected closure due to error"); closeErrors.push(e); },
         );
 
         const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
@@ -58,6 +61,7 @@ describe("Garbage Collection Tests", () => {
             sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
         });
         beforeEach(() => {
+            mockLogger = new MockLogger();
             closeErrors = [];
         });
         afterEach(() => {
@@ -76,10 +80,16 @@ describe("Garbage Collection Tests", () => {
                 createHandler().usageDetectedInMainContainer({});
                 assert.equal(closeErrors.length, 0, "Shouldn't close if setting doesn't include 'mainContainer'");
             });
+            it("NoopStorage - close the container back-to-back", () => {
+                const handler = createHandler("key1", noopStorage);
+                handler.usageDetectedInMainContainer({});
+                handler.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 2, `Should have closed back-to-back with noopStorage defined. errors:\n${closeErrors}`);
+                assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
+                mockLogger.assertMatch([{ eventName: "SweepReadyUsageDetectionHandlerNoOpStorage" }]);
+            });
             it("BlackoutPeriod undefined - close the container back-to-back", () => {
                 mockLocalStorage[blackoutPeriodDays] = undefined;
-                // Even if the closures data says we just closed
-                mockLocalStorage[closuresStorageKey] = JSON.stringify({ key1: Date.now() });
                 const handler = createHandler();
                 handler.usageDetectedInMainContainer({});
                 handler.usageDetectedInMainContainer({});
@@ -91,7 +101,7 @@ describe("Garbage Collection Tests", () => {
 
                 clock.tick(10);
                 handler.usageDetectedInMainContainer({});
-                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: 10 });
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
@@ -111,7 +121,7 @@ describe("Garbage Collection Tests", () => {
 
                 clock.tick(10);
                 handler1a.usageDetectedInMainContainer({});
-                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: 10 });
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
