@@ -30,7 +30,7 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
  */
 export class ContainerStorageAdapter implements IDocumentStorageService, IDisposable {
     private readonly blobContents: { [id: string]: ArrayBufferLike; } = {};
-    private _storageService: IDocumentStorageService & IDisposable;
+    private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
     constructor(
         detachedBlobStorage: IDetachedBlobStorage | undefined,
@@ -42,27 +42,25 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 
     disposed: boolean = false;
     dispose(error?: Error | undefined): void {
-        this._storageService?.dispose(error);
+        this._storageService?.dispose?.(error);
         this.disposed = true;
     }
 
-    public async connectStorageService(
-        service: IDocumentService,
-        ): Promise<void> {
+    public async connectToService(service: IDocumentService): Promise<void> {
         if (!(this._storageService instanceof DetachedStorageWrapper)) {
             return;
         }
 
-        assert(service !== undefined, 0x1ef /* "services must be defined" */);
         const storageService = await service.connectToStorage();
-
-        this._storageService =
-            new RetriableDocumentStorageService(storageService, this.logger);
+        const retriableStorage = this._storageService =
+            new RetriableDocumentStorageService(
+                storageService,
+                this.logger);
 
         if (this.captureProtocolSummary !== undefined) {
             this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
             this._storageService =
-                new ProtocolTreeStorageService(this._storageService, this.captureProtocolSummary);
+                new ProtocolTreeStorageService(retriableStorage, this.captureProtocolSummary);
         }
 
         // ensure we did not lose that policy in the process of wrapping
@@ -134,16 +132,11 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
  * Storage which only supports createBlob() and readBlob(). This is used with IDetachedBlobStorage to support
  * blobs in detached containers.
  */
-class DetachedStorageWrapper implements IDocumentStorageService, IDisposable {
+class DetachedStorageWrapper implements IDocumentStorageService {
     constructor(
         private readonly detachedStorage: IDetachedBlobStorage | undefined,
         private readonly logger: ITelemetryLogger,
     ) { }
-
-    disposed: boolean = false;
-    dispose(error?: Error | undefined): void {
-        this.disposed = true;
-    }
 
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         return this.verifyStorage().createBlob(content);

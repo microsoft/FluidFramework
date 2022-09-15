@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-     ITelemetryLogger, ITelemetryProperties,
+    ITelemetryLogger, ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -876,7 +876,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const resolvedUrl = this.service.resolvedUrl;
                 ensureFluidResolvedUrl(resolvedUrl);
                 this._resolvedUrl = resolvedUrl;
-                await this.storageService.connectStorageService(this.service);
+                await this.storageService.connectToService(this.service);
 
                 if (hasAttachmentBlobs) {
                     // upload blobs to storage
@@ -1127,10 +1127,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         if (!pendingLocalState) {
-            await this.storageService.connectStorageService(this.service);
+            await this.storageService.connectToService(this.service);
         } else {
             // if we have pendingLocalState we can load without storage; don't wait for connection
-            this.storageService.connectStorageService(this.service).catch((error) => this.close(error));
+            this.storageService.connectToService(this.service).catch((error) => this.close(error));
         }
 
         this._attachState = AttachState.Attached;
