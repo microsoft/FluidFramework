@@ -110,6 +110,7 @@ export enum ValueSchema {
  * from going out of schema based on their location in such a field.
  *
  * - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
+ *
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
  */
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
