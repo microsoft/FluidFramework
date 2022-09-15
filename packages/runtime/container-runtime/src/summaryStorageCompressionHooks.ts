@@ -90,15 +90,17 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         let compressed: ArrayBufferLike;
         if (this._algorithm === Algorithms.None) {
             return file;
-        } else
+        } else {
             if (this._algorithm === Algorithms.Deflate) {
                 compressed = deflate(file) as ArrayBufferLike;
-            } else
+            } else {
                 if (this._algorithm === Algorithms.LZ4) {
                     compressed = compress(file) as ArrayBufferLike;
                 } else {
                     throw Error(`Unknown Algorithm ${this._algorithm}`);
                 }
+            }
+        }
         const headerBuilder: BlobHeaderBuilder = new BlobHeaderBuilder();
         headerBuilder.addField(algorithmKey, this._algorithm.toString(10));
         return writeBlobHeader(headerBuilder.build(), compressed);
