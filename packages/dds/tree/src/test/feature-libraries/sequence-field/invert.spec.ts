@@ -5,10 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
-    Transposed as T,
-    DUMMY_INVERSE_VALUE,
-    DUMMY_INVERT_TAG,
-    sequenceChangeRebaser,
+    NodeChangeset,
     SequenceField as SF,
 } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
@@ -17,116 +14,114 @@ import { deepFreeze } from "../../utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 
+function childInverter(change: NodeChangeset): NodeChangeset {
+    assert.equal(change.fieldChanges, undefined);
+    assert.notEqual(change.valueChange?.value, undefined);
+    // Use numerical inverse for testing purposes
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return { valueChange: { value: -change.valueChange!.value! } };
+}
+
 function invert(change: SF.Changeset): SF.Changeset {
     deepFreeze(change);
-    return sequenceChangeRebaser.invert(change);
+    return SF.sequenceFieldChangeRebaser.invert(change, childInverter);
 }
 
 describe("SequenceChangeFamily - Invert", () => {
-    for (const nest of [false, true]) {
-        describe(nest ? "Nested" : "Root", () => {
-            function asForest(markList: T.MarkList): SF.Changeset {
-                return {
-                    marks: { root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList },
-                };
-            }
+    it("no changes", () => {
+        const input: SF.Changeset = [];
+        const expected: SF.Changeset = [];
+        const actual = invert(input);
+        assert.deepEqual(actual, expected);
+    });
 
-            it("no changes", () => {
-                const input = asForest([]);
-                const expected = asForest([]);
-                const actual = invert(input);
-                assert.deepEqual(actual, expected);
-            });
+    it("child changes", () => {
+        const input: SF.Changeset = [
+            { type: "Modify", changes: { valueChange: { value: 42 } } },
+        ];
+        const expected: SF.Changeset = [
+            { type: "Modify", changes: { valueChange: { value: -42 } } },
+        ];
+        const actual = invert(input);
+        assert.deepEqual(actual, expected);
+    });
 
-            it("set value => set value", () => {
-                const input = asForest([
-                    { type: "Modify", value: { id: 1, value: 42 } },
-                ]);
-                const expected = asForest([
-                    { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
-                ]);
-                const actual = invert(input);
-                assert.deepEqual(actual, expected);
-            });
+    it("insert => delete", () => {
+        const input: SF.Changeset = [
+            {
+                type: "Insert",
+                id: 1,
+                content: [{ type, value: 42 }, { type, value: 43 }],
+            },
+        ];
+        const expected: SF.Changeset = [
+            {
+                type: "Delete",
+                id: 1,
+                count: 2,
+            },
+        ];
+        const actual = invert(input);
+        assert.deepEqual(actual, expected);
+    });
 
-            it("insert => delete", () => {
-                const input = asForest([
-                    {
-                        type: "Insert",
-                        id: 1,
-                        content: [{ type, value: 42 }, { type, value: 43 }],
-                    },
-                ]);
-                const expected = asForest([
-                    {
-                        type: "Delete",
-                        id: 1,
-                        count: 2,
-                    },
-                ]);
-                const actual = invert(input);
-                assert.deepEqual(actual, expected);
-            });
+    it("modified insert => delete", () => {
+        const input: SF.Changeset = [
+            {
+                type: "MInsert",
+                id: 1,
+                content: { type, value: 42 },
+                changes: { valueChange: { value: 43 } },
+            },
+        ];
+        const expected: SF.Changeset = [
+            {
+                type: "Delete",
+                id: 1,
+                count: 1,
+            },
+        ];
+        const actual = invert(input);
+        assert.deepEqual(actual, expected);
+    });
 
-            it("modified insert => delete", () => {
-                const input = asForest([
-                    {
-                        type: "MInsert",
-                        id: 1,
-                        content: { type, value: 42 },
-                        fields: { foo: [{ type: "Modify", value: { id: 1, value: 42 } }] },
-                    },
-                ]);
-                const expected = asForest([
-                    {
-                        type: "Delete",
-                        id: 1,
-                        count: 1,
-                    },
-                ]);
-                const actual = invert(input);
-                assert.deepEqual(actual, expected);
-            });
+    it("delete => revive", () => {
+        const input: SF.Changeset = [
+            {
+                type: "Delete",
+                id: 1,
+                count: 2,
+            },
+        ];
+        const expected: SF.Changeset = [
+            {
+                type: "Revive",
+                id: 1,
+                count: 2,
+                tomb: SF.DUMMY_INVERT_TAG,
+            },
+        ];
+        const actual = invert(input);
+        assert.deepEqual(actual, expected);
+    });
 
-            it("delete => revive", () => {
-                const input = asForest([
-                    {
-                        type: "Delete",
-                        id: 1,
-                        count: 2,
-                    },
-                ]);
-                const expected = asForest([
-                    {
-                        type: "Revive",
-                        id: 1,
-                        count: 2,
-                        tomb: DUMMY_INVERT_TAG,
-                    },
-                ]);
-                const actual = invert(input);
-                assert.deepEqual(actual, expected);
-            });
-
-            it("revive => delete", () => {
-                const input = asForest([
-                    {
-                        type: "Revive",
-                        id: 1,
-                        count: 2,
-                        tomb: DUMMY_INVERT_TAG,
-                    },
-                ]);
-                const expected = asForest([
-                    {
-                        type: "Delete",
-                        id: 1,
-                        count: 2,
-                    },
-                ]);
-                const actual = invert(input);
-                assert.deepEqual(actual, expected);
-            });
-        });
-    }
+    it("revive => delete", () => {
+        const input: SF.Changeset = [
+            {
+                type: "Revive",
+                id: 1,
+                count: 2,
+                tomb: SF.DUMMY_INVERT_TAG,
+            },
+        ];
+        const expected: SF.Changeset = [
+            {
+                type: "Delete",
+                id: 1,
+                count: 2,
+            },
+        ];
+        const actual = invert(input);
+        assert.deepEqual(actual, expected);
+    });
 });

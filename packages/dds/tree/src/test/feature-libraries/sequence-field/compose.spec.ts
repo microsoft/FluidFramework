@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-    NodeChangeComposer,
     NodeChangeset,
     SequenceField as SF,
 } from "../../../feature-libraries";

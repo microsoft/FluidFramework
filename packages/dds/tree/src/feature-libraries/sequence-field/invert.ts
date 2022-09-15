@@ -15,12 +15,6 @@ import { isSkipMark } from "./utils";
  export const DUMMY_INVERT_TAG: F.ChangesetTag = "Dummy Invert Changeset Tag";
 
 /**
- * Dummy value used in place of actual repair data.
- * TODO: give `invert` access real repair data.
- */
-export const DUMMY_INVERSE_VALUE = "Dummy inverse value";
-
-/**
  * Inverts a given changeset.
  * @param change - The changeset to produce the inverse of.
  * @returns The inverse of the given `change` such that the inverse can be applied after `change`.
