@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import axios from "axios";
+
+import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 
 import { AzureMember } from "./interfaces";
 

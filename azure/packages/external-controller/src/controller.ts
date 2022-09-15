@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
+
 import { IValueChanged } from "fluid-framework";
 
 /**
