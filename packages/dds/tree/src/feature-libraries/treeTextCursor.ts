@@ -11,10 +11,9 @@ import {
 } from "../forest";
 import {
     FieldKey,
-    FieldMap,
-    FieldScope,
+    FieldMapObject,
+    genericTreeKeys,
     getGenericTreeField,
-    getGenericTreeFieldMap,
     JsonableTree,
     TreeType,
     UpPath,
@@ -193,7 +192,7 @@ export class TextCursor implements ITreeCursor {
     }
 
     public firstField(): boolean {
-        const fields = keys(this.getNode());
+        const fields = genericTreeKeys(this.getNode());
         if (fields.length === 0) {
             return false;
         }
@@ -284,16 +283,12 @@ export class TextCursor implements ITreeCursor {
     }
 }
 
-function keys(tree: JsonableTree): readonly FieldKey[] {
-    return Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, FieldScope.local, false)) as FieldKey[];
-}
-
 /**
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
     assert(cursor.mode === CursorLocationType.Nodes, "must start at node");
-    let fields: FieldMap<JsonableTree> | undefined;
+    let fields: FieldMapObject<JsonableTree> | undefined;
     let inField = cursor.firstField();
     while (inField) {
         fields ??= {};

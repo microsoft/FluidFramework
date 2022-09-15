@@ -14,6 +14,7 @@ export {
 	TextCursor as TextCursorNew,
 	jsonableTreeFromCursor as jsonableTreeFromCursorNew,
 } from "./treeTextCursor";
+export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export * from "./sequence-change-family";
 export * from "./defaultSchema";
 export {
