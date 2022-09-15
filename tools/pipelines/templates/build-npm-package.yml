@@ -338,7 +338,7 @@ stages:
                 mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
                 mkdir $(Build.ArtifactStagingDirectory)/test-files/
                 mkdir $(Build.ArtifactStagingDirectory)/log/
-                touch $(Build.ArtifactStagingDirectory)/log/test.txt
+                mv $(parameters.buildDirectory)/packages/test/test-end-to-end-tests/tinylicious.log $(Build.ArtifactStagingDirectory)/log/
                 if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
@@ -380,7 +380,7 @@ stages:
               publishLocation: 'Container'
 
           - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact - Log
+            displayName: Publish Artifact - Tinylicious Log
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/log'
               ArtifactName: 'log'
