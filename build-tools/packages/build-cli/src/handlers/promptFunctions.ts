@@ -7,12 +7,13 @@ import { strict as assert } from "assert";
 import { Machine } from "jssm";
 import chalk from "chalk";
 import type { InstructionalPrompt } from "../instructionalPromptWriter";
-import { generateReleaseBranchName, getPreReleaseDependencies } from "../lib";
+import { difference, generateReleaseBranchName, getPreReleaseDependencies } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { StateHandlerFunction } from "./stateHandlers";
+import { uniqueCommandArgs } from "../base";
 
 /**
  * Prompt the user to queue a release build.
@@ -186,7 +187,7 @@ export const promptToPRBump: StateHandlerFunction = async (
         if (!releaseBranchExists) {
             prompt.sections.push({
                 title: "NEXT",
-                message: `After PR is merged, create branch '${releaseBranch}' one commit before the merged PR and push to the repo.\n\nOnce the release branch has been created, switch to it and use the following command to release the ${releaseGroup} release group:`,
+                message: `After PR is merged, switch to the '${releaseBranch}' branch and and use the following command to release the ${releaseGroup} release group:`,
                 cmd: `${command?.config.bin} ${command?.id} -g ${releaseGroup}`,
             });
         }
@@ -371,24 +372,50 @@ export const promptToRunMinorReleaseCommand: StateHandlerFunction = async (
     if (testMode) return true;
 
     const { command, context, promptWriter, releaseGroup } = data;
+    assert(command !== undefined, "Command is undefined.");
     assert(context !== undefined, "Context is undefined.");
     assert(promptWriter !== undefined, "promptWriter is undefined.");
+    assert(releaseGroup !== undefined, "Release group is undefined.");
 
     const prompt: InstructionalPrompt = {
         title: "NEED TO DO A MINOR RELEASE",
-        sections: [
-            {
-                title: "FIRST: do a minor release",
-                message: `A minor release needs to be run in order to continue with the major release. To continue with the release, run the following command on the ${context.originalBranchName} branch:`,
-                cmd: `${command?.config.bin} ${command?.id} -g ${releaseGroup}} -t minor`,
-            },
-            {
-                title: "NEXT: run the major release again",
-                message: `Once the minor release is fully complete, run the following command on the ${context.originalBranchName} branch to continue the major release.`,
-                cmd: `${command?.config.bin} ${command?.id} ${command?.argv?.join(" ")}`,
-            },
-        ],
+        sections: [],
     };
+
+    // Remove arguments from the list passed into the command to build the re-run command with the same flags. Assumes
+    // no flags that support multiple values.
+    const uniqueArgs = [
+        ...difference(
+            new Set(command.argv),
+            new Set([
+                "-g",
+                "--releaseGroup",
+                releaseGroup,
+                "-t",
+                "--bumpType",
+                "minor",
+                "major",
+                "patch",
+            ]),
+        ),
+    ];
+
+    prompt.sections.push(
+        {
+            title: "FIRST: do a minor release",
+            message: `A minor release needs to be run in order to continue with the major release. To continue with the release, run the following command on the ${context.originalBranchName} branch:`,
+            cmd: `${command?.config.bin} ${command?.id} -g ${releaseGroup} -t minor ${chalk.gray(
+                uniqueArgs.join(" "),
+            )}`,
+        },
+        {
+            title: "NEXT: run the major release again",
+            message: `Once the minor release is fully complete, run the following command on the ${context.originalBranchName} branch to continue the major release.`,
+            cmd: `${command?.config.bin} ${command?.id} -g ${releaseGroup} -t major ${chalk.gray(
+                uniqueArgs.join(" "),
+            )}`,
+        },
+    );
 
     await promptWriter?.writePrompt(prompt);
     return true;

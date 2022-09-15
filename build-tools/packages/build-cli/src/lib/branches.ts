@@ -15,7 +15,7 @@ import {
 } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+import { isReleaseGroup, ReleaseGroup, ReleasePackage, ReleaseSource } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
 
 /**
@@ -164,12 +164,16 @@ export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType
     }
 }
 
+const releaseGroupReleaseTypeMap = new Map<string, ReleaseSource>([
+    [MonoRepoKind.BuildTools, "interactive"],
+]);
+
 /**
  * @internal
  */
-export function getReleaseTypeForReleaseGroup(
+export function getReleaseSourceForReleaseGroup(
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-): "direct" | "releaseBranches" | "interactive" {
+): ReleaseSource {
     if (!isReleaseGroup(releaseGroupOrPackage)) {
         return "direct";
     }

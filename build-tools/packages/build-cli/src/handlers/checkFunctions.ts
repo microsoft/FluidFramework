@@ -14,7 +14,7 @@ import {
     generateBumpVersionBranchName,
     generateReleaseBranchName,
     getPreReleaseDependencies,
-    getReleaseTypeForReleaseGroup,
+    getReleaseSourceForReleaseGroup,
     isReleased,
 } from "../lib";
 import { CommandLogger } from "../logging";
@@ -150,10 +150,9 @@ export const checkDoesReleaseFromReleaseBranch: StateHandlerFunction = async (
     assert(context !== undefined, "Context is undefined.");
     assert(releaseGroup !== undefined, "Release group is undefined.");
 
-    let releaseType = getReleaseTypeForReleaseGroup(releaseGroup);
+    let releaseSource = getReleaseSourceForReleaseGroup(releaseGroup);
 
-    if (releaseType === "interactive") {
-        // interactive
+    if (releaseSource === "interactive") {
         const branchToReleaseFrom: inquirer.ListQuestion = {
             type: "list",
             name: "releaseType",
@@ -168,12 +167,12 @@ export const checkDoesReleaseFromReleaseBranch: StateHandlerFunction = async (
         };
 
         const answers = await inquirer.prompt(branchToReleaseFrom);
-        releaseType = answers.releaseType;
+        releaseSource = answers.releaseType;
     }
 
-    if (releaseType === "direct") {
+    if (releaseSource === "direct") {
         BaseStateHandler.signalFailure(machine, state);
-    } else if (releaseType === "releaseBranches") {
+    } else if (releaseSource === "releaseBranches") {
         BaseStateHandler.signalSuccess(machine, state);
     }
 
