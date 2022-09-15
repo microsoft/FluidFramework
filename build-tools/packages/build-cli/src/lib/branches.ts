@@ -9,6 +9,7 @@ import {
     detectVersionScheme,
     fromInternalScheme,
     fromVirtualPatchScheme,
+    ReleaseVersion,
     toVirtualPatchScheme,
     VersionBumpType,
     VersionBumpTypeExtended,
@@ -48,7 +49,7 @@ export async function createBumpBranch(
  *
  * @param releaseGroupOrPackage - The release group or independent package to generate a branch name for.
  * @param bumpType - The bump type.
- * @param version - The version to use for the generated branch name.
+ * @param version - The current version of the release group or package.
  * @returns The generated branch name.
  *
  * @remarks
@@ -60,7 +61,7 @@ export async function createBumpBranch(
 export function generateBumpVersionBranchName(
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
     bumpType: VersionBumpTypeExtended,
-    version: string,
+    version: ReleaseVersion,
 ) {
     const newVersion = bumpVersionScheme(version, bumpType);
     const name = isReleaseGroup(releaseGroupOrPackage)

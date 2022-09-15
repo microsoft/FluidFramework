@@ -136,6 +136,7 @@ export async function bumpPackageDependencies(
 /**
  * Bumps a release group or standalone package by the bumpType.
  *
+ * @param context - The {@link Context}.
  * @param bumpType - The bump type.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
@@ -146,7 +147,7 @@ export async function bumpReleaseGroup(
     context: Context,
     bumpType: VersionChangeType,
     releaseGroupOrPackage: MonoRepo | Package,
-    scheme: VersionScheme,
+    scheme?: VersionScheme,
 ) {
     const translatedVersion = isVersionBumpType(bumpType)
         ? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)

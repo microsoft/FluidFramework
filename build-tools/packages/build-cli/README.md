@@ -120,6 +120,7 @@ USAGE
 <!-- usagestop -->
 # Command reference
 <!-- commands -->
+* [`flub bump PACKAGE_OR_RELEASE_GROUP`](#flub-bump-package_or_release_group)
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
 * [`flub check policy`](#flub-check-policy)
@@ -134,6 +135,39 @@ USAGE
 * [`flub run bundleStats`](#flub-run-bundlestats)
 * [`flub version VERSION`](#flub-version-version)
 * [`flub version latest`](#flub-version-latest)
+
+## `flub bump PACKAGE_OR_RELEASE_GROUP`
+
+Bumps the version of a release group or package to the next minor, major, or patch version.
+
+```
+USAGE
+  $ flub bump [PACKAGE_OR_RELEASE_GROUP] -t major|minor|patch [-S semver|internal|virtualPatch] [-x |
+    --install | --commit |  |  | ] [-v]
+
+ARGUMENTS
+  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group. Dependencies on these packages will be bumped.
+
+FLAGS
+  -S, --scheme=<option>    Override the version scheme used by the release group or package.
+                           <options: semver|internal|virtualPatch>
+  -t, --bumpType=<option>  (required) Bump the release group or package to the next version according to this bump type.
+                           <options: major|minor|patch>
+  -v, --verbose            Verbose logging.
+  -x, --skipChecks         Skip all checks.
+  --[no-]commit            Commit changes to a new branch.
+  --[no-]install           Update lockfiles by running 'npm install' automatically.
+
+DESCRIPTION
+  Bumps the version of a release group or package to the next minor, major, or patch version.
+
+EXAMPLES
+  Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.
+
+    $ flub bump @fluidframework/build-common -t latest
+```
+
+_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/bump.ts)_
 
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
 
