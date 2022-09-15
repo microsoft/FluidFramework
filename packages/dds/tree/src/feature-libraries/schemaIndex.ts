@@ -164,7 +164,7 @@ function decodeTree(schema: TreeSchemaFormat): TreeSchema {
  */
 export function getSchemaString(data: SchemaData): string {
     const encoded = encodeRepo(data);
-    // Currently no fluid handles are used, so just use JSON.stringify.
+    // Currently no Fluid handles are used, so just use JSON.stringify.
     return JSON.stringify(encoded);
 }
 
@@ -172,7 +172,7 @@ export function getSchemaString(data: SchemaData): string {
  * Parses data, asserts format is the current one.
  */
 export function parseSchemaString(data: string): SchemaData {
-    // Currently no fluid handles are used, so just use JSON.parse.
+    // Currently no Fluid handles are used, so just use JSON.parse.
     const parsed = JSON.parse(data) as Format;
     assert(parsed.version === version, "Got unsupported schema format version");
     return decode(parsed);
