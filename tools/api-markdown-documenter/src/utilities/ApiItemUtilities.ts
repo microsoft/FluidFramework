@@ -25,10 +25,9 @@ import { DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
 
+import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { Heading } from "../Heading";
 import { Link } from "../Link";
-import { logError } from "../LoggingUtilities";
-import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
 
 /**
@@ -88,6 +87,18 @@ export enum ApiModifier {
      * Indicates a `static` member of a `class` or `interface`.
      */
     Static = "static",
+
+    /**
+     * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/virtual | @virtual}
+     * tag. This item is intended to be overridden by implementing types.
+     */
+    Virtual = "virtual",
+
+    /**
+     * Indicates that the API item has been annotated with the {@link https://tsdoc.org/pages/tags/sealed | @sealed}
+     * tag. This item may not to be overridden by implementing types.
+     */
+    Sealed = "sealed",
 }
 
 /**
@@ -174,7 +185,14 @@ export function getLinkUrlForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
 ): string {
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    const documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
+    let documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
+
+    // Omit "index" file name from path generated in links.
+    // This can be considered an optimization in most cases, but some documentation systems also special-case
+    // "index" files, so this can also prevent issues in some cases.
+    if (documentPath === "index" || documentPath.endsWith("/index")) {
+        documentPath = documentPath.slice(0, documentPath.length - "index".length);
+    }
 
     // Don't bother with heading ID if we are linking to the root item of a document
     let headingPostfix = "";
@@ -568,12 +586,14 @@ function getCustomBlockSectionsForMultiInstanceTags(
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
  * Must start with "@". See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
 function getCustomBlockSectionForSingleInstanceTag(
     apiItem: ApiItem,
     tagName: string,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     const blocks = getCustomBlockSectionsForMultiInstanceTags(apiItem, tagName);
     if (blocks === undefined) {
@@ -581,7 +601,7 @@ function getCustomBlockSectionForSingleInstanceTag(
     }
 
     if (blocks.length > 1) {
-        logError(
+        config.logger.error(
             `API item ${apiItem.displayName} has multiple "${tagName}" comment blocks. This is not supported.`,
         );
     }
@@ -601,7 +621,7 @@ export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
 }
 
 /**
- * Gets any {@link https://tsdoc.org/pages/tags/throws/ | @throws} comment blocks from the API item if it has them.
+ * Gets any {@link https://tsdoc.org/pages/tags/throws/ | @throws} comment blocks from the API item, if it has them.
  *
  * @param apiItem - The API item whose documentation is being queried.
  *
@@ -612,15 +632,38 @@ export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
 }
 
 /**
+ * Gets any {@link https://tsdoc.org/pages/tags/see/ | @see} comment blocks from the API item, if it has them.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@see` comment block section, if the API item has one. Otherwise, `undefined`.
+ */
+export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.seeBlocks !== undefined) {
+        const seeBlocks = apiItem.tsdocComment.seeBlocks.map((block) => block.content);
+        return seeBlocks.length === 0 ? undefined : seeBlocks;
+    }
+    return undefined;
+}
+
+/**
  * Gets the {@link https://tsdoc.org/pages/tags/defaultvalue/ | @defaultValue} comment block from the API item,
  * if it has one.
  *
  * @param apiItem - The API item whose documentation is being queried.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
  *
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
  */
-export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined {
-    return getCustomBlockSectionForSingleInstanceTag(apiItem, StandardTags.defaultValue.tagName);
+export function getDefaultValueBlock(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocSection | undefined {
+    return getCustomBlockSectionForSingleInstanceTag(
+        apiItem,
+        StandardTags.defaultValue.tagName,
+        config,
+    );
 }
 
 /**
@@ -635,6 +678,31 @@ export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined {
         return apiItem.tsdocComment.returnsBlock.content;
     }
     return undefined;
+}
+
+/**
+ * Gets the {@link https://tsdoc.org/pages/tags/deprecated/ | @deprecated} comment block from the API item if it has
+ * one.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@deprecated` comment block section, if the API item has one. Otherwise, `undefined`.
+ */
+export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
+    return apiItem instanceof ApiDocumentedItem &&
+        apiItem.tsdocComment?.deprecatedBlock !== undefined
+        ? apiItem.tsdocComment.deprecatedBlock.content
+        : undefined;
+}
+
+/**
+ * Returns whether or not the provided API item is of a kind that can be marked as optional, and if it is
+ * indeed optional.
+ */
+export function isDeprecated(apiItem: ApiItem): boolean {
+    return (
+        apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.deprecatedBlock !== undefined
+    );
 }
 
 /**
@@ -689,6 +757,21 @@ export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]):
 
     if (isStatic(apiItem) && !modifiersToOmit?.includes(ApiModifier.Static)) {
         modifiers.push(ApiModifier.Static);
+    }
+
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+        if (
+            apiItem.tsdocComment.modifierTagSet.isVirtual() &&
+            !modifiersToOmit?.includes(ApiModifier.Virtual)
+        ) {
+            modifiers.push(ApiModifier.Virtual);
+        }
+        if (
+            apiItem.tsdocComment.modifierTagSet.isSealed() &&
+            !modifiersToOmit?.includes(ApiModifier.Sealed)
+        ) {
+            modifiers.push(ApiModifier.Sealed);
+        }
     }
 
     return modifiers;

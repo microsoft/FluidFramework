@@ -5,7 +5,7 @@
 
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { isRuntimeMessage, MessageType2 } from "@fluidframework/driver-utils";
 
 const defaultNoopTimeFrequency = 2000;
 const defaultNoopCountFrequency = 50;
@@ -34,7 +34,7 @@ export class CollabWindowTracker {
     private readonly timer: Timer | undefined;
 
     constructor(
-        private readonly submit: (type: MessageType, contents: any) => void,
+        private readonly submit: (type: MessageType) => void,
         NoopTimeFrequency: number = defaultNoopTimeFrequency,
         private readonly NoopCountFrequency: number = defaultNoopCountFrequency,
     ) {
@@ -74,7 +74,7 @@ export class CollabWindowTracker {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Promise.resolve().then(() => {
                 assert(this.opsCountSinceNoop >= this.NoopCountFrequency,
-                    "not enough ops were sent to reach the noop frequency");
+                    0x3ae /* not enough ops were sent to reach the noop frequency */);
                 this.submitNoop(false /* immediate */);
                 // reset count now that all ops are processed
                 this.opsCountSinceNoop = 0;
@@ -93,7 +93,8 @@ export class CollabWindowTracker {
 
     private submitNoop(immediate: boolean) {
         // Anything other than null is immediate noop
-        this.submit(MessageType.NoOp, immediate ? "" : null);
+        // ADO:1385: Remove cast and use MessageType once definition changes propagate
+        this.submit(immediate ? (MessageType2.Accept as unknown as MessageType) : MessageType.NoOp);
         assert(this.opsCountSinceNoop === 0,
             0x243 /* "stopSequenceNumberUpdate should be called as result of sending any op!" */);
     }

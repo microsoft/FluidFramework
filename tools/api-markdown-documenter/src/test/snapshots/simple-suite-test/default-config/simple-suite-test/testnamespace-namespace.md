@@ -1,6 +1,6 @@
 # TestNamespace
 
-[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace)
+[Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace)
 
 Test Namespace
 
@@ -32,6 +32,12 @@ Example 2
 const bar = foo
 ```
 
+## Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | Test interface |
+
 ## Classes
 
 |  Class | Description |
@@ -44,23 +50,17 @@ const bar = foo
 |  --- | --- |
 |  [TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum) | Test Enum |
 
+## Types
+
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TestTypeAlias](./simple-suite-test/testnamespace-namespace#testtypealias-typealias) | Test Type-Alias |
+
 ## Functions
 
 |  Function | Return Type | Description |
 |  --- | --- | --- |
 |  [testFunction(testParameter)](./simple-suite-test/testnamespace-namespace#testfunction-function) | number | Test function |
-
-## Interfaces
-
-|  Interface | Description |
-|  --- | --- |
-|  [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | Test interface |
-
-## Namespaces
-
-|  Namespace | Description |
-|  --- | --- |
-|  [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace-namespace) | Test sub-namespace |
 
 ## Variables
 
@@ -68,11 +68,11 @@ const bar = foo
 |  --- | --- | --- |
 |  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | <code>readonly</code> | Test Constant |
 
-## Types
+## Namespaces
 
-|  TypeAlias | Description |
+|  Namespace | Description |
 |  --- | --- |
-|  [TestTypeAlias](./simple-suite-test/testnamespace-namespace#testtypealias-typealias) | Test Type-Alias |
+|  [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace-namespace) | Test sub-namespace |
 
 ## Enumeration Details
 
@@ -115,6 +115,18 @@ Test enum value 2
 TestEnumValue2 = 1
 ```
 
+## Type Details
+
+### TestTypeAlias {#testtypealias-typealias}
+
+Test Type-Alias
+
+#### Signature {#testtypealias-signature}
+
+```typescript
+type TestTypeAlias = boolean;
+```
+
 ## Function Details
 
 ### testFunction {#testfunction-function}
@@ -153,16 +165,4 @@ Test Constant
 
 ```typescript
 TestConst = "Hello world!"
-```
-
-## Type Details
-
-### TestTypeAlias {#testtypealias-typealias}
-
-Test Type-Alias
-
-#### Signature {#testtypealias-signature}
-
-```typescript
-type TestTypeAlias = boolean;
 ```

@@ -46,6 +46,3 @@ export class CollaborativeText extends DataObject {
         this._text = await this.root.get<IFluidHandle<SharedString>>(this.textKey)?.get();
     }
 }
-
-// Export the CollaborativeText factory as fluidExport for the dynamic component loading scenario
-export const fluidExport = CollaborativeText.getFactory();

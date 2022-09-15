@@ -1,4 +1,4 @@
-# Rebase
+# rebase
 
 Abstractions and utilities for rebasing.
 

@@ -36,6 +36,7 @@ export interface IDocumentStorage {
         initialHash: string,
         ordererUrl: string,
         historianUrl: string,
+        deltaStreamUrl: string,
         values: [string, ICommittedProposal][],
         enableDiscovery: boolean): Promise<IDocumentDetails>;
 }

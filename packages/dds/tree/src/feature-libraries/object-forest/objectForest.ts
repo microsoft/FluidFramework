@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { jsonableTreeFromCursor, RootedTextCursor, singleTextCursor } from "../treeTextCursor";
+import { jsonableTreeFromCursor, RootedTextCursor, singleTextCursor } from "../treeTextCursorLegacy";
 import {
     DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
 } from "../../dependency-tracking";
@@ -50,6 +50,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return this.anchors.track(
             { parent: undefined, parentField: detachedFieldAsKey(range), parentIndex: index },
         );
+    }
+
+    public forgetAnchor(anchor: Anchor): void {
+        this.anchors.forget(anchor);
     }
 
     applyDelta(delta: Delta.Root): void {
@@ -331,6 +335,7 @@ class Cursor extends RootedTextCursor implements ITreeSubscriptionCursor {
 
     free(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);
+        this.forest.currentCursors.delete(this);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 
