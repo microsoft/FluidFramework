@@ -1318,7 +1318,11 @@ class PropertyFactory {
                     // we directly assign it here
                     if (initialValue !== undefined) {
                         creationFunctionSource += !_.isObject(initialValue.value)
+                            // We have a primitive property and thus direclty invoke the setValue function
                             ? `${currentPropertyVarName}.setValue(${JSON.stringify(initialValue.value)}\n`
+                            // For non primitive properties, we currently use the member on the property factory,
+                            // probably we could further optimize this to directly call the correct function on the
+                            // property
                             : `this._setInitialValue(${currentPropertyVarName},
                                                         ${JSON.stringify(initialValue)},
                                                         false);\n`;
