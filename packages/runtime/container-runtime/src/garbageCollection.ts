@@ -685,6 +685,7 @@ export class GarbageCollector implements IGarbageCollector {
                 // Log an event so we can evaluate how often we run into this scenario.
                 this.mc.logger.sendErrorEvent({
                     eventName: "GarbageCollectorInitializedWithoutTimestamp",
+                    gcConfigs: JSON.stringify(this.configs),
                 });
                 return;
             }
@@ -814,6 +815,7 @@ export class GarbageCollector implements IGarbageCollector {
             // Log an event so we can evaluate how often we run into this scenario.
             logger.sendErrorEvent({
                 eventName: "CollectGarbageCalledWithoutTimestamp",
+                gcConfigs: JSON.stringify(this.configs),
             });
             return undefined;
         }
