@@ -4,9 +4,8 @@
  */
 
 /**
- * @fileoverview
- * In this file, we will test the functions of 64 bit Uinteger properties
- * described in /src/shared/property_sets/properties/int_property.js
+ * @fileoverview In this file, we will test the functions of 64 bit Uinteger properties described in
+ * /src/shared/property_sets/properties/int_property.js
  */
 
 const { MSG } = require('@fluid-experimental/property-common').constants;

@@ -4,10 +4,8 @@
  */
 
 /**
- * A chronometer implementation backed by a high resolution timer.
+ * @fileoverview A chronometer implementation backed by a high resolution timer.
  * The implementation falls back to milliseconds precision when high resolution timers are not supported.
- *
- * @fileoverview
  */
 
 declare let process: any;
@@ -194,13 +192,12 @@ export class Chronometer {
 
     /**
      * A utility function to measure promise execution time.
-     * @param promiseFn - A function that returns a promise whose execution time is to be
-     * measured.
+     * @param promiseFn - A function that returns a promise whose execution time is to be measured.
      * @returns A Promise that resolves with an object with properties:
      *
-     * - chrono: A stopped chronometer instance from which to get the elapsed time,
+     * - `chrono`: A stopped chronometer instance from which to get the elapsed time,
      *
-     * - result: The resolved result of the promise returned by promiseFn
+     * - `result`: The resolved result of the promise returned by promiseFn
      */
     static async timePromise<T>(promiseFn: () => Promise<T>): Promise<{ chrono: Chronometer; result: T; }> {
         const chrono = new Chronometer();

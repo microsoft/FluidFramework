@@ -4,10 +4,8 @@
  */
 
 /**
- * The ValidationResultBuilder maintains validation context that ultimately gets returned as a
+ * @fileoverview The ValidationResultBuilder maintains validation context that ultimately gets returned as a
  * single result.
- *
- * @fileoverview
  */
 
 export declare interface SchemaValidationResult {

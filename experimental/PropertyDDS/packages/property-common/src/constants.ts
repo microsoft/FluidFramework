@@ -318,8 +318,8 @@ const PropertyError = {
      * The property you insert in a setProperty must be an instance of NamedProperty.
      * When creating the property to be inserted, make sure it inherits from NamedProperty.
      *
-     * @example
-     * #Creating a property that inherits from NamedProperty
+     * @example Creating a property that inherits from NamedProperty
+     *
      * ```json
      * {
      *   typeid:”my.example:myprop-1.0.0”,
@@ -849,11 +849,15 @@ const PropertyError = {
      * The token DEREFERENCE_TOKEN should only be used with .get when the in_ids passed to .get is an array.
      * the DEREFERENCE_TOKEN should follow a path to a reference.
      *
-     * @example <caption>valid: </caption>
+     * @example Valid:
+     * ```typescript
      * myProp.get(['myReference', TOKENS.DEREFERENCE_TOKEN])
+     * ```
      *
-     * @example <caption>not valid: </caption>
+     * @example Not valid:
+     * ```typescript
      * myProp.get('myReference').get(TOKENS.DEREFERENCE_TOKEN)
+     * ```
      */
     NO_GET_DEREFERENCE_ONLY: "PR-166: Cannot use a dereference token only with .get",
 
