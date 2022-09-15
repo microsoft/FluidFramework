@@ -21,15 +21,40 @@
         {
             "name": "flub",
             "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+            "cwd": "${workspaceFolder}",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node",
             "args": [
-                "info",
+                "release",
                 "-g",
-                "build-tools",
+                "client",
+                "-v",
+                "--no-policyCheck",
+            ],
+        },
+        {
+            "name": "flub bump deps",
+            "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+            "cwd": "${workspaceFolder}",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "bump",
+                "deps",
+                "server",
+                "-t",
+                "greatest",
+                "-p",
+                // "-g",
+                // "azure",
+                "--no-commit",
+                "--no-install"
             ],
         },
         {

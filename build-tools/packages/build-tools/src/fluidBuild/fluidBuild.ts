@@ -14,7 +14,7 @@ import { parseOptions, options } from "./options";
 import * as path from "path";
 import chalk from "chalk";
 
-const {info, error} = defaultLogger;
+const {info, errorLog: error} = defaultLogger;
 
 parseOptions(process.argv);
 

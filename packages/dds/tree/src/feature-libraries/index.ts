@@ -8,7 +8,13 @@ export * from "./editable-tree";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
 export * from "./schemaIndex";
-export * from "./treeTextCursor";
+export * from "./treeTextCursorLegacy";
+export {
+	singleTextCursor as singleTextCursorNew,
+	TextCursor as TextCursorNew,
+	jsonableTreeFromCursor as jsonableTreeFromCursorNew,
+} from "./treeTextCursor";
+export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export * from "./sequence-change-family";
 export * from "./defaultSchema";
 export {
@@ -19,6 +25,8 @@ export {
     FieldChangeRebaser,
     FieldChangeEncoder,
     FieldEditor,
+    NodeChangeset,
+    ValueChange,
     FieldChangeMap,
     FieldChange,
     FieldChangeset,

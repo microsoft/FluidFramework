@@ -16,6 +16,7 @@ import {
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+import { DependencyUpdateType } from "./bump";
 
 /**
  * Creates an appropriate branch for a release group and bump type. Does not commit!
@@ -85,7 +86,7 @@ export function generateBumpVersionBranchName(
  */
 export function generateBumpDepsBranchName(
     bumpedDep: ReleaseGroup,
-    bumpType: VersionBumpTypeExtended | "releasedDeps",
+    bumpType: DependencyUpdateType | VersionBumpType,
     releaseGroup?: ReleaseGroup,
 ): string {
     const releaseGroupSegment = releaseGroup ? `_${releaseGroup}` : "";

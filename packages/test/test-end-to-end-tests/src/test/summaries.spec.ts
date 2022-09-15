@@ -510,8 +510,4 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
         const summary3ParentHandle = broadcastResult3.data.summarizeOp.contents.head;
         assert(summary3ParentHandle === summary2AckHandle, "Summary Parent should match ack handle of summary2");
     });
-
-    afterEach(async () => {
-        provider.reset();
-    });
 });

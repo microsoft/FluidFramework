@@ -64,5 +64,6 @@ extends:
     taskBuild: build
     taskBuildDocs: true
     taskLint: true
-    taskTest: test
+    taskTest:
+    - test
     buildNumberInPatch: false # Publish as is, do override patch with build number

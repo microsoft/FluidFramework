@@ -146,7 +146,7 @@ export function verifyStorageToken(
         if (!tenantId) {
             return respondWithNetworkError(res, new NetworkError(403, "Missing tenantId in request."));
         }
-        const documentId = getParam(request.params, "id") || request.body.id;
+        const documentId = getParam(request.params, "id") ?? request.body.id;
         if (options.requireDocumentId && !documentId) {
             return respondWithNetworkError(res, new NetworkError(403, "Missing documentId in request"));
         }
