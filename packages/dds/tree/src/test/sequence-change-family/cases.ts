@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceChangeset } from "../../feature-libraries";
+import { Transposed as T, SequenceChangeset } from "../../feature-libraries";
 import { brand } from "../../util";
-import { Transposed as T, Value } from "../../changeset";
+import { Value } from "../../changeset";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 
 export function setRootValueTo(value: Value): SequenceChangeset {
