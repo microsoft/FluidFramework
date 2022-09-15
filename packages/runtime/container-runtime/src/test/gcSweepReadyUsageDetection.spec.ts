@@ -26,8 +26,8 @@ describe("Garbage Collection Tests", () => {
         // used to inject settings into MonitoringContext, and also to mock localStorage for the handler
         let mockLocalStorage: Record<string, ConfigTypes> = {};
         let closeErrors: (ICriticalContainerError)[] = [];
-        const createHandler = () => new SweepReadyUsageDetectionHandler(
-            "key1",
+        const createHandler = (uniqueContainerKey: string = "key1") => new SweepReadyUsageDetectionHandler(
+            uniqueContainerKey,
             loggerToMonitoringContext(new MockLogger()),
             {
                 getItem(key) {
@@ -103,6 +103,32 @@ describe("Garbage Collection Tests", () => {
                 handler.usageDetectedInMainContainer({});
                 assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
                 assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
+            });
+            it("Multiple handlers/keys - closure blackouts are consistent and independent", () => {
+                const handler1a = createHandler("key1");
+                const handler1b = createHandler("key1");
+                const handler2 = createHandler("key2");
+
+                clock.tick(10);
+                handler1a.usageDetectedInMainContainer({});
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: 10 });
+                assert.equal(closeErrors.length, 1, `Expected to close the first time`);
+                assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
+
+                // The other handler on key1 should be blocked
+                clock.tick(10);
+                handler1b.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to blackout period. errors:\n${closeErrors}`);
+
+                // But the handler on key2 should NOT be blocked
+                handler2.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 2, `Should have closed other container for the first time. errors:\n${closeErrors}`);
+
+                clock.tick(oneDayMs + 10);
+                handler1b.usageDetectedInMainContainer({});
+                handler2.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 4, `Expected both to close again after waiting 1 day`);
+                assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
             });
         });
     });
