@@ -7,7 +7,6 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { allFactories } from "./testDataObjects";
 
 /**
  * DataObjectWithCounter increments a SharedCounter as a way of sending ops.
@@ -46,6 +45,6 @@ export class DataObjectWithCounter extends DataObject {
 export const dataObjectWithCounterFactory = new DataObjectFactory(
     DataObjectWithCounter.type,
     DataObjectWithCounter,
-    allFactories,
+    [SharedCounter.getFactory()],
     {},
 );
