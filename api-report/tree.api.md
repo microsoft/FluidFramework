@@ -306,6 +306,10 @@ declare namespace FieldKinds {
         ValueChangeset,
         ValueFieldEditor,
         value,
+        OptionalFieldChange,
+        OptionalChangeset,
+        OptionalFieldEditor,
+        NodeChange,
         optional,
         sequence,
         forbidden,
@@ -742,6 +746,12 @@ export const neverTree: TreeSchema;
 const noChangeHandle: FieldChangeHandler<0>;
 
 // @public (undocumented)
+interface NodeChange {
+    // (undocumented)
+    childChange?: NodeChangeset;
+}
+
+// @public (undocumented)
 export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
 
 // @public (undocumented)
@@ -795,6 +805,22 @@ export type OpId = number;
 
 // @public
 const optional: FieldKind;
+
+// @public (undocumented)
+interface OptionalChangeset extends NodeChange {
+    fieldChange?: OptionalFieldChange;
+}
+
+// @public (undocumented)
+interface OptionalFieldChange {
+    newContent?: JsonableTree;
+    wasEmpty: boolean;
+}
+
+// @public (undocumented)
+interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
+    set(newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset;
+}
 
 // @public
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
@@ -1384,9 +1410,7 @@ export interface ValueChange {
 }
 
 // @public (undocumented)
-interface ValueChangeset {
-    // (undocumented)
-    changes?: NodeChangeset;
+interface ValueChangeset extends NodeChange {
     // (undocumented)
     value?: JsonableTree;
 }

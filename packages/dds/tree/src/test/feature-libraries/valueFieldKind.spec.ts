@@ -4,23 +4,23 @@
  */
 
 import { strict as assert } from "assert";
-import { FieldKinds, NodeChangeset, singleTextCursor } from "../../feature-libraries";
+import { FieldChangeHandler, FieldKinds, NodeChangeset, singleTextCursor } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
 
 const nodeType: TreeSchemaIdentifier = brand("Node");
-const fieldHandler = FieldKinds.value.changeHandler;
+const fieldHandler: FieldChangeHandler<FieldKinds.ValueChangeset> = FieldKinds.value.changeHandler;
 const tree1 = { type: nodeType, value: "value1" };
 const tree2 = { type: nodeType, value: "value2" };
 const nodeChange1: NodeChangeset = { valueChange: { value: "value3" } };
 const nodeChange2: NodeChangeset = { valueChange: { value: "value4" } };
 const nodeChange3: NodeChangeset = { valueChange: { value: "value5" } };
 
-const change1WithChildChange = { value: tree1, changes: nodeChange1 };
-const childChange1 = { changes: nodeChange1 };
-const childChange2 = { changes: nodeChange2 };
-const childChange3 = { changes: nodeChange3 };
+const change1WithChildChange: FieldKinds.ValueChangeset = { value: tree1, childChange: nodeChange1 };
+const childChange1: FieldKinds.ValueChangeset = { childChange: nodeChange1 };
+const childChange2: FieldKinds.ValueChangeset = { childChange: nodeChange2 };
+const childChange3: FieldKinds.ValueChangeset = { childChange: nodeChange3 };
 
 describe("Value field changesets", () => {
     const change1 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(singleTextCursor(tree1));
@@ -48,9 +48,9 @@ describe("Value field changesets", () => {
             change1WithChildChange,
         );
 
-        const expected = {
+        const expected: FieldKinds.ValueChangeset = {
             value: tree1,
-            changes: nodeChange1,
+            childChange: nodeChange1,
         };
 
         assert.deepEqual(change1WithChildChange, expected);
@@ -86,9 +86,9 @@ describe("Value field changesets", () => {
         const inverted = fieldHandler.rebaser.invert(
             change1WithChildChange,
             childInverter,
-        ) as FieldKinds.ValueChangeset;
+        );
 
-        assert.deepEqual(inverted.changes, nodeChange2);
+        assert.deepEqual(inverted.childChange, nodeChange2);
     });
 
     it("can be rebased", () => {
