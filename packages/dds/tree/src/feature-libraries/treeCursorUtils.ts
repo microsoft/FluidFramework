@@ -16,7 +16,7 @@ import {
 import { fail } from "../util";
 
 /**
- * @returns an ITreeCursorSynchronous for a single root.
+ * @returns an {@link ITreeCursorSynchronous} for a single root.
  */
 export function singleStackTreeCursor<TNode extends NodeData>(
         root: TNode,
