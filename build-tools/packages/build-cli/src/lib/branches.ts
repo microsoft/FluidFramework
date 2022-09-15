@@ -13,6 +13,7 @@ import {
     toVirtualPatchScheme,
     VersionBumpType,
     VersionBumpTypeExtended,
+    VersionScheme,
 } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
@@ -62,8 +63,9 @@ export function generateBumpVersionBranchName(
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
     bumpType: VersionBumpTypeExtended,
     version: ReleaseVersion,
+    scheme?: VersionScheme,
 ) {
-    const newVersion = bumpVersionScheme(version, bumpType);
+    const newVersion = bumpVersionScheme(version, bumpType, scheme);
     const name = isReleaseGroup(releaseGroupOrPackage)
         ? releaseGroupOrPackage
         : PackageName.getUnscopedName(releaseGroupOrPackage);
