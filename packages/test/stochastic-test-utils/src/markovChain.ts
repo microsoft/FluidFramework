@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { createWeightedGenerator } from "./generators";
 import { makeRandom } from "./random";
 import { IRandom } from "./types";

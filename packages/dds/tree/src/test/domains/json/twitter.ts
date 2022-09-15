@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IRandom, makeRandom, SpaceEfficientWordMarkovChain } from "@fluid-internal/stochastic-test-utils";
 import {
     createAlphabetFromUnicodeRange,
@@ -620,7 +625,7 @@ export function parseSentencesIntoWords(inputSentences: string[]) {
     return outputSentences;
 }
 
-/* eslint-disable max-len, @typescript-eslint/comma-dangle, quote-props */
+/* eslint-disable max-len, quote-props */
 
 // Returns a MarkovChain for prediciting the text field of TwitterJson. The Chain is compatible with the SpaceEfficientWordMarkovChain Class
 export function getTwitterJsonTextFieldWordMarkovChain(): Record<string, [string, number][]> {

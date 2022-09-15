@@ -20,7 +20,7 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
-import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./json";
+import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./canada";
 import { averageLocation, sum } from "./benchmarksLegacy";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at

@@ -13,8 +13,11 @@ import {
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
 import { jsonableTreeFromCursorNew } from "../../../feature-libraries";
+import { FieldKey } from "../../../tree";
+import { brand } from "../../../util";
 import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./canada";
 import { averageLocation, sum, sumMap } from "./benchmarks";
+import { generateTwitterJsonByByteSize } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -73,44 +76,44 @@ function bench(
             },
         });
 
-    const cursorFactories: [string, () => ITreeCursorNew][] = [
-        ["TextCursor", () => singleTextCursorNew(encodedTree)],
-    ];
+        const cursorFactories: [string, () => ITreeCursorNew][] = [
+            ["TextCursor", () => singleTextCursorNew(encodedTree)],
+        ];
 
-    const consumers: [
-        string,
-        (cursor: ITreeCursorNew,
-            dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any
-        ) => void,
-    ][] = [
-        // TODO: finish porting other cursor code and enable this.
-        // ["cursorToJsonObject", cursorToJsonObjectNew],
-        ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
-        ["sum", sum],
-        ["sum-map", sumMap],
-        ["averageLocation", averageLocation],
-    ];
+        const consumers: [
+            string,
+            (cursor: ITreeCursorNew,
+                dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any
+            ) => void,
+        ][] = [
+                // TODO: finish porting other cursor code and enable this.
+                // ["cursorToJsonObject", cursorToJsonObjectNew],
+                ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+                ["sum", sum],
+                ["sum-map", sumMap],
+                ["averageLocation", averageLocation],
+            ];
 
-    for (const [consumerName, consumer] of consumers) {
-        for (const [factoryName, factory] of cursorFactories) {
-            let cursor: ITreeCursorNew;
-            benchmark({
-                type: BenchmarkType.Measurement,
-                title: `${consumerName}(${factoryName}): '${name}'`,
-                before: () => {
-                    cursor = factory();
-                    // TODO: validate behavior
-                    // assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-                    // assert.deepEqual(
-                    //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
-                },
-                benchmarkFn: () => {
-                    consumer(cursor, dataConsumer);
-                },
-            });
+        for (const [consumerName, consumer] of consumers) {
+            for (const [factoryName, factory] of cursorFactories) {
+                let cursor: ITreeCursorNew;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `${consumerName}(${factoryName}): '${name}'`,
+                    before: () => {
+                        cursor = factory();
+                        // TODO: validate behavior
+                        // assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+                        // assert.deepEqual(
+                        //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+                    },
+                    benchmarkFn: () => {
+                        consumer(cursor, dataConsumer);
+                    },
+                });
+            }
         }
     }
-}
 }
 
 const canada = generateCanada(
@@ -163,6 +166,54 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
     cursor.exitField();
 }
 
+function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+    const statusesKey: FieldKey = brand("statuses");
+    const retweetCountKey: FieldKey = brand("retweet_count");
+    const favoriteCountKey: FieldKey = brand("favorite_count");
+    cursor.enterField(statusesKey); // move from root to field
+    cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
+    cursor.enterField(EmptyKey); // enter array itself,
+    // cursor.enterNode(0); // enter first value in the array
+
+    // cursor.enterField(GeometryKey);
+    // cursor.enterNode(0);
+    // cursor.enterField(CoordinatesKey);
+    // cursor.enterNode(0);
+
+    // cursor.enterField(EmptyKey);
+
+    for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
+        cursor.enterField(EmptyKey);
+
+        // cursor.enterField(retweetCountKey);
+        const retweetCount = cursor.value as number;
+
+        // const favoriteCount = cursor.value as number;
+        // assert.equal(cursor.firstNode(), true, "No retweet_count field");
+
+        // for (let resultInner = cursor.firstNode(); resultInner; resultInner = cursor.nextNode()) {
+        //     // Read x and y values
+        //     cursor.enterField(EmptyKey);
+        //     assert.equal(cursor.firstNode(), true, "No X field");
+        //     const x = cursor.value as number;
+        //     assert.equal(cursor.nextNode(), true, "No Y field");
+        //     const y = cursor.value as number;
+
+        //     cursor.exitNode();
+        //     cursor.exitField();
+
+        //     calculate(x, y);
+        // }
+
+        cursor.exitField();
+    }
+
+    // Reset the cursor state
+}
+
+// The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
+    bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
 });
