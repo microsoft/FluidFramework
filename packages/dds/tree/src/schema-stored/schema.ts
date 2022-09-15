@@ -202,6 +202,7 @@ export interface Named<TName> {
 }
 
 export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
+export type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
 
 /**
  * View of schema data that can be stored in a document.
