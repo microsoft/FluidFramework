@@ -2003,7 +2003,7 @@ export class FlowView extends ui.Component {
 
     private checkRow(
         lineDiv: ILineDiv,
-        fn: (lineDiv: ILineDiv) => ILineDiv | undefined,
+        fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null,
         rev?: boolean,
     ): ILineDiv | undefined {
         let _lineDiv: ILineDiv | undefined = lineDiv;
@@ -2027,7 +2027,7 @@ export class FlowView extends ui.Component {
     }
 
     public lineDivSelect(
-        fn: (lineDiv: ILineDiv) => ILineDiv | undefined,
+        fn: (lineDiv: ILineDiv) => ILineDiv | undefined | null,
         viewportDiv: IViewportDiv,
         dive = false,
         rev?: boolean,
