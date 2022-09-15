@@ -4,7 +4,6 @@
  */
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
-import { GenericError } from "@fluidframework/container-utils";
 import { ContainerRuntimeMessage } from "./containerRuntime";
 
 /**
@@ -27,14 +26,18 @@ export class BatchManager {
     // We can't estimate it fully, as we
     // - do not know what properties relay service will add
     // - we do not stringify final op, thus we do not know how much escaping will be added.
-    private static readonly defaultMaxOpSizeInBytes = 950 * 1024;
+    private static readonly hardLimit = 950 * 1024;
 
-    public push(message: BatchMessage) {
+    public get length() { return this.pendingBatch.length; }
+    public get limit() { return BatchManager.hardLimit; }
+
+    constructor(public readonly softLimit?: number) {}
+
+    public push(message: BatchMessage): boolean {
         this.pendingBatch.push(message);
         this.batchContentSize += message.contents.length;
 
         const opCount = this.pendingBatch.length;
-        const limit = BatchManager.defaultMaxOpSizeInBytes;
 
         // Attempt to estimate batch size, aka socket message size.
         // Each op has pretty large envelope, estimating to be 200 bytes.
@@ -43,19 +46,17 @@ export class BatchManager {
         // initially stored as base64, and that requires only 2 extra escape characters.
         const socketMessageSize = this.batchContentSize + 200 * opCount;
 
-        if (socketMessageSize >= limit) {
-            // If the content length is larger than the client configured message size
-            // instead of splitting the content, we will fail by explicitly closing the container
-            throw new GenericError(
-                "BatchTooLarge",
-                /* error */ undefined,
-                {
-                    opSize: message.contents.length,
-                    batchContentSize: this.batchContentSize,
-                    count: opCount,
-                    limit,
-                });
+        // If we were provided soft limit, check for exceeding it.
+        // But only if we have any ops, as the intention here is to flush existing ops (on exceeding this limit)
+        // and start over. That's not an option if we have no ops.
+        if (this.softLimit !== undefined && this.length > 0 && socketMessageSize >= this.softLimit) {
+            return false;
         }
+
+        if (socketMessageSize >= this.limit) {
+            return false;
+        }
+        return true;
     }
 
     public get empty() { return this.pendingBatch.length === 0; }
