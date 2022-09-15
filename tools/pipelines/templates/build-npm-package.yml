@@ -266,6 +266,7 @@ stages:
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
                   mkdir $(Build.ArtifactStagingDirectory)/log/
+                  touch $(Build.ArtifactStagingDirectory)/log/test.txt
             - task: Npm@1
               displayName: npm run ci:test:coverage
               inputs:
@@ -299,11 +300,11 @@ stages:
                 reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
                 failIfCoverageEmpty: true
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-            - task: CopyFiles@2
-              displayName: 'Copy Logs'
-              inputs:
-                contents: '${{ parameters.buildDirectory }}/nyc/report/**'
-                targetFolder: '$(Build.ArtifactStagingDirectory)/log'
+            #- task: CopyFiles@2
+            #  displayName: 'Copy Logs'
+            #  inputs:
+            #    contents: '${{ parameters.buildDirectory }}/nyc/report/**'
+            #    targetFolder: '$(Build.ArtifactStagingDirectory)/log'
             - publish: '$(Build.ArtifactStagingDirectory)/log'
               displayName: 'Publish Log'
               artifact: drop
