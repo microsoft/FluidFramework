@@ -4,7 +4,7 @@
  */
 
 import { assert } from "chai";
-import { FluidReleaseMachine as machine } from "../../src/machines/fluidReleaseMachine"
+import { FluidReleaseMachine as machine } from "../../src/machines/fluidReleaseMachine";
 
 describe("FluidReleaseMachine", () => {
     it("DoPatchRelease states", () => {
@@ -33,20 +33,19 @@ describe("FluidReleaseMachine", () => {
         walkExits(state, states);
         console.log(JSON.stringify([...states]));
     });
-
 });
 
 function walkExits(state: string, collector: Set<string>, step = 0): void {
     // console.log(`state: ${state}`);
     collector.add(state);
-    if(machine.state_is_terminal(state)) {
+    if (machine.state_is_terminal(state)) {
         return;
-    };
+    }
 
     const transitions = machine.list_transitions(state);
     // console.log(JSON.stringify(transitions));
 
-    for(const next of transitions.exits) {
+    for (const next of transitions.exits) {
         walkExits(next, collector, step++);
     }
 }
