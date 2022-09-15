@@ -6,7 +6,7 @@ module.exports = {
         "^fluid-framework$", // Special match for `fluid-framework` package
         "^@fluidframework/(.*)$", // Match all `@fluidframework/` packages
         "^@fluid-(.*?)/(.*)$", // Match other `@fluid-` scoped packages (`@fluid-experimental/`, `@fluid-tools/`, etc.)
-        "^[./]" // Match package-local file imports
+        "^[./]", // Match package-local file imports
     ],
     importOrderSeparation: true,
     importOrderSortSpecifiers: true,
