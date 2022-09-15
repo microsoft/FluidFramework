@@ -20,8 +20,9 @@ parameters:
   default: true
 
 - name: taskTest
-  type: string
-  default: ci:test
+  type: object
+  default:
+  - ci:test
 
 - name: taskBundleAnalysis
   type: boolean
@@ -44,11 +45,6 @@ parameters:
   default: Small
 
 - name: preCG
-  type: stepList
-  default: []
-
-# These should output results under an /nyc/ dir (anywhere in the repo) to get included in the published test results
-- name: additionalTests
   type: stepList
   default: []
 
@@ -114,7 +110,7 @@ stages:
         displayName: Build
         pool: ${{ parameters.poolBuild }}
         variables:
-          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
           releaseBuildVar: $[variables.releaseBuild]
         steps:
         # Setup
@@ -143,7 +139,7 @@ stages:
                 BuildDir=${{ parameters.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
                 Lint=${{ parameters.taskLint }}
-                Test=${{ parameters.taskTest }}
+                Test=${{ convertToJson(parameters.taskTest) }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
 
@@ -232,39 +228,45 @@ stages:
               customCommand: 'run lint'
 
         # Test
-        - ${{ if ne(parameters.taskTest, 'false') }}:
-          # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
-          - ${{ parameters.additionalTests }}
+        - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
+          # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
+          - script: |
+              echo "##vso[task.setvariable variable=startTest]true"
+            displayName: Start Test
 
-          # Test - No coverage
-          - ${{ if ne(variables['testCoverage'], true) }}:
-            - task: Npm@1
-              displayName: npm run ${{ parameters.taskTest }}
-              inputs:
-                command: 'custom'
-                workingDir: ${{ parameters.buildDirectory }}
-                customCommand: 'run ${{ parameters.taskTest }}'
+          - ${{ each taskTestStep in parameters.taskTest }}:
+            # Test - With coverage
+            - ${{ if and(eq(variables['testCoverage'], true), startsWith(taskTestStep, 'ci:test')) }}:
+              - task: Npm@1
+                displayName: npm run ${{ taskTestStep }}:coverage
+                inputs:
+                  command: 'custom'
+                  workingDir: ${{ parameters.buildDirectory }}
+                  customCommand: 'run ${{ taskTestStep }}:coverage'
+                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+            # Test - No coverage
+            - ${{ if or(eq(variables['testCoverage'], false), eq(startsWith(taskTestStep, 'ci:test'), false)) }}:
+                - task: Npm@1
+                  displayName: npm run ${{ taskTestStep }}
+                  inputs:
+                    command: 'custom'
+                    workingDir: ${{ parameters.buildDirectory }}
+                    customCommand: 'run ${{ taskTestStep }}'
+                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
-          # Test - With coverage
+          # Test - Upload coverage results
+          # Some webpacked file using externals introduce file name with quotes in them
+          # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
+          # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
           - ${{ if eq(variables['testCoverage'], true) }}:
-            - task: Npm@1
-              displayName: npm run ci:test:coverage
-              inputs:
-                command: 'custom'
-                workingDir: ${{ parameters.buildDirectory }}
-                customCommand: 'run ci:test:coverage'
-            # Some webpacked file using externals introduce file name with quotes in them
-            # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
-            # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
             - task: Bash@3
               displayName: 'Check for nyc/report directory'
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
-                  test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No
-                  nyc/report directory'
-              condition: succeededOrFailed()
+                  test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
+              condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
             - task: Bash@3
               displayName: Patch Coverage Results
               inputs:
@@ -273,7 +275,6 @@ stages:
                 script: |
                   sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-
             - task: PublishCodeCoverageResults@1
               displayName: Publish Code Coverage
               inputs:
@@ -291,7 +292,7 @@ stages:
               testResultsFiles: '**/*junit-report.xml'
               searchFolder: ${{ parameters.buildDirectory }}/nyc
               mergeTestResults: false
-            condition: succeededOrFailed()
+            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:

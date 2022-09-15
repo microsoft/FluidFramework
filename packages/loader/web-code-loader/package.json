@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/web-code-loader",
-  "version": "2.0.0-internal.1.1.0",
+  "version": "2.0.0-internal.1.2.0",
   "description": "Fluid web code loader",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,12 +33,12 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/protocol-definitions": "^1.0.0",
     "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@^1.0.0",

@@ -239,9 +239,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
         private readonly logger: ITelemetryLogger,
     ) {
         super();
-        this.deltaManager.on(
-            "op",
-            (op) => this.handleOp(op));
+        this.deltaManager.on("op", (op) => this.handleOp(op));
     }
 
     /**
@@ -295,24 +293,43 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
         return this.lastAck;
     }
 
+    private parseContent(op: ISequencedDocumentMessage) {
+        // back-compat: ADO #1385: Make this unconditional in the future,
+        // when Container.processRemoteMessage stops parsing contents. That said, we should move to
+        // listen for "op" events from ContainerRuntime, and parsing may not be required at all if
+        // ContainerRuntime.process() would parse it for all types of ops.
+        // Can make either of those changes only when LTS moves to a version that has no content
+        // parsing in loader layer!
+        if (typeof op.contents === "string") {
+            op.contents = JSON.parse(op.contents);
+        }
+    }
+
     /**
      * Handler for ops; only handles ops relating to summaries.
      * @param op - op message to handle
      */
-    private handleOp(op: ISequencedDocumentMessage) {
+    private handleOp(opArg: ISequencedDocumentMessage) {
+        const op = { ...opArg };
+
         switch (op.type) {
-            case MessageType.Summarize: {
-                this.handleSummaryOp(op as ISummaryOpMessage);
-                return;
-            }
-            case MessageType.SummaryAck: {
-                this.handleSummaryAck(op as ISummaryAckMessage);
-                return;
-            }
-            case MessageType.SummaryNack: {
-                this.handleSummaryNack(op as ISummaryNackMessage);
-                return;
-            }
+            case MessageType.Summarize:
+                this.parseContent(op);
+                return this.handleSummaryOp(op as ISummaryOpMessage);
+            case MessageType.SummaryAck:
+            case MessageType.SummaryNack:
+                // Old files (prior to PR #10077) may not contain this info
+                // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
+                if ((op as any).data !== undefined) {
+                    op.contents = JSON.parse((op as any).data);
+                } else {
+                    this.parseContent(op);
+                }
+                if (op.type === MessageType.SummaryAck) {
+                    return this.handleSummaryAck(op as ISummaryAckMessage);
+                } else {
+                    return this.handleSummaryNack(op as ISummaryNackMessage);
+                }
             default: {
                 // If the difference between timestamp of current op and last summary op is greater than
                 // the maxAckWaitTime, then we need to inform summarizer to not wait and summarize

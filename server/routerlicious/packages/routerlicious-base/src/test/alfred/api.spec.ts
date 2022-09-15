@@ -16,6 +16,9 @@ import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-utils";
 import { TestCache } from "@fluidframework/server-test-utils";
 import { DeltaService } from "../../alfred/services";
+import * as SessionHelper from "../../utils/sessionHelper"
+import Sinon from "sinon";
+
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -39,7 +42,9 @@ const defaultProvider = new nconf.Provider({}).defaults({
         },
     },
     worker: {
-        blobStorageUrl: "http://localhost:3001"
+        blobStorageUrl: "http://localhost:3001",
+        deltaStreamUrl: "http://localhost:3005",
+        serverUrl: "http://localhost:3003",
     }
 });
 
@@ -344,6 +349,81 @@ describe("Routerlicious", () => {
                             .set('Authorization', tenantToken1)
                             .send({ id: "" })
                             .expect(403);
+                    });
+                });
+            });
+
+            describe("session and discovery", () => {
+
+                let spyGetSession;
+
+                beforeEach(() => {
+                    const maxThrottlerLimit = 1000000;
+                    const throttler = new TestThrottler(maxThrottlerLimit);
+
+                    spyGetSession = Sinon.spy(SessionHelper, "getSession")
+
+                    app = alfredApp.create(
+                        defaultProvider,
+                        defaultTenantManager,
+                        throttler,
+                        defaultSingleUseTokenCache,
+                        defaultStorage,
+                        defaultAppTenants,
+                        defaultDeltaService,
+                        defaultProducer,
+                        defaultDocumentsCollection);
+                    supertest = request(app);
+                });
+
+                afterEach(() => {
+                    Sinon.restore();
+                })
+
+                describe("documents", () => {
+
+                    it("/:tenantId/session/:id", async () => {
+
+                        // Create a new session
+                        Sinon.stub(defaultDocumentsCollection, "upsert").returns(Promise.resolve());
+                        Sinon.stub(defaultDocumentsCollection, "findOne")
+                            .onFirstCall().returns(Promise.resolve({} as IDocument))
+                            .onSecondCall().returns(Promise.resolve({
+                                session: {
+                                    ordererUrl: defaultProvider.get("worker:serverUrl"),
+                                    deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+                                    historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+                                    isSessionAlive: false,
+                                    isSessionActive: true
+                                }
+                            } as IDocument));
+
+                        await supertest.get(`/documents/${appTenant1.id}/session/${document1._id}`)
+                            .set('Authorization', tenantToken1)
+                            .expect((res) => {
+                                assert(spyGetSession.calledOnce);
+                                assert.deepStrictEqual(res.body, {
+                                    ordererUrl: defaultProvider.get("worker:serverUrl"),
+                                    historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+                                    deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+                                    isSessionAlive: false,
+                                    isSessionActive: false
+                                })
+                            });
+
+                        // Update an existing session
+                        await supertest.get(`/documents/${appTenant1.id}/session/${document1._id}`)
+                            .set('Authorization', tenantToken1)
+                            .expect((res) => {
+                                assert(spyGetSession.calledTwice);
+                                assert.deepStrictEqual(res.body, {
+                                    ordererUrl: defaultProvider.get("worker:serverUrl"),
+                                    historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+                                    deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+                                    isSessionAlive: false,
+                                    isSessionActive: false
+                                })
+                            });
                     });
                 });
             });

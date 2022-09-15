@@ -117,6 +117,7 @@ describe("Garbage Collection Tests", () => {
             readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
             getNodePackagePath: async (nodeId: string) => testPkgPath,
             getLastSummaryTimestampMs: () => Date.now(),
+            activeConnection: () => true,
         });
     }
     let gc: GcWithPrivates | undefined;

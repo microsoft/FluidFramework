@@ -2,16 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
+import { timeoutAwait, timeoutPromise } from "./timeoutUtils";
 
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");
+
+// set the maximum timeout value as 5 mins
+const defaultMaxTimeout = 5 * 6000;
 
 interface ContainerRecord {
     // A short number for debug output
@@ -91,7 +97,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     private trackTrailingNoOps(container: IContainer, record: ContainerRecord) {
         container.deltaManager.outbound.on("op", (messages) => {
             for (const msg of messages) {
-                if (msg.type === MessageType.NoOp) {
+                if (canBeCoalescedByService(msg)) {
                     // Track the NoOp that was sent.
                     if (record.trailingNoOps === 0) {
                         // record the starting sequence number of the trailing no ops if we haven't been tracking yet.
@@ -107,7 +113,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
         container.deltaManager.inbound.on("push", (message) => {
             // Received the no op back, update the record if we are tracking
-            if (message.type === MessageType.NoOp
+            if (canBeCoalescedByService(message)
                 && message.clientId === (container as Container).clientId
                 && record.trailingNoOps !== 0
                 && record.startTrailingNoOps <= message.clientSequenceNumber
@@ -148,6 +154,20 @@ export class LoaderContainerTracker implements IOpProcessingController {
     }
 
     /**
+     * Ensure all tracked containers are synchronized
+     */
+    public async ensureSynchronized(...containers: IContainer[]) {
+        await this.processSynchronized(undefined, ...containers);
+    }
+
+    /**
+     * Ensure all tracked containers are synchronized with a time limit
+     */
+    public async ensureSynchronizedWithTimeout?(timeoutDuration: number | undefined, ...containers: IContainer[]) {
+        await this.processSynchronized(timeoutDuration, ...containers);
+    }
+
+    /**
      * Make sure all the tracked containers are synchronized.
      * - No isDirty (non-readonly) containers
      * - No extra clientId in quorum of any container that is not tracked and still opened.
@@ -158,7 +178,8 @@ export class LoaderContainerTracker implements IOpProcessingController {
      *      - this overlaps with !isDirty, but include task scheduler ops.
      *      - Trailing NoOp is tracked and don't count as pending ops.
      */
-    public async ensureSynchronized(...containers: IContainer[]) {
+    private async processSynchronized(timeoutDuration: number | undefined, ...containers: IContainer[]) {
+        const start = Date.now();
         const resumed = this.resumeProcessing(...containers);
 
         let waitingSequenceNumberSynchronized = false;
@@ -184,20 +205,34 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         // Only write it out once
                         waitingSequenceNumberSynchronized = true;
                         debugWait("Waiting for sequence number synchronized");
-                        await this.waitForAnyInboundOps(containersToApply);
+                        await timeoutAwait(this.waitForAnyInboundOps(containersToApply), {
+                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout,
+                            errorMsg: "Timeout on waiting for sequence number synchronized",
+                        });
                     }
                 } else {
                     waitingSequenceNumberSynchronized = false;
-                    await this.waitForPendingClients(pendingClients);
+                    await timeoutAwait(this.waitForPendingClients(pendingClients), {
+                            durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout,
+                        errorMsg: "Timeout on waiting for pending join or leave op",
+                    });
                 }
             } else {
                 // Wait for all the containers to be saved
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
+                const remainedDuration = timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout;
                 await Promise.all(dirtyContainers.map(async (c) => Promise.race(
-                    [new Promise((resolve) => c.once("saved", resolve)),
-                    new Promise((resolve) => c.once("closed", resolve))],
+                    [timeoutPromise(
+                        (resolve) => c.once("saved", () => resolve()),
+                        {
+                            durationMs: remainedDuration,
+                            errorMsg: "Timeout on waiting a container to be saved",
+                        },
+                    ),
+                    new Promise((resolve) => c.once("closed", resolve)),
+                    ],
                 )));
             }
 
@@ -208,7 +243,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
         // Pause all container that was resumed
         // don't call pause if resumed is empty and pause everything, which is not what we want
         if (resumed.length !== 0) {
-            await this.pauseProcessing(...resumed);
+            await timeoutAwait(this.pauseProcessing(...resumed), {
+                durationMs: timeoutDuration ? timeoutDuration - (Date.now() - start) : defaultMaxTimeout,
+                errorMsg: "Timeout on waiting for pausing all resumed containers",
+            });
         }
 
         debugWait("Synchronized");
@@ -454,13 +492,13 @@ export class LoaderContainerTracker implements IOpProcessingController {
     private setupInOutTracker(container: IContainer, inflightTracker: Map<IContainer, number>) {
         const outHandler = (messages: IDocumentMessage[]) => {
             for (const message of messages) {
-                if (message.type !== MessageType.NoOp) {
+                if (!canBeCoalescedByService(message)) {
                     inflightTracker.set(container, message.clientSequenceNumber);
                 }
             }
         };
         const inHandler = (message: ISequencedDocumentMessage) => {
-            if (message.type !== MessageType.NoOp
+            if (!canBeCoalescedByService(message)
                 && message.clientId === (container as Container).clientId
                 && inflightTracker.get(container) === message.clientSequenceNumber) {
                 inflightTracker.delete(container);

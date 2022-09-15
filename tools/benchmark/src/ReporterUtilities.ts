@@ -126,9 +126,8 @@ const tTable = {
  *
  * @param array - List of numbers for which to compute the statistics.
  * @param percentageOfSamplesToUse - Percentage of samples to use to get the statistics. The samples at the extremes
- *                                   (lowest, highest) are the ones that get discarded. If an odd number of samples need
- *                                   to be discarded, 1 more sample is discarded from the higher end than the lower end.
- * @returns
+ * (lowest, highest) are the ones that get discarded. If an odd number of samples need to be discarded, 1 more sample
+ * is discarded from the higher end than the lower end.
  */
  export function getArrayStatistics(array: number[], percentageOfSamplesToUse: number = 1): Benchmark.Stats {
     if (percentageOfSamplesToUse < 0.1 || percentageOfSamplesToUse > 1) {

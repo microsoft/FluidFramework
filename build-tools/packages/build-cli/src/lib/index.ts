@@ -3,4 +3,32 @@
  * Licensed under the MIT License.
  */
 
-export { bumpPackageDependencies, PackageWithRangeSpec } from "./bump";
+export {
+    generateBumpVersionBranchName,
+    generateBumpDepsBranchName,
+    createBumpBranch,
+    getDefaultBumpTypeForBranch,
+    generateReleaseBranchName,
+} from "./branches";
+export {
+    bumpPackageDependencies,
+    bumpReleaseGroup,
+    DependencyUpdateType,
+    isDependencyUpdateType,
+    PackageWithRangeSpec,
+} from "./bump";
+export {
+    getAllVersions,
+    getPreReleaseDependencies,
+    generateReleaseGitTagName,
+    getTagsForReleaseGroup,
+    getVersionFromTag,
+    isReleased,
+    npmCheckUpdates,
+    PackageVersionMap,
+    PreReleaseDependencies,
+    sortVersions,
+    VersionDetails,
+} from "./package";
+export { difference } from "./sets";
+export { getIndent, indentString } from "./text";

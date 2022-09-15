@@ -97,7 +97,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
                     this.error(`Tag ${tagName} already exists.`);
                 }
 
-                this.warn(`Tag ${tagName} already exists.`);
+                this.warning(`Tag ${tagName} already exists.`);
             }
         }
 
@@ -127,7 +127,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
                 version,
                 tags,
                 shouldIncludeInternalVersions,
-                await this.getLogger(),
+                this.logger,
             );
             this.log(`isLatest=${isLatest}`);
             if (isRelease && isLatest === true) {

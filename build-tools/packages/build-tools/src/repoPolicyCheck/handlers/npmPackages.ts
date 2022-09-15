@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as readline from "readline";
+import * as child_process from "child_process";
 import { EOL as newline } from "os";
 import fs from "fs";
 import replace from "replace-in-file";
@@ -73,14 +75,25 @@ function packageMayChooseToPublishToNPM(name: string): boolean {
 }
 
 /**
+ * Whether the package has the option to publish to an internal feed if it chooses.
+ */
+function packageMayChooseToPublishToInternalFeedOnly(name: string): boolean {
+    return (
+        name.startsWith("@fluid-internal/")
+        || name.startsWith("@fluid-msinternal/")
+    );
+}
+
+/**
  * If we haven't explicitly OK'd the package scope to publish in one of the categories above, it must be marked
  * private to prevent publishing.
  */
 function packageMustBePrivate(name: string): boolean {
     return !(
         packageMustPublishToNPM(name)
-        || packageMustPublishToInternalFeedOnly(name)
         || packageMayChooseToPublishToNPM(name)
+        || packageMustPublishToInternalFeedOnly(name)
+        || packageMayChooseToPublishToInternalFeedOnly(name)
     );
 }
 
@@ -103,6 +116,7 @@ function packageMustNotBePrivate(name: string): boolean {
         || name.startsWith("@fluid-example/")
         || name.startsWith("@fluid-experimental/")
         || name.startsWith("@fluid-internal/")
+        || name.startsWith("@fluid-msinternal/")
         || name.startsWith("@fluid-tools/")
         || name === "fluid-framework"
         || name === "fluidframework-docs"
@@ -139,6 +153,32 @@ function getReadmeInfo(dir: string): IReadmeInfo {
         readme,
     };
 }
+
+function ensurePrivatePackagesComputed(): void {
+    if (privatePackages) {
+        return;
+    }
+
+    privatePackages = new Set();
+    const pathToGitRoot = child_process.execSync("git rev-parse --show-cdup", { encoding: "utf8" }).trim();
+    const p = child_process.spawn("git", ["ls-files", "-co", "--exclude-standard", "--full-name", "**/package.json"]);
+    const lineReader = readline.createInterface({
+        input: p.stdout,
+        terminal: false
+    });
+
+    lineReader.on('line', line => {
+        const filePath = path.join(pathToGitRoot, line).trim().replace(/\\/g, "/");
+        if (fs.existsSync(filePath)) {
+            const packageJson = JSON.parse(readFile(filePath));
+            if (packageJson.private) {
+                privatePackages.add(packageJson.name);
+            }
+        }
+    });
+}
+
+let privatePackages: Set<string>;
 
 const match = /(^|\/)package\.json/i;
 export const handlers: Handler[] = [
@@ -257,7 +297,7 @@ export const handlers: Handler[] = [
     },
     {
         // Verify that packages are correctly marked private or not.
-        // Also verify that non-private packages don't take dependency on private packages.
+        // Also verify that non-private packages don't take dependencies on private packages.
         name: "npm-private-packages",
         match,
         handler: file => {
@@ -268,6 +308,7 @@ export const handlers: Handler[] = [
                 return 'Error parsing JSON file: ' + file;
             }
 
+            ensurePrivatePackagesComputed();
             const errors: string[] = [];
 
             if (json.private && packageMustNotBePrivate(json.name)) {
@@ -280,14 +321,13 @@ export const handlers: Handler[] = [
             }
 
             const deps = Object.keys(json.dependencies ?? {});
-            // TODO: Ideally we should check whether the dependency actually is marked private (in the case of
-            // packages which have a choice).  So this is just an approximation given packages that we know must
-            // be private.
             if (
                 json.private !== true
-                && deps.some((name) => packageIsFluidPackage(name) && packageMustBePrivate(name))
+                && deps.some((name) => privatePackages.has(name))
             ) {
-                errors.push(`Non-private package must not depend on a private package`);
+                errors.push(`Non-private package must not depend on the private package(s): ${
+                    deps.filter((name) => privatePackages.has(name)).join(",")
+                }`);
             }
 
             if (errors.length > 0) {
