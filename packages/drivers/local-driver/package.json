@@ -69,6 +69,7 @@
     "@fluidframework/server-services-core": "^0.1037.2000-91174",
     "@fluidframework/server-test-utils": "^0.1037.2000-91174",
     "jsrsasign": "^10.5.25",
+    "url": "^0.11.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

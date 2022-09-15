@@ -45,7 +45,8 @@
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/test-client-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/tool-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/tool-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "url": "^0.11.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
