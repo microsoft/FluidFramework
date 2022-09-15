@@ -4,12 +4,12 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { jsonableTreeFromCursor, RootedTextCursor, singleTextCursor } from "../treeTextCursorLegacy";
+import { RootedTextCursor } from "../treeTextCursorLegacy";
 import {
     DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
 } from "../../dependency-tracking";
 import {
-    ITreeCursor, ITreeSubscriptionCursor, IEditableForest,
+    ITreeSubscriptionCursor, IEditableForest,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
 } from "../../forest";
@@ -17,8 +17,10 @@ import { StoredSchemaRepository } from "../../schema-stored";
 import {
     FieldKey, DetachedField, AnchorSet, detachedFieldAsKey, keyAsDetachedField,
     Value, Delta, JsonableTree, getGenericTreeField, UpPath, Anchor, visitDelta,
+    ITreeCursorNew,
 } from "../../tree";
 import { brand, fail } from "../../util";
+import { jsonableTreeFromCursor } from "../treeTextCursor";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
@@ -101,7 +103,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             },
             onInsert: (index: number, content: Delta.ProtoNode[]): void => {
                 assert(currentField !== undefined, 0x366 /* must be in field to onInsert */);
-                const range = this.add(content.map((data) => singleTextCursor(data)));
+                const range = this.add(content);
                 moveIn(index, range);
             },
             onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
@@ -188,7 +190,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return range;
     }
 
-    private add(nodes: Iterable<ITreeCursor>): DetachedField {
+    private add(nodes: Iterable<ITreeCursorNew>): DetachedField {
         const range = this.newDetachedField();
         assert(!this.roots.has(range), 0x370 /* new range must not already exist */);
         const field: ObjectField = Array.from(nodes, jsonableTreeFromCursor);

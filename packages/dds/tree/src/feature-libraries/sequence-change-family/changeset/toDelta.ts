@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
+import { singleTextCursorNew } from "../..";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { FieldKey, Value, Delta } from "../../../tree";
 import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
@@ -34,7 +35,8 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
                 case "Insert": {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
-                        content: cloneTreeContent(mark.content),
+                        // TODO: can we skip this clone?
+                        content: clone(mark.content).map(singleTextCursorNew),
                     };
                     out.pushContent(insertMark);
                     break;
@@ -117,7 +119,7 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
                         // TODO: Restore the actual node
-                        content: makeArray(mark.count, () => ({ type: DUMMY_REVIVED_NODE_TYPE })),
+                        content: makeArray(mark.count, () => singleTextCursorNew({ type: DUMMY_REVIVED_NODE_TYPE })),
                     };
                     out.pushContent(insertMark);
                     break;
@@ -126,7 +128,7 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
                         // TODO: Restore the actual node
-                        content: [{ type: DUMMY_REVIVED_NODE_TYPE }],
+                        content: [singleTextCursorNew({ type: DUMMY_REVIVED_NODE_TYPE })],
                     };
                     out.pushContent(insertMark);
                     break;
@@ -151,15 +153,6 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
 
 /**
- * Clones the content described by a Changeset into tree content expected by Delta.
- */
-function cloneTreeContent(content: ProtoNode[]): Delta.ProtoNode[] {
-    // The changeset and Delta format currently use the same interface to represent inserted content.
-    // This is an implementation detail that may not remain true.
-    return clone(content);
-}
-
-/**
  * Converts inserted content into the format expected in Delta instances.
  * This involves applying all except MoveIn changes.
  *
@@ -167,9 +160,9 @@ function cloneTreeContent(content: ProtoNode[]): Delta.ProtoNode[] {
  */
 function cloneAndModify(insert: T.ModifyInsert): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
-    const outNode = cloneTreeContent([insert.content])[0];
+    const outNode = clone(insert.content);
     const outModifications = applyOrCollectModifications(outNode, insert);
-    return { content: outNode, fields: outModifications };
+    return { content: singleTextCursorNew(outNode), fields: outModifications };
 }
 
 /**
@@ -205,7 +198,7 @@ interface DeltaInsertModification {
  * all modifications are applied by the function.
  */
 function applyOrCollectModifications(
-    node: Delta.ProtoNode,
+    node: ProtoNode,
     modify: ChangesetMods,
 ): Delta.FieldMarks {
     const outFieldsMarks: Delta.FieldMarks = new Map();
@@ -229,7 +222,8 @@ function applyOrCollectModifications(
                     const type = mark.type;
                     switch (type) {
                         case "Insert": {
-                            const content = cloneTreeContent(mark.content);
+                            // TODO: can we skip this clone?
+                            const content = clone(mark.content).map(singleTextCursorNew);
                             outNodes.splice(index, 0, ...content);
                             index += content.length;
                             outMarks.pushOffset(content.length);

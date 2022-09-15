@@ -5,8 +5,9 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { Brand, fail, OffsetListFactory, Opaque } from "../util";
-import { FieldKey, Value } from "./types";
+import { ITreeCursorSynchronous } from "./cursor";
 import { JsonableTree } from "./treeTextFormat";
+import { FieldKey, Value } from "./types";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
@@ -241,6 +242,7 @@ export interface MoveInAndModify {
  */
 export interface Insert {
     type: typeof MarkType.Insert;
+    // TODO: use a single cursor with multiple nodes instead of array of cursors.
     content: ProtoNode[];
 }
 
@@ -255,12 +257,11 @@ export interface InsertAndModify {
 }
 
 /**
- * The contents of a subtree to be created
- * @remarks
- * Delta does not rely on the fact that JsonableTree is serializable.
- * We may use a non-serializable format in the future, but this is the most convenient for now.
+ * The contents of a subtree to be created.
+ *
+ * TODO: eventually we should support "pending" data here via using just `ITreeCursor`.
  */
-export type ProtoNode = JsonableTree;
+export type ProtoNode = ITreeCursorSynchronous;
 
 /**
  * Uniquely identifies a MoveOut/MoveIn pair within a delta.
@@ -328,7 +329,7 @@ export function inputLength(mark: Mark): number {
  * May be empty if all modifications are applied by the function.
  */
  export function applyModifyToInsert(
-    node: ProtoNode,
+    node: JsonableTree,
     modify: Modify,
 ): Map<FieldKey, MarkList> {
     const outFieldsMarks: Map<FieldKey, MarkList> = new Map();

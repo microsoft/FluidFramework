@@ -18,7 +18,7 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
-import { defaultSchemaPolicy } from "../../../feature-libraries";
+import { defaultSchemaPolicy, singleTextCursorNew } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
 import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./json";
 import { averageLocation, sum } from "./benchmarksLegacy";
@@ -90,7 +90,7 @@ function bench(
             ["TextCursor", () => singleTextCursor(encodedTree)],
             ["object-forest Cursor", () => {
                 const forest = buildForest(schema);
-                initializeForest(forest, [encodedTree]);
+                initializeForest(forest, [singleTextCursorNew(encodedTree)]);
                 const cursor = forest.allocateCursor();
                 assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
                 return cursor;

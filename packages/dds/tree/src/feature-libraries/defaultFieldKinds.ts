@@ -9,6 +9,7 @@ import { ITreeCursor } from "../forest";
 import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, Delta, JsonableTree } from "../tree";
 import { brand, clone, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { singleTextCursor } from "./treeTextCursor";
 import {
     FieldKind,
     Multiplicity,
@@ -312,14 +313,14 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
         if (change.value !== undefined) {
             let mark: Delta.Mark;
             if (change.changes === undefined) {
-                mark = { type: Delta.MarkType.Insert, content: [change.value] };
+                mark = { type: Delta.MarkType.Insert, content: [singleTextCursor(change.value)] };
             } else {
                 const modify = deltaFromChild(change.changes);
                 const content = clone(change.value);
                 const fields = Delta.applyModifyToInsert(content, modify);
                 mark = fields.size === 0
-                    ? { type: Delta.MarkType.Insert, content: [content] }
-                    : { type: Delta.MarkType.InsertAndModify, content, fields };
+                    ? { type: Delta.MarkType.Insert, content: [singleTextCursor(content)] }
+                    : { type: Delta.MarkType.InsertAndModify, content: singleTextCursor(content), fields };
             }
 
             return [

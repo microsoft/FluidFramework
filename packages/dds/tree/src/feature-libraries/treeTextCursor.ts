@@ -5,11 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    ITreeCursorNew as ITreeCursor,
-    CursorLocationType,
-    mapCursorFieldNew as mapCursorField,
-} from "../forest";
-import {
     FieldKey,
     FieldMapObject,
     genericTreeKeys,
@@ -18,6 +13,10 @@ import {
     TreeType,
     UpPath,
     Value,
+    ITreeCursorNew as ITreeCursor,
+    CursorLocationType,
+    mapCursorFieldNew as mapCursorField,
+    ITreeCursorSynchronous,
 } from "../tree";
 import { fail } from "../util";
 
@@ -45,9 +44,9 @@ import { fail } from "../util";
  */
 
 /**
- * @returns a TextCursor for a single JsonableTree.
+ * @returns an ITreeCursorSynchronous for a single JsonableTree.
  */
-export function singleTextCursor(root: JsonableTree): TextCursor {
+export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous {
     return new TextCursor(root);
 }
 
@@ -59,7 +58,7 @@ type SiblingsOrKey = readonly JsonableTree[] | readonly FieldKey[];
  * TODO: object-forest's cursor is mostly a superset of this functionality.
  * Maybe do a refactoring to deduplicate this.
  */
-export class TextCursor implements ITreeCursor {
+class TextCursor implements ITreeCursorSynchronous {
     /**
      * Indices traversed to visit this node: does not include current level (which is stored in `index`).
      * Even indexes are of nodes and odd indexes are for fields.
@@ -174,7 +173,7 @@ export class TextCursor implements ITreeCursor {
         return this.siblingStack.length % 2 === 0 ? CursorLocationType.Nodes : CursorLocationType.Fields;
     }
 
-    public get pending(): boolean {
+    public get pending(): false {
         return false;
     }
 
