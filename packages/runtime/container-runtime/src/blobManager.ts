@@ -301,10 +301,21 @@ export class BlobManager {
         // Create a local ID for each blob. This is used to support blobs if/when the client goes
         // offline since we don't have the ID from storage yet. If online flow succeeds this won't be used.
         const localId = uuid();
+
+        // Deferred promise to be resolved once we are ready to return a handle to the caller
+        const handleP = new Deferred<IFluidHandle<ArrayBufferLike>>();
+        // TODO: this won't work right since we return a handle early for offline flow
+        PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "createBlob", localId },
+            async () => handleP.promise,
+            { start: true, end: true, cancel: "error" },
+        ).catch((error) => console.log(error));
         const pendingEntry: PendingBlob = {
             blob,
             status: PendingBlobStatus.OnlinePendingUpload,
-            handleP: new Deferred(),
+            // handleP: new Deferred(),
+            handleP,
             uploadP: this.uploadBlob(localId, blob),
         };
         this.pendingBlobs.set(localId, pendingEntry);
@@ -313,15 +324,28 @@ export class BlobManager {
     }
 
     private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        return PerformanceEvent.timedExecAsync(
-            this.logger,
-            { eventName: "createBlob" },
-            async () => this.getStorage().createBlob(blob),
-            { end: true, cancel: this.runtime.connected ? "error" : "generic" },
-        ).then(
+        // const status = this.pendingBlobs.get(localId)?.status ?? PendingBlobStatus.OnlinePendingUpload;
+        // return PerformanceEvent.timedExecAsync(
+        //     this.logger,
+        //     { eventName: "createBlob", status },
+        //     async () => this.getStorage().createBlob(blob),
+        //     { end: true, cancel: this.runtime.connected ? "error" : "generic" },
+        // ).then(
+        return this.getStorage().createBlob(blob).then(
             (response) => this.onUploadResolve(localId, response),
             async (err) => this.onUploadReject(localId, err),
-        );
+        ).catch((error) => {
+            console.log("blob upload handling error:", error);
+            const entry = this.pendingBlobs.get(localId);
+            assert(!!entry, "no entry");
+            entry.handleP.reject(error);
+            this.logger.sendErrorEvent({
+                eventName: "blob upload handling error",
+                localId,
+                status: entry.status,
+            }, error);
+            throw error;
+        });
     }
 
     private onUploadResolve(localId: string, response: ICreateBlobResponse) {
@@ -369,7 +393,7 @@ export class BlobManager {
         if (!this.runtime.connected ||
             error.errorType === DriverErrorType.offlineError ||
             error.errorType === DriverErrorType.fetchFailure) {
-            if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+            if (!this.runtime.connected && entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 this.transitionToOffline(localId);
             }
             // we are probably not connected to storage but start another upload request in case we are
@@ -388,11 +412,13 @@ export class BlobManager {
         assert([PendingBlobStatus.OnlinePendingUpload, PendingBlobStatus.OnlinePendingOp].includes(entry.status),
             0x38a /* Blob must be in online flow to transition to offline flow */);
 
-        this.logger.sendTelemetryEvent({
-            eventName: "transitionBlobToOffline",
-            localId,
-            blobId: entry?.storageId,
-        });
+        if (!(this.runtime as any).disposed) {
+            this.logger.sendTelemetryEvent({
+                eventName: "transitionBlobToOffline",
+                localId,
+                blobId: entry?.storageId,
+            });
+        }
 
         entry.status = entry.status === PendingBlobStatus.OnlinePendingUpload
             ? PendingBlobStatus.OfflinePendingUpload

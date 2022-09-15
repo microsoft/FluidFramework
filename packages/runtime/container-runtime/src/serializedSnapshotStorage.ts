@@ -13,6 +13,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { blobsTreeName } from "./summaryFormat";
 
 /**
  * Serialized blobs from a snapshot. Used to load offline.
@@ -44,13 +45,15 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
         tree: ISnapshotTree,
         blobs: ISerializedBaseSnapshotBlobs,
         storage: IDocumentStorageService,
+        root = true,
     ) {
         const treePs: Promise<any>[] = [];
-        for (const subTree of Object.values(tree.trees)) {
-            treePs.push(this.serializeTreeCore(subTree, blobs, storage));
+        for (const [key, subTree] of Object.entries(tree.trees)) {
+            if (!root || key !== blobsTreeName) {
+                treePs.push(this.serializeTreeCore(subTree, blobs, storage, false));
+            }
         }
         for (const id of Object.values(tree.blobs)) {
-            // this is reading attachment blobs ?????????
             const blob = await storage.readBlob(id);
             // ArrayBufferLike will not survive JSON.stringify()
             blobs[id] = bufferToString(blob, "utf8");

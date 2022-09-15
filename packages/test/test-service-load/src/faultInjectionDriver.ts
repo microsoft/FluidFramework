@@ -203,6 +203,14 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     private _disposed: boolean = false;
     constructor(private readonly internal: IDocumentDeltaConnection, private online: boolean) {
         super(internal);
+        if (!online) {
+            this.unforwardEvent(this.internal, "op");
+            this.on("newListener", (event: string) => {
+                if (event === "op") {
+                    this.unforwardEvent(this.internal, "op");
+                }
+            });
+        }
     }
 
     public get disposed() { return this._disposed; }
@@ -278,6 +286,8 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
 
     public goOffline() {
         this.online = false;
+        this.unforwardEvent(this.internal, "op");
+        this.injectDisconnect();
     }
 
     public goOnline() {

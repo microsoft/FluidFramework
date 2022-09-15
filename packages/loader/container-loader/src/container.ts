@@ -639,7 +639,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 quorumClients: () => this._protocolHandler?.quorum,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
-                shouldClientJoinWrite: () => this.isDirty,
+                shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
                     // We get here when socket does not receive any ops on "write" connection, including
@@ -1536,9 +1536,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.client,
                 this._canReconnect,
                 ChildLogger.create(this.subLogger, "ConnectionManager"),
-                props,
-                () => this.isDirty,
-            ),
+                props),
         );
 
         // Disable inbound queues as Container is not ready to accept any ops until we are fully loaded!

@@ -252,25 +252,28 @@ export class LoadTestDataStoreModel {
         // download any blobs our partner may upload
         const partnerBlobCount = Math.trunc(config.testConfig.totalBlobCount ?? 0 / config.testConfig.numClients) +
             (this.partnerId < (config.testConfig.totalBlobCount ?? 0 % config.testConfig.numClients) ? 1 : 0);
+        if (Date.now() < 0) {
+            console.log(partnerBlobCount, this.partnerBlobKeyPrefix, this.logger);
+        }
 
-        const readBlob = (key: string) => {
-            if (key.startsWith(this.partnerBlobKeyPrefix)) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.root.get<IFluidHandle>(key)!.get().catch((error) => {
-                    this.logger.sendErrorEvent({
-                        eventName: "ReadBlobFailed_OnValueChanged",
-                        key,
-                    }, error);
-                });
-            }
-        };
-        if (partnerBlobCount > 0) {
-            this.root.on("valueChanged", (v) => readBlob(v.key));
-        }
-        // additional loop of readBlob in case the eventlistener won't fire when container is closed.
-        for (const key of this.root.keys()) {
-            readBlob(key);
-        }
+        // const readBlob = (key: string) => {
+        //     if (key.startsWith(this.partnerBlobKeyPrefix)) {
+        //         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        //         this.root.get<IFluidHandle>(key)!.get().catch((error) => {
+        //             this.logger.sendErrorEvent({
+        //                 eventName: "ReadBlobFailed_OnValueChanged",
+        //                 key,
+        //             }, error);
+        //         });
+        //     }
+        // };
+        // if (partnerBlobCount > 0) {
+        //     this.root.on("valueChanged", (v) => readBlob(v.key));
+        // }
+        // // additional loop of readBlob in case the eventlistener won't fire when container is closed.
+        // for (const key of this.root.keys()) {
+        //     readBlob(key);
+        // }
     }
 
     public get startTime(): number {

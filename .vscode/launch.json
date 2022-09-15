@@ -301,7 +301,7 @@
                 "--exit",
             ],
             // "cwd": "${fileDirname}",
-            "cwd": "/home/wes/fluid/packages/test/test-service-load",
+            "cwd": "/home/wes/fluid2/packages/test/test-service-load",
             "skipFiles": [
                 "<node_internals>/**",
                 "**/node_modules/**"

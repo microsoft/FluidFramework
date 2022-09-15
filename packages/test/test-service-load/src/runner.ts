@@ -271,6 +271,7 @@ async function runnerProcess(
                 reset = false;
             } catch (error) {
                 console.log("\n".repeat(5), "runnerfailed", error);
+                printStatus(runConfig, `runnerfailed ${error}`);
                 logger.sendErrorEvent({
                     eventName: "RunnerFailed",
                     testHarnessEvent: true,
@@ -311,7 +312,9 @@ async function runnerProcess(
             }
         }
 
-        printStatus(runConfig, verified ? "verified" : `not verified: ${runContext.fail}`);
+        printStatus(runConfig, verified
+            ? `verified (${JSON.stringify(runContext)})`
+            : `not verified: ${runContext.fail}`);
         return verified ? 0 : -1;
     } catch (e) {
         printStatus(runConfig, `error: loading test`);

@@ -91,10 +91,10 @@
             "readWriteCycleMs": 30000
         },
         "blobs": {
-            "opRatePerMin": 60,
+            "opRatePerMin": 120,
             "progressIntervalMs": 5000,
             "numClients": 4,
-            "totalSendCount": 200,
+            "totalSendCount": 400,
             "readWriteCycleMs": 10000,
             "totalBlobCount": 400,
             "blobSize": 10240,

@@ -71,7 +71,6 @@ describe("connectionManager", () => {
             true /* reconnectAllowed */,
             mockLogger,
             props,
-            () => true,
         );
         connectionManager.connect();
         const connection = await waitForConnection();
@@ -95,7 +94,6 @@ describe("connectionManager", () => {
             true /* reconnectAllowed */,
             mockLogger,
             props,
-            () => true,
         );
         connectionManager.connect();
         let connection = await waitForConnection();
