@@ -15,8 +15,9 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 /**
- *  Type tag used to distinguish different types of nodes in a {@link ISummaryTree}.
+ * Type tag used to distinguish different types of nodes in a {@link ISummaryTree}.
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SummaryType {
     export type Tree = 1;
     export type Blob = 2;
@@ -24,7 +25,7 @@ export namespace SummaryType {
     export type Attachment = 4;
 
     /**
-     *  Represents a sub-tree in the summary.
+     * Represents a sub-tree in the summary.
      */
     export const Tree: Tree = 1 as const;
 

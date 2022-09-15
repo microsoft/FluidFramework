@@ -12,7 +12,7 @@ export {
     EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
     UpPath, Anchor, RootField, ChildCollection,
     ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
-    Delta,
+    Delta, rootFieldKey, FieldScope, GlobalFieldKeySymbol, symbolFromKey, keyFromSymbol,
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -23,13 +23,15 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     ITreeSubscriptionCursor,
     ITreeSubscriptionCursorState,
     SynchronousNavigationResult,
+    ITreeCursorNew,
+    CursorLocationType,
 } from "./forest";
 
 export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
     FieldSchema, ValueSchema, TreeSchema,
     StoredSchemaRepository, FieldKindIdentifier,
-    rootFieldKey, TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
 } from "./schema-stored";
 
 export {
@@ -77,21 +79,6 @@ export {
 } from "./domains";
 
 export {
-    Transposed,
-    TreeForestPath,
-    TreeRootPath,
-    OpId,
-    Skip,
-    ChangesetTag,
-    Effects,
-    Tiebreak,
-    ProtoNode,
-    GapCount,
-    HasOpId,
-    NodeCount,
-} from "./changeset";
-
-export {
     buildForest,
     TextCursor,
     jsonableTreeFromCursor,
@@ -105,6 +92,8 @@ export {
     FieldEditor,
     FieldChangeRebaser,
     FieldChangeEncoder,
+    NodeChangeset,
+    ValueChange,
     FieldChangeMap,
     FieldChangeset,
     FieldChange,
@@ -131,11 +120,26 @@ export {
     valueSymbol,
     proxyTargetSymbol,
     defaultSchemaPolicy,
+    singleTextCursorNew,
+    TextCursorNew,
+    jsonableTreeFromCursorNew,
     PrimitiveValue,
     SequenceEditBuilder,
     SequenceChangeset,
     NodePath,
     PlacePath,
+    Transposed,
+    TreeForestPath,
+    TreeRootPath,
+    OpId,
+    Skip,
+    ChangesetTag,
+    Effects,
+    Tiebreak,
+    ProtoNode,
+    GapCount,
+    HasOpId,
+    NodeCount,
 } from "./feature-libraries";
 
 export {

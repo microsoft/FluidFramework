@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetTag, isSkipMark, OpId, Transposed as T } from "../../changeset";
 import { fail } from "../../util";
+import { ChangesetTag, isSkipMark, OpId, Transposed as T } from "./changeset";
 import { SequenceChangeset } from "./sequenceChangeset";
 
 /**

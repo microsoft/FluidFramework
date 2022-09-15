@@ -513,11 +513,6 @@ interface IPendingRuntimeState {
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
-// By default, we should reject any op larger than 768KB,
-// in order to account for some extra overhead from serialization
-// to not reach the 1MB limits in socket.io and Kafka.
-const defaultMaxOpSizeInBytes = 768000;
-
 const defaultFlushMode = FlushMode.TurnBased;
 
 /**
@@ -543,6 +538,12 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     return false;
 }
 
+/**
+ * Unpacks runtime messages
+ * @internal - no promises RE back-compat - this is internal API.
+ * @param message - message (as it observed in storage / service)
+ * @returns unpacked runtime message
+ */
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
     if (message.type === MessageType.Operation) {
         // legacy op format?
@@ -1583,9 +1584,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(
-                    // pre-0.58 error message: MaxReconnectsWithNoProgress
                     DataProcessingError.create(
-                        "Runtime detected too many reconnects with no progress syncing local ops",
+                        // eslint-disable-next-line max-len
+                        "Runtime detected too many reconnects with no progress syncing local ops. Batch of ops is likely too large (over 1Mb)",
                         "setConnectionState",
                         undefined,
                         {
@@ -1791,7 +1792,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
         const batch = this.batchManager.popBatch();
+        this.flushBatch(batch);
 
+        assert(this.batchManager.empty, "reentrancy");
+    }
+
+    protected flushBatch(batch: BatchMessage[]): void {
         const length = batch.length;
 
         if (length > 1) {
@@ -1853,8 +1859,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
             clientSequenceNumber++;
         }
-
-        assert(this.batchManager.empty, "reentrancy");
 
         this.pendingStateManager.onFlush();
     }
@@ -2485,6 +2489,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let handle: string;
             try {
+                // Logging removal tracked by task 1884.
+                this.logger.sendTelemetryEvent({ eventName: "uploadSummaryWithContext",
+                    proposalHandle: summaryContext.proposalHandle,
+                    ackHandle: summaryContext.ackHandle,
+                    referenceSequenceNumber: summaryContext.referenceSequenceNumber });
                 handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
             } catch (error) {
                 return { stage: "generate", ...generateSummaryData, error };
@@ -2633,41 +2642,56 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const deserializedContent: ContainerRuntimeMessage = { type, contents };
         const serializedContent = JSON.stringify(deserializedContent);
 
-        if (serializedContent.length > defaultMaxOpSizeInBytes) {
-            // If the content length is larger than the client configured message size
-            // instead of splitting the content, we will fail by explicitly closing the container
-            const error = new GenericError(
-                "OpTooLarge",
-                /* error */ undefined,
-                {
-                    length: serializedContent.length,
-                    limit: defaultMaxOpSizeInBytes,
-                });
-            this.closeFn(error);
-            throw error;
-        }
-
         if (this.deltaManager.readOnlyInfo.readonly) {
             this.logger.sendErrorEvent({ eventName: "SubmitOpInReadonly" });
         }
 
-        this.batchManager.push({
+        const message: BatchMessage = {
             contents: serializedContent,
             deserializedContent,
             metadata,
             localOpMetadata,
             referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-        });
-        if (this._flushMode !== FlushMode.TurnBased) {
-            this.flush();
-        } else if (!this.flushTrigger) {
-            this.flushTrigger = true;
-            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.resolve().then(() => {
-                this.flushTrigger = false;
-                this.flush();
-            });
+        };
+
+        try {
+            // If this is attach message for new data store, and we are in a batch, send this op out of order
+            // Is it safe:
+            //    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
+            //    They become visible only when aliased, or handle to some sub-element of newly created datastore
+            //    is stored in some DDS, i.e. only after some other op.
+            // Why:
+            //    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
+            //    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
+            //    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
+            //    these issues.
+            // Cons:
+            //    With large batches, relay service may throttle clients. Clients may disconnect while throttled.
+            //    This change creates new possibility of a lot of newly created data stores never being referenced
+            //    because client died before it had a change to submit the rest of the ops. This will create more
+            //    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
+            // Please note that this does not change file format, so it can be disabled in the future if this
+            // optimization no longer makes sense (for example, batch compression may make it less appealing).
+            if (this._flushMode === FlushMode.TurnBased && type === ContainerMessageType.Attach &&
+                    this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
+                this.flushBatch([message]);
+            } else {
+                this.batchManager.push(message);
+                if (this._flushMode !== FlushMode.TurnBased) {
+                    this.flush();
+                } else if (!this.flushTrigger) {
+                    this.flushTrigger = true;
+                    // Queue a microtask to detect the end of the turn and force a flush.
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    Promise.resolve().then(() => {
+                        this.flushTrigger = false;
+                        this.flush();
+                    });
+                }
+            }
+        } catch (error) {
+            this.closeFn(error as GenericError);
+            throw error;
         }
 
         if (this.isContainerMessageDirtyable(type, contents)) {
@@ -2762,25 +2786,29 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        const { snapshotTree } = await this.fetchSnapshotFromStorage(
-            ackHandle,
-            summaryLogger,
-            {
-                eventName: "RefreshLatestSummaryGetSnapshot",
-                ackHandle,
-                summaryRefSeq,
-                fetchLatest: false,
-            },
-        );
-        const result = await this.summarizerNode.refreshLatestSummary(
-            proposalHandle,
-            summaryRefSeq,
-            async () => snapshotTree,
-            readAndParseBlob,
-            summaryLogger,
-        );
+        // The call to fetch the snapshot is very expensive and not always needed.
+        // It should only be done by the summarizerNode, if required.
+        const snapshotTreeFetcher = async () => {
+            const fetchResult = await this.fetchSnapshotFromStorage(
+             ackHandle,
+             summaryLogger,
+             {
+                 eventName: "RefreshLatestSummaryGetSnapshot",
+                 ackHandle,
+                 summaryRefSeq,
+                 fetchLatest: false,
+             });
+             return fetchResult.snapshotTree;
+         };
+         const result = await this.summarizerNode.refreshLatestSummary(
+             proposalHandle,
+             summaryRefSeq,
+             snapshotTreeFetcher,
+             readAndParseBlob,
+             summaryLogger,
+         );
 
-        // Notify the garbage collector so it can update its latest summary state.
+         // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
     }
 
