@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { forEachNode, ITreeCursorNew } from "../../../forest";
+import { forEachNode, ITreeCursorNew } from "../../../tree";
 
 export function sum(cursor: ITreeCursorNew): number {
     let total = 0;

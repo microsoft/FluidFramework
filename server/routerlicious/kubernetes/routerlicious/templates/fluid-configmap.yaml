@@ -66,6 +66,7 @@ data:
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
+            "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "throttling": {
                 "restCalls": {
                     "maxPerMs": {{ .Values.alfred.throttling.restCalls.maxPerMs }},

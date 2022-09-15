@@ -12,12 +12,10 @@ import {
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
-import { jsonableTreeFromCursorNew } from "../../../feature-libraries";
-import { FieldKey } from "../../../tree";
-import { brand } from "../../../util";
+import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
 import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize } from "./twitter";
+import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -78,6 +76,7 @@ function bench(
 
         const cursorFactories: [string, () => ITreeCursorNew][] = [
             ["TextCursor", () => singleTextCursorNew(encodedTree)],
+            ["MapCursor", () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree)))],
         ];
 
         const consumers: [
@@ -89,6 +88,7 @@ function bench(
                 // TODO: finish porting other cursor code and enable this.
                 // ["cursorToJsonObject", cursorToJsonObjectNew],
                 ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+                ["mapTreeFromCursor", mapTreeFromCursor],
                 ["sum", sum],
                 ["sum-map", sumMap],
                 ["averageTwoValues", averageTwoValues],
@@ -167,22 +167,18 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
 }
 
 function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
-    const statusesKey: FieldKey = brand("statuses");
-    const retweetCountKey: FieldKey = brand("retweet_count");
-    const favoriteCountKey: FieldKey = brand("favorite_count");
-
-    cursor.enterField(statusesKey); // move from root to field
+    cursor.enterField(TwitterStatus.statusesKey); // move from root to field
     cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
     cursor.enterField(EmptyKey); // enter the array field at the node,
 
     for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-        cursor.enterField(retweetCountKey);
+        cursor.enterField(TwitterStatus.retweetCountKey);
         cursor.enterNode(0);
         const retweetCount = cursor.value as number;
         cursor.exitNode();
         cursor.exitField();
 
-        cursor.enterField(favoriteCountKey);
+        cursor.enterField(TwitterStatus.favoriteCountKey);
         cursor.enterNode(0);
         const favoriteCount = cursor.value;
         cursor.exitNode();
