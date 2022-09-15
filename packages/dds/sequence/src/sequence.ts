@@ -422,7 +422,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     /**
-     * @returns an iterable object that enumerates the IntervalCollection labels
+     * @returns An iterable object that enumerates the IntervalCollection labels.
      *
      * @example
      * ```typescript
