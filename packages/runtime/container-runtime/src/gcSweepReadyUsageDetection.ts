@@ -59,15 +59,16 @@ export class SweepReadyUsageDetectionHandler {
         localStorageImpl: Pick<Storage, "getItem" | "setItem"> | undefined,
         private readonly closeFn: (error?: ICriticalContainerError) => void,
     ) {
-        const noopStorage = { getItem: () => null, setItem: () => {} };
-        try {
-            this.storage =
-                localStorageImpl ??
-                (typeof localStorage === "object" && localStorage !== null)
-                    ? localStorage
-                    : noopStorage;
-        } catch (error) {
-            this.storage = noopStorage;
+        if (localStorageImpl !== undefined) {
+            this.storage = localStorageImpl;
+        } else {
+            const noopStorage = { getItem: () => null, setItem: () => {} };
+            try {
+                // localStorage is not defined in Node environment so this throws
+                this.storage = localStorage ?? noopStorage;
+            } catch (error) {
+                this.storage = noopStorage;
+            }
         }
     }
 
@@ -99,7 +100,7 @@ export class SweepReadyUsageDetectionHandler {
             || throttlingDurationDays === undefined // ...there's no throttling duration set, or...
             || Date.now() > lastClose + throttlingDurationDays * oneDayMs; // ...we've passed the throttling period
 
-        return { allowClose, lastClose, throttlingDurationDays };
+        return { allowClose, lastClose, throttlingDurationDays, closures };
     }
 
     public usageDetectedInMainContainer(errorProps: ITelemetryProperties) {
@@ -111,10 +112,12 @@ export class SweepReadyUsageDetectionHandler {
             "SweepReady object used in Non-Summarizer Container",
             { errorDetails: JSON.stringify(errorProps) });
 
-        const { allowClose, lastClose, throttlingDurationDays } =
+        const { allowClose, lastClose, throttlingDurationDays, closures } =
             this.getSweepReadyObjectUsageClosurePolicy() ?? { allowClose: true };
         if (allowClose) {
             //* Also add props lastClose and throttlingDurationDays?
+            this.storage.setItem(
+                closuresStorageKey, JSON.stringify({ ...closures, [this.uniqueContainerKey]: Date.now() }));
             this.closeFn(error);
         } else {
             this.mc.logger.sendErrorEvent({
