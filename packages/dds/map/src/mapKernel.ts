@@ -216,6 +216,7 @@ export class MapKernel {
                 const nextVal = localValuesIterator.next();
                 return nextVal.done
                     ? { value: undefined, done: true }
+                    // Unpack the stored value
                     : { value: nextVal.value.value, done: false };
             },
             [Symbol.iterator]() {
