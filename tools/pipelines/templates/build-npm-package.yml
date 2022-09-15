@@ -338,7 +338,7 @@ stages:
                 mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
                 mkdir $(Build.ArtifactStagingDirectory)/test-files/
                 mkdir $(Build.ArtifactStagingDirectory)/log/
-                mv $(parameters.buildDirectory)/packages/test/test-end-to-end-tests/tinylicious.log $(Build.ArtifactStagingDirectory)/log/
+                mv ${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log $(Build.ArtifactStagingDirectory)/log/
                 if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
