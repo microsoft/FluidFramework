@@ -500,11 +500,6 @@ function* buildScenario(
                     yield built;
                 }
                 scenario.pop();
-                scenario.push({ type: "Pull", seq: meta.seq, ref: ref + 0.5, from: peers[iPeer] });
-                for (const built of buildScenario(scenario, meta)) {
-                    yield built;
-                }
-                scenario.pop();
             }
             meta.peerRefs[iPeer] = prevRef;
         }
