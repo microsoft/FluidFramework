@@ -385,6 +385,15 @@ describe("EditManager", () => {
             { seq: 8, type: "Ack" },
             { seq: 9, type: "Pull", ref: 0, from: peer2, expectedDelta: [9] },
         ]);
+
+        runUnitTestScenario("Can handle ref numbers to operations that are not commits", [
+            { seq: 2, type: "Pull", ref: 0, from: peer1 },
+            { seq: 4, type: "Pull", ref: 1, from: peer2 },
+            { seq: 6, type: "Pull", ref: 3, from: peer1 },
+            { seq: 8, type: "Pull", ref: 3, from: peer1 },
+            { seq: 10, type: "Pull", ref: 0, from: peer2 },
+            { seq: 12, type: "Pull", ref: 1, from: peer2 },
+        ]);
     });
 
     describe("Avoids unnecessary rebases", () => {
@@ -487,6 +496,11 @@ function* buildScenario(
             for (let ref = prevRef; ref < meta.seq; ++ref) {
                 meta.peerRefs[iPeer] = ref;
                 scenario.push({ type: "Pull", seq: meta.seq, ref, from: peers[iPeer] });
+                for (const built of buildScenario(scenario, meta)) {
+                    yield built;
+                }
+                scenario.pop();
+                scenario.push({ type: "Pull", seq: meta.seq, ref: ref + 0.5, from: peers[iPeer] });
                 for (const built of buildScenario(scenario, meta)) {
                     yield built;
                 }
