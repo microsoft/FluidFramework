@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryPerformanceEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
@@ -34,10 +34,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
-    IConfigProvider,
-    IFluidErrorBase,
     loggerToMonitoringContext,
-    LoggingError,
     MonitoringContext,
     PerformanceEvent,
     TelemetryDataTag,
@@ -45,6 +42,7 @@ import {
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
+import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
     getGCVersion,
     GCVersion,
@@ -79,24 +77,6 @@ export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionEx
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-/**
- * Feature gate key to enable closing the container if SweepReady objects are used.
- * Only known values are accepted, otherwise return undefined.
- *
- * mainContainer: Detect these errors only in the main container
- */
- export const sweepReadyUsageDetectionSetting = {
-    read(config: IConfigProvider): "mainContainer" | undefined {
-        const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
-        const value = config.getString(sweepReadyUsageDetectionKey);
-        switch (value) {
-            case "mainContainer":
-                return value;
-            default:
-                return undefined;
-        }
-    },
-};
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -326,90 +306,6 @@ export class UnreferencedStateTracker {
     public stopTracking() {
         this.clearTimers();
         this._state = UnreferencedState.Active;
-    }
-}
-
-/**
- * Error class raised when a SweepReady object is used, indicating a bug in how
- * references are managed in the container by the application, or a bug in how
- * GC tracks those references.
- *
- * There's a chance for false positives when this error is raised by a Main Container,
- * since only the Summarizer has the latest truth about unreferenced node tracking
- */
-class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
-    /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
-    public errorType: string = "objectUsedAfterMarkedForDeletionError";
-}
-
-class SweepReadyUsageDetectionHandler {
-    private readonly storage: Pick<Storage, "getItem" | "setItem">;
-    constructor(
-        /** Unique key for this container for diagnostic purposes */
-        private readonly uniqueContainerKey: string,
-        private readonly mc: MonitoringContext,
-        localStorageImpl: Pick<Storage, "getItem" | "setItem"> | undefined,
-        private readonly closeFn: (error?: ICriticalContainerError) => void,
-    ) {
-        this.storage =
-            localStorageImpl ??
-            (typeof localStorage === "object" && localStorage !== null)
-                ? localStorage
-                : { getItem: () => null, setItem: () => {} };
-    }
-
-    //* Hide constructor and use this instead - return undef if required settings are missing
-    public createIfApplicable(
-    ) {
-    }
-
-    public getSweepReadyObjectUsageClosurePolicy() {
-        //* Don't even bother doing this if ThrottlingDurationDays is 0/undefined
-        const closures = (() => {
-            try {
-                //* Encapsulate this in a class that holds the JSON object and can keep it in sync with localStorage
-                const rawValue =
-                    this.storage.getItem("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures");
-                return rawValue === null
-                    ? {}
-                    : JSON.parse(rawValue) as Record<string, number | undefined>;
-            } catch (e) {
-                return {};
-            }
-        })();
-
-        const lastClose = closures[this.uniqueContainerKey];
-        const throttlingDurationDays =
-            this.mc.config.getNumber("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.ThrottlingDurationDays");
-
-        // Allow closing if...
-        const allowClose = lastClose === undefined // ...We've not closed before, or...
-            || throttlingDurationDays === undefined // ...there's no throttling duration set, or...
-            || Date.now() > lastClose + throttlingDurationDays * oneDayMs; // ...we've passed the throttling period
-
-        return { allowClose, lastClose, throttlingDurationDays };
-    }
-
-    public usageDetectedInMainContainer(errorProps: ITelemetryProperties) {
-        if (sweepReadyUsageDetectionSetting.read(this.mc.config) !== "mainContainer") {
-            return;
-        }
-        const error = new SweepReadyUsageError(
-            "SweepReady object used in Non-Summarizer Container",
-            { errorDetails: JSON.stringify(errorProps) });
-
-        const { allowClose, lastClose, throttlingDurationDays } =
-            this.getSweepReadyObjectUsageClosurePolicy() ?? { allowClose: true };
-        if (allowClose) {
-            //* Also add props lastClose and throttlingDurationDays?
-            this.closeFn(error);
-        } else {
-            this.mc.logger.sendErrorEvent({
-                eventName: "IgnoringSweepReadyObjectUsage",
-                details: JSON.stringify({ lastClose, throttlingDurationDays }),
-            },
-            error);
-        }
     }
 }
 
