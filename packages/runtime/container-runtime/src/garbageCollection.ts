@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
@@ -476,6 +476,9 @@ export class GarbageCollector implements IGarbageCollector {
     /** Returns the timestamp of the last summary generated for this container. */
     private readonly getLastSummaryTimestampMs: () => number | undefined;
 
+    /** Unique key for this container for diagnostic purposes */
+    private readonly uniqueContainerKey: string;
+
     protected constructor(createParams: IGarbageCollectorCreateParams) {
         this.runtime = createParams.runtime;
         this.isSummarizerClient = createParams.isSummarizerClient;
@@ -486,6 +489,9 @@ export class GarbageCollector implements IGarbageCollector {
         const baseSnapshot = createParams.baseSnapshot;
         const metadata = createParams.metadata;
         const readAndParseBlob = createParams.readAndParseBlob;
+
+        //* Properly expose this via callback in createParams
+        this.uniqueContainerKey = (this.runtime as any as { context: IContainerContext; }).context.id;
 
         this.mc = loggerToMonitoringContext(ChildLogger.create(
             createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
@@ -1318,6 +1324,31 @@ export class GarbageCollector implements IGarbageCollector {
         });
     }
 
+    private getSweepReadyObjectUsageClosurePolicy() {
+        const closures = (() => {
+            try {
+                const rawValue =
+                    this.mc.config.getString("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures");
+                return rawValue === undefined
+                    ? {}
+                    : JSON.parse(rawValue) as Record<string, number | undefined>;
+            } catch (e) {
+                return {};
+            }
+        })();
+
+        const lastClose = closures[this.uniqueContainerKey];
+        const throttlingDurationDays =
+            this.mc.config.getNumber("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.ThrottlingDurationDays");
+
+        // Allow closing if...
+        const allowClose = lastClose === undefined // ...We've not closed before, or...
+            || throttlingDurationDays === undefined // ...there's no throttling duration set, or...
+            || Date.now() > lastClose + throttlingDurationDays * oneDayMs; // ...we've passed the throttling period
+
+        return { allowClose, lastClose, throttlingDurationDays };
+    }
+
     /**
      * Called when an inactive node is used after. Queue up an event that will be logged next time GC runs.
      */
@@ -1387,7 +1418,19 @@ export class GarbageCollector implements IGarbageCollector {
                 const error = new SweepReadyUsageError(
                     "SweepReady object used in Non-Summarizer Container",
                     { errorDetails: JSON.stringify(propsToLog) });
-                this.runtime.closeFn(error);
+
+                const { allowClose, lastClose, throttlingDurationDays } = this.getSweepReadyObjectUsageClosurePolicy();
+                if (allowClose) {
+                    //* Update localStorage object Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures
+                    //* Assymetrical with getting from settings above...  hmm...
+                    this.runtime.closeFn(error);
+                } else {
+                    this.mc.logger.sendErrorEvent({
+                        eventName: "IgnoringSweepReadyObjectUsage",
+                        details: JSON.stringify({ lastClose, throttlingDurationDays }),
+                    },
+                    error);
+                }
             }
         }
     }
