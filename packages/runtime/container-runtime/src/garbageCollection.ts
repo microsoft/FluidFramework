@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryPerformanceEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
@@ -208,6 +208,7 @@ export interface IGarbageCollectorCreateParams {
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly snapshotCacheExpiryMs?: number;
+    readonly localStorageImpl?: Storage; // For tests running Node environment
 }
 
 /** The state of node that is unreferenced. */
@@ -339,6 +340,77 @@ export class UnreferencedStateTracker {
 class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
     /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
     public errorType: string = "objectUsedAfterMarkedForDeletionError";
+}
+
+class SweepReadyUsageDetectionHandler {
+    private readonly storage: Pick<Storage, "getItem" | "setItem">;
+    constructor(
+        /** Unique key for this container for diagnostic purposes */
+        private readonly uniqueContainerKey: string,
+        private readonly mc: MonitoringContext,
+        localStorageImpl: Pick<Storage, "getItem" | "setItem"> | undefined,
+        private readonly closeFn: (error?: ICriticalContainerError) => void,
+    ) {
+        this.storage =
+            localStorageImpl ??
+            (typeof localStorage === "object" && localStorage !== null)
+                ? localStorage
+                : { getItem: () => null, setItem: () => {} };
+    }
+
+    //* Hide constructor and use this instead - return undef if required settings are missing
+    public createIfApplicable(
+    ) {
+    }
+
+    public getSweepReadyObjectUsageClosurePolicy() {
+        //* Don't even bother doing this if ThrottlingDurationDays is 0/undefined
+        const closures = (() => {
+            try {
+                //* Encapsulate this in a class that holds the JSON object and can keep it in sync with localStorage
+                const rawValue =
+                    this.storage.getItem("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures");
+                return rawValue === null
+                    ? {}
+                    : JSON.parse(rawValue) as Record<string, number | undefined>;
+            } catch (e) {
+                return {};
+            }
+        })();
+
+        const lastClose = closures[this.uniqueContainerKey];
+        const throttlingDurationDays =
+            this.mc.config.getNumber("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.ThrottlingDurationDays");
+
+        // Allow closing if...
+        const allowClose = lastClose === undefined // ...We've not closed before, or...
+            || throttlingDurationDays === undefined // ...there's no throttling duration set, or...
+            || Date.now() > lastClose + throttlingDurationDays * oneDayMs; // ...we've passed the throttling period
+
+        return { allowClose, lastClose, throttlingDurationDays };
+    }
+
+    public usageDetectedInMainContainer(errorProps: ITelemetryProperties) {
+        if (sweepReadyUsageDetectionSetting.read(this.mc.config) !== "mainContainer") {
+            return;
+        }
+        const error = new SweepReadyUsageError(
+            "SweepReady object used in Non-Summarizer Container",
+            { errorDetails: JSON.stringify(errorProps) });
+
+        const { allowClose, lastClose, throttlingDurationDays } =
+            this.getSweepReadyObjectUsageClosurePolicy() ?? { allowClose: true };
+        if (allowClose) {
+            //* Also add props lastClose and throttlingDurationDays?
+            this.closeFn(error);
+        } else {
+            this.mc.logger.sendErrorEvent({
+                eventName: "IgnoringSweepReadyObjectUsage",
+                details: JSON.stringify({ lastClose, throttlingDurationDays }),
+            },
+            error);
+        }
+    }
 }
 
 /**
@@ -476,8 +548,8 @@ export class GarbageCollector implements IGarbageCollector {
     /** Returns the timestamp of the last summary generated for this container. */
     private readonly getLastSummaryTimestampMs: () => number | undefined;
 
-    /** Unique key for this container for diagnostic purposes */
-    private readonly uniqueContainerKey: string;
+    //* Comment and rename
+    private readonly sweepReadyUsageHandler: SweepReadyUsageDetectionHandler;
 
     protected constructor(createParams: IGarbageCollectorCreateParams) {
         this.runtime = createParams.runtime;
@@ -490,12 +562,20 @@ export class GarbageCollector implements IGarbageCollector {
         const metadata = createParams.metadata;
         const readAndParseBlob = createParams.readAndParseBlob;
 
-        //* Properly expose this via callback in createParams
-        this.uniqueContainerKey = (this.runtime as any as { context: IContainerContext; }).context.id;
-
         this.mc = loggerToMonitoringContext(ChildLogger.create(
             createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
         ));
+
+        //* Properly expose this via callback in createParams
+        const uniqueContainerKey = (this.runtime as any as { context: IContainerContext; }).context.id;
+        this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
+            uniqueContainerKey,
+            this.mc,
+            createParams.localStorageImpl,
+            //* double-check
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            this.runtime.closeFn,
+        );
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -1324,44 +1404,6 @@ export class GarbageCollector implements IGarbageCollector {
         });
     }
 
-    //* Move
-    private readonly safeLocalStorage = {
-        // eslint-disable-next-line max-len
-        read(key: string) { return typeof localStorage === "object" && localStorage !== null && localStorage[key] as string || undefined; },
-        write(key: string, value) {
-            if (typeof localStorage === "object" && localStorage !== null) {
-                localStorage[key] = value;
-            }
-        },
-    };
-
-    private getSweepReadyObjectUsageClosurePolicy() {
-        //* Don't even bother doing this if ThrottlingDurationDays is 0/undefined
-        const closures = (() => {
-            try {
-                //* Encapsulate this in a class that holds the JSON object and can keep it in sync with localStorage
-                const rawValue =
-                    this.safeLocalStorage.read("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures");
-                return rawValue === undefined
-                    ? {}
-                    : JSON.parse(rawValue) as Record<string, number | undefined>;
-            } catch (e) {
-                return {};
-            }
-        })();
-
-        const lastClose = closures[this.uniqueContainerKey];
-        const throttlingDurationDays =
-            this.mc.config.getNumber("Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.ThrottlingDurationDays");
-
-        // Allow closing if...
-        const allowClose = lastClose === undefined // ...We've not closed before, or...
-            || throttlingDurationDays === undefined // ...there's no throttling duration set, or...
-            || Date.now() > lastClose + throttlingDurationDays * oneDayMs; // ...we've passed the throttling period
-
-        return { allowClose, lastClose, throttlingDurationDays };
-    }
-
     /**
      * Called when an inactive node is used after. Queue up an event that will be logged next time GC runs.
      */
@@ -1427,23 +1469,8 @@ export class GarbageCollector implements IGarbageCollector {
             }
 
             // If SweepReady Usage Detection is enabed, close the main container
-            if (state === "SweepReady" && sweepReadyUsageDetectionSetting.read(this.mc.config) === "mainContainer") {
-                const error = new SweepReadyUsageError(
-                    "SweepReady object used in Non-Summarizer Container",
-                    { errorDetails: JSON.stringify(propsToLog) });
-
-                const { allowClose, lastClose, throttlingDurationDays } = this.getSweepReadyObjectUsageClosurePolicy();
-                if (allowClose) {
-                    //* Update localStorage object Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures
-                    //* Assymetrical with getting from settings above...  hmm...
-                    this.runtime.closeFn(error);
-                } else {
-                    this.mc.logger.sendErrorEvent({
-                        eventName: "IgnoringSweepReadyObjectUsage",
-                        details: JSON.stringify({ lastClose, throttlingDurationDays }),
-                    },
-                    error);
-                }
+            if (state === "SweepReady") {
+                this.sweepReadyUsageHandler.usageDetectedInMainContainer(propsToLog);
             }
         }
     }
