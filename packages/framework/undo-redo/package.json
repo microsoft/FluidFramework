@@ -102,10 +102,6 @@
   },
   "typeValidation": {
     "version": "0.59.2000",
-    "broken": {
-      "ClassDeclaration_SharedSegmentSequenceRevertible": {
-        "backCompat": false
-      }
-    }
+    "broken": {}
   }
 }
