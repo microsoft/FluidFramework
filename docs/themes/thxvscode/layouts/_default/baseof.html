@@ -8,18 +8,18 @@
     <script src="https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js"></script>
     {{- end -}}
 
-    <div id="main" style="flex-grow: 1;display: flex;flex-direction: column;">
+    <div id="main">
         {{- partial "header.html" . -}}
-        <div {{ if .IsHome}}class="home" {{ end}} style="flex-grow: 1; display:flex;">
+        <div {{ if .IsHome}}class="home main-wrapper" {{ else }} class="main-wrapper" {{ end}}>
             {{- block "main" . }}{{- end }}
         </div>
     </div>
     {{- partial "footer.html" . -}}
 </body>
 
-{{ $script := resources.Get "js/bundle.js" | resources.ExecuteAsTemplate "js/main.js" .  | minify |fingerprint -}}
-<script src="{{ $script.Permalink | relURL }}"
-    {{ printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr -}}>
+{{ $script := resources.Get "js/bundle.js" | resources.ExecuteAsTemplate "js/main.js" . | minify |fingerprint -}}
+<script src="{{ $script.Permalink | relURL }}" {{ printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr -}}>
 </script>
 {{- partial "cookies.html" . -}}
+
 </html>
