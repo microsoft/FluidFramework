@@ -5,7 +5,7 @@
 
 import * as fs from "fs";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { IFileLogger } from "./FileLogger";
+import { IFileLogger } from "./fileLogger";
 
 // TODO: be strict about FileLogger.ts exports
 export abstract class BaseFileLogger implements IFileLogger {

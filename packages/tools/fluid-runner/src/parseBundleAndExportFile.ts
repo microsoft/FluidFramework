@@ -9,7 +9,7 @@ import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
 import { createContainerAndExecute, IExportFileResponse } from "./exportFile";
 import { getArgsValidationError } from "./getArgsValidationError";
 // eslint-disable-next-line import/no-internal-modules
-import { createLogger, getTelemetryFileValidationError } from "./logger/FileLogger";
+import { createLogger, getTelemetryFileValidationError } from "./logger/fileLogger";
 import { getSnapshotFileContent } from "./utils";
 
 const clientArgsValidationError = "Client_ArgsValidationError";
