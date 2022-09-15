@@ -40,8 +40,8 @@ import { SerializedSessionIdNormalizer } from './persisted-types';
  * which depends on receiving an ack/sequence number from the server. Given this context, "session space" can be thought of as:
  *
  * ```
- * 		for each index in the range of IDs created by a session:
- * 			the local form if it exists, otherwise the final form
+ * for each index in the range of IDs created by a session:
+ * 	the local form if it exists, otherwise the final form
  * ```
  *
  * This class is designed to efficiently build and query these mappings by leveraging the facts that much of the range (in both local and
