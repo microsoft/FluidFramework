@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { strict as assert } from "assert";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
