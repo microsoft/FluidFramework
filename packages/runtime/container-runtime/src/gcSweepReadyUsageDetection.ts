@@ -28,8 +28,8 @@ const sweepReadyUsageDetectionSetting = {
             return { mainContainer: false, summarizer: false };
         }
         return {
-            mainContainer: value.indexOf("mainContainer") >= 0,
-            summarizer: value.indexOf("summarizer") >= 0,
+            mainContainer: value.includes("mainContainer"),
+            summarizer: value.includes("summarizer"),
         };
     },
 };
