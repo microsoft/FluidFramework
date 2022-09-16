@@ -9,4 +9,6 @@ export * from "./sequenceFieldChangeRebaser";
 export * from "./sequenceFieldChangeEncoder";
 export * from "./sequenceEditBuilder";
 export * from "./markListFactory";
-export { DUMMY_INVERT_TAG } from "./invert";
+export * from "./rebase";
+export * from "./invert";
+export * from "./compose";

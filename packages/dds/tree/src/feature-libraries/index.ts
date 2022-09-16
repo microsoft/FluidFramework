@@ -44,6 +44,10 @@ export {
     FieldKind,
     Multiplicity,
     FullSchemaPolicy,
+    MockChildChange,
+    mockChildChangeRebaser,
+    mockChildChangeInverter,
+    mockChildChangeComposer,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.

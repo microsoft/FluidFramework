@@ -5,32 +5,26 @@
 
 import { strict as assert } from "assert";
 import {
-    NodeChangeset,
+    mockChildChangeComposer,
     SequenceField as SF,
 } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
-import { cases } from "./cases";
+import { cases, TestChangeset } from "./cases";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
 
-function compose(changes: SF.Changeset[]): SF.Changeset {
+function compose(changes: TestChangeset[]): TestChangeset {
     changes.forEach(deepFreeze);
-    return SF.sequenceFieldChangeRebaser.compose(changes, childComposer);
+    return SF.compose(changes, mockChildChangeComposer);
 }
 
-const childComposer = (changes: NodeChangeset[]) => {
-    if (changes.length === 0) {
-        return {};
-    }
-    for (const change of changes) {
-        assert.equal(change.fieldChanges, undefined);
-        assert.notEqual(change.valueChange, undefined);
-    }
-    return changes[changes.length - 1];
-};
+function shallowCompose(changes: SF.Changeset[]): SF.Changeset {
+    changes.forEach(deepFreeze);
+    return SF.sequenceFieldChangeRebaser.compose(changes, () => assert.fail("Unexpected call to child rebaser"));
+}
 
 describe("SequenceChangeFamily - Compose", () => {
     describe("associativity of triplets", () => {
@@ -51,7 +45,7 @@ describe("SequenceChangeFamily - Compose", () => {
     });
 
     it("no changes", () => {
-        const actual = compose([]);
+        const actual = shallowCompose([]);
         assert.deepEqual(actual, cases.no_change);
     });
 
@@ -62,7 +56,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const deletion: SF.Changeset = [
             { type: "Delete", id: 2, count: 1 },
         ];
-        const actual = compose([insertion, deletion]);
+        const actual = shallowCompose([insertion, deletion]);
         assert.deepEqual(actual, cases.no_change);
     });
 
@@ -83,29 +77,29 @@ describe("SequenceChangeFamily - Compose", () => {
             },
             { type: "Insert", id: 1, content: [{ type, value: 2 }] },
         ];
-        const actual = compose([insert, modify]);
+        const actual = shallowCompose([insert, modify]);
         assert.deepEqual(actual, expected);
     });
 
     it("modify insert ○ modify", () => {
-        const insert: SF.Changeset = [
+        const insert: TestChangeset = [
             {
                 type: "MInsert",
                 id: 1,
                 content: { type, value: 1 },
-                changes: { valueChange: { value: 2 } },
+                changes: { intentions: [1], ref: 0 },
             },
         ];
-        const modify: SF.Changeset = [{
+        const modify: TestChangeset = [{
             type: "Modify",
-            changes: { valueChange: { value: 3 } },
+            changes: { intentions: [2], ref: 1 },
         }];
-        const expected: SF.Changeset = [
+        const expected: TestChangeset = [
             {
                 type: "MInsert",
                 id: 1,
                 content: { type, value: 1 },
-                changes: { valueChange: { value: 3 } },
+                changes: { intentions: [1, 2], ref: 0 },
             },
         ];
         const actual = compose([insert, modify]);
@@ -127,7 +121,7 @@ describe("SequenceChangeFamily - Compose", () => {
                 changes: { valueChange: { value: 2 } },
             },
         ];
-        const actual = compose([deletion, modify]);
+        const actual = shallowCompose([deletion, modify]);
         assert.deepEqual(actual, expected);
     });
 
@@ -148,21 +142,25 @@ describe("SequenceChangeFamily - Compose", () => {
             },
             { type: "Revive", id: 1, count: 2, tomb },
         ];
-        const actual = compose([revive, modify]);
+        const actual = shallowCompose([revive, modify]);
         assert.deepEqual(actual, expected);
     });
 
     it("modify ○ modify", () => {
-        const modifyA: SF.Changeset = [{
+        const modifyA: TestChangeset = [{
             type: "Modify",
-            changes: { valueChange: { value: 1 } },
+            changes: { intentions: [1], ref: 0 },
         }];
-        const modifyB: SF.Changeset = [{
+        const modifyB: TestChangeset = [{
             type: "Modify",
-            changes: { valueChange: { value: 2 } },
+            changes: { intentions: [2], ref: 1 },
+        }];
+        const expected: TestChangeset = [{
+            type: "Modify",
+            changes: { intentions: [1, 2], ref: 0 },
         }];
         const actual = compose([modifyA, modifyB]);
-        assert.deepEqual(actual, modifyB);
+        assert.deepEqual(actual, expected);
     });
 
     it("insert ○ delete (within insert)", () => {
@@ -177,7 +175,7 @@ describe("SequenceChangeFamily - Compose", () => {
             1,
             { type: "Delete", id: 2, count: 1 },
         ];
-        const actual = compose([insert, deletion]);
+        const actual = shallowCompose([insert, deletion]);
         const expected: SF.Changeset = [
             { type: "Insert", id: 1, content: [
                 { type, value: 1 },
@@ -206,7 +204,7 @@ describe("SequenceChangeFamily - Compose", () => {
             1,
             { type: "Delete", id: 2, count: 4 },
         ];
-        const actual = compose([insert, deletion]);
+        const actual = shallowCompose([insert, deletion]);
         const expected: SF.Changeset = [
             { type: "Insert", id: 1, content: [
                 { type, value: 1 },
@@ -226,7 +224,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const deletion: SF.Changeset = [
             { type: "Delete", id: 2, count: 1 },
         ];
-        const actual = compose([modify, deletion]);
+        const actual = shallowCompose([modify, deletion]);
         assert.deepEqual(actual, deletion);
     });
 
@@ -243,7 +241,7 @@ describe("SequenceChangeFamily - Compose", () => {
             2,
             { type: "Delete", id: 4, count: 2 },
         ];
-        const actual = compose([deleteA, deleteB]);
+        const actual = shallowCompose([deleteA, deleteB]);
         // Deletes ABCDEFG-IJKLMNOP
         const expected: SF.Changeset = [
             { type: "Delete", id: 1, count: 3 },
@@ -266,7 +264,7 @@ describe("SequenceChangeFamily - Compose", () => {
             1,
             { type: "Delete", id: 4, count: 3 },
         ];
-        const actual = compose([revive, deletion]);
+        const actual = shallowCompose([revive, deletion]);
         const expected: SF.Changeset = [
             { type: "Revive", id: 1, count: 2, tomb },
             { type: "Delete", id: 4, count: 1 },
@@ -289,7 +287,7 @@ describe("SequenceChangeFamily - Compose", () => {
                 changes: { valueChange: { value: 1 } },
             },
         ];
-        const actual = compose([modify, insert]);
+        const actual = shallowCompose([modify, insert]);
         assert.deepEqual(actual, expected);
     });
 
@@ -305,7 +303,7 @@ describe("SequenceChangeFamily - Compose", () => {
             { type: "Insert", id: 1, content: [{ type, value: 2 }] },
             { type: "Delete", id: 1, count: 3 },
         ];
-        const actual = compose([deletion, insert]);
+        const actual = shallowCompose([deletion, insert]);
         assert.deepEqual(actual, expected);
     });
 
@@ -321,7 +319,7 @@ describe("SequenceChangeFamily - Compose", () => {
             { type: "Insert", id: 1, content: [{ type, value: 2 }] },
             { type: "Revive", id: 1, count: 5, tomb },
         ];
-        const actual = compose([deletion, insert]);
+        const actual = shallowCompose([deletion, insert]);
         assert.deepEqual(actual, expected);
     });
 
@@ -336,7 +334,7 @@ describe("SequenceChangeFamily - Compose", () => {
             4,
             { type: "Insert", id: 4, content: [{ type, value: 4 }] },
         ];
-        const actual = compose([insertA, insertB]);
+        const actual = shallowCompose([insertA, insertB]);
         const expected: SF.Changeset = [
             { type: "Insert", id: 3, content: [{ type, value: 3 }] },
             { type: "Insert", id: 1, content: [{ type, value: 1 }] },
@@ -363,7 +361,7 @@ describe("SequenceChangeFamily - Compose", () => {
                 changes: { valueChange: { value: 1 } },
             },
         ];
-        const actual = compose([modify, revive]);
+        const actual = shallowCompose([modify, revive]);
         assert.deepEqual(actual, expected);
     });
 
@@ -380,7 +378,7 @@ describe("SequenceChangeFamily - Compose", () => {
             { type: "Revive", id: 1, count: 2, tomb },
             { type: "Delete", id: 1, count: 3 },
         ];
-        const actual = compose([deletion, revive]);
+        const actual = shallowCompose([deletion, revive]);
         assert.deepEqual(actual, expected);
     });
 
@@ -396,7 +394,7 @@ describe("SequenceChangeFamily - Compose", () => {
             { type: "Revive", id: 2, count: 3, tomb },
             { type: "Revive", id: 1, count: 2, tomb },
         ];
-        const actual = compose([reviveA, reviveB]);
+        const actual = shallowCompose([reviveA, reviveB]);
         assert.deepEqual(actual, expected);
     });
 
@@ -411,7 +409,7 @@ describe("SequenceChangeFamily - Compose", () => {
             4,
             { type: "Revive", id: 4, count: 1, tomb },
         ];
-        const actual = compose([insert, revive]);
+        const actual = shallowCompose([insert, revive]);
         const expected: SF.Changeset = [
             { type: "Revive", id: 3, count: 1, tomb },
             { type: "Insert", id: 1, content: [{ type, value: 1 }] },

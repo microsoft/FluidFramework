@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF } from "../../../feature-libraries";
+import { MockChildChange, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
 
+export type TestChangeset = SF.Changeset<MockChildChange>;
+
 export const cases: {
-    no_change: SF.Changeset;
-    insert: SF.Changeset;
-    modify: SF.Changeset;
-    modify_insert: SF.Changeset;
-    delete: SF.Changeset;
-    revive: SF.Changeset;
+    no_change: TestChangeset;
+    insert: TestChangeset;
+    modify: TestChangeset;
+    modify_insert: TestChangeset;
+    delete: TestChangeset;
+    revive: TestChangeset;
 } = {
     no_change: [],
     insert: [
@@ -24,7 +26,7 @@ export const cases: {
         { type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] },
     ],
     modify: [
-        { type: "Modify", changes: { valueChange: { value: 42 } } },
+        { type: "Modify", changes: { intentions: [1], ref: 0 } },
     ],
     modify_insert: [
         1,
@@ -32,7 +34,7 @@ export const cases: {
             type: "MInsert",
             id: 1,
             content: { type, value: 1 },
-            changes: { valueChange: { value: 42 } },
+            changes: { intentions: [1], ref: 0 },
         },
     ],
     delete: [

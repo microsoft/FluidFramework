@@ -4,7 +4,6 @@
  */
 
 import { fail } from "../../util";
-import { NodeChangeInverter } from "../modular-schema";
 import * as F from "./format";
 import { isSkipMark } from "./utils";
 
@@ -13,6 +12,8 @@ import { isSkipMark } from "./utils";
  * TODO: give `invert` access real tag data.
  */
  export const DUMMY_INVERT_TAG: F.ChangesetTag = "Dummy Invert Changeset Tag";
+
+export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
 /**
  * Inverts a given changeset.
@@ -25,7 +26,10 @@ import { isSkipMark } from "./utils";
  * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */
-export function invert(change: F.Changeset, invertChild: NodeChangeInverter): F.Changeset {
+export function invert<TNodeChange>(
+    change: F.Changeset<TNodeChange>,
+    invertChild: NodeChangeInverter<TNodeChange>,
+): F.Changeset<TNodeChange> {
     // TODO: support the input change being a squash
     const opIdToTag = (id: F.OpId): F.ChangesetTag => {
         return DUMMY_INVERT_TAG;
@@ -35,8 +39,12 @@ export function invert(change: F.Changeset, invertChild: NodeChangeInverter): F.
 
 type IdToTagLookup = (id: F.OpId) => F.ChangesetTag;
 
-function invertMarkList(markList: F.MarkList, opIdToTag: IdToTagLookup, invertChild: NodeChangeInverter): F.MarkList {
-    const inverseMarkList: F.MarkList = [];
+function invertMarkList<TNodeChange>(
+    markList: F.MarkList<TNodeChange>,
+    opIdToTag: IdToTagLookup,
+    invertChild: NodeChangeInverter<TNodeChange>,
+): F.MarkList<TNodeChange> {
+    const inverseMarkList: F.MarkList<TNodeChange> = [];
     for (const mark of markList) {
         const inverseMarks = invertMark(mark, opIdToTag, invertChild);
         inverseMarkList.push(...inverseMarks);
@@ -44,7 +52,11 @@ function invertMarkList(markList: F.MarkList, opIdToTag: IdToTagLookup, invertCh
     return inverseMarkList;
 }
 
-function invertMark(mark: F.Mark, opIdToTag: IdToTagLookup, invertChild: NodeChangeInverter): F.Mark[] {
+function invertMark<TNodeChange>(
+    mark: F.Mark<TNodeChange>,
+    opIdToTag: IdToTagLookup,
+    invertChild: NodeChangeInverter<TNodeChange>,
+): F.Mark<TNodeChange>[] {
     if (isSkipMark(mark)) {
         return [mark];
     } else {

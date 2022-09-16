@@ -13,11 +13,11 @@ import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
  *  - Merges runs of offsets together
  *  - Merges marks together
  */
-export class MarkListFactory {
+export class MarkListFactory<TNodeChange> {
     private offset = 0;
-    public readonly list: F.MarkList = [];
+    public readonly list: F.MarkList<TNodeChange> = [];
 
-    public push(...marks: F.Mark[]): void {
+    public push(...marks: F.Mark<TNodeChange>[]): void {
         for (const item of marks) {
             if (isSkipMark(item)) {
                 this.pushOffset(item);
@@ -31,7 +31,7 @@ export class MarkListFactory {
         this.offset += offset;
     }
 
-    public pushContent(mark: F.ObjectMark): void {
+    public pushContent(mark: F.ObjectMark<TNodeChange>): void {
         if (this.offset > 0) {
             this.list.push(this.offset);
             this.offset = 0;

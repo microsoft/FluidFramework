@@ -7,7 +7,7 @@ import { unreachableCase } from "@fluidframework/common-utils";
 import { fail } from "../../util";
 import * as F from "./format";
 
-export function isAttach(mark: F.Mark): mark is F.Attach {
+export function isAttach<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Attach<TNodeChange> {
     return isObjMark(mark)
         && "type" in mark
         && (
@@ -19,7 +19,7 @@ export function isAttach(mark: F.Mark): mark is F.Attach {
     ;
 }
 
-export function isReattach(mark: F.Mark): mark is F.Reattach | F.ModifyReattach {
+export function isReattach<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Reattach | F.ModifyReattach<TNodeChange> {
     return isObjMark(mark)
         && "type" in mark
         && (
@@ -31,7 +31,7 @@ export function isReattach(mark: F.Mark): mark is F.Reattach | F.ModifyReattach 
     ;
 }
 
-export function isTomb(mark: F.Mark): mark is F.Tomb {
+export function isTomb(mark: F.Mark<unknown>): mark is F.Tomb {
     return isObjMark(mark) && "type" in mark && mark.type === "Tomb";
 }
 
@@ -61,7 +61,7 @@ export function isEqualPlace(lhs: Readonly<F.HasPlaceFields>, rhs: Readonly<F.Ha
  * @param mark - The mark to get the length of.
  * @returns The number of nodes within the output context of the mark.
  */
-export function getOutputLength(mark: F.Mark): number {
+export function getOutputLength(mark: F.Mark<unknown>): number {
     if (isSkipMark(mark)) {
         return mark;
     }
@@ -93,7 +93,7 @@ export function getOutputLength(mark: F.Mark): number {
  * @param mark - The mark to get the length of.
  * @returns The number of nodes within the input context of the mark.
  */
-export function getInputLength(mark: F.Mark): number {
+export function getInputLength(mark: F.Mark<unknown>): number {
     if (isSkipMark(mark)) {
         return mark;
     }
@@ -129,7 +129,7 @@ export function isSkipMark(mark: F.Mark<unknown>): mark is F.Skip {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMarkOnInput<TMark extends F.SizedMark>(mark: TMark, length: number): [TMark, TMark] {
+export function splitMarkOnInput<TMark extends F.SizedMark<unknown>>(mark: TMark, length: number): [TMark, TMark] {
     const markLength = getInputLength(mark);
     const remainder = markLength - length;
     if (length < 1 || remainder < 1) {
@@ -166,7 +166,7 @@ export function splitMarkOnInput<TMark extends F.SizedMark>(mark: TMark, length:
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has output length `length`.
  */
-export function splitMarkOnOutput<TMark extends F.Mark>(mark: TMark, length: number): [TMark, TMark] {
+export function splitMarkOnOutput<TMark extends F.Mark<unknown>>(mark: TMark, length: number): [TMark, TMark] {
     const markLength = getOutputLength(mark);
     const remainder = markLength - length;
     if (length < 1 || remainder < 1) {
@@ -203,7 +203,9 @@ export function splitMarkOnOutput<TMark extends F.Mark>(mark: TMark, length: num
     }
 }
 
-export function isDetachMark(mark: F.Mark | undefined): mark is F.Detach | F.ModifyDetach {
+export function isDetachMark<TNodeChange>(
+    mark: F.Mark<TNodeChange> | undefined,
+): mark is F.Detach | F.ModifyDetach<TNodeChange> {
     if (isObjMark(mark) && "type" in mark) {
         const type = mark.type;
         return type === "Delete" || type === "MDelete" || type === "MoveOut" || type === "MMoveOut";
@@ -211,7 +213,7 @@ export function isDetachMark(mark: F.Mark | undefined): mark is F.Detach | F.Mod
     return false;
 }
 
-export function isObjMark(mark: F.Mark | undefined): mark is F.ObjectMark {
+export function isObjMark(mark: F.Mark<unknown> | undefined): mark is F.ObjectMark {
     return typeof mark === "object";
 }
 

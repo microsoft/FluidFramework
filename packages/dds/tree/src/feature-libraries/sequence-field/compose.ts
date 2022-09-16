@@ -4,7 +4,6 @@
  */
 
 import { clone, fail, StackyIterator } from "../../util";
-import { NodeChangeComposer } from "../modular-schema";
 import * as F from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -19,6 +18,8 @@ import {
     splitMarkOnOutput,
 } from "./utils";
 
+export type NodeChangeComposer<TNodeChange> = (changes: TNodeChange[]) => TNodeChange;
+
 /**
  * Composes a sequence of changesets into a single changeset.
  * @param changes - The changesets to be applied.
@@ -31,27 +32,30 @@ import {
  * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */
-export function compose(changes: F.Changeset[], composeChild: NodeChangeComposer): F.Changeset {
+export function compose<TNodeChange>(
+    changes: F.Changeset<TNodeChange>[],
+    composeChild: NodeChangeComposer<TNodeChange>,
+): F.Changeset<TNodeChange> {
     if (changes.length === 1) {
         return changes[0];
     }
-    let composed: F.Changeset = [];
+    let composed: F.Changeset<TNodeChange> = [];
     for (const change of changes) {
         composed = composeMarkLists(composed, change, composeChild);
     }
     return composed;
 }
 
-function composeMarkLists(
-    baseMarkList: F.MarkList,
-    newMarkList: F.MarkList,
-    composeChild: NodeChangeComposer,
-): F.MarkList {
-    const factory = new MarkListFactory();
+function composeMarkLists<TNodeChange>(
+    baseMarkList: F.MarkList<TNodeChange>,
+    newMarkList: F.MarkList<TNodeChange>,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): F.MarkList<TNodeChange> {
+    const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
     const newIter = new StackyIterator(newMarkList);
     for (let newMark of newIter) {
-        let baseMark: F.Mark | undefined = baseIter.pop();
+        let baseMark: F.Mark<TNodeChange> | undefined = baseIter.pop();
         if (baseMark === undefined) {
             // We have reached a region of the field that the base change does not affect.
             // We therefore adopt the new mark as is.
@@ -124,11 +128,11 @@ function composeMarkLists(
  * Its output range should be the same as `newMark`'s input range.
  * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
  */
-function composeMarks(
-    baseMark: F.Mark,
-    newMark: F.SizedMark,
-    composeChild: NodeChangeComposer,
-): F.Mark {
+function composeMarks<TNodeChange>(
+    baseMark: F.Mark<TNodeChange>,
+    newMark: F.SizedMark<TNodeChange>,
+    composeChild: NodeChangeComposer<TNodeChange>,
+): F.Mark<TNodeChange> {
     if (isSkipMark(baseMark)) {
         return clone(newMark);
     }
@@ -191,7 +195,7 @@ function composeMarks(
         case "Revive": {
             switch (newType) {
                 case "Modify": {
-                    const modRevive: F.ModifyReattach = {
+                    const modRevive: F.ModifyReattach<TNodeChange> = {
                         type: "MRevive",
                         id: baseMark.id,
                         tomb: baseMark.tomb,
@@ -210,10 +214,10 @@ function composeMarks(
     }
 }
 
-function updateModifyLike(
-    curr: F.Modify,
-    base: F.ModifyInsert | F.Modify | F.ModifyReattach,
-    composeChild: NodeChangeComposer,
+function updateModifyLike<TNodeChange>(
+    curr: F.Modify<TNodeChange>,
+    base: F.ModifyInsert<TNodeChange> | F.Modify<TNodeChange> | F.ModifyReattach<TNodeChange>,
+    composeChild: NodeChangeComposer<TNodeChange>,
 ) {
     base.changes = composeChild([base.changes, curr.changes]);
 }

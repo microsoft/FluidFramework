@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { NodeChangeRebaser } from "../modular-schema";
 import { clone, fail, StackyIterator } from "../../util";
 import {
     getInputLength,
@@ -31,24 +30,29 @@ import { MarkListFactory } from "./markListFactory";
  * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */
-export function rebase(
-    change: F.Changeset,
-    base: F.Changeset,
-    rebaseChild: NodeChangeRebaser,
-): F.Changeset {
+export function rebase<TNodeChange>(
+    change: F.Changeset<TNodeChange>,
+    base: F.Changeset<TNodeChange>,
+    rebaseChild: NodeChangeRebaser<TNodeChange>,
+): F.Changeset<TNodeChange> {
     return rebaseMarkList(change, base, rebaseChild);
 }
 
-function rebaseMarkList(
-    currMarkList: F.MarkList,
-    baseMarkList: F.MarkList,
-    rebaseChild: NodeChangeRebaser,
-): F.MarkList {
-    const factory = new MarkListFactory();
+export type NodeChangeRebaser<TNodeChange> = (
+    change: TNodeChange,
+    baseChange: TNodeChange
+) => TNodeChange;
+
+function rebaseMarkList<TNodeChange>(
+    currMarkList: F.MarkList<TNodeChange>,
+    baseMarkList: F.MarkList<TNodeChange>,
+    rebaseChild: NodeChangeRebaser<TNodeChange>,
+): F.MarkList<TNodeChange> {
+    const factory = new MarkListFactory<TNodeChange>();
     const baseIter = new StackyIterator(baseMarkList);
     const currIter = new StackyIterator(currMarkList);
     for (let baseMark of baseIter) {
-        let currMark: F.Mark | undefined = currIter.pop();
+        let currMark: F.Mark<TNodeChange> | undefined = currIter.pop();
         if (currMark === undefined) {
             break;
         }
@@ -117,7 +121,10 @@ function rebaseMarkList(
     return factory.list;
 }
 
-function rebaseMark(currMark: F.SizedMark, baseMark: F.SizedMark): F.SizedMark {
+function rebaseMark<TNodeChange>(
+    currMark: F.SizedMark<TNodeChange>,
+    baseMark: F.SizedMark<TNodeChange>,
+): F.SizedMark<TNodeChange> {
     if (isSkipMark(baseMark)) {
         return clone(currMark);
     }
