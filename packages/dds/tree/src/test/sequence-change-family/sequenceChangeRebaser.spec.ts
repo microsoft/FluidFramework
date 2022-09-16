@@ -8,7 +8,6 @@ import {
     Transposed as T,
     sequenceChangeFamily,
     sequenceChangeRebaser,
-    SequenceChangeset,
 } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
