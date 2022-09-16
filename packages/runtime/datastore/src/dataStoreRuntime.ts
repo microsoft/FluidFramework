@@ -295,14 +295,14 @@ Partial<{ readonly IFluidHandle: IFluidHandle<FluidObject>; }> {
                 this.contexts.set(path, channelContext);
                 this.contextsDeferred.set(path, deferred);
             });
+        }
 
-            if (initializeEntrypoint) {
-                this.handle = new FluidObjectHandle<FluidObject>(
-                    new LazyPromise(async () => initializeEntrypoint(this)),
-                    "",
-                    this.objectsRoutingContext,
-                    );
-            }
+        if (initializeEntrypoint) {
+            this.handle = new FluidObjectHandle<FluidObject>(
+                new LazyPromise(async () => initializeEntrypoint(this)),
+                "",
+                this.objectsRoutingContext,
+                );
         }
 
         this.attachListener();
