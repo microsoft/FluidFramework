@@ -41,7 +41,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
     }
 
     disposed: boolean = false;
-    dispose(error?: Error | undefined): void {
+    dispose(error?: Error): void {
         this._storageService?.dispose?.(error);
         this.disposed = true;
     }

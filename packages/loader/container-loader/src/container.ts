@@ -401,7 +401,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.storageService;
     }
 
-    readonly clientDetailsOverride: IClientDetails | undefined;
+    private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
     private _initialClients: ISignalClient[] | undefined;
