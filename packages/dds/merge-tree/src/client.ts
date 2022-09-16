@@ -763,10 +763,6 @@ export class Client {
         assert(segmentGroup === NACKedSegmentGroup,
             0x034 /* "Segment group not at head of merge tree pending queue" */);
 
-        if (resetOp.type === MergeTreeDeltaType.INSERT) {
-            this._mergeTree.normalizeSegmentsOnRebase(segmentGroup);
-        }
-
         const opList: IMergeTreeDeltaOp[] = [];
         // We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
         // The reason they need them sorted, as they have the same local sequence number and which means
@@ -951,6 +947,7 @@ export class Client {
         resetOp: IMergeTreeOp,
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): IMergeTreeOp {
+        this._mergeTree.normalizeSegmentsOnRebase(this.getCollabWindow().currentSeq);
         const opList: IMergeTreeDeltaOp[] = [];
         if (resetOp.type === MergeTreeDeltaType.GROUP) {
             if (Array.isArray(segmentGroup)) {

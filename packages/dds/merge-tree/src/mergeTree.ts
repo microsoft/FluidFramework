@@ -14,6 +14,7 @@ import {
     Comparer,
     Heap,
     List,
+    ListNode,
     Stack,
 } from "./collections";
 import {
@@ -2142,6 +2143,91 @@ export class MergeTree {
         }
     }
 
+    // Segments should either be removed remotely, removed locally, or inserted locally
+    private normalizeAdjacentSegments(affectedSegments: List<ISegment>): void {
+        // TODO: Wipe/restore tracking groups here. Add test for it.
+
+        const currentOrderTest = Array.from(affectedSegments.map(({ data }) => data));
+        // Eagerly demand this since we're about to shift elements in the list around
+        const currentOrder = currentOrderTest.map((seg) => ({
+            parent: seg.parent,
+            index: seg.index,
+            ordinal: seg.ordinal,
+        }));
+
+        // Last segment which was not affected locally.
+        let lastLocalSegment = affectedSegments.last;
+        while (lastLocalSegment !== undefined && isRemovedAndAcked(lastLocalSegment.data)) {
+            lastLocalSegment = lastLocalSegment.prev;
+        }
+
+        if (!lastLocalSegment) {
+            return;
+        }
+
+        for (
+            let segmentToSlide: ListNode<ISegment> | undefined = lastLocalSegment, nearerSegment = lastLocalSegment?.prev;
+            segmentToSlide !== undefined;
+            segmentToSlide = nearerSegment, nearerSegment = nearerSegment?.prev
+        ) {
+            // Slide iterCur forward as far as possible
+            if (isRemovedAndAcked(segmentToSlide.data)) {
+                // Slide past all segments that are not also remotely removed
+                affectedSegments.remove(segmentToSlide);
+                affectedSegments.insertAfter(lastLocalSegment, segmentToSlide.data);
+            } else if (isRemoved(segmentToSlide.data)) {
+                assert(segmentToSlide.data.localRemovedSeq !== undefined, 'Removed segment that hasnt had its removal acked should be locally removed');
+                // Slide each locally removed item past all segments that have localSeq > lremoveItem.localSeq
+                // but not past remotely removed segments;
+                let cur = segmentToSlide;
+                let scan = cur.next;
+                while (scan !== undefined &&
+                    !isRemovedAndAcked(scan.data) &&
+                    scan.data.localSeq !== undefined &&
+                    scan.data.localSeq! > segmentToSlide.data.localRemovedSeq
+                ) {
+                    cur = scan;
+                    scan = scan.next;
+                }
+                if (cur !== segmentToSlide) {
+                    affectedSegments.remove(segmentToSlide);
+                    affectedSegments.insertAfter(cur, segmentToSlide.data);
+                }
+            }
+        };
+
+        const newOrder = Array.from(affectedSegments.map(({ data }) => data));
+        newOrder.forEach((seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)));
+        for (let i = 0; i < newOrder.length; i++) {
+            const seg = newOrder[i];
+            const { parent, index, ordinal } = currentOrder[i];
+            parent?.assignChild(seg, index, false);
+            seg.ordinal = ordinal;
+        }
+
+        // Finally, update internal node bookkeeping on ancestors of the swapped nodes.
+        // Toposort would improve this by a log factor, but probably not worth the added code size
+        const depths = new Map<IMergeNode, number>();
+        const computeDepth = (block: IMergeNode): number => {
+            if (!depths.has(block)) {
+                depths.set(
+                    block,
+                    block.parent === undefined ? 0 : (1 + computeDepth(block.parent)),
+                );
+            }
+            return depths.get(block)!;
+        };
+        newOrder.forEach(computeDepth);
+        for (const [node] of Array.from(depths.entries()).sort((a, b) => b[1] - a[1])) {
+            if (!node.isLeaf()) {
+                this.nodeUpdateLengthNewStructure(node, false);
+            }
+        }
+        newOrder.forEach((seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)));
+
+    }
+
+    private lastNormalizationRefSeq = 0;
     /**
      * Normalizes the segments nearby `segmentGroup` to be ordered as they would if the op submitting `segmentGroup`
      * is rebased to the current sequence number.
@@ -2162,79 +2248,40 @@ export class MergeTree {
      * Rather than incur extra work tie-breaking these scenarios for all clients, when client 1 rebases its operation,
      * it can fix up its local state to align with what would be expected of the op it resubmits.
      */
-    public normalizeSegmentsOnRebase(segmentGroup: SegmentGroup): void {
-        // Forward and backward excursions will expand the affected normalization range,
-        // so simply taking the first segment suffices
-        const { refSeq, segments: [segment] } = segmentGroup;
-        const forwardLocalSegs: ISegment[] = [];
-        const backwardLocalSegs: ISegment[] = [];
-        const adjacentRemovedSegs: ISegment[] = [];
-        backwardExcursion(segment, (seg) => {
-            if (seg.seq === UnassignedSequenceNumber) {
-                backwardLocalSegs.push(seg);
-                return true;
-            }
-            const removalInfo = toRemovalInfo(seg);
-            if (removalInfo !== undefined &&
-                removalInfo.removedSeq !== UnassignedSequenceNumber &&
-                removalInfo.removedSeq > refSeq
-            ) {
-                adjacentRemovedSegs.push(seg);
-                return true;
-            }
-            return false;
-        });
-
-        if (adjacentRemovedSegs.length === 0) {
+    public normalizeSegmentsOnRebase(rebaseTo: number): void {
+        if (rebaseTo === this.lastNormalizationRefSeq) {
             return;
         }
-
-        forwardExcursion(segment, (seg) => {
-            if (seg.seq === UnassignedSequenceNumber) {
-                forwardLocalSegs.push(seg);
-                return true;
+        let currentRangeToNormalize = new List<ISegment>();
+        let rangeContainsLocalSegs = false;
+        let rangeContainsRemoteRemovedSegs = false;
+        const normalize = () => {
+            if (rangeContainsLocalSegs && rangeContainsRemoteRemovedSegs && currentRangeToNormalize.length > 1) {
+                this.normalizeAdjacentSegments(currentRangeToNormalize);
             }
-            return false;
+        }
+        walkAllChildSegments(this.root, (seg) => {
+            if (isRemoved(seg) || seg.seq === UnassignedSequenceNumber) {
+                if (isRemovedAndAcked(seg)) {
+                    rangeContainsRemoteRemovedSegs = true;
+                }
+                if (seg.seq === UnassignedSequenceNumber) {
+                    rangeContainsLocalSegs = true;
+                }
+                currentRangeToNormalize.push(seg);
+            } else {
+                normalize();
+                currentRangeToNormalize = new List<ISegment>();
+                rangeContainsLocalSegs = false;
+                rangeContainsRemoteRemovedSegs = false;
+            }
+
+            return true;
         });
-        const consecutiveLocalSegments = [...backwardLocalSegs.reverse(), segment, ...forwardLocalSegs];
-        adjacentRemovedSegs.reverse();
 
-        const currentOrder = [...adjacentRemovedSegs, ...consecutiveLocalSegments].map(
-            (seg) => ({
-                parent: seg.parent,
-                index: seg.index,
-                ordinal: seg.ordinal,
-            }),
-        );
+        normalize();
+        this.lastNormalizationRefSeq = rebaseTo;
 
-        const newOrder = [...consecutiveLocalSegments, ...adjacentRemovedSegs];
-        // TODO: Invoke slide ref callback and test that this happens
-        for (let i = 0; i < newOrder.length; i++) {
-            const seg = newOrder[i];
-            const { parent, index, ordinal } = currentOrder[i];
-            parent?.assignChild(seg, index, false);
-            seg.ordinal = ordinal;
-        }
-
-        // Finally, update internal node bookkeeping on ancestors of the swapped nodes.
-        this.ensureLocalPartialsComputed(refSeq);
-        // Toposort would improve this by a log factor, but probably not worth the added code size
-        const depths = new Map<IMergeNode, number>();
-        const computeDepth = (block: IMergeNode): number => {
-            if (!depths.has(block)) {
-                depths.set(
-                    block,
-                    block.parent === undefined ? 0 : (1 + computeDepth(block.parent)),
-                );
-            }
-            return depths.get(block)!;
-        };
-        newOrder.forEach(computeDepth);
-        for (const [node] of Array.from(depths.entries()).sort((a, b) => b[1] - a[1])) {
-            if (!node.isLeaf()) {
-                this.nodeUpdateLengthNewStructure(node, false, true);
-            }
-        }
     }
 
     private blockUpdate(block: IMergeBlock) {

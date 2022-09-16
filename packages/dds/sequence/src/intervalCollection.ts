@@ -1038,19 +1038,26 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         };
         if (interval instanceof SequenceInterval) {
             let previousInterval: TInterval & SequenceInterval | undefined;
+            let pendingChanges = 0;
             interval.addPositionChangeListeners(
                 () => {
-                    assert(!previousInterval, "Invalid interleaving of before/after slide");
-                    previousInterval = interval.clone() as TInterval & SequenceInterval;
-                    previousInterval.start = cloneRef(previousInterval.start);
-                    previousInterval.end = cloneRef(previousInterval.end);
-                    this.removeIntervalFromIndex(interval);
+                    pendingChanges++;
+                    // Note: both start and end can change and invoke beforeSlide on each endpoint before afterSlide.
+                    if (!previousInterval) {
+                        previousInterval = interval.clone() as TInterval & SequenceInterval;
+                        previousInterval.start = cloneRef(previousInterval.start);
+                        previousInterval.end = cloneRef(previousInterval.end);
+                        this.removeIntervalFromIndex(interval);
+                    }
                 },
                 () => {
                     assert(previousInterval !== undefined, "Invalid interleaving of before/after slide");
-                    this.addIntervalToIndex(interval);
-                    this.onPositionChange?.(interval, previousInterval);
-                    previousInterval = undefined;
+                    pendingChanges--;
+                    if (pendingChanges === 0) {
+                        this.addIntervalToIndex(interval);
+                        this.onPositionChange?.(interval, previousInterval);
+                        previousInterval = undefined;
+                    }
                 },
             );
         }
