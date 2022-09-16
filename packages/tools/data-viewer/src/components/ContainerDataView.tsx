@@ -50,9 +50,15 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 
     useEffect(() => {
         function onConnected() {
-            updateConnectionState(container.connectionState);
+            updateConnectionState(container.connectionState); // Should be connected
             updateAttachState(container.attachState);
         }
+
+        function onDisconnected() {
+            updateConnectionState(container.connectionState); // Should be disconnected
+            updateAttachState(container.attachState);
+        }
+
         function onDirty() {
             updateIsDirty(true);
         }
@@ -66,12 +72,14 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
         }
 
         container.on("connected", onConnected);
+        container.on("disconnected", onDisconnected);
         container.on("dirty", onDirty);
         container.on("saved", onSaved);
         container.on("dispose", onDispose);
 
         return () => {
             container.off("connected", onConnected);
+            container.off("disconnected", onDisconnected);
             container.off("dirty", onDirty);
             container.off("saved", onSaved);
             container.off("dispose", onDispose);
