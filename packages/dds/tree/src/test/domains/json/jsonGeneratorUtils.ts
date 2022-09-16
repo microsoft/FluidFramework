@@ -22,11 +22,9 @@ const englishAlphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
 // Returns either an alphanumeric string or an alpha string within the specified length range
 export function getRandomEnglishString(random = makeRandom(), includeNumbers: boolean, minLen: number, maxLen: number) {
     const stringLength = (minLen < maxLen) ? random.integer(minLen, maxLen) : minLen;
-    if (includeNumbers) {
-        return random.string(stringLength);
-    } else {
-        return random.string(stringLength, englishAlphabet);
-    }
+    return includeNumbers
+        ? random.string(stringLength)
+        : random.string(stringLength, englishAlphabet);
 }
 
 const numbersString = "0123456789";
@@ -36,12 +34,7 @@ export function getRandomNumberString(random = makeRandom(), minLen: number, max
 }
 
 export function getSizeInBytes(obj: unknown) {
-    let str = null;
-    if (typeof obj === "string") {
-        str = obj;
-    } else {
-        str = JSON.stringify(obj);
-    }
+    const str = typeof obj === "string" ? obj : JSON.stringify(obj);
     // Get the length of the Uint8Array
     const bytes = new TextEncoder().encode(str).length;
     return bytes;

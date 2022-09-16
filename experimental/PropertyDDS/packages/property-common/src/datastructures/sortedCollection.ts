@@ -28,11 +28,15 @@ export class SortedCollection<T> extends Collection<T> {
 
     /**
      * Set the comparison function. By default the keys will be sorted wrt their ASCII code.
+     *
      * @param in_fn - The function to compare two entries.
-     *  the return value of this function must convey to the following cases:
-     *  - if a \> b, then the return value must be greater than 0
-     *  - if a \< b, then the return value must be less than 0
-     *  - if a == b, then the return value must be 0
+     * The return value of this function must convey to the following cases:
+     *
+     * - if a \> b, then the return value must be greater than 0.
+     *
+     * - if a \< b, then the return value must be less than 0.
+     *
+     * - if a == b, then the return value must be 0.
      */
     setComparisonFunction(in_fn?: (x: string, y: string) => number) {
         console.assert(_.isFunction(in_fn), "Must provide a function");
@@ -41,9 +45,11 @@ export class SortedCollection<T> extends Collection<T> {
 
     /**
      * Add an item to the collection. Sort the list of keys in an ascending order.
-     * @param in_key - Key to store the value under
-     * @param in_value - Value to store in the collection
-     * @returns Return the value passed in
+     *
+     * @param in_key - Key to store the value under.
+     * @param in_value - Value to store in the collection.
+     *
+     * @returns The value passed in.
      */
     add(in_key: string | number, in_value: T) {
         const toReturn = super.add(in_key, in_value);
@@ -133,11 +139,9 @@ export class SortedCollection<T> extends Collection<T> {
      */
     getNearestNextItem(in_key: string) {
         const closestNextIndex = this._binarySearchNearestIndex(this._sortedKeys, in_key.toString());
-        if (closestNextIndex === this.getCount()) {
-            return undefined;
-        } else {
-            return this.item(this._sortedKeys[closestNextIndex]);
-        }
+        return closestNextIndex === this.getCount()
+            ? undefined
+            : this.item(this._sortedKeys[closestNextIndex]);
     }
 
     /**
@@ -149,10 +153,8 @@ export class SortedCollection<T> extends Collection<T> {
      */
     getNearestPreviousItem(in_key: string | number) {
         const closestPreviousIndex = this._binarySearchNearestIndex(this._sortedKeys, in_key.toString());
-        if (closestPreviousIndex === 0) {
-            return undefined;
-        } else {
-            return this.item(this._sortedKeys[closestPreviousIndex - 1]);
-        }
+        return closestPreviousIndex === 0
+            ? undefined
+            : this.item(this._sortedKeys[closestPreviousIndex - 1]);
     }
 }
