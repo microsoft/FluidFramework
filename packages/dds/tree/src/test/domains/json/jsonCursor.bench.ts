@@ -15,7 +15,8 @@ import { JsonCursor } from "../../../domains/json/jsonCursor";
 import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
+import { generateTwitterJsonByByteSize, TwitterJson } from "./twitter";
+import { CitmCatalog, generateCitmJson } from "./citm";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -167,18 +168,18 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
 }
 
 function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
-    cursor.enterField(TwitterStatus.statusesKey); // move from root to field
+    cursor.enterField(TwitterJson.statusesKey); // move from root to field
     cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
     cursor.enterField(EmptyKey); // enter the array field at the node,
 
     for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-        cursor.enterField(TwitterStatus.retweetCountKey);
+        cursor.enterField(TwitterJson.TwitterStatus.retweetCountKey);
         cursor.enterNode(0);
         const retweetCount = cursor.value as number;
         cursor.exitNode();
         cursor.exitField();
 
-        cursor.enterField(TwitterStatus.favoriteCountKey);
+        cursor.enterField(TwitterJson.TwitterStatus.favoriteCountKey);
         cursor.enterNode(0);
         const favoriteCount = cursor.value;
         cursor.exitNode();
@@ -192,9 +193,38 @@ function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number
     cursor.exitField();
 }
 
+function extractAvgValsFromCitm(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+    cursor.enterField(CitmCatalog.performancesKey);
+    cursor.enterNode(0);
+    cursor.enterField(EmptyKey);
+
+    // iterate over each performance
+    for (let performanceIterator = cursor.firstNode(); performanceIterator; performanceIterator = cursor.nextNode()) {
+        cursor.enterField(CitmCatalog.Performance.seatCategories);
+        const numSeatCategories = cursor.getFieldLength();
+        cursor.exitField();
+
+        cursor.enterField(CitmCatalog.Performance.startKey);
+        cursor.enterNode(0);
+        const startTimeEpoch = cursor.value as number;
+        cursor.exitNode();
+        cursor.exitField();
+
+        calculate(numSeatCategories, startTimeEpoch);
+    }
+
+    // Reset the cursor state
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+}
+
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+// The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
+const citm = isInPerformanceTestingMode ? generateCitmJson(2, 2500000) : generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
     bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
+    bench([{ name: "citm", getJson: () => citm, dataConsumer: extractAvgValsFromCitm }]);
 });

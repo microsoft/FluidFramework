@@ -17,12 +17,29 @@ import {
 * This file contains logic to generate a JSON file that is statistically similar to the well-known
 * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
 */
-
-export namespace TwitterStatus {
-    // Shared tree keys that map to the type used by the TwitterStatus type/dataset
+    // Shared tree keys that map to the type used by the TwitterJson type/dataset
+export namespace TwitterJson {
     export const statusesKey: FieldKey = brand("statuses");
-    export const retweetCountKey: FieldKey = brand("retweet_count");
-    export const favoriteCountKey: FieldKey = brand("favorite_count");
+
+    export namespace TwitterStatus {
+        export const retweetCountKey: FieldKey = brand("retweet_count");
+        export const favoriteCountKey: FieldKey = brand("favorite_count");
+    }
+}
+
+export interface TwitterJson {
+    statuses: TwitterStatus[];
+    search_metadata: {
+        completed_in: number;
+        max_id: number;
+        max_id_str: string;
+        next_results: string;
+        query: string;
+        refresh_url: string;
+        count: number;
+        since_id: number;
+        since_id_str: string;
+    };
 }
 
 /* eslint-disable @rushstack/no-new-null */
@@ -171,21 +188,6 @@ export interface TwitterUser {
     notifications: boolean;
 }
 /* eslint-enable */
-
-export interface TwitterJson {
-    statuses: TwitterStatus[];
-    search_metadata: {
-        completed_in: number;
-        max_id: number;
-        max_id_str: string;
-        next_results: string;
-        query: string;
-        refresh_url: string;
-        count: number;
-        since_id: number;
-        since_id_str: string;
-    };
-}
 
 /**
 * Generates a TwitterJson object as closely as possible to a specified byte size.

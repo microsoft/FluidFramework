@@ -22,7 +22,7 @@ import { defaultSchemaPolicy, singleTextCursorNew } from "../../../feature-libra
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum } from "./benchmarksLegacy";
-import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
+import { generateTwitterJsonByByteSize, TwitterJson } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -175,15 +175,15 @@ function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number
 }
 
 function extractAvgValsFromTwitter(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
-    cursor.down(TwitterStatus.statusesKey, 0);
+    cursor.down(TwitterJson.statusesKey, 0);
 
     let result = cursor.down(EmptyKey, 0);
     while (result === TreeNavigationResult.Ok) {
-        cursor.down(TwitterStatus.retweetCountKey, 0);
+        cursor.down(TwitterJson.TwitterStatus.retweetCountKey, 0);
         const retweetCount = cursor.value as number;
         cursor.up();
 
-        cursor.down(TwitterStatus.favoriteCountKey, 0);
+        cursor.down(TwitterJson.TwitterStatus.favoriteCountKey, 0);
         const favoriteCount = cursor.value as number;
         cursor.up();
         calculate(retweetCount, favoriteCount);
