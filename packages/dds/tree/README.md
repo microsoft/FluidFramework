@@ -187,7 +187,7 @@ Each change is processed in two ways:
 -   the change is accumulated in a `ProgressiveEditBuilder` which will be used to create/encode the actual edit to send to Fluid.
 
 Once the command ends, the transaction is rolled back leaving the forest in a clean state.
-Then if the command did not error, a [`changeset`](./src/changeset/README.md) is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
+Then if the command did not error, a `changeset` is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
 The checkout then rebases the op if any Ops came in while the transaction was pending (only possible for async transactions or if the checkout was behind due to it being async for some reason).
 Finally the checkout sends the op to `shared-tree-core` which submits it to Fluid.
 This submission results in the op becoming a local op, which `shared-tree-core` creates a delta for.
@@ -291,7 +291,6 @@ flowchart
             shared-tree-core-->change-family
             forest-->schema-stored
             change-family-->rebase
-            changeset-->tree
             edit-manager-->change-family
             rebase-->tree
             schema-stored-->dependency-tracking

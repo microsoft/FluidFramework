@@ -31,16 +31,16 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated This will be removed in a later release.
  */
 export const IContainerRuntime: keyof IProvideContainerRuntime = "IContainerRuntime";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated This will be removed in a later release.
  */
 export interface IProvideContainerRuntime {
     /**
-     * @deprecated - This will be removed in a later release.
+     * @deprecated This will be removed in a later release.
      */
     IContainerRuntime: IContainerRuntime;
 }
@@ -99,9 +99,11 @@ export interface IContainerRuntime extends
     readonly isDirty: boolean;
 
     /**
-     * Flushes any ops currently being batched to the loader
-     * @deprecated - This will be removed in a later release. If a more manual flushing process is needed,
-     * move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+     * Flushes any ops currently being batched to the loader.
+     *
+     * @deprecated This will be removed in a later release.
+     * If a more manual flushing process is needed, move all usage to
+     * {@link @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially} if possible.
      */
     flush(): void;
 

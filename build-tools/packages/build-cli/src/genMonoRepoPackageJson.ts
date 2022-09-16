@@ -22,8 +22,8 @@ function format(n: number) {
  * @param repoPackageJson - any
  * @param logger - Logger
  * @returns - lerna doesn't distingish between dependencies vs devDependencies, this function
-    will use the lerna-package-lock.json and patch up the "dev" field in the dependencies and
-    output it to repo-package-lock.json
+ * will use the lerna-package-lock.json and patch up the "dev" field in the dependencies and
+ * output it to repo-package-lock.json
  */
 
 async function generateMonoRepoPackageLockJson(
@@ -88,7 +88,7 @@ async function generateMonoRepoPackageLockJson(
     const markTopLevelNonDev = (dep: string, ref: string, topRef: string) => {
         const item = repoPackageLockJson.dependencies[dep];
         if (item !== undefined) {
-            logger.error(
+            logger.errorLog(
                 `Missing ${dep} in lock file referenced by ${ref} from ${topRef} in ${monoRepo.kind.toLowerCase()}`,
             );
         }
@@ -145,7 +145,9 @@ function processDependencies(
         const existing = repoPackageJson.dependencies[dep];
         if (existing) {
             if (existing !== version) {
-                logger.error(`Dependency version mismatch for ${dep}: ${existing} and ${version}`);
+                logger.errorLog(
+                    `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
+                );
             }
 
             continue;
@@ -174,7 +176,9 @@ function processDevDependencies(
         const existing = repoPackageJson.dependencies[dep] ?? repoPackageJson.devDependencies[dep];
         if (existing) {
             if (existing !== version) {
-                logger.error(`Dependency version mismatch for ${dep}: ${existing} and ${version}`);
+                logger.errorLog(
+                    `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
+                );
             }
 
             continue;
@@ -192,7 +196,7 @@ function processDevDependencies(
  * @param monoRepo - MonoRepo
  * @param logger - Logger
  * @returns - Generate the corresponding package.json for the lerna project by gathering all the
-    dependencies from all the packages, and output it to repo-package.json
+ * dependencies from all the packages, and output it to repo-package.json
  */
 
 export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo, logger: Logger) {

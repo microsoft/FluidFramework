@@ -124,7 +124,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
 
 // @public (undocumented)
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
-    constructor(value: T, path: string, routeContext: IFluidHandleContext);
+    constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     // (undocumented)
     readonly absolutePath: string;
     // (undocumented)
@@ -142,7 +142,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     // (undocumented)
     readonly routeContext: IFluidHandleContext;
     // (undocumented)
-    protected readonly value: T;
+    protected readonly value: T | Promise<T>;
 }
 
 // @public (undocumented)

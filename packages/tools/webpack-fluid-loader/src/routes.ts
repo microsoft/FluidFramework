@@ -20,7 +20,7 @@ import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
 import { createManifestResponse } from "./bohemiaIntercept";
-import { tinyliciousUrls } from "./multiResolver";
+import { tinyliciousUrls } from "./getUrlResolver";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
@@ -65,7 +65,7 @@ export const after = (
 ) => {
     const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf
-        .env({ parseValules: true, inputSeparator: "__" })
+        .env({ parseValues: true, separator: "__" })
         .file(path.join(baseDir, "config.json"));
     const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
         type: "browserLogin",

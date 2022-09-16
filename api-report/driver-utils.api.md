@@ -107,6 +107,9 @@ export class BlobCacheStorageService extends DocumentStorageServiceProxy {
 // @public
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
 
+// @public (undocumented)
+export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+
 // @public
 export const canRetryOnError: (error: any) => boolean;
 
@@ -236,15 +239,17 @@ export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolve
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
 
-// @public (undocumented)
-export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+// @public
+export function isRuntimeMessage(message: {
+    type: string;
+}): boolean;
 
 // @public
 export interface ISummaryTreeAssemblerProps {
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)
@@ -260,6 +265,12 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
+
+// @public (undocumented)
+export enum MessageType2 {
+    // (undocumented)
+    Accept = "accept"
+}
 
 // @public (undocumented)
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {

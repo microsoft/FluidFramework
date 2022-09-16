@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -13,9 +14,12 @@ import {
     TestObjectProvider,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
-    ITestFluidObject } from "@fluidframework/test-utils";
+    ITestFluidObject,
+    createSummarizer,
+    summarizeNow,
+} from "@fluidframework/test-utils";
 import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
-import { SharedTree, SharedTreeFactory } from "../shared-tree";
+import { ISharedTree, SharedTreeFactory } from "../shared-tree";
 
 // Testing utilities
 
@@ -53,10 +57,10 @@ export class TestTreeProvider {
     private static readonly treeId = "TestSharedTree";
 
     private readonly provider: ITestObjectProvider;
-    private readonly _trees: SharedTree[] = [];
+    private readonly _trees: ISharedTree[] = [];
     private readonly _containers: IContainer[] = [];
 
-    public get trees(): readonly SharedTree[] {
+    public get trees(): readonly ISharedTree[] {
         return this._trees;
     }
 
@@ -86,20 +90,36 @@ export class TestTreeProvider {
     }
 
     /**
-     * Create and initialize a new {@link SharedTree} that is connected to all other trees from this provider.
+     * Create and initialize a new {@link ISharedTree} that is connected to all other trees from this provider.
      * @returns the tree that was created. For convenience, the tree can also be accessed via `this[i]` where
      * _i_ is the index of the tree in order of creation.
      */
-    public async createTree(): Promise<SharedTree> {
+    public async createTree(): Promise<ISharedTree> {
         const container = this.trees.length === 0
         ? await this.provider.makeTestContainer()
         : await this.provider.loadTestContainer();
 
+        this._containers.push(container);
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
-        return this._trees[this.trees.length] = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
+        return this._trees[this.trees.length] = await dataObject.getSharedObject<ISharedTree>(TestTreeProvider.treeId);
     }
 
-    public [Symbol.iterator](): IterableIterator<SharedTree> {
+    /**
+     * Give this {@link TestTreeProvider} the ability to summarize on demand during a test by creating a summarizer
+     * client for the container at the given index. This must be called before any trees submit any edits, or else a
+     * different summarizer client might already have been elected.
+     * @param index - the container that will spawn the summarizer client
+     * @returns a function which will cause a summary to happen when awaited. May be called multiple times.
+     */
+    public async enableManualSummarization(index = 0): Promise<() => Promise<void>> {
+        assert(index < this.trees.length, "Index out of bounds: not enough trees");
+        const summarizer = await createSummarizer(this.provider, this.containers[index]);
+        return async () => {
+            await summarizeNow(summarizer, "TestTreeProvider");
+        };
+    }
+
+    public [Symbol.iterator](): IterableIterator<ISharedTree> {
         return this.trees[Symbol.iterator]();
     }
 
@@ -128,4 +148,29 @@ export class TestTreeProvider {
             },
         });
     }
+}
+
+/**
+ * Run a custom "spy function" every time the given method is invoked.
+ * @param methodClass - the class that has the method
+ * @param methodName - the name of the method
+ * @param spy - the spy function to run alongside the method
+ * @returns a function which will remove the spy function when invoked. Should be called exactly once
+ * after the spy is no longer needed.
+ */
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function spyOnMethod(methodClass: Function, methodName: string, spy: () => void): () => void {
+    const { prototype } = methodClass;
+    const method = prototype[methodName];
+    assert(typeof method === "function", `Method does not exist: ${methodName}`);
+
+    const methodSpy = function(this: unknown, ...args: unknown[]): unknown {
+        spy();
+        return method.call(this, ...args);
+    };
+    prototype[methodName] = methodSpy;
+
+    return () => {
+        prototype[methodName] = method;
+    };
 }

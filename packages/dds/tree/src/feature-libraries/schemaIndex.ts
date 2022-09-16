@@ -17,7 +17,9 @@ import { cachedValue, ICachedValue, recordDependency } from "../dependency-track
 import { Delta } from "../tree";
 import { StoredSchemaRepository } from "../schema-stored";
 
-/** The storage key for the blob in the summary containing schema data */
+/**
+ * The storage key for the blob in the summary containing schema data
+ */
 const schemaBlobKey = "SchemaBlob";
 
 /**

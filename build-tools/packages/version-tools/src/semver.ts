@@ -5,7 +5,12 @@
 
 import * as semver from "semver";
 import { VersionBumpTypeExtended, VersionBumpType } from "./bumpTypes";
-import { bumpInternalVersion, getVersionRange } from "./internalVersionScheme";
+import {
+    bumpInternalVersion,
+    fromInternalScheme,
+    getVersionRange,
+    isInternalVersionScheme,
+} from "./internalVersionScheme";
 import { bumpVersionScheme, detectVersionScheme } from "./schemes";
 
 /**
@@ -91,7 +96,8 @@ export function detectConstraintType(range: string): "minor" | "patch" {
 }
 
 /**
- * Given a first and second version, returns the bump type
+ * Given a first and second version, returns the bump type. Works correctly for Fluid internal versions.
+ *
  * @param v1 - The first version to compare.
  * @param v2 - The second version to compare.
  * @returns The bump type, or undefined if it can't be determined.
@@ -102,14 +108,24 @@ export function detectBumpType(
     // eslint-disable-next-line @rushstack/no-new-null
     v2: semver.SemVer | string | null,
 ): VersionBumpType | undefined {
-    const v1Parsed = semver.parse(v1);
-    if (v1Parsed === null) {
+    let v1Parsed = semver.parse(v1);
+    if (v1Parsed === null || v1 === null) {
         throw new Error(`Invalid version: ${v1}`);
     }
 
-    const v2Parsed = semver.parse(v2);
-    if (v2Parsed === null) {
+    let v2Parsed = semver.parse(v2);
+    if (v2Parsed === null || v2 === null) {
         throw new Error(`Invalid version: ${v2}`);
+    }
+
+    if (isInternalVersionScheme(v1, true)) {
+        const [, internalVer] = fromInternalScheme(v1, true);
+        v1Parsed = internalVer;
+    }
+
+    if (isInternalVersionScheme(v2, true)) {
+        const [, internalVer] = fromInternalScheme(v2, true);
+        v2Parsed = internalVer;
     }
 
     if (semver.compareBuild(v1Parsed, v2Parsed) >= 0) {
@@ -137,4 +153,33 @@ export function detectBumpType(
             return undefined;
         }
     }
+}
+
+/**
+ * Checks if a version is prerelease or not, taking into account the Fluid internal version scheme.
+ *
+ * @param version - The version to check.
+ * @returns True if the version is a prerelease version, false otherwise.
+ */
+export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean {
+    if (version === undefined) {
+        return false;
+    }
+
+    const scheme = detectVersionScheme(version);
+
+    // Fluid internal versions need special handling
+    if (scheme === "internalPrerelease") {
+        return true;
+    } else if (scheme === "internal") {
+        return false;
+    }
+
+    // All other schemes can use the semver library
+    const prerelease = semver.prerelease(version);
+    if (semver.parse(version) === null) {
+        throw new Error(`Cannot parse version: ${version}`);
+    }
+
+    return prerelease !== null && prerelease.length > 0;
 }

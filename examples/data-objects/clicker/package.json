@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/clicker",
-  "version": "2.0.0-internal.1.1.0",
+  "version": "2.0.0-internal.1.2.0",
   "private": true,
   "description": "Minimal Fluid component sample to implement a collaborative counter.",
   "homepage": "https://fluidframework.com",
@@ -42,21 +42,21 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/example-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluid-experimental/task-manager": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/aqueduct": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluid-example/example-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/task-manager": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/aqueduct": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/counter": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/counter": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/build-common": "^0.24.0",
+    "@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/test-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/test-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
