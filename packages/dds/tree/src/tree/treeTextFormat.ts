@@ -31,6 +31,19 @@ import { FieldKey, NodeData } from "./types";
  * Json compatible map as object.
  * Keys are FieldKey strings.
  * Values are the content of the field specified by the key.
+ *
+ * WARNING:
+ * Be very careful when using objects as maps:
+ * Use `Object.prototype.hasOwnProperty.call(fieldMap, key)` to safely check for keys.
+ * Do NOT simply read the field and check for undefined as this will return values for `__proto__`
+ * and various methods on Object.prototype, like `hasOwnProperty` and `toStrong`.
+ * This exposes numerous bug possibilities, including prototype pollution.
+ *
+ * Due to the above issue, try to avoid this type (and the whole object as map pattern).
+ * Only use this type when needed for json compatible maps,
+ * but even in those cases consider lists of key value pairs for serialization and using `Map`
+ * for runtime.
+ *
  * @public
  */
 export interface FieldMapObject<TChild> {
@@ -78,9 +91,9 @@ export function getGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, 
     const [scope, keyString] = scopeFromKey(key);
     const children = getGenericTreeFieldMap(node, scope, createIfMissing);
 
-    const field = children[keyString];
-    if (field !== undefined) {
-        return field;
+    // Do not just read field and check for undefined: see warning on FieldMapObject.
+    if (Object.prototype.hasOwnProperty.call(children, keyString)) {
+        return children[keyString];
     }
     // Handle missing field:
     if (createIfMissing === false) {
@@ -132,6 +145,6 @@ export function genericTreeKeys<T>(tree: GenericTreeNode<T>): readonly FieldKey[
     return [
         ...Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, FieldScope.local, false)) as LocalFieldKey[],
         ...(Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, FieldScope.global, false)) as GlobalFieldKey[])
-            .map(symbolFromKey),
+        .map(symbolFromKey),
     ];
 }
