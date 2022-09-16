@@ -11,7 +11,7 @@ export {
 export {
     EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
     UpPath, Anchor, RootField, ChildCollection,
-    ChildLocation, FieldMapObject, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
+    ChildLocation, FieldMapObject, NodeData, GenericTreeNode, JsonableTree,
     Delta, rootFieldKey, FieldScope, GlobalFieldKeySymbol, symbolFromKey, keyFromSymbol,
     ITreeCursorNew,
     CursorLocationType,
@@ -52,6 +52,7 @@ export {
     NameFromBranded,
     JsonCompatibleReadOnly,
     JsonCompatible,
+    JsonCompatibleObject,
 } from "./util";
 
 export {
