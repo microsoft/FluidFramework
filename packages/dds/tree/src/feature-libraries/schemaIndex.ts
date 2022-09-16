@@ -37,12 +37,12 @@ const version = "1.0.0" as const;
  *
  * This chooses to use lists of named objects instead of maps:
  * this choice is somewhat arbitrary, but avoids user data being used as object keys,
- * which can sometimes be an issue (for example handling that for __proto__ can require care).
+ * which can sometimes be an issue (for example handling that for "__proto__" can require care).
  */
 interface Format {
     version: typeof version;
-    tree: TreeSchemaFormat[];
-    field: NamedFieldSchemaFormat[];
+    treeSchema: TreeSchemaFormat[];
+    globalFieldSchema: NamedFieldSchemaFormat[];
 }
 
 interface TreeSchemaFormat {
@@ -62,21 +62,20 @@ interface FieldSchemaFormat {
 }
 
 function encodeRepo(repo: SchemaData): Format {
-    const { treeSchema, globalFieldSchema } = repo;
-    const tree: TreeSchemaFormat[] = [];
-    const field: NamedFieldSchemaFormat[] = [];
-    for (const [name, schema] of treeSchema) {
-        tree.push(encodeTree(name, schema));
+    const treeSchema: TreeSchemaFormat[] = [];
+    const globalFieldSchema: NamedFieldSchemaFormat[] = [];
+    for (const [name, schema] of repo.treeSchema) {
+        treeSchema.push(encodeTree(name, schema));
     }
-    for (const [name, schema] of globalFieldSchema) {
-        field.push(encodeNamedField(name, schema));
+    for (const [name, schema] of repo.globalFieldSchema) {
+        globalFieldSchema.push(encodeNamedField(name, schema));
     }
-    tree.sort(compareNamed);
-    field.sort(compareNamed);
+    treeSchema.sort(compareNamed);
+    globalFieldSchema.sort(compareNamed);
     return {
         version,
-        tree,
-        field,
+        treeSchema,
+        globalFieldSchema,
     };
 }
 
@@ -122,10 +121,10 @@ function encodeNamedField(name: string, schema: FieldSchema): NamedFieldSchemaFo
 function decode(f: Format): SchemaData {
     const globalFieldSchema: Map<GlobalFieldKey, FieldSchema> = new Map();
     const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
-    for (const field of f.field) {
+    for (const field of f.globalFieldSchema) {
         globalFieldSchema.set(brand(field.name), decodeField(field));
     }
-    for (const tree of f.tree) {
+    for (const tree of f.treeSchema) {
         treeSchema.set(brand(tree.name), decodeTree(tree));
     }
     return {
