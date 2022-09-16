@@ -173,6 +173,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
     /* eslint-enable @typescript-eslint/unbound-method */
 
     private notCalled(): never {
+        this.verifyStorage();
         try {
             // some browsers may not populate stack unless exception is thrown
             throw new Error("BlobOnlyStorage not implemented method used");
