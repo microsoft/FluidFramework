@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, TreeType, UpPath, Value } from "../tree";
+import { UpPath } from "./pathTree";
+import { FieldKey, TreeType, Value } from "./types";
 
 /**
  * A stateful low-level interface for reading tree data.
@@ -210,7 +211,10 @@ export const enum CursorLocationType {
     Fields,
 }
 
-export interface ITreeCursorSynchronous extends ITreeCursor{
+/**
+ * {@link ITreeCursor} that is never pending.
+ */
+export interface ITreeCursorSynchronous extends ITreeCursor {
     readonly pending: false;
 }
 
@@ -235,9 +239,7 @@ export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) 
 export function forEachNode(
     cursor: ITreeCursor, f: (cursor: ITreeCursor) => void): void {
     assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
-    let inField = cursor.firstNode();
-    while (inField) {
+    for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
         f(cursor);
-        inField = cursor.nextField();
     }
 }

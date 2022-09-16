@@ -56,6 +56,7 @@
         "verifyMaxMessageSize": false,
         "maxNumberOfClientsPerDocument": 1000000,
         "numberOfMessagesPerTrace": 100,
+        "sessionStickinessDurationMs": 3600000,
         "throttling": {
             "restCalls": {
                 "maxPerMs": 1000000,
@@ -107,8 +108,7 @@
         "enforceServerGeneratedDocumentId": false,
         "socketIo": {
             "perMessageDeflate": true
-        },
-        "sessionStickinessDurationMs": 3600000
+        }
     },
     "client": {
         "type": "browser",

@@ -4,7 +4,7 @@
  */
 
 /**
- * The **tinylicious-client** package provides a simple and powerful way to consume collaborative Fluid data with the
+ * The **tinylicious-client** library provides a simple and powerful way to consume collaborative Fluid data with the
  * Tinylicious service.
  *
  * The Tinylicious service is a local, in-memory Fluid service intended for prototyping and development purposes.

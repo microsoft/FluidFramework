@@ -5,13 +5,17 @@
 
 import { generateUser } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
-import { AzureClient } from "..";
-import { AzureLocalConnectionConfig, AzureRemoteConnectionConfig } from "../interfaces";
+import {
+    AzureClient,
+    AzureLocalConnectionConfig,
+    AzureRemoteConnectionConfig,
+} from "@fluidframework/azure-client";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
-// This function will determine if local or remote mode is required (based on FLUID_CLIENT),
-// and return a new AzureClient instance based on the mode by setting the Connection config
-// accordingly.
+/**
+ * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
+ * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
+ */
 export function createAzureClient(userID?: string, userName?: string): AzureClient {
     const useAzure = process.env.FLUID_CLIENT === "azure";
     const tenantId = useAzure
@@ -30,7 +34,7 @@ export function createAzureClient(userID?: string, userName?: string): AzureClie
           }
         : {
               tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
-              endpoint: "http://localhost:7070",
+              endpoint: "http://localhost:7071",
               type: "local",
           };
     return new AzureClient({ connection: connectionProps });

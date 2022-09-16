@@ -97,7 +97,7 @@ export function fromInternalScheme(
  * @example
  *
  * a.b.c-internal.x.y.z
-
+ *
  * @param publicVersion - The public version.
  * @param version - The internal version.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
