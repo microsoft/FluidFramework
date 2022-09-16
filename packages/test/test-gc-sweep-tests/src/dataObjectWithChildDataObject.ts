@@ -10,7 +10,7 @@ import { DataObjectWithCounter, dataObjectWithCounterFactory } from "./dataObjec
 
 export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
     private child?: DataObjectWithCounter;
-    private readonly count = 100;
+    private readonly opsToWait = 1000;
     private get childKey(): string {
         assert(this.context.clientId !== undefined, `client id needs to be defined to retrieve the child key!`);
         return `childKey:${this.context.clientId}`;
@@ -42,8 +42,7 @@ export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
         assert(this.isRunning === true, "Should be running to send ops");
         while (this.isRunning && !this.disposed) {
             let opsPerformed = 0;
-            while (opsPerformed < this.count && this.isRunning && !this.disposed) {
-                // This count is shared across dataObjects so this should reach clients * datastores * count
+            while (opsPerformed < this.opsToWait && this.isRunning && !this.disposed) {
                 super.sendOp();
                 // This data is local and allows us to understand the number of changes a local client has created
                 opsPerformed++;
