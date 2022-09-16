@@ -28,7 +28,7 @@ import {
     IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
-import { createResponseError } from "@fluidframework/runtime-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDataObjectProps,
     PureDataObject,
@@ -61,11 +61,9 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
     // request mixin in
     runtimeClass = mixinRequestHandler(
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-            const router: FluidObject<IFluidRouter> = (await runtimeArg.IFluidHandle?.get() as any);
-            if (router.IFluidRouter) {
-                return router.IFluidRouter.request(request);
-            }
-            return createResponseError(500, "Data store runtime handle is not an IFluidRouter", request);
+            const router = (await runtimeArg.IFluidHandle?.get() as FluidObject<IFluidRouter>).IFluidRouter;
+            assert(router !== undefined, "Data store runtime handle is not an IFluidRouter");
+            return router.request(request);
         },
         runtimeClass);
 
