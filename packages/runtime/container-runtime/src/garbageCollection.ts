@@ -34,10 +34,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
-    IConfigProvider,
-    IFluidErrorBase,
     loggerToMonitoringContext,
-    LoggingError,
     MonitoringContext,
     PerformanceEvent,
     TelemetryDataTag,
@@ -80,28 +77,6 @@ export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionEx
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-<<<<<<< HEAD
-=======
-/**
- * Feature gate key to enable closing the container if SweepReady objects are used.
- * Only known values are accepted, otherwise return undefined.
- *
- * mainContainer: Detect these errors only in the main container
- */
-export const sweepReadyUsageDetectionSetting = {
-    read(config: IConfigProvider) {
-        const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
-        const value = config.getString(sweepReadyUsageDetectionKey);
-        if (value === undefined) {
-            return { mainContainer: false, summarizer: false };
-        }
-        return {
-            mainContainer: value.indexOf("mainContainer") >= 0,
-            summarizer: value.indexOf("summarizer") >= 0,
-        };
-    },
-};
->>>>>>> main
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -328,19 +303,6 @@ export class UnreferencedStateTracker {
         this.clearTimers();
         this._state = UnreferencedState.Active;
     }
-}
-
-/**
- * Error class raised when a SweepReady object is used, indicating a bug in how
- * references are managed in the container by the application, or a bug in how
- * GC tracks those references.
- *
- * There's a chance for false positives when this error is raised by a Main Container,
- * since only the Summarizer has the latest truth about unreferenced node tracking
- */
-class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
-    /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
-    public errorType: string = "unreferencedObjectUsedAfterGarbageCollected";
 }
 
 /**
