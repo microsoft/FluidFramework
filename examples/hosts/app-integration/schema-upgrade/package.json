@@ -68,7 +68,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",

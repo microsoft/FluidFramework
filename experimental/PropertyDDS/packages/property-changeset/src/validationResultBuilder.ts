@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
- * @fileoverview
- * The ValidationResultBuilder maintains validation context that ultimately gets returned as a
+ * @fileoverview The ValidationResultBuilder maintains validation context that ultimately gets returned as a
  * single result.
  */
 
- export declare interface SchemaValidationResult {
+export declare interface SchemaValidationResult {
     isValid: boolean;
     errors: Error[];
     warnings: string[];
@@ -68,8 +68,7 @@ export class ValidationResultBuilder {
 
     /**
      * Fetches the boolean validation result.
-     * @return True if validation produced no error, false otherwise. Warnings don't affect
-     *   this value.
+     * @returns True if validation produced no error, false otherwise. Warnings don't affect this value.
      */
     public isValid(): boolean {
         return this._result.isValid;

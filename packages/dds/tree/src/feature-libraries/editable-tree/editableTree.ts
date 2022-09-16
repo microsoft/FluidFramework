@@ -292,14 +292,19 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             // All string keys are fields
             return target.proxifyField(key);
         }
-        if (key === getTypeSymbol) {
-            return target.getType.bind(target);
-        } else if (key === valueSymbol) {
-            return target.value;
-        } else if (key === proxyTargetSymbol) {
-            return target;
+        switch (key) {
+            case getTypeSymbol: {
+                return target.getType.bind(target);
+            }
+            case valueSymbol: {
+                return target.value;
+            }
+            case proxyTargetSymbol: {
+                return target;
+            }
+            default:
+                return undefined;
         }
-        return undefined;
     },
     set: (target: ProxyTarget, key: string | symbol, setValue: unknown, receiver: ProxyTarget): boolean => {
         throw new Error("Not implemented.");
@@ -400,11 +405,7 @@ function proxifyField(fieldKind: FieldKind, childTargets: ProxyTarget[]): Unwrap
     } else {
         // Avoid wrapping non-sequence fields in arrays
         assert(childTargets.length <= 1, "invalid non sequence");
-        if (childTargets.length === 1) {
-            return inProxyOrUnwrap(childTargets[0]);
-        } else {
-            return undefined;
-        }
+        return childTargets.length === 1 ? inProxyOrUnwrap(childTargets[0]) : undefined;
     }
 }
 

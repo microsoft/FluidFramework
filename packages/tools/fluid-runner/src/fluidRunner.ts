@@ -5,7 +5,7 @@
 
 /* eslint-disable max-len */
 import * as yargs from "yargs";
-import { exportFile, IExportFileResponse } from "./exportFile";
+import { exportFile } from "./exportFile";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
 // eslint-disable-next-line import/no-internal-modules
@@ -75,26 +75,22 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                     process.exit(1);
                 }
 
-                let result: IExportFileResponse;
-                if (argv.codeLoader) {
-                    result = await parseBundleAndExportFile(
+                const result = await (argv.codeLoader
+                    ? parseBundleAndExportFile(
                         argv.codeLoader,
                         argv.inputFile,
                         argv.outputFile,
                         argv.telemetryFile,
                         argv.options,
                         telemetryOptionsResult.telemetryOptions,
-                    );
-                } else {
-                    result = await exportFile(
+                    ) : exportFile(
                         fluidFileConverter!,
                         argv.inputFile,
                         argv.outputFile,
                         argv.telemetryFile,
                         argv.options,
                         telemetryOptionsResult.telemetryOptions,
-                    );
-                }
+                    ));
 
                 if (!result.success) {
                     console.error(`${result.eventName}: ${result.errorMessage}`);

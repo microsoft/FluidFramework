@@ -70,7 +70,7 @@
     "@fluidframework/driver-base": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/driver-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/driver-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/ink": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/local-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/map": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",

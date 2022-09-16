@@ -93,7 +93,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
                 info: (msg: string | Error) => {
                     this.log(msg.toString());
                 },
-                warning: this.warn.bind(this),
+                warning: this.warning.bind(this),
                 errorLog: (msg: string | Error) => {
                     this.errorLog(msg);
                 },
@@ -134,7 +134,9 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         return this._context;
     }
 
-    /** Outputs a horizontal rule. */
+    /**
+     * Outputs a horizontal rule.
+     */
     public logHr() {
         this.log("=".repeat(72));
     }
@@ -154,18 +156,31 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         this.log(`INFO: ${message}`);
     }
 
-    /** Logs an error without exiting. */
+    /**
+     * Logs an error without exiting.
+     */
     public errorLog(message: string | Error) {
         this.log(chalk.red(`ERROR: ${message}`));
     }
 
-    /** Logs a warning. */
+    /**
+     * Logs a warning.
+     */
     public warning(message: string | Error): string | Error {
-        super.warn(chalk.yellow(`WARNING: ${message}`));
+        this.log(chalk.yellow(`WARNING: ${message}`));
         return message;
     }
 
-    /** @deprecated Use {@link BaseCommand.warning} instead. */
+    /**
+     * Logs a warning with a stack trace in debug mode.
+     */
+    public warningWithDebugTrace(message: string | Error): string | Error {
+        return super.warn(message);
+    }
+
+    /**
+     * @deprecated Use {@link BaseCommand.warning}  or {@link BaseCommand.warningWithDebugTrace} instead.
+     */
     public warn(input: string | Error): string | Error {
         return super.warn(input);
     }
