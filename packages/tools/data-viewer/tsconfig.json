@@ -5,6 +5,8 @@
     "outDir": "dist",
     "composite": true,
     "types": ["mocha"],
+    "target": "es6",
+    "jsx": "react",
   },
   "include": ["src/**/*"],
 }
