@@ -386,7 +386,7 @@ describe("editable-tree", () => {
         };
         const forest = setupForest(schemaData, [{ type: optionalChildSchema.name, fields: { child: [{ type: int32Schema.name, value: undefined }] } }]);
         const [context, field] = getEditableTree(forest);
-        assert.throws(() => ((field as EditableTree).child), /`undefined` values not allowed for primitive fields/);
+        assert.throws(() => ((field as EditableTree).child), /Error: 0x3c7/);
         context.free();
     });
 
