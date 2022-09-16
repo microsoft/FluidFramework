@@ -1364,7 +1364,7 @@ export class GarbageCollector implements IGarbageCollector {
 
             // If SweepReady Usage Detection is enabed, close the main container
             // Once Sweep is fully implemented, this will be removed since the objects will be gone
-            // and errors will arise elsewhere in the runtime
+            // and errors will arise elsewhere in the runtime.
             if (state === "SweepReady") {
                 this.sweepReadyUsageHandler.usageDetectedInMainContainer(propsToLog);
             }
