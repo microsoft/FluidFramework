@@ -531,7 +531,7 @@ export enum ITreeSubscriptionCursorState {
 }
 
 // @public
-export interface JsonableTree extends GenericTreeNode<JsonableTree> {
+export interface JsonableTree extends PlaceholderTree {
 }
 
 // @public
