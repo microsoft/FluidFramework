@@ -50,14 +50,13 @@ export class SweepReadyUsageError extends LoggingError implements IFluidErrorBas
 /**
  * This class encapsulates the logic around what to do when a SweepReady object is used.
  * There are several tactics we plan to use in Dogfood environments to aid diagnosis of these cases:
- *  - Closing the container when either the main or summarizer client detects this kind of violation
+ *  - Closing the main container when either the main or summarizer client detects this kind of violation
  *  - Throttling the frequency of these crashes via a "Blackout Period" per container per device
  */
 export class SweepReadyUsageDetectionHandler {
     private readonly localStorage: Pick<Storage, "getItem" | "setItem">;
 
     constructor(
-        /** Unique key for this container for diagnostic purposes */
         private readonly uniqueContainerKey: string,
         private readonly mc: MonitoringContext,
         private readonly closeFn: (error?: ICriticalContainerError) => void,
@@ -96,9 +95,10 @@ export class SweepReadyUsageDetectionHandler {
         const pastClosuresMap: Record<string, { lastCloseTime: number; } | undefined> = (() => {
             try {
                 const rawValue = this.localStorage.getItem(closuresStorageKey);
-                return rawValue === null
-                    ? {}
-                    : JSON.parse(rawValue) as Record<string, { lastCloseTime: number; } | undefined>;
+                const parsedValue = rawValue === null ? {} : JSON.parse(rawValue);
+                return typeof parsedValue === "object"
+                    ? parsedValue as Record<string, { lastCloseTime: number; } | undefined>
+                    : {};
             } catch (e) {
                 return {};
             }
@@ -119,6 +119,8 @@ export class SweepReadyUsageDetectionHandler {
 
         if (shouldClose) {
             // Update closures map in localStorage before closing
+            // Note there is a race condition between different tabs updating localStorage and overwriting
+            // each others' updates. If so, some tab will crash again. Just reload one at a time to get unstuck
             pastClosuresMap[this.uniqueContainerKey] = { lastCloseTime: Date.now() };
             this.localStorage.setItem(closuresStorageKey, JSON.stringify(pastClosuresMap));
 

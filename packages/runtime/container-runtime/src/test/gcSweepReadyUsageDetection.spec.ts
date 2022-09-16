@@ -139,6 +139,63 @@ describe("Garbage Collection Tests", () => {
                 assert.equal(closeErrors.length, 4, `Expected both to close again after waiting 1 day`);
                 assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
             });
+            it("Invalid JSON format closure map value in localStorage - recovers and respects the blackout period", () => {
+                const handler = createHandler();
+                mockLocalStorage[closuresStorageKey] = "} Invalid JSON";
+
+                clock.tick(10);
+                handler.usageDetectedInMainContainer({});
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
+                assert.equal(closeErrors.length, 1, `Expected to close the first time`);
+                assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
+
+                clock.tick(10);
+                handler.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to blackout period. errors:\n${closeErrors}`);
+
+                clock.tick(oneDayMs);
+                handler.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
+                assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
+            });
+            it("Incorrect JSON type for closure map value in localStorage - recovers and respects the blackout period", () => {
+                const handler = createHandler();
+                mockLocalStorage[closuresStorageKey] = JSON.stringify("Not an object");
+
+                clock.tick(10);
+                handler.usageDetectedInMainContainer({});
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
+                assert.equal(closeErrors.length, 1, `Expected to close the first time`);
+                assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
+
+                clock.tick(10);
+                handler.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to blackout period. errors:\n${closeErrors}`);
+
+                clock.tick(oneDayMs);
+                handler.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
+                assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
+            });
+            it("Incorrect JSON schema for closure map value in localStorage - recovers and respects the blackout period", () => {
+                const handler = createHandler();
+                mockLocalStorage[closuresStorageKey] = JSON.stringify({ key1: { wrongSchema: "no lastCloseTime member" } });
+
+                clock.tick(10);
+                handler.usageDetectedInMainContainer({});
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
+                assert.equal(closeErrors.length, 1, `Expected to close the first time`);
+                assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
+
+                clock.tick(10);
+                handler.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to blackout period. errors:\n${closeErrors}`);
+
+                clock.tick(oneDayMs);
+                handler.usageDetectedInMainContainer({});
+                assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
+                assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
+            });
         });
     });
 });
