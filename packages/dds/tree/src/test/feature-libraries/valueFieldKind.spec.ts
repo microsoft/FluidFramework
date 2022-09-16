@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { FieldKinds, NodeChangeset, singleTextCursor } from "../../feature-libraries";
+import { FieldKinds, NodeChangeset, singleTextCursor, singleTextCursorNew } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
@@ -121,9 +121,9 @@ describe("Value field changesets", () => {
     });
 
     it("can be represented as a delta", () => {
-        const expected = [
+        const expected: Delta.MarkList = [
             { type: Delta.MarkType.Delete, count: 1 },
-            { type: Delta.MarkType.Insert, content: [{ type: nodeType, value: "value3" }] },
+            { type: Delta.MarkType.Insert, content: [singleTextCursorNew({ type: nodeType, value: "value3" })] },
         ];
 
         const deltaFromChild = (child: NodeChangeset): Delta.Modify => {

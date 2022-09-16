@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -20,6 +20,9 @@ import {
 } from "@fluidframework/test-utils";
 import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
+import { Delta, ITreeCursorSynchronous } from "../tree";
+import { jsonableTreeFromCursorNew } from "../feature-libraries";
+import { fail } from "../util";
 
 // Testing utilities
 
@@ -173,4 +176,47 @@ export function spyOnMethod(methodClass: Function, methodName: string, spy: () =
     return () => {
         prototype[methodName] = method;
     };
+}
+
+/**
+ * Assert two MarkList are equal, handling cursors.
+ */
+export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
+    assert.deepStrictEqual(uncursorContent(a), uncursorContent(b));
+}
+
+/**
+ * This clones objects, assuming "content" fields are cursors and replaces those with JsonableTrees.
+ * Works for the types in Delta.MarkList, but is not general.
+ */
+function uncursorContent(a: unknown): unknown {
+    if (typeof a !== "object") {
+        return a;
+    }
+    if (Array.isArray(a)) {
+        return a.map(uncursorContent);
+    }
+    if (a instanceof Map) {
+        return new Map([...a].map((k, v) => [k, uncursorContent(v)]));
+    }
+    const copy: Record<string, unknown> = {};
+    // eslint-disable-next-line no-restricted-syntax
+    for (const key in a) {
+        if (Object.prototype.hasOwnProperty.call(a, key)) {
+            const element = (a as Record<string, unknown>)[key];
+            if (key === "content") {
+                const cursor = element as ITreeCursorSynchronous | ITreeCursorSynchronous[];
+                if (Array.isArray(cursor)) {
+                    copy[key] = cursor.map(jsonableTreeFromCursorNew);
+                } else {
+                    copy[key] = jsonableTreeFromCursorNew(cursor);
+                }
+            } else {
+                copy[key] = uncursorContent(element);
+            }
+        } else {
+            fail("unexpected property from prototype");
+        }
+    }
+    return copy;
 }
