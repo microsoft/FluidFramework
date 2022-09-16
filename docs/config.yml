@@ -66,8 +66,6 @@ params:
     message: | # if set, this will override the release notes updates
       [Azure Fluid Relay](/docs/deployment/azure-frs/) is now generally available! [Learn more.](https://devblogs.microsoft.com/microsoft365dev/announcing-general-availability-of-azure-fluid-relay-service/)
 
-ignoreFiles:
-- debugging.md$
 menu:
   main:
   - name: "Getting started"
