@@ -128,7 +128,7 @@ describe("Value field changesets", () => {
 
         const deltaFromChild = (child: NodeChangeset): Delta.Modify => {
             assert.deepEqual(child, nodeChange1);
-            return { type: Delta.MarkType.Modify, setValue: { value: "value3" } };
+            return { type: Delta.MarkType.Modify, setValue: "value3" };
         };
 
         const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild);
