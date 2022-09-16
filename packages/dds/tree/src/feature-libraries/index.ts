@@ -48,6 +48,7 @@ export {
     mockChildChangeRebaser,
     mockChildChangeInverter,
     mockChildChangeComposer,
+    mockChildChangeToDelta,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.

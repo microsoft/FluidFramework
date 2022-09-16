@@ -11,7 +11,7 @@ import {
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
-import { cases, TestChangeset } from "./cases";
+import { cases, TestChangeset } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
@@ -22,7 +22,7 @@ function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
     return SF.rebase(change, base, mockChildChangeRebaser);
 }
 
-describe("SequenceChangeFamily - Rebase", () => {
+describe("SequenceField - Rebase", () => {
     describe("no changes ↷ *", () => {
         for (const [name, testCase] of Object.entries(cases)) {
             it(`no changes ↷ ${name}`, () => {

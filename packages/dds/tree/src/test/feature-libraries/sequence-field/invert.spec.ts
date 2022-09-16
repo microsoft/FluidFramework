@@ -11,7 +11,7 @@ import {
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
-import { TestChangeset } from "./cases";
+import { TestChangeset } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 
@@ -25,7 +25,7 @@ function shallowInvert(change: SF.Changeset<unknown>): SF.Changeset<unknown> {
     return SF.sequenceFieldChangeRebaser.invert(change,  () => assert.fail("Unexpected call to child inverter"));
 }
 
-describe("SequenceChangeFamily - Invert", () => {
+describe("SequenceField - Invert", () => {
     it("no changes", () => {
         const input: SF.Changeset = [];
         const expected: SF.Changeset = [];

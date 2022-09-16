@@ -11,7 +11,7 @@ import {
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
-import { cases, TestChangeset } from "./cases";
+import { cases, TestChangeset } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
@@ -26,7 +26,7 @@ function shallowCompose(changes: SF.Changeset[]): SF.Changeset {
     return SF.sequenceFieldChangeRebaser.compose(changes, () => assert.fail("Unexpected call to child rebaser"));
 }
 
-describe("SequenceChangeFamily - Compose", () => {
+describe("SequenceField - Compose", () => {
     describe("associativity of triplets", () => {
         const entries = Object.entries(cases);
         for (const a of entries) {

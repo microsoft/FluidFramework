@@ -6,13 +6,14 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { brandOpaque, clone, fail, OffsetListFactory } from "../../util";
 import { Delta } from "../../tree";
-import { ToDelta } from "../modular-schema";
 import * as F from "./format";
 import { isSkipMark } from "./utils";
 
-export function sequenceFieldToDelta(
-    marks: F.MarkList,
-    deltaFromChild: ToDelta,
+export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
+
+export function sequenceFieldToDelta<TNodeChange>(
+    marks: F.MarkList<TNodeChange>,
+    deltaFromChild: ToDelta<TNodeChange>,
 ): Delta.MarkList {
     const out = new OffsetListFactory<Delta.Mark>();
     for (const mark of marks) {
@@ -131,7 +132,7 @@ function cloneTreeContent(content: F.ProtoNode[]): Delta.ProtoNode[] {
  *
  * The returned `fields` map may be empty if all modifications are applied by the function.
  */
-function cloneAndModify(insert: F.ModifyInsert): DeltaInsertModification {
+function cloneAndModify<TNodeChange>(insert: F.ModifyInsert<TNodeChange>): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
     const outNode = cloneTreeContent([insert.content])[0];
     const outModifications = applyOrCollectModifications(outNode, insert.changes);
@@ -167,9 +168,9 @@ interface DeltaInsertModification {
  * @returns The remaining modifications that the consumer of the Delta will apply on the given node. May be empty if
  *   all modifications are applied by the function.
  */
-function applyOrCollectModifications(
+function applyOrCollectModifications<TNodeChange>(
     node: Delta.ProtoNode,
-    changes: F.NodeChangeType,
+    changes: TNodeChange,
 ): Delta.FieldMarks {
     fail(ERR_NOT_IMPLEMENTED);
 }

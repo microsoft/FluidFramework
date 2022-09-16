@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { Delta } from "../../tree";
 
 export interface MockChildChange {
     intentions: number[];
@@ -42,4 +43,8 @@ export function mockChildChangeComposer(changes: MockChildChange[]): MockChildCh
         intentions: id,
         ref: changes[0].ref,
     };
+}
+
+export function mockChildChangeToDelta(change: MockChildChange): Delta.Modify {
+    return { type: Delta.MarkType.Modify, setValue: { value: change.intentions.map(String).join("|") } };
 }
