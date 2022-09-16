@@ -3,17 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, delay } from "@fluidframework/common-utils";
 import { SharedCounter } from "@fluidframework/counter";
 import { DataObjectWithCounter, dataObjectWithCounterFactory } from "./dataObjectWithCounter";
 
+/**
+ * A root dataObject that repeatedly sends a series of ops, and then references a new child or
+ * unreferences a child. That child is unique to a particular client and a particular dataObject.
+ * For example, if there are two clients A and B, there will be one rootDataObject and 2 child
+ * data objects that can be potentially referenced at one point.
+ */
 export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
     private child?: DataObjectWithCounter;
     private readonly opsToWait = 1000;
+    private uniqueId?: string;
     private get childKey(): string {
-        assert(this.context.clientId !== undefined, `client id needs to be defined to retrieve the child key!`);
-        return `childKey:${this.context.clientId}`;
+        assert(this.uniqueId !== undefined, `A uniqueId needs to be defined to retrieve the child key!`);
+        return `childKey:${this.uniqueId}`;
     }
 
     public static get type(): string {
@@ -22,6 +30,7 @@ export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
 
     protected async hasInitialized(): Promise<void> {
         await super.hasInitialized();
+        this.uniqueId = makeRandom().uuid4();
         await this.createAndReferenceChild();
         this.start();
     }
@@ -38,15 +47,21 @@ export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
         this.child.start();
     }
 
-    protected async sendOps() {
+    protected async run() {
         assert(this.isRunning === true, "Should be running to send ops");
+        // The ideal loop is to send a number of counter ops, and then reference or unreference a child.
         while (this.isRunning && !this.disposed) {
             let opsPerformed = 0;
-            while (opsPerformed < this.opsToWait && this.isRunning && !this.disposed) {
-                super.sendOp();
+            // This inner loop generates a number of ops set by this.opsToWait.
+            while (opsPerformed < this.opsToWait) {
+                this.counter.increment(1);
                 // This data is local and allows us to understand the number of changes a local client has created
                 opsPerformed++;
                 await delay(this.delayPerOpMs);
+
+                if (!this.isRunning || this.disposed) {
+                    return;
+                }
             }
 
             // Reference the child if there is none, unreference if there is one

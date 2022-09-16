@@ -24,11 +24,11 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "npm run test:mocha-not-in-ci",
+    "test": "npm run test:mocha-not-in-ci:verbose",
     "test:build": "npm run build && npm run test:mocha-not-in-ci",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha-not-in-ci": "mocha --ignore 'dist/test/types/*' --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:mocha-not-in-ci:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+    "test:mocha-not-in-ci:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha-not-in-ci",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
   },

@@ -15,11 +15,16 @@ import { SharedCounter } from "@fluidframework/counter";
  */
 const counterKey = "counter";
 export class DataObjectWithCounter extends DataObject {
-    protected counter?: SharedCounter;
+    private _counter?: SharedCounter;
     public isRunning: boolean = false;
     protected readonly delayPerOpMs = 100;
     public static get type(): string {
         return "DataObjectWithCounter";
+    }
+
+    public get counter(): SharedCounter {
+        assert(this._counter !== undefined, "Need counter to be defined before retreiving!");
+        return this._counter;
     }
 
     protected async initializingFirstTime(props?: any): Promise<void> {
@@ -29,13 +34,12 @@ export class DataObjectWithCounter extends DataObject {
     protected async hasInitialized(): Promise<void> {
         const handle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
         assert(handle !== undefined, `The counter handle should exist on initialization!`);
-        this.counter = await handle.get();
+        this._counter = await handle.get();
     }
 
     protected sendOp() {
         assert(this.counter !== undefined, "Can't send ops when the counter isn't initialized!");
         assert(this.isRunning === true, `The DataObject should be running in order to generate ops!`);
-        this.counter.increment(1);
     }
 
     public stop() {
@@ -44,13 +48,13 @@ export class DataObjectWithCounter extends DataObject {
 
     public start() {
         this.isRunning = true;
-        this.sendOps().catch((error) => { console.log(error); });
+        this.run().catch((error) => { console.log(error); });
     }
 
-    protected async sendOps() {
+    protected async run() {
         assert(this.isRunning === true, "Should be running to send ops");
         while (this.isRunning && !this.disposed) {
-            this.sendOp();
+            this.counter.increment(1);
             await delay(this.delayPerOpMs);
         }
     }
