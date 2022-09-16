@@ -16,13 +16,13 @@ import { SharedCounter } from "@fluidframework/counter";
 const counterKey = "counter";
 export class DataObjectWithCounter extends DataObject {
     private _counter?: SharedCounter;
-    public isRunning: boolean = false;
+    protected isRunning: boolean = false;
     protected readonly delayPerOpMs = 100;
     public static get type(): string {
         return "DataObjectWithCounter";
     }
 
-    public get counter(): SharedCounter {
+    protected get counter(): SharedCounter {
         assert(this._counter !== undefined, "Need counter to be defined before retreiving!");
         return this._counter;
     }
@@ -35,11 +35,6 @@ export class DataObjectWithCounter extends DataObject {
         const handle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
         assert(handle !== undefined, `The counter handle should exist on initialization!`);
         this._counter = await handle.get();
-    }
-
-    protected sendOp() {
-        assert(this.counter !== undefined, "Can't send ops when the counter isn't initialized!");
-        assert(this.isRunning === true, `The DataObject should be running in order to generate ops!`);
     }
 
     public stop() {
