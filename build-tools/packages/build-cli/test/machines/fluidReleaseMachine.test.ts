@@ -41,14 +41,15 @@ const expectedMinorPath = [
     "CheckOnReleaseBranch2",
     "CheckReleaseGroupIsBumpedPatch2",
     "CheckReleaseIsDone2",
+    "CheckReleaseGroupIsBumpedMinor2",
     "CheckTypeTestPrepare2",
     "CheckTypeTestGenerate2",
     "ReleaseComplete",
-    "PromptToRelease",
     "DoReleaseGroupBump",
     "CheckShouldCommitBump",
     "PromptToPRBump",
     "PromptToCommitBump",
+    "PromptToRelease",
     "CheckReleaseGroupIsBumpedMinor",
     "CheckReleaseBranchExists",
     "CheckReleaseIsDone",
@@ -73,14 +74,15 @@ const expectedMajorPath = [
     "CheckOnReleaseBranch2",
     "CheckReleaseGroupIsBumpedPatch2",
     "CheckReleaseIsDone2",
+    "CheckReleaseGroupIsBumpedMinor2",
     "CheckTypeTestPrepare2",
     "CheckTypeTestGenerate2",
     "ReleaseComplete",
-    "PromptToRelease",
     "DoReleaseGroupBump",
     "CheckShouldCommitBump",
     "PromptToPRBump",
     "PromptToCommitBump",
+    "PromptToRelease",
     "CheckReleaseGroupIsBumpedMinor",
     "CheckReleaseBranchExists",
     "CheckReleaseIsDone",
@@ -109,6 +111,7 @@ describe("FluidReleaseMachine", () => {
         const startingState = `DoMinorRelease`;
 
         walkExits(startingState, states);
+        console.log(JSON.stringify([...states]));
         expect([...states]).to.be.equalTo(expectedMinorPath);
     });
 
@@ -116,6 +119,7 @@ describe("FluidReleaseMachine", () => {
         const states = new Set<string>();
         const startingState = `DoMajorRelease`;
         walkExits(startingState, states);
+        console.log(JSON.stringify([...states]));
         expect([...states]).to.be.equalTo(expectedMajorPath);
     });
 });
