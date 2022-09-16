@@ -126,12 +126,16 @@ describe("FluidReleaseMachine", () => {
 
     describe("All states with a success action have a failure action", () => {
         // Do* actions are not required to have a failure action except those in this array
-        const requiresFailureAction = ["DoBumpReleasedDependencies"];
+        const requiresBothActions = ["DoBumpReleasedDependencies"];
 
-        for (const state of machine.list_states_having_action("success")) {
+        const states = new Set<string>();
+        machine.list_states_having_action("success").forEach(v=>states.add(v));
+        machine.list_states_having_action("failure").forEach(v=>states.add(v));
+
+        for (const state of states) {
             const exits = machine.list_exit_actions(state).sort();
 
-            if (!state.startsWith("Do") || requiresFailureAction.includes(state)) {
+            if (!state.startsWith("Do") || requiresBothActions.includes(state)) {
                 it(state, () => {
                     expect(exits).to.be.equalTo(["failure", "success"]);
                 });
