@@ -213,7 +213,7 @@ export function isDetachMark<TNodeChange>(
     return false;
 }
 
-export function isObjMark(mark: F.Mark<unknown> | undefined): mark is F.ObjectMark {
+export function isObjMark<TNodeChange>(mark: F.Mark<TNodeChange> | undefined): mark is F.ObjectMark<TNodeChange> {
     return typeof mark === "object";
 }
 
