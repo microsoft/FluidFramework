@@ -78,8 +78,8 @@ export function validateAndParseTelemetryOptions(
 
     if (props) {
         let index = 0;
-        for (const kvp of props.split(/\s+/)) {
-            const kvpSplit = kvp.split("=");
+        for (const kvp of props.trim().split(/\s+/)) {
+            const kvpSplit = kvp.split("=").filter(Boolean);
             if (kvpSplit.length !== 2) {
                 return { success: false, error: `Invalid property at index [${index}] -> [${kvp}]` };
             }
