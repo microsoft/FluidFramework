@@ -11,7 +11,7 @@ import { brand } from "../../../util";
 const dummyMark: SF.Detach = { type: "Delete", id: 0, count: 1 };
 const type: TreeSchemaIdentifier = brand("Node");
 
-describe("SF.MarkListFactory", () => {
+describe("SequenceField - MarkListFactory", () => {
     it("Inserts an offset when there is content after the offset", () => {
         const factory = new SF.MarkListFactory();
         factory.pushOffset(42);

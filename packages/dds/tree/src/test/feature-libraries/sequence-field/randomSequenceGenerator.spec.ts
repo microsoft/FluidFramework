@@ -5,15 +5,13 @@
 
 import { strict as assert } from "assert";
 import { NodeChangeset } from "../../../feature-libraries";
-import { FieldKey } from "../../../tree";
-import { brand } from "../../../util";
 import { generateRandomChange } from "./randomSequenceGenerator";
 
 const testSeed = 432167897;
 const maxIndex = 3;
 const childGen = (seed: number): NodeChangeset => ({ valueChange: { value: seed } });
 
-describe("generateRandomChange", () => {
+describe("SequenceField - generateRandomChange", () => {
     it("generates the same change given the same seed", () => {
         const change1 = generateRandomChange(testSeed, maxIndex, childGen);
         const change2 = generateRandomChange(testSeed, maxIndex, childGen);

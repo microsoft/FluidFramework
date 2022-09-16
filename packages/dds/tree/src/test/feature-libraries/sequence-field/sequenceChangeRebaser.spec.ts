@@ -29,7 +29,7 @@ const testMarks: [string, SF.Mark<MockChildChange>][] = [
 ];
 deepFreeze(testMarks);
 
-describe("SequenceChangeFamily", () => {
+describe("SequenceField - Rebaser Axioms", () => {
     /**
      * This test simulates rebasing over an do-undo pair.
      */
