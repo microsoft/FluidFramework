@@ -259,14 +259,6 @@ stages:
           # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
           # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
           - ${{ if eq(variables['testCoverage'], true) }}:
-            #- task: Bash@3
-            #  displayName: Create directory for log file
-            #  inputs:
-            #    targetType: 'inline'
-            #    workingDirectory: ${{ parameters.buildDirectory }}
-            #    script: |
-            #      mkdir $(Build.ArtifactStagingDirectory)/log/
-            #      touch $(Build.ArtifactStagingDirectory)/log/test.txt
             - task: Npm@1
               displayName: npm run ci:test:coverage
               inputs:
@@ -300,20 +292,6 @@ stages:
                 reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
                 failIfCoverageEmpty: true
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-            #- task: CopyFiles@2
-            #  displayName: 'Copy Logs'
-            #  inputs:
-            #    contents: '${{ parameters.buildDirectory }}/nyc/report/**'
-            #    targetFolder: '$(Build.ArtifactStagingDirectory)/log'
-            #- publish: '$(Build.ArtifactStagingDirectory)/log'
-            #  displayName: 'Publish Log'
-            #  artifact: drop
-            #- task: PublishBuildArtifacts@1
-            #  displayName: Publish Artifact - Log
-            #  inputs:
-            #    PathtoPublish: '$(Build.ArtifactStagingDirectory)/log'
-            #    ArtifactName: 'log'
-            #    publishLocation: 'Container'
 
           # Test - Upload results
           - task: PublishTestResults@2
@@ -323,7 +301,6 @@ stages:
               testResultsFiles: '**/*junit-report.xml'
               searchFolder: ${{ parameters.buildDirectory }}/nyc
               mergeTestResults: false
-              publishRunAttachments: true
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
         # Pack
