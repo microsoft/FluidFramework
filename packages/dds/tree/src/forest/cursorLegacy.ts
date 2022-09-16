@@ -113,7 +113,7 @@ export function reduceField<T>(
     let output: T = initial;
     let result = cursor.down(key, 0);
     if (result !== TreeNavigationResult.Ok) {
-        assert(result === TreeNavigationResult.NotFound, "pending not supported in reduceField");
+        assert(result === TreeNavigationResult.NotFound, 0x3bb /* pending not supported in reduceField */);
         // This has to be special cased (and not fall through the code below)
         // since the call to `up` needs to be skipped.
         return output;
@@ -122,7 +122,7 @@ export function reduceField<T>(
         output = (f(cursor, output));
         result = cursor.seek(1);
     }
-    assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
+    assert(result === TreeNavigationResult.NotFound, 0x3bc /* expected enumeration to end at end of field */);
     cursor.up();
     return output;
 }

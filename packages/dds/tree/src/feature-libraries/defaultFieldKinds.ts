@@ -297,7 +297,7 @@ export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
 
 const valueFieldEditor: ValueFieldEditor = {
     buildChildChange: (index, change) => {
-        assert(index === 0, "Value fields only support a single child node");
+        assert(index === 0, 0x3b6 /* Value fields only support a single child node */);
         return { changes: change };
     },
 

@@ -266,7 +266,7 @@ export class PendingStateManager implements IDisposable {
         }
 
         this._pendingMessagesCount--;
-        assert(this._pendingMessagesCount >= 0, "positive");
+        assert(this._pendingMessagesCount >= 0, 0x3d6 /* positive */);
 
         // Post-processing part - If we are processing a batch then this could be the last message in the batch.
         this.maybeProcessBatchEnd(message);
