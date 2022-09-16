@@ -67,11 +67,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 
     constructor(random: IRandom = makeRandom(1), chain?: Record<string, [string, number][]>) {
         super();
-        if (chain) {
-            this.chain = chain;
-        } else {
-            this.chain = {};
-        }
+        this.chain = chain ? chain : {};
 
         this.random = random;
     }
@@ -175,16 +171,21 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
             }
             currWordSpacing = MarkovChain.assumeWordLanguageWordSpacing(currWord);
 
-            if (currWordSpacing === WordSpacing.Unknown) {
-                if (prevWordSpacing === WordSpacing.Unspaced) {
-                    sentence += `${currWord}`;
-                } else {
-                    sentence += ` ${currWord}`;
+            switch (currWordSpacing) {
+                case WordSpacing.Unknown: {
+                    sentence += prevWordSpacing === WordSpacing.Unspaced ? `${currWord}` : ` ${currWord}`;
+                    break;
                 }
-            } else if (currWordSpacing === WordSpacing.Unspaced) {
-                sentence += `${currWord}`;
-            } else if (currWordSpacing === WordSpacing.Spaced) {
-                sentence += ` ${currWord}`;
+                case WordSpacing.Unspaced: {
+                    sentence += `${currWord}`;
+                    break;
+                }
+                case WordSpacing.Spaced: {
+                    sentence += ` ${currWord}`;
+                    break;
+                }
+                default:
+                    break;
             }
 
             nextWordChoices = markovChain[currWord];
@@ -205,11 +206,7 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 
     constructor(random: IRandom = makeRandom(1), chain?: Record<string, string[]>) {
         super();
-        if (chain) {
-            this.chain = chain;
-        } else {
-            this.chain = {};
-        }
+        this.chain = chain ? chain : {};
         this.random = random;
     }
 
@@ -282,16 +279,21 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
                 break;
             }
             currWordSpacing = MarkovChain.assumeWordLanguageWordSpacing(currWord);
-            if (currWordSpacing === WordSpacing.Unknown) {
-                if (prevWordSpacing === WordSpacing.Unspaced) {
-                    sentence += `${currWord}`;
-                } else {
-                    sentence += ` ${currWord}`;
+            switch (currWordSpacing) {
+                case WordSpacing.Unknown: {
+                    sentence += prevWordSpacing === WordSpacing.Unspaced ? `${currWord}` : ` ${currWord}`;
+                    break;
                 }
-            } else if (currWordSpacing === WordSpacing.Unspaced) {
-                sentence += `${currWord}`;
-            } else if (currWordSpacing === WordSpacing.Spaced) {
-                sentence += ` ${currWord}`;
+                case WordSpacing.Unspaced: {
+                    sentence += `${currWord}`;
+                    break;
+                }
+                case WordSpacing.Spaced: {
+                    sentence += ` ${currWord}`;
+                    break;
+                }
+                default:
+                    break;
             }
             nextWordChoices = this.chain[currWord];
         }
