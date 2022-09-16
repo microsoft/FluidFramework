@@ -36,7 +36,7 @@ import { FieldKey, NodeData } from "./types";
  * Be very careful when using objects as maps:
  * Use `Object.prototype.hasOwnProperty.call(fieldMap, key)` to safely check for keys.
  * Do NOT simply read the field and check for undefined as this will return values for `__proto__`
- * and various methods on Object.prototype, like `hasOwnProperty` and `toStrong`.
+ * and various methods on Object.prototype, like `hasOwnProperty` and `toString`.
  * This exposes numerous bug possibilities, including prototype pollution.
  *
  * Due to the above issue, try to avoid this type (and the whole object as map pattern).
