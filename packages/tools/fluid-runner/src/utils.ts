@@ -19,7 +19,6 @@ export function isJsonSnapshot(content: Buffer): boolean {
  * Get the ODSP snapshot file content
  * Works on both JSON and binary snapshot formats
  * @param filePath - path to the ODSP snapshot file
- * @internal
  */
 export function getSnapshotFileContent(filePath: string): string | Buffer {
     // TODO: read file stream

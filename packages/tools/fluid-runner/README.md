@@ -59,7 +59,7 @@ Example of invalid usages:
 
 ### Consumption
 The code around `exportFile` can be consumed in multiple different layers. It is not necessary to run all this code fully as is, and the following are some interesting code bits involved in this workflow:
-- [`createLogger(...)`](./src/logger/FileLogger.ts)
+- [`createLogger(...)`](./src/logger/fileLogger.ts)
     - Creates and wraps an `IFileLogger` and adds some useful telemetry data to every entry
 - [`createContainerAndExecute(...)`](./src/exportFile.ts)
     - This is the core logic for running some action based on a local ODSP snapshot
