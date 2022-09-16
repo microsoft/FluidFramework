@@ -10,6 +10,8 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { loggerToMonitoringContext, MockLogger, sessionStorageConfigProvider, ConfigTypes } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
+    blackoutPeriodDaysKey,
+    closuresMapLocalStorageKey,
     SweepReadyUsageDetectionHandler,
 } from "../gcSweepReadyUsageDetection";
 import { oneDayMs } from "../garbageCollection";
@@ -19,8 +21,6 @@ describe("Garbage Collection Tests", () => {
 
     describe("SweepReady Usage Detection", () => {
         const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
-        const blackoutPeriodDays = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.BlackoutPeriodDays";
-        const closuresStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
         const sweepReadyUsageErrorType = "unreferencedObjectUsedAfterGarbageCollected";
 
         let mockLogger: MockLogger = new MockLogger();
@@ -72,7 +72,7 @@ describe("Garbage Collection Tests", () => {
             beforeEach(() => {
                 // For these tests, enable these by default
                 mockLocalStorage[sweepReadyUsageDetectionKey] = "blah mainContainer blah";
-                mockLocalStorage[blackoutPeriodDays] = 1;
+                mockLocalStorage[blackoutPeriodDaysKey] = 1;
             });
             it("setting does not contain 'mainContainer' - do not close the container", () => {
                 mockLocalStorage[sweepReadyUsageDetectionKey] = "summarizer or whatever";
@@ -88,7 +88,7 @@ describe("Garbage Collection Tests", () => {
                 mockLogger.assertMatch([{ eventName: "SweepReadyUsageDetectionHandlerNoOpStorage" }]);
             });
             it("BlackoutPeriod undefined - close the container back-to-back", () => {
-                mockLocalStorage[blackoutPeriodDays] = undefined;
+                mockLocalStorage[blackoutPeriodDaysKey] = undefined;
                 const handler = createHandler();
                 handler.usageDetectedInMainContainer({});
                 handler.usageDetectedInMainContainer({});
@@ -100,7 +100,7 @@ describe("Garbage Collection Tests", () => {
 
                 clock.tick(10);
                 handler.usageDetectedInMainContainer({});
-                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
@@ -120,7 +120,7 @@ describe("Garbage Collection Tests", () => {
 
                 clock.tick(10);
                 handler1a.usageDetectedInMainContainer({});
-                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
@@ -141,11 +141,11 @@ describe("Garbage Collection Tests", () => {
             });
             it("Invalid JSON format closure map value in localStorage - recovers and respects the blackout period", () => {
                 const handler = createHandler();
-                mockLocalStorage[closuresStorageKey] = "} Invalid JSON";
+                mockLocalStorage[closuresMapLocalStorageKey] = "} Invalid JSON";
 
                 clock.tick(10);
                 handler.usageDetectedInMainContainer({});
-                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
@@ -160,11 +160,11 @@ describe("Garbage Collection Tests", () => {
             });
             it("Incorrect JSON type for closure map value in localStorage - recovers and respects the blackout period", () => {
                 const handler = createHandler();
-                mockLocalStorage[closuresStorageKey] = JSON.stringify("Not an object");
+                mockLocalStorage[closuresMapLocalStorageKey] = JSON.stringify("Not an object");
 
                 clock.tick(10);
                 handler.usageDetectedInMainContainer({});
-                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 
@@ -179,11 +179,11 @@ describe("Garbage Collection Tests", () => {
             });
             it("Incorrect JSON schema for closure map value in localStorage - recovers and respects the blackout period", () => {
                 const handler = createHandler();
-                mockLocalStorage[closuresStorageKey] = JSON.stringify({ key1: { wrongSchema: "no lastCloseTime member" } });
+                mockLocalStorage[closuresMapLocalStorageKey] = JSON.stringify({ key1: { wrongSchema: "no lastCloseTime member" } });
 
                 clock.tick(10);
                 handler.usageDetectedInMainContainer({});
-                assert.deepEqual(JSON.parse(mockLocalStorage[closuresStorageKey] as string), { key1: { lastCloseTime: 10 } });
+                assert.deepEqual(JSON.parse(mockLocalStorage[closuresMapLocalStorageKey] as string), { key1: { lastCloseTime: 10 } });
                 assert.equal(closeErrors.length, 1, `Expected to close the first time`);
                 assert.equal(closeErrors[0]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the first time");
 

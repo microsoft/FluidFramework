@@ -13,9 +13,14 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { oneDayMs } from "./garbageCollection";
 
-const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
-const blackoutPeriodDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.BlackoutPeriodDays";
-const closuresStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
+/** Feature Gate Key -
+ *  How many days between closing the container from this error (avoids locking user out of their file altogether)
+ */
+export const blackoutPeriodDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.BlackoutPeriodDays";
+/** LocalStorage key (NOT via feature gate / monitoring context)
+ *  A map from docId to info about the last time we closed due to this error
+ */
+export const closuresMapLocalStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
 
 /**
  * Feature gate key to enable closing the container if SweepReady objects are used.
@@ -23,6 +28,7 @@ const closuresStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetec
  */
 const sweepReadyUsageDetectionSetting = {
     read(config: IConfigProvider) {
+        const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
         const value = config.getString(sweepReadyUsageDetectionKey);
         if (value === undefined) {
             return { mainContainer: false, summarizer: false };
@@ -60,11 +66,11 @@ export class SweepReadyUsageDetectionHandler {
         private readonly uniqueContainerKey: string,
         private readonly mc: MonitoringContext,
         private readonly closeFn: (error?: ICriticalContainerError) => void,
-        localStorageImpl?: Pick<Storage, "getItem" | "setItem">,
+        localStorageOverride?: Pick<Storage, "getItem" | "setItem">,
     ) {
         const noopStorage = { getItem: () => null, setItem: () => {} };
-        if (localStorageImpl !== undefined) {
-            this.localStorage = localStorageImpl;
+        if (localStorageOverride !== undefined) {
+            this.localStorage = localStorageOverride;
         } else {
             try {
                 // localStorage is not defined in Node environment so this throws
@@ -94,7 +100,7 @@ export class SweepReadyUsageDetectionHandler {
 
         const pastClosuresMap: Record<string, { lastCloseTime: number; } | undefined> = (() => {
             try {
-                const rawValue = this.localStorage.getItem(closuresStorageKey);
+                const rawValue = this.localStorage.getItem(closuresMapLocalStorageKey);
                 const parsedValue = rawValue === null ? {} : JSON.parse(rawValue);
                 return typeof parsedValue === "object"
                     ? parsedValue as Record<string, { lastCloseTime: number; } | undefined>
@@ -122,7 +128,7 @@ export class SweepReadyUsageDetectionHandler {
             // Note there is a race condition between different tabs updating localStorage and overwriting
             // each others' updates. If so, some tab will crash again. Just reload one at a time to get unstuck
             pastClosuresMap[this.uniqueContainerKey] = { lastCloseTime: Date.now() };
-            this.localStorage.setItem(closuresStorageKey, JSON.stringify(pastClosuresMap));
+            this.localStorage.setItem(closuresMapLocalStorageKey, JSON.stringify(pastClosuresMap));
 
             this.closeFn(error);
         } else {
