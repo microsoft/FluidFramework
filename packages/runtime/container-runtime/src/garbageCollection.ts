@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
-import { IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
@@ -134,7 +134,7 @@ export interface IGarbageCollectionRuntime {
     /** Returns the type of the GC node. */
     getNodeType(nodePath: string): GCNodeType;
     /** Called when the runtime should close because of an error. */
-    closeFn(error?: ICriticalContainerError): void;
+    closeFn: (error?: ICriticalContainerError) => void;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -189,6 +189,7 @@ export interface IGarbageCollectorCreateParams {
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly activeConnection: () => boolean;
+    readonly getContainerDiagnosticId: () => string;
     readonly snapshotCacheExpiryMs?: number;
 }
 
@@ -458,7 +459,7 @@ export class GarbageCollector implements IGarbageCollector {
         };
     }
 
-    //* Comment and rename
+    /** Handler to respond to when a SweepReady object is used */
     private readonly sweepReadyUsageHandler: SweepReadyUsageDetectionHandler;
 
     protected constructor(createParams: IGarbageCollectorCreateParams) {
@@ -477,13 +478,9 @@ export class GarbageCollector implements IGarbageCollector {
             createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
         ));
 
-        //* Properly expose this via callback in createParams
-        const uniqueContainerKey = (this.runtime as any as { context: IContainerContext; }).context.id;
         this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
-            uniqueContainerKey,
+            createParams.getContainerDiagnosticId(),
             this.mc,
-            //* double-check
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             this.runtime.closeFn,
         );
 
@@ -1413,9 +1410,6 @@ export class GarbageCollector implements IGarbageCollector {
                 });
             }
 
-            // If SweepReady Usage Detection is enabed, close the main container
-            // Once Sweep is fully implemented, this will be removed since the objects will be gone
-            // and errors will arise elsewhere in the runtime
             if (state === UnreferencedState.SweepReady) {
                 this.sweepReadyUsageHandler.usageDetectedInMainContainer(propsToLog);
             }

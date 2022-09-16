@@ -17,7 +17,7 @@ import { oneDayMs } from "../garbageCollection";
 describe("Garbage Collection Tests", () => {
     let clock: SinonFakeTimers;
 
-    describe.only("SweepReady Usage Detection", () => {
+    describe("SweepReady Usage Detection", () => {
         const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
         const blackoutPeriodDays = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.BlackoutPeriodDays";
         const closuresStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";

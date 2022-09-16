@@ -77,10 +77,17 @@ export class SweepReadyUsageDetectionHandler {
 
         if (this.localStorage === noopStorage) {
             // This means the Blackout Period logic will not work.
-            this.mc.logger.sendErrorEvent({ eventName: "SweepReadyUsageDetectionHandlerNoOpStorage" });
+            this.mc.logger.sendTelemetryEvent({ eventName: "SweepReadyUsageDetectionHandlerNoOpStorage" });
         }
     }
 
+    /**
+      * If SweepReady Usage Detection is enabled, close the main container.
+      * If the "Blackout Period" is set, don't close the container more than once in that period.
+      *
+      * Once Sweep is fully implemented, this will be removed since the objects will be gone
+      * and errors will arise elsewhere in the runtime
+     */
     public usageDetectedInMainContainer(errorProps: ITelemetryProperties) {
         if (!sweepReadyUsageDetectionSetting.read(this.mc.config).mainContainer) {
             return;
