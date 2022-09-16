@@ -37,7 +37,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
         private readonly logger: ITelemetryLogger,
         private readonly captureProtocolSummary?: () => ISummaryTree,
     ) {
-        this._storageService = new DetachedStorageWrapper(detachedBlobStorage, logger);
+        this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
     }
 
     disposed: boolean = false;
@@ -47,7 +47,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
     }
 
     public async connectToService(service: IDocumentService): Promise<void> {
-        if (!(this._storageService instanceof DetachedStorageWrapper)) {
+        if (!(this._storageService instanceof BlobOnlyStorage)) {
             return;
         }
 
@@ -132,7 +132,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
  * Storage which only supports createBlob() and readBlob(). This is used with IDetachedBlobStorage to support
  * blobs in detached containers.
  */
-class DetachedStorageWrapper implements IDocumentStorageService {
+class BlobOnlyStorage implements IDocumentStorageService {
     constructor(
         private readonly detachedStorage: IDetachedBlobStorage | undefined,
         private readonly logger: ITelemetryLogger,
