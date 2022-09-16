@@ -121,20 +121,16 @@ export class AzureClient {
         const loader = this.createLoader(containerSchema);
         const azClientLogger = this.createLogger(loader);
 
+        // Create doc url
+        const url = new URL(this.props.connection.endpoint);
+        url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
+        url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
+        url.searchParams.append("containerId", encodeURIComponent(id));
+
         return PerformanceEvent.timedExecAsync(
             azClientLogger,
             { eventName: "ContainerCopy" },
             async () => {
-                const url = new URL(this.props.connection.endpoint);
-                url.searchParams.append(
-                    "storage",
-                    encodeURIComponent(this.props.connection.endpoint),
-                );
-                url.searchParams.append(
-                    "tenantId",
-                    encodeURIComponent(getTenantId(this.props.connection)),
-                );
-                url.searchParams.append("containerId", encodeURIComponent(id));
                 const sourceContainer = await loader.resolve({ url: url.href });
 
                 if (sourceContainer.resolvedUrl === undefined) {
@@ -183,23 +179,17 @@ export class AzureClient {
         const loader = this.createLoader(containerSchema);
         const azClientLogger = this.createLogger(loader);
 
+        // Create doc url
+        const url = new URL(this.props.connection.endpoint);
+        url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
+        url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
+        url.searchParams.append("containerId", encodeURIComponent(id));
+
         return PerformanceEvent.timedExecAsync(
             azClientLogger,
             { eventName: "GetContainer", docId: id },
             async () => {
-                // Create doc url
-                const url = new URL(this.props.connection.endpoint);
-                url.searchParams.append(
-                    "storage",
-                    encodeURIComponent(this.props.connection.endpoint),
-                );
-                url.searchParams.append(
-                    "tenantId",
-                    encodeURIComponent(getTenantId(this.props.connection)),
-                );
-                url.searchParams.append("containerId", encodeURIComponent(id));
-
-                // Resolve fluid container
+                // Resolve Fluid container
                 const container = await loader.resolve({ url: url.href });
                 const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
                 const fluidContainer = new FluidContainer(container, rootDataObject);
