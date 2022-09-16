@@ -56,7 +56,7 @@ export interface IFluidHandle<
     > extends IProvideFluidHandle {
 
     /**
-     * @deprecated - Do not use handle's path for routing. Use `get` to get the underlying object.
+     * @deprecated Do not use handle's path for routing. Use `get` to get the underlying object.
      *
      * The absolute path to the handle context from the root.
      */

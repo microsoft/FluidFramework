@@ -49,8 +49,6 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
-    isRuntimeMessage,
-    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -1754,14 +1752,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
 
-        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
-            this.mc.logger.sendTelemetryEvent(
-                { eventName: "UnpackedRuntimeMessage", type: message.type });
-        }
-        // Forward non system messages to the loaded runtime for processing
-        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
-            this.context.process(message, local);
-        }
+        // Forward messages to the loaded runtime for processing
+        this.context.process(message, local);
 
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {

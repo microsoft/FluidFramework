@@ -10,8 +10,6 @@ import { ConnectionState, Container, Loader } from "@fluidframework/container-lo
 import {
     ContainerMessageType,
     IContainerRuntimeOptions,
-    isRuntimeMessage,
-    unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
 import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -120,11 +118,13 @@ describe("Ops on Reconnect", () => {
         const loader = await createLoader();
         const container2 = await loader.resolve({ url: documentLoadUrl });
         await waitForContainerReconnection(container2);
-        container2.on("op", (containerMessage: ISequencedDocumentMessage) => {
-            if (!isRuntimeMessage(containerMessage)) {
-                return;
-            }
-            const message = unpackRuntimeMessage(containerMessage);
+
+        // Get dataStore1 on the second container.
+        const container2Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
+            container2,
+            "default");
+
+        container2Object1.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
             if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
                 const address = envelope.contents.content.address;
@@ -143,11 +143,6 @@ describe("Ops on Reconnect", () => {
                 receivedValues.push([value1, value2, batch]);
             }
         });
-
-        // Get dataStore1 on the second container.
-        const container2Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
-            container2,
-            "default");
 
         return container2Object1;
     }
