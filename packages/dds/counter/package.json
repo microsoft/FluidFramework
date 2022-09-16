@@ -69,7 +69,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
-    "@fluidframework/counter-previous": "npm:@fluidframework/counter@1.2.2",
+    "@fluidframework/counter-previous": "npm:@fluidframework/counter@1.2.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.2.6",
     "@fluidframework/test-runtime-utils": "^1.2.6",

@@ -69,7 +69,7 @@
     "@fluidframework/datastore": "^1.2.6",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.2.6",
-    "@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@1.2.2",
+    "@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@1.2.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",

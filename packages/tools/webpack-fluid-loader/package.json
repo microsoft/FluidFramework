@@ -92,7 +92,7 @@
     "webpack-dev-server": "~4.6.0"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@1.2.2",
+    "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@1.2.0",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",

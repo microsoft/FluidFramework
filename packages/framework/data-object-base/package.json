@@ -73,7 +73,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@1.2.2",
+    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@1.2.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.2.6",
     "@microsoft/api-extractor": "^7.22.2",

@@ -44,7 +44,7 @@
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/routerlicious-host-previous": "npm:@fluidframework/routerlicious-host@1.2.2",
+    "@fluidframework/routerlicious-host-previous": "npm:@fluidframework/routerlicious-host@1.2.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",

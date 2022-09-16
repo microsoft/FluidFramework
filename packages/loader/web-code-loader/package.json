@@ -41,7 +41,7 @@
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@1.2.2",
+    "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@1.2.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/isomorphic-fetch": "^0.0.35",

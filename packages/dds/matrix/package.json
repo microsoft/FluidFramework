@@ -78,7 +78,7 @@
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/matrix-previous": "npm:@fluidframework/matrix@1.2.2",
+    "@fluidframework/matrix-previous": "npm:@fluidframework/matrix@1.2.0",
     "@fluidframework/mocha-test-setup": "^1.2.6",
     "@fluidframework/test-runtime-utils": "^1.2.6",
     "@microsoft/api-extractor": "^7.22.2",
