@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree as F, JsonableTree } from "../../tree";
+import { JsonableTree } from "../../tree";
 import { NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
