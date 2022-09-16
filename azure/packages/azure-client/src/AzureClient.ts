@@ -19,9 +19,8 @@ import {
     IFluidContainer,
     RootDataObject,
 } from "@fluidframework/fluid-static";
-
 import { SummaryType } from "@fluidframework/protocol-definitions";
-
+import { ChildLogger, PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     AzureClientProps,
     AzureConnectionConfig,
@@ -32,6 +31,7 @@ import {
 import { isAzureRemoteConnectionConfig } from "./utils";
 import { AzureAudience } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
+import { pkgVersion } from "./packageVersion";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
@@ -80,15 +80,26 @@ export class AzureClient {
         services: AzureContainerServices;
     }> {
         const loader = this.createLoader(containerSchema);
+        const azClientLogger = this.createLogger(loader);
 
-        const container = await loader.createDetachedContainer({
-            package: "no-dynamic-package",
-            config: {},
-        });
+        return PerformanceEvent.timedExecAsync(
+            azClientLogger,
+            { eventName: "ContainerCreate" },
+            async () => {
+                const container = await loader.createDetachedContainer({
+                    package: "no-dynamic-package",
+                    config: {},
+                });
 
-        const fluidContainer = await this.createFluidContainer(container, this.props.connection);
-        const services = this.getContainerServices(container);
-        return { container: fluidContainer, services };
+                const fluidContainer = await this.createFluidContainer(
+                    container,
+                    this.props.connection,
+                    azClientLogger,
+                );
+                const services = this.getContainerServices(container);
+                return { container: fluidContainer, services };
+            },
+        );
     }
 
     /**
@@ -108,32 +119,52 @@ export class AzureClient {
         services: AzureContainerServices;
     }> {
         const loader = this.createLoader(containerSchema);
-        const url = new URL(this.props.connection.endpoint);
-        url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
-        url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
-        url.searchParams.append("containerId", encodeURIComponent(id));
-        const sourceContainer = await loader.resolve({ url: url.href });
+        const azClientLogger = this.createLogger(loader);
 
-        if (sourceContainer.resolvedUrl === undefined) {
-            throw new Error("Source container cannot resolve URL.");
-        }
+        return PerformanceEvent.timedExecAsync(
+            azClientLogger,
+            { eventName: "ContainerCopy" },
+            async () => {
+                const url = new URL(this.props.connection.endpoint);
+                url.searchParams.append(
+                    "storage",
+                    encodeURIComponent(this.props.connection.endpoint),
+                );
+                url.searchParams.append(
+                    "tenantId",
+                    encodeURIComponent(getTenantId(this.props.connection)),
+                );
+                url.searchParams.append("containerId", encodeURIComponent(id));
+                const sourceContainer = await loader.resolve({ url: url.href });
 
-        const documentService = await this.documentServiceFactory.createDocumentService(
-            sourceContainer.resolvedUrl,
+                if (sourceContainer.resolvedUrl === undefined) {
+                    throw new Error("Source container cannot resolve URL.");
+                }
+
+                const documentService = await this.documentServiceFactory.createDocumentService(
+                    sourceContainer.resolvedUrl,
+                );
+                const storage = await documentService.connectToStorage();
+                const handle = {
+                    type: SummaryType.Handle,
+                    handleType: SummaryType.Tree,
+                    handle: version?.id ?? "latest",
+                };
+                const tree = await storage.downloadSummary(handle);
+
+                const container = await loader.rehydrateDetachedContainerFromSnapshot(
+                    JSON.stringify(tree),
+                );
+
+                const fluidContainer = await this.createFluidContainer(
+                    container,
+                    this.props.connection,
+                    azClientLogger,
+                );
+                const services = this.getContainerServices(container);
+                return { container: fluidContainer, services };
+            },
         );
-        const storage = await documentService.connectToStorage();
-        const handle = {
-            type: SummaryType.Handle,
-            handleType: SummaryType.Tree,
-            handle: version?.id ?? "latest",
-        };
-        const tree = await storage.downloadSummary(handle);
-
-        const container = await loader.rehydrateDetachedContainerFromSnapshot(JSON.stringify(tree));
-
-        const fluidContainer = await this.createFluidContainer(container, this.props.connection);
-        const services = this.getContainerServices(container);
-        return { container: fluidContainer, services };
     }
 
     /**
@@ -150,15 +181,30 @@ export class AzureClient {
         services: AzureContainerServices;
     }> {
         const loader = this.createLoader(containerSchema);
-        const url = new URL(this.props.connection.endpoint);
-        url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
-        url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
-        url.searchParams.append("containerId", encodeURIComponent(id));
-        const container = await loader.resolve({ url: url.href });
-        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer = new FluidContainer(container, rootDataObject);
-        const services = this.getContainerServices(container);
-        return { container: fluidContainer, services };
+        const azClientLogger = this.createLogger(loader);
+
+        return PerformanceEvent.timedExecAsync(
+            azClientLogger,
+            { eventName: "GetContainer", docId: id },
+            async () => {
+                const url = new URL(this.props.connection.endpoint);
+                url.searchParams.append(
+                    "storage",
+                    encodeURIComponent(this.props.connection.endpoint),
+                );
+                url.searchParams.append(
+                    "tenantId",
+                    encodeURIComponent(getTenantId(this.props.connection)),
+                );
+                url.searchParams.append("containerId", encodeURIComponent(id));
+                const container = await loader.resolve({ url: url.href });
+                const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+                const fluidContainer = new FluidContainer(container, rootDataObject);
+                const services = this.getContainerServices(container);
+                throw new Error("Unable to resolved URL1");
+                return { container: fluidContainer, services };
+            },
+        );
     }
 
     /**
@@ -222,6 +268,7 @@ export class AzureClient {
     private async createFluidContainer(
         container: IContainer,
         connection: AzureConnectionConfig,
+        logger: TelemetryLogger,
     ): Promise<FluidContainer> {
         const createNewRequest = createAzureCreateNewRequest(
             connection.endpoint,
@@ -239,15 +286,29 @@ export class AzureClient {
              * doesn't exist in the framework.
              */
             public async attach(): Promise<string> {
-                if (this.attachState !== AttachState.Detached) {
-                    throw new Error("Cannot attach container. Container is not in detached state");
-                }
-                await container.attach(createNewRequest);
-                const resolved = container.resolvedUrl;
-                ensureFluidResolvedUrl(resolved);
-                return resolved.id;
+                return PerformanceEvent.timedExecAsync(
+                    logger,
+                    { eventName: "ContainerAttach" },
+                    async () => {
+                        if (this.attachState !== AttachState.Detached) {
+                            throw new Error(
+                                "Cannot attach container. Container is not in detached state",
+                            );
+                        }
+                        await container.attach(createNewRequest);
+                        const resolved = container.resolvedUrl;
+                        ensureFluidResolvedUrl(resolved);
+                        return resolved.id;
+                    },
+                );
             }
         })(container, rootDataObject);
+    }
+
+    private createLogger(loader: Loader): TelemetryLogger {
+        return ChildLogger.create(loader.services.subLogger, "AzureClient", {
+            all: { azureClientVersion: pkgVersion },
+        });
     }
     // #endregion
 }
