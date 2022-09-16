@@ -7,7 +7,7 @@ import { FieldChangeHandler } from "../modular-schema";
 import { Changeset } from "./format";
 import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
 import { sequenceFieldChangeEncoder } from "./sequenceFieldChangeEncoder";
-import { sequenceFieldEditor } from "./sequenceEditBuilder";
+import { sequenceFieldEditor } from "./sequenceFieldEditor";
 import { sequenceFieldToDelta } from "./sequenceFieldToDelta";
 
 export type SequenceFieldChangeHandler = FieldChangeHandler<Changeset>;

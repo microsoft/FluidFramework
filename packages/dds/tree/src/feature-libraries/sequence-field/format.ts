@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree as F } from "../../tree";
+import { JsonableTree as F, JsonableTree } from "../../tree";
 import { NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
@@ -203,7 +203,7 @@ export interface HasOpId {
 /**
  * The contents of a node to be created
  */
-export type ProtoNode = F;
+export type ProtoNode = JsonableTree;
 
 export type NodeCount = number;
 export type GapCount = number;

@@ -8,7 +8,7 @@ export * from "./sequenceFieldChangeHandler";
 export * from "./sequenceFieldChangeRebaser";
 export * from "./sequenceFieldChangeEncoder";
 export * from "./sequenceFieldToDelta";
-export * from "./sequenceEditBuilder";
+export * from "./sequenceFieldEditor";
 export * from "./markListFactory";
 export * from "./rebase";
 export * from "./invert";
