@@ -12,12 +12,14 @@ import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { BaseFileLogger } from "./baseFileLogger";
 
 /**
- * Logger that writes events into a defined CSV file
+ * FileLogger that writes events into a defined CSV file
+ * @internal
  */
 export class CSVFileLogger extends BaseFileLogger {
-    // eslint-disable-next-line max-len
-    // private readonly csvFileName = "C:\\Users\\kianthompson\\Documents\\RandomData\\fluid-runner\\src\\logger\\sample.csv";
+    /** Store the column names to write as the CSV header */
     private readonly columns = new Set();
+
+    /** Store the telemetry in a temporary file to convert to CSV later */
     private readonly tempFile = path.join(__dirname, uuidv4());
 
     public async flush(): Promise<void> {
@@ -35,7 +37,7 @@ export class CSVFileLogger extends BaseFileLogger {
     public async close(): Promise<void> {
         await super.close();
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
-        for (const field in this.defaultFields) {
+        for (const field in this.defaultProps) {
             this.columns.add(field);
         }
 
@@ -50,8 +52,8 @@ export class CSVFileLogger extends BaseFileLogger {
         readline.createInterface({ input: fs.createReadStream(this.tempFile) })
             .on("line", (line) => { asyncParser.input.push(line); })
             .on("close", () => { asyncParser.input.push(null); });
-        await asyncParser.promise();
 
+        await asyncParser.promise();
         fs.rmSync(this.tempFile);
     }
 }

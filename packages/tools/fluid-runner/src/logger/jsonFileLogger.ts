@@ -6,13 +6,17 @@
 import * as fs from "fs";
 import { BaseFileLogger } from "./baseFileLogger";
 
+/**
+ * FileLogger that writes events into a defined CSV file
+ * @internal
+ */
 export class JSONFileLogger extends BaseFileLogger {
     constructor(
         filePath: string,
         eventsPerFlush: number = 50,
-        defaultFields?: Record<string, string>,
+        defaultProps?: Record<string, string>,
     ) {
-        super(filePath, eventsPerFlush, defaultFields);
+        super(filePath, eventsPerFlush, defaultProps);
         fs.appendFileSync(this.filePath, "[");
     }
 

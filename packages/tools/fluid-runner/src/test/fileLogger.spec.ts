@@ -54,7 +54,7 @@ describe("fileLogger", () => {
             verifyOutput(path.join(expectedOutputFolder, "expectedOutput1.json"));
         });
 
-        it("Adds default fields", async () => {
+        it("Adds default props", async () => {
             const logger = new JSONFileLogger(telemetryFile, 50, { extraProp1: "value1", extraProp2: "value2" });
             sendTelemetry(logger);
 
@@ -81,7 +81,7 @@ describe("fileLogger", () => {
             verifyOutput(path.join(expectedOutputFolder, "expectedOutput3.csv"));
         });
 
-        it("Adds default fields", async () => {
+        it("Adds default props", async () => {
             const logger = new CSVFileLogger(telemetryFile, 50, { extraProp1: "value1", extraProp2: "value2" });
             sendTelemetry(logger);
 
@@ -90,7 +90,7 @@ describe("fileLogger", () => {
         });
     });
 
-    describe("validation: TODO", () => {
+    describe("validation", () => {
         describe("telemetry file", () => {
             it("empty", () => {
                 const result = getTelemetryFileValidationError("");
@@ -145,7 +145,7 @@ describe("fileLogger", () => {
                     }
                     const telemetryOptions = result.telemetryOptions;
                     assert.strictEqual(telemetryOptions.outputFormat, OutputFormat.CSV, "expected CSV format");
-                    assert.deepStrictEqual(telemetryOptions.defaultFields, { prop1: "value1", prop2: "value2" });
+                    assert.deepStrictEqual(telemetryOptions.defaultProps, { prop1: "value1", prop2: "value2" });
                 }
                 {
                     const result = validateAndParseTelemetryOptions("JSON", "prop1=value1 prop2=value2");
@@ -154,11 +154,11 @@ describe("fileLogger", () => {
                     }
                     const telemetryOptions = result.telemetryOptions;
                     assert.strictEqual(telemetryOptions.outputFormat, OutputFormat.JSON, "expected JSON format");
-                    assert.deepStrictEqual(telemetryOptions.defaultFields, { prop1: "value1", prop2: "value2" });
+                    assert.deepStrictEqual(telemetryOptions.defaultProps, { prop1: "value1", prop2: "value2" });
                 }
             });
 
-            describe("default fields", () => {
+            describe("default props", () => {
                 it("missing =", () => {
                     const result = validateAndParseTelemetryOptions(undefined, "prop1:value1 prop2:value2");
                     assert(!result.success, `expected invalid properties`);
@@ -185,7 +185,7 @@ describe("fileLogger", () => {
                     if (!result.success) {
                         assert.fail(`unexpected error [${result.error}]`);
                     }
-                    assert.deepStrictEqual(result.telemetryOptions.defaultFields, { prop1: "value1", prop2: "value2" });
+                    assert.deepStrictEqual(result.telemetryOptions.defaultProps, { prop1: "value1", prop2: "value2" });
                 });
             });
         });

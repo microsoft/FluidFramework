@@ -7,7 +7,9 @@ import * as fs from "fs";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IFileLogger } from "./fileLogger";
 
-// TODO: be strict about FileLogger.ts exports
+/**
+ * @internal
+ */
 export abstract class BaseFileLogger implements IFileLogger {
     public supportsTags?: true | undefined;
 
@@ -18,17 +20,17 @@ export abstract class BaseFileLogger implements IFileLogger {
     /**
      * @param filePath - file path to write logs to
      * @param eventsPerFlush - number of events per flush
-     * @param defaultFields - TODO
+     * @param defaultProps - default properties to add to every telemetry event
      */
      public constructor(
         protected readonly filePath: string,
         protected readonly eventsPerFlush: number = 50,
-        protected readonly defaultFields?: Record<string, string>,
+        protected readonly defaultProps?: Record<string, string>,
     ) { }
 
     public send(event: ITelemetryBaseEvent): void {
         // eslint-disable-next-line no-param-reassign
-        event = { ...event, ...this.defaultFields };
+        event = { ...event, ...this.defaultProps };
         const logEvent = JSON.stringify(event);
         this.events.push(logEvent);
 

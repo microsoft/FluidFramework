@@ -10,6 +10,7 @@ import { IFluidFileConverter } from "./codeLoaderBundle";
 import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
 // eslint-disable-next-line import/no-internal-modules
 import { validateAndParseTelemetryOptions } from "./logger/fileLogger";
+import { validateCommandLineArgs } from "./utils";
 
 /**
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
@@ -51,18 +52,19 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         demandOption: false,
                     })
                     .option("telemetryFormat", {
-                        describe: "TODO",
+                        describe: "Output format for telemetry. Current options are: [\"JSON\", \"CSV\"]",
                         type: "string",
                         demandOption: false,
+                        default: "JSON",
                     })
                     .option("telemetryProps", {
-                        describe: "TODO only accept strings with no spaces",
+                        describe: "Properties to add to every telemetry entry. Formatted like \"prop1=value1 prop2=value\".",
                         type: "string",
                         demandOption: false,
                     }),
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             async (argv) => {
-                const argsError = validateProvidedArgs(argv.codeLoader, fluidFileConverter);
+                const argsError = validateCommandLineArgs(argv.codeLoader, fluidFileConverter);
                 if (argsError) {
                     console.error(argsError);
                     process.exit(1);
@@ -102,19 +104,6 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
         )
         .help()
         .demandCommand().argv;
-}
-
-function validateProvidedArgs(
-    codeLoader?: string,
-    fluidFileConverter?: IFluidFileConverter,
-): string | undefined {
-    if (codeLoader !== undefined && fluidFileConverter !== undefined) {
-        return "\"codeLoader\" and \"fluidFileConverter\" cannot both be provided. See \"fluidRunner.ts\" for details.";
-    }
-    if (codeLoader === undefined && fluidFileConverter === undefined) {
-        return "\"codeLoader\" must be provided if there is no explicit \"fluidFileConverter\". See \"fluidRunner.ts\" for details.";
-    }
-    return undefined;
 }
 
 fluidRunner();
