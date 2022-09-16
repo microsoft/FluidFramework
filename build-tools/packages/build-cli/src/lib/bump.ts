@@ -151,21 +151,26 @@ export async function bumpReleaseGroup(
     const translatedVersion = isVersionBumpType(bumpType)
         ? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
         : bumpType;
+
+    let name: string;
     let cmd: string;
     let workingDir: string;
 
     if (releaseGroupOrPackage instanceof MonoRepo) {
         workingDir = releaseGroupOrPackage.repoPath;
         cmd = `npx lerna version ${translatedVersion.version} --no-push --no-git-tag-version -y && npm run build:genver`;
+        name = releaseGroupOrPackage.kind;
     } else {
         workingDir = releaseGroupOrPackage.directory;
         cmd = `npm version ${translatedVersion.version}`;
         if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
             cmd += " && npm run build:genver";
         }
+
+        name = releaseGroupOrPackage.name;
     }
 
-    const results = await exec(cmd, workingDir, `Error bumping ${releaseGroupOrPackage}`);
+    const results = await exec(cmd, workingDir, `Error bumping ${name}`);
     context.repo.reload();
 
     // the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,
