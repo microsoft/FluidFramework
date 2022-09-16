@@ -74,7 +74,7 @@ $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version)
-@fluid-tools/version-tools/0.4.5000 win32-x64 node-v14.18.1
+@fluid-tools/version-tools/0.4.6000 linux-x64 node-v14.20.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
@@ -153,7 +153,7 @@ EXAMPLES
     $ fluv version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/version.ts)_
+_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/version.ts)_
 
 ## `fluv version latest`
 

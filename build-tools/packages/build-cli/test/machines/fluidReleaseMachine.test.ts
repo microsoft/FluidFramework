@@ -43,6 +43,7 @@ const expectedMinorPath = [
     "CheckReleaseIsDone2",
     "CheckReleaseGroupIsBumpedMinor2",
     "CheckTypeTestPrepare2",
+    "PromptToRunTypeTests",
     "CheckTypeTestGenerate2",
     "ReleaseComplete",
     "DoReleaseGroupBump",
@@ -56,7 +57,6 @@ const expectedMinorPath = [
     "CheckReleaseGroupIsBumpedPatch",
     "CheckTypeTestPrepare",
     "CheckTypeTestGenerate",
-    "PromptToRunTypeTests",
     "PromptToCreateReleaseBranch",
 ];
 
@@ -76,6 +76,7 @@ const expectedMajorPath = [
     "CheckReleaseIsDone2",
     "CheckReleaseGroupIsBumpedMinor2",
     "CheckTypeTestPrepare2",
+    "PromptToRunTypeTests",
     "CheckTypeTestGenerate2",
     "ReleaseComplete",
     "DoReleaseGroupBump",
@@ -89,7 +90,6 @@ const expectedMajorPath = [
     "CheckReleaseGroupIsBumpedPatch",
     "CheckTypeTestPrepare",
     "CheckTypeTestGenerate",
-    "PromptToRunTypeTests",
     "PromptToCreateReleaseBranch",
     "CheckOnReleaseBranch3",
     "Failed",
@@ -103,6 +103,7 @@ describe("FluidReleaseMachine", () => {
         const startingState = `DoPatchRelease`;
 
         walkExits(startingState, states);
+        console.log(JSON.stringify([...states]));
         expect([...states]).to.be.equalTo(expectedPatchPath);
     });
 
@@ -122,8 +123,31 @@ describe("FluidReleaseMachine", () => {
         console.log(JSON.stringify([...states]));
         expect([...states]).to.be.equalTo(expectedMajorPath);
     });
+
+    describe("All states with a success action have a failure action", () => {
+        // Do* actions are not required to have a failure action except those in this array
+        const requiresFailureAction = ["DoBumpReleasedDependencies"];
+
+        for (const state of machine.list_states_having_action("success")) {
+            const exits = machine.list_exit_actions(state).sort();
+
+            if (!state.startsWith("Do") || requiresFailureAction.includes(state)) {
+                it(state, () => {
+                    expect(exits).to.be.equalTo(["failure", "success"]);
+                });
+            } else {
+                // Do* actions are not required to have a failure action
+                it(state, () => {
+                    expect(exits).to.be.equalTo(["success"]);
+                });
+            }
+        }
+    });
 });
 
+/**
+ * Recursively follows exit transitions from each state until reaching a terminal state.
+ */
 function walkExits(state: string, collector: Set<string>, step = 0): void {
     collector.add(state);
     if (machine.state_is_terminal(state)) {
