@@ -133,6 +133,10 @@ export class TestClient extends Client {
         this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
     }
 
+    public obliterateRangeLocal(start: number, end: number) {
+        return this.removeRangeLocal(start, end);
+    }
+
     public getText(start?: number, end?: number): string {
         return this.textHelper.getText(this.getCurrentSeq(), this.getClientId(), "", start, end);
     }
