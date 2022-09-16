@@ -77,8 +77,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      */
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
         const maybeIProvideFluidHandle: FluidObject<IProvideFluidHandle> = (runtime as any);
-        const obj = await maybeIProvideFluidHandle?.IFluidHandle?.get();
-        assert(obj instanceof PureDataObject, 0x0bc /* "The runtime's handle is not a DataObject!" */);
+        const obj = await maybeIProvideFluidHandle?.IFluidHandle?.get() as PureDataObject;
+        assert(obj !== undefined, 0x0bc /* "The runtime's handle is not a DataObject!" */);
         await obj.finishInitialization(true);
         return obj;
     }
