@@ -64,7 +64,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/agent-scheduler-previous": "npm:@fluidframework/agent-scheduler@1.2.1",
+    "@fluidframework/agent-scheduler-previous": "npm:@fluidframework/agent-scheduler@1.2.2",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@rushstack/eslint-config": "^2.5.1",
@@ -89,7 +89,7 @@
     }
   },
   "typeValidation": {
-    "version": "1.2.2",
+    "version": "1.2.6",
     "broken": {}
   }
 }

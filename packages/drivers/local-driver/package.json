@@ -74,7 +74,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@1.2.1",
+    "@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@1.2.2",
     "@fluidframework/mocha-test-setup": "^1.2.6",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jsrsasign": "^8.0.8",
@@ -91,7 +91,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.2.2",
+    "version": "1.2.6",
     "broken": {}
   }
 }

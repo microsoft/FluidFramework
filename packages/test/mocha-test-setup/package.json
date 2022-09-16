@@ -61,7 +61,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup-previous": "npm:@fluidframework/mocha-test-setup@1.2.1",
+    "@fluidframework/mocha-test-setup-previous": "npm:@fluidframework/mocha-test-setup@1.2.2",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -75,7 +75,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.2.2",
+    "version": "1.2.6",
     "broken": {}
   }
 }

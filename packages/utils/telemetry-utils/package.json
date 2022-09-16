@@ -75,7 +75,7 @@
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.2.6",
-    "@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@1.2.1",
+    "@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@1.2.2",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",
@@ -93,7 +93,7 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "1.2.2",
+    "version": "1.2.6",
     "broken": {}
   }
 }
