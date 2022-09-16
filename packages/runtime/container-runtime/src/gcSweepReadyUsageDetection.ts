@@ -27,17 +27,17 @@ export const closuresMapLocalStorageKey = "Fluid.GarbageCollection.Dogfood.Sweep
 
 /**
  * Feature gate key to enable closing the container if SweepReady objects are used.
- * Value should contain keywords "mainContainer" and/or "summarizer" to enable detection in each container type
+ * Value should contain keywords "interactiveClient" and/or "summarizer" to enable detection in each container type
  */
 const sweepReadyUsageDetectionSetting = {
     read(config: IConfigProvider) {
         const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
         const value = config.getString(sweepReadyUsageDetectionKey);
         if (value === undefined) {
-            return { mainContainer: false, summarizer: false };
+            return { interactiveClient: false, summarizer: false };
         }
         return {
-            mainContainer: value.includes("mainContainer"),
+            interactiveClient: value.includes("interactiveClient"),
             summarizer: value.includes("summarizer"),
         };
     },
@@ -48,7 +48,7 @@ const sweepReadyUsageDetectionSetting = {
  * references are managed in the container by the application, or a bug in how
  * GC tracks those references.
  *
- * There's a chance for false positives when this error is raised by a Main Container,
+ * There's a chance for false positives when this error is raised by an Interactive Container,
  * since only the Summarizer has the latest truth about unreferenced node tracking
  */
 export class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
@@ -59,7 +59,7 @@ export class SweepReadyUsageError extends LoggingError implements IFluidErrorBas
 /**
  * This class encapsulates the logic around what to do when a SweepReady object is used.
  * There are several tactics we plan to use in Dogfood environments to aid diagnosis of these cases:
- * - Closing the main container when either the main or summarizer client detects this kind of violation
+ * - Closing the interactive container when either the interactive or summarizer client detects this kind of violation
  * (via sweepReadyUsageDetectionSetting above)
  * - Throttling the frequency of these crashes via a "Skip Closure Period" per container per device
  * (via skipClosureForXDaysKey above.  Uses localStorage and closuresMapLocalStorageKey to implement this behavior)
@@ -92,14 +92,14 @@ export class SweepReadyUsageDetectionHandler {
     }
 
     /**
-      * If SweepReady Usage Detection is enabled, close the main container.
+      * If SweepReady Usage Detection is enabled, close the interactive container.
       * If the SkipClosureForXDays setting is set, don't close the container more than once in that period.
       *
       * Once Sweep is fully implemented, this will be removed since the objects will be gone
       * and errors will arise elsewhere in the runtime
      */
-    public usageDetectedInMainContainer(errorProps: ITelemetryProperties) {
-        if (!sweepReadyUsageDetectionSetting.read(this.mc.config).mainContainer) {
+    public usageDetectedInInteractiveClient(errorProps: ITelemetryProperties) {
+        if (!sweepReadyUsageDetectionSetting.read(this.mc.config).interactiveClient) {
             return;
         }
 

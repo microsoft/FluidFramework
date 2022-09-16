@@ -903,7 +903,7 @@ describe("Garbage Collection Tests", () => {
             );
         });
 
-        describe("Main Container Behavior", () => {
+        describe("Interactive Client Behavior", () => {
             function updateAllNodes(garbageCollector) {
                 nodes.forEach((nodeId) => {
                     garbageCollector.nodeUpdated(nodeId, "Changed", Date.now(), testPkgPath);
@@ -911,7 +911,7 @@ describe("Garbage Collection Tests", () => {
                 });
             }
 
-            async function mainContainerTestCode(
+            async function interactiveClientTestCode(
                 timeout: number,
                 loadedEventName: string,
                 sweepReadyUsageErrorExpected: boolean,
@@ -920,7 +920,7 @@ describe("Garbage Collection Tests", () => {
                 let lastCloseErrorType: string = "N/A";
 
                 // Create GC state where node 3's unreferenced time was > timeout ms ago.
-                // This is important since we shouldn't run GC on the main container,
+                // This is important since we shouldn't run GC on the interactive container,
                 // but rather load from a snapshot in which SweepReady state is already reached.
 
                 // Create a snapshot tree to be used as the GC snapshot tree.
@@ -971,9 +971,9 @@ describe("Garbage Collection Tests", () => {
             it("Inactive object used - generates events but does not close container (SweepReadyUsageDetection enabled)", async () => {
                 const inactiveTimeoutMs = 400;
                 injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = inactiveTimeoutMs;
-                injectedSettings[SweepReadyUsageDetectionKey] = "mainContainer";
+                injectedSettings[SweepReadyUsageDetectionKey] = "interactiveClient";
 
-                await mainContainerTestCode(
+                await interactiveClientTestCode(
                     inactiveTimeoutMs,
                     "GarbageCollector:InactiveObject_Loaded",
                     false,
@@ -983,9 +983,9 @@ describe("Garbage Collection Tests", () => {
             it("SweepReady object used - generates events and closes container (SweepReadyUsageDetection enabled)", async () => {
                 const snapshotCacheExpiryMs = 500;
                 const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
-                injectedSettings[SweepReadyUsageDetectionKey] = "mainContainer";
+                injectedSettings[SweepReadyUsageDetectionKey] = "interactiveClient";
 
-                await mainContainerTestCode(
+                await interactiveClientTestCode(
                     sweepTimeoutMs,
                     "GarbageCollector:SweepReadyObject_Loaded",
                     true,
@@ -998,7 +998,7 @@ describe("Garbage Collection Tests", () => {
                 const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
                 injectedSettings[SweepReadyUsageDetectionKey] = "something else";
 
-                await mainContainerTestCode(
+                await interactiveClientTestCode(
                     sweepTimeoutMs,
                     "GarbageCollector:SweepReadyObject_Loaded",
                     false,
