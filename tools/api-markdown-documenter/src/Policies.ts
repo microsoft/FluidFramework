@@ -337,6 +337,12 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
     emptyTableCellText: "",
 };
 
+/**
+ * Extracts the text from the provided excerpt and adjusts it to be on a single line, and to omit any trailing `;`.
+ *
+ * @privateRemarks If we find that this is useful in more places, we might consider moving this to a
+ * public utilities module and make it part of the public helper suite.
+ */
 function getSingleLineExcerptText(excerpt: Excerpt): string {
     // Regex replaces line breaks with spaces to ensure everything ends up on a single line.
     let signatureExcerpt = excerpt.text.trim().replace(/[\r\n\s]+/g, " ");
