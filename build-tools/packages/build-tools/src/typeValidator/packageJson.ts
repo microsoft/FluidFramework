@@ -33,11 +33,12 @@ export interface BrokenCompatSettings {
 
 export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
+
 interface PackageJson {
-    name: string;
-    version: string;
-    main: string | undefined;
-    private: boolean | undefined;
+    name: string,
+    version: string,
+    main: string | undefined,
+    private: boolean | undefined,
     devDependencies: Record<string, string>;
     typeValidation?: {
         version: string;
@@ -65,8 +66,8 @@ function safeParse(json: string, error: string) {
 
 export async function getPackageDetails(packageDir: string): Promise<PackageDetails> {
     const packagePath = `${packageDir}/package.json`;
-    if (!(await util.promisify(fs.exists)(packagePath))) {
-        throw new Error(`Package json does not exist: ${packagePath}`);
+    if (!await util.promisify(fs.exists)(packagePath)) {
+        throw new Error(`Package json does not exist: ${packagePath}`)
     }
     const content = await util.promisify(fs.readFile)(packagePath);
 
@@ -196,11 +197,12 @@ export async function getAndUpdatePackageDetails(
     // if the version does not exist, we will defer updating the package
     const packageDef = `${packageDetails.pkg.name}@${prevVersion}`;
     const args = ["view", `"${packageDef}"`, "version", "--json"];
-    const result = child_process
-        .execSync(`npm ${args.join(" ")}`, { cwd: updateOptions?.cwd ?? packageDir })
-        .toString();
+    const result = child_process.execSync(`npm ${args.join(" ")}`, { cwd: updateOptions?.cwd ?? packageDir }).toString()
     const maybeVersions =
-        result !== undefined && result.length > 0 ? safeParse(result, args.join(" ")) : undefined;
+        result !== undefined
+            && result.length > 0
+            ? safeParse(result, args.join(" "))
+            : undefined;
 
     const versionsArray =
         typeof maybeVersions === "string"
@@ -209,10 +211,9 @@ export async function getAndUpdatePackageDetails(
             ? maybeVersions
             : [];
 
+
     if (versionsArray.length > 0) {
-        packageDetails.pkg.devDependencies[
-            `${packageDetails.pkg.name}-previous`
-        ] = `npm:${packageDef}`;
+        packageDetails.pkg.devDependencies[`${packageDetails.pkg.name}-previous`] = `npm:${packageDef}`;
 
         packageDetails.pkg.devDependencies = createSortedObject(packageDetails.pkg.devDependencies);
 
@@ -225,9 +226,8 @@ export async function getAndUpdatePackageDetails(
             JSON.stringify(packageDetails.pkg, undefined, 2),
         );
     }
-    const oldVersions = Object.keys(packageDetails.pkg.devDependencies ?? {}).filter((k) =>
-        k.startsWith(packageDetails.pkg.name),
-    );
+    const oldVersions =
+        Object.keys(packageDetails.pkg.devDependencies ?? {}).filter((k) => k.startsWith(packageDetails.pkg.name));
     return {
         ...packageDetails,
         oldVersions,
@@ -243,11 +243,9 @@ export async function findPackagesUnderPath(path: string) {
             packages.push(search);
         } else {
             searchPaths.push(
-                ...fs
-                    .readdirSync(search, { withFileTypes: true })
+                ...fs.readdirSync(search, { withFileTypes: true })
                     .filter((t) => t.isDirectory())
-                    .map((d) => `${search}/${d.name}`),
-            );
+                    .map((d) => `${search}/${d.name}`));
         }
     }
     return packages;
