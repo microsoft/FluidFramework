@@ -256,6 +256,9 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
             schemaBuffer = await services.readBlob(schemaStringKey);
         }
 
+        // After the awaits, validate that the schema is in a clean state.
+        // This detects any schema that could have been accidently added through
+        // invalid means and are about to be overwritten.
         assert(this.schema.treeSchema.size === 0,
             "there should not already be stored schema when loading stored schema");
         assert(this.schema.globalFieldSchema.size === 0,
