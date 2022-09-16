@@ -55,8 +55,7 @@ export interface FieldMapObject<TChild> {
  * Json compatibility assumes `TChild` is also json compatible.
  * @public
  */
-export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
-}
+export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData { }
 
 /**
  * Json comparable field collection, generic over child type.
@@ -78,11 +77,9 @@ export interface JsonableTree extends GenericTreeNode<JsonableTree> {}
  * Derives the scope using the type of `key`.
  */
 export function scopeFromKey(key: FieldKey): [FieldScope, LocalFieldKey | GlobalFieldKey] {
-    if (isGlobalFieldKey(key)) {
-        return [FieldScope.global, keyFromSymbol(key)];
-    } else {
-        return [FieldScope.local, key];
-    }
+    return isGlobalFieldKey(key) ?
+        [FieldScope.global, keyFromSymbol(key)] :
+        [FieldScope.local, key];
 }
 
 /**
