@@ -8,14 +8,16 @@ import path from "path";
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { createContainerAndExecute, exportFile } from "../exportFile";
+import { getSnapshotFileContent } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
-import { fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
+import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
 
 describe("exportFile", () => {
     const folderRoot = path.join(__dirname, "../../src/test");
     const outputFolder = path.join(folderRoot, "outputFolder");
+    const outputFilePath = path.join(outputFolder, "result.txt");
+    const telemetryFile = path.join(outputFolder, "telemetry.txt");
     const snapshotFolder = path.join(folderRoot, "localOdspSnapshots");
-    const sampleCodeLoadersFolder = path.join(__dirname, "sampleCodeLoaders");
 
     beforeEach(() => {
         fs.mkdirSync(outputFolder);
@@ -28,76 +30,41 @@ describe("exportFile", () => {
     fs.readdirSync(snapshotFolder).forEach((snapshotFileName: string) => {
         describe(`Export using snapshot [${snapshotFileName}]`, () => {
             it("Output file is correct", async () => {
-                const scenario = "sampleScenario";
                 const exportFileResult = await exportFile(
-                    path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
+                    await fluidExport,
                     path.join(snapshotFolder, snapshotFileName),
-                    outputFolder,
-                    scenario,
-                    new MockLogger(),
+                    outputFilePath,
+                    telemetryFile,
                 );
 
                 assert(exportFileResult.success, "exportFile call was not successful");
 
-                const resultFilePath = path.join(outputFolder, "result.txt");
-                assert(fs.existsSync(resultFilePath), "result file does not exist");
+                assert(fs.existsSync(outputFilePath), "result file does not exist");
 
-                const resultFileContent = fs.readFileSync(resultFilePath, { encoding: "utf-8" });
-                assert.strictEqual(resultFileContent, scenario, "result output is not correct");
+                const resultFileContent = fs.readFileSync(outputFilePath, { encoding: "utf-8" });
+                assert.strictEqual(resultFileContent, executeResult, "result output is not correct");
             });
 
             it("Execution result is correct", async () => {
-                const scenario = "sampleScenario";
                 const result = await createContainerAndExecute(
-                    fs.readFileSync(path.join(snapshotFolder, snapshotFileName), { encoding: "utf-8" }),
+                    getSnapshotFileContent(path.join(snapshotFolder, snapshotFileName)),
                     await fluidExport,
-                    scenario,
                     new MockLogger(),
                 );
-                assert.deepStrictEqual(result, { "result.txt": scenario }, "result objects do not match");
+                assert.deepStrictEqual(result, executeResult, "result objects do not match");
             });
         });
     });
 
     describe("Validate arguments", () => {
-        const mockLogger = new MockLogger();
         const snapshotFilePath = path.join(snapshotFolder, "odspSnapshot1.json");
-
-        it("codeLoaderBundle", async () => {
-            const result = await exportFile(
-                path.join(sampleCodeLoadersFolder, "badCodeLoader.js"),
-                snapshotFilePath,
-                outputFolder,
-                "scneario",
-                mockLogger,
-            );
-
-            assert(!result.success, "result should not be successful");
-            assert(result.errorMessage.includes("ICodeLoaderBundle"),
-                `error message does not contain "ICodeLoaderBundle" [${result.errorMessage}]`);
-        });
-
-        it("codeLoaderBundle.fluidExport", async () => {
-            const result = await exportFile(
-                path.join(sampleCodeLoadersFolder, "badFluidFileConverter.js"),
-                snapshotFilePath,
-                outputFolder,
-                "scneario",
-                mockLogger,
-            );
-
-            assert(!result.success, "result should not be successful");
-            assert(result.errorMessage.includes("IFluidFileConverter"),
-                `error message does not contain "IFluidFileConverter" [${result.errorMessage}]`);
-        });
 
         it("input file", async () => {
             const result = await exportFile(
-                path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
+                await fluidExport,
                 "nonExistentFile.json",
-                outputFolder,
-                "scneario",
-                mockLogger,
+                outputFilePath,
+                telemetryFile,
             );
 
             assert(!result.success, "result should not be successful");
@@ -105,32 +72,17 @@ describe("exportFile", () => {
                 `error message does not contain "input file" [${result.errorMessage}]`);
         });
 
-        it("output folder", async () => {
+        it("output file", async () => {
             const result = await exportFile(
-                path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
+                await fluidExport,
                 snapshotFilePath,
-                "nonExistentFolder",
-                "scneario",
-                mockLogger,
+                snapshotFilePath, // output file already exists
+                telemetryFile,
             );
 
             assert(!result.success, "result should not be successful");
-            assert(result.errorMessage.toLowerCase().includes("output folder"),
-                `error message does not contain "output folder" [${result.errorMessage}]`);
-        });
-
-        it("scneario", async () => {
-            const result = await exportFile(
-                path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
-                snapshotFilePath,
-                outputFolder,
-                "",
-                mockLogger,
-            );
-
-            assert(!result.success, "result should not be successful");
-            assert(result.errorMessage.toLowerCase().includes("scenario"),
-                `error message does not contain "scenario" [${result.errorMessage}]`);
+            assert(result.errorMessage.toLowerCase().includes("output file"),
+                `error message does not contain "output file" [${result.errorMessage}]`);
         });
     });
 });

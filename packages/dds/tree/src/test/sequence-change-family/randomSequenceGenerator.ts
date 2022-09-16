@@ -6,9 +6,8 @@
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { AnchorSet, FieldKey, UpPath } from "../../tree";
-import { SequenceEditBuilder, singleTextCursor } from "../../feature-libraries";
+import { SequenceEditBuilder, singleTextCursor, Transposed as T } from "../../feature-libraries";
 import { jsonNumber } from "../../domains";
-import { Transposed as T } from "../../changeset";
 
 /**
  * @param parentKeys - Keys allowed in the generated path.
@@ -61,19 +60,19 @@ export function generateRandomChange(seed: number, pathGenerator: (seed: number)
     switch (operation) {
         case Operation.SetValue:
             builder.setValue(
-                pathGenerator(random.real()),
+                pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
                 random.integer(0, Number.MAX_SAFE_INTEGER),
             );
             break;
         case Operation.Insert:
             builder.insert(
-                pathGenerator(random.real()),
+                pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
                 singleTextCursor({ type: jsonNumber.name, value: random.integer(0, Number.MAX_SAFE_INTEGER) }),
             );
             break;
         case Operation.Delete:
             builder.delete(
-                pathGenerator(random.real()),
+                pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
                 random.integer(1, 10),
             );
             break;

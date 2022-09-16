@@ -164,6 +164,9 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             this.logger,
             {
                 eventName: "uploadSummaryWithContext",
+                proposalHandle: context.proposalHandle,
+                ackHandle: context.ackHandle,
+                referenceSequenceNumber: context.referenceSequenceNumber,
             },
             async () => {
                 const summaryUploadManager = await this.getSummaryUploadManager();

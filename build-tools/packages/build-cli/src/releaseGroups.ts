@@ -32,3 +32,10 @@ export type ReleaseGroup = MonoRepoKind;
 export function isReleaseGroup(str: string | undefined): str is ReleaseGroup {
     return isMonoRepoKind(str);
 }
+
+/**
+ * A type that represents where a release can originate. Most release groups use the releaseBranches value, and
+ * individual packages use the direct value, which indicates releases originate from the main/lts branches. The
+ * interactive value means the user should be asked to define the source dynamically.
+ */
+export type ReleaseSource = "direct" | "releaseBranches" | "interactive";

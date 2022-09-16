@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
@@ -106,10 +106,9 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
 
     public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
         if (await services.contains(schemaBlobKey)) {
-            // const schemaBuffer = await services.readBlob(schemaBlobKey);
-            // TODO: use schema to initialize this.schema
-            // const schema = parse(bufferToString(_schemaBuffer, "utf8")) as string;
-            throw new Error("Method not implemented.");
+            const blob = await services.readBlob(schemaBlobKey);
+            parse(bufferToString(blob, "utf-8")) as string;
+            // TODO: use parsed results to rehydrate the schema
         }
     }
 }

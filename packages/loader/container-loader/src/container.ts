@@ -49,8 +49,6 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
-    isRuntimeMessage,
-    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -149,14 +147,19 @@ export interface IContainerConfig {
 }
 
 /**
- * Waits until container connects to delta storage and gets up-to-date
+ * Waits until container connects to delta storage and gets up-to-date.
+ *
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
  * up to date. Host may chose to wait in such case and retry resolving URI.
+ *
  * Warning: Will wait infinitely for connection to establish if there is no connection.
  * May result in deadlock if Container.disconnect() is called and never followed by a call to Container.connect().
- * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
- *          false: storage does not provide indication of how far the client is. Container processed
- *          all the ops known to it, but it maybe still behind.
+ *
+ * @returns `true`: container is up to date, it processed all the ops that were know at the time of first connection.
+ *
+ * `false`: storage does not provide indication of how far the client is. Container processed all the ops known to it,
+ * but it maybe still behind.
+ *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
  */
 export async function waitContainerToCatchUp(container: IContainer) {
@@ -1110,9 +1113,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Load container.
      *
-     * @param specifiedVersion - one of the following
-     *   - undefined - fetch latest snapshot
-     *   - otherwise, version sha to load snapshot
+     * @param specifiedVersion - Version SHA to load snapshot. If not specified, will fetch the latest snapshot.
      */
     private async load(
         specifiedVersion: string | undefined,
@@ -1638,11 +1639,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
                 }
             }
-            if (this.firstConnection) {
-                connectionInitiationReason = "InitialConnect";
-            } else {
-                connectionInitiationReason = "AutoReconnect";
-            }
+            connectionInitiationReason = this.firstConnection ? "InitialConnect" : "AutoReconnect";
         }
 
         this.mc.logger.sendPerformanceEvent({
@@ -1754,14 +1751,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Allow the protocol handler to process the message
         const result = this.protocolHandler.processMessage(message, local);
 
-        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
-            this.mc.logger.sendTelemetryEvent(
-                { eventName: "UnpackedRuntimeMessage", type: message.type });
-        }
-        // Forward non system messages to the loaded runtime for processing
-        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
-            this.context.process(message, local, undefined);
-        }
+        // Forward messages to the loaded runtime for processing
+        this.context.process(message, local, undefined);
 
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {

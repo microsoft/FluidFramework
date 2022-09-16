@@ -4,7 +4,7 @@
  */
 
 import { FieldKindIdentifier } from "../../schema-stored";
-import { Delta, FieldKey } from "../../tree";
+import { Delta, FieldKey, Value } from "../../tree";
 import { Brand, Invariant, JsonCompatibleReadOnly } from "../../util";
 
 /**
@@ -33,7 +33,7 @@ export interface FieldChangeRebaser<TChangeset> {
       * @returns the inverse of `changes`.
       * See {@link ChangeRebaser} for details.
       */
-     invert(changes: TChangeset, invertChild: NodeChangeInverter): TChangeset;
+     invert(change: TChangeset, invertChild: NodeChangeInverter): TChangeset;
 
      /**
       * Rebase `change` over `over`.
@@ -58,21 +58,33 @@ export interface FieldEditor<TChangeset> {
     /**
      * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
      */
-    buildChildChange(childIndex: number, change: FieldChangeMap): TChangeset;
+    buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
 }
 
-export type ToDelta = (child: FieldChangeMap) => Delta.Root;
+export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
-export type NodeChangeInverter = (change: FieldChangeMap) => FieldChangeMap;
+export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 export type NodeChangeRebaser = (
-    change: FieldChangeMap,
-    baseChange: FieldChangeMap
-) => FieldChangeMap;
+    change: NodeChangeset,
+    baseChange: NodeChangeset
+) => NodeChangeset;
 
-export type NodeChangeComposer = (changes: FieldChangeMap[]) => FieldChangeMap;
-export type NodeChangeEncoder = (change: FieldChangeMap) => JsonCompatibleReadOnly;
-export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => FieldChangeMap;
+export type NodeChangeComposer = (changes: NodeChangeset[]) => NodeChangeset;
+export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
+export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
+
+export interface NodeChangeset {
+    fieldChanges?: FieldChangeMap;
+    valueChange?: ValueChange;
+}
+
+export interface ValueChange {
+    /**
+     * Can be left unset to represent the value being cleared.
+     */
+    value?: Value;
+}
 
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 

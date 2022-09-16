@@ -7,16 +7,17 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable max-len */
 import { fail, strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
     NamedTreeSchema, StoredSchemaRepository, namedTreeSchema, ValueSchema, fieldSchema, SchemaData,
-    TreeSchemaIdentifier, rootFieldKey,
+    TreeSchemaIdentifier,
 } from "../../../schema-stored";
 import { IEditableForest, initializeForest } from "../../../forest";
-import { JsonableTree, EmptyKey, Value } from "../../../tree";
+import { JsonableTree, EmptyKey, Value, rootFieldKey } from "../../../tree";
 import { brand, Brand, clone } from "../../../util";
 import {
     defaultSchemaPolicy, getEditableTree, EditableTree, buildForest, getTypeSymbol, UnwrappedEditableField,
-    proxyTargetSymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive, isPrimitiveValue, Multiplicity,
+    proxyTargetSymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive, isPrimitiveValue, Multiplicity, singleTextCursorNew,
 } from "../../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -173,7 +174,7 @@ const person: JsonableTree = {
 function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
     const schemaRepo = new StoredSchemaRepository(defaultSchemaPolicy, schema);
     const forest = buildForest(schemaRepo);
-    initializeForest(forest, data);
+    initializeForest(forest, data.map(singleTextCursorNew));
     return forest;
 }
 
@@ -386,7 +387,9 @@ describe("editable-tree", () => {
         };
         const forest = setupForest(schemaData, [{ type: optionalChildSchema.name, fields: { child: [{ type: int32Schema.name, value: undefined }] } }]);
         const [context, field] = getEditableTree(forest);
-        assert.throws(() => ((field as EditableTree).child), /`undefined` values not allowed for primitive fields/);
+        assert.throws(() => ((field as EditableTree).child),
+            (e) => validateAssertionError(e, "`undefined` values not allowed for primitive fields"),
+            "Expected exception was not thrown");
         context.free();
     });
 

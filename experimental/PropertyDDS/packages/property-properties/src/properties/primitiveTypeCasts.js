@@ -85,7 +85,7 @@ const _castFunctors = {
      * Casts the input value to a Int64
      * @param {number} in_value - The value to use in the cast
      * @param {number} [in_radix = 10] - An integer between 2 and 36 that represents the
-     *    radix (the base in mathematical numeral systems) of the above in_value if it is a string.
+     * radix (the base in mathematical numeral systems) of the above in_value if it is a string.
      * @return {number} The casted value
      * @protected
      */

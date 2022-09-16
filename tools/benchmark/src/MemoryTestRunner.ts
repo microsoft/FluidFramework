@@ -102,12 +102,15 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
  * This is wrapper for Mocha's `it` function, that runs a memory benchmark.
  *
  * Here is how this benchmarking works:
- *	For each benchmark
- *		// Run args.benchmarkFn  multiple times and measure results.
- *		Iterate until args.minSampleCount has been reached, and one of
+ *
+ * ```
+ *  For each benchmark
+ *      // Run args.benchmarkFn  multiple times and measure results.
+ *      Iterate until args.minSampleCount has been reached, and one of
  *      these two things is also true: RME is lower than maxRelativeMarginOfError,
  *      or we've iterated for longer than args.maxBenchmarkDurationSeconds.
- *			args.benchmarkFn()
+ *          args.benchmarkFn()
+ * ```
  *
  * Optionally, setup and teardown functions for the whole benchmark can be provided via the
  * `before` and `after` options. Each of them will run only once, before/after all the
