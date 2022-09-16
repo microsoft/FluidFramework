@@ -104,6 +104,26 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
+      "RemovedClassDeclaration_DeltaStorageService": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_DocumentDeltaStorageService": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_DocumentService": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_DocumentStorageService": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_NullBlobStorageService": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
       "InterfaceDeclaration_IRouterliciousDriverPolicies": {
         "forwardCompat": false
       }

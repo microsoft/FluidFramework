@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
@@ -26,6 +25,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -34,7 +34,7 @@ const assertIntervalsHelper = (
 ) => {
     let actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
     if (sharedString.getLength() === 0) {
-        actual = Array.from(intervalView);
+        actual = Array.from<SequenceInterval>(intervalView);
     }
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
@@ -59,7 +59,7 @@ const assertIntervalsHelper = (
 
 function testIntervalOperations(intervalCollection: IntervalCollection<SequenceInterval>) {
     const intervalArray: SequenceInterval[] = [];
-    let interval: SequenceInterval;
+    let interval: SequenceInterval | undefined;
     let id;
 
     intervalArray[0] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
@@ -214,8 +214,6 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
         let dataObject: ITestFluidObject & IFluidLoadable;
 
         const assertIntervals = (expected: readonly { start: number; end: number; }[]) => {
-            // Make sure all ops have been sent before actually asserting
-            (dataObject.context.containerRuntime as IContainerRuntime).flush();
             assertIntervalsHelper(sharedString, intervals, expected);
         };
 
@@ -224,6 +222,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
             const testContainerConfig: ITestContainerConfig = {
                 fluidDataObjectType: DataObjectFactoryType.Test,
                 registry,
+                runtimeOptions: {
+                    flushMode: FlushMode.Immediate,
+                },
             };
             const container = await provider.makeTestContainer(testContainerConfig);
             dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -445,8 +446,9 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
             assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with end position");
 
             i = 0;
-            for (interval of intervals2) {
-                checkIdEquals(interval, intervalArray[i], "Mismatch in for...of iteration of collection");
+            for (const interval2 of intervals2) {
+                assert(interval2);
+                checkIdEquals(interval2, intervalArray[i], "Mismatch in for...of iteration of collection");
                 i++;
             }
             assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
@@ -459,7 +461,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
             await provider.ensureSynchronized();
 
             if (intervals1[Symbol.iterator]) {
-                for (interval of intervals1) {
+                for (const _interval of intervals1) {
                     assert(false, "intervals1 should be empty after emptying invervals2");
                 }
             }
@@ -480,8 +482,8 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
             sharedString1.insertText(0, "01234");
             const intervals1 = sharedString1.getIntervalCollection("intervals");
-            let interval1: SequenceInterval;
-            let interval2: SequenceInterval;
+            let interval1: SequenceInterval | undefined;
+            let interval2: SequenceInterval | undefined;
             let id1;
             let id2;
 
@@ -556,20 +558,20 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval1?.getIntervalId(), id1);
                 assert.strictEqual(interval2?.getIntervalId(), id1);
                 for (interval1 of intervals1) {
-                    const id: string = interval1.getIntervalId() as string;
-                    assert.strictEqual(interval1.start.getOffset(),
+                    const id: string = interval1?.getIntervalId() as string;
+                    assert.strictEqual(interval1?.start.getOffset(),
                         intervals2.getIntervalById(id)?.start.getOffset(),
                         "Conflicting changes");
-                    assert.strictEqual(interval1.end.getOffset(),
+                    assert.strictEqual(interval1?.end.getOffset(),
                         intervals2.getIntervalById(id)?.end.getOffset(),
                         "Conflicting changes");
                 }
                 for (interval2 of intervals2) {
-                    const id: string = interval2.getIntervalId() as string;
-                    assert.strictEqual(interval2.start.getOffset(),
+                    const id: string = interval2?.getIntervalId() as string;
+                    assert.strictEqual(interval2?.start.getOffset(),
                         intervals1.getIntervalById(id)?.start.getOffset(),
                         "Conflicting changes");
-                    assert.strictEqual(interval2.end.getOffset(),
+                    assert.strictEqual(interval2?.end.getOffset(),
                         intervals1.getIntervalById(id)?.end.getOffset(),
                         "Conflicting changes");
                 }
@@ -580,12 +582,12 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
                 await provider.ensureSynchronized();
 
                 interval1 = intervals1.getIntervalById(id1);
-                assert.strictEqual(interval1.start.getOffset(), 2, "Conflicting transparent change");
-                assert.strictEqual(interval1.end.getOffset(), 4, "Conflicting transparent change");
+                assert.strictEqual(interval1?.start.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval1?.end.getOffset(), 4, "Conflicting transparent change");
 
                 interval2 = intervals2.getIntervalById(id1);
-                assert.strictEqual(interval2.start.getOffset(), 2, "Conflicting transparent change");
-                assert.strictEqual(interval2.end.getOffset(), 4, "Conflicting transparent change");
+                assert.strictEqual(interval2?.start.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval2?.end.getOffset(), 4, "Conflicting transparent change");
 
                 intervals1.change(id1, undefined, 3);
                 await provider.opProcessingController.processOutgoing();
@@ -594,12 +596,12 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
                 await provider.ensureSynchronized();
 
                 interval1 = intervals1.getIntervalById(id1);
-                assert.strictEqual(interval1.start.getOffset(), 2, "Conflicting transparent change");
-                assert.strictEqual(interval1.end.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval1?.start.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval1?.end.getOffset(), 2, "Conflicting transparent change");
 
                 interval2 = intervals2.getIntervalById(id1);
-                assert.strictEqual(interval2.start.getOffset(), 2, "Conflicting transparent change");
-                assert.strictEqual(interval2.end.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval2?.start.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval2?.end.getOffset(), 2, "Conflicting transparent change");
             }
 
             if (typeof (intervals1.changeProperties) === "function" &&
@@ -631,11 +633,11 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
                 assertPropertyChangedArg(deltaArgs2.prop1, null, "Mismatch in property-changed event arg 4");
 
                 interval1 = intervals1.getIntervalById(id1);
-                assert.strictEqual(interval1.properties.prop1, "prop1", "Mismatch in changed properties 1");
-                assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 2");
+                assert.strictEqual(interval1?.properties.prop1, "prop1", "Mismatch in changed properties 1");
+                assert.strictEqual(interval1?.properties.prop2, "prop2", "Mismatch in changed properties 2");
                 interval2 = intervals2.getIntervalById(id1);
-                assert.strictEqual(interval2.properties.prop1, "prop1", "Mismatch in changed properties 3");
-                assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 4");
+                assert.strictEqual(interval2?.properties.prop1, "prop1", "Mismatch in changed properties 3");
+                assert.strictEqual(interval2?.properties.prop2, "prop2", "Mismatch in changed properties 4");
 
                 intervals1.changeProperties(id1, { prop1: "no" });
                 assertPropertyChangedArg(deltaArgs1.prop1, "prop1", "Mismatch in property-changed event arg 5");
@@ -648,10 +650,10 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
                 assertPropertyChangedArg(Object.hasOwnProperty.call(deltaArgs2, "prop1"), false,
                     "Mismatch in property-changed event arg 8");
 
-                assert.strictEqual(interval1.properties.prop1, "yes", "Mismatch in changed properties 5");
-                assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 6");
-                assert.strictEqual(interval2.properties.prop1, "yes", "Mismatch in changed properties 7");
-                assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 8");
+                assert.strictEqual(interval1?.properties.prop1, "yes", "Mismatch in changed properties 5");
+                assert.strictEqual(interval1?.properties.prop2, "prop2", "Mismatch in changed properties 6");
+                assert.strictEqual(interval2?.properties.prop1, "yes", "Mismatch in changed properties 7");
+                assert.strictEqual(interval2?.properties.prop2, "prop2", "Mismatch in changed properties 8");
 
                 intervals1.changeProperties(id1, { prop1: "maybe" });
                 assertPropertyChangedArg(deltaArgs1.prop1, "yes", "Mismatch in property-changed event arg 9");
