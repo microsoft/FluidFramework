@@ -82,6 +82,7 @@ CheckValidReleaseGroup
 CheckPolicy
 CheckHasRemote
 CheckBranchUpToDate
+CheckShouldRunOptionalChecks
 ] 'failure' -> Failed;
 // END Init and optional checks
 
@@ -98,6 +99,19 @@ DoBumpReleasedDependencies 'success' // No dependencies to bump
 DoBumpReleasedDependencies 'failure' // Dependencies were bumped
 => CheckNoPrereleaseDependencies3 'failure'
 => PromptToReleaseDeps;
+
+CheckNoPrereleaseDependencies3 'success'
+=> CheckShouldCommitReleasedDepsBump 'success'
+=> PromptToPRReleasedDepsBump;
+
+CheckNoPrereleaseDependencies2 'failure'
+=> PromptToReleaseDeps;
+
+CheckShouldCommitReleasedDepsBump 'failure'
+=> PromptToCommitReleasedDepsBump;
+
+CheckShouldCommitDeps 'failure'
+=> PromptToCommitDeps;
 
 // END DoBumpReleasedDependencies
 
@@ -128,21 +142,21 @@ AskForReleaseType 'patch'
 => CheckTypeTestGenerate 'success'
 => ReleaseComplete;
 
-CheckDoesReleaseFromReleaseBranch -> 'failure'
-CheckReleaseIsDone;
+CheckDoesReleaseFromReleaseBranch 'failure'
+-> CheckReleaseIsDone 'failure'
+-> PromptToRelease;
 
 CheckOnReleaseBranch 'failure'
 -> Failed;
-
-CheckReleaseIsDone 'failure'
--> PromptToRelease;
 
 CheckReleaseGroupIsBumpedPatch 'failure'
 -> DoReleaseGroupBump;
 
 [
 CheckTypeTestPrepare
+CheckTypeTestPrepare2
 CheckTypeTestGenerate
+CheckTypeTestGenerate2
 ] 'failure'
 -> PromptToRunTypeTests;
 
@@ -158,6 +172,7 @@ AskForReleaseType 'minor'
 => CheckOnReleaseBranch2 'success'
 => CheckReleaseGroupIsBumpedPatch2 'success'
 => CheckReleaseIsDone2 'success'
+=> CheckReleaseGroupIsBumpedMinor2 'success'
 => CheckTypeTestPrepare2 'success'
 => CheckTypeTestGenerate2 'success'
 => ReleaseComplete;
@@ -166,7 +181,10 @@ CheckDoesReleaseFromReleaseBranch2 'failure'
 -> CheckReleaseIsDone2 'failure'
 -> PromptToRelease;
 
-CheckReleaseGroupIsBumpedPatch2 'failure'
+[
+CheckReleaseGroupIsBumpedMinor2
+CheckReleaseGroupIsBumpedPatch2
+] 'failure'
 -> DoReleaseGroupBump;
 
 CheckOnReleaseBranch2 'failure'
@@ -175,7 +193,7 @@ CheckOnReleaseBranch2 'failure'
 => CheckReleaseIsDone;
 
 CheckReleaseBranchExists 'failure'
-=> PromptToCreateReleaseBranch;
+-> PromptToCreateReleaseBranch;
 
 CheckReleaseGroupIsBumpedMinor 'failure'
 -> DoReleaseGroupBump;

@@ -251,6 +251,7 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 
             case "CheckReleaseGroupIsBumped":
             case "CheckReleaseGroupIsBumpedMinor":
+            case "CheckReleaseGroupIsBumpedMinor2":
             case "CheckReleaseGroupIsBumpedPatch":
             case "CheckReleaseGroupIsBumpedPatch2": {
                 result = await checkReleaseGroupIsBumped(state, machine, testMode, log, data);
