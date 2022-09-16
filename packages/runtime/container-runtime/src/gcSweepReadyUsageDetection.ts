@@ -13,12 +13,15 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { oneDayMs } from "./garbageCollection";
 
-/** Feature Gate Key -
- *  How many days between closing the container from this error (avoids locking user out of their file altogether)
+/**
+ * Feature Gate Key -
+ * How many days between closing the container from this error (avoids locking user out of their file altogether)
  */
 export const blackoutPeriodDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.BlackoutPeriodDays";
-/** LocalStorage key (NOT via feature gate / monitoring context)
- *  A map from docId to info about the last time we closed due to this error
+
+/**
+ * LocalStorage key (NOT via feature gate / monitoring context)
+ * A map from docId to info about the last time we closed due to this error
  */
 export const closuresMapLocalStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
 
@@ -138,7 +141,7 @@ export class SweepReadyUsageDetectionHandler {
 
             this.closeFn(error);
         } else {
-            this.mc.logger.sendErrorEvent({ eventName: "IgnoringSweepReadyObjectUsage" }, error);
+            this.mc.logger.sendErrorEvent({ eventName: "SweepReadyObject_UsageAllowed" }, error);
         }
     }
 }

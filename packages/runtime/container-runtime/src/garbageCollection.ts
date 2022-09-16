@@ -1437,7 +1437,7 @@ export class GarbageCollector implements IGarbageCollector {
             // Once Sweep is fully implemented, this will be removed since the objects will be gone
             // and errors will arise elsewhere in the runtime
             if (state === UnreferencedState.SweepReady) {
-                this.sweepReadyUsageHandler.usageDetectedInMainContainer(propsToLog);
+                this.sweepReadyUsageHandler.usageDetectedInMainContainer({ ...propsToLog, usageType });
             }
         }
     }
