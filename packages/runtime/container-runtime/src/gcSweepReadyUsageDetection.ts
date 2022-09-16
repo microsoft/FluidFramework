@@ -100,31 +100,35 @@ export class SweepReadyUsageDetectionHandler {
             return;
         }
 
-        const pastClosuresMap: Record<string, { lastCloseTime: number; } | undefined> = (() => {
+        // Default stance is we close every time - this reflects the severity of SweepReady Object Usage.
+        // However, we may choose to "throttle" the closures by setting the BlackoutPeriodDays setting,
+        // which will only allow the container to close once during that period, to avoid locking users out.
+        let shouldClose: boolean = true;
+        let pastClosuresMap: Record<string, { lastCloseTime: number; } | undefined> = {};
+        let lastCloseTime: number | undefined;
+        const blackoutPeriodDays = this.mc.config.getNumber(blackoutPeriodDaysKey);
+        if (blackoutPeriodDays !== undefined) {
+            // Read pastClosuresMap from localStorage then extract the lastCloseTime from the map
             try {
                 const rawValue = this.localStorage.getItem(closuresMapLocalStorageKey);
                 const parsedValue = rawValue === null ? {} : JSON.parse(rawValue);
-                return typeof parsedValue === "object"
-                    ? parsedValue as Record<string, { lastCloseTime: number; } | undefined>
-                    : {};
+                if (typeof parsedValue === "object") {
+                    pastClosuresMap = parsedValue;
+                }
             } catch (e) {
-                return {};
             }
-        })();
+            lastCloseTime = pastClosuresMap[this.uniqueContainerKey]?.lastCloseTime;
 
-        const lastCloseTime = pastClosuresMap[this.uniqueContainerKey]?.lastCloseTime;
-        const blackoutPeriodDays = this.mc.config.getNumber(blackoutPeriodDaysKey);
+            // Don't close if we did already within the blackout period
+            if (lastCloseTime !== undefined && Date.now() < lastCloseTime + blackoutPeriodDays * oneDayMs) {
+                shouldClose = false;
+            }
+        }
 
         const error = new SweepReadyUsageError(
             "SweepReady object used in Non-Summarizer Client",
             { errorDetails: JSON.stringify({ ...errorProps, lastCloseTime, blackoutPeriodDays }) },
         );
-
-        // Should close if...
-        const shouldClose = lastCloseTime === undefined // ...We've not closed before, or...
-            || blackoutPeriodDays === undefined // ...there's no blackout duration set, or...
-            || Date.now() > lastCloseTime + blackoutPeriodDays * oneDayMs; // ...we've passed the blackout period
-
         if (shouldClose) {
             // Update closures map in localStorage before closing
             // Note there is a race condition between different tabs updating localStorage and overwriting
