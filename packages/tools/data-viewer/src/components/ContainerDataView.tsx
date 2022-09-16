@@ -6,6 +6,8 @@ import React, { useEffect, useState } from "react";
 
 import { AttachState, ConnectionState, IFluidContainer } from "fluid-framework";
 
+import { DataObjectView } from "./DataObjectView";
+
 /**
  * {@link ContainerDataView} input props.
  */
@@ -84,7 +86,14 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
             </div>
         );
     } else {
-        // TODO: Viewer per object in initial objects (collapsable?)
+        const initialObjects = container.initialObjects;
+        const objectViews = Object.entries(initialObjects).map(([key, value]) => {
+            return (
+                <React.Fragment key={key}>
+                    <DataObjectView name={key} dataObject={value} />
+                </React.Fragment>
+            );
+        });
 
         // TODO: styling
         innerContents = (
@@ -98,6 +107,8 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
                     {attachState}
                 </div>
                 <div>{isDirty ? "Pending local edits" : "No pending local edits"}</div>
+                <hr />
+                <div>{objectViews}</div>
             </div>
         );
     }

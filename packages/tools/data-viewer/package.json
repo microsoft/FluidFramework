@@ -37,6 +37,8 @@
     "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict"
   },
   "dependencies": {
+    "@fluidframework/core-interfaces": "^1.0.1",
+    "@fluidframework/fluid-static": "^1.0.1",
     "fluid-framework": "^1.0.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
