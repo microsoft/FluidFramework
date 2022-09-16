@@ -43,7 +43,7 @@ export const askForReleaseType: StateHandlerFunction = async (
 
     const questions: inquirer.Question[] = [];
 
-    // if an bumpType was set in the handler data, use it. Otherwise set it as the default for the branch. If there's
+    // If an bumpType was set in the handler data, use it. Otherwise set it as the default for the branch. If there's
     // no default for the branch, ask the user.
     let bumpType = inputBumpType ?? getDefaultBumpTypeForBranch(currentBranch);
     if (inputBumpType === undefined) {
