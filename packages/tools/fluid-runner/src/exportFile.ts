@@ -14,7 +14,7 @@ import { IFluidFileConverter } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
 import { getSnapshotFileContent } from "./utils";
 // eslint-disable-next-line import/no-internal-modules
-import { createLogger, getTelemetryFileValidationError } from "./logger/fileLogger";
+import { createLogger, getTelemetryFileValidationError, ITelemetryOptions } from "./logger/fileLogger";
 
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
@@ -40,13 +40,14 @@ export async function exportFile(
     outputFile: string,
     telemetryFile: string,
     options?: string,
+    telemetryOptions?: ITelemetryOptions,
 ): Promise<IExportFileResponse> {
     const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
     if (telemetryArgError) {
         const eventName = clientArgsValidationError;
         return { success: false, eventName, errorMessage: telemetryArgError };
     }
-    const { fileLogger, logger } = createLogger(telemetryFile);
+    const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
 
     try {
         return await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
@@ -71,7 +72,7 @@ export async function exportFile(
         logger.sendErrorEvent({ eventName }, error);
         return { success: false, eventName, errorMessage: "Unexpected error", error };
     } finally {
-        await fileLogger.flush();
+        await fileLogger.close();
     }
 }
 

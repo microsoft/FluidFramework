@@ -21,6 +21,7 @@ export class JSONFileLogger extends BaseFileLogger {
     }
 
     public async close(): Promise<void> {
+        await super.close();
         fs.appendFileSync(this.filePath, "]");
     }
 }

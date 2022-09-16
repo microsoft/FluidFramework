@@ -38,8 +38,7 @@ export abstract class BaseFileLogger implements IFileLogger {
         }
     }
 
-    public abstract close(): Promise<void>;
-    public abstract flush(): Promise<void>;
+    protected abstract flush(): Promise<void>;
 
     protected async flushCore(outputPath: string, delimitter: string): Promise<void> {
         if (this.events.length > 0) {
@@ -51,5 +50,9 @@ export abstract class BaseFileLogger implements IFileLogger {
             this.events = [];
             this.hasWrittenToFile = true;
         }
+    }
+
+    public async close(): Promise<void> {
+        await this.flush();
     }
 }

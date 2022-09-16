@@ -6,6 +6,7 @@
 import * as fs from "fs";
 import path from "path";
 import readline from "readline";
+import { v4 as uuidv4 } from "uuid";
 import { AsyncParser } from "json2csv";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { BaseFileLogger } from "./baseFileLogger";
@@ -17,7 +18,7 @@ export class CSVFileLogger extends BaseFileLogger {
     // eslint-disable-next-line max-len
     // private readonly csvFileName = "C:\\Users\\kianthompson\\Documents\\RandomData\\fluid-runner\\src\\logger\\sample.csv";
     private readonly columns = new Set();
-    private readonly tempFile = path.join(__dirname, "tempOutputFile.txt");
+    private readonly tempFile = path.join(__dirname, uuidv4());
 
     public async flush(): Promise<void> {
         return super.flushCore(this.tempFile, "\n");
@@ -32,6 +33,7 @@ export class CSVFileLogger extends BaseFileLogger {
     }
 
     public async close(): Promise<void> {
+        await super.close();
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const field in this.defaultFields) {
             this.columns.add(field);
@@ -39,7 +41,7 @@ export class CSVFileLogger extends BaseFileLogger {
 
         const asyncParser = new AsyncParser({ fields: Array.from(this.columns) });
 
-        const fd = fs.openSync(this.tempFile, "w");
+        const fd = fs.openSync(this.filePath, "w");
         asyncParser.processor
             .on("data", (chunk) => fs.appendFileSync(fd, chunk.toString()))
             .on("end", () => fs.closeSync(fd))

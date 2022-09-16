@@ -9,8 +9,10 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { CSVFileLogger } from "./csvFileLogger";
 import { JSONFileLogger } from "./jsonFileLogger";
 
+/**
+ * TODO
+ */
 export interface IFileLogger extends ITelemetryBaseLogger {
-    flush(): Promise<void>;
     close(): Promise<void>;
 }
 
@@ -20,7 +22,9 @@ export enum OutputFormat {
     CSV,
 }
 
+// TODO
 export interface ITelemetryOptions {
+    outputFormat?: OutputFormat;
     defaultFields?: Record<string, string>; // TODO: need to pass through layers
     eventsPerFlush?: number;
 }
@@ -31,10 +35,9 @@ export interface ITelemetryOptions {
  */
 export function createLogger(
     filePath: string,
-    outputFormat: OutputFormat = OutputFormat.JSON,
     options?: ITelemetryOptions,
 ): { logger: ITelemetryLogger; fileLogger: IFileLogger; } {
-    const fileLogger = outputFormat === OutputFormat.CSV
+    const fileLogger = options?.outputFormat === OutputFormat.CSV
         ? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultFields)
         : new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultFields);
 
@@ -56,4 +59,34 @@ export function getTelemetryFileValidationError(telemetryFile: string): string |
     }
 
     return undefined;
+}
+
+// TODO
+export function validateAndParseTelemetryOptions(
+    format?: string,
+    props?: string,
+): { success: false; error: string; } | { success: true; telemetryOptions: ITelemetryOptions; } {
+    let outputFormat: OutputFormat | undefined;
+    const defaultFields: Record<string, string> = {};
+
+    if (format) {
+        outputFormat = OutputFormat[format];
+        if (outputFormat === undefined) {
+            return { success: false, error: `Invalid telemetry format [${format}]` };
+        }
+    }
+
+    if (props) {
+        let index = 0;
+        for (const kvp of props.split(/\s+/)) {
+            const kvpSplit = kvp.split("=");
+            if (kvpSplit.length !== 2) {
+                return { success: false, error: `Invalid property at index [${index}] -> [${kvp}]` };
+            }
+            defaultFields[kvpSplit[0]] = kvpSplit[1];
+            index++;
+        }
+    }
+
+    return { success: true, telemetryOptions: { outputFormat, defaultFields } };
 }

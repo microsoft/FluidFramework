@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
 import * as yargs from "yargs";
 import { exportFile, IExportFileResponse } from "./exportFile";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
+// eslint-disable-next-line import/no-internal-modules
+import { validateAndParseTelemetryOptions } from "./logger/fileLogger";
 
 /**
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
@@ -23,7 +26,6 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
             (yargs) =>
                 yargs
                     .option("codeLoader", {
-                        // eslint-disable-next-line max-len
                         describe: "Path to code loader bundle. Required if this application is being called without modification.\nSee \"README.md\" for more details.",
                         type: "string",
                         demandOption: false,
@@ -47,12 +49,27 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         describe: "Additional options passed to container on execution",
                         type: "string",
                         demandOption: false,
+                    })
+                    .option("telemetryFormat", {
+                        describe: "TODO",
+                        type: "string",
+                        demandOption: false,
+                    })
+                    .option("telemetryProps", {
+                        describe: "TODO only accept strings with no spaces",
+                        type: "string",
+                        demandOption: false,
                     }),
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             async (argv) => {
                 const argsError = validateProvidedArgs(argv.codeLoader, fluidFileConverter);
                 if (argsError) {
                     console.error(argsError);
+                    process.exit(1);
+                }
+                const telemetryOptionsResult = validateAndParseTelemetryOptions(argv.telemetryFormat, argv.telemetryProps);
+                if (!telemetryOptionsResult.success) {
+                    console.error(telemetryOptionsResult.error);
                     process.exit(1);
                 }
 
@@ -64,6 +81,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         argv.outputFile,
                         argv.telemetryFile,
                         argv.options,
+                        telemetryOptionsResult.telemetryOptions,
                     );
                 } else {
                     result = await exportFile(
@@ -72,6 +90,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         argv.outputFile,
                         argv.telemetryFile,
                         argv.options,
+                        telemetryOptionsResult.telemetryOptions,
                     );
                 }
 
@@ -93,10 +112,10 @@ function validateProvidedArgs(
         return "\"codeLoader\" and \"fluidFileConverter\" cannot both be provided. See \"fluidRunner.ts\" for details.";
     }
     if (codeLoader === undefined && fluidFileConverter === undefined) {
-        // eslint-disable-next-line max-len
         return "\"codeLoader\" must be provided if there is no explicit \"fluidFileConverter\". See \"fluidRunner.ts\" for details.";
     }
     return undefined;
 }
 
 fluidRunner();
+/* eslint-enable max-len */
