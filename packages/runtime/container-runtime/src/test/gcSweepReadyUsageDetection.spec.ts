@@ -139,7 +139,6 @@ describe("Garbage Collection Tests", () => {
                 assert.equal(closeErrors.length, 4, `Expected both to close again after waiting 1 day`);
                 assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
             });
-            //* Test case for corrupted value in closure map (fail JSON.parse or succeed but have the wrong structure)
         });
     });
 });
