@@ -129,8 +129,8 @@ describe("FluidReleaseMachine", () => {
         const requiresBothActions = ["DoBumpReleasedDependencies"];
 
         const states = new Set<string>();
-        machine.list_states_having_action("success").forEach(v=>states.add(v));
-        machine.list_states_having_action("failure").forEach(v=>states.add(v));
+        machine.list_states_having_action("success").forEach((v) => states.add(v));
+        machine.list_states_having_action("failure").forEach((v) => states.add(v));
 
         for (const state of states) {
             const exits = machine.list_exit_actions(state).sort();
