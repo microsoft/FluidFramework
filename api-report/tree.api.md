@@ -547,7 +547,10 @@ export const jsonArray: NamedTreeSchema;
 export const jsonBoolean: NamedTreeSchema;
 
 // @public
-export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | {
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+
+// @public
+export type JsonCompatibleObject = {
     [P in string]: JsonCompatible;
 };
 
