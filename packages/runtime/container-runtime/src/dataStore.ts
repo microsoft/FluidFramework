@@ -158,7 +158,7 @@ class DataStore implements IDataStore, Partial<{ readonly IFluidHandle: IFluidHa
     public get IFluidHandle(): IFluidHandle<FluidObject> | undefined {
         // Currently treating the data store channel as a FluidObject<IFluidHandle>. If we later
         // make changes so that it exposes the handle explicitly, we can simplify this code.
-        const maybeHandle: FluidObject<IFluidHandle<FluidObject>> = (this.fluidDataStoreChannel as any);
+        const maybeHandle = this.fluidDataStoreChannel as FluidObject<IFluidHandle<FluidObject>>;
         return maybeHandle.IFluidHandle;
     }
 
