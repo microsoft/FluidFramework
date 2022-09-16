@@ -10,7 +10,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { loggerToMonitoringContext, MockLogger, sessionStorageConfigProvider, ConfigTypes } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
-    blackoutPeriodDaysKey,
+    skipClosureForXDaysKey,
     closuresMapLocalStorageKey,
     SweepReadyUsageDetectionHandler,
 } from "../gcSweepReadyUsageDetection";
@@ -72,7 +72,7 @@ describe("Garbage Collection Tests", () => {
             beforeEach(() => {
                 // For these tests, enable these by default
                 mockLocalStorage[sweepReadyUsageDetectionKey] = "blah mainContainer blah";
-                mockLocalStorage[blackoutPeriodDaysKey] = 1;
+                mockLocalStorage[skipClosureForXDaysKey] = 1;
             });
             it("setting does not contain 'mainContainer' - do not close the container", () => {
                 mockLocalStorage[sweepReadyUsageDetectionKey] = "summarizer or whatever";
@@ -87,15 +87,15 @@ describe("Garbage Collection Tests", () => {
                 assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
                 mockLogger.assertMatch([{ eventName: "SweepReadyUsageDetectionHandlerNoOpStorage" }]);
             });
-            it("BlackoutPeriod undefined - close the container back-to-back", () => {
-                mockLocalStorage[blackoutPeriodDaysKey] = undefined;
+            it("SkipClosure Period undefined - close the container back-to-back", () => {
+                mockLocalStorage[skipClosureForXDaysKey] = undefined;
                 const handler = createHandler();
                 handler.usageDetectedInMainContainer({});
                 handler.usageDetectedInMainContainer({});
-                assert.equal(closeErrors.length, 2, `Should have closed back-to-back with no blackout period defined. errors:\n${closeErrors}`);
+                assert.equal(closeErrors.length, 2, `Should have closed back-to-back with no Skip Closure Period defined. errors:\n${closeErrors}`);
                 assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
             });
-            it("BlackoutPeriod set - don't close the container during that period", () => {
+            it("SkipClosure Period set - don't close the container during that period", () => {
                 const handler = createHandler();
 
                 clock.tick(10);
@@ -106,14 +106,14 @@ describe("Garbage Collection Tests", () => {
 
                 clock.tick(10);
                 handler.usageDetectedInMainContainer({});
-                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to blackout period. errors:\n${closeErrors}`);
+                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 clock.tick(oneDayMs);
                 handler.usageDetectedInMainContainer({});
                 assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
                 assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
             });
-            it("Multiple handlers/keys - closure blackouts are consistent and independent", () => {
+            it("Multiple handlers/keys - closure skipping is consistent and independent", () => {
                 const handler1a = createHandler("key1");
                 const handler1b = createHandler("key1");
                 const handler2 = createHandler("key2");
@@ -127,7 +127,7 @@ describe("Garbage Collection Tests", () => {
                 // The other handler on key1 should be blocked
                 clock.tick(10);
                 handler1b.usageDetectedInMainContainer({});
-                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to blackout period. errors:\n${closeErrors}`);
+                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 // But the handler on key2 should NOT be blocked
                 handler2.usageDetectedInMainContainer({});
@@ -139,7 +139,7 @@ describe("Garbage Collection Tests", () => {
                 assert.equal(closeErrors.length, 4, `Expected both to close again after waiting 1 day`);
                 assert(closeErrors.every((e) => e.errorType === sweepReadyUsageErrorType), `Expected all SweepReadyUsageErrors. errors:\n${closeErrors}`);
             });
-            it("Invalid JSON format closure map value in localStorage - recovers and respects the blackout period", () => {
+            it("Invalid JSON format closure map value in localStorage - recovers and respects the Skip Closure Period", () => {
                 const handler = createHandler();
                 mockLocalStorage[closuresMapLocalStorageKey] = "} Invalid JSON";
 
@@ -151,14 +151,14 @@ describe("Garbage Collection Tests", () => {
 
                 clock.tick(10);
                 handler.usageDetectedInMainContainer({});
-                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to blackout period. errors:\n${closeErrors}`);
+                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 clock.tick(oneDayMs);
                 handler.usageDetectedInMainContainer({});
                 assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
                 assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
             });
-            it("Incorrect JSON type for closure map value in localStorage - recovers and respects the blackout period", () => {
+            it("Incorrect JSON type for closure map value in localStorage - recovers and respects the Skip Closure Period", () => {
                 const handler = createHandler();
                 mockLocalStorage[closuresMapLocalStorageKey] = JSON.stringify("Not an object");
 
@@ -170,14 +170,14 @@ describe("Garbage Collection Tests", () => {
 
                 clock.tick(10);
                 handler.usageDetectedInMainContainer({});
-                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to blackout period. errors:\n${closeErrors}`);
+                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 clock.tick(oneDayMs);
                 handler.usageDetectedInMainContainer({});
                 assert.equal(closeErrors.length, 2, `Expected to close again after waiting 1 day`);
                 assert.equal(closeErrors[1]?.errorType ?? "", sweepReadyUsageErrorType, "Expected sweepReadyUsageErrorType the second time");
             });
-            it("Incorrect JSON schema for closure map value in localStorage - recovers and respects the blackout period", () => {
+            it("Incorrect JSON schema for closure map value in localStorage - recovers and respects the Skip Closure Period", () => {
                 const handler = createHandler();
                 mockLocalStorage[closuresMapLocalStorageKey] = JSON.stringify({ key1: { wrongSchema: "no lastCloseTime member" } });
 
@@ -189,7 +189,7 @@ describe("Garbage Collection Tests", () => {
 
                 clock.tick(10);
                 handler.usageDetectedInMainContainer({});
-                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to blackout period. errors:\n${closeErrors}`);
+                assert.equal(closeErrors.length, 1, `Should NOT have closed back-to-back due to Skip Closure Period. errors:\n${closeErrors}`);
 
                 clock.tick(oneDayMs);
                 handler.usageDetectedInMainContainer({});

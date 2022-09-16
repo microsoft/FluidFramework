@@ -17,7 +17,7 @@ import { oneDayMs } from "./garbageCollection";
  * Feature Gate Key -
  * How many days between closing the container from this error (avoids locking user out of their file altogether)
  */
-export const blackoutPeriodDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.SkipClosureForXDays";
+export const skipClosureForXDaysKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.SkipClosureForXDays";
 
 /**
  * LocalStorage key (NOT via feature gate / monitoring context)
@@ -59,10 +59,10 @@ export class SweepReadyUsageError extends LoggingError implements IFluidErrorBas
 /**
  * This class encapsulates the logic around what to do when a SweepReady object is used.
  * There are several tactics we plan to use in Dogfood environments to aid diagnosis of these cases:
- *  - Closing the main container when either the main or summarizer client detects this kind of violation
- *    (via sweepReadyUsageDetectionSetting above)
- *  - Throttling the frequency of these crashes via a "Blackout Period" per container per device
- *   (via blackoutPeriodDaysKey above.  Uses localStorage and closuresMapLocalStorageKey to implement this behavior)
+ * - Closing the main container when either the main or summarizer client detects this kind of violation
+ * (via sweepReadyUsageDetectionSetting above)
+ * - Throttling the frequency of these crashes via a "Skip Closure Period" per container per device
+ * (via skipClosureForXDaysKey above.  Uses localStorage and closuresMapLocalStorageKey to implement this behavior)
  */
 export class SweepReadyUsageDetectionHandler {
     private readonly localStorage: Pick<Storage, "getItem" | "setItem">;
@@ -86,14 +86,14 @@ export class SweepReadyUsageDetectionHandler {
         }
 
         if (this.localStorage === noopStorage) {
-            // This means the Blackout Period logic will not work.
-            this.mc.logger.sendTelemetryEvent({ eventName: "SweepReadyUsageDetectionHandlerNoOpStorage" });
+            // This means the Skip Closure Period logic will not work.
+            this.mc.logger.sendTelemetryEvent({ eventName: "SweepReadyUsageDetectionHandlerNoopStorage" });
         }
     }
 
     /**
       * If SweepReady Usage Detection is enabled, close the main container.
-      * If the "Blackout Period" is set, don't close the container more than once in that period.
+      * If the SkipClosureForXDays setting is set, don't close the container more than once in that period.
       *
       * Once Sweep is fully implemented, this will be removed since the objects will be gone
       * and errors will arise elsewhere in the runtime
@@ -104,13 +104,13 @@ export class SweepReadyUsageDetectionHandler {
         }
 
         // Default stance is we close every time - this reflects the severity of SweepReady Object Usage.
-        // However, we may choose to "throttle" the closures by setting the BlackoutPeriodDays setting,
+        // However, we may choose to "throttle" the closures by setting the SkipClosureForXDays setting,
         // which will only allow the container to close once during that period, to avoid locking users out.
         let shouldClose: boolean = true;
         let pastClosuresMap: Record<string, { lastCloseTime: number; } | undefined> = {};
         let lastCloseTime: number | undefined;
-        const blackoutPeriodDays = this.mc.config.getNumber(blackoutPeriodDaysKey);
-        if (blackoutPeriodDays !== undefined) {
+        const skipClosureForXDays = this.mc.config.getNumber(skipClosureForXDaysKey);
+        if (skipClosureForXDays !== undefined) {
             // Read pastClosuresMap from localStorage then extract the lastCloseTime from the map
             try {
                 const rawValue = this.localStorage.getItem(closuresMapLocalStorageKey);
@@ -122,15 +122,15 @@ export class SweepReadyUsageDetectionHandler {
             }
             lastCloseTime = pastClosuresMap[this.uniqueContainerKey]?.lastCloseTime;
 
-            // Don't close if we did already within the blackout period
-            if (lastCloseTime !== undefined && Date.now() < lastCloseTime + blackoutPeriodDays * oneDayMs) {
+            // Don't close if we did already within the Skip Closure Period
+            if (lastCloseTime !== undefined && Date.now() < lastCloseTime + skipClosureForXDays * oneDayMs) {
                 shouldClose = false;
             }
         }
 
         const error = new SweepReadyUsageError(
             "SweepReady object used in Non-Summarizer Client",
-            { errorDetails: JSON.stringify({ ...errorProps, lastCloseTime, blackoutPeriodDays }) },
+            { errorDetails: JSON.stringify({ ...errorProps, lastCloseTime, skipClosureForXDays }) },
         );
         if (shouldClose) {
             // Update closures map in localStorage before closing
