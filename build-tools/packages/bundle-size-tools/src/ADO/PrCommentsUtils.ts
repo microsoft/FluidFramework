@@ -27,8 +27,8 @@ export class prCommentsUtils {
    * Only one thread per threadType will exist on each PR, if a thread with the same type already exists, this will be updated
    * Pass undefined as a threadType to force the creation of a new one.
    *
-   * @param message the message to write on the thread. You can pass HTML
-   * @param threadType the identifier of your thread
+   * @param message - the message to write on the thread. You can pass HTML
+   * @param threadType - the identifier of your thread
    */
   public async createOrUpdateThread(message: string, threadType: string | undefined) {
     const gitApi = await this.gitApi;
@@ -62,8 +62,8 @@ export class prCommentsUtils {
   /**
    * Creates or replaces a thread by deleting the existing thread on the specified PR based on the threadType.
    *
-   * @param message the message to write on the thread. You can pass HTML
-   * @param threadType the identifier of your thread
+   * @param message - the message to write on the thread. You can pass HTML
+   * @param threadType - the identifier of your thread
    */
   public async createOrReplaceThread(message: string, threadType: string | undefined) {
     const gitApi = await this.gitApi;
@@ -79,8 +79,8 @@ export class prCommentsUtils {
   /**
    * Creates a new comment on the existing thread based on the type.
    *
-   * @param message the message to write on the thread. You can pass HTML
-   * @param threadType the identifier of your thread
+   * @param message - the message to write on the thread. You can pass HTML
+   * @param threadType - the identifier of your thread
    */
   public async appendCommentToThread(message: string, threadType: string) {
     const gitApi = await this.gitApi;
@@ -100,8 +100,8 @@ export class prCommentsUtils {
   /**
    * Updates the status of an existing thread based on the type.
    *
-   * @param threadType the identifier of your thread
-   * @param commentThreadStatus the new value of the thread status
+   * @param threadType - the identifier of your thread
+   * @param commentThreadStatus - the new value of the thread status
    */
   public async updateThreadStatus(threadType: string, commentThreadStatus: CommentThreadStatus) {
     const gitApi = await this.gitApi;

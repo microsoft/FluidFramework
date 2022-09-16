@@ -129,8 +129,8 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
             const treeBuffer = await services.readBlob(treeBlobKey);
             const treeBufferString = bufferToString(treeBuffer, "utf8");
             const tree = parse(treeBufferString) as string;
-            const placeholderTree = JSON.parse(tree) as JsonableTree[];
-            initializeForest(this.forest, placeholderTree.map(singleTextCursor));
+            const jsonableTree = JSON.parse(tree) as JsonableTree[];
+            initializeForest(this.forest, jsonableTree.map(singleTextCursor));
         }
     }
 }

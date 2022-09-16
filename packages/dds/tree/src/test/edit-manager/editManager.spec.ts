@@ -415,9 +415,11 @@ describe("EditManager", () => {
     /**
      * This test case effectively tests most of the scenarios covered by the other test cases.
      * Despite that, it's good to keep the other tests cases for the following reasons:
+     *
      * - They are easier to read and debug.
+     *
      * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
-     *   but this one doesn't, then there might be something wrong with this test).
+     * but this one doesn't, then there might be something wrong with this test).
      */
     it("Combinatorial test", () => {
         const meta = {
@@ -548,12 +550,10 @@ function runUnitTestScenario(
                 case "Push": {
                     let seq = step.seq;
                     if (seq === undefined) {
-                        if (iNextAck < acks.length) {
-                            seq = acks[iNextAck].seq;
-                        } else {
+                        seq = iNextAck < acks.length
+                            ? acks[iNextAck].seq
                             // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-                            seq = finalSequencedEdit + 1 + iNextAck - acks.length;
-                        }
+                            : finalSequencedEdit + 1 + iNextAck - acks.length;
                     }
                     iNextAck += 1;
                     const changeset = TestChangeRebaser.mintChangeset(knownToLocal, seq);

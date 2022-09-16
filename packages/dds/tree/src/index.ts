@@ -53,6 +53,7 @@ export {
     NameFromBranded,
     JsonCompatibleReadOnly,
     JsonCompatible,
+    JsonCompatibleObject,
 } from "./util";
 
 export {

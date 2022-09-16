@@ -178,9 +178,11 @@ export const counterHandle: FieldChangeHandler<number> = {
  * Stores a single value which corresponds to number which can be added to.
  *
  * This is an example of a few interesting things:
+ *
  * - A field kind with some constraints on what can be under it type wise.
- *      Other possible examples which would do this include sets, maps (for their keys),
- *      or any domain specific specialized kinds.
+ * Other possible examples which would do this include sets, maps (for their keys),
+ * or any domain specific specialized kinds.
+ *
  * - A field kind with commutative edits.
  *
  * TODO:

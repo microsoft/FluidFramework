@@ -55,7 +55,6 @@ export function createLogger(fileLogger: FileLogger): ITelemetryLogger {
 /**
  * Validate the telemetryFile command line argument
  * @param telemetryFile - path where telemetry will be written
- * @returns
  */
 export function getTelemetryFileValidationError(telemetryFile: string): string | undefined {
     if (!telemetryFile) {
