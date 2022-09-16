@@ -147,9 +147,9 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
     describe("client sends invalid batches ", () => {
-        itExpects("Batch end without start",
+        itExpects.skip("Batch end without start",
         [
-            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Delta stream submit" },
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpBatchIncomplete" },
         ],
         async function() {
             const provider = getTestObjectProvider({ resetAfterEach: true });
@@ -160,16 +160,30 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                     createDocumentService: {
                         connectToDeltaStream: {
                             submit: (ds) => (messages) => {
-                               throw new Error("Delta stream submit");
+                                const newMessages = [...messages];
+                                const batchStartIndex = newMessages.findIndex((m) => m.metadata?.batch === true);
+                                if (batchStartIndex >= 0) {
+                                    newMessages[batchStartIndex] = {
+                                        ... newMessages[batchStartIndex],
+                                        metadata: {
+                                            ... newMessages[batchStartIndex].metadata,
+                                            batch: undefined,
+                                        },
+                                    };
+                                }
+                                ds.submit(newMessages);
                             },
                         },
                     },
                 });
-            await assert.rejects(async () => {
+
+            try {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
-            }, (e) => {
-                return e.message === "Delta stream submit";
-            });
+                assert.fail("expected error");
+            } catch (e) {
+                assert(isILoggingError(e), `${e}`);
+                assert.equal(e.message, "OpBatchIncomplete", e);
+            }
         });
 
         // bug bug: container runtime never unpauses if there is no batch end
@@ -265,11 +279,13 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-            await assert.rejects(async () => {
+            try {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
-            }, (e) => {
-                return e.message === "0x29a";
-            });
+                assert.fail("expected error");
+            } catch (e) {
+                assert(isILoggingError(e), `${e}`);
+                assert.equal(e.message, "0x29a", e);
+            }
         });
     });
     describe("server sends invalid batch", () => {
@@ -324,12 +340,13 @@ describeNoCompat.skip("Batching failures", (getTestObjectProvider) => {
                         },
                     },
                 });
-
-            await assert.rejects(async () => {
+            try {
                 await runAndValidateBatch(provider, proxyDsf, this.timeout());
-            }, (e) => {
-                return e.message === "0x29a";
-            });
+                assert.fail("expected error");
+            } catch (e) {
+                assert(isILoggingError(e), `${e}`);
+                assert.equal(e.message, "0x29a", e);
+            }
         });
     });
 });
