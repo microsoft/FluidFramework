@@ -312,6 +312,8 @@ export interface ISequencedDocumentMessage {
     clientSequenceNumber: number;
     // (undocumented)
     contents: any;
+    // (undocumented)
+    data?: string;
     // @alpha
     expHash1?: string;
     // (undocumented)
@@ -555,6 +557,8 @@ export interface IVersion {
 // @public (undocumented)
 export enum MessageType {
     // (undocumented)
+    Accept = "accept",
+    // (undocumented)
     ClientJoin = "join",
     // (undocumented)
     ClientLeave = "leave",
@@ -568,12 +572,6 @@ export enum MessageType {
     Operation = "op",
     // (undocumented)
     Propose = "propose",
-    // (undocumented)
-    Reject = "reject",
-    // (undocumented)
-    RemoteHelp = "remoteHelp",
-    // (undocumented)
-    RoundTrip = "tripComplete",
     // (undocumented)
     Summarize = "summarize",
     // (undocumented)

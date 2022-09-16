@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { UnassignedSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { MergeTreeDeltaType } from "../ops";
 import { PartialSequenceLengths } from "../partialLengths";
 import { TextSegment } from "../textSegment";
@@ -28,7 +29,7 @@ describe("partial lengths", () => {
 
         let actualLen = 0;
 
-        mergeTree.walkAllSegments(mergeBlock, (segment) => {
+        walkAllChildSegments(mergeBlock, (segment) => {
             // this condition does not account for un-acked changes
             if (
                 segment.isLeaf()
