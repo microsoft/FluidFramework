@@ -72,7 +72,7 @@
   "dependencies": {
     "@fluid-tools/version-tools": "^0.4.6000",
     "@fluidframework/build-tools": "^0.4.6000",
-    "@fluidframework/bundle-size-tools": "^0.0.8505",
+    "@fluidframework/bundle-size-tools": "^0.4.6000",
     "@oclif/core": "~1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
