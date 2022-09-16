@@ -44,7 +44,7 @@ const sweepReadyUsageDetectionSetting = {
  */
 export class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
     /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
-    public errorType: string = "objectUsedAfterMarkedForDeletionError";
+    public errorType: string = "unreferencedObjectUsedAfterGarbageCollected";
 }
 
 /**
@@ -101,7 +101,7 @@ export class SweepReadyUsageDetectionHandler {
         const blackoutPeriodDays = this.mc.config.getNumber(blackoutPeriodDaysKey);
 
         const error = new SweepReadyUsageError(
-            "SweepReady object used in Non-Summarizer Container",
+            "SweepReady object used in Non-Summarizer Client",
             { errorDetails: JSON.stringify({ ...errorProps, lastCloseTime, blackoutPeriodDays }) },
         );
 

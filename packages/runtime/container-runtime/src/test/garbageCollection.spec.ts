@@ -90,6 +90,7 @@ describe("Garbage Collection Tests", () => {
         createParams: Partial<IGarbageCollectorCreateParams> = {},
         gcBlobsMap: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase> = new Map(),
         closeFn: (error?: ICriticalContainerError) => void = () => {},
+        isSummarizerClient: boolean = true,
     ) {
         const getNodeType = (nodePath: string) => {
             if (nodePath.split("/").length !== 2) {
@@ -117,7 +118,7 @@ describe("Garbage Collection Tests", () => {
             baseLogger: mockLogger,
             existing: createParams.metadata !== undefined /* existing */,
             metadata: createParams.metadata,
-            isSummarizerClient: true /* summarizerClient */,
+            isSummarizerClient,
             readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
             getNodePackagePath: async (nodeId: string) => testPkgPath,
             getLastSummaryTimestampMs: () => Date.now(),
@@ -472,8 +473,10 @@ describe("Garbage Collection Tests", () => {
 
         beforeEach(async () => {
             // Set up the reference graph such that all nodes are referenced. Add in a couple of cycles in the graph.
+            // Here's a diagram showing the references:
             // 0 - 1 - 2 - 3
-            //      \- 0    \- 0
+            // |  /       /
+            // |-/-------/
             defaultGCData.gcNodes["/"] = [nodes[0]];
             defaultGCData.gcNodes[nodes[0]] = [nodes[1]];
             defaultGCData.gcNodes[nodes[1]] = [nodes[0], nodes[2]];
@@ -865,9 +868,7 @@ describe("Garbage Collection Tests", () => {
                 baseSnapshot?: ISnapshotTree,
                 gcBlobsMap?: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase>,
             ) => {
-                const gc2 = createGarbageCollector({ baseSnapshot, snapshotCacheExpiryMs }, gcBlobsMap, (error) => { lastCloseErrorType = error?.errorType ?? "NONE"; });
-                (gc2 as any).isSummarizerClient = false; // Main Container
-                return gc2;
+                return createGarbageCollector({ baseSnapshot, snapshotCacheExpiryMs }, gcBlobsMap, (error) => { lastCloseErrorType = error?.errorType ?? "NONE"; }, false /* isSummarizerClient */);
             };
 
             it("generates events and may close container when SweepReady nodes are used", async () => {
@@ -905,7 +906,7 @@ describe("Garbage Collection Tests", () => {
                 updateAllNodes(garbageCollector);
                 mockLogger.assertMatch([{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg }], "all events not generated as expected");
 
-                const expectedErrorType = sweepReadyUsageDetectionEnabled ? "objectUsedAfterMarkedForDeletionError" : "N/A";
+                const expectedErrorType = sweepReadyUsageDetectionEnabled ? "unreferencedObjectUsedAfterGarbageCollected" : "N/A";
                 assert.equal(lastCloseErrorType, expectedErrorType, "Incorrect lastCloseReason after using unreferenced nodes");
             });
         };

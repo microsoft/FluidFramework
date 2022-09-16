@@ -21,7 +21,7 @@ describe("Garbage Collection Tests", () => {
         const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
         const blackoutPeriodDays = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.BlackoutPeriodDays";
         const closuresStorageKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection.Closures";
-        const sweepReadyUsageErrorType = "objectUsedAfterMarkedForDeletionError";
+        const sweepReadyUsageErrorType = "unreferencedObjectUsedAfterGarbageCollected";
 
         let mockLogger: MockLogger = new MockLogger();
         let closeErrors: (ICriticalContainerError)[] = [];
