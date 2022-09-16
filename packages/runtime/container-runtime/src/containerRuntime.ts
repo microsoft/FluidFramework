@@ -2673,7 +2673,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.closeFn(error as GenericError);
             throw error;
         }
-        if (this._flushMode !== FlushMode.TurnBased) {
+
+        if (!this.currentlyBatching()) {
             this.flush();
         } else if (!this.flushMicroTaskExists) {
             this.flushMicroTaskExists = true;
