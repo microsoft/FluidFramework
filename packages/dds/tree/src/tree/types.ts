@@ -103,10 +103,10 @@ export function detachedFieldAsKey(field: DetachedField): LocalFieldKey {
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
     if (isLocalKey(key)) {
-        assert(key !== rootFieldKey as string, "Root is field key must be a global field key");
+        assert(key !== rootFieldKey as string, 0x3be /* Root is field key must be a global field key */);
         return brand(key);
     }
-    assert(key === rootFieldKeySymbol, "Root is only allowed global field key as detached field");
+    assert(key === rootFieldKeySymbol, 0x3bf /* Root is only allowed global field key as detached field */);
     return brand(rootFieldKey);
 }
 

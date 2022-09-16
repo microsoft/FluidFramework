@@ -1570,7 +1570,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._perfSignalData.trackingSignalSequenceNumber = undefined;
         } else {
             assert(this.attachState === AttachState.Attached,
-                "Connection is possible only if container exists in storage");
+                0x3cd /* Connection is possible only if container exists in storage */);
         }
 
         // Fail while disconnected
@@ -1666,7 +1666,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.Rejoin:
                     break;
                 default:
-                    assert(!runtimeMessage, "Runtime message of unknown type");
+                    assert(!runtimeMessage, 0x3ce /* Runtime message of unknown type */);
             }
 
             // For back-compat, notify only about runtime messages for now.
@@ -1790,7 +1790,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const batch = this.batchManager.popBatch();
         this.flushBatch(batch);
 
-        assert(this.batchManager.empty, "reentrancy");
+        assert(this.batchManager.empty, 0x3cf /* reentrancy */);
     }
 
     protected flushBatch(batch: BatchMessage[]): void {
@@ -1839,7 +1839,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
             clientSequenceNumber -= batch.length - 1;
-            assert(clientSequenceNumber >= 0, "clientSequenceNumber can't be negative");
+            assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
         }
 
         // Let the PendingStateManager know that a message was submitted.
@@ -2312,7 +2312,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
-        assert(this.batchManager.empty, "Can't trigger summary in the middle of a batch");
+        assert(this.batchManager.empty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
         let latestSnapshotVersionId: string | undefined;
         if (refreshLatestAck) {
@@ -2576,11 +2576,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private updateDocumentDirtyState(dirty: boolean) {
         if (this.attachState !== AttachState.Attached) {
-            assert(dirty, "Non-attached container is dirty");
+            assert(dirty, 0x3d2 /* Non-attached container is dirty */);
         } else {
             // Other way is not true = see this.isContainerMessageDirtyable()
             assert(!dirty || this.hasPendingMessages(),
-                "if doc is dirty, there has to be pending ops");
+                0x3d3 /* if doc is dirty, there has to be pending ops */);
         }
 
         if (this.dirtyContainer === dirty) {
@@ -2695,7 +2695,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
         // System message should not be sent in the middle of the batch.
-        assert(this.batchManager.empty, "System op in the middle of a batch");
+        assert(this.batchManager.empty, 0x3d4 /* System op in the middle of a batch */);
 
         // back-compat: ADO #1385: Make this call unconditional in the future
         return this.context.submitSummaryFn !== undefined
@@ -2981,7 +2981,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // If it's not the case, we should take it into account when calculating dirty state.
         assert(this.context.attachState === AttachState.Attached,
-            "this function is called for attached containers only");
+            0x3d5 /* this function is called for attached containers only */);
         if (!this.hasPendingMessages()) {
             this.updateDocumentDirtyState(false);
         }
