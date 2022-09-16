@@ -9,9 +9,8 @@ import { mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries"
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { jsonableTreeFromCursor, singleTextCursor } from "../../feature-libraries/treeTextCursor";
-import { ITreeCursorNew as ITreeCursor } from "../../forest";
 
-import { JsonableTree } from "../../tree";
+import { JsonableTree, ITreeCursorNew as ITreeCursor } from "../../tree";
 import { brand } from "../../util";
 
 const testCases: [string, JsonableTree][] = [

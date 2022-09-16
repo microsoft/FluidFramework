@@ -29,7 +29,7 @@ export class AnchorSet {
 }
 
 // @public
-function applyModifyToInsert(node: ProtoNode_2, modify: Modify): Map<FieldKey, MarkList>;
+function applyModifyToInsert(node: JsonableTree, modify: Modify): Map<FieldKey, MarkList>;
 
 // @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -507,6 +507,12 @@ export interface ITreeCursorNew {
 }
 
 // @public
+export interface ITreeCursorSynchronous extends ITreeCursorNew {
+    // (undocumented)
+    readonly pending: false;
+}
+
+// @public
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildAnchor(): Anchor;
     clear(): void;
@@ -819,7 +825,7 @@ export abstract class ProgressiveEditBuilder<TChange> {
 export type ProtoNode = JsonableTree;
 
 // @public
-type ProtoNode_2 = JsonableTree;
+type ProtoNode_2 = ITreeCursorSynchronous;
 
 // @public
 export const proxyTargetSymbol: unique symbol;
@@ -941,7 +947,7 @@ export class SimpleDependee implements Dependee {
 export function singleTextCursor(root: JsonableTree): TextCursor;
 
 // @public (undocumented)
-export function singleTextCursorNew(root: JsonableTree): TextCursorNew;
+export function singleTextCursorNew(root: JsonableTree): ITreeCursorSynchronous;
 
 // @public (undocumented)
 export type Skip = number;
@@ -1010,51 +1016,6 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     get type(): TreeType;
     // (undocumented)
     up(): SynchronousNavigationResult;
-    // (undocumented)
-    get value(): Value;
-}
-
-// @public
-export class TextCursorNew implements ITreeCursorNew {
-    constructor(root: JsonableTree);
-    // (undocumented)
-    get chunkLength(): number;
-    // (undocumented)
-    get chunkStart(): number;
-    // (undocumented)
-    enterField(key: FieldKey): void;
-    // (undocumented)
-    enterNode(index: number): void;
-    // (undocumented)
-    exitField(): void;
-    // (undocumented)
-    exitNode(): void;
-    // (undocumented)
-    get fieldIndex(): number;
-    // (undocumented)
-    firstField(): boolean;
-    // (undocumented)
-    firstNode(): boolean;
-    // (undocumented)
-    getFieldKey(): FieldKey;
-    // (undocumented)
-    getFieldLength(): number;
-    // (undocumented)
-    getPath(): UpPath | undefined;
-    // (undocumented)
-    get mode(): CursorLocationType;
-    // (undocumented)
-    nextField(): boolean;
-    // (undocumented)
-    nextNode(): boolean;
-    // (undocumented)
-    get pending(): boolean;
-    // (undocumented)
-    seekNodes(offset: number): boolean;
-    // (undocumented)
-    skipPendingFields(): boolean;
-    // (undocumented)
-    get type(): TreeType;
     // (undocumented)
     get value(): Value;
 }
