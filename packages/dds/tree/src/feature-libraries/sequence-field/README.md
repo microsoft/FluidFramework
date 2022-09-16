@@ -1,5 +1,6 @@
-# sequence-change-family
+# sequence-field
 
-[`change-family`](../../change-family/README.md) that treats all fields like sequences.
+A sequence-shaped `FieldChangeHandler` for use in [`modula-schema`](../../modula-schema/README.md).
 
-TODO: Maybe move `change-set` to be part of this.
+This implementation is incomplete.
+See comments on rebase, compose, and invert functions.
