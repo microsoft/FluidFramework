@@ -68,7 +68,7 @@ b {
   font-weight: 600;
 }
 
-a[href^="http"]:not([href^="{{ (urls.Parse .Page.Permalink).Scheme }}://{{ (urls.Parse .Page.Permalink).Host }}"]):not(.no-external-icon)::after
+a[href^=http]:not(.no-external-icon)::after
 {
   content: "";
   width: 16px;
@@ -80,7 +80,8 @@ a[href^="http"]:not([href^="{{ (urls.Parse .Page.Permalink).Scheme }}://{{ (urls
   background-size: contain;
   display: inline-block;
   background-color: #0098ff;
-  &:visited {
-    background-color: #ac7ee1;
-  }
+}
+a[href^=http]:not(.no-external-icon):visited::after
+{
+  background-color: #ac7ee1;
 }
