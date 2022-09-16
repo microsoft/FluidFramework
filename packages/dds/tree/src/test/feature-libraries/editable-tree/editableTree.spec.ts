@@ -146,11 +146,9 @@ const person: JsonableTree = {
         name: [{ value: "Adam", type: stringSchema.name }],
         age: [{ value: 35, type: int32Schema.name }],
         salary: [{ value: 10420.2, type: float32Schema.name }],
-        friends: [{
-            fields: {
-                Mat: [{ type: stringSchema.name, value: "Mat" }],
-            }, type: mapStringSchema.name,
-        }],
+        friends: [{ fields: {
+            Mat: [{ type: stringSchema.name, value: "Mat" }],
+        }, type: mapStringSchema.name }],
         address: [{
             fields: {
                 street: [{ value: "treeStreet", type: stringSchema.name }],
@@ -160,12 +158,10 @@ const person: JsonableTree = {
                         [EmptyKey]: [
                             { type: stringSchema.name, value: "+49123456778" },
                             { type: int32Schema.name, value: 123456879 },
-                            {
-                                type: complexPhoneSchema.name, fields: {
-                                    number: [{ value: "012345", type: stringSchema.name }],
-                                    prefix: [{ value: "0123", type: stringSchema.name }],
-                                },
-                            },
+                            { type: complexPhoneSchema.name, fields: {
+                                number: [{ value: "012345", type: stringSchema.name }],
+                                prefix: [{ value: "0123", type: stringSchema.name }],
+                            } },
                         ],
                     },
                 }],
