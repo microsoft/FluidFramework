@@ -160,7 +160,7 @@ async function runnerProcess(
                     driverEndpointName: testDriver.endpointName,
                 },
         });
-        const loadContainer = async (documentServiceFactory, headers, stashBlob?) => {
+        const loadContainer = async (documentServiceFactory, headers?, stashBlob?) => {
             const loader = new Loader({
                 urlResolver: testDriver.createUrlResolver(),
                 documentServiceFactory,
@@ -289,15 +289,10 @@ async function runnerProcess(
         if (nextFactoryPermutation2.done === true) {
             throw new Error("Factory permutation iterator is expected to cycle forever");
         }
-        // const values = nextFactoryPermutation2.value;
-        // const container2 = await loadContainer(values.documentServiceFactory, values.headers);
-        // container2.connect();
-        // const test2 = await requestFluidObject<ILoadTest>(container2, "/");
 
         let verified: boolean | undefined;
         while (verified === undefined) {
-            const values = nextFactoryPermutation2.value;
-            const verifyContainer = await loadContainer(values.documentServiceFactory, values.headers);
+            const verifyContainer = await loadContainer(testDriver.createDocumentServiceFactory());
             verifyContainer.connect();
             const verifyTest = await requestFluidObject<ILoadTest>(verifyContainer, "/");
             try {

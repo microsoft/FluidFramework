@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { assert, EventForwarder } from "@fluidframework/common-utils";
+import EventEmitter from "events";
+import { IDisposable, IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     DriverErrorType,
     IDocumentDeltaConnection,
@@ -73,11 +74,11 @@ export class FaultInjectionDocumentService implements IDocumentService {
     private _currentDeltaStorage?: FaultInjectionDocumentDeltaStorageService;
     private _currentStorage?: FaultInjectionDocumentStorageService;
 
-    private _online = true;
-    public get online() { return this._online; }
+    private onlineP = new Deferred<void>();
+    public get online() { return this.onlineP.isCompleted; }
 
     public goOffline() {
-        this._online = false;
+        this.onlineP = new Deferred();
         assert(!!this._currentDeltaStream, "no delta stream");
         assert(!!this._currentStorage, "no storage");
         this._currentDeltaStream.goOffline();
@@ -86,7 +87,7 @@ export class FaultInjectionDocumentService implements IDocumentService {
     }
 
     public goOnline() {
-        this._online = true;
+        this.onlineP.resolve();
         assert(!!this._currentDeltaStream, "no delta stream");
         assert(!!this._currentStorage, "no storage");
         this._currentDeltaStream.goOnline();
@@ -95,6 +96,7 @@ export class FaultInjectionDocumentService implements IDocumentService {
     }
 
     constructor(private readonly internal: IDocumentService) {
+        this.onlineP.resolve();
     }
 
     public get resolvedUrl() { return this.internal.resolvedUrl; }
@@ -118,6 +120,9 @@ export class FaultInjectionDocumentService implements IDocumentService {
             this._currentDeltaStream?.disposed !== false,
             "Document service factory should only have one open connection");
         const internal = await this.internal.connectToDeltaStream(client);
+
+        // connectToDeltaStream() is not expected to resolve until connected
+        await this.onlineP.promise;
         this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal, this.online);
         return this._currentDeltaStream;
     }
@@ -198,19 +203,38 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
     }
 }
 
+class SimpleEventForwarder<TEvent> extends TypedEventEmitter<TEvent> {
+    constructor(private readonly source: EventEmitter | IEventProvider<TEvent & IEvent>) {
+        super();
+        this.on("newListener", (event) => this.addEvent(event));
+    }
+
+    public forwarding = true;
+    private readonly events = new Set<string>();
+
+    private addEvent(event) {
+        const emitterEvents = ["newListener", "removeListener"];
+        if (!emitterEvents.includes(event) && !this.events.has(event)) {
+            const listener = (...args: any[]) => {
+                if (this.forwarding) {
+                    this.emit(event, ...args);
+                }
+            };
+            this.source.on(event, listener);
+        }
+    }
+
+    public dispose() {
+        // remove event listeners probably
+    }
+}
+
 export class FaultInjectionDocumentDeltaConnection
-extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
+extends SimpleEventForwarder<IDocumentDeltaConnectionEvents>
+implements IDocumentDeltaConnection, IDisposable {
     private _disposed: boolean = false;
     constructor(private readonly internal: IDocumentDeltaConnection, private online: boolean) {
         super(internal);
-        if (!online) {
-            this.unforwardEvent(this.internal, "op");
-            this.on("newListener", (event: string) => {
-                if (event === "op") {
-                    this.unforwardEvent(this.internal, "op");
-                }
-            });
-        }
     }
 
     public get disposed() { return this._disposed; }
@@ -254,6 +278,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
      * Disconnects the given delta connection
      */
     public dispose(): void {
+        super.dispose();
         this._disposed = true;
         this.internal.dispose();
     }
@@ -286,12 +311,12 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
 
     public goOffline() {
         this.online = false;
-        this.unforwardEvent(this.internal, "op");
-        this.injectDisconnect();
+        this.forwarding = false;
     }
 
     public goOnline() {
         this.online = true;
+        this.forwarding = true;
     }
 }
 

@@ -326,16 +326,16 @@ export class LoadTestDataStoreModel {
                 }
                 ++count;
 
-                const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
-                const blob = await handle.get();
-                const expectedContent = `${this.config.runId}/${key.split("_").pop()}:`;
-                const content = Buffer.from(blob).toString("utf8", 0, expectedContent.length);
+                // const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
+                // const blob = await handle.get();
+                // const expectedContent = `${this.config.runId}/${key.split("_").pop()}:`;
+                // const content = Buffer.from(blob).toString("utf8", 0, expectedContent.length);
 
-                if (blob.byteLength !== blobSize || content !== expectedContent) {
-                    console.log(Buffer.from(blob).toString("utf8", 0, expectedContent.length));
-                    console.log(expectedContent);
-                    return false;
-                }
+                // if (blob.byteLength !== blobSize || content !== expectedContent) {
+                //     console.log(Buffer.from(blob).toString("utf8", 0, expectedContent.length));
+                //     console.log(expectedContent);
+                //     return false;
+                // }
             }
         }
 
