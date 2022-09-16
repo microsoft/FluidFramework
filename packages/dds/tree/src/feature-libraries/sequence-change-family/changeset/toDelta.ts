@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
+import { singleTextCursorNew } from "../..";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { FieldKey, Value, Delta } from "../../../tree";
 import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
@@ -18,11 +19,11 @@ import { isSkipMark } from "./utils";
  export function toDelta(changeset: T.LocalChangeset): Delta.Root {
     // Save result to a constant to work around linter bug:
     // https://github.com/typescript-eslint/typescript-eslint/issues/5014
-    const out: Delta.Root = convertFieldMarks<Delta.OuterMark>(changeset.marks);
+    const out: Delta.Root = convertFieldMarks(changeset.marks);
     return out;
 }
 
-function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
+function convertMarkList(marks: T.MarkList): Delta.MarkList {
     const out = new OffsetListFactory<Delta.Mark>();
     for (const mark of marks) {
         if (isSkipMark(mark)) {
@@ -34,7 +35,8 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
                 case "Insert": {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
-                        content: cloneTreeContent(mark.content),
+                        // TODO: can we skip this clone?
+                        content: clone(mark.content).map(singleTextCursorNew),
                     };
                     out.pushContent(insertMark);
                     break;
@@ -74,7 +76,7 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
                     if (mark.tomb === undefined) {
                         out.pushContent({
                             type: Delta.MarkType.Modify,
-                            ...convertModify<Delta.OuterMark>(mark),
+                            ...convertModify(mark),
                         });
                     }
                     break;
@@ -88,7 +90,7 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
                     break;
                 }
                 case "MDelete": {
-                    const fields = convertModify<Delta.ModifyDeleted | Delta.MoveOut>(mark).fields;
+                    const fields = convertModify(mark).fields;
                     if (fields !== undefined) {
                         const deleteMark: Delta.ModifyAndDelete = {
                             type: Delta.MarkType.ModifyAndDelete,
@@ -117,7 +119,7 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
                         // TODO: Restore the actual node
-                        content: makeArray(mark.count, () => ({ type: DUMMY_REVIVED_NODE_TYPE })),
+                        content: makeArray(mark.count, () => singleTextCursorNew({ type: DUMMY_REVIVED_NODE_TYPE })),
                     };
                     out.pushContent(insertMark);
                     break;
@@ -126,7 +128,7 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
                         // TODO: Restore the actual node
-                        content: [{ type: DUMMY_REVIVED_NODE_TYPE }],
+                        content: [singleTextCursorNew({ type: DUMMY_REVIVED_NODE_TYPE })],
                     };
                     out.pushContent(insertMark);
                     break;
@@ -145,20 +147,10 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
             }
         }
     }
-    // TODO: add runtime checks
-    return out.list as unknown as Delta.MarkList<TMarks>;
+    return out.list;
 }
 
 const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
-
-/**
- * Clones the content described by a Changeset into tree content expected by Delta.
- */
-function cloneTreeContent(content: ProtoNode[]): Delta.ProtoNode[] {
-    // The changeset and Delta format currently use the same interface to represent inserted content.
-    // This is an implementation detail that may not remain true.
-    return clone(content);
-}
 
 /**
  * Converts inserted content into the format expected in Delta instances.
@@ -168,9 +160,9 @@ function cloneTreeContent(content: ProtoNode[]): Delta.ProtoNode[] {
  */
 function cloneAndModify(insert: T.ModifyInsert): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
-    const outNode = cloneTreeContent([insert.content])[0];
+    const outNode = clone(insert.content);
     const outModifications = applyOrCollectModifications(outNode, insert);
-    return { content: outNode, fields: outModifications };
+    return { content: singleTextCursorNew(outNode), fields: outModifications };
 }
 
 /**
@@ -185,14 +177,8 @@ interface DeltaInsertModification {
      * The modifications to make to the inserted subtree.
      * May be empty.
      */
-    fields: InsertedFieldsMarksMap;
+    fields: Delta.FieldMarks;
 }
-
-/**
- * A map of marks to be applied to inserted fields.
- */
-type InsertedFieldsMarksMap = Delta.FieldMarks<InsertedFieldsMark>;
-type InsertedFieldsMark = Delta.Skip | Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify;
 
 /**
  * Converts inserted content into the format expected in Delta instances.
@@ -209,10 +195,10 @@ type InsertedFieldsMark = Delta.Skip | Delta.ModifyInserted | Delta.MoveIn | Del
  *   all modifications are applied by the function.
  */
 function applyOrCollectModifications(
-    node: Delta.ProtoNode,
+    node: ProtoNode,
     modify: ChangesetMods,
-): InsertedFieldsMarksMap {
-    const outFieldsMarks: InsertedFieldsMarksMap = new Map();
+): Delta.FieldMarks {
+    const outFieldsMarks: Delta.FieldMarks = new Map();
     if (modify.value !== undefined) {
         node.value = modify.value.value;
     }
@@ -222,7 +208,7 @@ function applyOrCollectModifications(
         for (const key of Object.keys(modifyFields)) {
             const brandedKey: FieldKey = brand(key);
             const outNodes = protoFields[key] ?? fail(ERR_MOD_ON_MISSING_FIELD);
-            const outMarks = new OffsetListFactory<InsertedFieldsMark>();
+            const outMarks = new OffsetListFactory<Delta.Mark>();
             let index = 0;
             for (const mark of modifyFields[key]) {
                 if (isSkipMark(mark)) {
@@ -233,7 +219,8 @@ function applyOrCollectModifications(
                     const type = mark.type;
                     switch (type) {
                         case "Insert": {
-                            const content = cloneTreeContent(mark.content);
+                            // TODO: can we skip this clone?
+                            const content = clone(mark.content).map(singleTextCursorNew);
                             outNodes.splice(index, 0, ...content);
                             index += content.length;
                             outMarks.pushOffset(content.length);
@@ -340,30 +327,30 @@ interface ChangesetMods {
 /**
  * Modifications to a subtree as described by a Delta.
  */
- interface DeltaMods<TMark> {
-    fields?: Delta.FieldMarks<TMark>;
+ interface DeltaMods {
+    fields?: Delta.FieldMarks;
     setValue?: Value;
 }
 
 /**
  * Converts tree modifications from the Changeset to the Delta format.
  */
-function convertModify<TMarks>(modify: ChangesetMods): DeltaMods<TMarks> {
-    const out: DeltaMods<TMarks> = {};
+function convertModify(modify: ChangesetMods): DeltaMods {
+    const out: DeltaMods = {};
     if (modify.value !== undefined) {
         out.setValue = modify.value.value;
     }
     const fields = modify.fields;
     if (fields !== undefined) {
-        out.fields = convertFieldMarks<TMarks>(fields);
+        out.fields = convertFieldMarks(fields);
     }
     return out;
 }
 
-function convertFieldMarks<TMarks>(fields: T.FieldMarks): Delta.FieldMarks<TMarks> {
-    const outFields: Delta.FieldMarks<TMarks> = new Map();
+function convertFieldMarks(fields: T.FieldMarks): Delta.FieldMarks {
+    const outFields: Delta.FieldMarks = new Map();
     for (const key of Object.keys(fields)) {
-        const marks = convertMarkList<TMarks>(fields[key]);
+        const marks = convertMarkList(fields[key]);
         const brandedKey: FieldKey = brand(key);
         outFields.set(brandedKey, marks);
     }
