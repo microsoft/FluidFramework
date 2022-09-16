@@ -367,11 +367,15 @@ export interface FullSchemaPolicy extends SchemaPolicy {
 export type GapCount = number;
 
 // @public
-export interface GenericTreeNode<TChild> extends NodeData {
+export interface GenericFieldsNode<TChild> {
     // (undocumented)
     [FieldScope.local]?: FieldMapObject<TChild>;
     // (undocumented)
     [FieldScope.global]?: FieldMapObject<TChild>;
+}
+
+// @public
+export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
 
 // @public

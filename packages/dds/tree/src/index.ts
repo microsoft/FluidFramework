@@ -16,6 +16,7 @@ export {
     ITreeCursorNew,
     CursorLocationType,
     ITreeCursorSynchronous,
+    GenericFieldsNode,
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,

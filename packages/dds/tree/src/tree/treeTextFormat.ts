@@ -55,7 +55,15 @@ export interface FieldMapObject<TChild> {
  * Json compatibility assumes `TChild` is also json compatible.
  * @public
  */
-export interface GenericTreeNode<TChild> extends NodeData {
+export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
+}
+
+/**
+ * Json comparable field collection, generic over child type.
+ * Json compatibility assumes `TChild` is also json compatible.
+ * @public
+ */
+export interface GenericFieldsNode<TChild> {
     [FieldScope.local]?: FieldMapObject<TChild>;
     [FieldScope.global]?: FieldMapObject<TChild>;
 }
@@ -87,7 +95,7 @@ export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol {
 /**
  * Get a field from `node`, optionally modifying the tree to create it if missing.
  */
-export function getGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, createIfMissing: boolean): T[] {
+export function getGenericTreeField<T>(node: GenericFieldsNode<T>, key: FieldKey, createIfMissing: boolean): T[] {
     const [scope, keyString] = scopeFromKey(key);
     const children = getGenericTreeFieldMap(node, scope, createIfMissing);
 
@@ -116,7 +124,7 @@ export const enum FieldScope {
  * Get a FieldMap from `node`, optionally modifying the tree to create it if missing.
  */
 function getGenericTreeFieldMap<T>(
-    node: GenericTreeNode<T>, scope: FieldScope, createIfMissing: boolean): FieldMapObject<T> {
+    node: GenericFieldsNode<T>, scope: FieldScope, createIfMissing: boolean): FieldMapObject<T> {
     let children = node[scope];
     if (children === undefined) {
         children = {};
@@ -132,7 +140,7 @@ function getGenericTreeFieldMap<T>(
 /**
  * Sets a field on `node`.
  */
-export function setGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, content: T[]): void {
+export function setGenericTreeField<T>(node: GenericFieldsNode<T>, key: FieldKey, content: T[]): void {
     const [scope, keyString] = scopeFromKey(key);
     const children = getGenericTreeFieldMap(node, scope, true);
     children[keyString] = content;
@@ -141,10 +149,31 @@ export function setGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, 
 /**
  * @returns keys for fields of `tree`.
  */
-export function genericTreeKeys<T>(tree: GenericTreeNode<T>): readonly FieldKey[] {
+export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
     return [
         ...Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, FieldScope.local, false)) as LocalFieldKey[],
         ...(Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, FieldScope.global, false)) as GlobalFieldKey[])
         .map(symbolFromKey),
     ];
+}
+
+/**
+ * Delete a field if empty.
+ * Optionally delete FieldMapObject if empty as well.
+ */
+export function genericTreeDeleteIfEmpty<T>(node: GenericFieldsNode<T>, key: FieldKey, removeMapObject: boolean): void {
+    const [scope, keyString] = scopeFromKey(key);
+    const children = getGenericTreeFieldMap(node, scope, false);
+    if (Object.prototype.hasOwnProperty.call(children, keyString)) {
+        if (children[keyString].length === 0) {
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete children[keyString];
+            if (removeMapObject) {
+                if (Object.getOwnPropertyNames(children).length === 0) {
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                    delete node[scope];
+                }
+            }
+        }
+    }
 }
