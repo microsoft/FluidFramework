@@ -40,8 +40,10 @@ export enum DataStoreMessageType {
 }
 
 // @public
-export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean);
+export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext, Partial<{
+    readonly IFluidHandle: IFluidHandle<FluidObject>;
+}> {
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntrypoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -79,12 +81,14 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
+    get IFluidHandle(): IFluidHandle<FluidObject<unknown>> | undefined;
     // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
+    // @deprecated (undocumented)
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
     readonly logger: ITelemetryLogger;

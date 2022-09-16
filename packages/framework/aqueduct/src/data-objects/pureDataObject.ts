@@ -72,9 +72,13 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
      */
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
+    /**
+     * @deprecated - Treat the runtime as a FluidObject<IFluidHandle> and use runtime.IFluidHandle.get() instead.
+     */
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
-        const obj = (runtime as any)._dataObject as PureDataObject;
-        assert(obj !== undefined, 0x0bc /* "Runtime has no DataObject!" */);
+        const maybeIProvideFluidHandle: FluidObject<IProvideFluidHandle> = (runtime as any);
+        const obj = await maybeIProvideFluidHandle?.IFluidHandle?.get();
+        assert(obj instanceof PureDataObject, 0x0bc /* "The runtime's handle is not a DataObject!" */);
         await obj.finishInitialization(true);
         return obj;
     }

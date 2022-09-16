@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -17,8 +17,8 @@ import {
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { LazyPromise } from "@fluidframework/common-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { createResponseError } from "@fluidframework/runtime-utils";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
@@ -52,17 +52,19 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         existing: boolean,
     ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
-            async (request: IRequest) => {
-                const router = await instance;
-                return router.request(request);
+            async (request: IRequest, rt: FluidDataStoreRuntime) => {
+                const router: FluidObject<IFluidRouter> = (await rt.IFluidHandle?.get() as any);
+                if (router.IFluidRouter === undefined) {
+                    return createResponseError(500, "Data store runtime handle is not an IFluidRouter", request);
+                }
+                return router.IFluidRouter.request(request);
             });
 
-        const runtime = new runtimeClass(context, this.ISharedObjectRegistry, existing);
-
-        // Note this may synchronously return an instance or a deferred LazyPromise,
-        // depending of if a new store is being created or an existing store
-        // is being loaded.
-        const instance = this.instantiate(context, runtime, existing);
+        const runtime = new runtimeClass(
+            context,
+            this.ISharedObjectRegistry,
+            existing,
+            async (rt) => this.instantiate(context, rt, existing));
 
         return runtime;
     }
@@ -70,8 +72,11 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
     public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject> {
         const { containerRuntime, packagePath } = parentContext;
 
-        const router = await containerRuntime.createDataStore(packagePath.concat(this.type));
-        return requestFluidObject(router, "/");
+        const dataStore = await containerRuntime.createDataStore(packagePath.concat(this.type));
+        const maybeHandle: FluidObject<IFluidHandle> = (dataStore as any);
+        const handle = await maybeHandle.IFluidHandle?.get();
+        assert(handle instanceof LazyLoadedDataObject, "The data store's handle is not a LazyLoadedDataObject!");
+        return handle;
     }
 
     private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, existing: boolean) {

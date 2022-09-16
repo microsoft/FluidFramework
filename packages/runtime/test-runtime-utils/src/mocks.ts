@@ -12,6 +12,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
+    IProvideFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -48,6 +49,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
+import { MockHandle } from "./mockHandle";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -377,11 +379,16 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
-    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext, IProvideFluidHandle {
     constructor(overrides?: { clientId?: string; }) {
         super();
         this.clientId = overrides?.clientId ?? uuid();
     }
+
+    public get IFluidHandle(): IFluidHandle {
+        return this.handle;
+    }
+    private readonly handle = new MockHandle(null, "", "");
 
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get rootRoutingContext(): IFluidHandleContext { return this; }

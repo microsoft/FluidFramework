@@ -74,7 +74,6 @@ import {
     InboundAttachMessage,
     IFluidDataStoreContextDetached,
     IFluidDataStoreRegistry,
-    IFluidDataStoreChannel,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
     IEnvelope,
@@ -1724,10 +1723,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return this.getRootDataStoreChannel(id, wait);
-    }
-
-    private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const context = await this.dataStores.getDataStore(internalId, wait);
@@ -1891,10 +1886,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
-        const internalId = uuid();
+        const channel = await this.dataStores
+            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], uuid())
+            .realize();
         return channelToDataStore(
-            await this._createDataStore(pkg, internalId),
-            internalId,
+            channel,
+            channel.id,
             this,
             this.dataStores,
             this.mc.logger);
@@ -1921,16 +1918,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
         return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
-    }
-
-    private async _createDataStore(
-        pkg: string | string[],
-        id = uuid(),
-        props?: any,
-    ): Promise<IFluidDataStoreChannel> {
-        return this.dataStores
-            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
-            .realize();
     }
 
     private canSendOps() {

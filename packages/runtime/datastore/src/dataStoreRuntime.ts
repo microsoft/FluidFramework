@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    FluidObject,
     IFluidHandle,
     IFluidHandleContext,
     IRequest,
@@ -61,6 +62,7 @@ import {
     create404Response,
     createResponseError,
     exceptionToResponse,
+    requestFluidObject,
 } from "@fluidframework/runtime-utils";
 import {
     IChannel,
@@ -78,6 +80,7 @@ import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import { LocalChannelContext, LocalChannelContextBase, RehydratedLocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
+import { FluidObjectHandle } from "./fluidHandle";
 
 export enum DataStoreMessageType {
     // Creates a new channel
@@ -96,8 +99,11 @@ export interface ISharedObjectRegistry {
  */
 export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
-IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext,
+Partial<{ readonly IFluidHandle: IFluidHandle<FluidObject>; }> {
     /**
+     * @deprecated - Instantiate the class using its constructor instead.
+     *
      * Loads the data store runtime
      * @param context - The data store context
      * @param sharedObjectRegistry - The registry of shared objects used by this data store
@@ -108,8 +114,24 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ): FluidDataStoreRuntime {
-        return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing);
+        return new FluidDataStoreRuntime(
+            context,
+            sharedObjectRegistry,
+            existing,
+            async (rt) => requestFluidObject(rt, "/"));
     }
+
+    /**
+     * Fluid handle to the data store runtime. It'll only be defined if initializeEntrypoint was passed to the
+     * constructor when instantiating the runtime. Exposed so we can start making handles a first-class citizen and
+     * the primary way of interacting with some fluid objects. Use it if possible, but for now all code paths should
+     * first check if it's not undefined, and keep using current approaches (e.g. using the request pattern) if it is.
+     */
+    public get IFluidHandle() {
+        return this.handle;
+    }
+
+    private readonly handle?: IFluidHandle<FluidObject>;
 
     public get IFluidRouter() { return this; }
 
@@ -174,10 +196,22 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     // channel contexts.
     private readonly channelsBaseGCDetails: LazyPromise<Map<string, IGarbageCollectionDetailsBase>>;
 
+    /**
+     * Create an instance of a DataStore runtime.
+     *
+     * @param dataStoreContext - Context object for the runtime.
+     * @param sharedObjectRegistry - The registry of shared objects that this data store will be able to instantiate.
+     * @param existing - Pass 'true' if loading this datastore from an existing file; pass 'false' otherwise.
+     * @param initializeEntrypoint - Function to initialize the entrypoint object for the data store runtime. The
+     * handle to this data store runtime will point to the object returned by this function. If this function is not
+     * provided, the handle will be left undefined. This is here so we can start making handles a first-class citizen
+     * and the primary way of interacting with some fluid objects, and should be used if possible.
+     */
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
+        initializeEntrypoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
     ) {
         super();
 
@@ -261,6 +295,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 this.contexts.set(path, channelContext);
                 this.contextsDeferred.set(path, deferred);
             });
+
+            if (initializeEntrypoint) {
+                this.handle = new FluidObjectHandle<FluidObject>(
+                    new LazyPromise(async () => initializeEntrypoint(this)),
+                    "",
+                    this.objectsRoutingContext,
+                    );
+            }
         }
 
         this.attachListener();

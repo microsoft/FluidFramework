@@ -373,6 +373,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const channel = await factory.instantiateDataStore(this, existing);
         assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
         this.bindRuntime(channel);
+
+        if (!existing) {
+            // Load the handle to initialize the object. The only implementation of IFluidDataStoreChannel is
+            // FluidDataStoreRuntime, which exposes its handle.
+            const channelAsFluidObject: FluidObject<IFluidHandle> = (channel as any);
+            await channelAsFluidObject.IFluidHandle?.get();
+        }
     }
 
     /**
@@ -1022,6 +1029,11 @@ export class LocalDetachedFluidDataStoreContext
         this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
         super.bindRuntime(dataStoreChannel);
+
+        // Load the handle to initialize the object. The only implementation of IFluidDataStoreChannel is
+        // FluidDataStoreRuntime, which exposes its handle.
+        const channelAsFluidObject: FluidObject<IFluidHandle> = (dataStoreChannel as any);
+        await channelAsFluidObject.IFluidHandle?.get();
 
         if (await this.isRoot()) {
             dataStoreChannel.makeVisibleAndAttachGraph();

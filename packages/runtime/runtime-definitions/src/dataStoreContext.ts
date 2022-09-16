@@ -161,11 +161,17 @@ export interface IContainerRuntimeBase extends
     ): Promise<IDataStore>;
 
     /**
-     * Creates data store. Returns router of data store. Data store is not bound to container,
-     * store in such state is not persisted to storage (file). Storing a handle to this store
-     * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
-     * gets attached to storage) will result in this store being attached to storage.
-     * @param pkg - Package name of the data store factory
+     * Creates a data store and returns its router object. The data store is not bound to a container,
+     * and in such state is not persisted to storage (file). Storing a handle to this store
+     * (or any of its parts, like DDS) into an already attached DDS (or non-attached DDS that will eventually
+     * get attached to storage) will result in this store being attached to storage.
+     *
+     * @remarks
+     * The returned object might also implement {@link @fluidframework/core-interfaces#IProvideFluidHandle}. If you
+     * need access to the data store's handle, first try treating it as a FluidObject<IFluidHandle> and using the value
+     * of the IFluidHandle property; if it is undefined (which means the implementation hasn't been updated to provide
+     * access to the handle in this way), fall back to the existing approach of treating the data store as an
+     * {@link @fluidframework/core-interfaces#IFluidRouter} and requesting its root object.
      */
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
 
@@ -196,7 +202,7 @@ export interface IContainerRuntimeBase extends
 }
 
 /**
- * Minimal interface a data store runtime need to provide for IFluidDataStoreContext to bind to control
+ * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control
  *
  * Functionality include attach, snapshot, op/signal processing, request routes,
  * and connection state notifications

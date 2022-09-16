@@ -8,10 +8,10 @@ import {
     DataObjectFactory,
     defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
+import { assert } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ContainerSchema,
     DataObjectClass,
@@ -121,8 +121,11 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
     private async createDataObject<T extends IFluidLoadable>(dataObjectClass: DataObjectClass<T>): Promise<T> {
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
-        const router = await this.context.containerRuntime.createDataStore(packagePath);
-        return requestFluidObject<T>(router, "/");
+        const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
+        const maybeHandle: FluidObject<IFluidHandle> = (dataStore as any);
+        const handle = await maybeHandle.IFluidHandle?.get();
+        assert(handle instanceof DataObject, "The data store's handle is not of the correct type!");
+        return handle as unknown as T;
     }
 
     private createSharedObject<T extends IFluidLoadable>(

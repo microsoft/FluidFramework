@@ -36,6 +36,7 @@ import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitio
 import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
+import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -340,7 +341,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 }
 
 // @public
-export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext, IProvideFluidHandle {
     constructor(overrides?: {
         clientId?: string;
     });
@@ -394,6 +395,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
+    // (undocumented)
+    get IFluidHandle(): IFluidHandle;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)

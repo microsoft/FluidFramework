@@ -21,13 +21,14 @@ import {
     IFluidDataStoreContextDetached,
 } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     FluidObjectSymbolProvider,
     DependencyContainer,
     IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
+import { createResponseError } from "@fluidframework/runtime-utils";
 import {
     IDataObjectProps,
     PureDataObject,
@@ -59,42 +60,53 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
 
     // request mixin in
     runtimeClass = mixinRequestHandler(
-        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
-            (await PureDataObject.getDataObject(runtimeArg)).request(request),
-            runtimeClass);
+        async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
+            const router: FluidObject<IFluidRouter> = (await runtimeArg.IFluidHandle?.get() as any);
+            if (router.IFluidRouter) {
+                return router.IFluidRouter.request(request);
+            }
+            return createResponseError(500, "Data store runtime handle is not an IFluidRouter", request);
+        },
+        runtimeClass);
 
     // Create a new runtime for our data store
     // The runtime is what Fluid uses to create DDS' and route to your data store
-    const runtime = new runtimeClass(
+    const runtime: FluidDataStoreRuntime = new runtimeClass(
         context,
         sharedObjectRegistry,
         existing,
+        async (rt: IFluidDataStoreRuntime) => {
+            // Create the data object as part of initializing the handle for the data store runtime. This allows it
+            // to register various callbacks with the runtime before the runtime becomes globally available. However,
+            // this is not full initialization - the constructor can't access DDSes or other services of runtime as
+            // objects are not fully initialized. In order to use object, we need to go through full initialization
+            // by calling finishInitialization().
+            const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
+            const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
+            const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
+            const instance = new ctor({ runtime: rt, context, providers, initProps });
+
+            // If it's a newly created object we need to wait for it to finish initialization (as that results in
+            // creation of DDSes) before it gets attached, providing atomic guarantee of creation.
+            // WARNING: we can't do the same (yet) for already existing PureDataObject!
+            // This will result in deadlock, as it tries to resolve internal handles, but any
+            // handle resolution goes through root (container runtime), which can't route it back
+            // to this data store, as it's still not initialized and not known to container runtime yet.
+            // In the future, we should address it by using relative paths for handles and be able to resolve
+            // local DDSes while data store is not fully initialized.
+            if (!existing) {
+                await instance.finishInitialization(existing);
+            }
+
+            return instance;
+        },
     );
 
-    // Create object right away.
-    // This allows object to register various callbacks with runtime before runtime
-    // becomes globally available. But it's not full initialization - constructor can't
-    // access DDSes or other services of runtime as objects are not fully initialized.
-    // In order to use object, we need to go through full initialization by calling finishInitialization().
-    const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
-    const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
-    const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
-    const instance = new ctor({ runtime, context, providers, initProps });
+    // Trigger initialization of the runtime's handle (using the code provided above when instantiating it) so the
+    // data object gets constructed immediately.
+    await runtime.IFluidHandle?.get();
 
-    // if it's a newly created object, we need to wait for it to finish initialization
-    // as that results in creation of DDSes, before it gets attached, providing atomic
-    // guarantee of creation.
-    // WARNING: we can't do the same (yet) for already existing PureDataObject!
-    // This will result in deadlock, as it tries to resolve internal handles, but any
-    // handle resolution goes through root (container runtime), which can't route it back
-    // to this data store, as it's still not initialized and not known to container runtime yet.
-    // In the future, we should address it by using relative paths for handles and be able to resolve
-    // local DDSes while data store is not fully initialized.
-    if (!existing) {
-        await instance.finishInitialization(existing);
-    }
-
-    return { instance, runtime };
+    return runtime;
 }
 
 /**
@@ -149,7 +161,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
      * @param context - data store context used to load a data store runtime
      */
     public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-        const { runtime } = await createDataObject(
+        const runtime = await createDataObject(
             this.ctor,
             context,
             this.sharedObjectRegistry,
@@ -253,7 +265,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
         context: IFluidDataStoreContextDetached,
         initialState?: I["InitialState"],
     ): Promise<TObj> {
-        const { instance, runtime } = await createDataObject(
+        const runtime = await createDataObject(
             this.ctor,
             context,
             this.sharedObjectRegistry,
@@ -264,6 +276,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 
         await context.attachRuntime(this, runtime);
 
-        return instance;
+        return runtime.IFluidHandle?.get() as unknown as TObj;
     }
 }

@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -51,7 +51,7 @@ enum AliasState {
     None = "None",
 }
 
-class DataStore implements IDataStore {
+class DataStore implements IDataStore, Partial<{ readonly IFluidHandle: IFluidHandle<FluidObject> | undefined; }> {
     private aliasState: AliasState = AliasState.None;
     private alias: string | undefined;
     private readonly pendingAliases: Map<string, Promise<AliasResult>>;
@@ -149,6 +149,17 @@ class DataStore implements IDataStore {
 
     async request(request: IRequest): Promise<IResponse> {
         return this.fluidDataStoreChannel.request(request);
+    }
+
+    /**
+     * Handle to the data store. Use this as the primary way of interacting with it, and only fall back to
+     * requesting the root object through the request pattern if the handle is not defined.
+     */
+    public get IFluidHandle(): IFluidHandle<FluidObject> | undefined {
+        // Currently treating the data store channel as a FluidObject<IFluidHandle>. If we later
+        // make changes so that it exposes the handle explicitly, we can simplify this code.
+        const maybeHandle: FluidObject<IFluidHandle<FluidObject>> = (this.fluidDataStoreChannel as any);
+        return maybeHandle.IFluidHandle;
     }
 
     constructor(

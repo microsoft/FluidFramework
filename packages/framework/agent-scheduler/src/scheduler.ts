@@ -5,6 +5,7 @@
 
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+    FluidObject,
     IFluidHandle,
     IRequest,
 } from "@fluidframework/core-interfaces";
@@ -22,7 +23,6 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
@@ -387,20 +387,22 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
 }
 
 class AgentSchedulerRuntime extends FluidDataStoreRuntime {
-    private readonly agentSchedulerP: Promise<AgentScheduler>;
     constructor(
         dataStoreContext: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
         existing: boolean,
     ) {
-        super(dataStoreContext, sharedObjectRegistry, existing);
-        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext, existing);
+        super(
+            dataStoreContext,
+            sharedObjectRegistry,
+            existing,
+            async () => AgentScheduler.load(this, dataStoreContext, existing));
     }
     public async request(request: IRequest) {
         const response = await super.request(request);
         if (response.status === 404) {
             if (request.url === "" || request.url === "/") {
-                const agentScheduler = await this.agentSchedulerP;
+                const agentScheduler = await this.IFluidHandle?.get();
                 return { status: 200, mimeType: "fluid/object", value: agentScheduler };
             }
         }
@@ -420,8 +422,11 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 
     public static async createChildInstance(parentContext: IFluidDataStoreContext): Promise<AgentScheduler> {
         const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
-        const router = await parentContext.containerRuntime.createDataStore(packagePath);
-        return requestFluidObject<AgentScheduler>(router, "/");
+        const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
+        const maybeHandle: FluidObject<IFluidHandle> = (dataStore as any);
+        const handle = await maybeHandle.IFluidHandle?.get();
+        assert(handle instanceof AgentScheduler, "The data store's handle is not an AgentScheduler!");
+        return handle;
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
