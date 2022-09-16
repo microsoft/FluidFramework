@@ -347,7 +347,7 @@ export interface FieldSchema {
 // @public
 export const enum FieldScope {
     // (undocumented)
-    global = "fields",
+    global = "globalFields",
     // (undocumented)
     local = "fields"
 }
@@ -531,7 +531,7 @@ export enum ITreeSubscriptionCursorState {
 }
 
 // @public
-export interface JsonableTree extends PlaceholderTree {
+export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 }
 
 // @public
@@ -801,9 +801,6 @@ export type OpId = number;
 
 // @public
 const optional: FieldKind;
-
-// @public
-export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 // @public
 export interface PlacePath extends UpPath {
