@@ -4,16 +4,13 @@
  */
 
 import { DataObjectFactory } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, delay } from "@fluidframework/common-utils";
 import { SharedCounter } from "@fluidframework/counter";
 import { DataObjectWithCounter, dataObjectWithCounterFactory } from "./dataObjectWithCounter";
 
 export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
-    private unrefTimeStampMs?: number;
-    private unreferencedChild?: DataObjectWithCounter;
-    // TODO: logic to always keep a child referenced. A getter should retrieve this value and add some asserts
     private child?: DataObjectWithCounter;
+    private readonly count = 100;
     private get childKey(): string {
         assert(this.context.clientId !== undefined, `client id needs to be defined to retrieve the child key!`);
         return `childKey:${this.context.clientId}`;
@@ -26,39 +23,41 @@ export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
     protected async hasInitialized(): Promise<void> {
         await super.hasInitialized();
         await this.createAndReferenceChild();
-        // TODO: Start logic goes here after we agree on what it should be.
+        this.start();
     }
 
-    // TODO: Make private - left public so the build passes
-    public async unreferenceChild() {
+    private unreferenceChild() {
         assert(this.child !== undefined, `Child should be defined when unreferencing!`);
-        this.unreferencedChild = this.child;
         this.child.stop();
         this.root.delete(this.childKey);
-        this.unrefTimeStampMs = Date.now();
     }
 
     private async createAndReferenceChild() {
         this.child = await dataObjectWithCounterFactory.createInstance(this.context.containerRuntime);
-        await this.referenceChild(this.child.handle);
+        this.root.set(this.childKey, this.child.handle);
+        this.child.start();
     }
 
-    private async referenceChild(handle: IFluidHandle<DataObjectWithCounter>) {
-        this.unreferencedChild = this.child;
-        this.root.set(this.childKey, handle);
-    }
+    protected async sendOps() {
+        assert(this.isRunning === true, "Should be running to send ops");
+        while (this.isRunning && !this.disposed) {
+            let opsPerformed = 0;
+            while (opsPerformed < this.count && this.isRunning && !this.disposed) {
+                // This count is shared across dataObjects so this should reach clients * datastores * count
+                super.sendOp();
+                // This data is local and allows us to understand the number of changes a local client has created
+                opsPerformed++;
+                await delay(this.delayPerOpMs);
+            }
 
-    // This should only be called when inactiveObjectX time isn't greater than unrefTimeStampMs
-    // TODO: Make private - left public so the build passes
-    public async reviveChild() {
-        assert(this.unreferencedChild !== undefined, `An old handle should exist when reviving`);
-        assert(this.unrefTimeStampMs !== undefined, `An unreferenceTimestamp should exist when reviving`);
-        await this.referenceChild(this.unreferencedChild.handle);
-        this.unreferencedChild = undefined;
-        this.unrefTimeStampMs = undefined;
+            // Reference the child if there is none, unreference if there is one
+            if (this.child === undefined) {
+                await this.createAndReferenceChild();
+            } else {
+                this.unreferenceChild();
+            }
+        }
     }
-
-    // TODO: create a doActivity method that does interesting GC tasks
 }
 
 export const rootDataObjectWithChildDataObjectFactory = new DataObjectFactory(

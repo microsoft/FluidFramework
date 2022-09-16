@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
+import { assert, delay } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 
@@ -15,8 +15,9 @@ import { SharedCounter } from "@fluidframework/counter";
  */
 const counterKey = "counter";
 export class DataObjectWithCounter extends DataObject {
-    private counter?: SharedCounter;
+    protected counter?: SharedCounter;
     public isRunning: boolean = false;
+    protected readonly delayPerOpMs = 100;
     public static get type(): string {
         return "DataObjectWithCounter";
     }
@@ -31,7 +32,7 @@ export class DataObjectWithCounter extends DataObject {
         this.counter = await handle.get();
     }
 
-    public async sendOp() {
+    protected sendOp() {
         assert(this.counter !== undefined, "Can't send ops when the counter isn't initialized!");
         assert(this.isRunning === true, `The DataObject should be running in order to generate ops!`);
         this.counter.increment(1);
@@ -39,6 +40,19 @@ export class DataObjectWithCounter extends DataObject {
 
     public stop() {
         this.isRunning = false;
+    }
+
+    public start() {
+        this.isRunning = true;
+        this.sendOps().catch((error) => { console.log(error); });
+    }
+
+    protected async sendOps() {
+        assert(this.isRunning === true, "Should be running to send ops");
+        while (this.isRunning && !this.disposed) {
+            this.sendOp();
+            await delay(this.delayPerOpMs);
+        }
     }
 }
 
