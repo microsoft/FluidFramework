@@ -57,7 +57,9 @@ export class SweepReadyUsageError extends LoggingError implements IFluidErrorBas
  * This class encapsulates the logic around what to do when a SweepReady object is used.
  * There are several tactics we plan to use in Dogfood environments to aid diagnosis of these cases:
  *  - Closing the main container when either the main or summarizer client detects this kind of violation
+ *    (via sweepReadyUsageDetectionSetting above)
  *  - Throttling the frequency of these crashes via a "Blackout Period" per container per device
+ *   (via blackoutPeriodDaysKey above.  Uses localStorage and closuresMapLocalStorageKey to implement this behavior)
  */
 export class SweepReadyUsageDetectionHandler {
     private readonly localStorage: Pick<Storage, "getItem" | "setItem">;
