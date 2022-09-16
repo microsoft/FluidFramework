@@ -937,9 +937,10 @@ describe("Garbage Collection Tests", () => {
                 // Create GC state with node 3 expired. This will be returned when the garbage collector asks
                 // for the GC blob with `gcBlobId`.
                 const gcState: IGarbageCollectionState = { gcNodes: {} };
+                const unrefTime = Date.now() - (timeout + 100);
                 const node3Data: IGarbageCollectionNodeData = {
                     outboundRoutes: [],
-                    unreferencedTimestampMs: Date.now() - (timeout + 100),
+                    unreferencedTimestampMs: unrefTime,
                 };
                 gcState.gcNodes[nodes[3]] = node3Data;
 
@@ -956,7 +957,8 @@ describe("Garbage Collection Tests", () => {
 
                 // Update nodes and validate that all events for node 3 are logged.
                 updateAllNodes(garbageCollector);
-                mockLogger.assertMatch([{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg }], "all events not generated as expected");
+                assert(!mockLogger.events.some((event) => event.eventName !== loadedEventName && event.unrefTime === unrefTime), "shouldn't see any unreference events besides Loaded");
+                mockLogger.assertMatch([{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg, unrefTime }], "all events not generated as expected");
 
                 const expectedErrorType = sweepReadyUsageErrorExpected ? "unreferencedObjectUsedAfterGarbageCollected" : "N/A";
                 assert.equal(lastCloseErrorType, expectedErrorType, "Incorrect lastCloseReason after using unreferenced nodes");
