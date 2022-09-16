@@ -22,7 +22,7 @@ function invert(change: TestChangeset): TestChangeset {
 
 function shallowInvert(change: SF.Changeset<unknown>): SF.Changeset<unknown> {
     deepFreeze(change);
-    return SF.sequenceFieldChangeRebaser.invert(change,  () => assert.fail("Unexpected call to child inverter"));
+    return SF.invert(change,  () => assert.fail("Unexpected call to child inverter"));
 }
 
 describe("SequenceField - Invert", () => {
