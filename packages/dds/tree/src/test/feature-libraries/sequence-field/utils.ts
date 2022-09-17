@@ -26,7 +26,7 @@ export const cases: {
         { type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] },
     ],
     modify: [
-        { type: "Modify", changes: { intentions: [1], ref: 0 } },
+        { type: "Modify", changes: { intentions: [1] } },
     ],
     modify_insert: [
         1,
@@ -34,7 +34,7 @@ export const cases: {
             type: "MInsert",
             id: 1,
             content: { type, value: 1 },
-            changes: { intentions: [1], ref: 0 },
+            changes: { intentions: [2] },
         },
     ],
     delete: [

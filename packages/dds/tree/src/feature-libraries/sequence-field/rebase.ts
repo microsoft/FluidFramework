@@ -8,6 +8,7 @@ import {
     getInputLength,
     getOutputLength,
     isAttach,
+    isModify,
     isReattach,
     isSkipMark,
     splitMarkOnInput,
@@ -111,7 +112,7 @@ function rebaseMarkList<TNodeChange>(
             // Past this point, we are guaranteed that `baseMark` and `currMark` have the same length and
             // start at the same location at the revision to which both changesets apply.
             // They therefore refer to the same range for that revision.
-            const rebasedMark = rebaseMark(currMark, baseMark);
+            const rebasedMark = rebaseMark(currMark, baseMark, rebaseChild);
             factory.push(rebasedMark);
         }
     }
@@ -124,6 +125,7 @@ function rebaseMarkList<TNodeChange>(
 function rebaseMark<TNodeChange>(
     currMark: F.SizedMark<TNodeChange>,
     baseMark: F.SizedMark<TNodeChange>,
+    rebaseChild: NodeChangeRebaser<TNodeChange>,
 ): F.SizedMark<TNodeChange> {
     if (isSkipMark(baseMark)) {
         return clone(currMark);
@@ -133,8 +135,15 @@ function rebaseMark<TNodeChange>(
         case "Delete":
         case "MDelete":
             return 0;
-        case "Modify":
+        case "Modify": {
+            if (isModify(currMark)) {
+                return {
+                    ...clone(currMark),
+                    changes: rebaseChild(currMark.changes, baseMark.changes),
+                };
+            }
             return clone(currMark);
+        }
         default: fail("Not implemented");
     }
 }

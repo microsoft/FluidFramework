@@ -44,8 +44,8 @@ describe("SequenceField - Rebase", () => {
     it("modify ↷ modify", () => {
         const change1: TestChangeset = [{ type: "Modify", changes: { intentions: [1], ref: 0 } }];
         const change2: TestChangeset = [{ type: "Modify", changes: { intentions: [2], ref: 0 } }];
-        const expected: TestChangeset = [{ type: "Modify", changes: { intentions: [1], ref: 1 } }];
-        const actual = rebase(change1, change2);
+        const expected: TestChangeset = [{ type: "Modify", changes: { intentions: [2], ref: 1 } }];
+        const actual = rebase(change2, change1);
         assert.deepEqual(actual, expected);
     });
 

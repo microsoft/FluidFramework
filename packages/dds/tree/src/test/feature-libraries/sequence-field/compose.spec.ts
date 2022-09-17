@@ -82,26 +82,25 @@ describe("SequenceField - Compose", () => {
     });
 
     it("modify insert ○ modify", () => {
-        const insert: TestChangeset = [
-            {
-                type: "MInsert",
-                id: 1,
-                content: { type, value: 1 },
-                changes: { intentions: [1], ref: 0 },
-            },
-        ];
+        const childChangeA = { intentions: [1], ref: 0 };
+        const childChangeB = { intentions: [2], ref: 1 };
+        const childChangeAB = mockChildChangeComposer([childChangeA, childChangeB]);
+        const insert: TestChangeset = [{
+            type: "MInsert",
+            id: 1,
+            content: { type, value: 1 },
+            changes: childChangeA,
+        }];
         const modify: TestChangeset = [{
             type: "Modify",
-            changes: { intentions: [2], ref: 1 },
+            changes: childChangeB,
         }];
-        const expected: TestChangeset = [
-            {
-                type: "MInsert",
-                id: 1,
-                content: { type, value: 1 },
-                changes: { intentions: [1, 2], ref: 0 },
-            },
-        ];
+        const expected: TestChangeset = [{
+            type: "MInsert",
+            id: 1,
+            content: { type, value: 1 },
+            changes: childChangeAB,
+        }];
         const actual = compose([insert, modify]);
         assert.deepEqual(actual, expected);
     });
@@ -147,17 +146,20 @@ describe("SequenceField - Compose", () => {
     });
 
     it("modify ○ modify", () => {
+        const childChangeA = { intentions: [1], ref: 0 };
+        const childChangeB = { intentions: [2], ref: 1 };
+        const childChangeAB = mockChildChangeComposer([childChangeA, childChangeB]);
         const modifyA: TestChangeset = [{
             type: "Modify",
-            changes: { intentions: [1], ref: 0 },
+            changes: childChangeA,
         }];
         const modifyB: TestChangeset = [{
             type: "Modify",
-            changes: { intentions: [2], ref: 1 },
+            changes: childChangeB,
         }];
         const expected: TestChangeset = [{
             type: "Modify",
-            changes: { intentions: [1, 2], ref: 0 },
+            changes: childChangeAB,
         }];
         const actual = compose([modifyA, modifyB]);
         assert.deepEqual(actual, expected);

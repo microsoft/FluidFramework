@@ -34,11 +34,13 @@ describe("SequenceField - Invert", () => {
     });
 
     it("child changes", () => {
+        const childChange = { intentions: [1], ref: 0 };
+        const inverseChildChange = mockChildChangeInverter(childChange);
         const input: TestChangeset = [
-            { type: "Modify", changes: { intentions: [1], ref: 0 } },
+            { type: "Modify", changes: childChange },
         ];
         const expected: TestChangeset = [
-            { type: "Modify", changes: { intentions: [1], ref: 0 } },
+            { type: "Modify", changes: inverseChildChange },
         ];
         const actual = invert(input);
         assert.deepEqual(actual, expected);

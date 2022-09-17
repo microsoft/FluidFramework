@@ -7,9 +7,12 @@ import { unreachableCase } from "@fluidframework/common-utils";
 import { fail } from "../../util";
 import * as F from "./format";
 
+export function isModify<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Modify<TNodeChange> {
+    return isObjMark(mark) && mark.type === "Modify";
+}
+
 export function isAttach<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Attach<TNodeChange> {
     return isObjMark(mark)
-        && "type" in mark
         && (
             mark.type === "Insert"
             || mark.type === "MInsert"
@@ -21,7 +24,6 @@ export function isAttach<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Atta
 
 export function isReattach<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Reattach | F.ModifyReattach<TNodeChange> {
     return isObjMark(mark)
-        && "type" in mark
         && (
             mark.type === "Revive"
             || mark.type === "MRevive"
@@ -32,7 +34,7 @@ export function isReattach<TNodeChange>(mark: F.Mark<TNodeChange>): mark is F.Re
 }
 
 export function isTomb(mark: F.Mark<unknown>): mark is F.Tomb {
-    return isObjMark(mark) && "type" in mark && mark.type === "Tomb";
+    return isObjMark(mark) && mark.type === "Tomb";
 }
 
 export function getAttachLength(attach: F.Attach): number {
@@ -206,7 +208,7 @@ export function splitMarkOnOutput<TMark extends F.Mark<unknown>>(mark: TMark, le
 export function isDetachMark<TNodeChange>(
     mark: F.Mark<TNodeChange> | undefined,
 ): mark is F.Detach | F.ModifyDetach<TNodeChange> {
-    if (isObjMark(mark) && "type" in mark) {
+    if (isObjMark(mark)) {
         const type = mark.type;
         return type === "Delete" || type === "MDelete" || type === "MoveOut" || type === "MMoveOut";
     }

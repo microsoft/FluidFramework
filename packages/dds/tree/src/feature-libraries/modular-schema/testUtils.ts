@@ -8,7 +8,11 @@ import { Delta } from "../../tree";
 
 export interface MockChildChange {
     intentions: number[];
-    ref: number;
+    /**
+     * The last known intention to be applied before this change.
+     * Can be left unspecified to bypass validation.
+     */
+    ref?: number;
 }
 
 export function mockChildChangeRebaser(
@@ -16,17 +20,25 @@ export function mockChildChangeRebaser(
     baseChange: MockChildChange,
 ): MockChildChange {
     assert(change.ref === baseChange.ref, "Invalid input passed to child rebaser");
-    return {
-        intentions: change.intentions,
-        ref: baseChange.intentions[baseChange.intentions.length - 1],
-    };
+    return change.ref === undefined
+        ? change
+        : {
+            intentions: change.intentions,
+            ref: baseChange.intentions[baseChange.intentions.length - 1],
+        }
+    ;
 }
 
 export function mockChildChangeInverter(change: MockChildChange): MockChildChange {
-    return {
-        intentions: change.intentions.map((i) => -i).reverse(),
-        ref: change.intentions[change.intentions.length - 1],
-    };
+    return change.ref === undefined
+        ? {
+            intentions: change.intentions.map((i) => -i).reverse(),
+        }
+        : {
+            intentions: change.intentions.map((i) => -i).reverse(),
+            ref: change.intentions[change.intentions.length - 1],
+        }
+    ;
 }
 
 export function mockChildChangeComposer(changes: MockChildChange[]): MockChildChange {
@@ -35,8 +47,10 @@ export function mockChildChangeComposer(changes: MockChildChange[]): MockChildCh
     }
     const id: number[] = [];
     changes.forEach((change, i) => {
-        const prev = changes[i - 1].intentions;
-        assert(i === 0 || change.ref === prev[prev.length - 1], "Invalid input to child composer");
+        if (change.ref !== undefined && i > 0) {
+            const prev = changes[i - 1].intentions;
+            assert(i === 0 || change.ref === prev[prev.length - 1], "Invalid input to child composer");
+        }
         id.push(...change.intentions);
     });
     return {
