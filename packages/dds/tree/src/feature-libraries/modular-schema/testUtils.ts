@@ -51,7 +51,13 @@ export function mockChildChangeComposer(changes: MockChildChange[]): MockChildCh
             const prev = changes[i - 1].intentions;
             assert(i === 0 || change.ref === prev[prev.length - 1], "Invalid input to child composer");
         }
-        id.push(...change.intentions);
+        for (const intention of change.intentions) {
+            if (id[id.length - 1] === -intention) {
+                id.pop();
+            } else {
+                id.push(intention);
+            }
+        }
     });
     return {
         intentions: id,
@@ -60,8 +66,11 @@ export function mockChildChangeComposer(changes: MockChildChange[]): MockChildCh
 }
 
 export function mockChildChangeToDelta(change: MockChildChange): Delta.Modify {
-    return {
-        type: Delta.MarkType.Modify,
-        setValue: change.intentions.map(String).join("|"),
-    };
+    if (change.intentions.length > 0) {
+        return {
+            type: Delta.MarkType.Modify,
+            setValue: change.intentions.map(String).join("|"),
+        };
+    }
+    return { type: Delta.MarkType.Modify };
 }

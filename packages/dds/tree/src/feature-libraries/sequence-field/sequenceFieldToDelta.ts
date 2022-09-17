@@ -60,7 +60,12 @@ export function sequenceFieldToDelta<TNodeChange>(
                     fail(ERR_NOT_IMPLEMENTED);
                 case "Modify": {
                     if (mark.tomb === undefined) {
-                        out.pushContent(deltaFromChild(mark.changes));
+                        const modify = deltaFromChild(mark.changes);
+                        if (modify.setValue !== undefined || modify.fields !== undefined) {
+                            out.pushContent(modify);
+                        } else {
+                            out.pushOffset(1);
+                        }
                     }
                     break;
                 }

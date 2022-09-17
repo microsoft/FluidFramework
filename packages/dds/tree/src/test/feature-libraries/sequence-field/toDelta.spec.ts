@@ -44,6 +44,12 @@ describe("SequenceField - toDelta", () => {
         assert.deepEqual(actual, expected);
     });
 
+    it("Empty child change", () => {
+        const actual = toDelta([{ type: "Modify", changes: { intentions: [], ref: 0 } }]);
+        const expected: Delta.MarkList = [];
+        assert.deepEqual(actual, expected);
+    });
+
     it("insert", () => {
         const changeset: TestChangeset = [
             { type: "Insert", id: opId, content },

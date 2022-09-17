@@ -96,11 +96,11 @@ describe("SequenceField - Rebaser Axioms", () => {
 
     describe("A ○ A⁻¹ === ε", () => {
         for (const [name, mark] of testMarks) {
-            if (name === "SetValue" || name === "Delete") {
+            if (name === "Delete") {
                 it.skip(`${name} ○ ${name}⁻¹ === ε`, () => {
                     /**
-                     * These cases are currently disabled because the inverses of SetValue and Delete
-                     * do not capture which prior change they are reverting.
+                     * These cases are currently disabled because the inverse of Delete
+                     * does not capture which node it is reviving.
                      */
                 });
             } else {
@@ -109,7 +109,7 @@ describe("SequenceField - Rebaser Axioms", () => {
                     const inv = SF.invert(change, mockChildChangeInverter);
                     const actual = SF.compose([change, inv], mockChildChangeComposer);
                     const delta = SF.sequenceFieldToDelta(actual, mockChildChangeToDelta);
-                    assert.deepEqual(delta, Delta.empty);
+                    assert.deepEqual(delta, []);
                 });
             }
         }
