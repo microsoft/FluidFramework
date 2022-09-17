@@ -46,5 +46,8 @@ export function mockChildChangeComposer(changes: MockChildChange[]): MockChildCh
 }
 
 export function mockChildChangeToDelta(change: MockChildChange): Delta.Modify {
-    return { type: Delta.MarkType.Modify, setValue: { value: change.intentions.map(String).join("|") } };
+    return {
+        type: Delta.MarkType.Modify,
+        setValue: change.intentions.map(String).join("|"),
+    };
 }

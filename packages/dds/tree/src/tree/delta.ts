@@ -324,13 +324,14 @@ export function inputLength(mark: Mark): number {
  * @returns The remaining modifications that the consumer of the Delta will apply on the given node. May be empty if
  *   all modifications are applied by the function.
  */
- export function applyModifyToInsert(
+export function applyModifyToInsert(
     node: ProtoNode,
     modify: Modify,
 ): Map<FieldKey, MarkList> {
     const outFieldsMarks: Map<FieldKey, MarkList> = new Map();
-    if (modify.setValue !== undefined) {
-        node.value = modify.setValue.value;
+    // Use `hasOwnProperty` to detect when setValue is set to `undefined`.
+    if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
+        node.value = modify.setValue;
     }
     if (modify.fields !== undefined) {
         const protoFields = node.fields ?? {};

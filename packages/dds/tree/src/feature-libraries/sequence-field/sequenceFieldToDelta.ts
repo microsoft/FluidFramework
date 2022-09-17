@@ -32,7 +32,7 @@ export function sequenceFieldToDelta<TNodeChange>(
                     break;
                 }
                 case "MInsert": {
-                    const cloned = cloneAndModify(mark);
+                    const cloned = cloneAndModify(mark, deltaFromChild);
                     if (cloned.fields.size > 0) {
                         const insertMark: Delta.InsertAndModify = {
                             type: Delta.MarkType.InsertAndModify,
@@ -132,10 +132,13 @@ function cloneTreeContent(content: F.ProtoNode[]): Delta.ProtoNode[] {
  *
  * The returned `fields` map may be empty if all modifications are applied by the function.
  */
-function cloneAndModify<TNodeChange>(insert: F.ModifyInsert<TNodeChange>): DeltaInsertModification {
+function cloneAndModify<TNodeChange>(
+    insert: F.ModifyInsert<TNodeChange>,
+    deltaFromChild: ToDelta<TNodeChange>,
+): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
     const outNode = cloneTreeContent([insert.content])[0];
-    const outModifications = applyOrCollectModifications(outNode, insert.changes);
+    const outModifications = Delta.applyModifyToInsert(outNode, deltaFromChild(insert.changes));
     return { content: outNode, fields: outModifications };
 }
 
@@ -152,27 +155,6 @@ interface DeltaInsertModification {
      * May be empty.
      */
     fields: Delta.FieldMarks;
-}
-
-/**
- * Converts inserted content into the format expected in Delta instances.
- * This involves applying the following changes:
- * - Updating node values
- * - Inserting new subtrees within the inserted content
- * - Deleting parts of the inserted content
- *
- * The only kind of change that is not applied by this function is MoveIn.
- *
- * @param node - The subtree to apply modifications to. Updated in place.
- * @param modify - The modifications to either apply or collect.
- * @returns The remaining modifications that the consumer of the Delta will apply on the given node. May be empty if
- *   all modifications are applied by the function.
- */
-function applyOrCollectModifications<TNodeChange>(
-    node: Delta.ProtoNode,
-    changes: TNodeChange,
-): Delta.FieldMarks {
-    fail(ERR_NOT_IMPLEMENTED);
 }
 
 const ERR_NOT_IMPLEMENTED = "Not implemented";

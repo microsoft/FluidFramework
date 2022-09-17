@@ -14,8 +14,8 @@ import { TestChangeset } from "./utils";
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: "X" };
 const content = [nodeX];
-const moveId = brandOpaque<Delta.MoveId>(0);
 const opId = 42;
+const moveId = brandOpaque<Delta.MoveId>(opId);
 
 function toDelta(change: TestChangeset): Delta.MarkList {
     deepFreeze(change);
