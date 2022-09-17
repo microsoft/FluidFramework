@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { NodeChangeset } from "../../../feature-libraries";
-import { generateRandomChange } from "./randomSequenceGenerator";
+import { generateRandomChange } from "./randomChangeGenerator";
 
 const testSeed = 432167897;
 const maxIndex = 3;
@@ -26,7 +26,7 @@ describe("SequenceField - generateRandomChange", () => {
 
     it("Generates a change", () => {
         const change = generateRandomChange(testSeed, maxIndex, childGen);
-        const expected = [{}]; // TODO: update this with test output
+        const expected = [2, { type: "Delete", id: 0, count: 5 }];
         assert.deepStrictEqual(change, expected);
     });
 });
