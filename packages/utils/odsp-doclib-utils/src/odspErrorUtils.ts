@@ -257,6 +257,7 @@ export function createOdspNetworkError(
                 errorMessage, { canRetry: true, retryAfterMs }, driverProps);
             break;
     }
+
     enrichOdspError(error, response, facetCodes, undefined);
     return error;
 }

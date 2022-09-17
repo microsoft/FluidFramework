@@ -84,6 +84,11 @@ export enum DriverErrorType {
      */
     locationRedirection = "locationRedirection",
 
+    /**
+     * When a file is not a fluid file, but has fluid extension such as ".note",
+     * server won't be able to open it and will return this error. The innerMostErrorCode will be
+     * "fluidInvalidSchema"
+     */
     fluidInvalidSchema = "fluidInvalidSchema",
 }
 
