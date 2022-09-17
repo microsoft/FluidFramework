@@ -13,6 +13,7 @@ import {
     IDocumentStorageServicePolicies,
     ISummaryContext,
 } from "@fluidframework/driver-definitions";
+import { UsageError } from "@fluidframework/driver-utils";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
@@ -148,10 +149,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 
     private verifyStorage(): IDetachedBlobStorage {
         if (this.detachedStorage === undefined) {
-            this.logger.sendErrorEvent({
-                eventName: "NoRealStorageInDetachedContainer",
-            });
-            throw new Error("Real storage calls not allowed in Unattached container");
+            throw new UsageError("Real storage calls not allowed in Unattached container");
         }
         return this.detachedStorage;
     }

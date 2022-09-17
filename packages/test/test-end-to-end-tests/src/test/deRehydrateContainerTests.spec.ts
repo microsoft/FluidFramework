@@ -423,12 +423,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
-        itExpects("Storage in detached container",
-        [
-            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
-            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
-        ],
-        async () => {
+        it("Storage in detached container", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
 
