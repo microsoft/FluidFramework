@@ -10,12 +10,20 @@ import { DocAlertType } from "../doc-nodes";
 
 export enum DocumentNodeKind {
     Alert = "Alert",
+    CodeSpan = "CodeSpan",
     Document = "Document",
-    Group = "Group",
+    FencedCode = "FencedCode",
+    LineBreak = "LineBreak",
     Markdown = "Markdown",
     NestedSection = "NestedSection",
     OrderedList = "OrderedList",
+    Paragraph = "Paragraph",
+    PlainText = "PlainText",
+    Span = "Span",
     SymbolicLink = "SymbolicLink",
+    Table = "Table",
+    TableCell = "TableCell",
+    TableRow = "TableRow",
     UnorderedList = "UnorderedList",
     UrlLink = "UrlLink",
 }
@@ -35,7 +43,7 @@ export interface LiteralNode<T = unknown> extends UnistLiteral<T>, DocumentDomai
     readonly type: DocumentNodeKind;
 }
 
-export abstract class DocumentParentNodeBase<
+export abstract class ParentNodeBase<
     TDocumentNode extends DocumentDomainNode = DocumentDomainNode,
 > implements ParentNode<TDocumentNode>
 {
@@ -60,7 +68,7 @@ export class DocumentNode implements UnistParent<DocumentDomainNode> {
     }
 }
 
-export class NestedSectionNode extends DocumentParentNodeBase {
+export class NestedSectionNode extends ParentNodeBase {
     public readonly type = DocumentNodeKind.NestedSection;
 
     public constructor(children: DocumentDomainNode[]) {
@@ -68,11 +76,37 @@ export class NestedSectionNode extends DocumentParentNodeBase {
     }
 }
 
-export class Group extends DocumentParentNodeBase {
-    public readonly type = DocumentNodeKind.Group;
+export interface TextFormatting {
+    /**
+     * @defaultValue Inherit
+     */
+    italics?: boolean;
 
-    public constructor(children: DocumentDomainNode[]) {
+    /**
+     * @defaultValue Inherit
+     */
+    bold?: boolean;
+
+    /**
+     * @defaultValue Inherit
+     */
+    strikethrough?: boolean;
+
+    // TODO: underline?
+    // TODO: what else?
+}
+
+export class Span extends ParentNodeBase {
+    public readonly type = DocumentNodeKind.Span;
+
+    /**
+     * @defaultValue Inherit
+     */
+    public readonly formatting?: TextFormatting;
+
+    public constructor(children: DocumentDomainNode[], formatting?: TextFormatting) {
         super(children);
+        this.formatting = formatting;
     }
 }
 
@@ -85,7 +119,7 @@ export class MarkdownNode implements LiteralNode<MdastParent> {
     }
 }
 
-export class AlertNode extends DocumentParentNodeBase {
+export class AlertNode extends ParentNodeBase {
     public readonly type = DocumentNodeKind.Alert;
     public readonly alertKind: DocAlertType;
 
@@ -125,7 +159,7 @@ export class SymbolicLinkNode implements LiteralNode<SymbolicLink> {
     }
 }
 
-export class UnorderedListNode extends DocumentParentNodeBase<
+export class UnorderedListNode extends ParentNodeBase<
     LiteralNode | UnorderedListNode | OrderedListNode
 > {
     public readonly type = DocumentNodeKind.UnorderedList;
@@ -135,7 +169,7 @@ export class UnorderedListNode extends DocumentParentNodeBase<
     }
 }
 
-export class OrderedListNode extends DocumentParentNodeBase<
+export class OrderedListNode extends ParentNodeBase<
     LiteralNode | UnorderedListNode | OrderedListNode
 > {
     public readonly type = DocumentNodeKind.OrderedList;
@@ -162,5 +196,58 @@ export class HeadingNode implements LiteralNode<DocumentDomainNode> {
 
     public constructor(content: DocumentDomainNode, id?: string, level?: number) {
         this.value = content;
+    }
+}
+
+/**
+ * @example `Foo`
+ */
+export class CodeSpanNode extends ParentNodeBase {
+    public readonly type = DocumentNodeKind.CodeSpan;
+
+    public constructor(children: DocumentDomainNode[]) {
+        super(children);
+    }
+}
+
+export class FencedCodeNode extends ParentNodeBase {
+    public readonly type = DocumentNodeKind.FencedCode;
+
+    /**
+     * @defaultValue No language tag
+     */
+    public readonly language?: string;
+
+    public constructor(children: DocumentDomainNode[], language?: string) {
+        super(children);
+        this.language = language;
+    }
+}
+
+ export class TableCellNode extends ParentNodeBase {
+    public readonly type = DocumentNodeKind.TableCell;
+
+    public constructor(children: DocumentDomainNode[]) {
+        super(children);
+    }
+}
+
+
+export class TableRowNode extends ParentNodeBase<TableCellNode> {
+    public readonly type = DocumentNodeKind.TableRow;
+
+    public constructor(cells: TableCellNode[]) {
+        super(cells);
+    }
+}
+
+export class TableNode extends ParentNodeBase<TableRowNode> {
+    public readonly type = DocumentNodeKind.Table;
+
+    public readonly headingRow?: TableRowNode[];
+
+    public constructor(bodyRows: TableCellNode[], headingRow?: TableRowNode[]) {
+        super(bodyRows);
+        this.headingRow = headingRow;
     }
 }
