@@ -2685,15 +2685,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
                 if (!this.pendingAttachBatch.push(message)) {
                     this.flushBatch(this.pendingAttachBatch.popBatch());
-                    const success = this.pendingAttachBatch.push(message);
-                    // We do not expect attach ops to be so large that after compression that do not fit into 1Mb!
-                    // If they are so large, we are out of options!
-                    assert(success, "Attach op is too large, exceeds socket.io / Kafka limits!");
+                    if (!this.pendingAttachBatch.push(message)) {
+                        throw new GenericError(
+                            "BatchTooLarge",
+                            /* error */ undefined,
+                            {
+                                opSize: message.contents.length,
+                                count: this.pendingAttachBatch.length,
+                                limit: this.pendingAttachBatch.limit,
+                            });
+                    }
                 }
             } else {
                 if (!this.pendingBatch.push(message)) {
-                    // If the content length is larger than the client configured message size
-                    // instead of splitting the content, we will fail by explicitly closing the container
                     throw new GenericError(
                         "BatchTooLarge",
                         /* error */ undefined,
