@@ -19,6 +19,7 @@ module.exports = {
 
         // oclif uses default exports for commands
         "import/no-default-export": "off",
+        "max-params": ["error", 5],
         "unicorn/prefer-node-protocol": "off",
         "valid-jsdoc": "off",
     },

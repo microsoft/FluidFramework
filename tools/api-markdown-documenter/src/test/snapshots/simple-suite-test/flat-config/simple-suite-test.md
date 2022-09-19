@@ -45,6 +45,7 @@ const foo = bar;
 |  [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) | An empty interface |
 |  [TestInterface](docs/simple-suite-test#testinterface-interface) | Test interface |
 |  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test#testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithIndexSignature](docs/simple-suite-test#testinterfacewithindexsignature-interface) | An interface with an index signature. |
 |  [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
 ## Classes
@@ -318,6 +319,36 @@ A number
 - [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)
 
 - [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
+
+### TestInterfaceWithIndexSignature {#testinterfacewithindexsignature-interface}
+
+An interface with an index signature.
+
+#### Signature {#testinterfacewithindexsignature-signature}
+
+```typescript
+export interface TestInterfaceWithIndexSignature 
+```
+
+#### Index Signatures
+
+|  IndexSignature | Description |
+|  --- | --- |
+|  [(indexer)(foo)](docs/simple-suite-test#testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |
+
+#### Index Signature Details
+
+##### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-_indexer_-indexsignature}
+
+Test index signature.
+
+###### Signature {#_indexer_-signature}
+
+```typescript
+[foo: number]: {
+        bar: string;
+    };
+```
 
 ### TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
 
