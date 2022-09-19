@@ -30,6 +30,7 @@ describe("ScheduleManager", () => {
             scheduleManager = new ScheduleManager(
                 deltaManager,
                 emitter,
+                () => testClientId,
                 DebugLogger.create("fluid:testScheduleManager"),
             );
 
