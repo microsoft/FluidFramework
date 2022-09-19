@@ -36,8 +36,8 @@ export interface CitmCatalog {
 export namespace CitmCatalog {
 
     // Shared tree keys that map to the type used by the CitmCatalog type/dataset
-    export const performancesKey: FieldKey = brand("performances");
-    export namespace Performance {
+    export namespace SharedTreeFields {
+        export const performancesKey: FieldKey = brand("performances");
         export const seatCategories: FieldKey = brand("seatCategories");
         export const startKey: FieldKey = brand("start");
     }

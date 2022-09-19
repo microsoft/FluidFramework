@@ -22,7 +22,8 @@ import { defaultSchemaPolicy, singleTextCursorNew } from "../../../feature-libra
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum } from "./benchmarksLegacy";
-import { generateTwitterJsonByByteSize, TwitterJson } from "./twitter";
+import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
+import { CitmCatalog, generateCitmJson } from "./citm";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -138,10 +139,10 @@ const canada = generateCanada(
         : [2, 10]);
 
 function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
-    cursor.down(Canada.FeatureKey, 0);
+    cursor.down(Canada.SharedTreeFields.FeatureKey, 0);
     cursor.down(EmptyKey, 0);
-    cursor.down(Canada.GeometryKey, 0);
-    cursor.down(Canada.CoordinatesKey, 0);
+    cursor.down(Canada.SharedTreeFields.GeometryKey, 0);
+    cursor.down(Canada.SharedTreeFields.CoordinatesKey, 0);
 
     let result = cursor.down(EmptyKey, 0);
     assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
@@ -175,15 +176,15 @@ function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number
 }
 
 function extractAvgValsFromTwitter(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
-    cursor.down(TwitterJson.statusesKey, 0);
+    cursor.down(Twitter.SharedTreeFields.statusesKey, 0);
 
     let result = cursor.down(EmptyKey, 0);
     while (result === TreeNavigationResult.Ok) {
-        cursor.down(TwitterJson.TwitterStatus.retweetCountKey, 0);
+        cursor.down(Twitter.SharedTreeFields.retweetCountKey, 0);
         const retweetCount = cursor.value as number;
         cursor.up();
 
-        cursor.down(TwitterJson.TwitterStatus.favoriteCountKey, 0);
+        cursor.down(Twitter.SharedTreeFields.favoriteCountKey, 0);
         const favoriteCount = cursor.value as number;
         cursor.up();
         calculate(retweetCount, favoriteCount);
@@ -197,9 +198,37 @@ function extractAvgValsFromTwitter(cursor: ITreeCursor, calculate: (x: number, y
     cursor.up();
 }
 
+function extractAvgValsFromCitm(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
+    cursor.down(CitmCatalog.SharedTreeFields.performancesKey, 0);
+
+    // iterate over each performance
+    let result = cursor.down(EmptyKey, 0);
+    while (result === TreeNavigationResult.Ok) {
+        cursor.down(CitmCatalog.SharedTreeFields.seatCategories, 0);
+        const numSeatCategories = cursor.length(EmptyKey);
+        cursor.up();
+
+        cursor.down(CitmCatalog.SharedTreeFields.startKey, 0);
+        const startTimeEpoch = cursor.value as number;
+        cursor.up();
+
+        calculate(numSeatCategories, startTimeEpoch);
+
+        result = cursor.seek(1);
+    }
+
+    // Reset the cursor state
+    cursor.up();
+    cursor.up();
+    cursor.up();
+}
+
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+// The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
+const citm = isInPerformanceTestingMode ? generateCitmJson(2, 2500000) : generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
     bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
+    bench([{ name: "citm", getJson: () => citm, dataConsumer: extractAvgValsFromCitm }]);
 });

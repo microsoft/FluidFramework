@@ -17,17 +17,16 @@ import {
 * This file contains logic to generate a JSON file that is statistically similar to the well-known
 * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
 */
-    // Shared tree keys that map to the type used by the TwitterJson type/dataset
-export namespace TwitterJson {
-    export const statusesKey: FieldKey = brand("statuses");
-
-    export namespace TwitterStatus {
+    // Shared tree keys that map to the type used by the Twitter type/dataset
+export namespace Twitter {
+    export namespace SharedTreeFields {
+        export const statusesKey: FieldKey = brand("statuses");
         export const retweetCountKey: FieldKey = brand("retweet_count");
         export const favoriteCountKey: FieldKey = brand("favorite_count");
     }
 }
 
-export interface TwitterJson {
+export interface Twitter {
     statuses: TwitterStatus[];
     search_metadata: {
         completed_in: number;
@@ -198,13 +197,13 @@ export interface TwitterUser {
 * generated json may be closer to the desired byte size but there is a risk of exceeding the inputted byte limit
 * @returns TwitterJson
 */
-export function generateTwitterJsonByByteSize(sizeInBytes: number, allowOversize: boolean, seed = 1) {
+export function generateTwitterJsonByByteSize(sizeInBytes: number, allowOversize = false, seed = 1) {
     const random = makeRandom(seed);
     const textFieldMarkovChain = new SpaceEfficientWordMarkovChain(random, getTwitterJsonTextFieldWordMarkovChain());
     const userDescFieldMarkovChain =
         new SpaceEfficientWordMarkovChain(random, getTwitterJsonUserDescFieldWordMarkovChain());
     const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
-    const twitterJson: TwitterJson = {
+    const twitterJson: Twitter = {
         statuses: [],
         search_metadata: {
             completed_in: 0.087,
@@ -249,7 +248,7 @@ export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1) 
     const userDescFieldMarkovChain =
         new SpaceEfficientWordMarkovChain(random, getTwitterJsonUserDescFieldWordMarkovChain());
     const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
-    const twitterJson: TwitterJson = {
+    const twitterJson: Twitter = {
         statuses: [],
         search_metadata: {
             completed_in: 0.087,

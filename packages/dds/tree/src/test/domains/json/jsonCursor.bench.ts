@@ -15,7 +15,7 @@ import { JsonCursor } from "../../../domains/json/jsonCursor";
 import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize, TwitterJson } from "./twitter";
+import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
 import { CitmCatalog, generateCitmJson } from "./citm";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -124,13 +124,13 @@ const canada = generateCanada(
         : [2, 10]);
 
 function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
-    cursor.enterField(Canada.FeatureKey);
+    cursor.enterField(Canada.SharedTreeFields.FeatureKey);
     cursor.enterNode(0);
     cursor.enterField(EmptyKey);
     cursor.enterNode(0);
-    cursor.enterField(Canada.GeometryKey);
+    cursor.enterField(Canada.SharedTreeFields.GeometryKey);
     cursor.enterNode(0);
-    cursor.enterField(Canada.CoordinatesKey);
+    cursor.enterField(Canada.SharedTreeFields.CoordinatesKey);
     cursor.enterNode(0);
 
     cursor.enterField(EmptyKey);
@@ -168,18 +168,18 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
 }
 
 function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
-    cursor.enterField(TwitterJson.statusesKey); // move from root to field
+    cursor.enterField(Twitter.SharedTreeFields.statusesKey); // move from root to field
     cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
     cursor.enterField(EmptyKey); // enter the array field at the node,
 
     for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-        cursor.enterField(TwitterJson.TwitterStatus.retweetCountKey);
+        cursor.enterField(Twitter.SharedTreeFields.retweetCountKey);
         cursor.enterNode(0);
         const retweetCount = cursor.value as number;
         cursor.exitNode();
         cursor.exitField();
 
-        cursor.enterField(TwitterJson.TwitterStatus.favoriteCountKey);
+        cursor.enterField(Twitter.SharedTreeFields.favoriteCountKey);
         cursor.enterNode(0);
         const favoriteCount = cursor.value;
         cursor.exitNode();
@@ -194,17 +194,17 @@ function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number
 }
 
 function extractAvgValsFromCitm(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
-    cursor.enterField(CitmCatalog.performancesKey);
+    cursor.enterField(CitmCatalog.SharedTreeFields.performancesKey);
     cursor.enterNode(0);
     cursor.enterField(EmptyKey);
 
     // iterate over each performance
     for (let performanceIterator = cursor.firstNode(); performanceIterator; performanceIterator = cursor.nextNode()) {
-        cursor.enterField(CitmCatalog.Performance.seatCategories);
+        cursor.enterField(CitmCatalog.SharedTreeFields.seatCategories);
         const numSeatCategories = cursor.getFieldLength();
         cursor.exitField();
 
-        cursor.enterField(CitmCatalog.Performance.startKey);
+        cursor.enterField(CitmCatalog.SharedTreeFields.startKey);
         cursor.enterNode(0);
         const startTimeEpoch = cursor.value as number;
         cursor.exitNode();
