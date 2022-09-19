@@ -306,16 +306,12 @@ export async function getTagsForReleaseGroup(
     context: Context,
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 ): Promise<string[]> {
-    let prefix = "";
-    try {
-        prefix = isReleaseGroup(releaseGroupOrPackage)
-            ? releaseGroupOrPackage.toLowerCase()
-            : PackageName.getUnscopedName(releaseGroupOrPackage);
-    } catch {
-        console.log(releaseGroupOrPackage);
-    }
+    const prefix = isReleaseGroup(releaseGroupOrPackage)
+        ? releaseGroupOrPackage.toLowerCase()
+        : PackageName.getUnscopedName(releaseGroupOrPackage);
+    const tagList = await context.gitRepo.getAllTags(`${prefix}_v*`);
 
-    const allTags = await context.gitRepo.getAllTags(`${prefix}*`);
+    const allTags = tagList;
     return allTags;
 }
 
@@ -328,7 +324,8 @@ export async function getTagsForReleaseGroup(
  * @internal
  */
 export function getVersionFromTag(tag: string): string | undefined {
-    // TODO: Consider a stronger check here using a regex.
+    // This is sufficient, but there is a possibility that this will fail if we add a tag that includes "_v" in its
+    // name.
     const tagSplit = tag.split("_v");
     if (tagSplit.length !== 2) {
         return undefined;
@@ -360,8 +357,6 @@ export interface VersionDetails {
  *
  * @param context - The {@link Context}.
  * @param releaseGroupOrPackage - The release group or independent package to get versions for.
- * @param allowPrereleases - If true, allow pre-release versions to be returned. Otherwise all pre-release versions will
- * be filtered out of the returned array.
  * @returns An array of {@link VersionDetails} containing the version and date for each version.
  *
  * @internal
@@ -369,7 +364,6 @@ export interface VersionDetails {
 export async function getAllVersions(
     context: Context,
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-    allowPrereleases = false,
 ): Promise<VersionDetails[] | undefined> {
     const versions = new Map<string, Date>();
     const tags = await getTagsForReleaseGroup(context, releaseGroupOrPackage);

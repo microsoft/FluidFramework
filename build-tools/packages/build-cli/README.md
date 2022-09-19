@@ -126,6 +126,7 @@ USAGE
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
 * [`flub release`](#flub-release)
+* [`flub release report`](#flub-release-report)
 * [`flub run bundleStats`](#flub-run-bundlestats)
 * [`flub version VERSION`](#flub-version-version)
 * [`flub version latest`](#flub-version-latest)
@@ -384,15 +385,64 @@ DESCRIPTION
   The release command ensures that a release branch is in good condition, then walks the user through releasing a
   package or release group.
 
-  The command runs a number of checks automatically to make sure . If any of the dependencies are also in the repo, then
-  they're checked for the latest release version. If the dependencies have not yet been released, then the command
-  prompts to perform the release of the dependency, then run the release command again.
+  The command runs a number of checks automatically to make sure the branch is in a good state for a release. If any of
+  the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have
+  not yet been released, then the command prompts to perform the release of the dependency, then run the release command
+  again.
 
   This process is continued until all the dependencies have been released, after which the release group itself is
   released.
 ```
 
 _See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/release.ts)_
+
+## `flub release report`
+
+Generates a report of Fluid Framework releases.
+
+```
+USAGE
+  $ flub release report [--json] [-d <value>] [-s | -r] [-f -o <value>] [-v]
+
+FLAGS
+  -d, --days=<value>    [default: 10] The number of days to look back for releases to report.
+  -f, --full            Output a full report. A full report includes additional metadata for each package, including the
+                        time of the release, the type of release (patch, minor, major), and whether the release is new.
+  -o, --output=<value>  Output a JSON report file to this location.
+  -r, --mostRecent      Always pick the most recent version as the latest (ignore semver version sorting).
+  -s, --highest         Always pick the greatest semver version as the latest (ignore dates).
+  -v, --verbose         Verbose logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Generates a report of Fluid Framework releases.
+
+  The release report command is used to produce a report of all the packages that were released and their current
+  version. After a release, it is useful to generate this report to provide to customers, so they can update their
+  dependencies to the most recent version.
+
+  The command will prompt you to select versions for a package or release group in the event that multiple versions have
+  recently been released.
+
+EXAMPLES
+  Generate a minimal release report and display it in the terminal.
+
+    $ flub release report
+
+  Generate a minimal release report and output it to stdout as JSON.
+
+    $ flub release report --json
+
+  Output a release report to 'report.json'.
+
+    $ flub release report -o report.json
+
+  Output a full release report to 'report.json'.
+
+    $ flub release report -f -o report.json
+```
 
 ## `flub run bundleStats`
 
