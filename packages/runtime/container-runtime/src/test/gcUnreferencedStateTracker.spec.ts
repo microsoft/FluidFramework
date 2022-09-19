@@ -67,12 +67,18 @@ describe("Garbage Collection Tests", () => {
         /**
          * Test cases to run through above function runTestCase
          * Each test case specifies:
-         * - name: Name of the test
-         * - start: Starting value for currentReferenceTimestampMs and expected starting state
-         * - steps: Each step gives:
-         *      - The timestamp to advance to
-         *      - The currentReferenceTimestampMs to pass to updateTracking (or skip if undefined)
-         *      - The expected state at that time (after calling updateTracking if applicable)
+         *
+         * `name`: Name of the test
+         *
+         * `start`: Starting value for currentReferenceTimestampMs and expected starting state
+         *
+         * `steps`: Each step gives:
+         *
+         * - The timestamp to advance to
+         *
+         * - The currentReferenceTimestampMs to pass to updateTracking (or skip if undefined)
+         *
+         * - The expected state at that time (after calling updateTracking if applicable)
          *
          * In all cases:  unreferencedTimestampMs = 0, inactiveTimeoutMs = 10, sweepTimeoutMs = 20
          */

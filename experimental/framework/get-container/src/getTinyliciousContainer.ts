@@ -17,11 +17,13 @@ import { createContainer, getContainer } from "./getContainer";
 
 /**
  * Connect to the Tinylicious service and retrieve a container with the given ID running the given code.
+ *
  * @param documentId - The document id to retrieve (only used when `createNew` is false).
  * @param containerRuntimeFactory - The container factory to be loaded in the container.
  * @param createNew - A flag indicating whether a new container should be created.
  * @param tinyliciousPort - An optional port to connect to the tinylicious server.
- *                          When not provided, the default port 7070 will be used.
+ * When not provided, the default port 7070 will be used.
+ *
  * @returns - A tuple of the container instance and the container ID associated with it.
  */
 export async function getTinyliciousContainer(
@@ -33,22 +35,18 @@ export async function getTinyliciousContainer(
     const tokenProvider = new InsecureTinyliciousTokenProvider();
     const urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
-    let container: IContainer;
-    if (createNew) {
-        container = await createContainer({
+    const container = await (createNew
+        ? createContainer({
             documentServiceFactory,
             urlResolver,
             containerRuntimeFactory,
             request: createTinyliciousCreateNewRequest(),
-        });
-    } else {
-        container = await getContainer({
+        }) : getContainer({
             documentServiceFactory,
             urlResolver,
             containerRuntimeFactory,
             request: { url: documentId },
-        });
-    }
+        }));
     const resolved = container.resolvedUrl;
     ensureFluidResolvedUrl(resolved);
     const containerId = resolved.id;

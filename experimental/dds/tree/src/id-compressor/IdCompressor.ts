@@ -88,16 +88,20 @@ interface IdCluster {
 	/**
 	 * Final IDs assigned override strings within this cluster.
 	 * These are one of the following:
+	 *
 	 * 1. The override string
-	 * 2. The override string and external override details. This occurs when local IDs corresponding to the same override
-	 * 		string are created by different sessions before any have been finalized. This can occur due to concurrency or offline.
-	 * 		In this case, the string is stored for the final ID that got sequenced first, and that final ID is stored associated with
-	 * 		all subsequent final IDs with the same override.
-	 * When a final ID which is safely reserved via consensus as part of a cluster (but is not yet sequenced) is allocated with an
-	 * override, this collection will be temporarily inaccurate as it will not contain an entry for that final ID. This absence indicates
-	 * the uncertainty about what the final ID associated with that override will be after finalizing the range (which could change due
-	 * to unification of a concurrent duplicate override). This table will be adjusted to reflect the override when that final ID is
-	 * finalized via consensus, and decompression will use `clustersAndOverridesInversion` until that point.
+	 *
+	 * 2. The override string and external override details. This occurs when local IDs corresponding to the same
+	 * override string are created by different sessions before any have been finalized. This can occur due to
+	 * concurrency or offline. In this case, the string is stored for the final ID that got sequenced first, and that
+	 * final ID is stored associated with all subsequent final IDs with the same override.
+	 *
+	 * When a final ID which is safely reserved via consensus as part of a cluster (but is not yet sequenced) is
+	 * allocated with an override, this collection will be temporarily inaccurate as it will not contain an entry for
+	 * that final ID. This absence indicates the uncertainty about what the final ID associated with that override will
+	 * be after finalizing the range (which could change due to unification of a concurrent duplicate override).
+	 * This table will be adjusted to reflect the override when that final ID is finalized via consensus, and
+	 * decompression will use `clustersAndOverridesInversion` until that point.
 	 */
 	overrides?: Map<FinalCompressedId, string | UnifiedOverride>;
 }
@@ -216,12 +220,14 @@ type InversionKey = `${typeof nonStableOverridePrefix}${string}` | StableId;
  * created it is said to be created by the compressor's "local" session.
  *
  * For each stable ID created, two numeric IDs are provided by the compressor:
- * 	1. A local ID, which is stable for the lifetime of the session (which could be longer than that of the compressor object, as it may
- * 		be serialized for offline usage). Available as soon as the stable ID is allocated. Local IDs are session-unique and are thus only
- * 		publicly usable by the compressor that created the stable ID.
- * 	2. A final ID, which is stable across serialization and deserialization of an IdCompressor. Available as soon as the range containing
- * 		the corresponding local ID is totally ordered (via consensus) with respect to other sessions' allocations.
- * 		Final IDs are known to and publicly usable by any compressor that has received them.
+ *
+ * 1. A local ID, which is stable for the lifetime of the session (which could be longer than that of the compressor object, as it may
+ * be serialized for offline usage). Available as soon as the stable ID is allocated. Local IDs are session-unique and are thus only
+ * publicly usable by the compressor that created the stable ID.
+ *
+ * 2. A final ID, which is stable across serialization and deserialization of an IdCompressor. Available as soon as the range containing
+ * the corresponding local ID is totally ordered (via consensus) with respect to other sessions' allocations.
+ * Final IDs are known to and publicly usable by any compressor that has received them.
  *
  * Compressors will allocate UUIDs in non-random ways to reduce entropy allowing for optimized storage of the data needed
  * to map the UUIDs to the numbers.
@@ -230,11 +236,15 @@ type InversionKey = `${typeof nonStableOverridePrefix}${string}` | StableId;
  * the UUID that would otherwise be created.
  *
  * The following invariants are upheld by IdCompressor:
+ *
  * 1. Local IDs will always decompress to the same UUIDs (or override string) for the lifetime of the session.
+ *
  * 2. Final IDs will always decompress to the same UUIDs (or override string).
+ *
  * 3. After a server-processed range of local IDs (from any session) is received by a compressor, any of those local IDs may be
- * 		translated by the compressor into the corresponding final ID. For any given local ID, this translation will always yield the
- * 		same final ID.
+ * translated by the compressor into the corresponding final ID. For any given local ID, this translation will always yield the
+ * same final ID.
+ *
  * 4. A UUID (or override string) will always compress into the same session-space ID for the lifetime of the session.
  *
  * Local IDs are sent across the wire in efficiently-represented ranges. These ranges are created by querying the compressor, and *must*

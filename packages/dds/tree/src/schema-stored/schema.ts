@@ -96,15 +96,21 @@ export enum ValueSchema {
  * In the future, this could be extended to allow inlining a TreeSchema here
  * (or some similar structural schema system).
  * For structural types which could go here, there are a few interesting options:
+ *
  * - Allow replacing the whole set with a structural type for terminal / non-tree data,
  * and use this as a replacement for values on the tree nodes.
+ *
  * - Allow expression structural constraints for child trees, for example requiring specific traits
  * (ex: via TreeSchema), instead of by type.
+ *
  * There are two ways this could work:
- *      - Constrain the child nodes based on their shape:
+ *
+ * - Constrain the child nodes based on their shape:
  * this makes schema safe editing difficult because nodes would incur extra editing constraints to prevent them
  * from going out of schema based on their location in such a field.
- *      - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
+ *
+ * - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
+ *
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
  */
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
@@ -202,6 +208,7 @@ export interface Named<TName> {
 }
 
 export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
+export type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
 
 /**
  * View of schema data that can be stored in a document.

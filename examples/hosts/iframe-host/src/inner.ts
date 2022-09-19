@@ -66,19 +66,15 @@ async function loadContainer(
         codeLoader,
     });
 
-    let container: IContainer;
-
     // TODO: drive new/existing creation entirely from outer
-    if (createNew) {
+    const container = await (createNew
         // We're not actually using the code proposal (our code loader always loads the same module regardless of the
         // proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
-        container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
         // Caller is responsible for attaching the created container
-    } else {
+        ? loader.createDetachedContainer({ package: "no-dynamic-package", config: {} })
         // Request must be appropriate and parseable by resolver.
-        container = await loader.resolve({ url: documentId });
-    }
+        : loader.resolve({ url: documentId }));
 
     await loadFluidObject(divId, container);
     const containerId = (container.resolvedUrl as IFluidResolvedUrl).id;

@@ -585,11 +585,15 @@ export function isJapaneseSymbolOrPunctuation(ch: string) {
  *
  * Japanese is not space separated but individual characters are counted as words here words.
  * We count a series of english charaters, numbers, symbols or escape characters without spaces in between as a word.
+ *
  * 1. we will first space separate the text,
+ *
  * 2. we will iterate over each character in each space separated word.
+ *
  * 2a. If the char is a Japanese it will be counted as a complete word.
+ *
  * 2b. If the characters are alpha latin, escapes or line breaks we will count it as part of a word,
- *  adding each next chars until we get to either a Japanese character or a space.
+ * adding each next chars until we get to either a Japanese character or a space.
  */
 export function parseSentencesIntoWords(inputSentences: string[]) {
     const outputSentences: string[][] = [];

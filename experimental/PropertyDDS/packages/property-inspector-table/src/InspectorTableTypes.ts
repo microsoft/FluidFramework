@@ -138,105 +138,130 @@ export interface IInspectorTableProps<T extends IRowData<T> = any> extends BaseT
    * The active repository guid. Used as the prefix for the table row ids.
    */
   activeRepositoryGuid?: string;
+
   /**
    * An array that contains the identifiers of the columns to be visualized.
    */
   columns: IInspectorColumnsKeys[];
+
   /**
    * A callback to override the child of a row,
    * defaults to the hierarchical child of the property the row visualizes.
    */
   childGetter?: (child: any, name: string, parent: any, typeid: string, context: string) => any;
+
   /**
    * Current Urn
    */
   currentUrn?: string;
+
   /**
    * Indicates whether the current urn is a v1 branch urn.
    */
   isV1Urn?: boolean;
+
   /**
-   *  Reference property handler
+   * Reference property handler
    */
   editReferenceHandler?: (rowData: T, newPath: string) => Promise<void>;
+
   /**
    * A callback function that is called on data creation. If not specified,
    * data creation will be disabled.
    */
   dataCreationHandler?: (rowData: T, name: string, typeid: string, context: string) => Promise<any>;
+
   /**
    * A callback that is executed to compute the name and the options available for the data creation.
    */
   dataCreationOptionGenerationHandler?: (rowData: T, nameOnly: boolean) => IDataCreationOptions;
+
   /**
    * A handler to delete (expire) a repository.
    */
   deleteRepo?: (repoUrn: string) => Promise<void>;
+
   /**
    * A handler to get expiry information of a repository.
    */
   getRepoExpiry?: IRepoExpiryGetter;
+
   /**
    * Indicates whether the current repository is expired or not.
    */
   expired?: boolean;
+
   /**
    * A callback to override the name of a row, defaults to the id of the property the row visualizes.
    */
   nameGetter?: (name: string, parent: any, typeid: string, context: string) => string;
+
   /**
    * Indicates if the table is in read only mode
    */
   readOnly?: boolean;
+
   /**
    * Callback that is invoked to determine the icon.
    */
   rowIconRenderer?: (rowData: T) => React.ReactNode;
+
   /**
    * Width of the table
    */
   width: number;
+
   /**
    * Height of the table
    */
   height: number;
+
   /**
    * The urn of the currently active repository.
    */
   repositoryUrn?: string;
+
   /**
    * Row height
    */
   rowHeight: number;
+
   /**
    * Id of the expandable column
    */
   expandColumnKey: string;
+
   /**
    * Props passes to the search
    */
   searchBoxProps?: any;
+
   /**
    * A handler to set the expiry policy of a repository.
    */
   setRepoExpiry?: IRepoExpirySetter;
+
   /**
    * dataGetter in case there is
    */
   dataGetter?: (params: IDataGetterParameter) => React.ReactNode | null;
+
   /**
    * enable follow references
    */
   followReferences: boolean;
+
   /**
    * if checkout is in progress
    */
   checkoutInProgress: boolean;
+
   /**
    * A transformation function from raw data to table rows
    */
   toTableRows?: (row: any, props: IToTableRowsProps,
     options?: Partial<IToTableRowsOptions>, pathPrefix?: string) => T[];
+
   columnsRenderers?: Record<string, (...props: any) => any>;
 }
 

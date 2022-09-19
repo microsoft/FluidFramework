@@ -75,10 +75,12 @@ export const VisibilityState = {
 
     /**
      * Indicates that the object is visible globally to all clients. This is the state of an object in 2 scenarios:
+     *
      * 1. It is attached to the container's graph when the container is globally visible. The object's state goes from
-     *    not visible to globally visible.
+     * not visible to globally visible.
+     *
      * 2. When a container becomes globally visible, all locally visible objects go from locally visible to globally
-     *    visible.
+     * visible.
      */
     GloballyVisible: "GloballyVisible",
 };
