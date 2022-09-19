@@ -663,7 +663,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.containerSaved();
         });
 
-        this._deltaManager = this.createDeltaManager();
         this.storageService = new ContainerStorageAdapter(
             this.loader.services.detachedBlobStorage,
             this.mc.logger,
