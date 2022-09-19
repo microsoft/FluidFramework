@@ -5,106 +5,153 @@
 
 import { strict as assert } from "assert";
 
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import { ITreeCursor, TreeNavigationResult } from "../forest";
-import { EmptyKey, FieldKey } from "../tree";
+import { EmptyKey, FieldKey, JsonableTree } from "../tree";
 import { brand } from "../util";
-import { cursorToJsonObject } from "../domains";
 
-export const jsonCompatibleCursorTestCases: [string, Jsonable][] = [
-    ["null", [null]],
-    ["boolean", [true, false]],
-    ["integer", [Number.MIN_SAFE_INTEGER - 1, 0, Number.MAX_SAFE_INTEGER + 1]],
-    ["finite", [-Number.MAX_VALUE, -Number.MIN_VALUE, -0, Number.MIN_VALUE, Number.MAX_VALUE]],
-    ["non-finite", [NaN, -Infinity, +Infinity]],
-    ["string", ["", "\\\"\b\f\n\r\t", "😀"]],
-    ["object", [
-        {},
-        { one: "field" },
-        { nested: { depth: 1 } },
-        { a: {}, b: {} },
-        { b: { c: 6 } },
-        { a: {}, b: { c: 6 } },
-    ]],
-    ["array", [[], ["oneItem"], [["nested depth 1"]]]],
-    ["composite", [
-        { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [] }] },
-        [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", {}] }],
-    ]],
-    ["siblings restored on up", [{
-        X: [
-            {
-                // Inner node so that when navigating up from it,
-                // The cursor's siblings value needs to be restored.
-                q: [{}],
-            },
-            {},
-        ],
-    }]],
+export const cursorTestCases: [string, JsonableTree][] = [
+    ["minimal", { type: brand("Foo") }],
+    ["true boolean", { type: brand("Foo"), value: true }],
+    ["false boolean", { type: brand("Foo"), value: true }],
+    ["integer", { type: brand("Foo"), value: Number.MIN_SAFE_INTEGER - 1 }],
+    ["string", { type: brand("Foo"), value: "test" }],
+    ["string with escaped characters", { type: brand("Foo"), value: "\\\"\b\f\n\r\t" }],
+    ["string with emoticon", { type: brand("Foo"), value: "😀" }],
+    ["nested", { type: brand("Foo"), fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] } }],
+    ["multiple fields", {
+        type: brand("Foo"),
+        fields: {
+            a: [{ type: brand("Bar") }],
+            b: [{ type: brand("Baz") }],
+        },
+    }],
+    ["double nested", {
+        type: brand("Foo"),
+        fields: {
+            b: [{
+                type: brand("Bar"),
+                fields: { c: [{ type: brand("Baz") }] },
+            }],
+        },
+    }],
+    ["complex", {
+        type: brand("Foo"),
+        fields: {
+            a: [{ type: brand("Bar") }],
+            b: [{
+                type: brand("Bar"),
+                fields: {
+                    c: [{ type: brand("Bar"), value: 6 }],
+                },
+            }],
+        },
+    }],
+    ["siblings restored on up", {
+        type: brand("Foo"),
+        fields: {
+            X: [
+                {
+                    type: brand("a"),
+                    // Inner node so that when navigating up from it,
+                    // The cursor's siblings value needs to be restored.
+                    fields: { q: [{ type: brand("b") }] },
+                },
+                { type: brand("c") },
+            ],
+        },
+    }],
 ];
 
 /**
- * Tests the provided cursor factor with Jsonable data. The cursor must be JSON compatible.
+ * Tests the provided cursor factory with JsonableTree data. The cursor must be JSON compatible.
  * @param suiteName - The name of the test suite to create.
  * @param factory - Creates the cursor to be tested with or without provided data.
- * @param checkAdditionalRoundTripRequirements - Extract the contents of the given ITreeCursor as the original data
- *                                               type. Assumes that ITreeCursor contains only unaugmented JsonTypes.
+ * @param dataFromCursor - Gets a JsonableTree from the provided cursor.
  */
-export function testJsonCompatibleCursor<T>(
+export function testJsonCompatibleCursor(
     suiteName: string,
-    factory: (data?: Jsonable) => ITreeCursor,
-    checkAdditionalRoundTripRequirements?: (clone: Jsonable, expected: Jsonable) => void,
+    factory: (data: JsonableTree) => ITreeCursor,
+    dataFromCursor: (cursor: ITreeCursor) => JsonableTree,
 ): void {
-    describe(`${suiteName} cursor implementation`, () => {
+    describe.only(`${suiteName} cursor implementation`, () => {
         describe("extract roundtrip", () => {
-            for (const [name, testValues] of jsonCompatibleCursorTestCases) {
-                for (const expected of testValues) {
-                    it(`${name}: ${JSON.stringify(expected)}`, () => {
-                        const cursor = factory(expected);
+            for (const [name, data] of cursorTestCases) {
+                it(`${name}: ${JSON.stringify(data)}`, () => {
+                    // const cursor = factory(expected);
 
-                        assert.deepEqual(cursorToJsonObject(cursor), expected,
-                            `${suiteName} results must match source.`);
+                    // assert.deepEqual(dataFromCursor(cursor), expected,
+                    //     `${suiteName} results must match source.`);
 
-                        // Read tree a second time to verify that the previous traversal returned the cursor's
-                        // internal state machine to the root (i.e., stacks should be empty.)
-                        const secondResult = cursorToJsonObject(cursor);
-                        assert.deepEqual(secondResult, expected,
-                            `${suiteName} must return same results on second traversal.`);
+                    // // Read tree a second time to verify that the previous traversal returned the cursor's
+                    // // internal state machine to the root (i.e., stacks should be empty.)
+                    // const clone = dataFromCursor(cursor);
+                    // assert.deepEqual(clone, expected,
+                    //     `${suiteName} must return same results on second traversal.`);
 
-                        checkAdditionalRoundTripRequirements?.call(undefined, secondResult, expected);
-                    });
-                }
+                    const cursor = factory(data);
+                    const clone = dataFromCursor(cursor);
+                    assert.deepEqual(clone, data);
+                    // Check objects are actually json compatible
+                    const text = JSON.stringify(clone);
+                    const parsed = JSON.parse(text);
+                    assert.deepEqual(parsed, data);
+                });
             }
+        });
+
+        it("up from root", () => {
+            const cursor = factory({ type: brand("Foo") });
+            assert.equal(cursor.up(), TreeNavigationResult.NotFound);
         });
 
         describe("keys", () => {
             it("object", () => {
-                assert.deepEqual([...factory({}).keys], []);
-                assert.deepEqual([...factory({}).keys], []);
-                assert.deepEqual([...factory({ x: {} }).keys], ["x"]);
-                assert.deepEqual(new Set(factory({ x: {}, test: 6 }).keys), new Set(["x", "test"]));
+                assert.deepEqual([...factory({ type: brand("Foo") }).keys], []);
+                assert.deepEqual([...factory({
+                    type: brand("Foo"),
+                    fields: { x: [{ type: brand("Bar") }] },
+                }).keys], ["x"]);
+                assert.deepEqual(
+                    new Set(factory({
+                        type: brand("Foo"),
+                        fields: { x: [{ type: brand("Bar") }], test: [{ type: brand("Bar"), value: 6 }] },
+                    }).keys),
+                    new Set(["x", "test"]),
+                );
             });
 
             it("array", () => {
                 // TODO: should empty arrays report this key?
-                assert.deepEqual([...factory([]).keys], [EmptyKey]);
-                assert.deepEqual([...factory([0]).keys], [EmptyKey]);
-                assert.deepEqual([...factory(["test", {}]).keys], [EmptyKey]);
+                assert.deepEqual([...factory({ type: brand("Foo"), fields: { [EmptyKey]: [] } }).keys], [EmptyKey]);
+                assert.deepEqual(
+                    [...factory({
+                        type: brand("Foo"),
+                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }] },
+                    }).keys],
+                    [EmptyKey],
+                );
+                assert.deepEqual(
+                    [...factory({
+                        type: brand("Foo"),
+                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: "test" }, { type: brand("Bar") }] },
+                    }).keys],
+                    [EmptyKey],
+                );
             });
 
             it("string", () => {
-                assert.deepEqual([...factory("").keys], []);
-                assert.deepEqual([...factory("test").keys], []);
+                assert.deepEqual([...factory({ type: brand("Foo"), value: "" }).keys], []);
+                assert.deepEqual([...factory({ type: brand("Foo"), value: "test" }).keys], []);
             });
 
             it("number", () => {
-                assert.deepEqual([...factory(0).keys], []);
-                assert.deepEqual([...factory(6.5).keys], []);
+                assert.deepEqual([...factory({ type: brand("Foo"), value: 0 }).keys], []);
+                assert.deepEqual([...factory({ type: brand("Foo"), value: 6.5 }).keys], []);
             });
 
             it("boolean", () => {
-                assert.deepEqual([...factory(false).keys], []);
-                assert.deepEqual([...factory(true).keys], []);
+                assert.deepEqual([...factory({ type: brand("Foo"), value: false }).keys], []);
+                assert.deepEqual([...factory({ type: brand("Foo"), value: true }).keys], []);
             });
         });
 
@@ -117,7 +164,10 @@ export function testJsonCompatibleCursor<T>(
 
                 tests.forEach(([name, key]) => {
                     it(`permits offset of zero with ${name} map key`, () => {
-                        const cursor = factory({ [key as string]: 0 });
+                        const cursor = factory({
+                            type: brand("Foo"),
+                            fields: { [key as string]: [{ type: brand("Bar"), value: 0 }] },
+                        });
                         assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
                         assert.equal(cursor.value, 0);
                         assert.deepEqual(cursor.seek(0), TreeNavigationResult.Ok);
@@ -125,7 +175,10 @@ export function testJsonCompatibleCursor<T>(
                     });
 
                     it(`disallows non-zero offset with ${name} map key`, () => {
-                        const cursor = factory({ [key as string]: 0 });
+                        const cursor = factory({
+                            type: brand("Foo"),
+                            fields: { [key as string]: [{ type: brand("Bar"), value: 0 }] },
+                        });
                         assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
                         assert.equal(cursor.value, 0);
                         assert.deepEqual(cursor.seek(1), TreeNavigationResult.NotFound);
@@ -138,7 +191,10 @@ export function testJsonCompatibleCursor<T>(
 
             describe("with array-like node", () => {
                 it(`can seek forward`, () => {
-                    const cursor = factory([0, 1]);
+                    const cursor = factory({
+                        type: brand("Foo"),
+                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                    });
                     assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
                     assert.deepEqual(cursor.seek(1), TreeNavigationResult.Ok);
@@ -146,7 +202,10 @@ export function testJsonCompatibleCursor<T>(
                 });
 
                 it(`can seek backward`, () => {
-                    const cursor = factory([0, 1]);
+                    const cursor = factory({
+                        type: brand("Foo"),
+                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                    });
                     assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 1);
                     assert.deepEqual(cursor.seek(-1), TreeNavigationResult.Ok);
@@ -154,7 +213,10 @@ export function testJsonCompatibleCursor<T>(
                 });
 
                 it(`can not seek past end of array`, () => {
-                    const cursor = factory([0, 1]);
+                    const cursor = factory({
+                        type: brand("Foo"),
+                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                    });
                     assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 1);
                     assert.deepEqual(cursor.seek(1), TreeNavigationResult.NotFound);
@@ -162,7 +224,10 @@ export function testJsonCompatibleCursor<T>(
                 });
 
                 it(`can not seek before beginning of array`, () => {
-                    const cursor = factory([0, 1]);
+                    const cursor = factory({
+                        type: brand("Foo"),
+                        fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                    });
                     assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
                     assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
@@ -192,7 +257,10 @@ export function testJsonCompatibleCursor<T>(
             }
 
             it("Missing key in map returns NotFound", () => {
-                const cursor = factory({ [foundKey as string]: true });
+                const cursor = factory({
+                    type: brand("Foo"),
+                    fields: { [foundKey as string]: [{ type: brand("Bar"), value: true }] },
+                });
                 expectNotFound(cursor, notFoundKey);
 
                 // A failed navigation attempt should leave the cursor in a valid state.  Verify
@@ -201,7 +269,10 @@ export function testJsonCompatibleCursor<T>(
             });
 
             it("Out of bounds map index returns NotFound", () => {
-                const cursor = factory({ [foundKey as string]: true });
+                const cursor = factory({
+                    type: brand("Foo"),
+                    fields: { [foundKey as string]: [{ type: brand("Bar"), value: true }] },
+                });
                 expectNotFound(cursor, foundKey, 1);
 
                 // A failed navigation attempt should leave the cursor in a valid state.  Verify
@@ -210,12 +281,15 @@ export function testJsonCompatibleCursor<T>(
             });
 
             it("Empty array must not contain 0th item", () => {
-                const cursor = factory([]);
+                const cursor = factory({ type: brand("Foo"), fields: { [EmptyKey]: [] } });
                 expectNotFound(cursor, EmptyKey, 0);
             });
 
             it("Out of bounds array index returns NotFound", () => {
-                const cursor = factory([0, 1]);
+                const cursor = factory({
+                    type: brand("Foo"),
+                    fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                });
                 expectNotFound(cursor, EmptyKey, -1);
                 expectNotFound(cursor, EmptyKey, 2);
 
@@ -258,7 +332,7 @@ function traverseNode(cursor: ITreeCursor) {
 export function testCursors(
     suiteName: string,
     cursors: { cursorName: string; cursor: ITreeCursor; }[]) {
-    describe(`${suiteName} cursor functionality`, () => {
+    describe.only(`${suiteName} cursor functionality`, () => {
         for (const { cursorName, cursor } of cursors) {
             describe(`${cursorName}`, () => {
                 it("tree can be traversed", () => {
