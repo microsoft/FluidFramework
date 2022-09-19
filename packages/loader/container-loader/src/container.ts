@@ -91,7 +91,7 @@ import { ContainerContext } from "./containerContext";
 import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
+import { ILoaderOptions, ILoaderServices, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import {
     IConnectionStateHandler,
@@ -277,7 +277,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load an existing container.
      */
     public static async load(
-        loader: Loader,
+        loader: Loader | ILoaderServices,
         loadOptions: IContainerLoadOptions,
         pendingLocalState?: IPendingContainerState,
         protocolHandlerBuilder?: ProtocolHandlerBuilder,
@@ -336,7 +336,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Create a new container in a detached state.
      */
     public static async createDetached(
-        loader: Loader,
+        loader: Loader | ILoaderServices,
         codeDetails: IFluidCodeDetails,
         protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
@@ -360,7 +360,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * snapshot from a previous detached container.
      */
     public static async rehydrateDetachedFromSnapshot(
-        loader: Loader,
+        loader: Loader | ILoaderServices,
         snapshot: string,
         protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
@@ -559,14 +559,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._dirtyContainer;
     }
 
-    private get serviceFactory() { return this.loader.services.documentServiceFactory; }
-    private get urlResolver() { return this.loader.services.urlResolver; }
+    private get serviceFactory() { return this.loaderServices.documentServiceFactory; }
+    private get urlResolver() { return this.loaderServices.urlResolver; }
     public readonly options: ILoaderOptions;
-    private get scope() { return this.loader.services.scope; }
-    private get codeLoader() { return this.loader.services.codeLoader; }
+    private get scope() { return this.loaderServices.scope; }
+    private get codeLoader() { return this.loaderServices.codeLoader; }
+
+    private readonly loaderServices: ILoaderServices;
+    private readonly loader?: Loader;
 
     constructor(
-        private readonly loader: Loader,
+        private readonly loaderOrLoaderServices: Loader | ILoaderServices,
         config: IContainerConfig,
         private readonly protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ) {
@@ -578,6 +581,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 error);
         });
+
+        // Split the parameter with a union type (ILoaderServices was added later as an alternative for
+        // scenarios where a full ILoader is not really necessary) into a variable for each. Loader can be
+        // left undefined if only ILoaderServices was provided in the constructor.
+        const maybeLoaderMaybeServices = this.loaderOrLoaderServices as Loader & ILoaderServices;
+        this.loaderServices = maybeLoaderMaybeServices.services !== undefined
+            ? maybeLoaderMaybeServices.services
+            : maybeLoaderMaybeServices;
+        this.loader = maybeLoaderMaybeServices.services !== undefined ? maybeLoaderMaybeServices : undefined;
 
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._resolvedUrl = config.resolvedUrl;
@@ -593,7 +605,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
-            loader.services.subLogger,
+            this.loaderServices.subLogger,
             undefined,
             {
                 all: {
@@ -630,10 +642,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const summarizeProtocolTree =
             this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree")
-            ?? this.loader.services.options.summarizeProtocolTree;
+            ?? this.loaderServices.options.summarizeProtocolTree;
 
         this.options = {
-            ... this.loader.services.options,
+            ... this.loaderServices.options,
             summarizeProtocolTree,
         };
 
@@ -654,7 +666,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     }
                 },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
-                maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
+                maxClientLeaveWaitTime: this.loaderServices.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
@@ -676,8 +688,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._storage = new ContainerStorageAdapter(
             () => {
                 if (this.attachState !== AttachState.Attached) {
-                    if (this.loader.services.detachedBlobStorage !== undefined) {
-                        return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.mc.logger);
+                    if (this.loaderServices.detachedBlobStorage !== undefined) {
+                        return new BlobOnlyStorage(this.loaderServices.detachedBlobStorage, this.mc.logger);
                     }
                     this.mc.logger.sendErrorEvent({
                         eventName: "NoRealStorageInDetachedContainer",
@@ -842,7 +854,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const protocolSummary = this.captureProtocolSummary();
         const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
-        if (this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0) {
+        if (this.loaderServices.detachedBlobStorage && this.loaderServices.detachedBlobStorage.size > 0) {
             combinedSummary.tree[".hasAttachmentBlobs"] = { type: SummaryType.Blob, content: "true" };
         }
         return JSON.stringify(combinedSummary);
@@ -861,8 +873,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.attachStarted = true;
 
             // If attachment blobs were uploaded in detached state we will go through a different attach flow
-            const hasAttachmentBlobs = this.loader.services.detachedBlobStorage !== undefined
-                && this.loader.services.detachedBlobStorage.size > 0;
+            const hasAttachmentBlobs = this.loaderServices.detachedBlobStorage !== undefined
+                && this.loaderServices.detachedBlobStorage.size > 0;
 
             try {
                 assert(this.deltaManager.inbound.length === 0,
@@ -911,17 +923,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                 if (hasAttachmentBlobs) {
                     // upload blobs to storage
-                    assert(!!this.loader.services.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
+                    assert(!!this.loaderServices.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
 
                     // build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
                     // support blob handles that only know about the local IDs
                     const redirectTable = new Map<string, string>();
                     // if new blobs are added while uploading, upload them too
-                    while (redirectTable.size < this.loader.services.detachedBlobStorage.size) {
-                        const newIds = this.loader.services.detachedBlobStorage.getBlobIds().filter(
+                    while (redirectTable.size < this.loaderServices.detachedBlobStorage.size) {
+                        const newIds = this.loaderServices.detachedBlobStorage.getBlobIds().filter(
                             (id) => !redirectTable.has(id));
                         for (const id of newIds) {
-                            const blob = await this.loader.services.detachedBlobStorage.readBlob(id);
+                            const blob = await this.loaderServices.detachedBlobStorage.readBlob(id);
                             const response = await this.storageService.createBlob(blob);
                             redirectTable.set(id, response.id);
                         }
@@ -1304,7 +1316,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
         if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
-            assert(!!this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0,
+            assert(!!this.loaderServices.detachedBlobStorage && this.loaderServices.detachedBlobStorage.size > 0,
                 0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */);
             delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
         }
