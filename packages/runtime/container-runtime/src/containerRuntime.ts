@@ -2690,19 +2690,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             //    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
-            if (this._flushMode === FlushMode.TurnBased && type === ContainerMessageType.Attach &&
+            if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
                     this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
                 this.flushBatch([message]);
             } else {
                 this.batchManager.push(message);
-                if (this._flushMode !== FlushMode.TurnBased) {
+                if (!this.currentlyBatching()) {
                     this.flush();
-                } else if (!this.flushTrigger) {
-                    this.flushTrigger = true;
+                } else if (!this.flushMicroTaskExists) {
+                    this.flushMicroTaskExists = true;
                     // Queue a microtask to detect the end of the turn and force a flush.
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     Promise.resolve().then(() => {
-                        this.flushTrigger = false;
+                        this.flushMicroTaskExists = false;
                         this.flush();
                     });
                 }
@@ -2710,18 +2710,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } catch (error) {
             this.closeFn(error as GenericError);
             throw error;
-        }
-
-        if (!this.currentlyBatching()) {
-            this.flush();
-        } else if (!this.flushMicroTaskExists) {
-            this.flushMicroTaskExists = true;
-            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.resolve().then(() => {
-                this.flushMicroTaskExists = false;
-                this.flush();
-            });
         }
 
         if (this.isContainerMessageDirtyable(type, contents)) {
