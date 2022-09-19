@@ -105,17 +105,18 @@ The vast majority of these options have default values that have been crafted to
 
 ### Hackathon TODOs
 
-- Split doc domain node types into separate files
-- Implement ApiItem/DocNode -> Document Domain (Josh)
-  - Default implementation library (like our current RenderingHelpers.ts / TableRenderingHelpers.ts)
-  - Policy configuration object
-  - "Unit" tests!
-- Implement Document Domain sink (Justin)
-  - Default implementation library (like our current emitter)
-  - Policy configuration object
-  - Unit tests!
-- Update end-to-end tests
-- Remove old gunk
+-   Split doc domain node types into separate files
+-   Implement ApiItem/DocNode -> Document Domain (Josh)
+    -   Default implementation library (like our current RenderingHelpers.ts / TableRenderingHelpers.ts)
+    -   Policy configuration object
+    -   "Unit" tests!
+-   Implement Document Domain sink (Justin)
+    -   Default implementation library (like our current emitter)
+    -   Policy configuration object
+    -   Unit tests!
+-   Update end-to-end tests
+-   Remove old gunk
+-   Ensure everything is documented (with examples where appropriate)
 
 ### Known Bugs
 
