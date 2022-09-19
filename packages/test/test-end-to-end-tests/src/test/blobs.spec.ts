@@ -180,7 +180,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
             const props = sharedString2.getPropertiesAtPosition(0);
 
-            assert.strictEqual(bufferToString(await props.blob.get(), "utf-8"), testString);
+            assert.strictEqual(bufferToString(await props?.blob.get(), "utf-8"), testString);
         }
     });
 
