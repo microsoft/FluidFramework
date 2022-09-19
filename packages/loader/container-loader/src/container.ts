@@ -93,7 +93,10 @@ import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { ConnectionStateHandler } from "./connectionStateHandler";
+import {
+    IConnectionStateHandler,
+    createConnectionStateHandler,
+} from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
@@ -392,7 +395,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Only transition states if currently loading
         if (this._lifecycleState === "loading") {
             // Propagate current connection state through the system.
-            this.propagateConnectionState();
+            this.propagateConnectionState(true /* initial transition */);
             this._lifecycleState = "loaded";
         }
     }
@@ -448,7 +451,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private lastVisible: number | undefined;
     private readonly visibilityEventHandler: (() => void) | undefined;
-    private readonly connectionStateHandler: ConnectionStateHandler;
+    private readonly connectionStateHandler: IConnectionStateHandler;
 
     private setAutoReconnectTime = performance.now();
 
@@ -490,7 +493,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get connected(): boolean {
-        return this.connectionStateHandler.connected;
+        return this.connectionStateHandler.connectionState === ConnectionState.Connected;
     }
 
     /**
@@ -501,12 +504,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.serviceConfiguration;
     }
 
+    private _clientId: string | undefined;
+
     /**
      * The server provided id of the client.
      * Set once this.connected is true, otherwise undefined
      */
     public get clientId(): string | undefined {
-        return this.connectionStateHandler.clientId;
+        return this._clientId;
     }
 
     /**
@@ -632,11 +637,22 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             summarizeProtocolTree,
         };
 
-        this.connectionStateHandler = new ConnectionStateHandler(
+        this._deltaManager = this.createDeltaManager();
+
+        this._clientId = config.serializedContainerState?.clientId;
+        this.connectionStateHandler = createConnectionStateHandler(
             {
+                logger: this.mc.logger,
                 quorumClients: () => this._protocolHandler?.quorum,
-                logConnectionStateChangeTelemetry: (value, oldState, reason) =>
-                    this.logConnectionStateChangeTelemetry(value, oldState, reason),
+                connectionStateChanged: (value, oldState, reason) => {
+                    if (value === ConnectionState.Connected) {
+                        this._clientId = this.connectionStateHandler.pendingClientId;
+                    }
+                    this.logConnectionStateChangeTelemetry(value, oldState, reason);
+                    if (this._lifecycleState === "loaded") {
+                        this.propagateConnectionState(false /* initial transition */);
+                    }
+                },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
@@ -648,22 +664,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
                 },
-                connectionStateChanged: () => {
-                    // Fire events only if container is fully loaded and not closed
-                    if (this._lifecycleState === "loaded") {
-                        this.propagateConnectionState();
-                    }
-                },
             },
-            this.mc.logger,
-            config.serializedContainerState?.clientId,
+            this.deltaManager,
+            this._clientId,
         );
 
         this.on(savedContainerEvent, () => {
             this.connectionStateHandler.containerSaved();
         });
 
-        this._deltaManager = this.createDeltaManager();
         this._storage = new ContainerStorageAdapter(
             () => {
                 if (this.attachState !== AttachState.Attached) {
@@ -936,8 +945,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._attachState = AttachState.Attached;
                 this.emit("attached");
 
-                // Propagate current connection state through the system.
-                this.propagateConnectionState();
                 if (!this.closed) {
                     this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
                 }
@@ -1556,15 +1563,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
             }
 
-            const deltaManagerForCatchingUp =
-                this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true ?
-                    this.deltaManager
-                    : undefined;
-
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,
-                deltaManagerForCatchingUp,
             );
         });
 
@@ -1665,7 +1666,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private propagateConnectionState() {
+    private propagateConnectionState(initialTransition: boolean) {
+        // When container loaded, we want to propagate initial connection state.
+        // After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
+        // This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
+        if (!initialTransition &&
+                this.connectionState !== ConnectionState.Connected &&
+                this.connectionState !== ConnectionState.Disconnected) {
+            return;
+        }
+        const state = this.connectionState === ConnectionState.Connected;
+
         const logOpsOnReconnect: boolean =
             this.connectionState === ConnectionState.Connected &&
             !this.firstConnection &&
@@ -1673,8 +1684,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-
-        const state = this.connectionState === ConnectionState.Connected;
 
         // Both protocol and context should not be undefined if we got so far.
 
