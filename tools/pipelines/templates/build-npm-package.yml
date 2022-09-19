@@ -265,9 +265,6 @@ stages:
                 command: 'custom'
                 workingDir: ${{ parameters.buildDirectory }}
                 customCommand: 'run ci:test:coverage'
-            # Some webpacked file using externals introduce file name with quotes in them
-            # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
-            # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
             - task: Bash@3
               displayName: 'Check for nyc/report directory'
               inputs:
