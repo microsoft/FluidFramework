@@ -341,7 +341,7 @@ export class TestClient extends Client {
             && segoff.offset !== undefined
             && this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
 
-        assert.equal(fastPathSegment, segoff.segment || undefined, "Unequal rebasePosition computed segments");
+        assert.equal(fastPathSegment, segoff.segment ?? undefined, "Unequal rebasePosition computed segments");
         assert.equal(fastPathResult, slowPathResult, "Unequal rebasePosition results");
         return fastPathResult;
     }

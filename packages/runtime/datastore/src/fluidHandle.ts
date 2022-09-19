@@ -29,15 +29,19 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
          * should be enough for a handle. However, there are scenarios where the object becomes locally visible but the
          * handle does not know this - This will happen is attachGraph is never called on the handle. Couple of examples
          * where this can happen:
+         *
          * 1. Handles to DDS other than the default handle won't know if the DDS becomes visible after the handle was
-         *    created.
+         * created.
+         *
          * 2. Handles to root data stores will never know that it was visible because the handle will not be stores in
-         *    another DDS and so, attachGraph will never be called on it.
+         * another DDS and so, attachGraph will never be called on it.
          */
         return this.isAttached || this.locallyVisible;
     }
 
-    // Tracks whether this handle is locally visible in the container.
+    /**
+     * Tracks whether this handle is locally visible in the container.
+     */
     private locallyVisible: boolean = false;
 
     /**

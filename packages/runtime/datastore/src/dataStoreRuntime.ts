@@ -269,10 +269,12 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         /**
          * If existing flag is false, this is a new data store and is not visible. The existing flag can be true in two
          * conditions:
+         *
          * 1. It's a local data store that is created when a detached container is rehydrated. In this case, the data
-         *    store is locally visible because the snapshot it is loaded from contains locally visible data stores only.
+         * store is locally visible because the snapshot it is loaded from contains locally visible data stores only.
+         *
          * 2. It's a remote data store that is created when an attached container is loaded is loaded from snapshot or
-         *    when an attach op comes in. In both these cases, the data store is already globally visible.
+         * when an attach op comes in. In both these cases, the data store is already globally visible.
          */
         if (existing) {
             this.visibilityState = dataStoreContext.attachState === AttachState.Detached
@@ -418,11 +420,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     /**
      * This function is called when a data store becomes root. It does the following:
+     *
      * 1. Marks the data store locally visible in the container.
+     *
      * 2. Attaches the graph of all the handles bound to it.
+     *
      * 3. Calls into the data store context to mark it visible in the container too. If the container is globally
-     *    visible, it will mark us globally visible. Otherwise, it will mark us globally visible when it becomes
-     *    globally visible.
+     * visible, it will mark us globally visible. Otherwise, it will mark us globally visible when it becomes
+     * globally visible.
      */
     public makeVisibleAndAttachGraph() {
         if (this.visibilityState !== VisibilityState.NotVisible) {
@@ -599,11 +604,15 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * Generates data used for garbage collection. This includes a list of GC nodes that represent this channel
      * including any of its child channel contexts. Each node has a set of outbound routes to other GC nodes in the
      * document. It does the following:
+     *
      * 1. Calls into each child context to get its GC data.
+     *
      * 2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
-     *    identified as belonging to the child.
+     * identified as belonging to the child.
+     *
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
-     *    the GC data of this channel.
+     * the GC data of this channel.
+     *
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
@@ -715,21 +724,21 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
          * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
          * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
          * before visibility state was added, this may not have been the case and getAttachSummary() could be called:
-         * 1) Before attaching the data store - When a detached container is attached.
-         * 2) After attaching the data store - When a data store is created and bound in an attached container.
+         *
+         * 1. Before attaching the data store - When a detached container is attached.
+         *
+         * 2. After attaching the data store - When a data store is created and bound in an attached container.
          *
          * The basic idea is that all local object should become locally visible before they are globally visible.
          */
         this.attachGraph();
 
-        /**
-         * This assert cannot be added now due to back-compat. To be uncommented when the following issue is fixed -
-         * https://github.com/microsoft/FluidFramework/issues/9688.
-         *
-         * assert(this.visibilityState === VisibilityState.LocallyVisible,
-         *   "The data store should be locally visible when generating attach summary",
-         * );
-         */
+        // This assert cannot be added now due to back-compat. To be uncommented when the following issue is fixed -
+        // https://github.com/microsoft/FluidFramework/issues/9688.
+        //
+        // assert(this.visibilityState === VisibilityState.LocallyVisible,
+        //  "The data store should be locally visible when generating attach summary",
+        // );
 
         const summaryBuilder = new SummaryTreeBuilder();
 
