@@ -8,7 +8,7 @@ import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/pro
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
-import { isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
@@ -20,10 +20,12 @@ type IRuntimeMessageMetadata = undefined | {
 
 /**
  * This class has the following responsibilities:
+ *
  * 1. It tracks batches as we process ops and raises "batchBegin" and "batchEnd" events.
- *    As part of it, it validates batch correctness (i.e. no system ops in the middle of batch)
+ * As part of it, it validates batch correctness (i.e. no system ops in the middle of batch)
+ *
  * 2. It creates instance of ScheduleManagerCore that ensures we never start processing ops from batch
- *    unless all ops of the batch are in.
+ * unless all ops of the batch are in.
  */
 export class ScheduleManager {
     private readonly deltaScheduler: DeltaScheduler;
@@ -52,11 +54,7 @@ export class ScheduleManager {
             this.deltaScheduler.batchBegin(message);
 
             const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
-            if (batch) {
-                this.batchClientId = message.clientId;
-            } else {
-                this.batchClientId = undefined;
-            }
+            this.batchClientId = batch ? message.clientId : undefined;
         }
     }
 
@@ -234,7 +232,7 @@ class ScheduleManagerCore {
         const batchMetadata = metadata?.batch;
 
         // Protocol messages are never part of a runtime batch of messages
-        if (!isUnpackedRuntimeMessage(message)) {
+        if (!isRuntimeMessage(message)) {
             // Protocol messages should never show up in the middle of the batch!
             assert(this.currentBatchClientId === undefined, 0x29a /* "System message in the middle of batch!" */);
             assert(batchMetadata === undefined, 0x29b /* "system op in a batch?" */);

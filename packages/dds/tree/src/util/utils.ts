@@ -92,3 +92,49 @@ export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
     }
     return true;
 }
+
+/**
+ * Utility for dictionaries whose values are lists.
+ * Gets the list associated with the provided key, if it exists.
+ * Otherwise, creates an entry with an empty list, and returns that list.
+ */
+ export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
+	let collection = map.get(key);
+	if (collection === undefined) {
+		collection = [];
+		map.set(key, collection);
+	}
+	return collection;
+}
+
+/**
+ * Use for Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+
+/**
+ * Use for Json object compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleObject = { [P in string]: JsonCompatible; };
+
+/**
+ * Use for readonly view of Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleReadOnly =
+    | string
+    | number
+    | boolean
+    // eslint-disable-next-line @rushstack/no-new-null
+    | null
+    | readonly JsonCompatibleReadOnly[]
+    | { readonly [P in string]: JsonCompatibleReadOnly | undefined; };

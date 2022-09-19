@@ -49,6 +49,8 @@ import {
  * it is not the focus of this design since such users have strictly less implementation constraints.
  *
  * TODO: could implement more fine grained dependency tracking.
+ *
+ * @sealed
  */
 export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
     extends SimpleDependee implements SchemaData {
@@ -75,10 +77,8 @@ export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
     ) {
         super();
         if (data !== undefined) {
-            this.data = {
-                treeSchema: new Map(this.data.treeSchema),
-                globalFieldSchema: new Map(this.data.globalFieldSchema),
-            };
+            this.data.treeSchema = new Map(data.treeSchema);
+            this.data.globalFieldSchema = new Map(data.globalFieldSchema);
         }
     }
 

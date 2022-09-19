@@ -13,9 +13,11 @@ import {
 
 /**
  * This storage service provides the following functionalities:
+ *
  * - It can be used to load a container with a saved snapshot in `IFileSnapshot` format.
+ *
  * - When a snapshot is written, it calls a callback and provide the snapshot to it in `IFileSnapshot` format. The
- *   callback should be provided when creating the storage service.
+ * callback should be provided when creating the storage service.
  */
 export class SnapshotStorageService extends FileSnapshotReader implements IDocumentStorageService {
     public constructor(

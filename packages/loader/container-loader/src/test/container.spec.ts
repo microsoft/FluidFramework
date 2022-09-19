@@ -16,7 +16,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Container, waitContainerToCatchUp } from "../container";
 import { Loader } from "../loader";
-import { CatchUpMonitor, ImmediateCatchUpMonitor } from "../catchUpMonitor";
+import { CatchUpMonitor } from "../catchUpMonitor";
 import { ConnectionState } from "../connectionState";
 
 class MockDeltaManager
@@ -77,16 +77,6 @@ describe("Container", () => {
 
             const catchUpMonitor = (container as any).connectionStateHandler.catchUpMonitor;
             assert(catchUpMonitor instanceof CatchUpMonitor);
-        });
-
-        it("Fluid.Container.CatchUpBeforeDeclaringConnected undefined, use ImmediateCatchUpMonitor", () => {
-            const container = new Container({ services: { options: {} } } as Loader, {});
-            const deltaManager: any = container.deltaManager;
-            deltaManager.connectionManager.connection = {}; // Avoid assert 0x0df
-            (deltaManager as EventEmitter).emit("connect", { clientId: "someClientId" });
-
-            const catchUpMonitor = (container as any).connectionStateHandler.catchUpMonitor;
-            assert(catchUpMonitor instanceof ImmediateCatchUpMonitor);
         });
     });
 

@@ -772,24 +772,20 @@ const _processValidationResults = function(in_template: PropertySchema) {
                         error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data
                             } does not match that pattern`;
                     } else if ("pattern" && regexTypeId.test(error.dataPath)) {
-                        if (error.schemaPath === "#/definitions/typed-reference-typeid/pattern") {
-                            error.message = "";
-                        } else {
-                            error.message = `${error.dataPath} should follow this pattern: <namespace>:<typeid>-<version> ` +
+                        error.message = error.schemaPath === "#/definitions/typed-reference-typeid/pattern"
+                            ? ""
+                            : `${error.dataPath} should follow this pattern: <namespace>:<typeid>-<version> ` +
                                 `(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
                                 `Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
                                 `Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
                                 `RelationshipProperty). '${error.data}' is not valid`;
-                        }
                     }
                     break;
 
                 case "enum":
-                    if (regexTypeId.test(error.dataPath)) {
-                        error.message = "";
-                    } else {
-                        error.message = `${error.dataPath} should match one of the following: ${error.schema}`;
-                    }
+                    error.message = regexTypeId.test(error.dataPath)
+                        ? ""
+                        : `${error.dataPath} should match one of the following: ${error.schema}`;
                     break;
 
                 case "type":
@@ -958,7 +954,7 @@ const Utils = {
 };
 
 /**
- *  @description Instantiates a new TemplateValidator. Must be provided with a set of inheritsFrom and hasSchema
+ * Instantiates a new TemplateValidator. Must be provided with a set of inheritsFrom and hasSchema
  * function or inheritsFromAsync and hasSchemaAsync, but not both.
  */
 export class TemplateValidator {
@@ -985,26 +981,42 @@ export class TemplateValidator {
         }
     }
 
-    /**
+/**
  * Validates that all templates conform to the following mandatory rules:
+ *
  * 1. Must have a typeid attribute.
+ *
  * 2. typeid must end in a valid semver string.
+ *
  * 3. When both in_template (B) and in_templatePrevious (A) are supplied:
- *    3a. Semver is identical only if content is identical.
- *    3b. B's semver >= A's semver
+ *
+ * - 3a. Semver is identical only if content is identical.
+ *
+ * - 3b. B's semver >= A's semver
+ *
  * Additionally, the following soft rules will produce warnings when violated:
- * 3.5 Elements of sets must eventually inherit from 'NamedProperty'
+ *
+ * 3.5. Elements of sets must eventually inherit from 'NamedProperty'
+ *
  * 4. PATCH revision should be increased when _only_ the template description changes.
+ *
  * 5. Adding one or more template attributes is a MINOR change.
+ *
  * 6. Removing one or more template attributes is a MAJOR change.
+ *
  * @param in_template - The latest template version, as a JSON object.
  * @param in_templatePrevious - The previous template version, as a JSON object. Optional.
- * @returns The validation results. Example: {
+ * @returns The validation results. Example:
+ *
+ * ```json
+ * {
  *   isValid: false,
  *   errors: ['Something went wrong. Validation failed.'],
  *   warnings: ['A non-fatal warning'],
  *   typeid: 'SomeNamespace:PointID-1.0.0'
  * }
+ * ```
+ *
  * It's possible for 'isValid' to be true while 'warnings' contains one or more messages.
  */
     validate(in_template: PropertySchema, in_templatePrevious?: PropertySchema): SchemaValidationResult {
@@ -1090,24 +1102,40 @@ export class TemplateValidator {
 
     /**
      * Validates that all templates conform to the following mandatory rules:
+     *
      * 1. Must have a typeid attribute.
+     *
      * 2. typeid must end in a valid semver string.
+     *
      * 3. When both in_template (B) and in_templatePrevious (A) are supplied:
-     *    3a. Semver is identical only if content is identical.
-     *    3b. B's semver >= A's semver
+     *
+     * - 3a. Semver is identical only if content is identical.
+     *
+     * - 3b. B's semver >= A's semver
+     *
      * Additionally, the following soft rules will produce warnings when violated:
-     * 3.5 Elements of sets must eventually inherit from 'NamedProperty'
+     *
+     * 3.5. Elements of sets must eventually inherit from 'NamedProperty'
+     *
      * 4. PATCH revision should be increased when _only_ the template description changes.
+     *
      * 5. Adding one or more template attributes is a MINOR change.
+     *
      * 6. Removing one or more template attributes is a MAJOR change.
+     *
      * @param in_template - The latest template version, as a JSON object.
      * @param in_templatePrevious - The previous template version, as a JSON object. Optional.
-     * @returns A promise that resolves to the validation results as an object. Example: {
+     * @returns A promise that resolves to the validation results as an object. Example:
+     *
+     * ```json
+     * {
      *   isValid: false,
      *   errors: ['Something went wrong. Validation failed.'],
      *   warnings: ['A non-fatal warning'],
      *   typeid: 'SomeNamespace:PointID-1.0.0'
      * }
+     * ```
+     *
      * It's possible for 'isValid' to be true while 'warnings' contains one or more messages.
      */
     async validateAsync(in_template: PropertySchema, in_templatePrevious?: PropertySchema): Promise<SchemaValidationResult> {
