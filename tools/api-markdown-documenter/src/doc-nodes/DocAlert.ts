@@ -3,19 +3,9 @@
  * Licensed under the MIT License.
  */
 import { DocNode, IDocNodeParameters } from "@microsoft/tsdoc";
+import { DocAlertType } from "../documentation-domain";
 
 import { CustomDocNodeKind } from "./CustomDocNodeKind";
-
-/**
- * Kind of alert.
- */
-export enum DocAlertType {
-    Tip = "Tip",
-    Note = "Note",
-    Important = "Important",
-    Warning = "Warning",
-    Danger = "Danger",
-}
 
 /**
  * Constructor parameters for {@link DocAlert}.
