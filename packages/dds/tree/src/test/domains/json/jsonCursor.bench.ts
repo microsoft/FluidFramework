@@ -13,8 +13,9 @@ import {
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
 import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
-import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./json";
-import { averageLocation, sum, sumMap } from "./benchmarks";
+import { Canada, generateCanada } from "./canada";
+import { averageTwoValues, sum, sumMap } from "./benchmarks";
+import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -73,46 +74,46 @@ function bench(
             },
         });
 
-    const cursorFactories: [string, () => ITreeCursorNew][] = [
-        ["TextCursor", () => singleTextCursorNew(encodedTree)],
-        ["MapCursor", () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree)))],
-    ];
+        const cursorFactories: [string, () => ITreeCursorNew][] = [
+            ["TextCursor", () => singleTextCursorNew(encodedTree)],
+            ["MapCursor", () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree)))],
+        ];
 
-    const consumers: [
-        string,
-        (cursor: ITreeCursorNew,
-            dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any
-        ) => void,
-    ][] = [
-        // TODO: finish porting other cursor code and enable this.
-        // ["cursorToJsonObject", cursorToJsonObjectNew],
-        ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
-        ["mapTreeFromCursor", mapTreeFromCursor],
-        ["sum", sum],
-        ["sum-map", sumMap],
-        ["averageLocation", averageLocation],
-    ];
+        const consumers: [
+            string,
+            (cursor: ITreeCursorNew,
+                dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any
+            ) => void,
+        ][] = [
+                // TODO: finish porting other cursor code and enable this.
+                // ["cursorToJsonObject", cursorToJsonObjectNew],
+                ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+                ["mapTreeFromCursor", mapTreeFromCursor],
+                ["sum", sum],
+                ["sum-map", sumMap],
+                ["averageTwoValues", averageTwoValues],
+            ];
 
-    for (const [consumerName, consumer] of consumers) {
-        for (const [factoryName, factory] of cursorFactories) {
-            let cursor: ITreeCursorNew;
-            benchmark({
-                type: BenchmarkType.Measurement,
-                title: `${consumerName}(${factoryName}): '${name}'`,
-                before: () => {
-                    cursor = factory();
-                    // TODO: validate behavior
-                    // assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-                    // assert.deepEqual(
-                    //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
-                },
-                benchmarkFn: () => {
-                    consumer(cursor, dataConsumer);
-                },
-            });
+        for (const [consumerName, consumer] of consumers) {
+            for (const [factoryName, factory] of cursorFactories) {
+                let cursor: ITreeCursorNew;
+                benchmark({
+                    type: BenchmarkType.Measurement,
+                    title: `${consumerName}(${factoryName}): '${name}'`,
+                    before: () => {
+                        cursor = factory();
+                        // TODO: validate behavior
+                        // assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+                        // assert.deepEqual(
+                        //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+                    },
+                    benchmarkFn: () => {
+                        consumer(cursor, dataConsumer);
+                    },
+                });
+            }
         }
     }
-}
 }
 
 const canada = generateCanada(
@@ -122,13 +123,13 @@ const canada = generateCanada(
         : [2, 10]);
 
 function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
-    cursor.enterField(FeatureKey);
+    cursor.enterField(Canada.FeatureKey);
     cursor.enterNode(0);
     cursor.enterField(EmptyKey);
     cursor.enterNode(0);
-    cursor.enterField(GeometryKey);
+    cursor.enterField(Canada.GeometryKey);
     cursor.enterNode(0);
-    cursor.enterField(CoordinatesKey);
+    cursor.enterField(Canada.CoordinatesKey);
     cursor.enterNode(0);
 
     cursor.enterField(EmptyKey);
@@ -165,6 +166,35 @@ function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: num
     cursor.exitField();
 }
 
+function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+    cursor.enterField(TwitterStatus.statusesKey); // move from root to field
+    cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
+    cursor.enterField(EmptyKey); // enter the array field at the node,
+
+    for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
+        cursor.enterField(TwitterStatus.retweetCountKey);
+        cursor.enterNode(0);
+        const retweetCount = cursor.value as number;
+        cursor.exitNode();
+        cursor.exitField();
+
+        cursor.enterField(TwitterStatus.favoriteCountKey);
+        cursor.enterNode(0);
+        const favoriteCount = cursor.value;
+        cursor.exitNode();
+        cursor.exitField();
+        calculate(retweetCount, favoriteCount as number);
+    }
+
+    // Reset the cursor state
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+}
+
+// The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
+    bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
 });

@@ -53,11 +53,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection = false) {
-        if (in_hideCollection) {
-            return this._typeid;
-        } else {
-            return TypeIdHelper.createSerializationTypeId(this._typeid, 'map');
-        }
+        return in_hideCollection
+            ? this._typeid
+            : TypeIdHelper.createSerializationTypeId(this._typeid, 'map');
     }
 
     /**
@@ -78,7 +76,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      *
      * @param {object} in_values - to assign to the collection
      * @param {Boolean} in_typed - If the map's items have a typeid and a value then create the
-     *   properties with that typeid, else use the set's typeid (support polymorphic items).
+     * properties with that typeid, else use the set's typeid (support polymorphic items).
      * @private
      */
     _setValuesInternal(in_values, in_typed) {
@@ -211,21 +209,19 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * @protected
      */
     _resolvePathSegment(in_segment, in_segmentType) {
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-            return this._dynamicChildren[in_segment];
-        } else {
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN
+            ? this._dynamicChildren[in_segment]
+            : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(
                 this,
                 in_segment,
                 in_segmentType);
-        }
     }
 
     /**
      * Inserts a property or value into the map
      *
      * Note: This will trigger an exception when this key already exists in the map. If you want to overwrite
-     *       existing entries you can use the set function.
+     * existing entries you can use the set function.
      *
      * @param {string} in_key - The key under which the entry is added
      * @param {property-properties.Property} in_property - The property to insert
@@ -312,16 +308,16 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * Returns the collection entry with the given key
      *
      * @param {string|array<string>} in_ids - key of the entry to return or an array of keys
-     *     if an array is passed, the .get function will be performed on each id in sequence
-     *     for example .get(['position','x']) is equivalent to .get('position').get('x').
-     *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
-     *     refers to.
+     * if an array is passed, the .get function will be performed on each id in sequence
+     * for example .get(['position','x']) is equivalent to .get('position').get('x').
+     * If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
+     * refers to.
      * @param {Object} in_options - parameter object
      * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]- -
-     *     How should this function behave during reference resolution?
+     * How should this function behave during reference resolution?
      *
      * @return {property-properties.Property|*|undefined} The entry in the collection or undefined
-     *     if none could be found
+     * if none could be found
      */
     get(in_ids, in_options) {
         if (_.isArray(in_ids)) {
@@ -334,14 +330,22 @@ export class MapProperty extends IndexedCollectionBaseProperty {
                     in_options.referenceResolutionMode;
 
             var prop = this;
-            if (in_ids === PATH_TOKENS.ROOT) {
-                prop = prop.getRoot();
-            } else if (in_ids === PATH_TOKENS.UP) {
-                prop = prop.getParent();
-            } else if (in_ids === PATH_TOKENS.REF) {
-                throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
-            } else {
-                prop = prop._dynamicChildren[in_ids];
+            switch (in_ids) {
+                case PATH_TOKENS.ROOT: {
+                    prop = prop.getRoot();
+                    break;
+                }
+                case PATH_TOKENS.UP: {
+                    prop = prop.getParent();
+                    break;
+                }
+                case PATH_TOKENS.REF: {
+                    throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+                }
+                default: {
+                    prop = prop._dynamicChildren[in_ids];
+                    break;
+                }
             }
 
             // Handle automatic reference resolution
@@ -371,7 +375,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
      *
      * @return {Array.<property-properties.BaseProperty | *>} Array with all entries of the map. This array
-     *     is a shallow copy which can be modified by the caller without effects on the map.
+     * is a shallow copy which can be modified by the caller without effects on the map.
      */
     getAsArray() {
         return _.values(this._dynamicChildren);
@@ -398,11 +402,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     _getScope() {
         var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
 
-        if (scope !== undefined) {
-            return scope;
-        } else {
-            return this._scope;
-        }
+        return scope !== undefined ? scope : this._scope;
     }
 
     /**

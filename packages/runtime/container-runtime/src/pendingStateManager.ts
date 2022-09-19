@@ -266,7 +266,7 @@ export class PendingStateManager implements IDisposable {
         }
 
         this._pendingMessagesCount--;
-        assert(this._pendingMessagesCount >= 0, "positive");
+        assert(this._pendingMessagesCount >= 0, 0x3d6 /* positive */);
 
         // Post-processing part - If we are processing a batch then this could be the last message in the batch.
         this.maybeProcessBatchEnd(message);
@@ -286,9 +286,11 @@ export class PendingStateManager implements IDisposable {
 
         /**
          * We are checking if the next message is the start of a batch. It can happen in the following scenarios:
+         *
          * 1. The FlushMode was set to TurnBased before this message was sent.
+         *
          * 2. The FlushMode was already TurnBased and a flush was called before this message was sent. This essentially
-         *    means that the flush marked the end of a previous batch and beginning of a new batch.
+         * means that the flush marked the end of a previous batch and beginning of a new batch.
          *
          * Keep reading pending states from the queue until we encounter a message. It's possible that the FlushMode was
          * updated a bunch of times without sending any messages.

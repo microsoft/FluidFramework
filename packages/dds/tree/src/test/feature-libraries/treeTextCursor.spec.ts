@@ -9,14 +9,20 @@ import { mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries"
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { jsonableTreeFromCursor, singleTextCursor } from "../../feature-libraries/treeTextCursor";
-import { ITreeCursorNew as ITreeCursor } from "../../forest";
 
-import { JsonableTree } from "../../tree";
+import { JsonableTree, ITreeCursorNew as ITreeCursor } from "../../tree";
 import { brand } from "../../util";
 
 const testCases: [string, JsonableTree][] = [
     ["minimal", { type: brand("Foo") }],
     ["value", { type: brand("Foo"), value: "test" }],
+    ["local field", { type: brand("Foo"), fields: { x: [{ type: brand("Bar") }] } }],
+    ["global field", { type: brand("Foo"), globalFields: { x: [{ type: brand("Bar") }] } }],
+    ["both fields", {
+        type: brand("Foo"),
+        fields: { x: [{ type: brand("Bar") }] },
+        globalFields: { x: [{ type: brand("Baz") }] },
+    }],
     ["nested", { type: brand("Foo"), fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] } }],
     ["multiple fields", {
         type: brand("Foo"),

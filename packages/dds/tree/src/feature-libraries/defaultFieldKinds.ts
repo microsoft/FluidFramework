@@ -9,6 +9,7 @@ import { ITreeCursor } from "../forest";
 import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, Delta, JsonableTree } from "../tree";
 import { brand, clone, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { singleTextCursor } from "./treeTextCursor";
 import {
     FieldKind,
     Multiplicity,
@@ -177,9 +178,11 @@ export const counterHandle: FieldChangeHandler<number> = {
  * Stores a single value which corresponds to number which can be added to.
  *
  * This is an example of a few interesting things:
+ *
  * - A field kind with some constraints on what can be under it type wise.
- *      Other possible examples which would do this include sets, maps (for their keys),
- *      or any domain specific specialized kinds.
+ * Other possible examples which would do this include sets, maps (for their keys),
+ * or any domain specific specialized kinds.
+ *
  * - A field kind with commutative edits.
  *
  * TODO:
@@ -294,7 +297,7 @@ export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
 
 const valueFieldEditor: ValueFieldEditor = {
     buildChildChange: (index, change) => {
-        assert(index === 0, "Value fields only support a single child node");
+        assert(index === 0, 0x3b6 /* Value fields only support a single child node */);
         return { changes: change };
     },
 
@@ -310,14 +313,14 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
         if (change.value !== undefined) {
             let mark: Delta.Mark;
             if (change.changes === undefined) {
-                mark = { type: Delta.MarkType.Insert, content: [change.value] };
+                mark = { type: Delta.MarkType.Insert, content: [singleTextCursor(change.value)] };
             } else {
                 const modify = deltaFromChild(change.changes);
                 const content = clone(change.value);
                 const fields = Delta.applyModifyToInsert(content, modify);
                 mark = fields.size === 0
-                    ? { type: Delta.MarkType.Insert, content: [content] }
-                    : { type: Delta.MarkType.InsertAndModify, content, fields };
+                    ? { type: Delta.MarkType.Insert, content: [singleTextCursor(content)] }
+                    : { type: Delta.MarkType.InsertAndModify, content: singleTextCursor(content), fields };
             }
 
             return [

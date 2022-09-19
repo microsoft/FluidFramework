@@ -244,9 +244,9 @@ async function fetchLatestSnapshotCore(
 
                 let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
                 let contentTypeToRead: string | undefined;
-                if (contentType?.indexOf("application/ms-fluid") !== -1) {
+                if (contentType?.includes("application/ms-fluid")) {
                     contentTypeToRead = "application/ms-fluid";
-                } else if (contentType?.indexOf("application/json") !== -1) {
+                } else if (contentType?.includes("application/json")) {
                     contentTypeToRead = "application/json";
                 }
 

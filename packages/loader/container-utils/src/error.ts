@@ -16,6 +16,7 @@ import {
     wrapError,
     wrapErrorAndLog,
     isExternalError,
+    NORMALIZED_ERROR_TYPE,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -142,7 +143,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     }
 
     /**
-     * Wrap the given error in a DataProcessingError, unless the error is already of a known type.
+     * Wrap the given error in a DataProcessingError, unless the error is already of a known type
+     * with the exception of a normalized LoggingError, which will still be wrapped.
      * In either case, the error will have some relevant properties added for telemetry
      * We wrap conditionally since known error types represent well-understood failure modes, and ideally
      * one day we will move away from throwing these errors but rather we'll return them.
@@ -164,19 +166,19 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         };
 
         const normalizedError = normalizeError(originalError, { props });
+        // Note that other errors may have the NORMALIZED_ERROR_TYPE errorType,
+        // but if so they are still suitable to be wrapped as DataProcessingError.
+        if (isExternalError(normalizedError) || normalizedError.errorType === NORMALIZED_ERROR_TYPE) {
+            // Create a new DataProcessingError to wrap this external error
+            const dataProcessingError =
+                wrapError(normalizedError, (message: string) => new DataProcessingError(message));
 
-        if (!isExternalError(normalizedError)) {
-            return normalizedError;
+            // Copy over the props above and any others added to this error since first being normalized
+            dataProcessingError.addTelemetryProperties(normalizedError.getTelemetryProperties());
+
+            return dataProcessingError;
         }
-
-        // Create a new DataProcessingError to wrap this external error
-        const dataProcessingError =
-            wrapError(normalizedError, (message: string) => new DataProcessingError(message));
-
-        // Copy over the props above and any others added to this error since first being normalized
-        dataProcessingError.addTelemetryProperties(normalizedError.getTelemetryProperties());
-
-        return dataProcessingError;
+        return normalizedError;
     }
 }
 

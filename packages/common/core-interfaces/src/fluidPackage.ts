@@ -148,11 +148,15 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
 
 /* eslint-disable max-len */
     /**
-     * Return a number representing the ascending sort order of the `a` and `b` code details;
-     *      `< 0` if `a < b`.
-     *      `= 0` if `a === b`.
-     *      `> 0` if `a > b`.
-     *      `undefined` if `a` is not comparable to `b`.
+     * Returns a number representing the ascending sort order of the `a` and `b` code details:
+     *
+     * - `< 0` if `a < b`.
+     *
+     * - `= 0` if `a === b`.
+     *
+     * - `> 0` if `a > b`.
+     *
+     * - `undefined` if `a` is not comparable to `b`.
      *
      * Similar semantics to:
      * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#description | Array.sort}

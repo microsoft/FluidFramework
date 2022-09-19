@@ -4,11 +4,12 @@
  */
 
 /* globals */
-/* eslint-disable no-unused-expressions */
+
 /**
- * @fileoverview In this file, we will test the functions of a PropertyTemplateWrapper object
- *    described in /src/property_template_wrapper.js
+ * @fileoverview
+ * In this file, we will test the functions of a PropertyTemplateWrapper object described in /src/property_template_wrapper.js
  */
+
 const { PropertyFactory } = require('..');
 
 describe('Property Template Wrapper', function() {
