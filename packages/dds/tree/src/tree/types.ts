@@ -103,10 +103,10 @@ export function detachedFieldAsKey(field: DetachedField): LocalFieldKey {
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
     if (isLocalKey(key)) {
-        assert(key !== rootFieldKey as string, "Root is field key must be a global field key");
+        assert(key !== rootFieldKey as string, 0x3be /* Root is field key must be a global field key */);
         return brand(key);
     }
-    assert(key === rootFieldKeySymbol, "Root is only allowed global field key as detached field");
+    assert(key === rootFieldKeySymbol, 0x3bf /* Root is only allowed global field key as detached field */);
     return brand(rootFieldKey);
 }
 
@@ -138,3 +138,21 @@ export interface TreeValue extends Serializable {}
   * Value stored on a node.
   */
 export type Value = undefined | TreeValue;
+
+/**
+ * The fields required by a node in a tree
+ * @public
+ */
+ export interface NodeData {
+    /**
+     * A payload of arbitrary serializable data
+     */
+    value?: TreeValue;
+
+    /**
+     * The meaning of this node.
+     * Provides contexts/semantics for this node and its content.
+     * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+     */
+    readonly type: TreeSchemaIdentifier;
+}

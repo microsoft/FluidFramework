@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions */
+
 /* globals assert */
+
 /**
  * @fileoverview In this file, we will test the functions of 64 bit integer properties
- *    described in /src/shared/property_sets/properties/int_property.js
+ * described in /src/shared/property_sets/properties/int_property.js
  */
 
 var PropertyFactory, nodeProp, containedInt64Prop, directInt64Prop, Int64, Uint64,

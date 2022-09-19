@@ -32,6 +32,7 @@ export interface IRunConfig {
 export interface ILoadTest {
     run(config: IRunConfig, reset: boolean, logger): Promise<boolean>;
     detached(config: Omit<IRunConfig, "runId">, logger): Promise<LoadTestDataStoreModel>;
+    getRuntime(): Promise<IFluidDataStoreRuntime>;
 }
 
 const taskManagerKey = "taskManager";
@@ -440,16 +441,35 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         // To set that up we start each client in a staggered way, each will independently go thru write
         // and listen cycles
 
-        const cycleMs = config.testConfig.readWriteCycleMs;
-        let t: NodeJS.Timeout | undefined;
+        let timeout: NodeJS.Timeout | undefined;
         if (config.verbose) {
             const printProgress = () => {
                 dataModel.printStatus();
-                t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
+                timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
             };
-            t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
+            timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
         }
 
+        let runResult: [boolean, void];
+        try {
+            const opsRun = this.sendOps(dataModel, config);
+            const signalsRun = this.sendSignals(config);
+            // runResult is of type [boolean, void] as we return boolean for Ops alone based on runtime.disposed value
+            runResult = await Promise.all([opsRun, signalsRun]);
+        } finally {
+            if (timeout !== undefined) {
+                clearTimeout(timeout);
+            }
+        }
+        return runResult[0];
+    }
+
+    async getRuntime() {
+        return this.runtime;
+    }
+
+    async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
+        const cycleMs = config.testConfig.readWriteCycleMs;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
@@ -480,10 +500,29 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             }
             return !this.runtime.disposed;
         } finally {
-            if (t !== undefined) {
-                clearTimeout(t);
-            }
             dataModel.printStatus();
+        }
+    }
+
+    async sendSignals(config: IRunConfig) {
+        const clientSignalsSendCount = (typeof config.testConfig.totalSignalsSendCount === "undefined") ?
+                                        0 : config.testConfig.totalSignalsSendCount / config.testConfig.numClients;
+        const cycleMs = config.testConfig.readWriteCycleMs;
+        const signalsPerCycle = (typeof config.testConfig.signalsPerMin === "undefined") ?
+                                 0 : config.testConfig.signalsPerMin * cycleMs / 60000;
+        const signalsGapMs = cycleMs / signalsPerCycle;
+        let submittedSignals = 0;
+        try {
+            while (submittedSignals < clientSignalsSendCount) {
+                // all the clients are sending signals;
+                // with signals, there is no particular need to have staggered writers and readers
+                this.runtime.submitSignal("generic-signal", true);
+                submittedSignals++;
+                // Random jitter of +- 50% of signalGapMs
+                await delay(signalsGapMs + signalsGapMs * random.real(0, .5, true)(config.randEng));
+            }
+        } catch (e) {
+            console.error("Error during submitting signals: ", e);
         }
     }
 }

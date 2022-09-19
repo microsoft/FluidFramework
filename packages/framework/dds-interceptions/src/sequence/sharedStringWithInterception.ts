@@ -10,11 +10,14 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 /**
  * - Create a new object from the passed SharedString.
+ *
  * - Modify the methods that insert / remove / annotate the properties of the SharedString to call
- *   the propertyInterceptionCallback to get new properties.
+ * the propertyInterceptionCallback to get new properties.
+ *
  * - Use these new properties to call the underlying SharedString.
+ *
  * - The propertyInterceptionCallback and the call to the underlying SharedString are wrapped around an
- *   orderSequentially call to batch any operations that might happen in the callback.
+ * orderSequentially call to batch any operations that might happen in the callback.
  *
  * @param sharedString - The underlying SharedString
  * @param context - The IFluidDataStoreContext that will be used to call orderSequentially

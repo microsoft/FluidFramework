@@ -24,11 +24,9 @@ const createMapIterator = (target: ComponentMap) => function*(): Generator<[any,
     const keys = property.getIds();
     for (const key of keys) {
         const propertyAtKey = property.get(key);
-        if (propertyAtKey && PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
-            yield [key, PropertyProxy.proxify(propertyAtKey)];
-        } else {
-            yield [key, propertyAtKey];
-        }
+        yield (propertyAtKey && PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")
+            ? [key, PropertyProxy.proxify(propertyAtKey)]
+            : [key, propertyAtKey]);
     }
 };
 
@@ -121,12 +119,10 @@ class ComponentMap extends Map {
             if (isReferenceMap && asteriskFound) {
                 return this.property.getValue(key);
             } else {
-                if (asteriskFound) {
-                    return PropertyProxy.proxify(this.property.get(key,
-                        { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
-                } else {
-                    return Utilities.proxifyInternal(this.property, key, caretFound, isReferenceMap);
-                }
+                return asteriskFound
+                    ? PropertyProxy.proxify(this.property.get(key,
+                        { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!)
+                    : Utilities.proxifyInternal(this.property, key, caretFound, isReferenceMap);
             }
         } else {
             return undefined;
@@ -205,11 +201,9 @@ class ComponentMap extends Map {
         const valuesIterator = function*(this: ComponentMap) {
             for (const key of keys) {
                 const propertyAtKey = this.property.get(key)!;
-                if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
-                    yield PropertyProxy.proxify(propertyAtKey);
-                } else {
-                    yield propertyAtKey;
-                }
+                yield (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")
+                    ? PropertyProxy.proxify(propertyAtKey)
+                    : propertyAtKey);
             }
         };
 

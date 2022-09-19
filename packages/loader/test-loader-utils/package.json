@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",

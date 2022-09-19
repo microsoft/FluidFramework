@@ -89,7 +89,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger?: ITelemetryLogger;
         runSweep?: boolean;
         fullGC?: boolean;
-    }): Promise<IGCStats>;
+    }): Promise<IGCStats | undefined>;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -346,7 +346,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 
 // @public
 export interface IGarbageCollectionRuntime {
-    closeFn(error?: ICriticalContainerError): void;
+    closeFn: (error?: ICriticalContainerError) => void;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
