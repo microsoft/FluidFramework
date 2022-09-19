@@ -10,6 +10,7 @@ import { DocAlertType } from "../doc-nodes";
 
 export enum DocumentNodeKind {
     Alert = "Alert",
+    BlockQuote = "BlockQuote",
     CodeSpan = "CodeSpan",
     Document = "Document",
     FencedCode = "FencedCode",
@@ -28,6 +29,8 @@ export enum DocumentNodeKind {
     UrlLink = "UrlLink",
 }
 
+export type SingleLineChildren = PlainTextNode | SymbolicLinkNode | UrlLinkNode;
+
 export interface DocumentDomainNode<TData extends object = UnistData> extends UnistNode<TData> {
     readonly type: DocumentNodeKind;
 }
@@ -43,9 +46,8 @@ export interface LiteralNode<T = unknown> extends UnistLiteral<T>, DocumentDomai
     readonly type: DocumentNodeKind;
 }
 
-export abstract class ParentNodeBase<
-    TDocumentNode extends DocumentDomainNode = DocumentDomainNode,
-> implements ParentNode<TDocumentNode>
+export abstract class ParentNodeBase<TDocumentNode extends DocumentDomainNode = DocumentDomainNode>
+    implements ParentNode<TDocumentNode>
 {
     public abstract type: DocumentNodeKind;
 
@@ -96,17 +98,19 @@ export interface TextFormatting {
     // TODO: what else?
 }
 
-export class Span extends ParentNodeBase {
+export class SpanNode<
+    TDocumentNode extends DocumentDomainNode = DocumentDomainNode,
+> extends ParentNodeBase<TDocumentNode> {
     public readonly type = DocumentNodeKind.Span;
 
     /**
      * @defaultValue Inherit
      */
-    public readonly formatting?: TextFormatting;
+    public readonly textFormatting?: TextFormatting;
 
-    public constructor(children: DocumentDomainNode[], formatting?: TextFormatting) {
+    public constructor(children: TDocumentNode[], formatting?: TextFormatting) {
         super(children);
-        this.formatting = formatting;
+        this.textFormatting = formatting;
     }
 }
 
@@ -131,14 +135,14 @@ export class AlertNode extends ParentNodeBase {
 
 export interface UrlLink {
     urlTarget: string;
-    text?: string;
+    content?: SingleLineChildren;
 }
 
 export type SymbolicLinkTarget = unknown; // TODO
 
 export interface SymbolicLink {
     symbolTarget: SymbolicLinkTarget;
-    text?: string;
+    content?: SingleLineChildren;
 }
 
 export class UrlLinkNode implements LiteralNode<UrlLink> {
@@ -159,30 +163,26 @@ export class SymbolicLinkNode implements LiteralNode<SymbolicLink> {
     }
 }
 
-export class UnorderedListNode extends ParentNodeBase<
-    LiteralNode | UnorderedListNode | OrderedListNode
-> {
+export class UnorderedListNode extends ParentNodeBase<SingleLineChildren> {
     public readonly type = DocumentNodeKind.UnorderedList;
 
-    public constructor(children: Array<LiteralNode | UnorderedListNode | OrderedListNode>) {
+    public constructor(children: SingleLineChildren[]) {
         super(children);
     }
 }
 
-export class OrderedListNode extends ParentNodeBase<
-    LiteralNode | UnorderedListNode | OrderedListNode
-> {
+export class OrderedListNode extends ParentNodeBase<SingleLineChildren> {
     public readonly type = DocumentNodeKind.OrderedList;
 
-    public constructor(children: Array<LiteralNode | UnorderedListNode | OrderedListNode>) {
+    public constructor(children: SingleLineChildren[]) {
         super(children);
     }
 }
 
-export class HeadingNode implements LiteralNode<DocumentDomainNode> {
+export class HeadingNode implements LiteralNode<SingleLineChildren> {
     public readonly type = DocumentNodeKind.Markdown;
 
-    public readonly value: DocumentDomainNode;
+    public readonly value: SingleLineChildren;
     public readonly id?: string;
 
     /**
@@ -194,7 +194,7 @@ export class HeadingNode implements LiteralNode<DocumentDomainNode> {
      */
     public readonly level?: number;
 
-    public constructor(content: DocumentDomainNode, id?: string, level?: number) {
+    public constructor(content: SingleLineChildren, id?: string, level?: number) {
         this.value = content;
     }
 }
@@ -202,15 +202,25 @@ export class HeadingNode implements LiteralNode<DocumentDomainNode> {
 /**
  * @example `Foo`
  */
-export class CodeSpanNode extends ParentNodeBase {
+export class CodeSpanNode extends ParentNodeBase<SingleLineChildren> {
     public readonly type = DocumentNodeKind.CodeSpan;
 
-    public constructor(children: DocumentDomainNode[]) {
+    public constructor(children: SingleLineChildren[]) {
         super(children);
     }
 }
 
-export class FencedCodeNode extends ParentNodeBase {
+export type FencedCodeChildren = LineBreakNode | SingleLineChildren;
+
+/**
+ * @example
+ * ```md
+ * ```typescrpt
+ * const foo = "bar";
+ * ```
+ * ```
+ */
+export class FencedCodeNode extends ParentNodeBase<FencedCodeChildren> {
     public readonly type = DocumentNodeKind.FencedCode;
 
     /**
@@ -218,20 +228,19 @@ export class FencedCodeNode extends ParentNodeBase {
      */
     public readonly language?: string;
 
-    public constructor(children: DocumentDomainNode[], language?: string) {
+    public constructor(children: FencedCodeChildren[], language?: string) {
         super(children);
         this.language = language;
     }
 }
 
- export class TableCellNode extends ParentNodeBase {
+export class TableCellNode extends ParentNodeBase {
     public readonly type = DocumentNodeKind.TableCell;
 
     public constructor(children: DocumentDomainNode[]) {
         super(children);
     }
 }
-
 
 export class TableRowNode extends ParentNodeBase<TableCellNode> {
     public readonly type = DocumentNodeKind.TableRow;
@@ -246,8 +255,56 @@ export class TableNode extends ParentNodeBase<TableRowNode> {
 
     public readonly headingRow?: TableRowNode[];
 
-    public constructor(bodyRows: TableCellNode[], headingRow?: TableRowNode[]) {
+    public constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode[]) {
         super(bodyRows);
         this.headingRow = headingRow;
+    }
+}
+
+export type ParagraphChildren =
+    | LineBreakNode
+    | SingleLineChildren
+    | SpanNode<LineBreakNode | SingleLineChildren>;
+
+export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
+    public readonly type = DocumentNodeKind.Paragraph;
+
+    public constructor(children: ParagraphChildren[]) {
+        super(children);
+    }
+}
+
+export class PlainTextNode implements LiteralNode<string> {
+    public readonly type = DocumentNodeKind.PlainText;
+    public readonly value: string;
+
+    public constructor(value: string) {
+        this.value = value;
+    }
+}
+
+export class LineBreakNode implements DocumentDomainNode {
+    public readonly type = DocumentNodeKind.LineBreak;
+
+    // TODO: do we want this?
+    public static readonly Singleton = new LineBreakNode();
+
+    public constructor() {}
+}
+
+/**
+ *
+ * @example
+ * ```md
+ * > Foo
+ * >
+ * > Bar
+ * ```
+ */
+export class BlockQuoteNode extends ParentNodeBase {
+    public readonly type = DocumentNodeKind.BlockQuote;
+
+    public constructor(children: DocumentDomainNode[]) {
+        super(children);
     }
 }
