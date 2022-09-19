@@ -21,8 +21,12 @@ export class Audience extends EventEmitter implements IAudienceOwner {
      * Adds a new client to the audience
      */
     public addMember(clientId: string, details: IClient) {
-        this.members.set(clientId, details);
-        this.emit("addMember", clientId, details);
+        // Given that signal delivery is unreliable process, we might observe same client being added twice
+        // In such case we should see exactly same payload (IClient), and should not raise event twice!
+        if (!this.members.has(clientId)) {
+            this.members.set(clientId, details);
+            this.emit("addMember", clientId, details);
+        }
     }
 
     /**

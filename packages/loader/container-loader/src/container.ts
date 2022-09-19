@@ -64,7 +64,6 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-    ISignalClient,
     ISignalMessage,
     ISnapshotTree,
     ISummaryContent,
@@ -422,7 +421,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
-    private _initialClients: ISignalClient[] | undefined;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -643,7 +641,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectionStateHandler = createConnectionStateHandler(
             {
                 logger: this.mc.logger,
-                quorumClients: () => this._protocolHandler?.quorum,
                 connectionStateChanged: (value, oldState, reason) => {
                     if (value === ConnectionState.Connected) {
                         this._clientId = this.connectionStateHandler.pendingClientId;
@@ -656,13 +653,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
+                    const mode = this.connectionMode;
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
+                        mode,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
                         ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
+
+                    // If this is "write" connection, it took too long to receive join op. But in most cases that's due
+                    // to very slow op fetches and we will eventually get there.
+                    // For "read" connections, we get here due to self join signal not arriving on time. We will need to
+                    // better understand when and why it may happen.
+                    // For now, attempt to recover by reconnecting. In future, maybe we can query relay service for
+                    // current state of audience.
+                    // Other possible recovery path - move to connected state (i.e. ConnectionStateHandler.joinOpTimer
+                    // to call this.applyForConnectedState("addMemberEvent") for "read" connections)
+                    if (mode === "read") {
+                        this.disconnect();
+                        this.connect();
+                    }
                 },
             },
             this.deltaManager,
@@ -1423,10 +1435,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes,
             quorumSnapshot,
             (key, value) => this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
-            this._initialClients ?? [],
         );
-
-        this._initialClients = undefined;
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1549,20 +1558,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.inboundSignal.pause();
 
         deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
-            if (this._protocolHandler === undefined) {
-                // Store the initial clients so that they can be submitted to the
-                // protocol handler when it is created.
-                this._initialClients = details.initialClients;
-            } else {
-                // When reconnecting, the protocol handler is already created,
-                // so we can update the audience right now.
-                this._protocolHandler.audience.clear();
-
-                for (const priorClient of details.initialClients ?? []) {
-                    this._protocolHandler.audience.addMember(priorClient.clientId, priorClient.client);
-                }
-            }
-
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,

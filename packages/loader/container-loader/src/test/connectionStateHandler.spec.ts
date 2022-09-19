@@ -7,7 +7,6 @@
 
 import { strict as assert } from "assert";
 import { TelemetryNullLogger, TypedEventEmitter } from "@fluidframework/common-utils";
-import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails, IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
@@ -18,6 +17,8 @@ import {
     IConnectionStateHandler,
     createConnectionStateHandlerCore,
 } from "../connectionStateHandler";
+import { Audience } from "../audience";
+import { ProtocolHandler } from "../protocol";
 
 class MockDeltaManagerForCatchingUp
     extends TypedEventEmitter<IDeltaManagerEvents>
@@ -25,7 +26,9 @@ class MockDeltaManagerForCatchingUp
 { // eslint-disable-line @typescript-eslint/brace-style
     lastSequenceNumber: number = 5;
     lastKnownSeqNumber: number = 10;
-    catchUp() {
+    catchUp(seq = 10) {
+        this.lastKnownSeqNumber = seq;
+        this.lastSequenceNumber = seq;
         this.emit("op", { sequenceNumber: this.lastKnownSeqNumber });
     }
 }
@@ -34,8 +37,7 @@ describe("ConnectionStateHandler Tests", () => {
     let clock: SinonFakeTimers;
     let handlerInputs: IConnectionStateHandlerInputs;
     let connectionStateHandler: IConnectionStateHandler;
-    let connectionStateHandlerWait: IConnectionStateHandler;
-    let protocolHandler: ProtocolOpHandler;
+    let protocolHandler: ProtocolHandler;
     let shouldClientJoinWrite: boolean;
     let connectionDetails: IConnectionDetails;
     let connectionDetails2: IConnectionDetails;
@@ -47,6 +49,7 @@ describe("ConnectionStateHandler Tests", () => {
     const pendingClientId3 = "pendingClientId3";
     let deltaManagerForCatchingUp: MockDeltaManagerForCatchingUp;
     let connectionStateHandler_receivedAddMemberEvent: (id: string) => void;
+    let connectionStateHandler_receivedJoinSignalEvent: (id: string) => void;
     let connectionStateHandler_receivedRemoveMemberEvent: (id: string) => void;
 
     // Stash the real setTimeout because sinon fake timers will hijack it.
@@ -66,6 +69,17 @@ describe("ConnectionStateHandler Tests", () => {
         await yieldEventLoop();
     }
 
+    function createHandler(connectedRaisedWhenCaughtUp: boolean, readClientsWaitForJoinSignal: boolean) {
+        const handler = createConnectionStateHandlerCore(
+            connectedRaisedWhenCaughtUp,
+            readClientsWaitForJoinSignal,
+            handlerInputs,
+            deltaManagerForCatchingUp as any,
+            undefined);
+        handler.initProtocol(protocolHandler);
+        return handler;
+    }
+
     before(() => {
         clock = useFakeTimers();
     });
@@ -75,10 +89,7 @@ describe("ConnectionStateHandler Tests", () => {
             clientId: pendingClientId,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             claims: {} as ITokenClaims,
-            existing: true,
             mode: "read",
-            version: "0.1",
-            initialClients: [],
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             serviceConfiguration: {} as IClientConfiguration,
             checkpointSequenceNumber: undefined,
@@ -87,10 +98,7 @@ describe("ConnectionStateHandler Tests", () => {
             clientId: pendingClientId2,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             claims: {} as ITokenClaims,
-            existing: true,
             mode: "read",
-            version: "0.1",
-            initialClients: [],
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             serviceConfiguration: {} as IClientConfiguration,
             checkpointSequenceNumber: undefined,
@@ -99,10 +107,7 @@ describe("ConnectionStateHandler Tests", () => {
             clientId: pendingClientId3,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             claims: {} as ITokenClaims,
-            existing: true,
             mode: "read",
-            version: "0.1",
-            initialClients: [],
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             serviceConfiguration: {} as IClientConfiguration,
             checkpointSequenceNumber: undefined,
@@ -118,11 +123,15 @@ describe("ConnectionStateHandler Tests", () => {
             },
             scopes: [],
         };
-        protocolHandler = new ProtocolOpHandler(0, 0, 1, [], [], [], (key, value) => 0);
+        protocolHandler = new ProtocolHandler(
+            { minimumSequenceNumber: 0, sequenceNumber: 0, term: 1 }, // attributes
+            { members: [], proposals: [], values: [] }, // quorumSnapshot
+            (key, value) => 0, // sendProposal
+            new Audience(),
+        );
         shouldClientJoinWrite = false;
         handlerInputs = {
             maxClientLeaveWaitTime: expectedTimeout,
-            quorumClients: () => protocolHandler.quorum,
             shouldClientJoinWrite: () => shouldClientJoinWrite,
             logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => { throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`); },
             connectionStateChanged: () => { },
@@ -131,24 +140,16 @@ describe("ConnectionStateHandler Tests", () => {
 
         deltaManagerForCatchingUp = new MockDeltaManagerForCatchingUp();
 
-        connectionStateHandler = createConnectionStateHandlerCore(
-            false,
-            handlerInputs,
-            deltaManagerForCatchingUp as any,
-            undefined);
-        connectionStateHandler.initProtocol(protocolHandler);
-
-        connectionStateHandlerWait = createConnectionStateHandlerCore(
-            true,
-            handlerInputs,
-            deltaManagerForCatchingUp as any,
-            undefined);
-        connectionStateHandlerWait.initProtocol(protocolHandler);
+        connectionStateHandler = createHandler(
+            false, // connectedRaisedWhenCaughtUp,
+            false); // readClientsWaitForJoinSignal
 
         connectionStateHandler_receivedAddMemberEvent =
-            (id: string) => { protocolHandler.quorum.addMember(id, {} as any as ISequencedClient); };
+            (id: string) => { protocolHandler.quorum.addMember(id, { client: {} } as any as ISequencedClient); };
         connectionStateHandler_receivedRemoveMemberEvent =
             (id: string) => { protocolHandler.quorum.removeMember(id); };
+        connectionStateHandler_receivedJoinSignalEvent =
+            (id: string) => { protocolHandler.audience.addMember(id, { } as any as IClient); };
     });
 
     it("Should move to connected state on normal flow for read client", async () => {
@@ -159,14 +160,97 @@ describe("ConnectionStateHandler Tests", () => {
             "Read Client should be in connected state");
     });
 
-    it("Should move to connected after catching up for read client", async () => {
-        connectionStateHandler = connectionStateHandlerWait;
+    it("Should move to connected after catching up for read client #1", async () => {
+        connectionStateHandler = createHandler(
+            true, // connectedRaisedWhenCaughtUp
+            false); // readClientsWaitForJoinSignal
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client should be in Disconnected state");
-            connectionStateHandlerWait.receivedConnectEvent(client.mode, connectionDetails);
+
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client should be in CatchingUp state");
+
         deltaManagerForCatchingUp.catchUp();
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Read Client should be in Connected state");
+    });
+
+    it("Should move to connected after catching up for read client #2", async () => {
+        connectionStateHandler = createHandler(
+            true, // connectedRaisedWhenCaughtUp
+            true); // readClientsWaitForJoinSignal
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in Disconnected state");
+
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state");
+
+        deltaManagerForCatchingUp.catchUp();
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state");
+
+        connectionStateHandler_receivedJoinSignalEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Read Client should be in Connected state");
+    });
+
+    it("Should move to connected after catching up for read client #3", async () => {
+        connectionStateHandler = createHandler(
+            true, // connectedRaisedWhenCaughtUp
+            true); // readClientsWaitForJoinSignal
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in Disconnected state");
+
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state");
+
+        connectionStateHandler_receivedJoinSignalEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state");
+
+        deltaManagerForCatchingUp.catchUp();
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Read Client should be in Connected state");
+    });
+
+    it("Should move to connected after receiving join op for read client", async () => {
+        connectionStateHandler = createHandler(
+            false, // connectedRaisedWhenCaughtUp
+            true); // readClientsWaitForJoinSignal
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in Disconnected state");
+
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state");
+
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Read Client should be in Connected state");
+    });
+
+    it("Changes in lastKnownSeqNumber by join signal should be picked up", async () => {
+        connectionStateHandler = createHandler(
+            true, // connectedRaisedWhenCaughtUp
+            true); // readClientsWaitForJoinSignal
+
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state");
+
+        const lastKnown = deltaManagerForCatchingUp.lastKnownSeqNumber;
+        const signalRef = lastKnown + 10;
+
+        deltaManagerForCatchingUp.catchUp(lastKnown);
+        deltaManagerForCatchingUp.lastKnownSeqNumber = signalRef;
+        connectionStateHandler_receivedJoinSignalEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in CatchingUp state");
+
+        deltaManagerForCatchingUp.catchUp(signalRef);
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Read Client should be in Connected state");
     });
@@ -188,7 +272,10 @@ describe("ConnectionStateHandler Tests", () => {
 
     it("Should move to connected state after catching up for write client", async () => {
         client.mode = "write";
-        connectionStateHandler = connectionStateHandlerWait;
+        connectionStateHandler = createHandler(
+            true, // connectedRaisedWhenCaughtUp
+            false); // readClientsWaitForJoinSignal
+
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client should be in Disconnected state");
         connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
@@ -205,9 +292,14 @@ describe("ConnectionStateHandler Tests", () => {
             "Client should be in Connected state");
     });
 
-    it("Should move to connected state on normal flow for write client, even if quorum isn't initialized at first", async () => {
-        // swap out quorumClients fn for one that returns undefined at first
-        handlerInputs.quorumClients = () => undefined;
+    it("Connect write first, init protocol later #1", async () => {
+        // ConnectionStateManager without initialized protocol
+        connectionStateHandler = createConnectionStateHandlerCore(
+            false, // connectedRaisedWhenCaughtUp,
+            false, // readClientsWaitForJoinSignal
+            handlerInputs,
+            deltaManagerForCatchingUp as any,
+            undefined);
 
         client.mode = "write";
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
@@ -216,9 +308,35 @@ describe("ConnectionStateHandler Tests", () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
             "Client should be in connecting state");
 
-        // Restore quorumClients fn to return the test quorum object
-        handlerInputs.quorumClients = () => protocolHandler.quorum;
+        // init protocol
+        connectionStateHandler.initProtocol(protocolHandler);
+
         connectionStateHandler_receivedAddMemberEvent(pendingClientId);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
+            "Client should be in connected state");
+    });
+
+    it("Connect write first, init protocol later #2", async () => {
+        // ConnectionStateManager without initialized protocol
+        connectionStateHandler = createConnectionStateHandlerCore(
+            false, // connectedRaisedWhenCaughtUp,
+            false, // readClientsWaitForJoinSignal
+            handlerInputs,
+            deltaManagerForCatchingUp as any,
+            undefined);
+
+        client.mode = "write";
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
+            "Client should be in disconnected state");
+        connectionStateHandler.receivedConnectEvent(client.mode, connectionDetails);
+        assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.CatchingUp,
+            "Client should be in connecting state");
+
+        connectionStateHandler_receivedAddMemberEvent(pendingClientId);
+
+        // init protocol
+        connectionStateHandler.initProtocol(protocolHandler);
+
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected,
             "Client should be in connected state");
     });

@@ -27,7 +27,6 @@ export type ProtocolHandlerBuilder = (
     attributes: IDocumentAttributes,
     snapshot: IQuorumSnapshot,
     sendProposal: (key: string, value: any) => number,
-    initialClients: ISignalClient[],
 ) => IProtocolHandler;
 
 export interface IProtocolHandler extends IBaseProtocolHandler {
@@ -40,7 +39,6 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
         attributes: IDocumentAttributes,
         quorumSnapshot: IQuorumSnapshot,
         sendProposal: (key: string, value: any) => number,
-        initialClients: ISignalClient[],
         readonly audience: IAudienceOwner,
     ) {
         super(
@@ -53,9 +51,9 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
             sendProposal,
         );
 
-        for (const initialClient of initialClients) {
-            this.audience.addMember(initialClient.clientId, initialClient.client);
-        }
+        // Join/leave signals are ignored for "write" clients in favor of join / leave ops
+        this.quorum.on("addMember", (clientId, details) => audience.addMember(clientId, details.client));
+        this.quorum.on("removeMember", (clientId) => audience.removeMember(clientId));
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
@@ -81,14 +79,24 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
     public processSignal(message: ISignalMessage) {
         const innerContent = message.content as { content: any; type: string; };
         switch (innerContent.type) {
+            case "clear": {
+                this.audience.clear();
+                break;
+            }
             case MessageType.ClientJoin: {
                 const newClient = innerContent.content as ISignalClient;
-                this.audience.addMember(newClient.clientId, newClient.client);
+                // Ignore write clients - quorum will control such clients.
+                if (newClient.client.mode === "read") {
+                    this.audience.addMember(newClient.clientId, newClient.client);
+                }
                 break;
             }
             case MessageType.ClientLeave: {
                 const leftClientId = innerContent.content as string;
-                this.audience.removeMember(leftClientId);
+                // Ignore write clients - quorum will control such clients.
+                if (this.audience.getMember(leftClientId)?.mode === "read") {
+                    this.audience.removeMember(leftClientId);
+                }
                 break;
             }
             default: break;

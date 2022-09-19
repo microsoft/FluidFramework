@@ -310,7 +310,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                     this.close(normalizeError(error));
                 }
             },
-            signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
+            signalHandler: (message: ISignalMessage) => {
+                if (message.referenceSequenceNumber !== undefined) {
+                    this.updateLatestKnownOpSeqNumber(message.referenceSequenceNumber);
+                }
+                this._inboundSignal.push(message);
+            },
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
             closeHandler: (error: any) => this.close(error),

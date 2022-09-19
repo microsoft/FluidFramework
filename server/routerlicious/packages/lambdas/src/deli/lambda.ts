@@ -1401,8 +1401,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 throw new Error(`Cannot create signal message for type ${message.operation.type}`);
         }
 
-        (signalMessage as any).referenceSequenceNumber = sequenceNumber;
-        (signalMessage as any).clientConnectionNumber = ++this.signalClientConnectionNumber;
+        signalMessage.referenceSequenceNumber = sequenceNumber;
+        signalMessage.clientConnectionNumber = ++this.signalClientConnectionNumber;
 
         return {
             ticketType: TicketType.Signal,
@@ -1800,8 +1800,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     private addSequencedSignalClient(clientJoinMessage: IClientJoin, signalMessage: ISignalMessageOutput) {
         const sequencedSignalClient: ISequencedSignalClient = {
             client: clientJoinMessage.detail,
-            referenceSequenceNumber: (signalMessage.message.operation as any).referenceSequenceNumber,
-            clientConnectionNumber: (signalMessage.message.operation as any).clientConnectionNumber,
+            referenceSequenceNumber: signalMessage.message.operation.referenceSequenceNumber,
+            clientConnectionNumber: signalMessage.message.operation.clientConnectionNumber,
             exp: Date.now() + this.serviceConfiguration.deli.clientTimeout,
         };
 

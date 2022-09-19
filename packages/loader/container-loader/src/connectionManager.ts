@@ -282,12 +282,9 @@ export class ConnectionManager implements IConnectionManager {
         return {
             claims: connection.claims,
             clientId: connection.clientId,
-            existing: connection.existing,
             checkpointSequenceNumber: connection.checkpointSequenceNumber,
-            get initialClients() { return connection.initialClients; },
             mode: connection.mode,
             serviceConfiguration: connection.serviceConfiguration,
-            version: connection.version,
         };
     }
 
@@ -713,17 +710,38 @@ export class ConnectionManager implements IConnectionManager {
             initialMessages,
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
+        const details = ConnectionManager.detailsFromConnection(connection);
+        details.checkpointSequenceNumber = checkpointSequenceNumber;
+        this.props.connectHandler(details);
+
+        this.connectFirstConnection = false;
+
         if (connection.initialSignals !== undefined) {
             for (const signal of connection.initialSignals) {
                 this.props.signalHandler(signal);
             }
         }
 
-        const details = ConnectionManager.detailsFromConnection(connection);
-        details.checkpointSequenceNumber = checkpointSequenceNumber;
-        this.props.connectHandler(details);
+        const clearSignal: ISignalMessage = {
+            clientId: null, // system message
+            content: JSON.stringify({
+                type: "clear",
+            }),
+        };
+        this.props.signalHandler(clearSignal);
 
-        this.connectFirstConnection = false;
+        for (const priorClient of connection.initialClients ?? []) {
+            const joinSignal: ISignalMessage = {
+                clientId: null, // system signal
+                content: JSON.stringify({
+                    type: MessageType.ClientJoin,
+                    content: priorClient, // ISignalClient
+                }),
+                // clientConnectionNumber?: number;
+                // referenceSequenceNumber?: number;
+            };
+            this.props.signalHandler(joinSignal);
+        }
     }
 
     /**

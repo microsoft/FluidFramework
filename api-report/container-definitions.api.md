@@ -25,7 +25,6 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
-import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -78,7 +77,7 @@ export interface IAudience extends EventEmitter {
 
 // @public
 export interface IAudienceOwner extends IAudience {
-    addMember(clientId: string, details: IClient): any;
+    addMember(clientId: string, details: IClient): void;
     clear(): any;
     removeMember(clientId: string): boolean;
 }
@@ -110,15 +109,9 @@ export interface IConnectionDetails {
     // (undocumented)
     clientId: string;
     // (undocumented)
-    existing: boolean;
-    // (undocumented)
-    initialClients: ISignalClient[];
-    // (undocumented)
     mode: ConnectionMode;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
-    // (undocumented)
-    version: string;
 }
 
 // @public

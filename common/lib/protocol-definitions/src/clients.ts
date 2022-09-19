@@ -44,16 +44,6 @@ export interface ISignalClient {
     clientId: string;
 
     client: IClient;
-
-    /**
-     * Counts the number of signals sent by the client
-     */
-    clientConnectionNumber?: number;
-
-    /**
-     * Sequence number that indicates when the signal was created in relation to the delta stream
-     */
-    referenceSequenceNumber?: number;
 }
 
 /**

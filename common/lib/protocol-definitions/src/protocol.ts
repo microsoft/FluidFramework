@@ -285,9 +285,12 @@ export interface ISignalMessage {
     content: any;
 
     /**
-     * Counts the number of signals sent by the client
+     * Counts the number of join & leave signals in a given relay session
+     * This number can be used to
+     * 1. Order clients in a session
+     * 2. Learn about dropped join/leave signals (if there is a gap in numbering)
      */
-    clientConnectionNumber?: number;
+     clientConnectionNumber?: number;
 
     /**
      * Sequence number that indicates when the signal was created in relation to the delta stream
