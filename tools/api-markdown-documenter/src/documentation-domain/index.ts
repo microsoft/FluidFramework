@@ -79,9 +79,9 @@ export abstract class ParentNodeBase<TDocumentNode extends DocumentationNode = D
 }
 
 // TODOs:
-// Take in an optional title?
-// Take in optional front-matter?
-// Take in optional Header / footer?
+// - Take in an optional title?
+// - Take in optional front-matter?
+// - Take in optional Header / footer?
 
 /**
  * Represents the root of a document.
