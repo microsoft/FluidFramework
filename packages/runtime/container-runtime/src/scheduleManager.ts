@@ -9,7 +9,11 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { DataCorruptionError, DataProcessingError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
+import {
+    DataCorruptionError,
+    DataProcessingError,
+    extractSafePropertiesFromMessage,
+} from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
 import { latencyThreshold } from "./connectionTelemetry";
