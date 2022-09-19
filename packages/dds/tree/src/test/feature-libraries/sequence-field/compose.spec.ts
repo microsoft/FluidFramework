@@ -4,12 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import {
-    mockChildChangeComposer,
-    SequenceField as SF,
-} from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
+import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { cases, TestChangeset } from "./utils";
 
@@ -18,7 +16,12 @@ const tomb = "Dummy Changeset Tag";
 
 function compose(changes: TestChangeset[]): TestChangeset {
     changes.forEach(deepFreeze);
-    return SF.compose(changes, mockChildChangeComposer);
+    return SF.compose(changes, TestChange.compose);
+}
+
+function composeNoVerify(changes: TestChangeset[]): TestChangeset {
+    changes.forEach(deepFreeze);
+    return SF.compose(changes, (changes: TestChange[]) => TestChange.compose(changes, false));
 }
 
 function shallowCompose(changes: SF.Changeset[]): SF.Changeset {
@@ -33,10 +36,10 @@ describe("SequenceField - Compose", () => {
             for (const b of entries) {
                 for (const c of entries) {
                     it(`((${a[0]}, ${b[0]}), ${c[0]}) === (${a[0]}, (${b[0]}, ${c[0]}))`, () => {
-                        const ab = compose([a[1], b[1]]);
-                        const left = compose([ab, c[1]]);
-                        const bc = compose([b[1], c[1]]);
-                        const right = compose([a[1], bc]);
+                        const ab = composeNoVerify([a[1], b[1]]);
+                        const left = composeNoVerify([ab, c[1]]);
+                        const bc = composeNoVerify([b[1], c[1]]);
+                        const right = composeNoVerify([a[1], bc]);
                         assert.deepEqual(left, right);
                     });
                 }
@@ -82,9 +85,9 @@ describe("SequenceField - Compose", () => {
     });
 
     it("modify insert ○ modify", () => {
-        const childChangeA = { intentions: [1], ref: 0 };
-        const childChangeB = { intentions: [2], ref: 1 };
-        const childChangeAB = mockChildChangeComposer([childChangeA, childChangeB]);
+        const childChangeA = TestChange.mint([0], 1);
+        const childChangeB = TestChange.mint([0, 1], 2);
+        const childChangeAB = TestChange.compose([childChangeA, childChangeB]);
         const insert: TestChangeset = [{
             type: "MInsert",
             id: 1,
@@ -146,9 +149,9 @@ describe("SequenceField - Compose", () => {
     });
 
     it("modify ○ modify", () => {
-        const childChangeA = { intentions: [1], ref: 0 };
-        const childChangeB = { intentions: [2], ref: 1 };
-        const childChangeAB = mockChildChangeComposer([childChangeA, childChangeB]);
+        const childChangeA = TestChange.mint([0], 1);
+        const childChangeB = TestChange.mint([0, 1], 2);
+        const childChangeAB = TestChange.compose([childChangeA, childChangeB]);
         const modifyA: TestChangeset = [{
             type: "Modify",
             changes: childChangeA,

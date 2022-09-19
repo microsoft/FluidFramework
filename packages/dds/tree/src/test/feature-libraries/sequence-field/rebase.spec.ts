@@ -4,12 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import {
-    mockChildChangeRebaser,
-    SequenceField as SF,
-} from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
+import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { cases, TestChangeset } from "./utils";
 
@@ -19,7 +17,7 @@ const tomb = "Dummy Changeset Tag";
 function rebase(change: TestChangeset, base: TestChangeset): TestChangeset {
     deepFreeze(change);
     deepFreeze(base);
-    return SF.rebase(change, base, mockChildChangeRebaser);
+    return SF.rebase(change, base, TestChange.rebase);
 }
 
 describe("SequenceField - Rebase", () => {
@@ -42,9 +40,12 @@ describe("SequenceField - Rebase", () => {
     });
 
     it("modify ↷ modify", () => {
-        const change1: TestChangeset = [{ type: "Modify", changes: { intentions: [1], ref: 0 } }];
-        const change2: TestChangeset = [{ type: "Modify", changes: { intentions: [2], ref: 0 } }];
-        const expected: TestChangeset = [{ type: "Modify", changes: { intentions: [2], ref: 1 } }];
+        const childChangeA = TestChange.mint([0], 1);
+        const childChangeB = TestChange.mint([0], 2);
+        const childChangeC = TestChange.mint([0, 1], 2);
+        const change1: TestChangeset = [{ type: "Modify", changes: childChangeA }];
+        const change2: TestChangeset = [{ type: "Modify", changes: childChangeB }];
+        const expected: TestChangeset = [{ type: "Modify", changes: childChangeC }];
         const actual = rebase(change2, change1);
         assert.deepEqual(actual, expected);
     });
@@ -73,11 +74,11 @@ describe("SequenceField - Rebase", () => {
             { type: "Revive", id: 3, count: 2, tomb },
         ];
         const mods: TestChangeset = [
-            { type: "Modify", changes: { intentions: [1], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 1) },
             2,
-            { type: "Modify", changes: { intentions: [2], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 2) },
             4,
-            { type: "Modify", changes: { intentions: [3], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 3) },
         ];
         const actual = rebase(revive, mods);
         assert.deepEqual(actual, revive);
@@ -85,11 +86,11 @@ describe("SequenceField - Rebase", () => {
 
     it("modify ↷ delete", () => {
         const mods: TestChangeset = [
-            { type: "Modify", changes: { intentions: [1], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 1) },
             2,
-            { type: "Modify", changes: { intentions: [2], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 2) },
             4,
-            { type: "Modify", changes: { intentions: [3], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 3) },
         ];
         const deletion: TestChangeset = [
             1,
@@ -98,11 +99,11 @@ describe("SequenceField - Rebase", () => {
         const actual = rebase(mods, deletion);
         const expected: TestChangeset = [
             // Set at an earlier index is unaffected by a delete at a later index
-            { type: "Modify", changes: { intentions: [1], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 1) },
             // Set as the same index as a delete is muted by the delete
             4,
             // Set at a later index moves to an earlier index due to a delete at an earlier index
-            { type: "Modify", changes: { intentions: [3], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 3) },
         ];
         assert.deepEqual(actual, expected);
     });
@@ -214,9 +215,9 @@ describe("SequenceField - Rebase", () => {
 
     it("modify ↷ insert", () => {
         const mods: TestChangeset = [
-            { type: "Modify", changes: { intentions: [1], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 1) },
             2,
-            { type: "Modify", changes: { intentions: [2], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 2) },
         ];
         const insert: TestChangeset = [
             2,
@@ -224,10 +225,10 @@ describe("SequenceField - Rebase", () => {
         ];
         const expected: TestChangeset = [
             // Modify at earlier index is unaffected
-            { type: "Modify", changes: { intentions: [1], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 1) },
             3,
             // Modify at later index has its index increased
-            { type: "Modify", changes: { intentions: [2], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 2) },
         ];
         const actual = rebase(mods, insert);
         assert.deepEqual(actual, expected);
@@ -307,9 +308,9 @@ describe("SequenceField - Rebase", () => {
 
     it("modify ↷ revive", () => {
         const mods: TestChangeset = [
-            { type: "Modify", changes: { intentions: [1], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 1) },
             2,
-            { type: "Modify", changes: { intentions: [2], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 2) },
         ];
         const revive: TestChangeset = [
             2,
@@ -317,10 +318,10 @@ describe("SequenceField - Rebase", () => {
         ];
         const expected: TestChangeset = [
             // Modify at earlier index is unaffected
-            { type: "Modify", changes: { intentions: [1], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 1) },
             3,
             // Modify at later index has its index increased
-            { type: "Modify", changes: { intentions: [2], ref: 0 } },
+            { type: "Modify", changes: TestChange.mint([0], 2) },
         ];
         const actual = rebase(mods, revive);
         assert.deepEqual(actual, expected);

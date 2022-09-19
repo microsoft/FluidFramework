@@ -4,12 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import {
-    mockChildChangeInverter,
-    SequenceField as SF,
-} from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
+import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { TestChangeset } from "./utils";
 
@@ -17,7 +15,7 @@ const type: TreeSchemaIdentifier = brand("Node");
 
 function invert(change: TestChangeset): TestChangeset {
     deepFreeze(change);
-    return SF.invert(change, mockChildChangeInverter);
+    return SF.invert(change, TestChange.invert);
 }
 
 function shallowInvert(change: SF.Changeset<unknown>): SF.Changeset<unknown> {
@@ -34,8 +32,8 @@ describe("SequenceField - Invert", () => {
     });
 
     it("child changes", () => {
-        const childChange = { intentions: [1], ref: 0 };
-        const inverseChildChange = mockChildChangeInverter(childChange);
+        const childChange = TestChange.mint([0], 1);
+        const inverseChildChange = TestChange.invert(childChange);
         const input: TestChangeset = [
             { type: "Modify", changes: childChange },
         ];

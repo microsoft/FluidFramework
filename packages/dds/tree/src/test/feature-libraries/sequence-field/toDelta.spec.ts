@@ -5,9 +5,10 @@
 
 import { fail, strict as assert } from "assert";
 import { Delta } from "../../../tree";
-import { mockChildChangeToDelta, SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque } from "../../../util";
+import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { TestChangeset } from "./utils";
 
@@ -19,7 +20,7 @@ const moveId = brandOpaque<Delta.MoveId>(opId);
 
 function toDelta(change: TestChangeset): Delta.MarkList {
     deepFreeze(change);
-    return SF.sequenceFieldToDelta(change, mockChildChangeToDelta);
+    return SF.sequenceFieldToDelta(change, TestChange.toDelta);
 }
 
 function toDeltaShallow(change: TestChangeset): Delta.MarkList {
@@ -34,7 +35,7 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("Child change", () => {
-        const actual = toDelta([{ type: "Modify", changes: { intentions: [1], ref: 0 } }]);
+        const actual = toDelta([{ type: "Modify", changes: TestChange.mint([0], 1) }]);
         const expected: Delta.MarkList = [
             {
                 type: Delta.MarkType.Modify,
@@ -45,7 +46,7 @@ describe("SequenceField - toDelta", () => {
     });
 
     it("Empty child change", () => {
-        const actual = toDelta([{ type: "Modify", changes: { intentions: [], ref: 0 } }]);
+        const actual = toDelta([{ type: "Modify", changes: TestChange.emptyChange }]);
         const expected: Delta.MarkList = [];
         assert.deepEqual(actual, expected);
     });
@@ -123,7 +124,7 @@ describe("SequenceField - toDelta", () => {
             1,
             {
                 type: "Modify",
-                changes: { intentions: [1], ref: 0 },
+                changes: TestChange.mint([0], 1),
             },
         ];
         const del: Delta.Delete = {
@@ -149,7 +150,7 @@ describe("SequenceField - toDelta", () => {
                 type: "MInsert",
                 id: opId,
                 content: content[0],
-                changes: { intentions: [1], ref: 0 },
+                changes: TestChange.mint([0], 1),
             },
         ];
         const mark: Delta.Insert = {
