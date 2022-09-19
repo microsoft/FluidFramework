@@ -341,9 +341,6 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     beforeEach(() => {
         provider = getTestObjectProvider();
     });
-    afterEach(async () => reset());
-
-    const reset = async () => provider.reset();
 
     let container: Container;
     let dataObject: ITestFluidObject;
@@ -387,7 +384,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         let sharedMap2: SharedMap;
 
         beforeEach(async () => {
-            await reset();
+            provider.reset();
             provider = getTestObjectProvider();
         });
 
