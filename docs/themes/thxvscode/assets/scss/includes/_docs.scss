@@ -122,6 +122,7 @@
 }
 #docs-navbar > .nav {
   max-height: calc(100vh - 140px);
+  overflow: hidden;
 }
 #docs-navbar::-webkit-scrollbar {
   width: 0 !important;

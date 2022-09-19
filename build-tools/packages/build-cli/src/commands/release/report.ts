@@ -5,7 +5,12 @@
 
 import { strict as assert } from "assert";
 import { Context, writeFileAsync } from "@fluidframework/build-tools";
-import { detectBumpType, isVersionBumpType, VersionBumpType } from "@fluid-tools/version-tools";
+import {
+    detectBumpType,
+    isVersionBumpType,
+    ReleaseVersion,
+    VersionBumpType,
+} from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow, formatISO9075 } from "date-fns";
@@ -88,7 +93,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
     };
 
     releaseGroup: ReleaseGroup | ReleasePackage | undefined;
-    releaseVersion: string | undefined;
+    releaseVersion: ReleaseVersion | undefined;
 
     public async run(): Promise<ReleaseReport | PackageVersionList> {
         const context = await this.getContext();

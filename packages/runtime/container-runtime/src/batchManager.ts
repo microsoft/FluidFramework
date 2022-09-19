@@ -77,6 +77,7 @@ export class BatchManager {
                 for (let i = this.pendingBatch.length; i > startPoint;) {
                     i--;
                     const message = this.pendingBatch[i];
+                    this.batchContentSize -= message.contents.length;
                     process(message);
                 }
 

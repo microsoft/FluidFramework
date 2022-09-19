@@ -52,7 +52,7 @@ export abstract class RdkafkaBase extends EventEmitter {
         // environment node-rdkafka would be running. Once OpenSSL is available, building node-rdkafka
         // as usual will automatically include SSL support.
         const rdKafkaHasSSLEnabled =
-            kafka.features.filter((feature) => feature.toLowerCase().indexOf("ssl") >= 0).length > 0;
+            kafka.features.filter((feature) => feature.toLowerCase().includes("ssl"));
 
         if (options?.sslCACertFilePath) {
             // If the use of SSL is desired, but rdkafka has not been built with SSL support,

@@ -114,6 +114,12 @@ export interface Covariant<T> {
     _removeContravariance?: T;
 }
 
+// @public (undocumented)
+export const enum CursorLocationType {
+    Fields = 1,
+    Nodes = 0
+}
+
 // @public
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible;
 
@@ -468,6 +474,33 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
 }
 
 // @public
+export interface ITreeCursorNew {
+    readonly chunkLength: number;
+    readonly chunkStart: number;
+    enterField(key: FieldKey): void;
+    enterNode(childIndex: number): void;
+    exitField(): void;
+    exitNode(): void;
+    readonly fieldIndex: number;
+    firstField(): boolean;
+    firstNode(): boolean;
+    getFieldKey(): FieldKey;
+    // (undocumented)
+    getFieldLength(): number;
+    // (undocumented)
+    getPath(): UpPath | undefined;
+    readonly mode: CursorLocationType;
+    nextField(): boolean;
+    nextNode(): boolean;
+    // (undocumented)
+    readonly pending: boolean;
+    seekNodes(offset: number): boolean;
+    skipPendingFields(): boolean;
+    readonly type: TreeType;
+    readonly value: Value;
+}
+
+// @public
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildAnchor(): Anchor;
     clear(): void;
@@ -491,6 +524,9 @@ export interface JsonableTree extends PlaceholderTree {
 
 // @public
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
+
+// @public
+export function jsonableTreeFromCursorNew(cursor: ITreeCursorNew): JsonableTree;
 
 // @public (undocumented)
 export const jsonArray: NamedTreeSchema;
@@ -899,6 +935,9 @@ export class SimpleDependee implements Dependee {
 export function singleTextCursor(root: JsonableTree): TextCursor;
 
 // @public (undocumented)
+export function singleTextCursorNew(root: JsonableTree): TextCursorNew;
+
+// @public (undocumented)
 export type Skip = number;
 
 // @public
@@ -965,6 +1004,51 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     get type(): TreeType;
     // (undocumented)
     up(): SynchronousNavigationResult;
+    // (undocumented)
+    get value(): Value;
+}
+
+// @public
+export class TextCursorNew implements ITreeCursorNew {
+    constructor(root: JsonableTree);
+    // (undocumented)
+    get chunkLength(): number;
+    // (undocumented)
+    get chunkStart(): number;
+    // (undocumented)
+    enterField(key: FieldKey): void;
+    // (undocumented)
+    enterNode(index: number): void;
+    // (undocumented)
+    exitField(): void;
+    // (undocumented)
+    exitNode(): void;
+    // (undocumented)
+    get fieldIndex(): number;
+    // (undocumented)
+    firstField(): boolean;
+    // (undocumented)
+    firstNode(): boolean;
+    // (undocumented)
+    getFieldKey(): FieldKey;
+    // (undocumented)
+    getFieldLength(): number;
+    // (undocumented)
+    getPath(): UpPath | undefined;
+    // (undocumented)
+    get mode(): CursorLocationType;
+    // (undocumented)
+    nextField(): boolean;
+    // (undocumented)
+    nextNode(): boolean;
+    // (undocumented)
+    get pending(): boolean;
+    // (undocumented)
+    seekNodes(offset: number): boolean;
+    // (undocumented)
+    skipPendingFields(): boolean;
+    // (undocumented)
+    get type(): TreeType;
     // (undocumented)
     get value(): Value;
 }

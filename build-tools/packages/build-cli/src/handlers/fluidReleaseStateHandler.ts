@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { VersionScheme, VersionBumpType } from "@fluid-tools/version-tools";
+import { VersionScheme, VersionBumpType, ReleaseVersion } from "@fluid-tools/version-tools";
 import { Context } from "@fluidframework/build-tools";
 import { Command } from "@oclif/core";
 import { Machine } from "jssm";
@@ -74,7 +74,7 @@ export interface FluidReleaseStateHandlerData {
     /**
      * The version being released.
      */
-    releaseVersion?: string;
+    releaseVersion?: ReleaseVersion;
 
     /**
      * True if all optional checks should be skipped.

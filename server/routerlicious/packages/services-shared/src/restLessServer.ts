@@ -90,11 +90,9 @@ export class RestLessServer {
         if (!methodOverrideField) {
             throw new NetworkError(400, "Invalid RestLess Method Property");
         }
-        if (methodOverrideField instanceof Array) {
-            request.method = methodOverrideField[0];
-        } else {
-            request.method = methodOverrideField;
-        }
+        request.method = methodOverrideField instanceof Array
+            ? methodOverrideField[0]
+            : methodOverrideField;
         // Parse and add HTTP Headers
         const headerField: RequestField = fields[RestLessFieldNames.Header];
         let definedNewContentType: boolean = false;
@@ -123,11 +121,7 @@ export class RestLessServer {
         const bodyField: RequestField = fields[RestLessFieldNames.Body];
         // Tell body-parser middleware not to parse the body
         (request as any)._body = true;
-        if (bodyField instanceof Array) {
-            request.body = bodyField[0];
-        } else {
-            request.body = bodyField;
-        }
+        request.body = bodyField instanceof Array ? bodyField[0] : bodyField;
         request.headers["content-length"] = request.body ? `${(request.body as string).length}` : undefined;
     }
 

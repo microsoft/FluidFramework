@@ -196,6 +196,14 @@ export class GitRepo {
     }
 
     /**
+     * Returns an array containing all the modified files in the repo.
+     */
+    public async getModifiedFiles(): Promise<string[]> {
+        const results = await this.exec(`ls-files -m --deduplicate`, `get modified files`);
+        return results.split("\n").filter(t => t !== undefined && t !== "" && t !== null);
+    }
+
+    /**
      * @param gitRef - A reference to a git commit/tag/branch for which the commit date will be parsed.
      * @returns The commit date of the ref.
      */
