@@ -16,35 +16,11 @@ import {
     IntervalCollection,
     intervalLocatorFromEndpoint,
     IntervalType, SequenceInterval,
-    TestIntervalCollection,
 } from "../intervalCollection";
 
 const assertIntervals = (
     sharedString: SharedString,
     intervalCollection: IntervalCollection<SequenceInterval>,
-    expected: readonly { start: number; end: number; }[],
-    validateOverlapping: boolean = true,
-) => {
-    const actual = Array.from(intervalCollection);
-    if (validateOverlapping && sharedString.getLength() > 0) {
-        const overlapping = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
-        assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
-    }
-    assert.strictEqual(actual.length, expected.length,
-        `findOverlappingIntervals() must return the expected number of intervals`);
-
-    const actualPos = actual.map((interval) => {
-        assert(interval);
-        const start = sharedString.localReferencePositionToPosition(interval.start);
-        const end = sharedString.localReferencePositionToPosition(interval.end);
-        return { start, end };
-    });
-    assert.deepEqual(actualPos, expected, "intervals are not as expected");
-};
-
-const assertOldIntervals = (
-    sharedString: TestSharedString,
-    intervalCollection: TestIntervalCollection<SequenceInterval>,
     expected: readonly { start: number; end: number; }[],
     validateOverlapping: boolean = true,
 ) => {
@@ -136,20 +112,13 @@ describe("IntervalCollection snapshotting", () => {
         containerRuntimeFactory.sequenceNumber = seq;
     });
 
-    it("uses the old interval format", async () => {
+    // **** don't exactly know what to do with this? ****
+    it("loads the old interval format", async () => {
         // Right now, this checks the setup for any errors instead of asserting anything useful.
         const sharedString = await testLoadSharedString(containerRuntimeFactory, "1", summary);
         const collection = sharedString.getIntervalCollection("test");
 
-        assertOldIntervals(sharedString, collection, [{ start: 0, end: 2 }]);
-
-        const intervals = Array.from(collection);
-        assert.equal(intervals.length, 1);
-        const interval = intervals[0] ?? assert.fail();
-        /* eslint-disable no-bitwise */
-        assert(interval.start.refType === (ReferenceType.RangeBegin | ReferenceType.SlideOnRemove));
-        assert(interval.end.refType === (ReferenceType.RangeEnd | ReferenceType.SlideOnRemove));
-        /* eslint-enable no-bitwise */
+        assertIntervals(sharedString, collection, [{ start: 0, end: 2 }]);
     });
 
     it("creates the correct reference type on reload", async () => {
