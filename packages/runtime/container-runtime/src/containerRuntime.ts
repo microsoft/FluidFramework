@@ -2684,6 +2684,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (this._flushMode === FlushMode.TurnBased && type === ContainerMessageType.Attach &&
                     this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
                 if (!this.pendingAttachBatch.push(message)) {
+                    // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
+                    // when queue is not empty.
+                    // Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
                     this.flushBatch(this.pendingAttachBatch.popBatch());
                     if (!this.pendingAttachBatch.push(message)) {
                         throw new GenericError(
