@@ -333,8 +333,9 @@ export function inputLength(mark: Mark): number {
     modify: Modify,
 ): Map<FieldKey, MarkList> {
     const outFieldsMarks: Map<FieldKey, MarkList> = new Map();
-    if (modify.setValue !== undefined) {
-        node.value = modify.setValue.value;
+    // Use `hasOwnProperty` to detect when setValue is set to `undefined`.
+    if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
+        node.value = modify.setValue;
     }
     if (modify.fields !== undefined) {
         const protoFields = node.fields ?? {};
