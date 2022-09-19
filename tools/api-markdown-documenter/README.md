@@ -103,6 +103,10 @@ The vast majority of these options have default values that have been crafted to
 
 ## Upcoming Work
 
+### Known Bugs
+
+- Types that extend or implement types with generic parameters result in signatures rendered with missing closing `>`s.
+
 ### Documentation Improvements
 
 -   Intro sandbox (api report)
