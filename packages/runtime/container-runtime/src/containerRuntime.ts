@@ -119,7 +119,7 @@ import {
     IPendingLocalState,
     PendingStateManager,
 } from "./pendingStateManager";
-import { pendingBatch, BatchMessage } from "./pendingBatch";
+import { BatchManager, BatchMessage } from "./batchManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
@@ -850,12 +850,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
-    private readonly pendingBatch = new pendingBatch();
-    // Provide lower soft limit - we want to have some number of ops to get efficiency in compression,
+
+    // Provide lower soft limit - we want to have some number of ops to get efficiency in compression & bandwidth usage,
     // but at the same time we want to send these ops sooner, to reduce overall latency of processing a batch.
     // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
-    // payloads. That number represents final (compressed) bits.
-    private readonly pendingAttachBatch = new pendingBatch(64 * 1024);
+    // payloads. That number represents final (compressed) bits (once compression is implemented).
+    private readonly pendingAttachBatch = new BatchManager(64 * 1024);
+    private readonly pendingBatch = new BatchManager();
+
     private readonly garbageCollector: IGarbageCollector;
 
     // Local copy of incomplete received chunks.

@@ -30,13 +30,12 @@ export class BatchManager {
 
     public get length() { return this.pendingBatch.length; }
     public get limit() { return BatchManager.hardLimit; }
+    public static get limit() { return BatchManager.hardLimit; }
 
     constructor(public readonly softLimit?: number) {}
 
     public push(message: BatchMessage): boolean {
-        this.pendingBatch.push(message);
-        this.batchContentSize += message.contents.length;
-
+        const contentSize = this.batchContentSize + message.contents.length;
         const opCount = this.pendingBatch.length;
 
         // Attempt to estimate batch size, aka socket message size.
@@ -44,7 +43,7 @@ export class BatchManager {
         // Also content will be strigified, and that adds a lot of overhead due to a lot of escape characters.
         // Not taking it into account, as compression work should help there - compressed payload will be
         // initially stored as base64, and that requires only 2 extra escape characters.
-        const socketMessageSize = this.batchContentSize + 200 * opCount;
+        const socketMessageSize = contentSize + 200 * opCount;
 
         // If we were provided soft limit, check for exceeding it.
         // But only if we have any ops, as the intention here is to flush existing ops (on exceeding this limit)
@@ -56,6 +55,9 @@ export class BatchManager {
         if (socketMessageSize >= this.limit) {
             return false;
         }
+
+        this.batchContentSize = contentSize;
+        this.pendingBatch.push(message);
         return true;
     }
 
