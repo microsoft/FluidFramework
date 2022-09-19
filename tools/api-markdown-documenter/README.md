@@ -105,7 +105,7 @@ The vast majority of these options have default values that have been crafted to
 
 ### Known Bugs
 
-- Types that extend or implement types with generic parameters result in signatures rendered with missing closing `>`s.
+-   Types that extend or implement types with generic parameters result in signatures rendered with missing closing `>`s.
 
 ### Documentation Improvements
 
