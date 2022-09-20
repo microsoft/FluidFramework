@@ -46,13 +46,13 @@ const defaultTimeoutMs = 20000;
 function createTestSuiteWithInstalledVersion(
     tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
     requiredVersions: IRequiredVersions = { versionsDelta: -2 },
-    timeout: number = defaultTimeoutMs,
+    timeoutMs: number = defaultTimeoutMs,
 ) {
     return function(this: Mocha.Suite) {
         let defaultProvider: TestObjectProvider;
         let resetAfterEach: boolean;
         before(async function() {
-            this.timeout(Math.max(defaultTimeoutMs, timeout));
+            this.timeout(Math.max(defaultTimeoutMs, timeoutMs));
 
             await installRequiredVersions(requiredVersions);
             defaultProvider = await getVersionedTestObjectProvider(
@@ -112,13 +112,13 @@ export type DescribeWithVersions =
 
 export function describeWithVersions(
     requiredVersions?: IRequiredVersions,
-    timeout?: number,
+    timeoutMs?: number,
 ): DescribeWithVersions {
     const d: DescribeWithVersions =
-        (name, tests) => describe(name, createTestSuiteWithInstalledVersion(tests, requiredVersions, timeout));
+        (name, tests) => describe(name, createTestSuiteWithInstalledVersion(tests, requiredVersions, timeoutMs));
     d.skip =
-        (name, tests) => describe.skip(name, createTestSuiteWithInstalledVersion(tests, requiredVersions, timeout));
+        (name, tests) => describe.skip(name, createTestSuiteWithInstalledVersion(tests, requiredVersions, timeoutMs));
     d.only =
-        (name, tests) => describe.only(name, createTestSuiteWithInstalledVersion(tests, requiredVersions, timeout));
+        (name, tests) => describe.only(name, createTestSuiteWithInstalledVersion(tests, requiredVersions, timeoutMs));
     return d;
 }
