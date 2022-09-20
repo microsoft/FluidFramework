@@ -54,7 +54,7 @@ export interface IFluidModuleWithDetails {
 export interface ICodeDetailsLoader
     extends Partial<IProvideFluidCodeDetailsComparer> {
     /**
-     * Load the code module (package) that is capable to interact with the document.
+     * Load the code module (package) that can interact with the document.
      *
      * @param source - Code proposal that articulates the current schema the document is written in.
      * @returns - Code module entry point along with the code details associated with it.
@@ -63,7 +63,7 @@ export interface ICodeDetailsLoader
 }
 
 /**
-* The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
+ * The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
  * that have been resolved and are ready to load
  */
 export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
@@ -147,7 +147,7 @@ export namespace ConnectionState {
 }
 
 /**
- * Type defining the different states of connectivity a container can be in.
+ * Type defining the different states of connectivity a Container can be in.
  */
 export type ConnectionState =
     | ConnectionState.Disconnected
@@ -156,7 +156,7 @@ export type ConnectionState =
     | ConnectionState.Connected;
 
 /**
- * The Host's view of the Container and its connection to storage
+ * The Host's view of a Container and its connection to storage
  */
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
 
@@ -201,7 +201,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly closed: boolean;
 
     /**
-     * Returns true if the container is dirty, i.e. there are user changes that has not been saved
+     * Returns true if the container is dirty, i.e. there are user changes that have not been saved.
      * Closing container in this state results in data loss for user.
      * Container usually gets into this situation due to loss of connectivity.
      */
@@ -235,7 +235,8 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     attach(request: IRequest): Promise<void>;
 
     /**
-     * Extract the snapshot from the detached container.
+     * Extract a snapshot of the container as long as it is in detached state. Calling this on an attached container
+     * is an error.
      */
     serialize(): string;
 
@@ -337,27 +338,27 @@ export type ILoaderOptions = {
     [key in string | number]: any;
 } & {
     /**
-     * Set caching behavior for the loader.  If true, we will load a container from cache if one
+     * Set caching behavior for the loader. If true, we will load a container from cache if one
      * with the same id/version exists or create a new container and cache it if it does not. If
      * false, always load a new container and don't cache it. If the container has already been
-     * closed, it will not be cached.  A cache option in the LoaderHeader for an individual
+     * closed, it will not be cached. A cache option in the LoaderHeader for an individual
      * request will override the Loader's value.
      * Defaults to true.
      */
     cache?: boolean;
 
     /**
-     * Provide the current Loader through the scope object when creating Containers.  It is added
+     * Provide the current Loader through the scope object when creating Containers. It is added
      * as the `ILoader` property, and will overwrite an existing property of the same name on the
-     * scope.  Useful for when the host wants to provide the current Loader's functionality to
+     * scope. Useful for when the host wants to provide the current Loader's functionality to
      * individual Data Stores, which is typically expected when creating with a Loader.
      * Defaults to true.
      */
     provideScopeLoader?: boolean;
 
     /**
-     * Max time(in ms) container will wait for a leave message of a disconnected client.
-    */
+     * Max time (in ms) container will wait for a leave message of a disconnected client.
+     */
     maxClientLeaveWaitTime?: number;
 };
 
@@ -409,6 +410,7 @@ export interface IContainerLoadMode {
      * recommended to have some progress UX / cancellation built into loading flow when using this option.
      */
     | "all";
+
     deltaConnection?:
     /*
      * Connection to delta stream is made only when Container.connect() call is made. Op processing
