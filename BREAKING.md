@@ -24,7 +24,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
 - [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
-- 
+-
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
@@ -38,7 +38,7 @@ This field has been deprecated and will be removed in a future breaking change. 
         fileName: string,
 -       createShareLinkType?: ShareLinkTypes,
 +       createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
-    ): 
+    ):
 ```
 
 
@@ -140,6 +140,9 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 
 ### Remove TelemetryDataTag.PackageData
 `TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
+
+### Remove ICodeLoader from `@fluidframework/container-definitions`
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 ### Remove ConnectionState.Connecting
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
@@ -331,9 +334,6 @@ should be updated depending on how you want to treat this new `EstablishingConne
 Additionally, please note that the `Connecting` state is being renamed to `CatchingUp`.
 `ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
 `ConnectionState.Connecting` will be removed in the following major release.
-
-### Remove ICodeLoader from `@fluidframework/container-definitions`
-`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 # 0.59
 
