@@ -5,18 +5,18 @@
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { LiteralNode, SingleLineElementNode } from "./DocumentionNode";
 
-export type SymbolicLinkTarget = unknown; // TODO: better typing here?
-
-export interface SymbolicLink {
-    symbolTarget: SymbolicLinkTarget;
+export interface SymbolicLink<TLinkTarget = unknown> {
+    symbolTarget: TLinkTarget;
     content?: SingleLineElementNode;
 }
 
-export class SymbolicLinkNode implements LiteralNode<SymbolicLink>, SingleLineElementNode {
+export class SymbolicLinkNode<TLinkTarget = unknown>
+    implements LiteralNode<SymbolicLink>, SingleLineElementNode
+{
     public readonly type = DocumentNodeType.SymbolicLink;
-    public readonly value: SymbolicLink;
+    public readonly value: SymbolicLink<TLinkTarget>;
 
-    public constructor(link: SymbolicLink) {
+    public constructor(link: SymbolicLink<TLinkTarget>) {
         this.value = link;
     }
 }
