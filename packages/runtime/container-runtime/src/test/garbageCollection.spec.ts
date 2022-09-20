@@ -267,8 +267,7 @@ describe("Garbage Collection Tests", () => {
             });
         });
 
-        //* ONLY
-        describe.only("Session Expiry and Sweep Timeout", () => {
+        describe("Session Expiry and Sweep Timeout", () => {
             const testOverrideInactiveTimeoutMsKey = "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs";
             const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
             const testOverrideSweepTimeoutMsKey = "Fluid.GarbageCollection.TestOverride.SweepTimeoutMs";
