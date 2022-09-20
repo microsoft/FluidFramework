@@ -49,8 +49,13 @@ const packageList = [
     "@fluidframework/routerlicious-driver",
 ];
 
+export interface IInstalledVersion {
+    version: string;
+    modulePath: string;
+}
+
 export const ensurePackageInstalled =
-    async (baseVersion: string, version: number | string, force: boolean) =>
+    async (baseVersion: string, version: number | string, force: boolean): Promise<IInstalledVersion | undefined> =>
         ensureInstalled(getRequestedRange(baseVersion, version), packageList, force);
 
 // Current versions of the APIs

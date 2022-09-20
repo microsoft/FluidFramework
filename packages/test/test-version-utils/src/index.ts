@@ -7,3 +7,4 @@ export * from "./compatUtils";
 export * from "./testApi";
 export * from "./itExpects";
 export * from "./describeCompat";
+export * from "./describeWithVersions";
