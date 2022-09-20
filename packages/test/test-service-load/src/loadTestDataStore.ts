@@ -22,7 +22,12 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
-import { DataObjectWithCounter, dataObjectWithCounterFactory } from "./gcDataStore";
+import {
+    DataObjectParent,
+    dataObjectParentFactory,
+    DataObjectWithCounter,
+    dataObjectWithCounterFactory,
+} from "./gcDataStore";
 
 export interface IRunConfig {
 	runId: number;
