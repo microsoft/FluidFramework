@@ -277,13 +277,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load an existing container.
      */
     public static async load(
-        loader: Loader | ILoaderServices,
+        loaderOrServices: Loader | ILoaderServices,
         loadOptions: IContainerLoadOptions,
         pendingLocalState?: IPendingContainerState,
         protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
-            loader,
+            loaderOrServices,
             {
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
                 resolvedUrl: loadOptions.resolvedUrl,
@@ -336,12 +336,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Create a new container in a detached state.
      */
     public static async createDetached(
-        loader: Loader | ILoaderServices,
+        loaderOrServices: Loader | ILoaderServices,
         codeDetails: IFluidCodeDetails,
         protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
-            loader,
+            loaderOrServices,
             {},
             protocolHandlerBuilder);
 
@@ -360,12 +360,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * snapshot from a previous detached container.
      */
     public static async rehydrateDetachedFromSnapshot(
-        loader: Loader | ILoaderServices,
+        loaderOrServices: Loader | ILoaderServices,
         snapshot: string,
         protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
-            loader,
+            loaderOrServices,
             {},
             protocolHandlerBuilder);
 
@@ -569,7 +569,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly loader?: Loader;
 
     constructor(
-        private readonly loaderOrLoaderServices: Loader | ILoaderServices,
+        private readonly loaderOrServices: Loader | ILoaderServices,
         config: IContainerConfig,
         private readonly protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ) {
@@ -582,10 +582,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error);
         });
 
-        // Split the parameter with a union type (ILoaderServices was added later as an alternative for
-        // scenarios where a full ILoader is not really necessary) into a variable for each. Loader can be
-        // left undefined if only ILoaderServices was provided in the constructor.
-        const maybeLoaderMaybeServices = this.loaderOrLoaderServices as Loader & ILoaderServices;
+        // Split the parameter with a union type (ILoaderServices was added later as an alternative for scenarios
+        // where a full Loader is not really necessary) into a variable for each. The local variable for the loader
+        // can be left undefined if only ILoaderServices was provided in the constructor. We're leveraging the fact
+        // that Loader will have a 'services' property that doesn't exist in ILoaderServices, but this logic
+        // could break if that changes (or if the object which implements ILoaderServices that gets passed in also
+        // has a 'services' property for other reasons).
+        const maybeLoaderMaybeServices = this.loaderOrServices as Loader & ILoaderServices;
         this.loaderServices = maybeLoaderMaybeServices.services !== undefined
             ? maybeLoaderMaybeServices.services
             : maybeLoaderMaybeServices;
