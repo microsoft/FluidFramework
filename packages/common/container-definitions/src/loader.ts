@@ -196,12 +196,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
 
     /**
-     * Returns true if the container has been closed, otherwise false
+     * Returns true if the Container has been closed, otherwise false
      */
     readonly closed: boolean;
 
     /**
-     * Returns true if the container is dirty, i.e. there are user changes that have not been saved.
+     * Returns true if the Container is dirty, i.e. there are user changes that have not been saved.
      * Closing container in this state results in data loss for user.
      * Container usually gets into this situation due to loss of connectivity.
      */
