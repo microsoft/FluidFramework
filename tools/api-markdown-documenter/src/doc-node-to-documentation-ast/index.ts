@@ -14,18 +14,17 @@ import {
     DocSection,
 } from "@microsoft/tsdoc";
 
+import { UrlTarget } from "../Link";
 import {
     CodeSpanNode,
     DocumentationNode,
     FencedCodeBlockNode,
     LineBreakNode,
+    LinkNode,
     ParagraphNode,
     PlainTextNode,
     SpanNode,
-    SymbolicLinkNode,
-    UrlLinkNode,
 } from "../documentation-domain";
-import {  UrlTarget } from "../Link";
 
 /**
  * Transformation library from {@link @microsoft/tsdoc#DocNode}_s to {@link DocumentationNode}s.
@@ -41,7 +40,10 @@ export interface DocNodeTransformOptions {
 /**
  * Converts a {@link @microsoft/tsdoc#DocNode} to a {@link DocumentationNode}.
  */
-export function transformDocNode(node: DocNode, options: DocNodeTransformOptions): DocumentationNode {
+export function transformDocNode(
+    node: DocNode,
+    options: DocNodeTransformOptions,
+): DocumentationNode {
     switch (node.kind) {
         case DocNodeKind.CodeSpan:
             return transformCodeSpan(node as DocCodeSpan, options);
@@ -65,14 +67,20 @@ export function transformDocNode(node: DocNode, options: DocNodeTransformOptions
 /**
  * Converts a {@link @microsoft/tsdoc#DocCodeSpan} to a {@link CodeSpanNode}.
  */
-export function transformCodeSpan(node: DocCodeSpan, options: DocNodeTransformOptions): CodeSpanNode {
+export function transformCodeSpan(
+    node: DocCodeSpan,
+    options: DocNodeTransformOptions,
+): CodeSpanNode {
     return CodeSpanNode.createFromPlainText(node.code);
 }
 
 /**
  * Converts a {@link @microsoft/tsdoc#DocParagraph} to a {@link ParagraphNode}.
  */
-export function transformParagraph(node: DocParagraph, options: DocNodeTransformOptions): ParagraphNode {
+export function transformParagraph(
+    node: DocParagraph,
+    options: DocNodeTransformOptions,
+): ParagraphNode {
     const children = node.nodes.map((child) => transformDocNode(child, options));
     return new ParagraphNode(children);
 }
@@ -88,14 +96,20 @@ export function transformSection(node: DocSection, options: DocNodeTransformOpti
 /**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
-export function transformPlainText(node: DocPlainText, options: DocNodeTransformOptions): PlainTextNode {
+export function transformPlainText(
+    node: DocPlainText,
+    options: DocNodeTransformOptions,
+): PlainTextNode {
     return new PlainTextNode(node.text);
 }
 
 /**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
-export function transformFencedCode(node: DocFencedCode, options: DocNodeTransformOptions): FencedCodeBlockNode {
+export function transformFencedCode(
+    node: DocFencedCode,
+    options: DocNodeTransformOptions,
+): FencedCodeBlockNode {
     return FencedCodeBlockNode.createFromPlainText(node.code, node.language);
 }
 
@@ -105,16 +119,16 @@ export function transformFencedCode(node: DocFencedCode, options: DocNodeTransfo
 export function transformLinkTag(
     node: DocLinkTag,
     options: DocNodeTransformOptions,
-): UrlLinkNode | SymbolicLinkNode<DocDeclarationReference> | PlainTextNode {
+): LinkNode | SymbolicLinkNode<DocDeclarationReference> | PlainTextNode {
     const linkTextNode = new PlainTextNode(node.linkText ?? "");
 
     if (node.codeDestination !== undefined) {
         const urlTarget = options.resolveApiReference(node.codeDestination);
-        return new UrlLinkNode({ urlTarget, content: linkTextNode });
+        return new LinkNode({ target: urlTarget, content: linkTextNode });
     }
 
     if (node.urlDestination !== undefined) {
-        return new UrlLinkNode({ urlTarget: node.urlDestination, content: linkTextNode });
+        return new LinkNode({ target: node.urlDestination, content: linkTextNode });
     }
 
     return linkTextNode;

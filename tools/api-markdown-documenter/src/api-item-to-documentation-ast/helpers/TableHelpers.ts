@@ -22,12 +22,12 @@ import {
     DocumentationNode,
     HeadingNode,
     HierarchicalSectionNode,
+    LinkNode,
     PlainTextNode,
     SpanNode,
     TableCellNode,
     TableNode,
     TableRowNode,
-    UrlLinkNode,
 } from "../../documentation-domain";
 import {
     ApiFunctionLike,
@@ -512,8 +512,8 @@ export function createApiTitleCell(
 ): TableCellNode {
     const itemLink = getLinkForApiItem(apiItem, config); // TODO: symbolic link?
     return new TableCellNode([
-        new UrlLinkNode({
-            urlTarget: itemLink.url,
+        new LinkNode({
+            target: itemLink.url,
             content: new PlainTextNode(itemLink.text),
         }),
     ]);

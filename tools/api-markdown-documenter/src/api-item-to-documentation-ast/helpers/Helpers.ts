@@ -29,7 +29,14 @@ import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { Heading } from "../../Heading";
 import { Link } from "../../Link";
 import { DocAlert, DocEmphasisSpan, DocHeading, DocList, ListKind } from "../../doc-nodes";
-import { DocAlertType, DocumentationNode, PlainTextNode, SpanNode, SymbolicLinkNode, UrlLinkNode } from "../../documentation-domain";
+import {
+    DocAlertType,
+    DocumentationNode,
+    LinkNode,
+    PlainTextNode,
+    SpanNode,
+    SymbolicLinkNode,
+} from "../../documentation-domain";
 import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,
@@ -359,18 +366,14 @@ export function createExcerptSpanWithHyperlinks(
                     config,
                     unwrappedTokenText,
                 );
-                children.push(
-                    new UrlLinkNode(link)
-                );
+                children.push(new LinkNode(link));
                 wroteHyperlink = true;
             }
         }
 
         // If the token was not one from which we generated hyperlink text, write as plain text instead
         if (!wroteHyperlink) {
-            children.push(
-                new PlainTextNode(unwrappedTokenText),
-            );
+            children.push(new PlainTextNode(unwrappedTokenText));
         }
     }
     return new SpanNode(children);
