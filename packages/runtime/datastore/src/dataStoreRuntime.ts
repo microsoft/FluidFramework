@@ -449,6 +449,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     /**
+     * @deprecated - Not necessary if consumers add a new dataStore to the container by storing its handle.
      * Binds this runtime to the container
      * This includes the following:
      * 1. Sending an Attach op that includes all existing state

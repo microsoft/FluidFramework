@@ -221,14 +221,6 @@ export interface IFluidDataStoreChannel extends
 
     readonly visibilityState?: VisibilityState;
 
-    //* Try removing
-    /**
-     * @deprecated - This is an internal method that should not be exposed.
-     * Called to bind the runtime to the container.
-     * If the container is not attached to storage, then this would also be unknown to other clients.
-     */
-    bindToContext(): void;
-
     /**
      * @deprecated - This will be removed in favor of makeVisibleAndAttachGraph.
      * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
