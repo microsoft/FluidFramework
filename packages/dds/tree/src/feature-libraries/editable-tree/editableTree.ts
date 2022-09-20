@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/common-utils";
-import { Value, Anchor } from "../../tree";
+import { Value, Anchor, rootFieldKey } from "../../tree";
 import {
     IEditableForest, TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState,
 } from "../../forest";
 import { brand } from "../../util";
 import {
-    FieldSchema, rootFieldKey, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema,
+    FieldSchema, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema,
 } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
@@ -148,7 +148,7 @@ class ProxyContext implements EditableTreeContext {
         for (const target of this.withCursors) {
             target.prepareForEdit();
         }
-        assert(this.withCursors.size === 0, "prepareForEdit should remove all cursors");
+        assert(this.withCursors.size === 0, 0x3c0 /* prepareForEdit should remove all cursors */);
     }
     public free(): void {
         for (const target of this.withCursors) {
@@ -157,8 +157,8 @@ class ProxyContext implements EditableTreeContext {
         for (const target of this.withAnchors) {
             target.free();
         }
-        assert(this.withCursors.size === 0, "free should remove all cursors");
-        assert(this.withAnchors.size === 0, "free should remove all anchors");
+        assert(this.withCursors.size === 0, 0x3c1 /* free should remove all cursors */);
+        assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
     }
 }
 
@@ -195,10 +195,11 @@ class ProxyTarget {
 
     public get cursor(): ITreeSubscriptionCursor {
         if (this.lazyCursor.state === ITreeSubscriptionCursorState.Cleared) {
-            assert(this.anchor !== undefined, "EditableTree should have an anchor if it does not have a cursor");
+            assert(this.anchor !== undefined,
+                0x3c3 /* EditableTree should have an anchor if it does not have a cursor */);
             const result = this.context.forest.tryMoveCursorTo(this.anchor, this.lazyCursor);
             assert(result === TreeNavigationResult.Ok,
-                "It is invalid to access an EditableTree node which no longer exists");
+                0x3c4 /* It is invalid to access an EditableTree node which no longer exists */);
             this.context.withCursors.add(this);
         }
         return this.lazyCursor;
@@ -208,7 +209,7 @@ class ProxyTarget {
         let typeName = this.cursor.type;
         if (key !== undefined) {
             const childTypes = mapCursorField(this.cursor, brand(key), (c) => c.type);
-            assert(childTypes.length <= 1, "invalid non sequence");
+            assert(childTypes.length <= 1, 0x3c5 /* invalid non sequence */);
             typeName = childTypes[0];
         }
         if (nameOnly) {
@@ -277,7 +278,7 @@ class ProxyTarget {
      */
     public getTypeName(key: string): TreeSchemaIdentifier {
         const childTypes = mapCursorField(this.cursor, brand(key), (c) => c.type);
-        assert(childTypes.length <= 1, "invalid non sequence");
+        assert(childTypes.length <= 1, 0x3c6 /* invalid non sequence */);
         return childTypes[0];
     }
 }
@@ -292,14 +293,19 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             // All string keys are fields
             return target.proxifyField(key);
         }
-        if (key === getTypeSymbol) {
-            return target.getType.bind(target);
-        } else if (key === valueSymbol) {
-            return target.value;
-        } else if (key === proxyTargetSymbol) {
-            return target;
+        switch (key) {
+            case getTypeSymbol: {
+                return target.getType.bind(target);
+            }
+            case valueSymbol: {
+                return target.value;
+            }
+            case proxyTargetSymbol: {
+                return target;
+            }
+            default:
+                return undefined;
         }
-        return undefined;
     },
     set: (target: ProxyTarget, key: string | symbol, setValue: unknown, receiver: ProxyTarget): boolean => {
         throw new Error("Not implemented.");
@@ -379,7 +385,8 @@ function inProxyOrUnwrap(target: ProxyTarget): UnwrappedEditableTree {
         if (isPrimitiveValue(nodeValue)) {
             return nodeValue;
         }
-        assert(fieldSchema.value === ValueSchema.Serializable, "`undefined` values not allowed for primitive fields");
+        assert(fieldSchema.value === ValueSchema.Serializable,
+            0x3c7 /* `undefined` values not allowed for primitive fields */);
     }
     const primary = target.getPrimaryArrayKey();
     if (primary !== undefined) {
@@ -399,12 +406,8 @@ function proxifyField(fieldKind: FieldKind, childTargets: ProxyTarget[]): Unwrap
         return childTargets.map(inProxyOrUnwrap);
     } else {
         // Avoid wrapping non-sequence fields in arrays
-        assert(childTargets.length <= 1, "invalid non sequence");
-        if (childTargets.length === 1) {
-            return inProxyOrUnwrap(childTargets[0]);
-        } else {
-            return undefined;
-        }
+        assert(childTargets.length <= 1, 0x3c8 /* invalid non sequence */);
+        return childTargets.length === 1 ? inProxyOrUnwrap(childTargets[0]) : undefined;
     }
 }
 

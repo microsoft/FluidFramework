@@ -5,9 +5,11 @@
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { ChangeEncoder } from "../change-family";
+import { ITreeCursor } from "../forest";
 import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, Delta, JsonableTree } from "../tree";
-import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { brand, clone, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { singleTextCursor } from "./treeTextCursor";
 import {
     FieldKind,
     Multiplicity,
@@ -18,7 +20,13 @@ import {
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
+    NodeChangeset,
+    FieldChangeEncoder,
+    NodeChangeDecoder,
+    NodeChangeEncoder,
+    FieldEditor,
 } from "./modular-schema";
+import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 
 /**
  * Encoder for changesets which carry no information.
@@ -170,9 +178,11 @@ export const counterHandle: FieldChangeHandler<number> = {
  * Stores a single value which corresponds to number which can be added to.
  *
  * This is an example of a few interesting things:
+ *
  * - A field kind with some constraints on what can be under it type wise.
- *      Other possible examples which would do this include sets, maps (for their keys),
- *      or any domain specific specialized kinds.
+ * Other possible examples which would do this include sets, maps (for their keys),
+ * or any domain specific specialized kinds.
+ *
  * - A field kind with commutative edits.
  *
  * TODO:
@@ -189,18 +199,147 @@ export const counter: FieldKind = new FieldKind(
     new Set(),
 );
 
+export interface ValueChangeset {
+    value?: JsonableTree;
+    changes?: NodeChangeset;
+}
+
+const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
+    compose: (changes: ValueChangeset[], composeChildren: NodeChangeComposer): ValueChangeset => {
+        if (changes.length === 0) {
+            return {};
+        }
+        let newValue: JsonableTree | undefined;
+        const childChanges: NodeChangeset[] = [];
+        for (const change of changes) {
+            if (change.value !== undefined) {
+                newValue = change.value;
+
+                // The previous changes applied to a different value, so we discard them.
+                // TODO: Consider if we should represent muted changes
+                childChanges.length = 0;
+            }
+
+            if (change.changes !== undefined) {
+                childChanges.push(change.changes);
+            }
+        }
+
+        const composed: ValueChangeset = {};
+        if (newValue !== undefined) {
+            composed.value = newValue;
+        }
+
+        if (childChanges.length > 0) {
+            composed.changes = composeChildren(childChanges);
+        }
+
+        return composed;
+    },
+
+    invert: (change: ValueChangeset, invertChild: NodeChangeInverter): ValueChangeset => {
+        // TODO: Handle the value inverse
+        const inverse: ValueChangeset = {};
+        if (change.changes !== undefined) {
+            inverse.changes = invertChild(change.changes);
+        }
+        return inverse;
+    },
+
+    rebase: (change: ValueChangeset, over: ValueChangeset, rebaseChild: NodeChangeRebaser): ValueChangeset => {
+        if (change.changes === undefined || over.changes === undefined) {
+            return change;
+        }
+        return { ...change, changes: rebaseChild(change.changes, over.changes) };
+    },
+};
+
+interface EncodedValueChangeset {
+    value?: JsonableTree;
+    changes?: JsonCompatibleReadOnly;
+}
+
+const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
+    encodeForJson: (formatVersion: number, change: ValueChangeset, encodeChild: NodeChangeEncoder) => {
+        const encoded: EncodedValueChangeset & JsonCompatibleReadOnly = {};
+        if (change.value !== undefined) {
+            encoded.value = change.value;
+        }
+
+        if (change.changes !== undefined) {
+            encoded.changes = encodeChild(change.changes);
+        }
+
+        return encoded;
+    },
+
+    decodeJson: (formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder) => {
+        const encoded = change as EncodedValueChangeset;
+        const decoded: ValueChangeset = {};
+        if (encoded.value !== undefined) {
+            decoded.value = encoded.value;
+        }
+
+        if (encoded.changes !== undefined) {
+            decoded.changes = decodeChild(encoded.changes);
+        }
+
+        return decoded;
+    },
+};
+
+export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
+    /**
+     * Creates a change which replaces the current value of the field with `newValue`.
+     */
+    set(newValue: ITreeCursor): ValueChangeset;
+}
+
+const valueFieldEditor: ValueFieldEditor = {
+    buildChildChange: (index, change) => {
+        assert(index === 0, 0x3b6 /* Value fields only support a single child node */);
+        return { changes: change };
+    },
+
+    set: (newValue: ITreeCursor) => ({ value: jsonableTreeFromCursor(newValue) }),
+};
+
+const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
+    rebaser: valueRebaser,
+    encoder: valueFieldEncoder,
+    editor: valueFieldEditor,
+
+    intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
+        if (change.value !== undefined) {
+            let mark: Delta.Mark;
+            if (change.changes === undefined) {
+                mark = { type: Delta.MarkType.Insert, content: [singleTextCursor(change.value)] };
+            } else {
+                const modify = deltaFromChild(change.changes);
+                const content = clone(change.value);
+                const fields = Delta.applyModifyToInsert(content, modify);
+                mark = fields.size === 0
+                    ? { type: Delta.MarkType.Insert, content: [singleTextCursor(content)] }
+                    : { type: Delta.MarkType.InsertAndModify, content: singleTextCursor(content), fields };
+            }
+
+            return [
+                { type: Delta.MarkType.Delete, count: 1 },
+                mark,
+            ];
+        }
+
+        return change.changes === undefined ? [] : [deltaFromChild(change.changes)];
+    },
+};
+
 /**
 * Exactly one item.
 */
 export const value: FieldKind = new FieldKind(
     brand("Value"),
     Multiplicity.Value,
-    {
-        rebaser: replaceRebaser<JsonableTree>(),
-        encoder: new ValueEncoder<JsonableTree & JsonCompatibleReadOnly>(),
-        editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-        intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
-    },
+    valueChangeHandler,
     (types, other) =>
         (other.kind === sequence.identifier || other.kind === value.identifier || other.kind === optional.identifier)
         && allowsTreeSchemaIdentifierSuperset(types, other.types),

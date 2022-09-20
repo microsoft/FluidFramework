@@ -156,7 +156,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     /**
      * Ensure all tracked containers are synchronized
      */
-    public async ensureSynchronized(...containers: IContainer[]) {
+    public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
         await this.processSynchronized(undefined, ...containers);
     }
 
@@ -169,14 +169,22 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
     /**
      * Make sure all the tracked containers are synchronized.
-     * - No isDirty (non-readonly) containers
-     * - No extra clientId in quorum of any container that is not tracked and still opened.
-     *      - i.e. no pending Join/Leave message.
-     * - No unresolved proposal (minSeqNum \>= lastProposalSeqNum)
-     * - lastSequenceNumber of all container is the same
-     * - clientSequenceNumberObserved is the same as clientSequenceNumber sent
-     *      - this overlaps with !isDirty, but include task scheduler ops.
-     *      - Trailing NoOp is tracked and don't count as pending ops.
+     *
+     * No isDirty (non-readonly) containers
+     *
+     * No extra clientId in quorum of any container that is not tracked and still opened.
+     *
+     * - i.e. no pending Join/Leave message.
+     *
+     * No unresolved proposal (minSeqNum \>= lastProposalSeqNum)
+     *
+     * lastSequenceNumber of all container is the same
+     *
+     * clientSequenceNumberObserved is the same as clientSequenceNumber sent
+     *
+     * - this overlaps with !isDirty, but include task scheduler ops.
+     *
+     * - Trailing NoOp is tracked and don't count as pending ops.
      */
     private async processSynchronized(timeoutDuration: number | undefined, ...containers: IContainer[]) {
         const start = Date.now();

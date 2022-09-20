@@ -58,6 +58,7 @@ export class DocumentDeltaConnection
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
     protected readonly queuedSignals: ISignalMessage[] = [];
+
     /**
      * A flag to indicate whether we have our handler attached.  If it's attached, we're queueing incoming ops
      * to later be retrieved via initialMessages.
@@ -341,7 +342,7 @@ export class DocumentDeltaConnection
     /**
      * Disconnect from the websocket.
      * @param socketProtocolError - true if error happened on socket / socket.io protocol level
-     *  (not on Fluid protocol level)
+     * (not on Fluid protocol level)
      * @param reason - reason for disconnect
      */
     protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {

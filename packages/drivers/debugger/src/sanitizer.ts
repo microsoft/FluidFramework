@@ -287,12 +287,7 @@ export class Sanitizer {
                 return this.replacementMap.get(input)!;
             }
 
-            let replacement: string;
-            if (this.fullScrub) {
-                replacement = this.getRandomText(input.length);
-            } else {
-                replacement = input;
-            }
+            const replacement = this.fullScrub ? this.getRandomText(input.length) : input;
 
             this.replacementMap.set(input, replacement);
             return replacement;
@@ -488,11 +483,9 @@ export class Sanitizer {
     }
 
     fixDeltaOp(deltaOp: any) {
-        if (typeof deltaOp.seg === "string") {
-            deltaOp.seg = this.replaceText(deltaOp.seg);
-        } else {
-            deltaOp.seg = this.replaceObject(deltaOp.seg, this.mergeTreeExcludedKeys);
-        }
+        deltaOp.seg = typeof deltaOp.seg === "string"
+            ? this.replaceText(deltaOp.seg)
+            : this.replaceObject(deltaOp.seg, this.mergeTreeExcludedKeys);
     }
 
     /**

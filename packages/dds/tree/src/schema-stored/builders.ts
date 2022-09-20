@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { brand, brandOpaque } from "../util";
+import { brand } from "../util";
 import {
     FieldKindIdentifier,
-    FieldSchema, GlobalFieldKey, LocalFieldKey, Named, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    FieldSchema, GlobalFieldKey, Named, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "./schema";
 
 /**
@@ -25,19 +25,6 @@ export const emptySet: ReadonlySet<never> = new Set();
  * Empty readonly map.
  */
 export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
-
-/**
- * LocalFieldKey to use for when there is a collection of items under a tree node
- * that makes up the logical primary significant of that tree.
- */
-export const itemsKey: LocalFieldKey = brand("items");
-
-/**
- * GlobalFieldKey to use for the root of documents.
- * TODO: if we do want to standardize on a single value for this,
- * it likely should be namespaced or a UUID to avoid risk of collisions.
- */
-export const rootFieldKey = brandOpaque<GlobalFieldKey>("rootFieldKey");
 
 /**
  * Helper for building {@link FieldSchema}.

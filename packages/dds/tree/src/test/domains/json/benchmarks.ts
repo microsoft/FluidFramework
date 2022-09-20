@@ -3,25 +3,48 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
-import { ITreeCursor, reduceField, TreeNavigationResult } from "../../../forest";
-import { EmptyKey, FieldKey } from "../../../tree";
+import { forEachNode, ITreeCursorNew } from "../../../tree";
 
-export function sum(cursor: ITreeCursor): number {
+export function sum(cursor: ITreeCursorNew): number {
     let total = 0;
     const value = cursor.value;
     if (typeof value === "number") {
         total += value;
     }
-    for (const key of cursor.keys) {
-        total += reduceField(cursor, key, total, sum);
+
+    for (let moreFields = cursor.firstField(); moreFields; moreFields = cursor.nextField()) {
+        for (let inField = cursor.firstNode(); inField; inField = cursor.nextField()) {
+            total += sum(cursor);
+        }
     }
+
     return total;
 }
 
-export function averageLocation(
-    cursor: ITreeCursor,
-    extractCoordinates: (cursor: ITreeCursor, calculate: (x: number, y: number) => void) => number,
+export function sumMap(cursor: ITreeCursorNew): number {
+    let total = 0;
+    const value = cursor.value;
+    if (typeof value === "number") {
+        total += value;
+    }
+
+    for (let moreFields = cursor.firstField(); moreFields; moreFields = cursor.nextField()) {
+        forEachNode(cursor, sumMap);
+    }
+
+    return total;
+}
+
+/**
+ * Benchmarking "consumer" that caculates two averages of two values, it takes a callback which enables this benchmark
+ * to be used with any shape of tree since the callback defines the tree nagivation.
+ * @param cursor - a Shared Tree cursor
+ * @param dataConsumer - Function that should use the given cursor to retrieve data and call calculate().
+ * @returns a set of two average values.
+ */
+export function averageTwoValues(
+    cursor: ITreeCursorNew,
+    dataConsumer: (cursor: ITreeCursorNew, calculate: (x: number, y: number) => void) => number,
 ): [number, number] {
     let count = 0;
     let xTotal = 0;
@@ -33,7 +56,7 @@ export function averageLocation(
         yTotal += y;
     };
 
-    extractCoordinates(cursor, calculate);
+    dataConsumer(cursor, calculate);
 
     return [xTotal / count, yTotal / count];
 }

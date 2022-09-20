@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { CatchUpMonitor, ImmediateCatchUpMonitor } from "../catchUpMonitor";
+import { CatchUpMonitor } from "../catchUpMonitor";
 
 class MockDeltaManagerForCatchingUp
     extends TypedEventEmitter<IDeltaManagerEvents>
@@ -138,27 +138,5 @@ describe("CatchUpMonitor", () => {
         assert(monitor.disposed, "dispose() should set disposed");
         assert.equal(monitor.listenerCount("caughtUp"), 0, "dispose() should clear all listeners");
         assert.equal(mockDeltaManager.listenerCount("op"), 0, "CatchUpMonitor.dispose should remove listener on DeltaManager");
-    });
-});
-
-describe("ImmediateCatchUpMonitor", () => {
-    it("caughtUp event fires immediately upon adding a listener", () => {
-        const monitor = new ImmediateCatchUpMonitor();
-        let caughtUp = false;
-        monitor.on("caughtUp", () => {
-            caughtUp = true;
-        });
-        assert(caughtUp, "callback should be invoked immediately");
-    });
-
-    it("Dispose removes all listeners", () => {
-        const monitor = new ImmediateCatchUpMonitor();
-        monitor.on("caughtUp", () => {});
-        monitor.on("caughtUp", () => {});
-        monitor.on("caughtUp", () => {});
-        monitor.dispose();
-
-        assert(monitor.disposed, "dispose() should set disposed");
-        assert.equal(monitor.listenerCount("caughtUp"), 0, "dispose() should clear all listeners");
     });
 });
