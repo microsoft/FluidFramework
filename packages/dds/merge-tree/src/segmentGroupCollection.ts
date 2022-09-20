@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { List } from "./collections";
+import { List, walkList } from "./collections";
 import { ISegment, SegmentGroup } from "./mergeTreeNodes";
 
 export class SegmentGroupCollection {
@@ -44,7 +44,10 @@ export class SegmentGroupCollection {
     }
 
     public copyTo(segment: ISegment) {
-        this.segmentGroups.walk((sg) => segment.segmentGroups.enqueueOnCopy(sg, this.segment));
+        walkList(
+            this.segmentGroups,
+            (sg) => segment.segmentGroups.enqueueOnCopy(sg.data, this.segment),
+        );
     }
 
     private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegment) {
