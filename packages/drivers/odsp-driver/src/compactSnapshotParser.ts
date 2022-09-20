@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
-import { ISnapshotTreeEx } from "./contracts";
 import {
     assertBlobCoreInstance,
     getStringInstance,
@@ -68,10 +67,10 @@ function readOpsSection(node: NodeTypes) {
  * @param node - tree node to de-serialize from
  */
 function readTreeSection(node: NodeCore) {
-    const snapshotTree: ISnapshotTreeEx = {
+    const trees = {};
+    const snapshotTree: ISnapshotTree = {
         blobs: {},
-        commits: {},
-        trees: {},
+        trees,
     };
     for (const treeNode of node) {
         assertNodeCoreInstance(treeNode, "tree nodes should be nodes");
@@ -88,9 +87,9 @@ function readTreeSection(node: NodeCore) {
             snapshotTree.blobs[path] = getStringInstance(records.value, "Blob value should be string");
         } else if (records.children !== undefined) {
             assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
-            snapshotTree.trees[path] = readTreeSection(records.children);
+            trees[path] = readTreeSection(records.children);
         } else {
-            snapshotTree.trees[path] = { blobs: {}, commits: {}, trees: {} };
+            trees[path] = { blobs: {}, trees: {} };
         }
     }
     return snapshotTree;

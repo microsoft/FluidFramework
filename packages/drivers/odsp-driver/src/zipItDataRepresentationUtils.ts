@@ -430,7 +430,10 @@ export class NodeCore {
                     this.children.push(false);
                     continue;
                 case MarkerCodesEnd.list:
+                    assert(this.type === "list", "Mismatch in end of list");
+                    return;
                 case MarkerCodesEnd.set:
+                    assert(this.type === "set", "Mismatch in end of set");
                     return;
                 default:
                     throw new Error(`Invalid code: ${code}`);
