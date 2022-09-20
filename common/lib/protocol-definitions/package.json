@@ -79,6 +79,10 @@
       "RemovedInterfaceDeclaration_ISummaryCommitter": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "EnumDeclaration_MessageType": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }

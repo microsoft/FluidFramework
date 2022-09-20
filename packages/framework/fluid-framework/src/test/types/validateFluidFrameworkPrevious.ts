@@ -804,6 +804,7 @@ declare function get_current_ClassDeclaration_Interval():
 declare function use_old_ClassDeclaration_Interval(
     use: TypeOnly<old.Interval>);
 use_old_ClassDeclaration_Interval(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Interval());
 
 /*
@@ -1141,6 +1142,7 @@ declare function get_current_InterfaceDeclaration_ISharedIntervalCollection():
 declare function use_old_InterfaceDeclaration_ISharedIntervalCollection(
     use: TypeOnly<old.ISharedIntervalCollection<any>>);
 use_old_InterfaceDeclaration_ISharedIntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedIntervalCollection());
 
 /*
@@ -1225,6 +1227,7 @@ declare function get_old_InterfaceDeclaration_ISharedString():
 declare function use_current_InterfaceDeclaration_ISharedString(
     use: TypeOnly<current.ISharedString>);
 use_current_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedString());
 
 /*
@@ -1435,194 +1438,98 @@ use_old_ClassDeclaration_MapFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_MatrixSegment": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_MatrixSegment": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_MatrixSegment():
-    TypeOnly<old.MatrixSegment>;
-declare function use_current_TypeAliasDeclaration_MatrixSegment(
-    use: TypeOnly<current.MatrixSegment>);
-use_current_TypeAliasDeclaration_MatrixSegment(
-    get_old_TypeAliasDeclaration_MatrixSegment());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_MatrixSegment": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_MatrixSegment": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_MatrixSegment():
-    TypeOnly<current.MatrixSegment>;
-declare function use_old_TypeAliasDeclaration_MatrixSegment(
-    use: TypeOnly<old.MatrixSegment>);
-use_old_TypeAliasDeclaration_MatrixSegment(
-    get_current_TypeAliasDeclaration_MatrixSegment());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCellPosition": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxCellPosition": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxCellPosition():
-    TypeOnly<typeof old.maxCellPosition>;
-declare function use_current_VariableDeclaration_maxCellPosition(
-    use: TypeOnly<typeof current.maxCellPosition>);
-use_current_VariableDeclaration_maxCellPosition(
-    get_old_VariableDeclaration_maxCellPosition());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCellPosition": {"backCompat": false}
+* "RemovedVariableDeclaration_maxCellPosition": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxCellPosition():
-    TypeOnly<typeof current.maxCellPosition>;
-declare function use_old_VariableDeclaration_maxCellPosition(
-    use: TypeOnly<typeof old.maxCellPosition>);
-use_old_VariableDeclaration_maxCellPosition(
-    get_current_VariableDeclaration_maxCellPosition());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCol": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxCol": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxCol():
-    TypeOnly<typeof old.maxCol>;
-declare function use_current_VariableDeclaration_maxCol(
-    use: TypeOnly<typeof current.maxCol>);
-use_current_VariableDeclaration_maxCol(
-    get_old_VariableDeclaration_maxCol());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCol": {"backCompat": false}
+* "RemovedVariableDeclaration_maxCol": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxCol():
-    TypeOnly<typeof current.maxCol>;
-declare function use_old_VariableDeclaration_maxCol(
-    use: TypeOnly<typeof old.maxCol>);
-use_old_VariableDeclaration_maxCol(
-    get_current_VariableDeclaration_maxCol());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCols": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxCols": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxCols():
-    TypeOnly<typeof old.maxCols>;
-declare function use_current_VariableDeclaration_maxCols(
-    use: TypeOnly<typeof current.maxCols>);
-use_current_VariableDeclaration_maxCols(
-    get_old_VariableDeclaration_maxCols());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCols": {"backCompat": false}
+* "RemovedVariableDeclaration_maxCols": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxCols():
-    TypeOnly<typeof current.maxCols>;
-declare function use_old_VariableDeclaration_maxCols(
-    use: TypeOnly<typeof old.maxCols>);
-use_old_VariableDeclaration_maxCols(
-    get_current_VariableDeclaration_maxCols());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxRow": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxRow": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxRow():
-    TypeOnly<typeof old.maxRow>;
-declare function use_current_VariableDeclaration_maxRow(
-    use: TypeOnly<typeof current.maxRow>);
-use_current_VariableDeclaration_maxRow(
-    get_old_VariableDeclaration_maxRow());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxRow": {"backCompat": false}
+* "RemovedVariableDeclaration_maxRow": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxRow():
-    TypeOnly<typeof current.maxRow>;
-declare function use_old_VariableDeclaration_maxRow(
-    use: TypeOnly<typeof old.maxRow>);
-use_old_VariableDeclaration_maxRow(
-    get_current_VariableDeclaration_maxRow());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxRows": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxRows": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxRows():
-    TypeOnly<typeof old.maxRows>;
-declare function use_current_VariableDeclaration_maxRows(
-    use: TypeOnly<typeof current.maxRows>);
-use_current_VariableDeclaration_maxRows(
-    get_old_VariableDeclaration_maxRows());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxRows": {"backCompat": false}
+* "RemovedVariableDeclaration_maxRows": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxRows():
-    TypeOnly<typeof current.maxRows>;
-declare function use_old_VariableDeclaration_maxRows(
-    use: TypeOnly<typeof old.maxRows>);
-use_old_VariableDeclaration_maxRows(
-    get_current_VariableDeclaration_maxRows());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_PaddingSegment": {"forwardCompat": false}
+* "RemovedClassDeclaration_PaddingSegment": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_PaddingSegment():
-    TypeOnly<old.PaddingSegment>;
-declare function use_current_ClassDeclaration_PaddingSegment(
-    use: TypeOnly<current.PaddingSegment>);
-use_current_ClassDeclaration_PaddingSegment(
-    get_old_ClassDeclaration_PaddingSegment());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_PaddingSegment": {"backCompat": false}
+* "RemovedClassDeclaration_PaddingSegment": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_PaddingSegment():
-    TypeOnly<current.PaddingSegment>;
-declare function use_old_ClassDeclaration_PaddingSegment(
-    use: TypeOnly<old.PaddingSegment>);
-use_old_ClassDeclaration_PaddingSegment(
-    get_current_ClassDeclaration_PaddingSegment());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_positionToRowCol": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_positionToRowCol": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_positionToRowCol():
-    TypeOnly<typeof old.positionToRowCol>;
-declare function use_current_FunctionDeclaration_positionToRowCol(
-    use: TypeOnly<typeof current.positionToRowCol>);
-use_current_FunctionDeclaration_positionToRowCol(
-    get_old_FunctionDeclaration_positionToRowCol());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_positionToRowCol": {"backCompat": false}
+* "RemovedFunctionDeclaration_positionToRowCol": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_positionToRowCol():
-    TypeOnly<typeof current.positionToRowCol>;
-declare function use_old_FunctionDeclaration_positionToRowCol(
-    use: TypeOnly<typeof old.positionToRowCol>);
-use_old_FunctionDeclaration_positionToRowCol(
-    get_current_FunctionDeclaration_positionToRowCol());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1675,50 +1582,26 @@ use_old_InterfaceDeclaration_RootDataObjectProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_rowColToPosition": {"forwardCompat": false}
+* "RemovedVariableDeclaration_rowColToPosition": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_rowColToPosition():
-    TypeOnly<typeof old.rowColToPosition>;
-declare function use_current_VariableDeclaration_rowColToPosition(
-    use: TypeOnly<typeof current.rowColToPosition>);
-use_current_VariableDeclaration_rowColToPosition(
-    get_old_VariableDeclaration_rowColToPosition());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_rowColToPosition": {"backCompat": false}
+* "RemovedVariableDeclaration_rowColToPosition": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_rowColToPosition():
-    TypeOnly<typeof current.rowColToPosition>;
-declare function use_old_VariableDeclaration_rowColToPosition(
-    use: TypeOnly<typeof old.rowColToPosition>);
-use_old_VariableDeclaration_rowColToPosition(
-    get_current_VariableDeclaration_rowColToPosition());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RunSegment": {"forwardCompat": false}
+* "RemovedClassDeclaration_RunSegment": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_RunSegment():
-    TypeOnly<old.RunSegment>;
-declare function use_current_ClassDeclaration_RunSegment(
-    use: TypeOnly<current.RunSegment>);
-use_current_ClassDeclaration_RunSegment(
-    get_old_ClassDeclaration_RunSegment());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RunSegment": {"backCompat": false}
+* "RemovedClassDeclaration_RunSegment": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_RunSegment():
-    TypeOnly<current.RunSegment>;
-declare function use_old_ClassDeclaration_RunSegment(
-    use: TypeOnly<old.RunSegment>);
-use_old_ClassDeclaration_RunSegment(
-    get_current_ClassDeclaration_RunSegment());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1780,6 +1663,7 @@ declare function get_old_ClassDeclaration_SequenceInterval():
 declare function use_current_ClassDeclaration_SequenceInterval(
     use: TypeOnly<current.SequenceInterval>);
 use_current_ClassDeclaration_SequenceInterval(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceInterval());
 
 /*
@@ -1890,6 +1774,7 @@ declare function get_current_ClassDeclaration_SharedIntervalCollection():
 declare function use_old_ClassDeclaration_SharedIntervalCollection(
     use: TypeOnly<old.SharedIntervalCollection>);
 use_old_ClassDeclaration_SharedIntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedIntervalCollection());
 
 /*
@@ -1943,51 +1828,26 @@ use_old_ClassDeclaration_SharedMap(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedNumberSequence": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedNumberSequence": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedNumberSequence():
-    TypeOnly<old.SharedNumberSequence>;
-declare function use_current_ClassDeclaration_SharedNumberSequence(
-    use: TypeOnly<current.SharedNumberSequence>);
-use_current_ClassDeclaration_SharedNumberSequence(
-    get_old_ClassDeclaration_SharedNumberSequence());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedNumberSequence": {"backCompat": false}
+* "RemovedClassDeclaration_SharedNumberSequence": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedNumberSequence():
-    TypeOnly<current.SharedNumberSequence>;
-declare function use_old_ClassDeclaration_SharedNumberSequence(
-    use: TypeOnly<old.SharedNumberSequence>);
-use_old_ClassDeclaration_SharedNumberSequence(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_SharedNumberSequence());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedNumberSequenceFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedNumberSequenceFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedNumberSequenceFactory():
-    TypeOnly<old.SharedNumberSequenceFactory>;
-declare function use_current_ClassDeclaration_SharedNumberSequenceFactory(
-    use: TypeOnly<current.SharedNumberSequenceFactory>);
-use_current_ClassDeclaration_SharedNumberSequenceFactory(
-    get_old_ClassDeclaration_SharedNumberSequenceFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedNumberSequenceFactory": {"backCompat": false}
+* "RemovedClassDeclaration_SharedNumberSequenceFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedNumberSequenceFactory():
-    TypeOnly<current.SharedNumberSequenceFactory>;
-declare function use_old_ClassDeclaration_SharedNumberSequenceFactory(
-    use: TypeOnly<old.SharedNumberSequenceFactory>);
-use_old_ClassDeclaration_SharedNumberSequenceFactory(
-    get_current_ClassDeclaration_SharedNumberSequenceFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2016,51 +1876,26 @@ use_old_TypeAliasDeclaration_SharedObjectClass(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedObjectSequence": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedObjectSequence": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedObjectSequence():
-    TypeOnly<old.SharedObjectSequence<any>>;
-declare function use_current_ClassDeclaration_SharedObjectSequence(
-    use: TypeOnly<current.SharedObjectSequence<any>>);
-use_current_ClassDeclaration_SharedObjectSequence(
-    get_old_ClassDeclaration_SharedObjectSequence());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedObjectSequence": {"backCompat": false}
+* "RemovedClassDeclaration_SharedObjectSequence": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedObjectSequence():
-    TypeOnly<current.SharedObjectSequence<any>>;
-declare function use_old_ClassDeclaration_SharedObjectSequence(
-    use: TypeOnly<old.SharedObjectSequence<any>>);
-use_old_ClassDeclaration_SharedObjectSequence(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_SharedObjectSequence());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedObjectSequenceFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedObjectSequenceFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedObjectSequenceFactory():
-    TypeOnly<old.SharedObjectSequenceFactory>;
-declare function use_current_ClassDeclaration_SharedObjectSequenceFactory(
-    use: TypeOnly<current.SharedObjectSequenceFactory>);
-use_current_ClassDeclaration_SharedObjectSequenceFactory(
-    get_old_ClassDeclaration_SharedObjectSequenceFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedObjectSequenceFactory": {"backCompat": false}
+* "RemovedClassDeclaration_SharedObjectSequenceFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedObjectSequenceFactory():
-    TypeOnly<current.SharedObjectSequenceFactory>;
-declare function use_old_ClassDeclaration_SharedObjectSequenceFactory(
-    use: TypeOnly<old.SharedObjectSequenceFactory>);
-use_old_ClassDeclaration_SharedObjectSequenceFactory(
-    get_current_ClassDeclaration_SharedObjectSequenceFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2072,6 +1907,7 @@ declare function get_old_ClassDeclaration_SharedSegmentSequence():
 declare function use_current_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<current.SharedSegmentSequence<any>>);
 use_current_ClassDeclaration_SharedSegmentSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -2097,6 +1933,7 @@ declare function get_old_ClassDeclaration_SharedSequence():
 declare function use_current_ClassDeclaration_SharedSequence(
     use: TypeOnly<current.SharedSequence<any>>);
 use_current_ClassDeclaration_SharedSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSequence());
 
 /*
@@ -2122,6 +1959,7 @@ declare function get_old_ClassDeclaration_SharedString():
 declare function use_current_ClassDeclaration_SharedString(
     use: TypeOnly<current.SharedString>);
 use_current_ClassDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedString());
 
 /*
@@ -2189,75 +2027,38 @@ use_old_TypeAliasDeclaration_SharedStringSegment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SparseMatrix": {"forwardCompat": false}
+* "RemovedClassDeclaration_SparseMatrix": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SparseMatrix():
-    TypeOnly<old.SparseMatrix>;
-declare function use_current_ClassDeclaration_SparseMatrix(
-    use: TypeOnly<current.SparseMatrix>);
-use_current_ClassDeclaration_SparseMatrix(
-    get_old_ClassDeclaration_SparseMatrix());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SparseMatrix": {"backCompat": false}
+* "RemovedClassDeclaration_SparseMatrix": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SparseMatrix():
-    TypeOnly<current.SparseMatrix>;
-declare function use_old_ClassDeclaration_SparseMatrix(
-    use: TypeOnly<old.SparseMatrix>);
-use_old_ClassDeclaration_SparseMatrix(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_SparseMatrix());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SparseMatrixFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SparseMatrixFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SparseMatrixFactory():
-    TypeOnly<old.SparseMatrixFactory>;
-declare function use_current_ClassDeclaration_SparseMatrixFactory(
-    use: TypeOnly<current.SparseMatrixFactory>);
-use_current_ClassDeclaration_SparseMatrixFactory(
-    get_old_ClassDeclaration_SparseMatrixFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SparseMatrixFactory": {"backCompat": false}
+* "RemovedClassDeclaration_SparseMatrixFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SparseMatrixFactory():
-    TypeOnly<current.SparseMatrixFactory>;
-declare function use_old_ClassDeclaration_SparseMatrixFactory(
-    use: TypeOnly<old.SparseMatrixFactory>);
-use_old_ClassDeclaration_SparseMatrixFactory(
-    get_current_ClassDeclaration_SparseMatrixFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SparseMatrixItem": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_SparseMatrixItem": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_SparseMatrixItem():
-    TypeOnly<old.SparseMatrixItem>;
-declare function use_current_TypeAliasDeclaration_SparseMatrixItem(
-    use: TypeOnly<current.SparseMatrixItem>);
-use_current_TypeAliasDeclaration_SparseMatrixItem(
-    get_old_TypeAliasDeclaration_SparseMatrixItem());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SparseMatrixItem": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_SparseMatrixItem": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_SparseMatrixItem():
-    TypeOnly<current.SparseMatrixItem>;
-declare function use_old_TypeAliasDeclaration_SparseMatrixItem(
-    use: TypeOnly<old.SparseMatrixItem>);
-use_old_TypeAliasDeclaration_SparseMatrixItem(
-    get_current_TypeAliasDeclaration_SparseMatrixItem());
 
 /*
 * Validate forward compat by using old type in place of current type

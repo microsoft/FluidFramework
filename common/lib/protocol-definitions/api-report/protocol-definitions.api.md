@@ -294,6 +294,8 @@ export interface ISequencedDocumentMessage {
     clientId: string;
     clientSequenceNumber: number;
     contents: any;
+    // (undocumented)
+    data?: string;
     // @alpha
     expHash1?: string;
     metadata?: any;
@@ -523,6 +525,9 @@ export interface IVersion {
 
 // @public (undocumented)
 export enum MessageType {
+    // (undocumented)
+    Accept = "accept",
+    // (undocumented)
     ClientJoin = "join",
     ClientLeave = "leave",
     Control = "control",
@@ -530,9 +535,7 @@ export enum MessageType {
     NoOp = "noop",
     Operation = "op",
     Propose = "propose",
-    Reject = "reject",
-    RemoteHelp = "remoteHelp",
-    RoundTrip = "tripComplete",
+    // (undocumented)
     Summarize = "summarize",
     SummaryAck = "summaryAck",
     SummaryNack = "summaryNack"
