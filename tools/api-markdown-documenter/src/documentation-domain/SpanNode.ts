@@ -4,6 +4,7 @@
  */
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
+import { PlainTextNode } from "./PlainTextNode";
 
 export interface TextFormatting {
     /**
@@ -38,5 +39,12 @@ export class SpanNode<
     public constructor(children: TDocumentNode[], formatting?: TextFormatting) {
         super(children);
         this.textFormatting = formatting;
+    }
+
+    public static createFromPlainText(
+        text: string,
+        formatting?: TextFormatting,
+    ): SpanNode<PlainTextNode> {
+        return new SpanNode([new PlainTextNode(text)], formatting);
     }
 }
