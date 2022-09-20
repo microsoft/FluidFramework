@@ -447,6 +447,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
+    public makeVisibleAndAttachGraph(): void {
+        return;
+    }
+
     public bindToContext(): void {
         return;
     }

@@ -1852,14 +1852,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id = uuid(),
     ): Promise<IDataStore> {
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
-            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
-        if (isRoot) {
-            fluidDataStore.makeVisibleAndAttachGraph();
-            this.logger.sendTelemetryEvent({
-                eventName: "Root datastore with props",
-                hasProps: props !== undefined,
-            });
-        }
+            Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
         return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
 

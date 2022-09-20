@@ -50,6 +50,7 @@ export enum AttachState {
     Attached = "Attached",
 }
 
+//* Deprecate
 // Represents the bind state of the entity.
 export enum BindState {
     NotBound = "NotBound",

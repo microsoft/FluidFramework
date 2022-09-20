@@ -316,6 +316,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
+    makeLocallyVisible(): void;
+    // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
     on(event: string | symbol, listener: (...args: any[]) => void): this;
@@ -409,6 +411,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     set local(local: boolean);
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
     // (undocumented)

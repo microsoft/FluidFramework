@@ -31,6 +31,7 @@ import {
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
+//* Update work item link
 /**
  * @deprecated - This will be removed once https://github.com/microsoft/FluidFramework/issues/9127 is fixed.
  */

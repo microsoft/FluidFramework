@@ -214,6 +214,7 @@ export interface IFluidDataStoreChannel extends
 
     readonly visibilityState?: VisibilityState;
 
+    //* Revert?
     /**
      * @deprecated - This is an internal method that should not be exposed.
      * Called to bind the runtime to the container.
@@ -231,7 +232,7 @@ export interface IFluidDataStoreChannel extends
      * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
      * bound handles that represent its dependencies in the container's graph.
      */
-    makeVisibleAndAttachGraph?(): void;
+    makeVisibleAndAttachGraph(): void;
 
     /**
      * Retrieves the summary used as part of the initial summary message
@@ -387,6 +388,7 @@ export interface IFluidDataStoreContext extends
      */
     submitSignal(type: string, content: any): void;
 
+    //* Revert?
     /**
      * @deprecated - To be removed in favor of makeVisible.
      * Register the runtime to the container
@@ -397,7 +399,7 @@ export interface IFluidDataStoreContext extends
      * Called to make the data store locally visible in the container. This happens automatically for root data stores
      * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
      */
-    makeLocallyVisible?(): void;
+    makeLocallyVisible(): void;
 
     /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
