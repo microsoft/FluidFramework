@@ -11,14 +11,14 @@ describe("PlainText markdown tests", () => {
     it("Renders nothing when given an empty plain text node", () => {
         const emptyNode = new PlainTextNode("");
         const renderer = new DocumentationNodeRenderer();
-        const renderedForm = renderer.RenderNode(emptyNode);
+        const renderedForm = renderer.renderNode(emptyNode);
         expect(renderedForm).to.equal("");
     }),
     it("Renders text when given text", () => {
         const expectedString = `this is some text`;
         const contentNode = new PlainTextNode(expectedString);
         const renderer = new DocumentationNodeRenderer();
-        const renderedForm = renderer.RenderNode(contentNode);
+        const renderedForm = renderer.renderNode(contentNode);
         expect(renderedForm).to.equal(expectedString);
     });
 });

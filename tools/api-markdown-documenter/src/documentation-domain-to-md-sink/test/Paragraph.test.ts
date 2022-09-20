@@ -11,8 +11,8 @@ import * as os from 'os';
 describe("Paragraph markdown tests", () => {
     it("Creates a line break from an empty Paragraph", () => {
         const renderer = new DocumentationNodeRenderer();
-        const renderedForm = renderer.RenderNode(new ParagraphNode([]));
-        expect(renderedForm).to.equal(os.EOL);
+        const renderedForm = renderer.renderNode(new ParagraphNode([]));
+        expect(renderedForm).to.equal(`  ${os.EOL}`);
     }),
 
     it("Renders plain text nodes", () => {
@@ -20,7 +20,7 @@ describe("Paragraph markdown tests", () => {
         const node2 = new PlainTextNode('This is more text!');
         const paragraph = new ParagraphNode([node1, node2])
         const renderer = new DocumentationNodeRenderer();
-        const renderedForm = renderer.RenderNode(paragraph);
-        expect(renderedForm).to.equal(`This is some text. This is more text!${os.EOL}`);
+        const renderedForm = renderer.renderNode(paragraph);
+        expect(renderedForm).to.equal(`This is some text. This is more text!  ${os.EOL}`);
     });
 });

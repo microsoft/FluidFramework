@@ -1,4 +1,4 @@
-import { DocumentNode, DocumentNodeType, DocumentationNode } from "../../documentation-domain";
+import { DocumentNode, DocumentNodeType, DocumentationNode, PlainTextNode, ParagraphNode } from "../../documentation-domain";
 import { ParagraphNodeToMarkdown } from "./ParagraphToMd";
 import { PlainTextToMarkdown } from "./PlainTextToMd";
 
@@ -9,7 +9,24 @@ export type DocumentationNodeRenderFunction = (
 
 // TODO: better name?
 export type NodeRenderers = {
-    [K in DocumentNodeType]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.Alert]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.BlockQuote]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.CodeSpan]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.Document]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.FencedCode]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.LineBreak]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.Markdown]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.NestedSection]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.OrderedList]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.Paragraph]: (node: ParagraphNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.PlainText]: (node: PlainTextNode) => string;
+    [DocumentNodeType.Span]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.SymbolicLink]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.Table]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.TableCell] : DocumentationNodeRenderFunction;
+    [DocumentNodeType.TableRow] : DocumentationNodeRenderFunction;
+    [DocumentNodeType.UnorderedList] : DocumentationNodeRenderFunction;
+    [DocumentNodeType.UrlLink] : DocumentationNodeRenderFunction;
 };
 
 const noop = (node: DocumentationNode, renderer: DocumentationNodeRenderer) => "";
@@ -38,13 +55,19 @@ class DefaultNodeRenderers {
 export const DefaultRenderers = new DefaultNodeRenderers();
 export class DocumentationNodeRenderer {
     private renderers: NodeRenderers = DefaultRenderers;
-    public RenderNode(node: DocumentationNode): string {
-        return this.renderers[node.type](node, this);
+    public renderNode(node: DocumentationNode): string {
+        switch (node.type) {
+            case DocumentNodeType.Paragraph:
+                return this.renderers[DocumentNodeType.Paragraph](node as unknown as ParagraphNode, this);
+            case DocumentNodeType.PlainText:
+                return this.renderers[DocumentNodeType.PlainText](node as unknown as PlainTextNode);
+        }
+        return 'TODO: UNKNOWN NODE ENCOUNTERED';
     }
 }
 
 export function markdownFromDocumentNode(node: DocumentNode): string {
     // todo: configurability of individual node renderers
     const renderer = new DocumentationNodeRenderer();
-    return node.children.map((child) => renderer.RenderNode(child)).join();
+    return node.children.map((child) => renderer.renderNode(child)).join();
 }

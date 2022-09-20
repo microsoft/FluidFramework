@@ -1,15 +1,14 @@
-import { DocumentationNode, ParagraphNode } from "../../documentation-domain";
+import { ParagraphNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 import * as os from 'os';
 
 export function ParagraphNodeToMarkdown(
-    node: DocumentationNode,
+    paragraph: ParagraphNode,
     renderer: DocumentationNodeRenderer,
 ): string {
-    const paragraph = node as unknown as ParagraphNode;
     const output: string[] = paragraph.children
-        ? paragraph.children.map((child) => renderer.RenderNode(child))
+        ? paragraph.children.map((child) => renderer.renderNode(child))
         : [];
-    output.push(os.EOL);
+    output.push(`  ${os.EOL}`);
     return output.join('');
 }
