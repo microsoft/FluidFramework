@@ -56,7 +56,7 @@ export enum ConnectionState {
 
 // @public (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    constructor(loaderOrServices: Loader | ILoaderServices, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
+    constructor(loaderServices: ILoaderServices | undefined, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
     // (undocumented)
@@ -79,7 +79,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
-    static createDetached(loaderOrServices: Loader | ILoaderServices, codeDetails: IFluidCodeDetails, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
+    static createDetached(loaderServices: ILoaderServices | undefined, codeDetails: IFluidCodeDetails, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -93,16 +93,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
-    static load(loaderOrServices: Loader | ILoaderServices, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
+    static load(loaderServices: ILoaderServices | undefined, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
+    // (undocumented)
+    static loader?: Loader;
     // (undocumented)
     readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
-    static rehydrateDetachedFromSnapshot(loaderOrServices: Loader | ILoaderServices, snapshot: string, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
+    static rehydrateDetachedFromSnapshot(loaderServices: ILoaderServices | undefined, snapshot: string, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)

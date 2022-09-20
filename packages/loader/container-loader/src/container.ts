@@ -275,13 +275,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Load an existing container.
      */
     public static async load(
-        loaderOrServices: Loader | ILoaderServices,
+        loaderServices: ILoaderServices | undefined,
         loadOptions: IContainerLoadOptions,
         pendingLocalState?: IPendingContainerState,
         protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
-            loaderOrServices,
+            loaderServices,
             {
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
                 resolvedUrl: loadOptions.resolvedUrl,
@@ -334,12 +334,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Create a new container in a detached state.
      */
     public static async createDetached(
-        loaderOrServices: Loader | ILoaderServices,
+        loaderServices: ILoaderServices | undefined,
         codeDetails: IFluidCodeDetails,
         protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
-            loaderOrServices,
+            loaderServices,
             {},
             protocolHandlerBuilder);
 
@@ -358,12 +358,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * snapshot from a previous detached container.
      */
     public static async rehydrateDetachedFromSnapshot(
-        loaderOrServices: Loader | ILoaderServices,
+        loaderServices: ILoaderServices | undefined,
         snapshot: string,
         protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
-            loaderOrServices,
+            loaderServices,
             {},
             protocolHandlerBuilder);
 
@@ -377,6 +377,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             },
             { start: true, end: true, cancel: "generic" });
     }
+
+    public static loader?: Loader;
 
     public subLogger: TelemetryLogger;
 
@@ -556,18 +558,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private get codeLoader() { return this.loaderServices.codeLoader; }
 
     private readonly loaderServices: ILoaderServices;
-    private readonly loader?: Loader;
 
     /**
      *
-     * @param loaderOrServices - A loader, or an object containing the services a loader would provide. If this is
-     * just the services object then the instantiated container won't be able to resolve documents/containers hosted
-     * at arbitrary URLs, only those with URLs relative to the root of the container itself.
+     * @param loaderServices - An object containing the services that a loader would provide.
+     * If the static Container.loader is set before instantiating a new Container and its services are the ones to be
+     * used, this can be left undefined.
+     * For scenarios where creating a Loader is unnecessary, this object must still be provided for the Container to
+     * function. In that case, the instantiated Container won't be able to resolve documents/Containers hosted at
+     * arbitrary URLs, only those with URLs relative to the root of the container itself.
      * @param config -
      * @param protocolHandlerBuilder -
      */
     constructor(
-        private readonly loaderOrServices: Loader | ILoaderServices,
+        loaderServices: ILoaderServices | undefined,
         config: IContainerConfig,
         private readonly protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ) {
@@ -580,17 +584,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error);
         });
 
-        // Split the parameter with a union type (ILoaderServices was added later as an alternative for scenarios
-        // where a full Loader is not really necessary) into a variable for each. The local variable for the loader
-        // can be left undefined if only ILoaderServices was provided in the constructor. We're leveraging the fact
-        // that Loader will have a 'services' property that doesn't exist in ILoaderServices, but this logic
-        // could break if that changes (or if the object which implements ILoaderServices that gets passed in also
-        // has a 'services' property for other reasons).
-        const maybeLoaderMaybeServices = this.loaderOrServices as Loader & ILoaderServices;
-        this.loaderServices = maybeLoaderMaybeServices.services !== undefined
-            ? maybeLoaderMaybeServices.services
-            : maybeLoaderMaybeServices;
-        this.loader = maybeLoaderMaybeServices.services !== undefined ? maybeLoaderMaybeServices : undefined;
+        if (Container.loader === undefined && loaderServices === undefined) {
+            throw new UsageError(
+                "If loaderServices are not provided, Container.loader must be set in order to instantiate a " +
+                "container");
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.loaderServices = loaderServices ?? Container.loader!.services;
 
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._resolvedUrl = config.resolvedUrl;
@@ -1835,7 +1836,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go directly to the loader
-        const loader = new RelativeLoader(this, this.loader);
+        const loader = new RelativeLoader(this, Container.loader);
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,

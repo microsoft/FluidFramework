@@ -91,7 +91,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         const testResolved = await loader.services.urlResolver.resolve(testRequest);
         ensureFluidResolvedUrl(testResolved);
         return Container.load(
-            loader,
+            loader.services,
             {
                 canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],

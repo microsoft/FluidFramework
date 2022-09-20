@@ -64,7 +64,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         const testResolved = await loader.services.urlResolver.resolve({ url: requestUrl });
         ensureFluidResolvedUrl(testResolved);
         return Container.load(
-            loader,
+            loader.services,
             {
                 resolvedUrl: testResolved,
                 version: undefined,
