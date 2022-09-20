@@ -239,7 +239,7 @@ export interface IProgress {
     onRetry?(delayInMs: number, error: any): void;
 }
 
-// @public (undocumented)
+// @public
 export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
 // @public (undocumented)
@@ -258,7 +258,7 @@ export interface ISummaryTreeAssemblerProps {
     unreferenced?: true;
 }
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)

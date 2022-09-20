@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-base",
-  "version": "0.1037.2000",
+  "version": "0.1037.3000",
   "description": "Fluid protocol base",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -59,13 +59,13 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/gitresources": "^0.1037.2000",
+    "@fluidframework/gitresources": "^0.1037.3000",
     "@fluidframework/protocol-definitions": "^1.0.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/assert": "^1.5.1",

@@ -346,14 +346,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              * There's an edge case though. Suppose the following:
              * 1. Server A created a deli for the session, consumes 100 kafka messages, and sequences 100 ops.
              * 2. Within 5 seconds of sequencing those ops,
-             *  Server A's deli saves a checkpoint (it remembers it sequenced those 100 ops)
+             * Server A's deli saves a checkpoint (it remembers it sequenced those 100 ops)
              * 3. Within a second of that checkpoint, the Kafka partition is rebalanced.
              * 4. Server B now creates a deli for that session and it consumes those same 100 kafka messages.
              * 4a. Server B's deli instance is smart enough to detect that those 100 kafka messages were already
-             *  processed (due to the checkpoint created in #2) so it ignores them (the first if statement in handler).
+             * processed (due to the checkpoint created in #2) so it ignores them (the first if statement in handler).
              *
              * The above flow is a problem because the opEvent logic is not going to trigger since
-             *  no messages were sequenced by this deli.
+             * no messages were sequenced by this deli.
              *
              * Deli should be smart and check if it hasn't yet sent an opEvent for messages that
              * were not durably stored.
@@ -1170,11 +1170,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     private isInvalidMessage(message: IRawOperationMessage): boolean {
-        if (message.clientId) {
-            return isServiceMessageType(message.operation.type);
-        } else {
-            return false;
-        }
+        return message.clientId ? isServiceMessageType(message.operation.type) : false;
     }
 
     private createOutputMessage(

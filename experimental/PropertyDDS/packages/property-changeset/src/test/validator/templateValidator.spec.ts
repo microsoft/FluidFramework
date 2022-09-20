@@ -20,16 +20,12 @@ import { TemplateValidator } from "../../templateValidator";
     const performValidation = function(async, template, templatePrevious, skipSemver, asyncErrorMessage?) {
         let schemaValidator = new SchemaValidator();
 
-        if (async) {
-            // @ts-ignore
-            return schemaValidator.validate(template, templatePrevious, async, skipSemver).catch((error) => {
+        return async
+            ? schemaValidator.validate(template, templatePrevious, async, skipSemver).catch((error) => {
                 expect(error.message).to.have.string(asyncErrorMessage);
-            });
-        } else {
-            return new Promise((resolve) => {
+            }) : new Promise((resolve) => {
                 resolve(schemaValidator.validate(template, templatePrevious, async, skipSemver));
             });
-        }
     };
 
     // Performs both synchronous and asynchronous validation

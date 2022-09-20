@@ -57,7 +57,11 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public getLastSequencedChange(): TChangeset {
-        return this.trunk[this.trunk.length - 1].changeset;
+        return (this.getLastCommit() ?? fail("No sequenced changes")).changeset;
+    }
+
+    public getLastCommit(): Commit<TChangeset> | undefined {
+        return this.trunk[this.trunk.length - 1];
     }
 
     public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
@@ -86,7 +90,8 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 
         const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
         this.updateBranch(branch, newCommit.refNumber);
-        const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit.changeset, branch);
+        const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit, branch);
+        this.addCommitToBranch(branch, newCommit);
 
         // Note: we never use the refNumber of a commit in the trunk
         this.trunk.push({
@@ -94,9 +99,20 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             changeset: newChangeFullyRebased,
         });
 
-        branch.localChanges.push(newCommit);
-
         return this.changeFamily.intoDelta(this.rebaseLocalBranch(newChangeFullyRebased));
+    }
+
+    /**
+     * Add `newCommit` to the tip of the `branch` and updates the branch's `isDivergent` flag.
+     */
+    public addCommitToBranch(branch: Branch<TChangeset>, newCommit: Commit<TChangeset>): void {
+        branch.localChanges.push(newCommit);
+        const lastCommit = this.getLastCommit();
+        if (lastCommit === undefined || newCommit.refNumber === lastCommit.seqNumber) {
+            branch.isDivergent = false;
+        } else {
+            branch.isDivergent ||= newCommit.sessionId !== lastCommit.sessionId;
+        }
     }
 
     public addLocalChange(change: TChangeset): Delta.Root {
@@ -109,11 +125,16 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         return this.changeFamily.intoDelta(change);
     }
 
-    private rebaseChangeFromBranchToTrunk(changeToRebase: TChangeset, branch: Branch<TChangeset>): TChangeset {
+    private rebaseChangeFromBranchToTrunk(commitToRebase: Commit<TChangeset>, branch: Branch<TChangeset>): TChangeset {
+        if (!branch.isDivergent && commitToRebase.sessionId === this.getLastCommit()?.sessionId) {
+            // The new commit is not divergent and therefore doesn't need to be rebased.
+            return commitToRebase.changeset;
+        }
+
         const changeRebasedToRef = branch.localChanges.reduceRight(
             (newChange, branchCommit) =>
                 this.changeFamily.rebaser.rebase(newChange, this.changeFamily.rebaser.invert(branchCommit.changeset)),
-            changeToRebase,
+            commitToRebase.changeset,
         );
 
         return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
@@ -160,7 +181,6 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     private updateBranch(branch: Branch<TChangeset>, newRef: SeqNumber) {
         const trunkChanges = this.getCommitsAfterAndUpToInclusive(branch.refSeq, newRef);
         if (trunkChanges.length === 0) {
-            assert(branch.refSeq === newRef, 0x3a3 /* Expected trunk changes */);
             // This early return avoids rebasing the branch changes over an empty sandwich.
             return;
         }
@@ -204,15 +224,13 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
      * ordered in sequencing order.
      */
     private getCommitsAfterAndUpToInclusive(pred: SeqNumber, last: SeqNumber): Commit<TChangeset>[] {
-        // This check is not just a fast-path for the common case where no concurrent edits occurred;
-        // it also serves to handle the case where `last` represents the initial state before any commits.
+        // This check is just a fast-path for the common case where no concurrent edits occurred.
         if (pred === last) {
             return [];
         }
-        // If there is no corresponding commit, we assume `pred` refers to initial state of the DDS.
-        const firstIndex = (this.getCommitIndex(pred) ?? -1) + 1;
-        const lastIndex = this.getCommitIndex(last) ?? fail("Unknown sequence number");
-        return this.trunk.slice(firstIndex, lastIndex + 1);
+        const firstIndex = this.getCommitIndexAfter(pred);
+        const lastIndex = this.getCommitIndexAfter(last);
+        return this.trunk.slice(firstIndex, lastIndex);
     }
 
     /**
@@ -220,19 +238,29 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
      * @returns The trunk commits with sequence numbers greater than `pred`
      */
     private getCommitsAfter(pred: SeqNumber): Commit<TChangeset>[] {
-        // If there is no corresponding commit, we assume `pred` refers to initial state of the DDS.
-        const firstIndex = (this.getCommitIndex(pred) ?? -1) + 1;
+        const firstIndex = this.getCommitIndexAfter(pred);
         return this.trunk.slice(firstIndex);
     }
 
-    private getCommitIndex(seqNumber: SeqNumber): number | undefined {
-        const index = this.trunk.findIndex((commit) => commit.seqNumber === seqNumber);
-        return index === -1 ? undefined : index;
+    /**
+     * @param seqNumber - The sequence number of an operation.
+     * It is acceptable for the trunk not to contain a commit with that sequence number.
+     * @returns The index of the earliest commit with a sequence number greater than `seqNumber`.
+     * Note that such a commit is not guaranteed to exist in the trunk
+     * (i.e. the return value may be equal to the length of the trunk).
+     */
+    private getCommitIndexAfter(seqNumber: SeqNumber): number {
+        for (let index = this.trunk.length - 1; index >= 0; --index) {
+            if (this.trunk[index].seqNumber <= seqNumber) {
+                return index + 1;
+            }
+        }
+        return 0;
     }
 
     private getOrCreateBranch(sessionId: SessionId, refSeq: SeqNumber): Branch<TChangeset> {
         if (!this.branches.has(sessionId)) {
-            this.branches.set(sessionId, { localChanges: [], refSeq });
+            this.branches.set(sessionId, { localChanges: [], refSeq, isDivergent: false });
         }
         return this.branches.get(sessionId) as Branch<TChangeset>;
     }
@@ -241,6 +269,30 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 interface Branch<TChangeset> {
     localChanges: Commit<TChangeset>[];
     refSeq: SeqNumber;
+    /**
+     * A branch is divergent iff it has local changes and there is a change outside the branch with a `seqNumber`
+     * between the branch's `refSeq` and the `seqNumber` of the last change in the branch.
+     * In other words, the ref commit followed by the local changes
+     * do not form a contiguous block in the trunk or final sequence.
+     *
+     * Note that a commit whose ref number does not match the latest sequence number at the time of its
+     * sequencing is not necessarily divergent: if the commit is from the peer who issued the preceding commit,
+     * and that preceding commit was not divergent, then the new commit is not divergent either.
+     *
+     * More formally, given:
+     *
+     * - A new commit `c`
+     *
+     * - The function `prev(x)` that returns the commit sequenced immediately before commit `x`:
+     *
+     * ```typescript
+     * isDivergent(c) =
+     *     prev(c) !== undefined
+     *     && c.refNumber !== prev(c).seqNumber
+     *     && (prev(c).sessionId !== c.sessionId || isDivergent(prev(c)))
+     * ```
+     */
+    isDivergent: boolean;
 }
 const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
     "Received a sequenced change from the local session despite having no local changes";

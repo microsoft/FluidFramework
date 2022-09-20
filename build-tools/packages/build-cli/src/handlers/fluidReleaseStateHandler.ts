@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { VersionScheme, VersionBumpType } from "@fluid-tools/version-tools";
+import { VersionScheme, VersionBumpType, ReleaseVersion } from "@fluid-tools/version-tools";
 import { Context } from "@fluidframework/build-tools";
 import { Command } from "@oclif/core";
+import chalk from "chalk";
 import { Machine } from "jssm";
 import { InstructionalPromptWriter } from "../instructionalPromptWriter";
 import { CommandLogger } from "../logging";
@@ -24,20 +25,27 @@ import {
     checkMainNextIntegrated,
     checkReleaseIsDone,
     checkReleaseGroupIsBumped,
-    checkReleaseBranchDoesNotExist,
     checkShouldCommit,
     checkShouldCommitReleasedDepsBump,
+    checkTypeTestGenerate,
+    checkTypeTestPrepare,
+    checkOnReleaseBranch,
+    checkDoesReleaseFromReleaseBranch,
+    checkReleaseBranchExists,
 } from "./checkFunctions";
 import { askForReleaseType } from "./askFunctions";
 import { InitFailedStateHandler } from "./initFailedStateHandler";
 import { BaseStateHandler } from "./stateHandlers";
 import {
     promptToCommitChanges,
+    promptToCreateReleaseBranch,
     promptToIntegrateNext,
     promptToPRBump,
     promptToPRDeps,
     promptToRelease,
     promptToReleaseDeps,
+    promptToRunMinorReleaseCommand,
+    promptToRunTypeTests,
 } from "./promptFunctions";
 import { doBumpReleasedDependencies, doReleaseGroupBump } from "./doFunctions";
 
@@ -74,7 +82,7 @@ export interface FluidReleaseStateHandlerData {
     /**
      * The version being released.
      */
-    releaseVersion?: string;
+    releaseVersion?: ReleaseVersion;
 
     /**
      * True if all optional checks should be skipped.
@@ -204,6 +212,19 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
                 break;
             }
 
+            case "CheckDoesReleaseFromReleaseBranch":
+            case "CheckDoesReleaseFromReleaseBranch2":
+            case "CheckDoesReleaseFromReleaseBranch3": {
+                result = await checkDoesReleaseFromReleaseBranch(
+                    state,
+                    machine,
+                    testMode,
+                    log,
+                    data,
+                );
+                break;
+            }
+
             case "CheckInstallBuildTools": {
                 result = await checkInstallBuildTools(state, machine, testMode, log, data);
                 break;
@@ -214,13 +235,38 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
                 break;
             }
 
-            case "CheckReleaseIsDone": {
+            case "CheckOnReleaseBranch":
+            case "CheckOnReleaseBranch2":
+            case "CheckOnReleaseBranch3": {
+                result = await checkOnReleaseBranch(state, machine, testMode, log, data);
+                break;
+            }
+
+            case "CheckReleaseIsDone":
+            case "CheckReleaseIsDone2":
+            case "CheckReleaseIsDone3": {
                 result = await checkReleaseIsDone(state, machine, testMode, log, data);
                 break;
             }
 
-            case "CheckReleaseGroupIsBumped": {
+            case "CheckReleaseGroupIsBumped":
+            case "CheckReleaseGroupIsBumpedMinor":
+            case "CheckReleaseGroupIsBumpedMinor2":
+            case "CheckReleaseGroupIsBumpedPatch":
+            case "CheckReleaseGroupIsBumpedPatch2": {
                 result = await checkReleaseGroupIsBumped(state, machine, testMode, log, data);
+                break;
+            }
+
+            case "CheckTypeTestGenerate":
+            case "CheckTypeTestGenerate2": {
+                result = await checkTypeTestGenerate(state, machine, testMode, log, data);
+                break;
+            }
+
+            case "CheckTypeTestPrepare":
+            case "CheckTypeTestPrepare2": {
+                result = await checkTypeTestPrepare(state, machine, testMode, log, data);
                 break;
             }
 
@@ -234,8 +280,8 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
                 break;
             }
 
-            case "CheckReleaseBranchDoesNotExist": {
-                result = await checkReleaseBranchDoesNotExist(state, machine, testMode, log, data);
+            case "CheckReleaseBranchExists": {
+                result = await checkReleaseBranchExists(state, machine, testMode, log, data);
                 break;
             }
 
@@ -253,6 +299,11 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
                     log,
                     data,
                 );
+                break;
+            }
+
+            case "PromptToCreateReleaseBranch": {
+                result = await promptToCreateReleaseBranch(state, machine, testMode, log, data);
                 break;
             }
 
@@ -296,6 +347,21 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
                     data.exitFunc(101);
                 }
 
+                break;
+            }
+
+            case "PromptToRunMinorReleaseCommand": {
+                result = await promptToRunMinorReleaseCommand(state, machine, testMode, log, data);
+                break;
+            }
+
+            case "PromptToRunTypeTests": {
+                result = await promptToRunTypeTests(state, machine, testMode, log, data);
+                break;
+            }
+
+            case "ReleaseComplete": {
+                log.info(chalk.green("Release complete!"));
                 break;
             }
 

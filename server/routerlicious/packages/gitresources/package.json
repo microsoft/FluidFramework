@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/gitresources",
-  "version": "0.1037.2000",
+  "version": "0.1037.3000",
   "description": "Git resource definitions for Fluid services",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",

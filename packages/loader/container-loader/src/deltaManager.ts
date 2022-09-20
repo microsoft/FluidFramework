@@ -246,15 +246,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.emit("prepareSend", batch);
 
         if (batch.length === 1) {
-            assert(batch[0].metadata?.batch === undefined, "no batch markup on single message");
+            assert(batch[0].metadata?.batch === undefined, 0x3c9 /* no batch markup on single message */);
         } else {
-            assert(batch[0].metadata?.batch === true, "no start batch markup");
-            assert(batch[batch.length - 1].metadata?.batch === false, "no end batch markup");
+            assert(batch[0].metadata?.batch === true, 0x3ca /* no start batch markup */);
+            assert(batch[batch.length - 1].metadata?.batch === false, 0x3cb /* no end batch markup */);
         }
 
         this.connectionManager.sendMessages(batch);
 
-        assert(this.messageBuffer.length === 0, "reentrancy");
+        assert(this.messageBuffer.length === 0, 0x3cc /* reentrancy */);
     }
 
     public get connectionProps(): ITelemetryProperties {

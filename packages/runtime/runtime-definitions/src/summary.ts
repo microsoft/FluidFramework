@@ -207,16 +207,25 @@ export interface ISummarizerNode {
 
 /**
  * Extends the functionality of ISummarizerNode to support garbage collection. It adds / updates the following APIs:
- * - usedRoutes - The routes in this node that are currently in use.
- * - getGCData - A new API that can be used to get the garbage collection data for this node.
- * - summarize - Added a trackState flag which indicates whether the summarizer node should track the state of the
- *   summary or not.
- * - createChild - Added the following params:
- *   - getGCDataFn - This gets the GC data from the caller. This must be provided in order for getGCData to work.
- *   - getInitialGCDetailsFn - This gets the initial GC details from the caller.
- * - deleteChild - Deletes a child node.
- * - isReferenced - This tells whether this node is referenced in the document or not.
- * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
+ *
+ * `usedRoutes`: The routes in this node that are currently in use.
+ *
+ * `getGCData`: A new API that can be used to get the garbage collection data for this node.
+ *
+ * `summarize`: Added a trackState flag which indicates whether the summarizer node should track the state of the
+ * summary or not.
+ *
+ * `createChild`: Added the following params:
+ *
+ * - `getGCDataFn`: This gets the GC data from the caller. This must be provided in order for getGCData to work.
+ *
+ * - `getInitialGCDetailsFn`: This gets the initial GC details from the caller.
+ *
+ * `deleteChild`: Deletes a child node.
+ *
+ * `isReferenced`: This tells whether this node is referenced in the document or not.
+ *
+ * `updateUsedRoutes`: Used to notify this node of routes that are currently in use in it.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createChild(

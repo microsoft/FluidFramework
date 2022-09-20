@@ -13,6 +13,7 @@ import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IBatchMessage } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
@@ -88,7 +89,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger?: ITelemetryLogger;
         runSweep?: boolean;
         fullGC?: boolean;
-    }): Promise<IGCStats>;
+    }): Promise<IGCStats | undefined>;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -111,6 +112,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // (undocumented)
     flush(): void;
+    // Warning: (ae-forgotten-export) The symbol "BatchMessage" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    protected flushBatch(batch: BatchMessage[]): void;
     // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)
@@ -341,7 +346,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 
 // @public
 export interface IGarbageCollectionRuntime {
-    closeFn(error?: ICriticalContainerError): void;
+    closeFn: (error?: ICriticalContainerError) => void;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;

@@ -12,8 +12,10 @@ import { assert, fail, compareFiniteNumbers } from './Common';
  *
  * It is associated with the output `RevisionView` of applying the edit at the index to the previous revision.
  * For example:
- *  - revision 0 corresponds to the initialRevision.
- *  - revision 1 corresponds to the output of editLog[0] applied to the initialRevision.
+ *
+ * - revision 0 corresponds to the initialRevision.
+ *
+ * - revision 1 corresponds to the output of editLog[0] applied to the initialRevision.
  */
 export type Revision = number;
 
@@ -23,10 +25,12 @@ export type Revision = number;
  * A value is kept in cache if it meets any of the following criteria:
  *
  * - The revision is \>= `retentionWindowStart`
+ *
  * - The value has been used recently, meaning getClosestEntry or cacheValue was called with its revision. Note that
- *      being returned when a large revision was passed to getClosestEntry does not count.
+ * being returned when a large revision was passed to getClosestEntry does not count.
+ *
  * - The value is `retained` meaning it was provided to to constructor in retainedEntries or passed to
- *   `cacheRetainedValue`
+ * `cacheRetainedValue`
  */
 export class RevisionValueCache<TValue> {
 	/**

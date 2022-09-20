@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
-import { AnchorSet, Delta, FieldKey, UpPath } from "../../tree";
-import { SequenceEditBuilder, singleTextCursor } from "../../feature-libraries";
+import { AnchorSet, Delta, FieldKey, ITreeCursorSynchronous, UpPath } from "../../tree";
+import { SequenceEditBuilder, singleTextCursor, singleTextCursorNew } from "../../feature-libraries";
 import { brand, brandOpaque } from "../../util";
 
 const rootKey = brand<FieldKey>("root");
@@ -75,6 +75,7 @@ const root_bar2_bar5_bar7: UpPath = {
 };
 
 const nodeX = { type: jsonString.name, value: "X" };
+const nodeXCursor: ITreeCursorSynchronous = singleTextCursorNew(nodeX);
 const content = [nodeX];
 const moveId = brandOpaque<Delta.MoveId>(0);
 const moveId2 = brandOpaque<Delta.MoveId>(1);
@@ -139,10 +140,11 @@ describe("SequenceEditBuilder", () => {
             rootKey,
             [{
                 type: Delta.MarkType.Insert,
-                content,
+                content: [nodeXCursor],
             }],
         ]]);
         builder.insert(root, singleTextCursor(nodeX));
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can insert a child node", () => {
@@ -164,7 +166,7 @@ describe("SequenceEditBuilder", () => {
                                     5,
                                     {
                                         type: Delta.MarkType.Insert,
-                                        content,
+                                        content: [nodeXCursor],
                                     },
                                 ],
                             ]]),

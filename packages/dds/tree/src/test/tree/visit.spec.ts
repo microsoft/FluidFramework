@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
+import { singleTextCursorNew } from "../../feature-libraries";
 import { FieldKey, Delta, DeltaVisitor, visitDelta } from "../../tree";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -56,7 +57,7 @@ function testTreeVisit(marks: Delta.MarkList, expected: Readonly<VisitScript>): 
 const rootKey: FieldKey = brand("root");
 const fooKey: FieldKey = brand("foo");
 const nodeX = { type: jsonString.name, value: "X" };
-const content = [nodeX];
+const content = [singleTextCursorNew(nodeX)];
 
 describe("visit", () => {
     it("empty delta", () => {

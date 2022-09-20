@@ -7,21 +7,15 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
-    buildForest,
-    ITreeCursor,
-    jsonableTreeFromCursor,
-    singleTextCursor,
-    jsonTypeSchema,
-    EmptyKey,
+    ITreeCursorNew, jsonableTreeFromCursor, singleTextCursorNew, EmptyKey,
 } from "../../..";
-import { initializeForest, TreeNavigationResult } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
-import { defaultSchemaPolicy } from "../../../feature-libraries";
-import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
-import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./json";
-import { averageLocation, sum } from "./benchmarks";
+import { JsonCursor } from "../../../domains/json/jsonCursor";
+import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
+import { Canada, generateCanada } from "./canada";
+import { averageTwoValues, sum, sumMap } from "./benchmarks";
+import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -58,17 +52,12 @@ function bench(
     data: {
         name: string;
         getJson: () => any;
-        dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
+        dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any;
     }[],
 ) {
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
         const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
-        const schemaData: SchemaData = {
-                globalFieldSchema: new Map(),
-                treeSchema: jsonTypeSchema,
-        };
-        const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
 
         benchmark({
             type: BenchmarkType.Measurement,
@@ -85,41 +74,38 @@ function bench(
             },
         });
 
-        const cursorFactories: [string, () => ITreeCursor][] = [
-            ["JsonCursor", () => new JsonCursor(json)],
-            ["TextCursor", () => singleTextCursor(encodedTree)],
-            ["object-forest Cursor", () => {
-                const forest = buildForest(schema);
-                initializeForest(forest, [encodedTree]);
-                const cursor = forest.allocateCursor();
-                assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
-                return cursor;
-            }],
+        const cursorFactories: [string, () => ITreeCursorNew][] = [
+            ["TextCursor", () => singleTextCursorNew(encodedTree)],
+            ["MapCursor", () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree)))],
         ];
 
         const consumers: [
             string,
-            (cursor: ITreeCursor,
-                dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any
+            (cursor: ITreeCursorNew,
+                dataConsumer: (cursor: ITreeCursorNew, calculate: (...operands: any[]) => void) => any
             ) => void,
         ][] = [
-            ["cursorToJsonObject", cursorToJsonObject],
-            ["jsonableTreeFromCursor", jsonableTreeFromCursor],
-            ["sum", sum],
-            ["averageLocation", averageLocation],
-        ];
+                // TODO: finish porting other cursor code and enable this.
+                // ["cursorToJsonObject", cursorToJsonObjectNew],
+                ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+                ["mapTreeFromCursor", mapTreeFromCursor],
+                ["sum", sum],
+                ["sum-map", sumMap],
+                ["averageTwoValues", averageTwoValues],
+            ];
 
         for (const [consumerName, consumer] of consumers) {
             for (const [factoryName, factory] of cursorFactories) {
-                let cursor: ITreeCursor;
+                let cursor: ITreeCursorNew;
                 benchmark({
                     type: BenchmarkType.Measurement,
                     title: `${consumerName}(${factoryName}): '${name}'`,
                     before: () => {
                         cursor = factory();
-                        assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
-                        assert.deepEqual(
-                            jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+                        // TODO: validate behavior
+                        // assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+                        // assert.deepEqual(
+                        //     jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
                     },
                     benchmarkFn: () => {
                         consumer(cursor, dataConsumer);
@@ -136,43 +122,79 @@ const canada = generateCanada(
         ? undefined
         : [2, 10]);
 
-function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
-    cursor.down(FeatureKey, 0);
-    cursor.down(EmptyKey, 0);
-    cursor.down(GeometryKey, 0);
-    cursor.down(CoordinatesKey, 0);
+function extractCoordinatesFromCanada(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+    cursor.enterField(Canada.FeatureKey);
+    cursor.enterNode(0);
+    cursor.enterField(EmptyKey);
+    cursor.enterNode(0);
+    cursor.enterField(Canada.GeometryKey);
+    cursor.enterNode(0);
+    cursor.enterField(Canada.CoordinatesKey);
+    cursor.enterNode(0);
 
-    let result = cursor.down(EmptyKey, 0);
-    assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+    cursor.enterField(EmptyKey);
 
-    while (result === TreeNavigationResult.Ok) {
-        let resultInner = cursor.down(EmptyKey, 0);
-        assert.equal(resultInner, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
+    for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
+        cursor.enterField(EmptyKey);
 
-        while (resultInner === TreeNavigationResult.Ok) {
+        for (let resultInner = cursor.firstNode(); resultInner; resultInner = cursor.nextNode()) {
             // Read x and y values
-            assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok, "No X field");
+            cursor.enterField(EmptyKey);
+            assert.equal(cursor.firstNode(), true, "No X field");
             const x = cursor.value as number;
-            cursor.up();
-
-            assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok, "No Y field");
+            assert.equal(cursor.nextNode(), true, "No Y field");
             const y = cursor.value as number;
-            cursor.up();
+
+            cursor.exitNode();
+            cursor.exitField();
 
             calculate(x, y);
-            resultInner = cursor.seek(1);
         }
-        cursor.up();
-        result = cursor.seek(1);
+
+        cursor.exitField();
     }
 
     // Reset the cursor state
-    cursor.up();
-    cursor.up();
-    cursor.up();
-    cursor.up();
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
 }
 
+function extractAvgValsFromTwitter(cursor: ITreeCursorNew, calculate: (x: number, y: number) => void): void {
+    cursor.enterField(TwitterStatus.statusesKey); // move from root to field
+    cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
+    cursor.enterField(EmptyKey); // enter the array field at the node,
+
+    for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
+        cursor.enterField(TwitterStatus.retweetCountKey);
+        cursor.enterNode(0);
+        const retweetCount = cursor.value as number;
+        cursor.exitNode();
+        cursor.exitField();
+
+        cursor.enterField(TwitterStatus.favoriteCountKey);
+        cursor.enterNode(0);
+        const favoriteCount = cursor.value;
+        cursor.exitNode();
+        cursor.exitField();
+        calculate(retweetCount, favoriteCount as number);
+    }
+
+    // Reset the cursor state
+    cursor.exitField();
+    cursor.exitNode();
+    cursor.exitField();
+}
+
+// The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
+    bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
 });

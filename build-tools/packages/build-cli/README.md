@@ -34,19 +34,23 @@ Consider this section of package.json.
 All of the dependencies are in the same repo. The first two dependencies listed are in a single release group, while the
 other two are standalone packages.
 
-When releasegroup1 publishes a prerelease version 1.4.0-xxxxxx, we want to bump the dependency range in the
-package above to be `~1.4.0-0`, which will pick up the new release. Doing that in one package with a release group that
-has only two packages is straightforward. However, when a repo has dozens or hundreds of packages with lots of large
-release groups, doing it manually becomes untenable.
+When releasegroup1 publishes a prerelease version 1.4.0-12345, we want to bump the dependency range in the package above
+to be `~1.4.0-12345`, which will pick up the new release. Doing that in one package with a release group that has only
+two packages is straightforward. However, when a repo has dozens or hundreds of packages with lots of large release
+groups, doing it manually becomes untenable.
 
 The `bump deps` command automates this process. In the case above, we could use the following command to bump
-releasegroup1 dependencies to `~1.4.0-0`:
+releasegroup1 dependencies to `~1.4.0-12345`:
+
+```shell
+flub bump deps releasegroup1 --updateType latest --prerelease
+```
 
 
 ```json
 "dependencies": {
-    "@releasegroup1/app": "~1.4.0-0",
-    "@releasegroup1/lib": "~1.4.0-0",
+    "@releasegroup1/app": "~1.4.0-12345",
+    "@releasegroup1/lib": "~1.4.0-12345",
     "@standalone/common-tools": "^1.24.0",
     "@standalone/eslint-config": "~1.28.2"
 }
@@ -58,18 +62,18 @@ It is very helpful to bump a dependency based on its current value and a bump ty
 following command yields the same results as the above command:
 
 ```shell
-flub bump deps releasegroup1 --bumpType minor --prerelease
+flub bump deps releasegroup1 --updateType minor --prerelease
 ```
 
 To bump to a release version instead, omit the `--prerelease` argument.
 
 ### Bumping standalone dependencies
 
-Some packages are versioned independently from other release groups. In the example above, we could bump to the next
-major version of the eslint-config package across the whole repo using the following command:
+Some packages are versioned independently from other release groups. In the example above, we could bump to the latest
+released version of the eslint-config package across the whole repo using the following command:
 
 ```shell
-flub bump deps @standalone/eslint-config --bumpType major
+flub bump deps @standalone/eslint-config --updateType latest
 ```
 
 That command will update the package.json like so:
@@ -107,7 +111,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.5000 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.4.6000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -126,6 +130,7 @@ USAGE
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
 * [`flub release`](#flub-release)
+* [`flub release report`](#flub-release-report)
 * [`flub run bundleStats`](#flub-run-bundlestats)
 * [`flub version VERSION`](#flub-version-version)
 * [`flub version latest`](#flub-version-latest)
@@ -136,8 +141,8 @@ Update the dependency version of a specified package or release group. That is, 
 
 ```
 USAGE
-  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-n <value> | -t major|minor|patch|current] [-p ]
-    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit] [-v]
+  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-p -t latest|newest|greatest|minor|patch|@next|@canary]
+    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit |  |  | ] [-v]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group. Dependencies on these packages will be bumped.
@@ -145,10 +150,9 @@ ARGUMENTS
 FLAGS
   -g, --releaseGroup=<option>  Only bump dependencies within this release group.
                                <options: client|server|azure|build-tools>
-  -n, --version=<value>        A semver version range string.
-  -p, --prerelease             Bump to pre-release versions.
-  -t, --bumpType=<option>      Bump the current version of the dependency according to this bump type.
-                               <options: major|minor|patch|current>
+  -p, --prerelease             Treat prerelease versions as valid versions to update to.
+  -t, --updateType=<option>    Bump the current version of the dependency according to this bump type.
+                               <options: latest|newest|greatest|minor|patch|@next|@canary>
   -v, --verbose                Verbose logging.
   -x, --skipChecks             Skip all checks.
   --[no-]commit                Commit changes to a new branch.
@@ -161,21 +165,23 @@ DESCRIPTION
   packages updated can be filtered using various flags.
 
 EXAMPLES
-  Bump dependencies on @fluidframework/build-common to range ~1.2.0 across all release groups.
+  Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.
 
-    $ flub bump deps @fluidframework/build-common -n '~1.2.0'
+    $ flub bump deps @fluidframework/build-common -t latest
 
-  Bump dependencies on @fluidframework/build-common to range ^1.0.0-0 in the azure release group.
+  Bump dependencies on @fluidframework/build-common to the next minor version in the azure release group.
 
-    $ flub bump deps @fluidframework/build-common -n '^1.0.0-0' -g azure
+    $ flub bump deps @fluidframework/build-common -t minor -g azure
 
-  Bump dependencies on packages in the server release group to the next major prerelease in the client release group.
+  Bump dependencies on packages in the server release group to the greatest released version in the client release
+  group. Include pre-release versions.
 
-    $ flub bump deps server -g client -t major
+    $ flub bump deps server -g client -t greatest -p
 
-  Bump dependencies on server packages to the current version, replacing any pre-release ranges with release ranges.
+  Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with
+  release ranges.
 
-    $ flub bump deps server -g client -t current
+    $ flub bump deps server -t latest
 ```
 
 ## `flub check layers`
@@ -353,7 +359,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/info.ts)_
 
 ## `flub release`
 
@@ -384,15 +390,64 @@ DESCRIPTION
   The release command ensures that a release branch is in good condition, then walks the user through releasing a
   package or release group.
 
-  The command runs a number of checks automatically to make sure . If any of the dependencies are also in the repo, then
-  they're checked for the latest release version. If the dependencies have not yet been released, then the command
-  prompts to perform the release of the dependency, then run the release command again.
+  The command runs a number of checks automatically to make sure the branch is in a good state for a release. If any of
+  the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have
+  not yet been released, then the command prompts to perform the release of the dependency, then run the release command
+  again.
 
   This process is continued until all the dependencies have been released, after which the release group itself is
   released.
 ```
 
-_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/release.ts)_
+_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/release.ts)_
+
+## `flub release report`
+
+Generates a report of Fluid Framework releases.
+
+```
+USAGE
+  $ flub release report [--json] [-d <value>] [-s | -r] [-f -o <value>] [-v]
+
+FLAGS
+  -d, --days=<value>    [default: 10] The number of days to look back for releases to report.
+  -f, --full            Output a full report. A full report includes additional metadata for each package, including the
+                        time of the release, the type of release (patch, minor, major), and whether the release is new.
+  -o, --output=<value>  Output a JSON report file to this location.
+  -r, --mostRecent      Always pick the most recent version as the latest (ignore semver version sorting).
+  -s, --highest         Always pick the greatest semver version as the latest (ignore dates).
+  -v, --verbose         Verbose logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Generates a report of Fluid Framework releases.
+
+  The release report command is used to produce a report of all the packages that were released and their current
+  version. After a release, it is useful to generate this report to provide to customers, so they can update their
+  dependencies to the most recent version.
+
+  The command will prompt you to select versions for a package or release group in the event that multiple versions have
+  recently been released.
+
+EXAMPLES
+  Generate a minimal release report and display it in the terminal.
+
+    $ flub release report
+
+  Generate a minimal release report and output it to stdout as JSON.
+
+    $ flub release report --json
+
+  Output a release report to 'report.json'.
+
+    $ flub release report -o report.json
+
+  Output a full release report to 'report.json'.
+
+    $ flub release report -f -o report.json
+```
 
 ## `flub run bundleStats`
 
@@ -455,7 +510,7 @@ EXAMPLES
     $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/version.ts)_
 
 ## `flub version latest`
 

@@ -34,7 +34,7 @@
     "prettier:fix": "prettier --write .",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:mocha": "mocha dist/**/*.test.js"
+    "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict"
   },
   "dependencies": {
     "@microsoft/api-documenter": "7.19.2",

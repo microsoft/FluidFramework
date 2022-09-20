@@ -4,7 +4,7 @@
  */
 
 import { FieldKey, ChildLocation, Value } from "../tree";
-import { ITreeCursor } from "./cursor";
+import { ITreeCursor } from "./cursorLegacy";
 
 /**
  * Copy on write and immutable views for forests.
