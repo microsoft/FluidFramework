@@ -2,9 +2,29 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import {
+    DocCodeSpan,
+    DocDeclarationReference,
+    DocFencedCode,
+    DocLinkTag,
+    DocNode,
+    DocNodeKind,
+    DocParagraph,
+    DocPlainText,
+    DocSection,
+} from "@microsoft/tsdoc";
 
-import {DocBlock, DocCodeSpan, DocNode, DocNodeKind, DocParagraph, DocPlainText, DocSection, DocSoftBreak} from '@microsoft/tsdoc';
-import { CodeSpanNode, DocumentationNode, HierarchicalSectionNode, LineBreakNode, ParagraphNode, PlainTextNode, SpanNode } from '../documentation-domain';
+import {
+    CodeSpanNode,
+    DocumentationNode,
+    FencedCodeBlockNode,
+    LineBreakNode,
+    ParagraphNode,
+    PlainTextNode,
+    SpanNode,
+    SymbolicLinkNode,
+    UrlLinkNode,
+} from "../documentation-domain";
 
 /**
  * Transformation library from DocNode_s to {@link DocumentationNode}s.
@@ -22,9 +42,13 @@ export function transformDocNode(node: DocNode): DocumentationNode {
         case DocNodeKind.Section:
             return transformSection(node as DocSection);
         case DocNodeKind.SoftBreak:
-            return LineBreakNode.Singleton
+            return LineBreakNode.Singleton;
         case DocNodeKind.PlainText:
             return transformPlainText(node as DocPlainText);
+        case DocNodeKind.FencedCode:
+            return transformFencedCode(node as DocFencedCode);
+        case DocNodeKind.LinkTag:
+            return transformLinkTag(node as DocLinkTag);
         default:
             throw new Error(`Unsupported DocNode kind: "${node.kind}".`);
     }
@@ -56,7 +80,32 @@ export function transformSection(node: DocSection): SpanNode {
 /**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
- export function transformPlainText(node: DocPlainText): PlainTextNode {
+export function transformPlainText(node: DocPlainText): PlainTextNode {
     return new PlainTextNode(node.text);
 }
 
+/**
+ * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
+ */
+export function transformFencedCode(node: DocFencedCode): FencedCodeBlockNode {
+    return FencedCodeBlockNode.createFromPlainText(node.code, node.language);
+}
+
+/**
+ * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
+ */
+export function transformLinkTag(
+    node: DocLinkTag,
+): UrlLinkNode | SymbolicLinkNode<DocDeclarationReference> | PlainTextNode {
+    const linkTextNode = new PlainTextNode(node.linkText ?? "");
+
+    if (node.codeDestination !== undefined) {
+        return new SymbolicLinkNode({ symbolTarget: node.codeDestination, content: linkTextNode });
+    }
+
+    if (node.urlDestination !== undefined) {
+        return new UrlLinkNode({ urlTarget: node.urlDestination, content: linkTextNode });
+    }
+
+    return linkTextNode;
+}
