@@ -61,6 +61,9 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
         // Join/leave signals are ignored for "write" clients in favor of join / leave ops
         this.quorum.on("addMember", (clientId, details) => audience.addMember(clientId, details.client));
         this.quorum.on("removeMember", (clientId) => audience.removeMember(clientId));
+        for (const [clientId, details] of this.quorum.getMembers()) {
+            this.audience.addMember(clientId, details.client);
+        }
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {

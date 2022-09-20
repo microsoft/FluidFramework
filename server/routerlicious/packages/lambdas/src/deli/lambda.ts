@@ -61,7 +61,7 @@ import {
     SessionState,
 } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import {
     logCommonSessionEndMetrics,
@@ -1798,10 +1798,15 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * @param signalMessage - Ticketed join signal message
      */
     private addSequencedSignalClient(clientJoinMessage: IClientJoin, signalMessage: ISignalMessageOutput) {
+        const op = signalMessage.message.operation;
+        assert(op.referenceSequenceNumber !== undefined,
+            "ISignalMessage.referenceSequenceNumber is undefined for sequenced signal");
+        assert(op.clientConnectionNumber !== undefined,
+            "ISignalMessage.clientConnectionNumber is undefined for sequenced signal");
         const sequencedSignalClient: ISequencedSignalClient = {
             client: clientJoinMessage.detail,
-            referenceSequenceNumber: signalMessage.message.operation.referenceSequenceNumber,
-            clientConnectionNumber: signalMessage.message.operation.clientConnectionNumber,
+            referenceSequenceNumber: op.referenceSequenceNumber,
+            clientConnectionNumber: op.clientConnectionNumber,
             exp: Date.now() + this.serviceConfiguration.deli.clientTimeout,
         };
 

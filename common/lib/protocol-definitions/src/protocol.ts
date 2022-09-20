@@ -77,13 +77,13 @@ export enum SignalType {
     /**
      * System signal sent to indicate a new client has joined the collaboration.
      */
-     ClientJoin = "join",
+    ClientJoin = "join",
 
-     /**
-      * System signal sent to indicate a client has left the collaboration.
-      */
-     ClientLeave = "leave",
- }
+    /**
+     * System signal sent to indicate a client has left the collaboration.
+     */
+    ClientLeave = "leave",
+}
 
 /**
  * Messages to track latency trace
@@ -302,7 +302,7 @@ export interface ISignalMessage {
      * 1. Order clients in a session
      * 2. Learn about dropped join/leave signals (if there is a gap in numbering)
      */
-     clientConnectionNumber?: number;
+    clientConnectionNumber?: number;
 
     /**
      * Sequence number that indicates when the signal was created in relation to the delta stream
