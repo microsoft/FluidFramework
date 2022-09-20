@@ -33,9 +33,10 @@ import {
     DocAlertType,
     DocumentationNode,
     LinkNode,
+    ParagraphNode,
     PlainTextNode,
+    SingleLineElementNode,
     SpanNode,
-    SymbolicLinkNode,
 } from "../../documentation-domain";
 import {
     ApiFunctionLike,
@@ -222,38 +223,27 @@ function renderHeritageTypeList(
     heritageTypes: readonly HeritageType[],
     label: string,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocParagraph | undefined {
+): ParagraphNode | undefined {
     if (heritageTypes.length > 0) {
-        const docNodes: DocNode[] = [];
+        const children: DocumentationNode[] = [];
 
-        docNodes.push(
-            new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
-                new DocPlainText({
-                    configuration: config.tsdocConfiguration,
-                    text: `${label}: `,
-                }),
-            ]),
-        );
+        children.push(SpanNode.createFromPlainText(`${label}: `, { bold: true }));
 
+        // TODO: add node array join helper?
         let needsComma: boolean = false;
         for (const heritageType of heritageTypes) {
             if (needsComma) {
-                docNodes.push(
-                    new DocPlainText({
-                        configuration: config.tsdocConfiguration,
-                        text: ", ",
-                    }),
-                );
+                children.push(new PlainTextNode(", "));
             }
 
             const renderedExcerpt = createExcerptSpanWithHyperlinks(heritageType.excerpt, config);
             if (renderedExcerpt !== undefined) {
-                docNodes.push(...renderedExcerpt);
+                children.push(renderedExcerpt);
                 needsComma = true;
             }
         }
 
-        return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
+        return new ParagraphNode(children);
     }
     return undefined;
 }
@@ -341,7 +331,7 @@ export function renderTypeParameters(
 export function createExcerptSpanWithHyperlinks(
     excerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
-): SpanNode | undefined {
+): SpanNode<SingleLineElementNode> | undefined {
     if (excerpt.isEmpty) {
         return undefined;
     }
@@ -366,7 +356,7 @@ export function createExcerptSpanWithHyperlinks(
                     config,
                     unwrappedTokenText,
                 );
-                children.push(new LinkNode(link));
+                children.push(LinkNode.createFromPlainTextLink(link));
                 wroteHyperlink = true;
             }
         }
@@ -765,7 +755,7 @@ export function renderReturnsSection(
                                     }),
                                 ],
                             ),
-                            ...renderedTypeExcerpt,
+                            renderedTypeExcerpt,
                         ]),
                     ]),
                 );
