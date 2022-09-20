@@ -361,15 +361,14 @@ export class NodeCore {
      */
     protected load(buffer: ReadBuffer, dictionary: string[]) {
         for (;!buffer.eof;) {
-            let childValue: NodeTypes | undefined;
             const code = buffer.read();
             switch (code) {
                 case MarkerCodesStart.list:
                 case MarkerCodesStart.set: {
-                    childValue = new NodeCore(code === MarkerCodesStart.set ? "set" : "list");
+                    const childValue = new NodeCore(code === MarkerCodesStart.set ? "set" : "list");
                     this.children.push(childValue);
                     childValue.load(buffer, dictionary);
-                    break;
+                    continue;
                 }
                 case MarkerCodes.ConstStringDeclare:
                 case MarkerCodes.ConstStringDeclareBig:
@@ -377,7 +376,7 @@ export class NodeCore {
                     const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
                     const constString = this.readString(buffer, code);
                     dictionary[stringId] = constString;
-                    break;
+                    continue;
                 }
                 case MarkerCodes.ConstString8Id:
                 case MarkerCodes.ConstString16Id:
@@ -387,7 +386,7 @@ export class NodeCore {
                     const content = dictionary[stringId];
                     assert(content !== undefined, "const string not found");
                     this.addDictionaryString(content);
-                    break;
+                    continue;
                 }
                 case MarkerCodes.StringEmpty:
                 case MarkerCodes.String8Length:
@@ -395,7 +394,7 @@ export class NodeCore {
                 case MarkerCodes.String32Length:
                 {
                     this.addString(this.readString(buffer, code));
-                    break;
+                    continue;
                 }
                 case MarkerCodes.BinaryEmpty:
                 case MarkerCodes.BinarySingle8:
@@ -403,16 +402,14 @@ export class NodeCore {
                 case MarkerCodes.BinarySingle32:
                 case MarkerCodes.BinarySingle64:
                 {
-                    childValue = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code));
-                    this.children.push(childValue);
-                    break;
+                    this.children.push(BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)));
+                    continue;
                 }
                 // If integer is 0.
                 case MarkerCodes.Int0:
                 {
-                    childValue = 0;
-                    this.children.push(childValue);
-                    break;
+                    this.children.push(0);
+                    continue;
                 }
                 case MarkerCodes.UInt8:
                 case MarkerCodes.UInt16:
@@ -423,16 +420,15 @@ export class NodeCore {
                 case MarkerCodes.Int32:
                 case MarkerCodes.Int64:
                 {
-                    childValue = buffer.read(getValueSafely(codeToBytesMap, code));
-                    this.children.push(childValue);
-                    break;
+                    this.children.push(buffer.read(getValueSafely(codeToBytesMap, code)));
+                    continue;
                 }
                 case MarkerCodes.BoolTrue:
                     this.children.push(true);
-                    break;
+                    continue;
                 case MarkerCodes.BoolFalse:
                     this.children.push(false);
-                    break;
+                    continue;
                 case MarkerCodesEnd.list:
                 case MarkerCodesEnd.set:
                     return;
@@ -532,8 +528,10 @@ function getNodeType(value: NodeTypes): NodeType {
         return "NodeCore";
     } else if (typeof value === "boolean") {
         return "Boolean";
+    } else if (value._stringElement) {
+        return "String";
     }
     return "UnknownType";
 }
 
-type NodeType = "Number" | "BlobCore" | "NodeCore" | "Boolean" | "UnknownType";
+type NodeType = "Number" | "BlobCore" | "NodeCore" | "Boolean" | "UnknownType" | "String";

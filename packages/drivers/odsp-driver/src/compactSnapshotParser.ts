@@ -35,8 +35,8 @@ interface ISnapshotSection {
 function readBlobSection(node: NodeTypes) {
     assertNodeCoreInstance(node, "TreeBlobs should be of type NodeCore");
     const blobs: Map<string, ArrayBuffer> = new Map();
-    for (let count = 0; count < node.length; ++count) {
-        const blob = node.getNode(count);
+    for (const blob of node) {
+        assertNodeCoreInstance(blob, "blob should be node");
         const records = getNodeProps(blob);
         assertBlobCoreInstance(records.data, "data should be of BlobCore type");
         const id = getStringInstance(records.id, "blob id should be string");
@@ -74,23 +74,23 @@ function readTreeSection(node: NodeCore) {
         trees: {},
     };
     for (const treeNode of node) {
-        assertNodeCoreInstance(treeNode, "getNode should return a node");
+        assertNodeCoreInstance(treeNode, "tree nodes should be nodes");
         const records = getNodeProps(treeNode);
+
+        if (records.unreferenced !== undefined) {
+            assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
+            assert(records.unreferenced, 0x281 /* "Unreferenced if present should be true" */);
+            snapshotTree.unreferenced = true;
+        }
+
         const path = getStringInstance(records.name, "Path name should be string");
         if (records.value !== undefined) {
-            const value = getStringInstance(records.value, "Blob value should be string");
-            snapshotTree.blobs[path] = value;
+            snapshotTree.blobs[path] = getStringInstance(records.value, "Blob value should be string");
         } else if (records.children !== undefined) {
             assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
             snapshotTree.trees[path] = readTreeSection(records.children);
         } else {
             snapshotTree.trees[path] = { blobs: {}, commits: {}, trees: {} };
-        }
-        if (records.unreferenced !== undefined) {
-            assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
-            const unreferenced = records.unreferenced;
-            assert(unreferenced, 0x281 /* "Unreferenced if present should be true" */);
-            snapshotTree.unreferenced = unreferenced;
         }
     }
     return snapshotTree;
