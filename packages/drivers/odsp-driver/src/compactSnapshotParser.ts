@@ -39,7 +39,7 @@ function readBlobSection(node: NodeTypes) {
         const blob = node.getNode(count);
         const records = getNodeProps(blob);
         assertBlobCoreInstance(records.data, "data should be of BlobCore type");
-        const id = getStringInstance(records.id, "blob id should be of BlobCore type");
+        const id = getStringInstance(records.id, "blob id should be string");
         blobs.set(id, records.data.arrayBuffer);
     }
     return blobs;
@@ -73,12 +73,12 @@ function readTreeSection(node: NodeCore) {
         commits: {},
         trees: {},
     };
-    for (let count = 0; count < node.length; count++) {
-        const treeNode = node.getNode(count);
+    for (const treeNode of node) {
+        assertNodeCoreInstance(treeNode, "getNode should return a node");
         const records = getNodeProps(treeNode);
-        const path = getStringInstance(records.name, "Path should be of BlobCore");
+        const path = getStringInstance(records.name, "Path name should be string");
         if (records.value !== undefined) {
-            const value = getStringInstance(records.value, "Blob value should be BlobCore");
+            const value = getStringInstance(records.value, "Blob value should be string");
             snapshotTree.blobs[path] = value;
         } else if (records.children !== undefined) {
             assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
@@ -88,7 +88,7 @@ function readTreeSection(node: NodeCore) {
         }
         if (records.unreferenced !== undefined) {
             assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
-            const unreferenced = records.unreferenced.valueOf();
+            const unreferenced = records.unreferenced;
             assert(unreferenced, 0x281 /* "Unreferenced if present should be true" */);
             snapshotTree.unreferenced = unreferenced;
         }
@@ -107,7 +107,7 @@ function readSnapshotSection(node: NodeTypes): ISnapshotSection {
     assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
     assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
     const snapshotTree: ISnapshotTree = readTreeSection(records.treeNodes);
-    snapshotTree.id = getStringInstance(records.id, "snapshotId should be BlobCore");
+    snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
     const sequenceNumber = records.sequenceNumber.valueOf();
     return {
         sequenceNumber,
@@ -127,8 +127,8 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
 
     const records = getNodeProps(root);
 
-    const mrv = getStringInstance(records.mrv, "minReadVersion should be of BlobCore type");
-    const cv = getStringInstance(records.cv, "createVersion should be of BlobCore type");
+    const mrv = getStringInstance(records.mrv, "minReadVersion should be string");
+    const cv = getStringInstance(records.cv, "createVersion should be string");
     if (records.lsn !== undefined) {
         assertNumberInstance(records.lsn, "lsn should be a number");
     }

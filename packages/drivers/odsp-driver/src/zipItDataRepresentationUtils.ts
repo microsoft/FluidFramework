@@ -114,7 +114,7 @@ export function getValueSafely(map: { [index: number]: number; }, key: number) {
 export function getNodeProps(node: NodeCore) {
     const res: Record<string, NodeTypes> = {};
     for (const [keyNode, valueNode] of node.iteratePairs()) {
-        const id = getStringInstance(keyNode, "keynode should be a blob");
+        const id = getStringInstance(keyNode, "keynode should be a string");
         res[id] = valueNode;
     }
     return res;
@@ -283,7 +283,7 @@ export class NodeCore {
 
     public getString(index: number): string {
         const node = this.children[index];
-        return getStringInstance(node, "getString should return stringblob");
+        return getStringInstance(node, "getString should return string");
     }
 
     public getBlob(index: number): BlobCore {
