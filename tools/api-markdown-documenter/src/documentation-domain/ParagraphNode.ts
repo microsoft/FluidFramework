@@ -5,6 +5,7 @@
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { LineBreakNode } from "./LineBreakNode";
+import { PlainTextNode } from "./PlainTextNode";
 import { SpanNode } from "./SpanNode";
 
 export type ParagraphChildren =
@@ -17,5 +18,9 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
 
     public constructor(children: ParagraphChildren[]) {
         super(children);
+    }
+
+    public static createFromPlainText(text: string): ParagraphNode {
+        return new ParagraphNode([new PlainTextNode(text)]);
     }
 }

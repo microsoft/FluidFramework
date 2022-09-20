@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { DocumentNodeType } from "./DocumentationNodeType";
-import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
+import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 
 export interface TextFormatting {
@@ -46,5 +46,11 @@ export class SpanNode<
         formatting?: TextFormatting,
     ): SpanNode<PlainTextNode> {
         return new SpanNode([new PlainTextNode(text)], formatting);
+    }
+}
+
+export class SingleLineSpanNode extends SpanNode<SingleLineElementNode> implements SingleLineElementNode {
+    public constructor(children: SingleLineElementNode[], formatting?: TextFormatting) {
+        super(children, formatting);
     }
 }

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Heading } from "../Heading";
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { LiteralNode, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
@@ -29,5 +30,9 @@ export class HeadingNode implements LiteralNode<SingleLineElementNode> {
 
     public static createFromPlainText(text: string, id?: string, level?: number): HeadingNode {
         return new HeadingNode(new PlainTextNode(text), id, level);
+    }
+
+    public static createFromHeading(heading: Heading): HeadingNode {
+        return HeadingNode.createFromPlainText(heading.title, heading.id, heading.level)
     }
 }

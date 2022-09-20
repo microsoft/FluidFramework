@@ -30,12 +30,17 @@ import { Heading } from "../../Heading";
 import { Link } from "../../Link";
 import { DocAlert, DocEmphasisSpan, DocHeading, DocList, ListKind } from "../../doc-nodes";
 import {
+    AlertNode,
     DocAlertType,
     DocumentationNode,
+    HeadingNode,
+    HierarchicalSectionNode,
+    LineBreakNode,
     LinkNode,
     ParagraphNode,
     PlainTextNode,
     SingleLineElementNode,
+    SingleLineSpanNode,
     SpanNode,
 } from "../../documentation-domain";
 import {
@@ -54,12 +59,14 @@ import {
     mergeSections,
 } from "../../utilities";
 import { createParametersSummaryTable } from "./TableHelpers";
+import { transformSection } from "../../doc-node-to-documentation-ast";
 
 // TODOs:
-// - rename "render" to "create", since these are really creation / builder helpers
+// - Express current Section helpers in terms of (Spans? Paragraphs?) - let consumers wrap in the appropriate
+//   Hierarchical sections (or add helper wrappers as appropriate)
 
 /**
- * Renders a section for an API signature.
+ * Generates a section for an API signature.
  *
  * @remarks Displayed as a heading with a code-block under it.
  *
@@ -68,10 +75,10 @@ import { createParametersSummaryTable } from "./TableHelpers";
  *
  * @returns The doc section if there was any signature content to render, otherwise `undefined`.
  */
-export function renderSignature(
+export function createSignatureSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection | undefined {
+): HierarchicalSectionNode | undefined {
     if (apiItem instanceof ApiDeclaredItem) {
         const signatureExcerpt = apiItem.getExcerptWithModifiers();
         if (signatureExcerpt !== "") {
@@ -93,7 +100,7 @@ export function renderSignature(
                 }),
             );
 
-            const renderedHeritageTypes = renderHeritageTypes(apiItem, config);
+            const renderedHeritageTypes = createHeritageTypesSpan(apiItem, config);
             if (renderedHeritageTypes !== undefined) {
                 docNodes.push(renderedHeritageTypes);
             }
@@ -115,10 +122,10 @@ export function renderSignature(
  *
  * @returns The doc section if there was any signature content to render, otherwise `undefined`.
  */
-export function renderSeeAlso(
+export function createSeeAlsoSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection | undefined {
+): HierarchicalSectionNode | undefined {
     const seeBlocks = getSeeBlocks(apiItem);
     if (seeBlocks === undefined || seeBlocks.length === 0) {
         return undefined;
@@ -150,16 +157,16 @@ export function renderSeeAlso(
  *
  * @returns The doc section if there were any heritage types to render, otherwise `undefined`.
  */
-export function renderHeritageTypes(
+export function createHeritageTypesSpan(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection | undefined {
+): SpanNode | undefined {
     const docNodes: DocNode[] = [];
 
     if (apiItem instanceof ApiClass) {
         // Render `extends` type if there is one.
         if (apiItem.extendsType) {
-            const renderedExtendsTypes = renderHeritageTypeList(
+            const renderedExtendsTypes = createHeritageTypeListSpan(
                 [apiItem.extendsType],
                 "Extends",
                 config,
@@ -173,7 +180,7 @@ export function renderHeritageTypes(
         }
 
         // Render `implements` types if there are any.
-        const renderedImplementsTypes = renderHeritageTypeList(
+        const renderedImplementsTypes = createHeritageTypeListSpan(
             apiItem.implementsTypes,
             "Implements",
             config,
@@ -183,7 +190,7 @@ export function renderHeritageTypes(
         }
 
         // Render type parameters if there are any.
-        const renderedTypeParameters = renderTypeParameters(apiItem.typeParameters, config);
+        const renderedTypeParameters = createTypeParametersSpan(apiItem.typeParameters, config);
         if (renderedTypeParameters !== undefined) {
             docNodes.push(renderedTypeParameters);
         }
@@ -191,7 +198,7 @@ export function renderHeritageTypes(
 
     if (apiItem instanceof ApiInterface) {
         // Render `extends` types if there are any.
-        const renderedExtendsTypes = renderHeritageTypeList(
+        const renderedExtendsTypes = createHeritageTypeListSpan(
             apiItem.extendsTypes,
             "Extends",
             config,
@@ -201,7 +208,7 @@ export function renderHeritageTypes(
         }
 
         // Render type parameters if there are any.
-        const renderedTypeParameters = renderTypeParameters(apiItem.typeParameters, config);
+        const renderedTypeParameters = createTypeParametersSpan(apiItem.typeParameters, config);
         if (renderedTypeParameters !== undefined) {
             docNodes.push(renderedTypeParameters);
         }
@@ -219,11 +226,11 @@ export function renderHeritageTypes(
  * @param label - Label text to display before the list of types.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-function renderHeritageTypeList(
+function createHeritageTypeListSpan(
     heritageTypes: readonly HeritageType[],
     label: string,
     config: Required<MarkdownDocumenterConfiguration>,
-): ParagraphNode | undefined {
+): SpanNode | undefined {
     if (heritageTypes.length > 0) {
         const children: DocumentationNode[] = [];
 
@@ -243,7 +250,7 @@ function renderHeritageTypeList(
             }
         }
 
-        return new ParagraphNode(children);
+        return new SpanNode(children);
     }
     return undefined;
 }
@@ -260,10 +267,10 @@ function renderHeritageTypeList(
  *
  * @returns The doc section if any type parameters were provided, otherwise `undefined`.
  */
-export function renderTypeParameters(
+export function createTypeParametersSpan(
     typeParameters: readonly TypeParameter[],
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection | undefined {
+): SpanNode | undefined {
     if (typeParameters.length > 0) {
         const listItemNodes: DocNode[] = [];
         for (const typeParameter of typeParameters) {
@@ -379,10 +386,10 @@ export function createExcerptSpanWithHyperlinks(
  * @param apiItem - The API item whose ancestory will be used to generate the breadcrumb.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderBreadcrumb(
+export function createBreadcrumbSpan(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection {
+): SingleLineSpanNode {
     // TODO: old system generated link text "Packages" for Model document
 
     const docNodes: DocNode[] = [];
@@ -428,56 +435,32 @@ export function renderBreadcrumb(
  * @param apiItem - The API item for which the heading is being generated.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderHeadingForApiItem(
+export function createHeadingForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocHeading {
-    return renderHeading(getHeadingForApiItem(apiItem, config), config);
+): HeadingNode {
+    const heading = getHeadingForApiItem(apiItem, config);
+    return HeadingNode.createFromHeading(heading);
 }
 
 /**
- * Helper function for rendering a heading.
- *
- * @param heading - The description of the heading to render.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * Alert text used in {@link betaAlert}.
  */
-export function renderHeading(
-    heading: Heading,
-    config: Required<MarkdownDocumenterConfiguration>,
-): DocHeading {
-    return new DocHeading({
-        ...heading,
-        configuration: config.tsdocConfiguration,
-    });
-}
-
-/**
- * Renders a simple note box containing a standard warning about beta API usage considerations.
- *
- * @param config - See {@link MarkdownDocumenterConfiguration}.
- */
-export function renderBetaAlert(config: Required<MarkdownDocumenterConfiguration>): DocAlert {
-    const betaWarning: string =
+const betaWarning: string =
         "This API is provided as a preview for developers and may change" +
         " based on feedback that we receive. Do not use this API in a production environment.";
 
-    return new DocAlert(
-        { configuration: config.tsdocConfiguration, type: DocAlertType.Danger },
-        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            new DocPlainText({
-                configuration: config.tsdocConfiguration,
-                text: betaWarning,
-            }),
-        ]),
-    );
-}
+/**
+ * A simple alert containing a warning about using `@beta` APIs.
+ */
+export const betaAlert = new AlertNode([ParagraphNode.createFromPlainText(betaWarning)], DocAlertType.Danger);
 
 /**
  * Renders a section containing the API item's summary comment if it has one.
  */
-export function renderSummarySection(apiItem: ApiItem): DocSection | undefined {
+export function createSummarySpan(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): SpanNode | undefined {
     return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
-        ? apiItem.tsdocComment.summarySection
+        ? transformSection(apiItem.tsdocComment.summarySection) // TODO
         : undefined;
 }
 
@@ -492,10 +475,10 @@ export function renderSummarySection(apiItem: ApiItem): DocSection | undefined {
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
-export function renderRemarksSection(
+export function createRemarksSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection | undefined {
+): HierarchicalSectionNode | undefined {
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.remarksBlock !== undefined) {
         return new DocSection({ configuration: config.tsdocConfiguration }, [
             renderHeading(
@@ -522,10 +505,10 @@ export function renderRemarksSection(
  *
  * @returns The doc section if the API item had any `@throws` comments, otherwise `undefined`.
  */
-export function renderThrowsSection(
+export function createThrowsSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection | undefined {
+): HierarchicalSectionNode | undefined {
     const throwsBlocks = getThrowsBlocks(apiItem);
     if (throwsBlocks === undefined || throwsBlocks.length === 0) {
         return undefined;
@@ -554,10 +537,10 @@ export function renderThrowsSection(
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
-export function renderDeprecationNoticeSection(
+export function createDeprecationNoticeSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection | undefined {
+): HierarchicalSectionNode | undefined {
     const deprecatedBlock = getDeprecatedBlock(apiItem);
     if (deprecatedBlock === undefined) {
         return undefined;
@@ -782,9 +765,9 @@ export function renderReturnsSection(
  */
 export interface ChildSectionProperties {
     /**
-     * Heading title for the section being rendered.
+     * Heading for the section being rendered.
      */
-    headingTitle: string;
+    heading: Heading;
 
     /**
      * The API item kind of all child items.
@@ -808,92 +791,41 @@ export interface ChildSectionProperties {
  * (see {@link DocumentBoundaries}).
  * The assumption is that this is used to render child contents to the same document as the parent.
  *
- * @param childSections - The child sections to be rendered.
+ * @param childItems - The child sections to be rendered.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
- * @param renderChild - Callback to render a given child item.
+ * @param createChildContent - Callback to render a given child item.
  *
  * @returns The doc section if there were any child contents to render, otherwise `undefined`.
  */
 export function renderChildDetailsSection(
-    childSections: readonly ChildSectionProperties[],
+    childItems: readonly ChildSectionProperties[],
     config: Required<MarkdownDocumenterConfiguration>,
-    renderChild: (apiItem) => DocSection,
-): DocSection | undefined {
-    const childNodes: DocSection[] = [];
+    createChildContent: (apiItem) => DocumentationNode,
+): HierarchicalSectionNode[] | undefined {
+    const sections: HierarchicalSectionNode[] = [];
 
-    for (const childSection of childSections) {
+    for (const childItem of childItems) {
         // Only render contents for a section if the item kind is one that gets rendered to its parent's document
         // (i.e. it does not get rendered to its own document).
         // Also only render the section if it actually has contents to render (to avoid empty headings).
         if (
-            !doesItemKindRequireOwnDocument(childSection.itemKind, config.documentBoundaries) &&
-            childSection.items.length !== 0
+            !doesItemKindRequireOwnDocument(childItem.itemKind, config.documentBoundaries) &&
+            childItem.items.length !== 0
         ) {
-            const renderedChildSection = renderChildrenUnderHeading(
-                childSection.items,
-                childSection.headingTitle,
-                config,
-                renderChild,
-            );
-            if (renderedChildSection !== undefined) {
-                childNodes.push(renderedChildSection);
-            }
+            sections.push(wrapInSection(childItem.items.map(createChildContent), childItem.heading));
         }
     }
 
-    return childNodes.length === 0
+    return sections.length === 0
         ? undefined
-        : mergeSections(childNodes, config.tsdocConfiguration);
+        : sections;
 }
 
-/**
- * Renders a section containing a list of sub-sections for the provided list of child API items.
- *
- * @remarks Displayed as a heading with the provided title, followed by a series a sub-sections for each child item.
- *
- * @param childItems - The child API items to be displayed as sub-contents.
- * @param headingTitle - The title of the section-root heading.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
- * @param renderChild - Callback for rendering each child item as a sub-section.
- *
- * @returns The doc section if there were any child items provided, otherwise `undefined`.
- */
-export function renderChildrenUnderHeading(
-    childItems: readonly ApiItem[],
-    headingTitle: string,
-    config: Required<MarkdownDocumenterConfiguration>,
-    renderChild: (childItem: ApiItem) => DocSection,
-): DocSection | undefined {
-    if (childItems.length === 0) {
-        return undefined;
-    }
-
-    const childSections: DocSection[] = childItems.map((childItem) => renderChild(childItem));
-
-    return new DocSection({ configuration: config.tsdocConfiguration }, [
-        renderHeading(
-            {
-                title: headingTitle,
-            },
-            config,
-        ),
-        mergeSections(childSections, config.tsdocConfiguration),
+function wrapInSection(nodes: DocumentationNode[], heading: Heading): HierarchicalSectionNode {
+    // TODO: section format update (explicit heading)
+    return new HierarchicalSectionNode([
+        HeadingNode.createFromHeading(heading),
+        LineBreakNode.Singleton,
+        ...nodes
     ]);
-}
-
-/**
- * Renders a Link tag for the provided link.
- * @param link - The link to render.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
- */
-export function renderLink(
-    link: Link,
-    config: Required<MarkdownDocumenterConfiguration>,
-): DocLinkTag {
-    return new DocLinkTag({
-        configuration: config.tsdocConfiguration,
-        tagName: "@link",
-        linkText: link.text,
-        urlDestination: link.url,
-    });
 }

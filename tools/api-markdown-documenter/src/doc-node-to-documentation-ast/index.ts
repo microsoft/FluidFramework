@@ -86,7 +86,7 @@ export function transformParagraph(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocParagraph} to a {@link SpanNode}.
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SpanNode}.
  */
 export function transformSection(node: DocSection, options: DocNodeTransformOptions): SpanNode {
     const children = node.nodes.map((child) => transformDocNode(child, options));
