@@ -37,7 +37,7 @@ import {
     getModifiers,
     isDeprecated,
 } from "../../utilities";
-import { renderExcerptWithHyperlinks } from "./Helpers";
+import { createExcerptSpanWithHyperlinks } from "./Helpers";
 
 /**
  * Input properties for creating a table of API members
@@ -643,7 +643,7 @@ export function createTypeExcerptCell(
     typeExcerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
-    const excerptNodes = renderExcerptWithHyperlinks(typeExcerpt, config);
+    const excerptNodes = createExcerptSpanWithHyperlinks(typeExcerpt, config);
     if (excerptNodes === undefined) {
         return TableCellNode.Empty;
     }
