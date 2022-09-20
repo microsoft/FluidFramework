@@ -1,6 +1,7 @@
-import { DocumentNode, DocumentNodeType, DocumentationNode, PlainTextNode, ParagraphNode } from "../../documentation-domain";
+import { DocumentNode, DocumentNodeType, DocumentationNode, PlainTextNode, ParagraphNode, SpanNode } from "../../documentation-domain";
 import { ParagraphNodeToMarkdown } from "./ParagraphToMd";
 import { PlainTextToMarkdown } from "./PlainTextToMd";
+import { SpanNodeToMarkdown } from './SpanToMd';
 
 export type DocumentationNodeRenderFunction = (
     node: DocumentationNode,
@@ -20,7 +21,7 @@ export type NodeRenderers = {
     [DocumentNodeType.OrderedList]: DocumentationNodeRenderFunction;
     [DocumentNodeType.Paragraph]: (node: ParagraphNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.PlainText]: (node: PlainTextNode) => string;
-    [DocumentNodeType.Span]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.Span]:  (node: SpanNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.SymbolicLink]: DocumentationNodeRenderFunction;
     [DocumentNodeType.Table]: DocumentationNodeRenderFunction;
     [DocumentNodeType.TableCell] : DocumentationNodeRenderFunction;
@@ -43,7 +44,7 @@ class DefaultNodeRenderers {
     [DocumentNodeType.OrderedList] = noop;
     [DocumentNodeType.Paragraph] = ParagraphNodeToMarkdown;
     [DocumentNodeType.PlainText] = PlainTextToMarkdown;
-    [DocumentNodeType.Span] = noop;
+    [DocumentNodeType.Span] = SpanNodeToMarkdown;
     [DocumentNodeType.SymbolicLink] = noop;
     [DocumentNodeType.Table] = noop;
     [DocumentNodeType.TableCell] = noop;
@@ -61,9 +62,15 @@ export class DocumentationNodeRenderer {
                 return this.renderers[DocumentNodeType.Paragraph](node as unknown as ParagraphNode, this);
             case DocumentNodeType.PlainText:
                 return this.renderers[DocumentNodeType.PlainText](node as unknown as PlainTextNode);
+            case DocumentNodeType.Span:
+                    return this.renderers[DocumentNodeType.Span](node as unknown as SpanNode, this);
         }
         return 'TODO: UNKNOWN NODE ENCOUNTERED';
     }
+
+    public applyingBold: boolean = false;
+    public applyingItalics: boolean = false;
+    public applyingStrikethrough: boolean = false;
 }
 
 export function markdownFromDocumentNode(node: DocumentNode): string {
