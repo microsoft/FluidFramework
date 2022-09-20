@@ -31,9 +31,8 @@ import {
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
-//* Update work item link
 /**
- * @deprecated - This will be removed once https://github.com/microsoft/FluidFramework/issues/9127 is fixed.
+ * @deprecated - Not necessary if consumers add a new dataStore to the container by storing its handle.
  */
 export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
     fluidDataStoreChannel?: { bindToContext?(): void; };
