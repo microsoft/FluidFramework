@@ -132,6 +132,7 @@ The vast majority of these options have default values that have been crafted to
 -   Excessive blank lines in Signature sections
 -   Fix links to the same file (only need heading component, not file path)
     -   This will require plumbing down a context document item, so we can easily determine if the document to which the link is being generated is the same as the document being linked to.
+-   Config options for parsing TSDoc block comment contents as Markdown (and don't escape the contents)?
 
 ## Longer-term work
 
