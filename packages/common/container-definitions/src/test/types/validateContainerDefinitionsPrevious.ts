@@ -40,14 +40,26 @@ use_old_EnumDeclaration_AttachState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_BindState": {"forwardCompat": false}
+* "EnumDeclaration_BindState": {"forwardCompat": false}
 */
+declare function get_old_EnumDeclaration_BindState():
+    TypeOnly<old.BindState>;
+declare function use_current_EnumDeclaration_BindState(
+    use: TypeOnly<current.BindState>);
+use_current_EnumDeclaration_BindState(
+    get_old_EnumDeclaration_BindState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_BindState": {"backCompat": false}
+* "EnumDeclaration_BindState": {"backCompat": false}
 */
+declare function get_current_EnumDeclaration_BindState():
+    TypeOnly<current.BindState>;
+declare function use_old_EnumDeclaration_BindState(
+    use: TypeOnly<old.BindState>);
+use_old_EnumDeclaration_BindState(
+    get_current_EnumDeclaration_BindState());
 
 /*
 * Validate forward compat by using old type in place of current type

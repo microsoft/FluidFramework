@@ -562,12 +562,10 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
 
-            // Create and reference another dataStore
-            const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
-            await provider.ensureSynchronized();
-
+            // Create another dataStore
+            const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+            peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");
             const snapshotTree = container.serialize();
@@ -609,12 +607,10 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
 
-            // Create and reference another dataStore
-            const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
-            await provider.ensureSynchronized();
-
+            // Create another dataStore
+            const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+            peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");
             const snapshotTree = container.serialize();

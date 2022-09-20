@@ -52,6 +52,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     bind(handle: IFluidHandle): void;
     bindChannel(channel: IChannel): void;
+    bindToContext(): void;
     // (undocumented)
     get channelsRoutingContext(): this;
     // (undocumented)

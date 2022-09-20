@@ -5,6 +5,7 @@
 
 import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
 import {
@@ -577,18 +578,17 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const newMapId = "newMap";
         let id;
         const pendingOps = await getPendingOps(provider, false, async (container, d, m) => {
-            const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
-            const runtime = defaultDataStore.context.containerRuntime;
+            const runtime = (container as any).context.runtime as IContainerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
-            const dataStore: ITestFluidObject = await requestFluidObject<ITestFluidObject>(router, "/");
+            const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
             id = dataStore.context.id;
 
             const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            defaultDataStore.root.set("someDataStore", dataStore.handle);
+            dataStore.channel.bindToContext();
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -605,8 +605,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it("doesn't resend successful attach op", async function() {
         const newMapId = "newMap";
         const pendingOps = await getPendingOps(provider, true, async (container, d, m) => {
-            const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
-            const runtime = defaultDataStore.context.containerRuntime;
+            const runtime = (container as any).context.runtime as IContainerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
             const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
@@ -615,7 +614,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            defaultDataStore.root.set("someDataStore", dataStore.handle);
+            dataStore.channel.bindToContext();
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -822,8 +821,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         let id;
         // stash attach op
         const pendingOps = await getPendingOps(provider, false, async (container, d, m) => {
-            const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
-            const runtime = defaultDataStore.context.containerRuntime;
+            const runtime = (container as any).context.runtime as IContainerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
             const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
@@ -833,7 +831,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            defaultDataStore.root.set("someDataStore", dataStore.handle);
+            dataStore.channel.bindToContext();
             (channel as SharedMap).set(testKey, testValue);
         });
 

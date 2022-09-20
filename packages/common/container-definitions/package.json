@@ -76,10 +76,6 @@
       "TypeAliasDeclaration_ConnectionState.Connecting": {
         "forwardCompat": false,
         "backCompat": false
-      },
-      "RemovedEnumDeclaration_BindState": {
-        "forwardCompat": false,
-        "backCompat": false
       }
     }
   }

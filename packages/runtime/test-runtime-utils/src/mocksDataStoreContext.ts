@@ -101,7 +101,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
         throw new Error("Method not implemented.");
     }
 
-    public makeLocallyVisible(): void {
+    public bindToContext(): void {
         throw new Error("Method not implemented.");
     }
 

@@ -278,6 +278,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
+    bindToContext(): void;
+    // (undocumented)
     clientDetails: IClientDetails;
     // (undocumented)
     clientId: string | undefined;
@@ -313,8 +315,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // (undocumented)
-    makeLocallyVisible(): void;
     // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
@@ -358,6 +358,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     bind(handle: IFluidHandle): void;
     // (undocumented)
     bindChannel(channel: IChannel): void;
+    // (undocumented)
+    bindToContext(): void;
     // (undocumented)
     get channelsRoutingContext(): IFluidHandleContext;
     // (undocumented)
@@ -407,8 +409,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     set local(local: boolean);
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // (undocumented)
-    makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
     // (undocumented)
