@@ -8,7 +8,7 @@ import { driver, r11sEndpointName, tenantIndex } from "./compatOptions";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ITestObjectProviderOptions } from "./describeCompat";
 import { pkgVersion } from "./packageVersion";
-import { ensurePackageInstalled, IInstalledVersion } from "./testApi";
+import { ensurePackageInstalled, IVersionInstall } from "./testApi";
 
 export interface IRequiredVersions {
     versionsDelta?: number;
@@ -16,7 +16,7 @@ export interface IRequiredVersions {
 }
 
 const installRequiredVersions = async (config: IRequiredVersions) => {
-    const installPromises: Promise<IInstalledVersion | undefined>[] = [];
+    const installPromises: Promise<IVersionInstall | undefined>[] = [];
     if (config.specificVersions !== undefined) {
         installPromises.push(
             ...config.specificVersions.map(async (version) => ensurePackageInstalled(version, 0, /* force */ false)));
