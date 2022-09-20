@@ -72,6 +72,7 @@ function createTestSuiteWithInstalledVersion(
 
             Object.defineProperty(this, "__fluidTestProvider", { get: () => defaultProvider });
         });
+
         tests.bind(this)((options?: ITestObjectProviderOptions) => {
             resetAfterEach = options?.resetAfterEach ?? true;
             if (options?.syncSummarizer === true) {
