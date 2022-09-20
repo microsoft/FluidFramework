@@ -533,10 +533,13 @@ export class GarbageCollector implements IGarbageCollector {
 
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
         if (this.sessionExpiryTimeoutMs !== undefined && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
-            // If Test Override config is set, override Session Expiry timeout.
+            // If Test Override config is set, override Session Expiry timeout
+            // (but don't update the class member, which is used to compute Sweep Timeout and is persisted to the file)
             const overrideSessionExpiryTimeoutMs =
                 this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
             const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
+            assert(timeoutMs <= this.sessionExpiryTimeoutMs,
+                "Cannot extend sessionExpiry via TestOverride setting");
 
             this.sessionExpiryTimer = new Timer(
                 timeoutMs,
@@ -544,10 +547,14 @@ export class GarbageCollector implements IGarbageCollector {
             );
             this.sessionExpiryTimer.start();
 
+            const snapshotCacheDisabled =
+                this.mc.config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache") === true;
             // TEMPORARY: Hardcode a default of 2 days which is the value used in the ODSP driver.
             // This unblocks the Sweep Log (see logSweepEvents function).
             // This will be removed before sweep is fully implemented.
-            const snapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? 2 * 24 * 60 * 60 * 1000;
+            const snapshotCacheExpiryMs = snapshotCacheDisabled
+                ? 0
+                : createParams.snapshotCacheExpiryMs ?? 2 * 24 * 60 * 60 * 1000;
 
             /**
              * Sweep timeout is the time after which unreferenced content can be swept.
@@ -556,7 +563,15 @@ export class GarbageCollector implements IGarbageCollector {
              * but make it one day to be safe.
              */
             if (snapshotCacheExpiryMs !== undefined) {
-                this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs;
+                const overrideSweepTimeoutMs =
+                    this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SweepTimeoutMs");
+
+                this.sweepTimeoutMs =
+                    overrideSweepTimeoutMs
+                    ?? this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs;
+
+                assert(this.sweepTimeoutMs > this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs,
+                    "SweepTimeout must exceed sessionExpiry + snapshotCacheExpiry even if using TestOverride");
             }
         }
 
