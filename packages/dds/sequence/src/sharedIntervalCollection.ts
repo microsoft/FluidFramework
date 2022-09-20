@@ -108,6 +108,7 @@ export class SharedIntervalCollection
 
     public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
     private readonly intervalCollections: DefaultMap<IntervalCollection<Interval>>;
+
     /**
      * Constructs a new shared SharedIntervalCollection. If the object is non-local an id and service interfaces will
      * be provided

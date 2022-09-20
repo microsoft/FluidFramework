@@ -52,10 +52,8 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 
 import {
     IntervalCollection,
-    OldSequenceIntervalCollectionValueType,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
-    TestIntervalCollection,
 } from "./intervalCollection";
 import { DefaultMap } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
@@ -164,16 +162,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
     // cache out going ops created when partial loading
-    protected readonly loadedDeferredOutgoingOps:
+    private readonly loadedDeferredOutgoingOps:
         [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
     // cache incoming ops that arrive when partial loading
-    protected deferIncomingOps = true;
-    protected readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
+    private deferIncomingOps = true;
+    private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
-    protected messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
+    private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
     constructor(
-        protected readonly dataStoreRuntime: IFluidDataStoreRuntime,
+        private readonly dataStoreRuntime: IFluidDataStoreRuntime,
         public id: string,
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
@@ -716,198 +714,206 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 }
 
-export class TestSharedSegmentSequence<T extends ISegment>
- extends SharedSegmentSequence<ISegment> {
-    private readonly testIntervalCollections: DefaultMap<TestIntervalCollection<SequenceInterval>>;
-    protected readonly client: Client;
+// interface SharedStringInternals extends SharedSegmentSequence<T extends ISegment> {
+//     readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>
+// }
 
-    get loaded(): Promise<void> {
-        return this.loadedDeferred.promise;
-    }
+// export class TestSharedSegmentSequence<T extends ISegment>
+//  extends SharedSegmentSequence<ISegment> {
+//     // private readonly testIntervalCollections: DefaultMap<TestIntervalCollection<SequenceInterval>>;
+//     protected readonly client: Client;
 
-    /**
-     * Returns the length of the current sequence for the client
-     */
-     public getLength() {
-        return this.client.getLength();
-    }
+//     get loaded(): Promise<void> {
+//         return this.loadedDeferred.promise;
+//     }
 
-    public localReferencePositionToPosition(lref: ReferencePosition): number {
-        return this.client.localReferencePositionToPosition(lref);
-    }
+//     public getContainingSegment(pos: number) {
+//         return this.client.getContainingSegment<T>(pos);
+//     }
 
-    protected initializeLocalCore() {
-        // super.initializeLocalCore();
-        this.testLoadFinished();
-    }
+//     /**
+//      * Returns the length of the current sequence for the client
+//      */
+//      public getLength() {
+//         return this.client.getLength();
+//     }
 
-    public getPropertiesAtPosition(pos: number) {
-        return this.client.getPropertiesAtPosition(pos);
-    }
+//     public localReferencePositionToPosition(lref: ReferencePosition): number {
+//         return this.client.localReferencePositionToPosition(lref);
+//     }
 
-    constructor(
-        dataStoreRuntime: IFluidDataStoreRuntime,
-        id: string,
-        attributes: IChannelAttributes,
-        segmentFromSpec: (spec: IJSONSegment) => ISegment,
-    ) {
-        super(dataStoreRuntime, id, attributes, segmentFromSpec);
+//     protected initializeLocalCore() {
+//         // super.initializeLocalCore();
+//         this.testLoadFinished();
+//     }
 
-        this.testIntervalCollections = new DefaultMap(
-            this.serializer,
-            this.handle,
-            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            new OldSequenceIntervalCollectionValueType(),
-        );
-    }
+//     public getPropertiesAtPosition(pos: number) {
+//         return this.client.getPropertiesAtPosition(pos);
+//     }
 
-    public getIntervalCollection(label: string): TestIntervalCollection<SequenceInterval> {
-        return this.testIntervalCollections.get(label);
-    }
+//     constructor(
+//         dataStoreRuntime: IFluidDataStoreRuntime,
+//         id: string,
+//         attributes: IChannelAttributes,
+//         segmentFromSpec: (spec: IJSONSegment) => ISegment,
+//     ) {
+//         super(dataStoreRuntime, id, attributes, segmentFromSpec);
 
-    private testProcessMergeTreeMsg(rawMessage: ISequencedDocumentMessage, local?: boolean) {
-        const message = parseHandles(rawMessage, this.serializer);
+//         this.testIntervalCollections = new DefaultMap(
+//             this.serializer,
+//             this.handle,
+//             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+//             new OldSequenceIntervalCollectionValueType(),
+//         );
+//     }
 
-        const ops: IMergeTreeDeltaOp[] = [];
-        function transformOps(event: SequenceDeltaEvent) {
-            ops.push(...TestSharedSegmentSequence.createOpsFromDelta(event));
-        }
-        const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
-        let stashMessage: Readonly<ISequencedDocumentMessage> = message;
-        if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
-            if (needsTransformation) {
-                this.on("sequenceDelta", transformOps);
-            }
-        }
+//     public getIntervalCollection(label: string): TestIntervalCollection<SequenceInterval> {
+//         return this.testIntervalCollections.get(label);
+//     }
 
-        this.client.applyMsg(message, local);
+//     private testProcessMergeTreeMsg(rawMessage: ISequencedDocumentMessage, local?: boolean) {
+//         const message = parseHandles(rawMessage, this.serializer);
 
-        if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
-            if (needsTransformation) {
-                this.removeListener("sequenceDelta", transformOps);
-                // shallow clone the message as we only overwrite top level properties,
-                // like referenceSequenceNumber and content only
-                stashMessage = {
-                    ...message,
-                    referenceSequenceNumber: stashMessage.sequenceNumber - 1,
-                    contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
-                };
-            }
+//         const ops: IMergeTreeDeltaOp[] = [];
+//         function transformOps(event: SequenceDeltaEvent) {
+//             ops.push(...TestSharedSegmentSequence.createOpsFromDelta(event));
+//         }
+//         const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
+//         let stashMessage: Readonly<ISequencedDocumentMessage> = message;
+//         if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+//             if (needsTransformation) {
+//                 this.on("sequenceDelta", transformOps);
+//             }
+//         }
 
-            this.messagesSinceMSNChange.push(stashMessage);
+//         this.client.applyMsg(message, local);
 
-            // Do GC every once in a while...
-            if (this.messagesSinceMSNChange.length > 20
-                && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
-                this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
-            }
-        }
-    }
+//         if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+//             if (needsTransformation) {
+//                 this.removeListener("sequenceDelta", transformOps);
+//                 // shallow clone the message as we only overwrite top level properties,
+//                 // like referenceSequenceNumber and content only
+//                 stashMessage = {
+//                     ...message,
+//                     referenceSequenceNumber: stashMessage.sequenceNumber - 1,
+//                     contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
+//                 };
+//             }
 
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-     */
-    protected async loadCore(storage: IChannelStorageService) {
-        if (await storage.contains(snapshotFileName)) {
-            const blob = await storage.readBlob(snapshotFileName);
-            const header = bufferToString(blob, "utf8");
-            this.testIntervalCollections.populate(header);
-        }
+//             this.messagesSinceMSNChange.push(stashMessage);
 
-        try {
-            // this will load the header, and return a promise
-            // that will resolve when the body is loaded
-            // and the catchup ops are available.
-            const { catchupOpsP } = await this.client.load(
-                this.runtime,
-                new ObjectStoragePartition(storage, contentPath),
-                this.serializer);
+//             // Do GC every once in a while...
+//             if (this.messagesSinceMSNChange.length > 20
+//                 && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
+//                 this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
+//             }
+//         }
+//     }
 
-            // setup a promise to process the
-            // catch up ops, and finishing the loading process
-            const loadCatchUpOps = catchupOpsP
-                .then((msgs) => {
-                    msgs.forEach((m) => {
-                        const collabWindow = this.client.getCollabWindow();
-                        if (m.minimumSequenceNumber < collabWindow.minSeq
-                            || m.referenceSequenceNumber < collabWindow.minSeq
-                            || m.sequenceNumber <= collabWindow.minSeq
-                            || m.sequenceNumber <= collabWindow.currentSeq) {
-                            throw new Error(`Invalid catchup operations in snapshot: ${JSON.stringify({
-                                op: {
-                                    seq: m.sequenceNumber,
-                                    minSeq: m.minimumSequenceNumber,
-                                    refSeq: m.referenceSequenceNumber,
-                                },
-                                collabWindow: {
-                                    seq: collabWindow.currentSeq,
-                                    minSeq: collabWindow.minSeq,
-                                },
-                            })}`);
-                        }
-                        this.testProcessMergeTreeMsg(m);
-                    });
-                    this.testLoadFinished();
-                })
-                .catch((error) => {
-                    this.testLoadFinished(error);
-                });
-            if (this.dataStoreRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
-                // if we not doing partial load, await the catch up ops,
-                // and the finalization of the load
-                await loadCatchUpOps;
-            }
-        } catch (error) {
-            this.testLoadFinished(error);
-        }
-    }
+//     /**
+//      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+//      */
+//     protected async loadCore(storage: IChannelStorageService) {
+//         if (await storage.contains(snapshotFileName)) {
+//             const blob = await storage.readBlob(snapshotFileName);
+//             const header = bufferToString(blob, "utf8");
+//             this.testIntervalCollections.populate(header);
+//         }
 
-    private testLoadFinished(error?: any) {
-        if (!this.loadedDeferred.isCompleted) {
-            // Initialize the interval collections
-            this.testInitializeIntervalCollections();
-            if (error) {
-                this.loadedDeferred.reject(error);
-                throw error;
-            } else {
-                // it is important this series remains synchronous
-                // first we stop deferring incoming ops, and apply then all
-                this.deferIncomingOps = false;
-                for (const message of this.loadedDeferredIncomingOps) {
-                    this.processCore(message, false, undefined);
-                }
-                this.loadedDeferredIncomingOps.length = 0;
+//         try {
+//             // this will load the header, and return a promise
+//             // that will resolve when the body is loaded
+//             // and the catchup ops are available.
+//             const { catchupOpsP } = await this.client.load(
+//                 this.runtime,
+//                 new ObjectStoragePartition(storage, contentPath),
+//                 this.serializer);
 
-                // then resolve the loaded promise
-                // and resubmit all the outstanding ops, as the snapshot
-                // is fully loaded, and all outstanding ops are applied
-                this.loadedDeferred.resolve();
+//             // setup a promise to process the
+//             // catch up ops, and finishing the loading process
+//             const loadCatchUpOps = catchupOpsP
+//                 .then((msgs) => {
+//                     msgs.forEach((m) => {
+//                         const collabWindow = this.client.getCollabWindow();
+//                         if (m.minimumSequenceNumber < collabWindow.minSeq
+//                             || m.referenceSequenceNumber < collabWindow.minSeq
+//                             || m.sequenceNumber <= collabWindow.minSeq
+//                             || m.sequenceNumber <= collabWindow.currentSeq) {
+//                             throw new Error(`Invalid catchup operations in snapshot: ${JSON.stringify({
+//                                 op: {
+//                                     seq: m.sequenceNumber,
+//                                     minSeq: m.minimumSequenceNumber,
+//                                     refSeq: m.referenceSequenceNumber,
+//                                 },
+//                                 collabWindow: {
+//                                     seq: collabWindow.currentSeq,
+//                                     minSeq: collabWindow.minSeq,
+//                                 },
+//                             })}`);
+//                         }
+//                         this.testProcessMergeTreeMsg(m);
+//                     });
+//                     this.testLoadFinished();
+//                 })
+//                 .catch((error) => {
+//                     this.testLoadFinished(error);
+//                 });
+//             if (this.dataStoreRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
+//                 // if we not doing partial load, await the catch up ops,
+//                 // and the finalization of the load
+//                 await loadCatchUpOps;
+//             }
+//         } catch (error) {
+//             this.testLoadFinished(error);
+//         }
+//     }
 
-                for (const [messageContent, opMetadata] of this.loadedDeferredOutgoingOps) {
-                    this.reSubmitCore(messageContent, opMetadata);
-                }
-                this.loadedDeferredOutgoingOps.length = 0;
-            }
-        }
-    }
+//     private testLoadFinished(error?: any) {
+//         if (!this.loadedDeferred.isCompleted) {
+//             // Initialize the interval collections
+//             this.testInitializeIntervalCollections();
+//             if (error) {
+//                 this.loadedDeferred.reject(error);
+//                 throw error;
+//             } else {
+//                 // it is important this series remains synchronous
+//                 // first we stop deferring incoming ops, and apply then all
+//                 this.deferIncomingOps = false;
+//                 for (const message of this.loadedDeferredIncomingOps) {
+//                     this.processCore(message, false, undefined);
+//                 }
+//                 this.loadedDeferredIncomingOps.length = 0;
 
-    private testInitializeIntervalCollections() {
-        // Listen and initialize new SharedIntervalCollections
-        this.testIntervalCollections.eventEmitter.on(
-            "create",
-            ({ key, previousValue }: IValueChanged, local: boolean) => {
-            const intervalCollection = this.testIntervalCollections.get(key);
-            if (!intervalCollection.attached) {
-                intervalCollection.attachGraph(this.client, key);
-            }
-            assert(previousValue === undefined, 0x2c1 /* "Creating an interval collection that already exists?" */);
-            this.emit("createIntervalCollection", key, local, this);
-        });
+//                 // then resolve the loaded promise
+//                 // and resubmit all the outstanding ops, as the snapshot
+//                 // is fully loaded, and all outstanding ops are applied
+//                 this.loadedDeferred.resolve();
 
-        // Initialize existing SharedIntervalCollections
-        for (const key of this.testIntervalCollections.keys()) {
-            const intervalCollection = this.testIntervalCollections.get(key);
-            intervalCollection.attachGraph(this.client, key);
-        }
-    }
- }
+//                 for (const [messageContent, opMetadata] of this.loadedDeferredOutgoingOps) {
+//                     this.reSubmitCore(messageContent, opMetadata);
+//                 }
+//                 this.loadedDeferredOutgoingOps.length = 0;
+//             }
+//         }
+//     }
+
+//     private testInitializeIntervalCollections() {
+//         // Listen and initialize new SharedIntervalCollections
+//         this.testIntervalCollections.eventEmitter.on(
+//             "create",
+//             ({ key, previousValue }: IValueChanged, local: boolean) => {
+//             const intervalCollection = this.testIntervalCollections.get(key);
+//             if (!intervalCollection.attached) {
+//                 intervalCollection.attachGraph(this.client, key);
+//             }
+//             assert(previousValue === undefined, 0x2c1 /* "Creating an interval collection that already exists?" */);
+//             this.emit("createIntervalCollection", key, local, this);
+//         });
+
+//         // Initialize existing SharedIntervalCollections
+//         for (const key of this.testIntervalCollections.keys()) {
+//             const intervalCollection = this.testIntervalCollections.get(key);
+//             intervalCollection.attachGraph(this.client, key);
+//         }
+//     }
+//  }

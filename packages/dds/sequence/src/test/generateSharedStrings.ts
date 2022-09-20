@@ -116,7 +116,10 @@ export function* generateStrings(): Generator<[string, SharedString]> {
     }
 }
 
-export function* generateTestStrings(): Generator<[string, TestSharedString]> {
+// Adding a flag to determine if we should run a test on the document in snapshotVersion.spec.ts.
+// We only want to test the wiithIntervals.json documents, since these are
+// the only ones with format changes.
+export function* generateTestStrings(): Generator<[string, TestSharedString, boolean]> {
     for (const [version, options] of supportedVersions) {
         const documentId = "fakeId";
         const dataStoreRuntime: mocks.MockFluidDataStoreRuntime = new mocks.MockFluidDataStoreRuntime();
@@ -137,7 +140,7 @@ export function* generateTestStrings(): Generator<[string, TestSharedString]> {
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        yield [`${version}/headerOnly`, sharedString];
+        yield [`${version}/headerOnly`, sharedString, false];
 
         sharedString = createNewSharedString();
         // Big enough that snapshot will have body
@@ -145,7 +148,7 @@ export function* generateTestStrings(): Generator<[string, TestSharedString]> {
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        yield [`${version}/headerAndBody`, sharedString];
+        yield [`${version}/headerAndBody`, sharedString, false];
 
         sharedString = createNewSharedString();
         // Very big sharedString
@@ -153,7 +156,7 @@ export function* generateTestStrings(): Generator<[string, TestSharedString]> {
             sharedString.insertText(0, `${insertText}-${i}`);
         }
 
-        yield [`${version}/largeBody`, sharedString];
+        yield [`${version}/largeBody`, sharedString, false];
 
         sharedString = createNewSharedString();
         // SharedString with markers
@@ -169,7 +172,7 @@ export function* generateTestStrings(): Generator<[string, TestSharedString]> {
             });
         }
 
-        yield [`${version}/withMarkers`, sharedString];
+        yield [`${version}/withMarkers`, sharedString, false];
 
         sharedString = createNewSharedString();
         // SharedString with annotations
@@ -180,7 +183,7 @@ export function* generateTestStrings(): Generator<[string, TestSharedString]> {
             sharedString.annotateRange(i, i + 10, { bold: true });
         }
 
-        yield [`${version}/withAnnotations`, sharedString];
+        yield [`${version}/withAnnotations`, sharedString, false];
 
         sharedString = createNewSharedString();
         // Very big sharedString
@@ -188,7 +191,7 @@ export function* generateTestStrings(): Generator<[string, TestSharedString]> {
             sharedString.insertText(0, `${insertText}-${i}`);
         }
 
-        yield [`${version}/largeBody`, sharedString];
+        yield [`${version}/largeBody`, sharedString, false];
 
         sharedString = createNewSharedString();
         // SharedString with intervals
@@ -205,6 +208,6 @@ export function* generateTestStrings(): Generator<[string, TestSharedString]> {
             collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
         }
 
-        yield [`${version}/withIntervals`, sharedString];
+        yield [`${version}/withIntervals`, sharedString, true];
     }
 }
