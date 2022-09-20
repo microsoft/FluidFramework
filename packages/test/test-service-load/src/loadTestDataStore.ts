@@ -423,8 +423,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     protected async hasInitialized(): Promise<void> {
-        const gcDataStore = await this.root.get<IFluidHandle<DataObjectWithCounter>>(gcDataStore2Key)?.get();
-        gcDataStore?.start();
     }
 
     public async detached(config: Omit<IRunConfig, "runId">, logger) {
@@ -439,6 +437,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     public async run(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
+        const gcDataStore = await this.root.get<IFluidHandle<DataObjectWithCounter>>(gcDataStore2Key)?.get();
+        return gcDataStore?.run(config) ?? true;
+    }
+
+    public async run_old(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
             config, reset, this.root, this.runtime, this.context.containerRuntime, logger);
 

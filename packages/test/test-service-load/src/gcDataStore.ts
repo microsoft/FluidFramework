@@ -7,6 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, delay } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
+import { IRunConfig } from "./loadTestDataStore";
 
 /**
  * DataObjectWithCounter increments a SharedCounter as a way of sending ops.
@@ -17,7 +18,6 @@ const counterKey = "counter";
 export class DataObjectWithCounter extends DataObject {
     private _counter?: SharedCounter;
     protected isRunning: boolean = false;
-    protected readonly delayPerOpMs = 100;
     public static get type(): string {
         return "DataObjectWithCounter";
     }
@@ -41,20 +41,24 @@ export class DataObjectWithCounter extends DataObject {
         this.isRunning = false;
     }
 
-    public start() {
-        this.isRunning = true;
-        this.run().catch((error) => { console.log(error); });
-    }
+    // public start() {
+    //     this.run().catch((error) => { console.log(error); });
+    // }
 
-    protected async run() {
-        assert(this.isRunning === true, "Should be running to send ops");
+    public async run(config: IRunConfig) {
+        this.isRunning = true;
+        const delayPerOpMs = 60 * 1000 / config.testConfig.opRatePerMin;
         while (this.isRunning && !this.disposed) {
             this.counter.increment(1);
-            if (this.counter.value % 10 === 1) {
+            if (this.counter.value % 3 === 1) {
                 console.log(`########## GC DATA STORE [${this.runtime.clientId}]: ${this.counter.value}`);
             }
-            await delay(this.delayPerOpMs);
+            if (this.counter.value >= config.testConfig.totalSendCount) {
+                break;
+            }
+            await delay(delayPerOpMs);
         }
+        return true;
     }
 }
 
