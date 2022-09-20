@@ -215,7 +215,7 @@ export class GitRepo {
 
     /**
      * @param source - Source branch name
-     * @param target: Target branch name
+     * @param target - Target branch name
      * @return The last merge commit id between source and target branch
      */
     public async mergeBase(source: string, target: string) {
@@ -232,7 +232,7 @@ export class GitRepo {
 
     /**
      * @param commitId - Last merged commit id between two branches
-     * @param target: Target branch name
+     * @param target - Target branch name
      * @return The list of unmerged commit ids between passed commit id and branch
      */
     public async revList(commitId: string, branchName: string) {

@@ -1,14 +1,14 @@
 import { expect, test } from "@oclif/test";
 
-describe("merge/branch", () => {
+describe("merge/branches", () => {
     test.stdout()
-        .command(["merge/branch"])
+        .command(["merge/branches"])
         .it("runs hello", (ctx) => {
             expect(ctx.stdout).to.contain("hello world");
         });
 
     test.stdout()
-        .command(["merge/branch", "--name", "jeff"])
+        .command(["merge/branches", "--name", "jeff"])
         .it("runs hello --name jeff", (ctx) => {
             expect(ctx.stdout).to.contain("hello jeff");
         });

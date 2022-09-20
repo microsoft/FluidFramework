@@ -111,7 +111,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.6000 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.4.7000 win32-x64 node-v14.18.1
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -129,7 +129,7 @@ USAGE
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
-* [`flub merge branch`](#flub-merge-branch)
+* [`flub merge branches`](#flub-merge-branches)
 * [`flub release`](#flub-release)
 * [`flub release report`](#flub-release-report)
 * [`flub run bundleStats`](#flub-run-bundlestats)
@@ -360,15 +360,15 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/info.ts)_
 
-## `flub merge branch`
+## `flub merge branches`
 
 Sync branches depending on the batch size passed
 
 ```
 USAGE
-  $ flub merge branch -a <value> -s <value> -t <value> -b <value> [-p <value>] [-v]
+  $ flub merge branches -a <value> -s <value> -t <value> -b <value> [-p <value>] [-v]
 
 FLAGS
   -a, --auth=<value>                (required) GitHub authentication token
@@ -380,9 +380,6 @@ FLAGS
 
 DESCRIPTION
   Sync branches depending on the batch size passed
-
-EXAMPLES
-  $ flub merge branch
 ```
 
 ## `flub release`
@@ -423,7 +420,7 @@ DESCRIPTION
   released.
 ```
 
-_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/release.ts)_
+_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/release.ts)_
 
 ## `flub release report`
 
@@ -483,7 +480,8 @@ USAGE
 
 FLAGS
   -v, --verbose      Verbose logging.
-  --dirname=<value>  [default: /home/tylerbu/code/FluidFramework/build-tools/packages/build-cli/dist/commands/run]
+  --dirname=<value>  [default:
+                     C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\dist\commands\run]
                      Directory
 
 DESCRIPTION
@@ -534,7 +532,7 @@ EXAMPLES
     $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/version.ts)_
 
 ## `flub version latest`
 
