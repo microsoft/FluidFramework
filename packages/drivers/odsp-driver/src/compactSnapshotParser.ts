@@ -10,10 +10,11 @@ import { ReadBuffer } from "./ReadBufferUtils";
 import { ISnapshotTreeEx } from "./contracts";
 import {
     assertBlobCoreInstance,
+    getStringInstance,
     assertBoolInstance,
     assertNodeCoreInstance,
     assertNumberInstance,
-    getAndValidateNodeProps,
+    getNodeProps,
     NodeCore,
     NodeTypes,
     TreeBuilder,
@@ -36,10 +37,10 @@ function readBlobSection(node: NodeTypes) {
     const blobs: Map<string, ArrayBuffer> = new Map();
     for (let count = 0; count < node.length; ++count) {
         const blob = node.getNode(count);
-        const records = getAndValidateNodeProps(blob, ["id", "data"]);
+        const records = getNodeProps(blob);
         assertBlobCoreInstance(records.data, "data should be of BlobCore type");
-        assertBlobCoreInstance(records.id, "blob id should be of BlobCore type");
-        blobs.set(records.id.toString(), records.data.arrayBuffer);
+        const id = getStringInstance(records.id, "blob id should be of BlobCore type");
+        blobs.set(id, records.data.arrayBuffer);
     }
     return blobs;
 }
@@ -51,7 +52,7 @@ function readBlobSection(node: NodeTypes) {
 function readOpsSection(node: NodeTypes) {
     assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
     const ops: ISequencedDocumentMessage[] = [];
-    const records = getAndValidateNodeProps(node, ["firstSequenceNumber", "deltas"]);
+    const records = getNodeProps(node);
     assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
     assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
     for (let i = 0; i < records.deltas.length; ++i) {
@@ -74,13 +75,11 @@ function readTreeSection(node: NodeCore) {
     };
     for (let count = 0; count < node.length; count++) {
         const treeNode = node.getNode(count);
-        const records = getAndValidateNodeProps(treeNode,
-            ["name", "value", "children", "unreferenced"], false);
-        assertBlobCoreInstance(records.name, "Path should be of BlobCore");
-        const path = records.name.toString();
+        const records = getNodeProps(treeNode);
+        const path = getStringInstance(records.name, "Path should be of BlobCore");
         if (records.value !== undefined) {
-            assertBlobCoreInstance(records.value, "Blob value should be BlobCore");
-            snapshotTree.blobs[path] = records.value.toString();
+            const value = getStringInstance(records.value, "Blob value should be BlobCore");
+            snapshotTree.blobs[path] = value;
         } else if (records.children !== undefined) {
             assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
             snapshotTree.trees[path] = readTreeSection(records.children);
@@ -103,14 +102,12 @@ function readTreeSection(node: NodeCore) {
  */
 function readSnapshotSection(node: NodeTypes): ISnapshotSection {
     assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
-    const records = getAndValidateNodeProps(node,
-        ["id", "sequenceNumber", "treeNodes"]);
+    const records = getNodeProps(node);
 
     assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
     assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
-    assertBlobCoreInstance(records.id, "snapshotId should be BlobCore");
     const snapshotTree: ISnapshotTree = readTreeSection(records.treeNodes);
-    snapshotTree.id = records.id.toString();
+    snapshotTree.id = getStringInstance(records.id, "snapshotId should be BlobCore");
     const sequenceNumber = records.sequenceNumber.valueOf();
     return {
         sequenceNumber,
@@ -128,20 +125,19 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     assert(builder.length === 1, 0x219 /* "1 root should be there" */);
     const root = builder.getNode(0);
 
-    const records = getAndValidateNodeProps(root,
-        ["mrv", "cv", "lsn", "snapshot", "blobs", "deltas"], false);
+    const records = getNodeProps(root);
 
-    assertBlobCoreInstance(records.mrv, "minReadVersion should be of BlobCore type");
-    assertBlobCoreInstance(records.cv, "createVersion should be of BlobCore type");
+    const mrv = getStringInstance(records.mrv, "minReadVersion should be of BlobCore type");
+    const cv = getStringInstance(records.cv, "createVersion should be of BlobCore type");
     if (records.lsn !== undefined) {
         assertNumberInstance(records.lsn, "lsn should be a number");
     }
 
-    assert(parseFloat(snapshotMinReadVersion) >= parseFloat(records.mrv.toString()),
+    assert(parseFloat(snapshotMinReadVersion) >= parseFloat(mrv),
         0x20f /* "Driver min read version should >= to server minReadVersion" */);
-    assert(parseFloat(records.cv.toString()) >= parseFloat(snapshotMinReadVersion),
+    assert(parseFloat(cv) >= parseFloat(snapshotMinReadVersion),
         0x210 /* "Snapshot should be created with minReadVersion or above" */);
-    assert(currentReadVersion === records.cv.toString(),
+    assert(currentReadVersion === cv,
         0x2c2 /* "Create Version should be equal to currentReadVersion" */);
 
     return {
