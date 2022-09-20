@@ -49,7 +49,7 @@ This field has been deprecated and will be removed in a future breaking change. 
 
 ### Add fluidInvalidSchema errorType to DriverErrorType enum
 Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
-was mistook as a fluid file, and is unable to be opened. The innerMostErrorCode will also be "fluidInvalidSchema". For consumers, this needs to be handled as a separate error type, or have a separate case in order to not throw the error.
+was mistook as a Fluid file, and is unable to be opened. The innerMostErrorCode will also be "fluidInvalidSchema". For consumers, this needs to be handled as a separate error type, or have a separate case in order to not throw the error.
 
 # 2.0.0
 
