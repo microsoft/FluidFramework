@@ -19,6 +19,7 @@
     "build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
     "build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:docs": "api-extractor run --local",
+    "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
     "ci:build:docs": "api-extractor run",
