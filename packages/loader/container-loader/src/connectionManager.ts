@@ -59,6 +59,7 @@ import {
     IConnectionManagerFactoryArgs,
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
+import { SignalType } from "./protocol";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -282,9 +283,12 @@ export class ConnectionManager implements IConnectionManager {
         return {
             claims: connection.claims,
             clientId: connection.clientId,
+            existing: connection.existing,
             checkpointSequenceNumber: connection.checkpointSequenceNumber,
+            get initialClients() { return connection.initialClients; },
             mode: connection.mode,
             serviceConfiguration: connection.serviceConfiguration,
+            version: connection.version,
         };
     }
 
@@ -725,7 +729,7 @@ export class ConnectionManager implements IConnectionManager {
         const clearSignal: ISignalMessage = {
             clientId: null, // system message
             content: JSON.stringify({
-                type: "clear",
+                type: SignalType.Clear,
             }),
         };
         this.props.signalHandler(clearSignal);
@@ -734,7 +738,7 @@ export class ConnectionManager implements IConnectionManager {
             const joinSignal: ISignalMessage = {
                 clientId: null, // system signal
                 content: JSON.stringify({
-                    type: MessageType.ClientJoin,
+                    type: SignalType.ClientJoin,
                     content: priorClient, // ISignalClient
                 }),
                 // clientConnectionNumber?: number;

@@ -89,7 +89,10 @@ describe("ConnectionStateHandler Tests", () => {
             clientId: pendingClientId,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             claims: {} as ITokenClaims,
+            existing: true,
             mode: "read",
+            version: "0.1",
+            initialClients: [],
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             serviceConfiguration: {} as IClientConfiguration,
             checkpointSequenceNumber: undefined,
@@ -98,7 +101,10 @@ describe("ConnectionStateHandler Tests", () => {
             clientId: pendingClientId2,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             claims: {} as ITokenClaims,
+            existing: true,
             mode: "read",
+            version: "0.1",
+            initialClients: [],
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             serviceConfiguration: {} as IClientConfiguration,
             checkpointSequenceNumber: undefined,
@@ -107,7 +113,10 @@ describe("ConnectionStateHandler Tests", () => {
             clientId: pendingClientId3,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             claims: {} as ITokenClaims,
+            existing: true,
             mode: "read",
+            version: "0.1",
+            initialClients: [],
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             serviceConfiguration: {} as IClientConfiguration,
             checkpointSequenceNumber: undefined,

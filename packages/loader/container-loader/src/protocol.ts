@@ -20,6 +20,13 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 
+// ADO: #1986: Start using enum from protocol-base.
+export enum SignalType {
+    ClientJoin = "join", // same value as MessageType.ClientJoin,
+    ClientLeave = "leave", // same value as MessageType.ClientLeave,
+    Clear = "clear", // used only by client for synthetic signals
+}
+
 /**
  * Function to be used for creating a protocol handler.
  */
@@ -79,11 +86,11 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
     public processSignal(message: ISignalMessage) {
         const innerContent = message.content as { content: any; type: string; };
         switch (innerContent.type) {
-            case "clear": {
+            case SignalType.Clear: {
                 this.audience.clear();
                 break;
             }
-            case MessageType.ClientJoin: {
+            case SignalType.ClientJoin: {
                 const newClient = innerContent.content as ISignalClient;
                 // Ignore write clients - quorum will control such clients.
                 if (newClient.client.mode === "read") {
@@ -91,7 +98,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
                 }
                 break;
             }
-            case MessageType.ClientLeave: {
+            case SignalType.ClientLeave: {
                 const leftClientId = innerContent.content as string;
                 // Ignore write clients - quorum will control such clients.
                 if (this.audience.getMember(leftClientId)?.mode === "read") {

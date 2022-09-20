@@ -73,6 +73,18 @@ export enum MessageType {
     Control = "control",
 }
 
+export enum SignalType {
+    /**
+     * System signal sent to indicate a new client has joined the collaboration.
+     */
+     ClientJoin = "join",
+
+     /**
+      * System signal sent to indicate a client has left the collaboration.
+      */
+     ClientLeave = "leave",
+ }
+
 /**
  * Messages to track latency trace
  */

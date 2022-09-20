@@ -10,6 +10,7 @@ import {
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
@@ -20,7 +21,10 @@ import {
 export interface IConnectionDetails {
     clientId: string;
     claims: ITokenClaims;
+    existing: boolean;
     mode: ConnectionMode;
+    version: string;
+    initialClients: ISignalClient[];
     serviceConfiguration: IClientConfiguration;
     /**
      * Last known sequence number to ordering service at the time of connection
