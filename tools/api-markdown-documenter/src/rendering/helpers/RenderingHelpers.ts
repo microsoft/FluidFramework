@@ -28,14 +28,8 @@ import {
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { Heading } from "../../Heading";
 import { Link } from "../../Link";
-import {
-    DocAlert,
-    DocAlertType,
-    DocEmphasisSpan,
-    DocHeading,
-    DocList,
-    ListKind,
-} from "../../doc-nodes";
+import { DocAlert, DocEmphasisSpan, DocHeading, DocList, ListKind } from "../../doc-nodes";
+import { DocAlertType } from "../../documentation-domain";
 import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,

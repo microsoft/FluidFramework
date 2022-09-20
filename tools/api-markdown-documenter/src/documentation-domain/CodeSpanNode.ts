@@ -4,6 +4,7 @@
  */
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
+import { PlainTextNode } from "./PlainTextNode";
 
 /**
  * @example `Foo`
@@ -16,5 +17,9 @@ export class CodeSpanNode
 
     public constructor(children: SingleLineElementNode[]) {
         super(children);
+    }
+
+    public static createFromPlainText(text: string): CodeSpanNode {
+        return new CodeSpanNode([new PlainTextNode(text)]);
     }
 }

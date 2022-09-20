@@ -9,9 +9,9 @@ import { TableRowNode } from "./TableRowNode";
 export class TableNode extends ParentNodeBase<TableRowNode> {
     public readonly type = DocumentNodeType.Table;
 
-    public readonly headingRow?: TableRowNode[];
+    public readonly headingRow?: TableRowNode;
 
-    public constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode[]) {
+    public constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode) {
         super(bodyRows);
         this.headingRow = headingRow;
     }

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { DocNode, IDocNodeParameters } from "@microsoft/tsdoc";
-import { DocAlertType } from "../documentation-domain";
 
+import { DocAlertType } from "../documentation-domain";
 import { CustomDocNodeKind } from "./CustomDocNodeKind";
 
 /**

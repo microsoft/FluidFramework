@@ -4,6 +4,7 @@
  */
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { LiteralNode, SingleLineElementNode } from "./DocumentionNode";
+import { PlainTextNode } from "./PlainTextNode";
 
 export class HeadingNode implements LiteralNode<SingleLineElementNode> {
     public readonly type = DocumentNodeType.Markdown;
@@ -22,5 +23,11 @@ export class HeadingNode implements LiteralNode<SingleLineElementNode> {
 
     public constructor(content: SingleLineElementNode, id?: string, level?: number) {
         this.value = content;
+        this.id = id;
+        this.level = level;
+    }
+
+    public static createFromPlainText(text: string, id?: string, level?: number): HeadingNode {
+        return new HeadingNode(new PlainTextNode(text), id, level);
     }
 }

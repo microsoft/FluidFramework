@@ -9,7 +9,7 @@ export interface TextFormatting {
     /**
      * @defaultValue Inherit
      */
-    italics?: boolean;
+    italic?: boolean;
 
     /**
      * @defaultValue Inherit
