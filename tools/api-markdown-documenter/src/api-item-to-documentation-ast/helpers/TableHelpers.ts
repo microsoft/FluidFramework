@@ -39,11 +39,8 @@ import {
 } from "../../utilities";
 import { renderExcerptWithHyperlinks } from "./Helpers";
 
-// TODOs:
-// - rename "render" to "create", since these are really creation / builder helpers
-
 /**
- * Input properties for rendering a table of API members
+ * Input properties for creating a table of API members
  */
 export interface MemberTableProperties {
     /**
@@ -57,22 +54,22 @@ export interface MemberTableProperties {
     itemKind: ApiItemKind;
 
     /**
-     * The items to be rendered as rows in the table.
+     * The items to be displayed as rows in the table.
      */
     items: readonly ApiItem[];
 
     /**
-     * Rendering options for the table.
+     * Creation options for the table.
      */
-    options?: TableRenderingOptions;
+    options?: TableCreationOptions;
 }
 
 /**
- * Content / formatting options for table rendering.
+ * Content / formatting options for table creation.
  */
-export interface TableRenderingOptions {
+export interface TableCreationOptions {
     /**
-     * A list of modifiers to omit from table rendering.
+     * A list of modifiers to omit from table creation.
      *
      * @defaultValue No modifier kinds will be excluded.
      */
@@ -80,20 +77,20 @@ export interface TableRenderingOptions {
 }
 
 /**
- * Renders a simple section containing a series of headings and tables, representing the API members of some parent
+ * Creates a simple section containing a series of headings and tables, representing the API members of some parent
  * item, organized by kind.
  *
  * @param memberTableProperties - List of table configurations.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderMemberTables(
+export function createMemberTables(
     memberTableProperties: readonly MemberTableProperties[],
     config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode[] | undefined {
     const sections: HierarchicalSectionNode[] = [];
 
     for (const member of memberTableProperties) {
-        const table = renderTableWithHeading(member, config);
+        const table = createTableWithHeading(member, config);
         if (table !== undefined) {
             sections.push(table);
         }
@@ -103,50 +100,52 @@ export function renderMemberTables(
 }
 
 /**
- * Renders a simple section containing a heading and a table, based on the provided properties.
+ * Creates a simple section containing a heading and a table, based on the provided properties.
  *
  * @param memberTableProperties - The table configuration.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderTableWithHeading(
+export function createTableWithHeading(
     memberTableProperties: MemberTableProperties,
     config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode | undefined {
-    const renderedTable = renderSummaryTable(
+    const table = createSummaryTable(
         memberTableProperties.items,
         memberTableProperties.itemKind,
         config,
         memberTableProperties.options,
     );
 
-    return renderedTable === undefined
+    return table === undefined
         ? undefined
         : new HierarchicalSectionNode([
               // TODO: special heading hook?
               HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
-              renderedTable,
+              table,
           ]);
 }
 
 /**
- * Renders a simple summary table for API items of the specified kind.
+ * Creates a simple summary table for API items of the specified kind.
  * This is intended to represent a simple overview of the items.
  *
- * @remarks General use-case is to render a summary of child items of a given kind for some parent API item.
+ * @remarks General use-case is to display a summary of child items of a given kind for some parent API item.
  *
- * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
- * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
+ * @param itemKind - The kind of items being displayed in the table. Used to determine the semantic shape of the table.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  * @param options - Table content / formatting options.
  */
-export function renderSummaryTable(
+export function createSummaryTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
-    options?: TableRenderingOptions,
+    options?: TableCreationOptions,
 ): TableNode | undefined {
     if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
-        throw new Error(`Table rendering does not support provided API item kind: "${itemKind}".`);
+        throw new Error(
+            `Summary table creation does not support provided API item kind: "${itemKind}".`,
+        );
     }
 
     if (apiItems.length === 0) {
@@ -159,7 +158,7 @@ export function renderSummaryTable(
         case ApiItemKind.Function:
         case ApiItemKind.Method:
         case ApiItemKind.MethodSignature:
-            return renderFunctionLikeSummaryTable(
+            return createFunctionLikeSummaryTable(
                 apiItems.map((apiItem) => apiItem as ApiFunctionLike),
                 itemKind,
                 config,
@@ -168,36 +167,36 @@ export function renderSummaryTable(
 
         case ApiItemKind.Property:
         case ApiItemKind.PropertySignature:
-            return renderPropertiesTable(
+            return createPropertiesTable(
                 apiItems.map((apiItem) => apiItem as ApiPropertyItem),
                 config,
                 options,
             );
 
         case ApiItemKind.Package:
-            return renderPackagesTable(
+            return createPackagesTable(
                 apiItems.map((apiItem) => apiItem as ApiPackage),
                 config,
             );
 
         default:
-            return renderDefaultSummaryTable(apiItems, itemKind, config, options);
+            return createDefaultSummaryTable(apiItems, itemKind, config, options);
     }
 }
 
 /**
- * Default summary table rendering. Displays each item's name, modifiers, and description (summary) comment.
+ * Default summary table generation. Displays each item's name, modifiers, and description (summary) comment.
  *
- * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
- * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
+ * @param itemKind - The kind of items being displayed in the table. Used to determine the semantic shape of the table.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  * @param options - Table content / formatting options.
  */
-export function renderDefaultSummaryTable(
+export function createDefaultSummaryTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
-    options?: TableRenderingOptions,
+    options?: TableCreationOptions,
 ): TableNode | undefined {
     if (apiItems.length === 0) {
         return undefined;
@@ -225,14 +224,14 @@ export function renderDefaultSummaryTable(
 
     const tableRows: TableRowNode[] = [];
     for (const apiItem of apiItems) {
-        const rowCells: TableCellNode[] = [renderApiTitleCell(apiItem, config)];
+        const rowCells: TableCellNode[] = [createApiTitleCell(apiItem, config)];
         if (hasDeprecated) {
-            rowCells.push(renderDeprecatedCell(apiItem));
+            rowCells.push(createDeprecatedCell(apiItem));
         }
         if (hasModifiers) {
-            rowCells.push(renderModifiersCell(apiItem, options?.modifiersToOmit));
+            rowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
         }
-        rowCells.push(renderApiSummaryCell(apiItem));
+        rowCells.push(createApiSummaryCell(apiItem));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -241,14 +240,14 @@ export function renderDefaultSummaryTable(
 }
 
 /**
- * Renders a simple summary table for a series of parameters.
+ * Creates a simple summary table for a series of parameters.
  * Displays each parameter's name, type, and description ({@link https://tsdoc.org/pages/tags/param/ | @param}) comment.
  *
- * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
- * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
+ * @param itemKind - The kind of items being displayed in the table. Used to determine the semantic shape of the table.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderParametersSummaryTable(
+export function createParametersSummaryTable(
     apiParameters: readonly Parameter[],
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableNode {
@@ -263,7 +262,7 @@ export function renderParametersSummaryTable(
     headerRowCells.push(TableCellNode.createFromPlainText("Description"));
     const headerRow = new TableRowNode(headerRowCells);
 
-    function renderModifierCell(apiParameter: Parameter): TableCellNode {
+    function createModifierCell(apiParameter: Parameter): TableCellNode {
         return apiParameter.isOptional
             ? TableCellNode.createFromPlainText("optional")
             : TableCellNode.Empty;
@@ -271,12 +270,12 @@ export function renderParametersSummaryTable(
 
     const tableRows: TableRowNode[] = [];
     for (const apiParameter of apiParameters) {
-        const rowCells: TableCellNode[] = [renderParameterTitleCell(apiParameter)];
+        const rowCells: TableCellNode[] = [createParameterTitleCell(apiParameter)];
         if (hasOptionalParameters) {
-            rowCells.push(renderModifierCell(apiParameter));
+            rowCells.push(createModifierCell(apiParameter));
         }
-        rowCells.push(renderParameterTypeCell(apiParameter, config));
-        rowCells.push(renderParameterSummaryCell(apiParameter, config));
+        rowCells.push(createParameterTypeCell(apiParameter, config));
+        rowCells.push(createParameterSummaryCell(apiParameter));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -285,19 +284,19 @@ export function renderParametersSummaryTable(
 }
 
 /**
- * Renders a simple summary table for function-like API items (constructors, functions, methods).
+ * Creates a simple summary table for function-like API items (constructors, functions, methods).
  * Displays each item's name, modifiers, return type, and description (summary) comment.
  *
- * @param apiItems - The function-like items to be rendered.
+ * @param apiItems - The function-like items to be displayed.
  * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  * @param options - Table content / formatting options.
  */
-export function renderFunctionLikeSummaryTable(
+export function createFunctionLikeSummaryTable(
     apiItems: readonly ApiFunctionLike[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
-    options?: TableRenderingOptions,
+    options?: TableCreationOptions,
 ): TableNode | undefined {
     if (apiItems.length === 0) {
         return undefined;
@@ -329,17 +328,17 @@ export function renderFunctionLikeSummaryTable(
 
     const tableRows: TableRowNode[] = [];
     for (const apiItem of apiItems) {
-        const rowCells: TableCellNode[] = [renderApiTitleCell(apiItem, config)];
+        const rowCells: TableCellNode[] = [createApiTitleCell(apiItem, config)];
         if (hasDeprecated) {
-            rowCells.push(renderDeprecatedCell(apiItem));
+            rowCells.push(createDeprecatedCell(apiItem));
         }
         if (hasModifiers) {
-            rowCells.push(renderModifiersCell(apiItem, options?.modifiersToOmit));
+            rowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
         }
         if (hasReturnTypes) {
-            rowCells.push(renderReturnTypeCell(apiItem, config));
+            rowCells.push(createReturnTypeCell(apiItem, config));
         }
-        rowCells.push(renderApiSummaryCell(apiItem));
+        rowCells.push(createApiSummaryCell(apiItem));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -348,17 +347,17 @@ export function renderFunctionLikeSummaryTable(
 }
 
 /**
- * Renders a simple summary table for a series of properties.
+ * Creates a simple summary table for a series of properties.
  * Displays each property's name, modifiers, type, and description (summary) comment.
  *
- * @param apiProperties - The `Property` items to be rendered.
+ * @param apiProperties - The `Property` items to be displayed.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  * @param options - Table content / formatting options.
  */
-export function renderPropertiesTable(
+export function createPropertiesTable(
     apiProperties: readonly ApiPropertyItem[],
     config: Required<MarkdownDocumenterConfiguration>,
-    options?: TableRenderingOptions,
+    options?: TableCreationOptions,
 ): TableNode | undefined {
     if (apiProperties.length === 0) {
         return undefined;
@@ -391,18 +390,18 @@ export function renderPropertiesTable(
 
     const tableRows: TableRowNode[] = [];
     for (const apiProperty of apiProperties) {
-        const rowCells: TableCellNode[] = [renderApiTitleCell(apiProperty, config)];
+        const rowCells: TableCellNode[] = [createApiTitleCell(apiProperty, config)];
         if (hasDeprecated) {
-            rowCells.push(renderDeprecatedCell(apiProperty));
+            rowCells.push(createDeprecatedCell(apiProperty));
         }
         if (hasModifiers) {
-            rowCells.push(renderModifiersCell(apiProperty, options?.modifiersToOmit));
+            rowCells.push(createModifiersCell(apiProperty, options?.modifiersToOmit));
         }
         if (hasDefaultValues) {
-            rowCells.push(renderDefaultValueCell(apiProperty, config));
+            rowCells.push(createDefaultValueCell(apiProperty, config));
         }
-        rowCells.push(renderPropertyTypeCell(apiProperty, config));
-        rowCells.push(renderApiSummaryCell(apiProperty));
+        rowCells.push(createPropertyTypeCell(apiProperty, config));
+        rowCells.push(createApiSummaryCell(apiProperty));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -411,14 +410,14 @@ export function renderPropertiesTable(
 }
 
 /**
- * Renders a simple summary table for a list of packages.
+ * Creates a simple summary table for a list of packages.
  * Displays each package's name and description
  * ({@link https://tsdoc.org/pages/tags/packagedocumentation/ | @packageDocumentation}) comment.
  *
- * @param apiPackages - The package items to be rendered.
+ * @param apiPackages - The package items to be displayed.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderPackagesTable(
+export function createPackagesTable(
     apiPackages: readonly ApiPackage[],
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableNode | undefined {
@@ -438,11 +437,11 @@ export function renderPackagesTable(
 
     const tableRows: TableRowNode[] = [];
     for (const apiPackage of apiPackages) {
-        const rowCells: TableCellNode[] = [renderApiTitleCell(apiPackage, config)];
+        const rowCells: TableCellNode[] = [createApiTitleCell(apiPackage, config)];
         if (hasDeprecated) {
-            rowCells.push(renderDeprecatedCell(apiPackage));
+            rowCells.push(createDeprecatedCell(apiPackage));
         }
-        rowCells.push(renderApiSummaryCell(apiPackage));
+        rowCells.push(createApiSummaryCell(apiPackage));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -451,12 +450,12 @@ export function renderPackagesTable(
 }
 
 /**
- * Renders a table cell containing the description (summary) comment for the provided API item.
+ * Creates a table cell containing the description (summary) comment for the provided API item.
  * If the item has an `@beta` release tag, the comment will be annotated as being beta content.
  *
  * @param apiItem - The API item whose comment will be rendered in the cell.
  */
-export function renderApiSummaryCell(apiItem: ApiItem): TableCellNode {
+export function createApiSummaryCell(apiItem: ApiItem): TableCellNode {
     const children: DocumentationNode[] = [];
 
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem)) {
@@ -480,34 +479,34 @@ export function renderApiSummaryCell(apiItem: ApiItem): TableCellNode {
 }
 
 /**
- * Renders a table cell containing the return type information for the provided function-like API item,
- * if it specifies one. If it does not specify a type, an empty table cell will be rendered.
+ * Creates a table cell containing the return type information for the provided function-like API item,
+ * if it specifies one. If it does not specify a type, an empty table cell will be used.
  *
- * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * @remarks This content will be generated as links to type signature documentation for other items local to the same
  * API suite (model).
  *
- * @param apiItem - The API item whose return type will be rendered in the cell.
+ * @param apiItem - The API item whose return type will be displayed in the cell.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderReturnTypeCell(
+export function createReturnTypeCell(
     apiItem: ApiFunctionLike,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
     return ApiReturnTypeMixin.isBaseClassOf(apiItem)
-        ? renderTypeExcerptCell(apiItem.returnTypeExcerpt, config)
+        ? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
         : TableCellNode.Empty;
 }
 
 /**
- * Renders a table cell containing the name of the provided API item.
+ * Creates a table cell containing the name of the provided API item.
  *
- * @remarks This content will be rendered as a link to the section content describing the API item.
+ * @remarks This content will be generated as a link to the section content describing the API item.
  *
- * @param apiItem - The API item whose name will be rendered in the cell, and to whose content the generate link
+ * @param apiItem - The API item whose name will be displayed in the cell, and to whose content the generate link
  * will point.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderApiTitleCell(
+export function createApiTitleCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
@@ -521,12 +520,12 @@ export function renderApiTitleCell(
 }
 
 /**
- * Renders a table cell containing a list of modifiers that apply.
+ * Creates a table cell containing a list of modifiers that apply.
  *
- * @param apiItem - The API item whose modifiers will be rendered in the cell.
- * @param modifiersToOmit - List of modifiers to omit from the rendered cell, even if they apply to the item.
+ * @param apiItem - The API item whose modifiers will be displayed in the cell.
+ * @param modifiersToOmit - List of modifiers to omit from the generated cell, even if they apply to the item.
  */
-export function renderModifiersCell(
+export function createModifiersCell(
     apiItem: ApiItem,
     modifiersToOmit?: ApiModifier[],
 ): TableCellNode {
@@ -545,12 +544,12 @@ export function renderModifiersCell(
 }
 
 /**
- * Renders a table cell containing the `@defaultValue` comment of the API item if it has one.
+ * Creates a table cell containing the `@defaultValue` comment of the API item if it has one.
  *
- * @param apiItem - The API item whose `@defaultValue` comment will be rendered in the cell.
+ * @param apiItem - The API item whose `@defaultValue` comment will be displayed in the cell.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderDefaultValueCell(
+export function createDefaultValueCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
@@ -562,71 +561,67 @@ export function renderDefaultValueCell(
 }
 
 /**
- * Renders a table cell noting that the item is deprecated if it is annotated with an `@deprecated` comment.
- * Will render an empty table cell otherwise.
+ * Creates a table cell noting that the item is deprecated if it is annotated with an `@deprecated` comment.
+ * Will use an empty table cell otherwise.
  *
  * @param apiItem - The API item for which the deprecation notice will be displayed if appropriate.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderDeprecatedCell(apiItem: ApiItem): TableCellNode {
+export function createDeprecatedCell(apiItem: ApiItem): TableCellNode {
     return isDeprecated(apiItem)
         ? new TableCellNode([CodeSpanNode.createFromPlainText("DEPRECATED")])
         : TableCellNode.Empty;
 }
 
 /**
- * Renders a table cell containing the type information about the provided property.
+ * Creates a table cell containing the type information about the provided property.
  *
- * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * @remarks This content will be generated as links to type signature documentation for other items local to the same
  * API suite (model).
  *
- * @param apiProperty - The property whose type information will be rendered in the cell.
+ * @param apiProperty - The property whose type information will be displayed in the cell.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderPropertyTypeCell(
+export function createPropertyTypeCell(
     apiProperty: ApiPropertyItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
-    return renderTypeExcerptCell(apiProperty.propertyTypeExcerpt, config);
+    return createTypeExcerptCell(apiProperty.propertyTypeExcerpt, config);
 }
 
 /**
- * Renders a table cell containing the name of the provided parameter as plain text.
+ * Creates a table cell containing the name of the provided parameter as plain text.
  *
- * @param apiParameter - The parameter whose name will be rendered in the cell.
+ * @param apiParameter - The parameter whose name will be displayed in the cell.
  */
-export function renderParameterTitleCell(apiParameter: Parameter): TableCellNode {
+export function createParameterTitleCell(apiParameter: Parameter): TableCellNode {
     return TableCellNode.createFromPlainText(apiParameter.name);
 }
 
 /**
- * Renders a table cell containing the type information about the provided parameter.
+ * Creates a table cell containing the type information about the provided parameter.
  *
- * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * @remarks This content will be generated as links to type signature documentation for other items local to the same
  * API suite (model).
  *
- * @param apiProperty - The parameter whose type information will be rendered in the cell.
+ * @param apiProperty - The parameter whose type information will be displayed in the cell.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderParameterTypeCell(
+export function createParameterTypeCell(
     apiParameter: Parameter,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
-    return renderTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
+    return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 }
 
 /**
- * Renders a table cell containing the description ({@link https://tsdoc.org/pages/tags/param/ | @param}) comment
+ * Creates a table cell containing the description ({@link https://tsdoc.org/pages/tags/param/ | @param}) comment
  * of the provided parameter.
- * If the parameter has no documentation, an empty cell will be rendered.
+ * If the parameter has no documentation, an empty cell will be used.
  *
- * @param apiParameter - The parameter whose comment will be rendered in the cell
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param apiParameter - The parameter whose comment will be displayed in the cell
  */
-export function renderParameterSummaryCell(
-    apiParameter: Parameter,
-    config: Required<MarkdownDocumenterConfiguration>,
-): TableCellNode {
+export function createParameterSummaryCell(apiParameter: Parameter): TableCellNode {
     if (apiParameter.tsdocParamBlock === undefined) {
         return TableCellNode.Empty;
     }
@@ -637,14 +632,14 @@ export function renderParameterSummaryCell(
 }
 
 /**
- * Renders a table cell containing type information.
- * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * Creates a table cell containing type information.
+ * @remarks This content will be generated as links to type signature documentation for other items local to the same
  * API suite (model).
  *
- * @param typeExcerpty - An excerpt describing the type to be rendered.
+ * @param typeExcerpty - An excerpt describing the type to be displayed in the cell.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderTypeExcerptCell(
+export function createTypeExcerptCell(
     typeExcerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {

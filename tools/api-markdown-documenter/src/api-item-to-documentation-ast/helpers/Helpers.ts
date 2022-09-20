@@ -45,7 +45,7 @@ import {
     getThrowsBlocks,
     mergeSections,
 } from "../../utilities";
-import { renderParametersSummaryTable } from "./TableHelpers";
+import { createParametersSummaryTable } from "./TableHelpers";
 
 // TODOs:
 // - rename "render" to "create", since these are really creation / builder helpers
@@ -715,7 +715,7 @@ export function renderParametersSection(
             },
             config,
         ),
-        renderParametersSummaryTable(apiFunctionLike.parameters, config),
+        createParametersSummaryTable(apiFunctionLike.parameters, config),
     ]);
 }
 
