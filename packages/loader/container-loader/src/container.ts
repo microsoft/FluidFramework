@@ -558,6 +558,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly loaderServices: ILoaderServices;
     private readonly loader?: Loader;
 
+    /**
+     *
+     * @param loaderOrServices - A loader, or an object containing the services a loader would provide. If this is
+     * just the services object then the instantiated container won't be able to resolve documents/containers hosted
+     * at arbitrary URLs, only those with URLs relative to the root of the container itself.
+     * @param config -
+     * @param protocolHandlerBuilder -
+     */
     constructor(
         private readonly loaderOrServices: Loader | ILoaderServices,
         config: IContainerConfig,
