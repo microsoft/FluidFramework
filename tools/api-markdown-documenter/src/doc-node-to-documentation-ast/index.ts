@@ -119,17 +119,17 @@ export function transformFencedCode(
 export function transformLinkTag(
     node: DocLinkTag,
     options: DocNodeTransformOptions,
-): LinkNode | SymbolicLinkNode<DocDeclarationReference> | PlainTextNode {
-    const linkTextNode = new PlainTextNode(node.linkText ?? "");
+): LinkNode | PlainTextNode {
+    const linkText = node.linkText ?? "";
 
     if (node.codeDestination !== undefined) {
         const urlTarget = options.resolveApiReference(node.codeDestination);
-        return new LinkNode({ target: urlTarget, content: linkTextNode });
+        return LinkNode.createFromPlainText(linkText, urlTarget);
     }
 
     if (node.urlDestination !== undefined) {
-        return new LinkNode({ target: node.urlDestination, content: linkTextNode });
+        return LinkNode.createFromPlainText(linkText, node.urlDestination);
     }
 
-    return linkTextNode;
+    return new PlainTextNode(linkText);
 }
