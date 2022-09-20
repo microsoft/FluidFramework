@@ -29,7 +29,15 @@ import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { Heading } from "../../Heading";
 import { Link } from "../../Link";
 import { DocAlert, DocEmphasisSpan, DocHeading, DocList, ListKind } from "../../doc-nodes";
-import { DocAlertType } from "../../documentation-domain";
+import {
+    DocAlertType,
+    DocumentationNode,
+    LinkNode,
+    ParagraphNode,
+    PlainTextNode,
+    SingleLineElementNode,
+    SpanNode,
+} from "../../documentation-domain";
 import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,
@@ -45,7 +53,7 @@ import {
     getThrowsBlocks,
     mergeSections,
 } from "../../utilities";
-import { renderParametersSummaryTable } from "./TableHelpers";
+import { createParametersSummaryTable } from "./TableHelpers";
 
 // TODOs:
 // - rename "render" to "create", since these are really creation / builder helpers
@@ -215,38 +223,27 @@ function renderHeritageTypeList(
     heritageTypes: readonly HeritageType[],
     label: string,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocParagraph | undefined {
+): ParagraphNode | undefined {
     if (heritageTypes.length > 0) {
-        const docNodes: DocNode[] = [];
+        const children: DocumentationNode[] = [];
 
-        docNodes.push(
-            new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
-                new DocPlainText({
-                    configuration: config.tsdocConfiguration,
-                    text: `${label}: `,
-                }),
-            ]),
-        );
+        children.push(SpanNode.createFromPlainText(`${label}: `, { bold: true }));
 
+        // TODO: add node array join helper?
         let needsComma: boolean = false;
         for (const heritageType of heritageTypes) {
             if (needsComma) {
-                docNodes.push(
-                    new DocPlainText({
-                        configuration: config.tsdocConfiguration,
-                        text: ", ",
-                    }),
-                );
+                children.push(new PlainTextNode(", "));
             }
 
-            const renderedExcerpt = renderExcerptWithHyperlinks(heritageType.excerpt, config);
+            const renderedExcerpt = createExcerptSpanWithHyperlinks(heritageType.excerpt, config);
             if (renderedExcerpt !== undefined) {
-                docNodes.push(...renderedExcerpt);
+                children.push(renderedExcerpt);
                 needsComma = true;
             }
         }
 
-        return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
+        return new ParagraphNode(children);
     }
     return undefined;
 }
@@ -331,15 +328,15 @@ export function renderTypeParameters(
  * Will return `undefined` otherwise.
  * This list of nodes is suitable to be placed in a `paragraph` or `section`, etc.
  */
-export function renderExcerptWithHyperlinks(
+export function createExcerptSpanWithHyperlinks(
     excerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocNode[] | undefined {
+): SpanNode<SingleLineElementNode> | undefined {
     if (excerpt.isEmpty) {
         return undefined;
     }
 
-    const docNodes: DocNode[] = [];
+    const children: DocumentationNode[] = [];
     for (const token of excerpt.spannedTokens) {
         // Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
         // the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
@@ -354,31 +351,22 @@ export function renderExcerptWithHyperlinks(
                 config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
 
             if (apiItemResult.resolvedApiItem) {
-                docNodes.push(
-                    renderLink(
-                        getLinkForApiItem(
-                            apiItemResult.resolvedApiItem,
-                            config,
-                            unwrappedTokenText,
-                        ),
-                        config,
-                    ),
+                const link = getLinkForApiItem(
+                    apiItemResult.resolvedApiItem,
+                    config,
+                    unwrappedTokenText,
                 );
+                children.push(LinkNode.createFromPlainTextLink(link));
                 wroteHyperlink = true;
             }
         }
 
         // If the token was not one from which we generated hyperlink text, write as plain text instead
         if (!wroteHyperlink) {
-            docNodes.push(
-                new DocPlainText({
-                    configuration: config.tsdocConfiguration,
-                    text: unwrappedTokenText,
-                }),
-            );
+            children.push(new PlainTextNode(unwrappedTokenText));
         }
     }
-    return docNodes;
+    return new SpanNode(children);
 }
 
 /**
@@ -715,7 +703,7 @@ export function renderParametersSection(
             },
             config,
         ),
-        renderParametersSummaryTable(apiFunctionLike.parameters, config),
+        createParametersSummaryTable(apiFunctionLike.parameters, config),
     ]);
 }
 
@@ -747,7 +735,7 @@ export function renderReturnsSection(
         // Special case to detect when the return type is `void`.
         // We will skip declaring the return type in this case.
         if (apiItem.returnTypeExcerpt.text.trim() !== "void") {
-            const renderedTypeExcerpt = renderExcerptWithHyperlinks(
+            const renderedTypeExcerpt = createExcerptSpanWithHyperlinks(
                 apiItem.returnTypeExcerpt,
                 config,
             );
@@ -767,7 +755,7 @@ export function renderReturnsSection(
                                     }),
                                 ],
                             ),
-                            ...renderedTypeExcerpt,
+                            renderedTypeExcerpt,
                         ]),
                     ]),
                 );

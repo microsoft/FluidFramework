@@ -4,6 +4,12 @@
  */
 
 /**
+ * Represents the target URL of a link.
+ * @remarks Can be fully realized, a heading ID, relative file path, etc.
+ */
+export type UrlTarget = string;
+
+/**
  * Represents a link to some documentation element.
  */
 export interface Link {
@@ -12,8 +18,9 @@ export interface Link {
      */
     text: string;
 
+    // TODO: rename to "target"? Type system already captures the format requirements.
     /**
      * Link target URL.
      */
-    url: string;
+    url: UrlTarget;
 }
