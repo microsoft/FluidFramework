@@ -21,7 +21,12 @@ import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
-import { DataObjectWithCounter, dataObjectWithCounterFactory } from "./gcDataStore";
+import {
+    DataObjectParent,
+    dataObjectParentFactory,
+    DataObjectWithCounter,
+    dataObjectWithCounterFactory,
+} from "./gcDataStore";
 
 export interface IRunConfig {
     runId: number;
@@ -418,7 +423,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     protected async initializingFirstTime() {
         this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
 
-        const gcDataStore = await dataObjectWithCounterFactory.createInstance(this.context.containerRuntime);
+        const gcDataStore = await dataObjectParentFactory.createInstance(this.context.containerRuntime);
         this.root.set(gcDataStore2Key, gcDataStore.handle);
     }
 
@@ -437,7 +442,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     public async run(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
-        const gcDataStore = await this.root.get<IFluidHandle<DataObjectWithCounter>>(gcDataStore2Key)?.get();
+        const gcDataStore = await this.root.get<IFluidHandle<DataObjectParent>>(gcDataStore2Key)?.get();
         return gcDataStore?.run(config) ?? true;
     }
 
@@ -520,6 +525,7 @@ export const createFluidExport = (options: IContainerRuntimeOptions) =>
         [
             [LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)],
             [DataObjectWithCounter.type, Promise.resolve(dataObjectWithCounterFactory)],
+            [DataObjectParent.type, Promise.resolve(dataObjectParentFactory)],
         ],
         undefined,
         [innerRequestHandler],

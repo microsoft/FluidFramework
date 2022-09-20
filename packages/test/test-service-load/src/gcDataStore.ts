@@ -48,12 +48,17 @@ export class DataObjectWithCounter extends DataObject {
     public async run(config: IRunConfig) {
         this.isRunning = true;
         const delayPerOpMs = 60 * 1000 / config.testConfig.opRatePerMin;
+        // div by 2 for parent/child
+        const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients / 2;
+        let localCount = 0;
         while (this.isRunning && !this.disposed) {
             this.counter.increment(1);
-            if (this.counter.value % 3 === 1) {
-                console.log(`########## GC DATA STORE [${this.runtime.clientId}]: ${this.counter.value}`);
+            localCount++;
+            if (localCount % 3 === 1) {
+                console.log(
+                    `########## GC DATA STORE [${this.runtime.clientId}]: ${localCount} / ${this.counter.value}`);
             }
-            if (this.counter.value >= config.testConfig.totalSendCount) {
+            if (localCount >= clientSendCount) {
                 break;
             }
             await delay(delayPerOpMs);
@@ -65,6 +70,32 @@ export class DataObjectWithCounter extends DataObject {
 export const dataObjectWithCounterFactory = new DataObjectFactory(
     DataObjectWithCounter.type,
     DataObjectWithCounter,
+    [SharedCounter.getFactory()],
+    {},
+);
+
+export class DataObjectParent extends DataObjectWithCounter {
+    private child: DataObjectWithCounter | undefined;
+    public static get type(): string {
+        return "DataObjectParent";
+    }
+    protected async hasInitialized(): Promise<void> {
+        await super.hasInitialized();
+
+        this.child = await dataObjectWithCounterFactory.createInstance(this.context.containerRuntime);
+    }
+
+    public async run(config: IRunConfig) {
+        const childP = this.child?.run(config);
+        const parentP = super.run(config);
+        const allP = await Promise.all([childP, parentP]);
+        return allP.every((done) => done);
+    }
+}
+
+export const dataObjectParentFactory = new DataObjectFactory(
+    DataObjectParent.type,
+    DataObjectParent,
     [SharedCounter.getFactory()],
     {},
 );

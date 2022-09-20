@@ -59,9 +59,9 @@
             }
         },
         "debug": {
-            "opRatePerMin": 60,
+            "opRatePerMin": 120,
             "progressIntervalMs": 5000,
-            "numClients": 1,
+            "numClients": 2,
             "totalSendCount": 30,
             "readWriteCycleMs": 10000,
             "faultInjectionMinMs": 0,
