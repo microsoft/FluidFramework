@@ -20,11 +20,6 @@ export interface IAudienceOwner extends IAudience {
      * @returns if a client was removed from the audience
      */
      removeMember(clientId: string): boolean;
-
-     /**
-      * Clears the audience
-      */
-     clear();
 }
 
 /**

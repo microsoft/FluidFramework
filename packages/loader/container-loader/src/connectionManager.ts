@@ -720,12 +720,6 @@ export class ConnectionManager implements IConnectionManager {
 
         this.connectFirstConnection = false;
 
-        if (connection.initialSignals !== undefined) {
-            for (const signal of connection.initialSignals) {
-                this.props.signalHandler(signal);
-            }
-        }
-
         const clearSignal: ISignalMessage = {
             clientId: null, // system message
             content: JSON.stringify({
@@ -745,6 +739,16 @@ export class ConnectionManager implements IConnectionManager {
                 // referenceSequenceNumber?: number;
             };
             this.props.signalHandler(joinSignal);
+        }
+
+        // Unfortunately, there is no defined order between initialSignals (including join & leave signals)
+        // and connection.initialClients. In practice, connection.initialSignals quite often contains join signal
+        // for "self" and connection.initialClients does not contain "self", so we have to process them after
+        // "clear" signal above.
+        if (connection.initialSignals !== undefined) {
+            for (const signal of connection.initialSignals) {
+                this.props.signalHandler(signal);
+            }
         }
     }
 

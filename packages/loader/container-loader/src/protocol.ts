@@ -87,7 +87,12 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
         const innerContent = message.content as { content: any; type: string; };
         switch (innerContent.type) {
             case SignalType.Clear: {
-                this.audience.clear();
+                const members = this.audience.getMembers();
+                for (const [clientId, client] of members) {
+                    if (client.mode === "read") {
+                        this.audience.removeMember(clientId);
+                    }
+                }
                 break;
             }
             case SignalType.ClientJoin: {
