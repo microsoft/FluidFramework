@@ -382,7 +382,9 @@ describe("Garbage Collection Tests", () => {
                 });
             });
             describe("TestOverride.SweepTimeout", () => {
+                const sweepAllowed = false; // Just to prove that sweepTimeout calculation is independent from sweep enablement
                 let sessionExpiryTimeoutMs: number = defaultSessionExpiryDurationMs;
+                const createGc = () => createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs, sweepAllowed });
                 beforeEach(() => {
                     injectedSettings[testOverrideSweepTimeoutMsKey] = 200;
 
@@ -395,35 +397,34 @@ describe("Garbage Collection Tests", () => {
                 });
 
                 it("TestOverride.SweepTimeout is applied", () => {
-                    //* Is sweepAllowed: true required?
-                    gc = createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs, sweepAllowed: true });
+                    gc = createGc();
                     assert.equal(gc.sweepTimeoutMs, 200, "sweepTimeoutMs incorrect");
-                });
-                //* Maybe just require it's longer than snapshotCache... or longer than snapshotcache + sessionExpiry?
-                it("Requires TestOverride.DisableSnapshotCache setting", () => {
-                    injectedSettings[testOverrideDisableSnapshotCacheKey] = false;
-                    assert.throws(() => { createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs, sweepAllowed: true }); },
-                        "TestOverride.SweepTimeout requires TestOverride.DisableSnapshotCache = true");
                 });
                 it("Ignored if DisableSessionExpiry is set", () => {
                     injectedSettings[disableSessionExpiryKey] = true;
-                    gc = createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs, sweepAllowed: true });
+                    gc = createGc();
                     assert.equal(gc.sweepTimeoutMs, undefined, "TestOverride.SweepTimeout should be ignored if DisableSessionExpiry = true");
                 });
                 it("Ignored if RunSessionExpiry is disabled", () => {
                     injectedSettings[runSessionExpiryKey] = false;
-                    gc = createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs, sweepAllowed: true });
+                    gc = createGc();
                     assert.equal(gc.sweepTimeoutMs, undefined, "TestOverride.SweepTimeout should be ignored if RunSessionExpiry = false");
                 });
-                it("SweepTimeout must be greater than persisted SessionExpiry", () => {
-                    sessionExpiryTimeoutMs = 1000; // greater than SweepTimeout=200 set in beforeEach
-                    assert.throws(() => { createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs, sweepAllowed: true }); },
-                        "SweepTimeout must be greater than SessionExpiry even with TestOverride");
+                it("SweepTimeout must be greater than persisted SessionExpiry + snapshotCacheExpiry", () => {
+                    injectedSettings[testOverrideDisableSnapshotCacheKey] = false;  // Now snapshotCacheExpiry is default value
+                    const minAllowedSweepTimeout = defaultSnapshotCacheExpiryMs + sessionExpiryTimeoutMs + 1;
+
+                    injectedSettings[testOverrideSweepTimeoutMsKey] = minAllowedSweepTimeout;
+                    gc = createGc();
+                    assert.equal(gc.sweepTimeoutMs, minAllowedSweepTimeout, "Incorrect sweepTimeoutMs");
+
+                    injectedSettings[testOverrideSweepTimeoutMsKey] = minAllowedSweepTimeout - 1;
+                    assert.throws(createGc,
+                        "SweepTimeout must be greater than SessionExpiry + snapshotCacheExpiry even with TestOverride");
                 });
-                //* Is it possible to test this without sessionExpiry in the mix?
                 it("SweepTimeout must be greater than InactiveTimeout", () => {
                     injectedSettings[testOverrideInactiveTimeoutMsKey] = 1000; // greater than SweepTimeout=200 set in beforeEach
-                    assert.throws(() => { createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs, sweepAllowed: true }); },
+                    assert.throws(createGc,
                         "SweepTimeout must be greater than InactiveTimeout even with TestOverride");
                 });
             });
