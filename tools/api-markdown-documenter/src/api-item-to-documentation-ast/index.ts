@@ -4,7 +4,7 @@
  */
 
 /**
- * Transformation library from ApiItem_s / DocNode_s to {@link DocumentationNode}s.
+ * Transformation library from ApiItem_s to {@link DocumentationNode}s.
  */
 
 // TODOs:
