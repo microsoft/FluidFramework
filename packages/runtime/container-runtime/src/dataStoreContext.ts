@@ -13,7 +13,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    BindState,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -38,6 +37,7 @@ import {
     IContainerRuntime,
 } from "@fluidframework/container-runtime-definitions";
 import {
+    BindState,
     channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
@@ -225,7 +225,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
-    //* Revert?
+    /** @deprecated - To be replaced by calling makeLocallyVisible directly  */
     public readonly bindToContext: () => void;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
@@ -253,7 +253,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     constructor(
         props: IFluidDataStoreContextProps,
         private readonly existing: boolean,
-        private bindState: BindState,
+        private bindState: BindState,  // Used to assert for state tracking purposes
         public readonly isLocalDataStore: boolean,
         private readonly makeLocallyVisibleFn: () => void,
     ) {
@@ -1030,13 +1030,7 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreChannel);
 
         if (await this.isRoot()) {
-            // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
-            // For older versions, we still have to call bindToContext.
-            if (dataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
-                dataStoreChannel.makeVisibleAndAttachGraph();
-            } else {
-                dataStoreChannel.bindToContext();
-            }
+            dataStoreChannel.makeVisibleAndAttachGraph();
         }
     }
 

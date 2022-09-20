@@ -451,6 +451,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
+    //* Can probably remove with interface update
     public bindToContext(): void {
         return;
     }

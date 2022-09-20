@@ -13,7 +13,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    BindState,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -41,6 +40,7 @@ import {
     IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {
+    BindState,
     CreateSummarizerNodeSource,
     IAttachMessage,
     IEnvelope,
