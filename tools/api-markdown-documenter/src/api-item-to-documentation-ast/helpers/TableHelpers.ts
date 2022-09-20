@@ -16,6 +16,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
+import { transformDocNode, transformSection } from "../../doc-node-to-documentation-ast";
 import {
     CodeSpanNode,
     DocumentationNode,
@@ -210,14 +211,17 @@ export function renderDefaultSummaryTable(
         (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
     );
 
-    const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
+    const headerRowCells: TableCellNode[] = [
+        TableCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
+    ];
     if (hasDeprecated) {
-        headerTitles.push("Alerts");
+        headerRowCells.push(TableCellNode.createFromPlainText("Alerts"));
     }
     if (hasModifiers) {
-        headerTitles.push("Modifiers");
+        headerRowCells.push(TableCellNode.createFromPlainText("Modifiers"));
     }
-    headerTitles.push("Description");
+    headerRowCells.push(TableCellNode.createFromPlainText("Description"));
+    const headerRow = new TableRowNode(headerRowCells);
 
     const tableRows: TableRowNode[] = [];
     for (const apiItem of apiItems) {
@@ -233,10 +237,7 @@ export function renderDefaultSummaryTable(
         tableRows.push(new TableRowNode(rowCells));
     }
 
-    return new TableNode(
-        tableRows,
-        headerTitles, // TODO
-    );
+    return new TableNode(tableRows, headerRow);
 }
 
 /**
@@ -254,12 +255,13 @@ export function renderParametersSummaryTable(
     // Only display "Modifiers" column if there are any optional parameters present.
     const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
 
-    const headerTitles: string[] = ["Parameter"];
+    const headerRowCells: TableCellNode[] = [TableCellNode.createFromPlainText("Parameter")];
     if (hasOptionalParameters) {
-        headerTitles.push("Modifiers");
+        headerRowCells.push(TableCellNode.createFromPlainText("Modifiers"));
     }
-    headerTitles.push("Type");
-    headerTitles.push("Description");
+    headerRowCells.push(TableCellNode.createFromPlainText("Type"));
+    headerRowCells.push(TableCellNode.createFromPlainText("Description"));
+    const headerRow = new TableRowNode(headerRowCells);
 
     function renderModifierCell(apiParameter: Parameter): TableCellNode {
         return apiParameter.isOptional
@@ -279,10 +281,7 @@ export function renderParametersSummaryTable(
         tableRows.push(new TableRowNode(rowCells));
     }
 
-    return new TableNode(
-        tableRows,
-        headerTitles, // TODO
-    );
+    return new TableNode(tableRows, headerRow);
 }
 
 /**
@@ -313,17 +312,20 @@ export function renderFunctionLikeSummaryTable(
     );
     const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
 
-    const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
+    const headerRowCells: TableCellNode[] = [
+        TableCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
+    ];
     if (hasDeprecated) {
-        headerTitles.push("Alerts");
+        headerRowCells.push(TableCellNode.createFromPlainText("Alerts"));
     }
     if (hasModifiers) {
-        headerTitles.push("Modifiers");
+        headerRowCells.push(TableCellNode.createFromPlainText("Modifiers"));
     }
     if (hasReturnTypes) {
-        headerTitles.push("Return Type");
+        headerRowCells.push(TableCellNode.createFromPlainText("Return Type"));
     }
-    headerTitles.push("Description");
+    headerRowCells.push(TableCellNode.createFromPlainText("Description"));
+    const headerRow = new TableRowNode(headerRowCells);
 
     const tableRows: TableRowNode[] = [];
     for (const apiItem of apiItems) {
@@ -342,10 +344,7 @@ export function renderFunctionLikeSummaryTable(
         tableRows.push(new TableRowNode(rowCells));
     }
 
-    return new TableNode(
-        tableRows,
-        headerTitles, // TODO
-    );
+    return new TableNode(tableRows, headerRow);
 }
 
 /**
@@ -376,18 +375,19 @@ export function renderPropertiesTable(
         (apiItem) => getDefaultValueBlock(apiItem, config) !== undefined,
     );
 
-    const headerTitles: string[] = ["Property"];
+    const headerRowCells: TableCellNode[] = [TableCellNode.createFromPlainText("Property")];
     if (hasDeprecated) {
-        headerTitles.push("Alerts");
+        headerRowCells.push(TableCellNode.createFromPlainText("Alerts"));
     }
     if (hasModifiers) {
-        headerTitles.push("Modifiers");
+        headerRowCells.push(TableCellNode.createFromPlainText("Modifiers"));
     }
     if (hasDefaultValues) {
-        headerTitles.push("Default Value");
+        headerRowCells.push(TableCellNode.createFromPlainText("Default Value"));
     }
-    headerTitles.push("Type");
-    headerTitles.push("Description");
+    headerRowCells.push(TableCellNode.createFromPlainText("Type"));
+    headerRowCells.push(TableCellNode.createFromPlainText("Description"));
+    const headerRow = new TableRowNode(headerRowCells);
 
     const tableRows: TableRowNode[] = [];
     for (const apiProperty of apiProperties) {
@@ -407,10 +407,7 @@ export function renderPropertiesTable(
         tableRows.push(new TableRowNode(rowCells));
     }
 
-    return new TableNode(
-        tableRows,
-        headerTitles, // TODO
-    );
+    return new TableNode(tableRows, headerRow);
 }
 
 /**
@@ -475,7 +472,7 @@ export function renderApiSummaryCell(apiItem: ApiItem): TableCellNode {
 
     if (apiItem instanceof ApiDocumentedItem) {
         if (apiItem.tsdocComment !== undefined) {
-            children.push(apiItem.tsdocComment.summarySection); // TODO
+            children.push(transformSection(apiItem.tsdocComment.summarySection));
         }
     }
 
@@ -561,7 +558,7 @@ export function renderDefaultValueCell(
 
     return defaultValueSection === undefined
         ? TableCellNode.Empty
-        : new TableCellNode([defaultValueSection]);
+        : new TableCellNode([transformSection(defaultValueSection)]);
 }
 
 /**
@@ -634,7 +631,7 @@ export function renderParameterSummaryCell(
         return TableCellNode.Empty;
     }
 
-    const cellContent = apiParameter.tsdocParamBlock.content; // TODO
+    const cellContent = transformSection(apiParameter.tsdocParamBlock.content);
 
     return new TableCellNode([cellContent]);
 }
@@ -652,8 +649,12 @@ export function renderTypeExcerptCell(
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
     const excerptNodes = renderExcerptWithHyperlinks(typeExcerpt, config);
+    if (excerptNodes === undefined) {
+        return TableCellNode.Empty;
+    }
 
-    return excerptNodes === undefined ? TableCellNode.Empty : new TableCellNode(excerptNodes);
+    const transformedNodes = excerptNodes.map(transformDocNode);
+    return new TableCellNode(transformedNodes);
 }
 
 /**
