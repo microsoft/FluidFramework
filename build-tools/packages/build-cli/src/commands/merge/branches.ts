@@ -21,17 +21,17 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             required: true,
         }),
         source: Flags.string({
-            description: "Source branch",
+            description: "Source branch name",
             char: "s",
             required: true,
         }),
         target: Flags.string({
-            description: "Target branch",
+            description: "Target branch name",
             char: "t",
             required: true,
         }),
         batchSize: Flags.integer({
-            description: "Maximum number of commit to include in the pull request",
+            description: "Maximum number of commits to include in the pull request",
             char: "b",
             required: true,
         }),
@@ -48,10 +48,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
 
         const context = await this.getContext();
         const gitRepo = context.gitRepo;
-        const prExists: boolean = await api.pullRequestExists(
-            flags.auth,
-            "Automation: Main-next integrate",
-        );
+        const prExists: boolean = await api.pullRequestExists(flags.auth);
 
         if (prExists) {
             this.warn(`Open pull request exists`);

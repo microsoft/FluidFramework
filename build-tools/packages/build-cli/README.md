@@ -372,10 +372,10 @@ USAGE
 
 FLAGS
   -a, --auth=<value>                (required) GitHub authentication token
-  -b, --batchSize=<value>           (required) Maximum number of commit to include in the pull request
+  -b, --batchSize=<value>           (required) Maximum number of commits to include in the pull request
   -p, --pullRequestInfo=<value>...  Pull request data
-  -s, --source=<value>              (required) Source branch
-  -t, --target=<value>              (required) Target branch
+  -s, --source=<value>              (required) Source branch name
+  -t, --target=<value>              (required) Target branch name
   -v, --verbose                     Verbose logging.
 
 DESCRIPTION
