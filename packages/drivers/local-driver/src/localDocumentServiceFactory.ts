@@ -76,6 +76,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             defaultHash,
             resolvedUrl.endpoints.ordererUrl ?? "",
             resolvedUrl.endpoints.storageUrl ?? "",
+            resolvedUrl.endpoints.deltaStreamUrl ?? resolvedUrl.endpoints.ordererUrl ?? "",
             quorumValues,
             false,
         );
