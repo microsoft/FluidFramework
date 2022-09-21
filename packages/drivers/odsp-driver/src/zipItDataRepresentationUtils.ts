@@ -290,6 +290,11 @@ export class NodeCore {
         return getStringInstance(node, "getString should return string");
     }
 
+    public getMaybeString(index: number) {
+        const node = this.children[index];
+        return getMaybeStringInstance(node);
+    }
+
     public getBlob(index: number): BlobCore {
         const node = this.children[index];
         assertBlobCoreInstance(node, "getBlob should return a blob");
@@ -457,6 +462,13 @@ export class TreeBuilder extends NodeCore {
         builder.load(buffer, dictionary);
         assert(buffer.eof, 0x233 /* "Unexpected data at the end of buffer" */);
         return builder;
+    }
+}
+
+export function getMaybeStringInstance(node: NodeTypes): string | undefined {
+    const maybeString = node as IStringElement;
+    if (maybeString._stringElement) {
+        return maybeString.content;
     }
 }
 
