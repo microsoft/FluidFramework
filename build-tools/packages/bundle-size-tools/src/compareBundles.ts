@@ -40,7 +40,7 @@ export function compareBundles(baseline: BundleSummaries, compare: BundleSummari
 
 /**
  * Checks if a bundle comparison contains no size changes
- * @param comparisons
+ * @param comparisons - bundle comparison
  */
 export function bundlesContainNoChanges(comparisons: BundleComparison[]): boolean {
   for (const { commonBundleMetrics } of comparisons) {

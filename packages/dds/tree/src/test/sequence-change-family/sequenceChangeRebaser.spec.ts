@@ -14,6 +14,7 @@ import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
+import { asForest } from "./cases";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
@@ -26,12 +27,6 @@ const testMarks: [string, T.Mark][] = [
     ["Revive", { type: "Revive", id: 0, count: 2, tomb }],
 ];
 deepFreeze(testMarks);
-
-function asForest(markList: T.MarkList): SequenceChangeset {
-    return {
-        marks: { root: markList },
-    };
-}
 
 describe("SequenceChangeFamily", () => {
     /**
