@@ -33,6 +33,7 @@ import { TableCellToMarkdown } from "./TableCellToMd";
 import { TableRowToMarkdown } from "./TableRowToMd";
 import { TableToMarkdown } from "./TableToMd";
 import { UnorderedListToMarkdown } from "./UnorderedListToMd";
+import { standardEOL } from "./Utilities";
 
 export type DocumentationNodeRenderFunction = (
     node: DocumentationNode,
@@ -57,7 +58,10 @@ export type NodeRenderers = {
         node: FencedCodeBlockNode,
         subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.LineBreak]: (node: LineBreakNode) => string;
+    [DocumentNodeType.LineBreak]: (
+        node: LineBreakNode,
+        subtreeRenderer: DocumentationNodeRenderer,
+    ) => string;
     [DocumentNodeType.Markdown]: (
         node: MarkdownNode,
         subtreeRenderer: DocumentationNodeRenderer,
@@ -111,7 +115,10 @@ class DefaultNodeRenderers {
     [DocumentNodeType.BlockQuote] = BlockQuoteToMarkdown;
     [DocumentNodeType.CodeSpan] = CodeSpanToMarkdown;
     [DocumentNodeType.FencedCode] = FencedCodeBlockToMarkdown;
-    [DocumentNodeType.LineBreak] = (node: LineBreakNode) => `</br>`;
+    [DocumentNodeType.LineBreak] = (
+        node: LineBreakNode,
+        subtreeRenderer: DocumentationNodeRenderer,
+    ) => (subtreeRenderer.isInsideCodeBlock ? standardEOL : `<br/>`);
     [DocumentNodeType.Markdown] = (
         node: MarkdownNode,
         subtreeRenderer: DocumentationNodeRenderer,
@@ -136,7 +143,9 @@ export interface RenderingContext {
     bold: boolean;
     italic: boolean;
     strikethrough: boolean;
-    insideHTML: boolean;
+    insideTable: boolean;
+    insideCodeBlock: boolean;
+    depth: number;
 }
 
 export const DefaultRenderers = new DefaultNodeRenderers();
@@ -146,7 +155,9 @@ export class DocumentationNodeRenderer {
         bold: false,
         strikethrough: false,
         italic: false,
-        insideHTML: false,
+        insideTable: false,
+        insideCodeBlock: false,
+        depth: 0,
     };
     public renderNode(node: DocumentationNode): string {
         const prevRenderingContext = this.renderingContext;
@@ -268,8 +279,14 @@ export class DocumentationNodeRenderer {
     public setStrikethrough(): void {
         this.renderingContext.strikethrough = true;
     }
-    public setInsideHTML(): void {
-        this.renderingContext.insideHTML = true;
+    public setInsideTable(): void {
+        this.renderingContext.insideTable = true;
+    }
+    public setInsideCodeBlock(): void {
+        this.renderingContext.insideCodeBlock = true;
+    }
+    public increaseHierarchicalDepth(): void {
+        this.renderingContext.depth++;
     }
 
     public get applyingBold() {
@@ -281,8 +298,11 @@ export class DocumentationNodeRenderer {
     public get applyingStrikethrough() {
         return this.renderingContext.strikethrough;
     }
-    public get isInsideHTML() {
-        return this.renderingContext.insideHTML;
+    public get isInsideTable() {
+        return this.renderingContext.insideTable;
+    }
+    public get isInsideCodeBlock() {
+        return this.renderingContext.insideCodeBlock;
     }
 }
 
