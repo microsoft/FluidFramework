@@ -229,10 +229,11 @@ export class GitRepo {
      */
     public async merge(commitId: string) {
         try {
-            return await this.exec(`merge ${commitId} --no-ff`, `merge a commit id`);
+            return await this.exec(`merge ${commitId} --no-ff`, `merge a commit id: ${commitId}`);
         } catch (error: unknown) {
-            console.error(`Merge conflicts exists. Aborting the merge`);
-            return await this.exec(`merge --abort`, `abort the merge`);
+            this.log?.errorLog(`Merge conflicts exists. Aborting the merge`);
+            await this.exec(`merge --abort`, `Abort merge`);
+            return "Abort";
         }
     }
 

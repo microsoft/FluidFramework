@@ -108,11 +108,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
         let i = 0;
         let commit = 0;
         while (i !== commitSize) {
-            try {
-                // eslint-disable-next-line no-await-in-loop
-                await gitRepo.merge(unmergedCommitList[i]);
-            } catch (error: unknown) {
-                this.error(`Merge abort for ${unmergedCommitList[i]}: ${error}`);
+            // eslint-disable-next-line no-await-in-loop
+            const response = await gitRepo.merge(unmergedCommitList[i]);
+
+            if (response === "Abort merge") {
                 break;
             }
 
