@@ -55,10 +55,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             this.exit(-1);
         }
 
-        // const lastMergedCommit = await gitRepo.mergeBase(flags.source, flags.target);
-        // this.log(
-        //     `${lastMergedCommit} is the last merged commit id between ${flags.source} and ${flags.target}`,
-        // );
+        const lastMergedCommit = await gitRepo.mergeBase(flags.source, flags.target);
+        this.log(
+            `${lastMergedCommit} is the last merged commit id between ${flags.source} and ${flags.target}`,
+        );
 
         // const listCommits = await gitRepo.revList(lastMergedCommit, flags.source);
         // const unmergedCommitList: string[] = [];
