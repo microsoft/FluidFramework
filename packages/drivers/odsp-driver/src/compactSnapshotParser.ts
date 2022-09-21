@@ -37,9 +37,6 @@ function readBlobSection(node: NodeTypes) {
     for (const blob of node) {
         assertNodeCoreInstance(blob, "blob should be node");
 
-        const length = blob.length;
-        assert((length % 2) === 0, "reading pairs");
-
         /**
          * Perf optimization - the most common cases!
          * This is essentially unrolling code below for faster processing
@@ -94,16 +91,14 @@ function readTreeSection(node: NodeCore) {
     for (const treeNode of node) {
         assertNodeCoreInstance(treeNode, "tree nodes should be nodes");
 
-        const length = treeNode.length;
-        assert((length % 2) === 0, "reading pairs");
-
         /**
          * Perf optimization - the most common cases!
          * This is essentially unrolling code below for faster processing
          * It speeds up tree parsing by 2-3x times!
          */
         if (treeNode.getMaybeString(0) === "name") {
-            if (treeNode.length === 4) {
+            const length = treeNode.length;
+            if (length === 4) {
                 const content = treeNode.getMaybeString(2);
                 // "name": <node name>
                 // "children": <blob id>
@@ -122,7 +117,7 @@ function readTreeSection(node: NodeCore) {
             // "name": <node name>
             // "nodeType": 3
             // "value": <blob id>
-            if (treeNode.length === 6 &&
+            if (length === 6 &&
                     treeNode.getMaybeString(2) === "nodeType" &&
                     treeNode.getMaybeString(4) === "value") {
                 snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
