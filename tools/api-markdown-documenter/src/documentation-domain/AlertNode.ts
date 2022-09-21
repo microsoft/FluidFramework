@@ -14,10 +14,14 @@ export enum DocAlertType {
 
 export class AlertNode extends ParentNodeBase {
     public readonly type = DocumentNodeType.Alert;
-    public readonly alertKind: DocAlertType;
 
-    public constructor(children: DocumentationNode[], alertKind: DocAlertType) {
+    public readonly alertKind: DocAlertType;
+    public readonly title?: string;
+
+    public constructor(children: DocumentationNode[], alertKind: DocAlertType, title?: string) {
         super(children);
+
         this.alertKind = alertKind;
+        this.title = title;
     }
 }

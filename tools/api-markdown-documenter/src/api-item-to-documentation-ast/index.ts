@@ -11,5 +11,4 @@
 // - configurable transformation dispatch options with defaults
 // - scope exports to reduce API clutter?
 
-export * from "./default-policies";
 export * from "./helpers";

@@ -44,13 +44,14 @@ export class SpanNode<
     public static createFromPlainText(
         text: string,
         formatting?: TextFormatting,
-    ): SpanNode<PlainTextNode> {
+    ): SingleLineSpanNode<PlainTextNode> {
         return new SpanNode([new PlainTextNode(text)], formatting);
     }
 }
 
-export class SingleLineSpanNode extends SpanNode<SingleLineElementNode> implements SingleLineElementNode {
-    public constructor(children: SingleLineElementNode[], formatting?: TextFormatting) {
-        super(children, formatting);
-    }
-}
+/**
+ * Helper type representing {@link SpanNode}s which strictly contain single-line contents.
+ */
+export type SingleLineSpanNode<
+    TDocumentationNode extends SingleLineElementNode = SingleLineElementNode,
+> = SpanNode<TDocumentationNode>;

@@ -15,6 +15,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import { UrlTarget } from "../Link";
+import { Logger } from "../Logging";
 import {
     CodeSpanNode,
     DocumentationNode,
@@ -23,6 +24,7 @@ import {
     LinkNode,
     ParagraphNode,
     PlainTextNode,
+    SingleLineSpanNode,
     SpanNode,
 } from "../documentation-domain";
 
@@ -34,7 +36,19 @@ import {
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
 export interface DocNodeTransformOptions {
-    resolveApiReference(codeDestination: DocDeclarationReference): UrlTarget;
+    /**
+     * Callback for resolving symbolic links to API items.
+     *
+     * @returns The appropriate URL target if the reference can be resolved. Otherwise, `undefined`.
+     */
+    readonly resolveApiReference: (
+        codeDestination: DocDeclarationReference,
+    ) => UrlTarget | undefined;
+
+    /**
+     * Optional policy for logging system information.
+     */
+    readonly logger?: Logger;
 }
 
 /**
@@ -86,11 +100,14 @@ export function transformParagraph(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SpanNode}.
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link ParagraphNode}.
  */
-export function transformSection(node: DocSection, options: DocNodeTransformOptions): SpanNode {
+export function transformSection(
+    node: DocSection,
+    options: DocNodeTransformOptions,
+): ParagraphNode {
     const children = node.nodes.map((child) => transformDocNode(child, options));
-    return new SpanNode(children);
+    return new ParagraphNode(children);
 }
 
 /**
@@ -119,17 +136,26 @@ export function transformFencedCode(
 export function transformLinkTag(
     node: DocLinkTag,
     options: DocNodeTransformOptions,
-): LinkNode | PlainTextNode {
-    const linkText = node.linkText ?? "";
-
+): LinkNode | SingleLineSpanNode {
     if (node.codeDestination !== undefined) {
+        // If link text was not provided, use the name of the referenced element.
+        const linkText = node.linkText ?? node.codeDestination.emitAsTsdoc();
+
         const urlTarget = options.resolveApiReference(node.codeDestination);
-        return LinkNode.createFromPlainText(linkText, urlTarget);
+        return urlTarget === undefined
+            ? // If the code link could not be resolved, print the unresolved text in italics.
+              SpanNode.createFromPlainText(linkText, { italic: true })
+            : LinkNode.createFromPlainText(linkText, urlTarget);
     }
 
     if (node.urlDestination !== undefined) {
+        // If link text was not provided, use the name of the referenced element.
+        const linkText = node.linkText ?? node.urlDestination;
+
         return LinkNode.createFromPlainText(linkText, node.urlDestination);
     }
 
-    return new PlainTextNode(linkText);
+    throw new Error(
+        `DocLinkTag contained neither a URL destination nor a code destination, which is not expected.`,
+    );
 }

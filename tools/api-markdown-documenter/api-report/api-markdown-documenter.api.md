@@ -23,11 +23,17 @@ import { ApiPackage } from '@microsoft/api-extractor-model';
 import { ApiPropertyItem } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
+import { Data } from 'unist';
+import { DocCodeSpan } from '@microsoft/tsdoc';
+import { DocDeclarationReference } from '@microsoft/tsdoc';
 import { DocEmphasisSpan } from '@microsoft/api-documenter/lib/nodes/DocEmphasisSpan';
+import { DocFencedCode } from '@microsoft/tsdoc';
 import { DocLinkTag } from '@microsoft/tsdoc';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocNodeContainer } from '@microsoft/tsdoc';
 import { DocNoteBox } from '@microsoft/api-documenter/lib/nodes/DocNoteBox';
+import { DocParagraph } from '@microsoft/tsdoc';
+import { DocPlainText } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { DocTable } from '@microsoft/api-documenter/lib/nodes/DocTable';
 import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
@@ -37,12 +43,27 @@ import { IDocNodeContainerParameters } from '@microsoft/tsdoc';
 import { IDocNodeParameters } from '@microsoft/tsdoc';
 import { IMarkdownEmitterContext } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { IMarkdownEmitterOptions } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
+import { Literal } from 'unist';
 import { MarkdownEmitter as MarkdownEmitter_2 } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { NewlineKind } from '@rushstack/node-core-library';
+import { Node as Node_2 } from 'unist';
 import { Parameter } from '@microsoft/api-extractor-model';
+import { Parent } from 'unist';
+import { Parent as Parent_2 } from 'mdast';
 import { StringBuilder } from '@microsoft/tsdoc';
 import { TSDocConfiguration } from '@microsoft/tsdoc';
 import { TypeParameter } from '@microsoft/api-extractor-model';
+
+// @public (undocumented)
+export class AlertNode extends ParentNodeBase {
+    constructor(children: DocumentationNode[], alertKind: DocAlertType, title?: string);
+    // (undocumented)
+    readonly alertKind: DocAlertType;
+    // (undocumented)
+    readonly title?: string;
+    // (undocumented)
+    readonly type = DocumentNodeType.Alert;
+}
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -74,11 +95,133 @@ export { ApiPackage }
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 // @public
-interface ChildSectionProperties {
+export const betaAlert: AlertNode;
+
+// @public (undocumented)
+export class BlockQuoteNode extends ParentNodeBase {
+    constructor(children: DocumentationNode[]);
+    // (undocumented)
+    readonly type = DocumentNodeType.BlockQuote;
+}
+
+// @public
+export interface ChildSectionProperties {
+    heading: Heading;
+    itemKind: ApiItemKind;
+    items: readonly ApiItem[];
+}
+
+// @public
+interface ChildSectionProperties_2 {
     headingTitle: string;
     itemKind: ApiItemKind;
     items: readonly ApiItem[];
 }
+
+// @public (undocumented)
+export class CodeSpanNode extends ParentNodeBase<SingleLineElementNode> implements SingleLineElementNode {
+    constructor(children: SingleLineElementNode[]);
+    // (undocumented)
+    static createFromPlainText(text: string): CodeSpanNode;
+    // (undocumented)
+    readonly type = DocumentNodeType.CodeSpan;
+}
+
+// @public
+export function createApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): TableCellNode;
+
+// @public
+export function createApiTitleCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): TableCellNode;
+
+// @public
+export function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ParagraphNode;
+
+// @public
+export function createChildDetailsSection(childItems: readonly ChildSectionProperties[], config: Required<MarkdownDocumenterConfiguration>, createChildContent: (apiItem: any) => DocumentationNode): HierarchicalSectionNode[] | undefined;
+
+// @public
+export function createDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableCreationOptions): TableNode | undefined;
+
+// @public
+export function createDefaultValueCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): TableCellNode;
+
+// @public
+export function createDeprecatedCell(apiItem: ApiItem): TableCellNode;
+
+// @public
+export function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): AlertNode | undefined;
+
+// @public
+export function createExcerptSpanWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): SpanNode<SingleLineElementNode> | undefined;
+
+// @public
+export function createFunctionLikeSummaryTable(apiItems: readonly ApiFunctionLike[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableCreationOptions): TableNode | undefined;
+
+// @public
+export function createHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HeadingNode;
+
+// @public
+export function createHeritageTypesSpan(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): SpanNode | undefined;
+
+// @public
+export function createMemberTables(memberTableProperties: readonly MemberTableProperties[], config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode[] | undefined;
+
+// @public
+export function createModifiersCell(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): TableCellNode;
+
+// @public
+export function createPackagesTable(apiPackages: readonly ApiPackage[], config: Required<MarkdownDocumenterConfiguration>): TableNode | undefined;
+
+// @public
+export function createParametersSummaryTable(apiParameters: readonly Parameter[], config: Required<MarkdownDocumenterConfiguration>): TableNode;
+
+// @public
+export function createParameterSummaryCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): TableCellNode;
+
+// @public
+export function createParameterTitleCell(apiParameter: Parameter): TableCellNode;
+
+// @public
+export function createParameterTypeCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): TableCellNode;
+
+// @public
+export function createPropertiesTable(apiProperties: readonly ApiPropertyItem[], config: Required<MarkdownDocumenterConfiguration>, options?: TableCreationOptions): TableNode | undefined;
+
+// @public
+export function createPropertyTypeCell(apiProperty: ApiPropertyItem, config: Required<MarkdownDocumenterConfiguration>): TableCellNode;
+
+// @public
+export function createRemarksSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
+
+// @public
+export function createReturnsSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
+
+// @public
+export function createReturnTypeCell(apiItem: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): TableCellNode;
+
+// @public
+export function createSeeAlsoSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
+
+// @public
+export function createSignatureSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
+
+// @public
+export function createSummaryParagraph(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ParagraphNode | undefined;
+
+// @public
+export function createSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableCreationOptions): TableNode | undefined;
+
+// @public
+export function createTableWithHeading(memberTableProperties: MemberTableProperties, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
+
+// @public
+export function createThrowsSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
+
+// @public
+export function createTypeExcerptCell(typeExcerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): TableCellNode;
+
+// @public
+export function createTypeParametersSpan(typeParameters: readonly TypeParameter[], config: Required<MarkdownDocumenterConfiguration>): SpanNode | undefined;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -143,7 +286,14 @@ export enum DocAlertType {
 export { DocEmphasisSpan }
 
 // @public
-interface DocExampleProperties {
+export interface DocExampleProperties {
+    apiItem: ApiItem;
+    content: DocSection;
+    exampleNumber?: number;
+}
+
+// @public
+interface DocExampleProperties_2 {
     apiItem: ApiItem;
     content: DocSection;
     exampleNumber?: number;
@@ -167,6 +317,12 @@ export class DocList extends DocNodeContainer {
     readonly listKind: ListKind;
 }
 
+// @public
+export interface DocNodeTransformOptions {
+    readonly logger?: Logger;
+    readonly resolveApiReference: (codeDestination: DocDeclarationReference) => UrlTarget | undefined;
+}
+
 export { DocNoteBox }
 
 export { DocTable }
@@ -176,7 +332,64 @@ export { DocTableCell }
 export { DocTableRow }
 
 // @public
+export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
+    // (undocumented)
+    readonly type: DocumentNodeType;
+}
+
+// @public
 export type DocumentBoundaries = ApiMemberKind[];
+
+// @public
+export class DocumentNode implements Parent<DocumentationNode> {
+    constructor(children: DocumentationNode[], filePath: string);
+    // (undocumented)
+    readonly children: DocumentationNode[];
+    // (undocumented)
+    readonly filePath: string;
+    // (undocumented)
+    readonly type = DocumentNodeType.Document;
+}
+
+// @public
+export enum DocumentNodeType {
+    // (undocumented)
+    Alert = "Alert",
+    // (undocumented)
+    BlockQuote = "BlockQuote",
+    // (undocumented)
+    CodeSpan = "CodeSpan",
+    // (undocumented)
+    Document = "Document",
+    // (undocumented)
+    FencedCode = "FencedCode",
+    // (undocumented)
+    LineBreak = "LineBreak",
+    // (undocumented)
+    Markdown = "Markdown",
+    // (undocumented)
+    NestedSection = "NestedSection",
+    // (undocumented)
+    OrderedList = "OrderedList",
+    // (undocumented)
+    Paragraph = "Paragraph",
+    // (undocumented)
+    PlainText = "PlainText",
+    // (undocumented)
+    Span = "Span",
+    // (undocumented)
+    SymbolicLink = "SymbolicLink",
+    // (undocumented)
+    Table = "Table",
+    // (undocumented)
+    TableCell = "TableCell",
+    // (undocumented)
+    TableRow = "TableRow",
+    // (undocumented)
+    UnorderedList = "UnorderedList",
+    // (undocumented)
+    UrlLink = "UrlLink"
+}
 
 // @public
 export function doesItemGenerateHierarchy(apiItem: ApiItem, hierarchyBoundaries: HierarchyBoundaries): boolean;
@@ -202,6 +415,20 @@ export interface EmitterOptions extends IMarkdownEmitterOptions {
     getLinkUrlApiItem: (apiItem: ApiItem) => string | undefined;
     headingLevel?: number;
     logger?: Logger;
+}
+
+// @public (undocumented)
+export type FencedCodeBlockChildren = LineBreakNode | SingleLineElementNode;
+
+// @public (undocumented)
+export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren> {
+    constructor(children: FencedCodeBlockChildren[], language?: string);
+    // (undocumented)
+    static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
+    // (undocumented)
+    readonly language?: string;
+    // (undocumented)
+    readonly type = DocumentNodeType.FencedCode;
 }
 
 // @public
@@ -274,8 +501,31 @@ export interface Heading {
     title: string;
 }
 
+// @public (undocumented)
+export class HeadingNode implements LiteralNode<SingleLineElementNode> {
+    constructor(content: SingleLineElementNode, id?: string, level?: number);
+    // (undocumented)
+    static createFromHeading(heading: Heading): HeadingNode;
+    // (undocumented)
+    static createFromPlainText(text: string, id?: string, level?: number): HeadingNode;
+    // (undocumented)
+    readonly id?: string;
+    readonly level?: number;
+    // (undocumented)
+    readonly type = DocumentNodeType.Markdown;
+    // (undocumented)
+    readonly value: SingleLineElementNode;
+}
+
 // @public
 export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
+
+// @public
+export class HierarchicalSectionNode extends ParentNodeBase {
+    constructor(children: DocumentationNode[]);
+    // (undocumented)
+    readonly type = DocumentNodeType.NestedSection;
+}
 
 // @public
 export type HierarchyBoundaries = ApiMemberKind[];
@@ -306,10 +556,32 @@ export function isReadonly(apiItem: ApiItem): boolean;
 // @public
 export function isStatic(apiItem: ApiItem): boolean;
 
+// @public (undocumented)
+export class LineBreakNode implements DocumentationNode {
+    constructor();
+    // (undocumented)
+    static readonly Singleton: LineBreakNode;
+    // (undocumented)
+    readonly type = DocumentNodeType.LineBreak;
+}
+
 // @public
 export interface Link {
     text: string;
-    url: string;
+    url: UrlTarget;
+}
+
+// @public (undocumented)
+export class LinkNode extends ParentNodeBase<SingleLineElementNode> implements SingleLineElementNode {
+    constructor(content: SingleLineElementNode[], target: UrlTarget);
+    // (undocumented)
+    static createFromPlainText(text: string, target: UrlTarget): LinkNode;
+    // (undocumented)
+    static createFromPlainTextLink(link: Link): LinkNode;
+    // (undocumented)
+    readonly target: UrlTarget;
+    // (undocumented)
+    readonly type = DocumentNodeType.UrlLink;
 }
 
 // @public
@@ -321,6 +593,12 @@ export enum ListKind {
     Ordered = "ordered",
     // (undocumented)
     Unordered = "unordered"
+}
+
+// @public
+export interface LiteralNode<T = unknown> extends Literal<T>, DocumentationNode {
+    // (undocumented)
+    readonly type: DocumentNodeType;
 }
 
 // @public
@@ -387,11 +665,28 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
     protected writeTable(docTable: DocTable, context: EmitterContext, docNodeSiblings: boolean): void;
 }
 
+// @public (undocumented)
+export class MarkdownNode implements LiteralNode<Parent_2> {
+    constructor(child: Parent_2);
+    // (undocumented)
+    readonly type = DocumentNodeType.Markdown;
+    // (undocumented)
+    readonly value: Parent_2;
+}
+
 // @public
 export const maxHeadingLevel = 6;
 
 // @public
-interface MemberTableProperties {
+export interface MemberTableProperties {
+    headingTitle: string;
+    itemKind: ApiItemKind;
+    items: readonly ApiItem[];
+    options?: TableCreationOptions;
+}
+
+// @public
+interface MemberTableProperties_2 {
     headingTitle: string;
     itemKind: ApiItemKind;
     items: readonly ApiItem[];
@@ -401,8 +696,54 @@ interface MemberTableProperties {
 // @public
 export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocConfiguration): DocSection;
 
+// @public (undocumented)
+export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
+    constructor(children: SingleLineElementNode[]);
+    // (undocumented)
+    readonly type = DocumentNodeType.OrderedList;
+}
+
 // @public
 export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
+
+// @public (undocumented)
+export type ParagraphChildren = LineBreakNode | SingleLineElementNode | SpanNode<LineBreakNode | SingleLineElementNode>;
+
+// @public (undocumented)
+export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
+    constructor(children: ParagraphChildren[]);
+    // (undocumented)
+    static createFromPlainText(text: string): ParagraphNode;
+    // (undocumented)
+    readonly type = DocumentNodeType.Paragraph;
+}
+
+// @public
+interface ParentNode_2<TDocumentNode extends DocumentationNode = DocumentationNode> extends Parent<TDocumentNode, Data>, DocumentationNode {
+    // (undocumented)
+    readonly children: TDocumentNode[];
+    // (undocumented)
+    readonly type: DocumentNodeType;
+}
+export { ParentNode_2 as ParentNode }
+
+// @public
+export abstract class ParentNodeBase<TDocumentNode extends DocumentationNode = DocumentationNode> implements ParentNode_2<TDocumentNode> {
+    protected constructor(children: TDocumentNode[]);
+    // (undocumented)
+    readonly children: TDocumentNode[];
+    // (undocumented)
+    abstract type: DocumentNodeType;
+}
+
+// @public (undocumented)
+export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode {
+    constructor(value: string);
+    // (undocumented)
+    readonly type = DocumentNodeType.PlainText;
+    // (undocumented)
+    readonly value: string;
+}
 
 // @public
 export interface PolicyOptions {
@@ -440,7 +781,7 @@ function renderBetaAlert(config: Required<MarkdownDocumenterConfiguration>): Doc
 function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
-function renderChildDetailsSection(childSections: readonly ChildSectionProperties[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
+function renderChildDetailsSection(childSections: readonly ChildSectionProperties_2[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
 
 // @public
 function renderChildrenSection(apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>): DocSection;
@@ -473,10 +814,16 @@ function renderEmptyTableCell(config: Required<MarkdownDocumenterConfiguration>)
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public
-function renderExampleSection(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+export function renderExampleSection(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode;
 
 // @public
-function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderExampleSection_2(example: DocExampleProperties_2, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+
+// @public
+export function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
+
+// @public
+function renderExamplesSection_2(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocNode[] | undefined;
@@ -514,15 +861,15 @@ declare namespace RenderingHelpers {
         renderRemarksSection,
         renderThrowsSection,
         renderDeprecationNoticeSection,
-        renderExamplesSection,
-        renderExampleSection,
-        renderParametersSection,
+        renderExamplesSection_2 as renderExamplesSection,
+        renderExampleSection_2 as renderExampleSection,
+        renderParametersSection_2 as renderParametersSection,
         renderReturnsSection,
         renderChildDetailsSection,
         renderChildrenUnderHeading,
         renderLink,
-        DocExampleProperties,
-        ChildSectionProperties,
+        DocExampleProperties_2 as DocExampleProperties,
+        ChildSectionProperties_2 as ChildSectionProperties,
         renderMemberTables,
         renderTableWithHeading,
         renderSummaryTable,
@@ -544,7 +891,7 @@ declare namespace RenderingHelpers {
         renderTypeExcerptCell,
         renderPlainTextCell,
         renderEmptyTableCell,
-        MemberTableProperties,
+        MemberTableProperties_2 as MemberTableProperties,
         TableRenderingOptions
     }
 }
@@ -580,7 +927,7 @@ function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDo
 function renderLink(link: Link, config: Required<MarkdownDocumenterConfiguration>): DocLinkTag;
 
 // @public
-function renderMemberTables(memberTableProperties: readonly MemberTableProperties[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderMemberTables(memberTableProperties: readonly MemberTableProperties_2[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 export function renderModelDocument(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
@@ -607,7 +954,10 @@ function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownD
 function renderPackagesTable(apiPackages: readonly ApiPackage[], config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
 // @public
-function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+export function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
+
+// @public
+function renderParametersSection_2(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderParametersSummaryTable(apiParameters: readonly Parameter[], config: Required<MarkdownDocumenterConfiguration>): DocTable;
@@ -655,7 +1005,7 @@ function renderSummarySection(apiItem: ApiItem): DocSection | undefined;
 function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>, options?: TableRenderingOptions): DocTable | undefined;
 
 // @public
-function renderTableWithHeading(memberTableProperties: MemberTableProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderTableWithHeading(memberTableProperties: MemberTableProperties_2, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderThrowsSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
@@ -667,12 +1017,103 @@ function renderTypeExcerptCell(typeExcerpt: Excerpt, config: Required<MarkdownDo
 function renderTypeParameters(typeParameters: readonly TypeParameter[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
+export interface SingleLineElementNode extends DocumentationNode {
+}
+
+// @public
+export type SingleLineSpanNode<TDocumentationNode extends SingleLineElementNode = SingleLineElementNode> = SpanNode<TDocumentationNode>;
+
+// @public (undocumented)
+export class SpanNode<TDocumentNode extends DocumentationNode = DocumentationNode> extends ParentNodeBase<TDocumentNode> {
+    constructor(children: TDocumentNode[], formatting?: TextFormatting);
+    // (undocumented)
+    static createFromPlainText(text: string, formatting?: TextFormatting): SingleLineSpanNode<PlainTextNode>;
+    // (undocumented)
+    readonly textFormatting?: TextFormatting;
+    // (undocumented)
+    readonly type = DocumentNodeType.Span;
+}
+
+// @public (undocumented)
+export class TableCellNode extends ParentNodeBase {
+    constructor(children: DocumentationNode[]);
+    // (undocumented)
+    static createFromPlainText(text: string): TableCellNode;
+    // (undocumented)
+    static readonly Empty: TableCellNode;
+    // (undocumented)
+    readonly type = DocumentNodeType.TableCell;
+}
+
+// @public
+export interface TableCreationOptions {
+    modifiersToOmit?: ApiModifier[];
+}
+
+// @public (undocumented)
+export class TableNode extends ParentNodeBase<TableRowNode> {
+    constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode);
+    // (undocumented)
+    readonly headingRow?: TableRowNode;
+    // (undocumented)
+    readonly type = DocumentNodeType.Table;
+}
+
+// @public
 interface TableRenderingOptions {
     modifiersToOmit?: ApiModifier[];
 }
 
+// @public (undocumented)
+export class TableRowNode extends ParentNodeBase<TableCellNode> {
+    constructor(cells: TableCellNode[]);
+    // (undocumented)
+    readonly type = DocumentNodeType.TableRow;
+}
+
+// @public (undocumented)
+export interface TextFormatting {
+    // (undocumented)
+    bold?: boolean;
+    // (undocumented)
+    italic?: boolean;
+    // (undocumented)
+    strikethrough?: boolean;
+}
+
+// @public
+export function transformCodeSpan(node: DocCodeSpan, options: DocNodeTransformOptions): CodeSpanNode;
+
+// @public
+export function transformDocNode(node: DocNode, options: DocNodeTransformOptions): DocumentationNode;
+
+// @public
+export function transformFencedCode(node: DocFencedCode, options: DocNodeTransformOptions): FencedCodeBlockNode;
+
+// @public
+export function transformLinkTag(node: DocLinkTag, options: DocNodeTransformOptions): LinkNode | SingleLineSpanNode;
+
+// @public
+export function transformParagraph(node: DocParagraph, options: DocNodeTransformOptions): ParagraphNode;
+
+// @public
+export function transformPlainText(node: DocPlainText, options: DocNodeTransformOptions): PlainTextNode;
+
+// @public
+export function transformSection(node: DocSection, options: DocNodeTransformOptions): ParagraphNode;
+
+// @public (undocumented)
+export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
+    constructor(children: SingleLineElementNode[]);
+    // (undocumented)
+    readonly type = DocumentNodeType.UnorderedList;
+}
+
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
+
+// @public
+export type UrlTarget = string;
 
 // @public
 export const verboseConsoleLogger: Logger;

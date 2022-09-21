@@ -12,9 +12,9 @@ export type FencedCodeBlockChildren = LineBreakNode | SingleLineElementNode;
 /**
  * @example
  * ```md
- * ```typescrpt
+ * \`\`\`typescrpt
  * const foo = "bar";
- * ```
+ * \`\`\`
  * ```
  */
 export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren> {

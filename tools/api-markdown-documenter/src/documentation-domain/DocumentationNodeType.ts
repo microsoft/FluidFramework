@@ -4,7 +4,8 @@
 /**
  * Kind of document domain node. Used to dispatch on different document domain node implementations.
  *
- * @remarks Any given {@link DocumentationNode} implementation will specify a unique value as its {@link DocumentationNode.type}.
+ * @remarks Any given {@link DocumentationNode} implementation will specify a unique value as
+ * its {@link DocumentationNode."type"}.
  */
 export enum DocumentNodeType {
     Alert = "Alert",

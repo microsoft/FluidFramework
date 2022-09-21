@@ -14,9 +14,14 @@
  * @packageDocumentation
  */
 
+// TODOs:
+// - bundle helper libraries as module (namespace) exports?
+// - Remove DocNode types from exports
+
+export * from "./api-item-to-documentation-ast";
+export * from "./doc-node-to-documentation-ast";
 export {
     DocAlert,
-    DocAlertType,
     DocEmphasisSpan,
     DocHeading,
     DocList,
@@ -29,6 +34,7 @@ export {
     IDocListParameters,
     ListKind,
 } from "./doc-nodes";
+export * from "./documentation-domain";
 export * from "./rendering";
 export * from "./utilities";
 

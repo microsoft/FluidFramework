@@ -16,7 +16,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
-import { transformDocNode, transformSection } from "../../doc-node-to-documentation-ast";
+import { transformSection } from "../../doc-node-to-documentation-ast";
 import {
     CodeSpanNode,
     DocumentationNode,
@@ -38,6 +38,7 @@ import {
     isDeprecated,
 } from "../../utilities";
 import { createExcerptSpanWithHyperlinks } from "./Helpers";
+import { getDocNodeTransformationOptions } from "./InternalUtilities";
 
 /**
  * Input properties for creating a table of API members
@@ -231,7 +232,7 @@ export function createDefaultSummaryTable(
         if (hasModifiers) {
             rowCells.push(createModifiersCell(apiItem, options?.modifiersToOmit));
         }
-        rowCells.push(createApiSummaryCell(apiItem));
+        rowCells.push(createApiSummaryCell(apiItem, config));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -275,7 +276,7 @@ export function createParametersSummaryTable(
             rowCells.push(createModifierCell(apiParameter));
         }
         rowCells.push(createParameterTypeCell(apiParameter, config));
-        rowCells.push(createParameterSummaryCell(apiParameter));
+        rowCells.push(createParameterSummaryCell(apiParameter, config));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -338,7 +339,7 @@ export function createFunctionLikeSummaryTable(
         if (hasReturnTypes) {
             rowCells.push(createReturnTypeCell(apiItem, config));
         }
-        rowCells.push(createApiSummaryCell(apiItem));
+        rowCells.push(createApiSummaryCell(apiItem, config));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -401,7 +402,7 @@ export function createPropertiesTable(
             rowCells.push(createDefaultValueCell(apiProperty, config));
         }
         rowCells.push(createPropertyTypeCell(apiProperty, config));
-        rowCells.push(createApiSummaryCell(apiProperty));
+        rowCells.push(createApiSummaryCell(apiProperty, config));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -441,7 +442,7 @@ export function createPackagesTable(
         if (hasDeprecated) {
             rowCells.push(createDeprecatedCell(apiPackage));
         }
-        rowCells.push(createApiSummaryCell(apiPackage));
+        rowCells.push(createApiSummaryCell(apiPackage, config));
 
         tableRows.push(new TableRowNode(rowCells));
     }
@@ -454,13 +455,17 @@ export function createPackagesTable(
  * If the item has an `@beta` release tag, the comment will be annotated as being beta content.
  *
  * @param apiItem - The API item whose comment will be rendered in the cell.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function createApiSummaryCell(apiItem: ApiItem): TableCellNode {
-    const children: DocumentationNode[] = [];
+export function createApiSummaryCell(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): TableCellNode {
+    const contents: DocumentationNode[] = [];
 
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem)) {
         if (apiItem.releaseTag === ReleaseTag.Beta) {
-            children.push(
+            contents.push(
                 new SpanNode([new PlainTextNode("(BETA)")], {
                     bold: true,
                     italic: true,
@@ -470,12 +475,15 @@ export function createApiSummaryCell(apiItem: ApiItem): TableCellNode {
     }
 
     if (apiItem instanceof ApiDocumentedItem) {
+        const docNodeTransformOptions = getDocNodeTransformationOptions(config);
         if (apiItem.tsdocComment !== undefined) {
-            children.push(transformSection(apiItem.tsdocComment.summarySection));
+            contents.push(
+                transformSection(apiItem.tsdocComment.summarySection, docNodeTransformOptions),
+            );
         }
     }
 
-    return children.length === 0 ? TableCellNode.Empty : new TableCellNode(children);
+    return contents.length === 0 ? TableCellNode.Empty : new TableCellNode(contents);
 }
 
 /**
@@ -510,13 +518,8 @@ export function createApiTitleCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
-    const itemLink = getLinkForApiItem(apiItem, config); // TODO: symbolic link?
-    return new TableCellNode([
-        new LinkNode({
-            target: itemLink.url,
-            content: new PlainTextNode(itemLink.text),
-        }),
-    ]);
+    const itemLink = getLinkForApiItem(apiItem, config);
+    return new TableCellNode([LinkNode.createFromPlainTextLink(itemLink)]);
 }
 
 /**
@@ -553,11 +556,13 @@ export function createDefaultValueCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
-    const defaultValueSection = getDefaultValueBlock(apiItem, config); // TODO
+    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+
+    const defaultValueSection = getDefaultValueBlock(apiItem, config);
 
     return defaultValueSection === undefined
         ? TableCellNode.Empty
-        : new TableCellNode([transformSection(defaultValueSection)]);
+        : new TableCellNode([transformSection(defaultValueSection, docNodeTransformOptions)]);
 }
 
 /**
@@ -619,14 +624,23 @@ export function createParameterTypeCell(
  * of the provided parameter.
  * If the parameter has no documentation, an empty cell will be used.
  *
- * @param apiParameter - The parameter whose comment will be displayed in the cell
+ * @param apiParameter - The parameter whose comment will be displayed in the cell.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function createParameterSummaryCell(apiParameter: Parameter): TableCellNode {
+export function createParameterSummaryCell(
+    apiParameter: Parameter,
+    config: Required<MarkdownDocumenterConfiguration>,
+): TableCellNode {
     if (apiParameter.tsdocParamBlock === undefined) {
         return TableCellNode.Empty;
     }
 
-    const cellContent = transformSection(apiParameter.tsdocParamBlock.content);
+    const docNodeTransformOptions = getDocNodeTransformationOptions(config);
+
+    const cellContent = transformSection(
+        apiParameter.tsdocParamBlock.content,
+        docNodeTransformOptions,
+    );
 
     return new TableCellNode([cellContent]);
 }
@@ -643,13 +657,8 @@ export function createTypeExcerptCell(
     typeExcerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
 ): TableCellNode {
-    const excerptNodes = createExcerptSpanWithHyperlinks(typeExcerpt, config);
-    if (excerptNodes === undefined) {
-        return TableCellNode.Empty;
-    }
-
-    const transformedNodes = excerptNodes.map(transformDocNode);
-    return new TableCellNode(transformedNodes);
+    const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
+    return excerptSpan === undefined ? TableCellNode.Empty : new TableCellNode([excerptSpan]);
 }
 
 /**
