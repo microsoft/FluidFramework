@@ -13,6 +13,7 @@ export class LeaderElection {
     private lastPinged: number | undefined;
     private readonly logger: TelemetryLogger;
     private prevPing: number | undefined;
+    private readonly leaders: string[] = [];
 
     constructor(private readonly dataStoreRuntime: IFluidDataStoreRuntime) {
         this.logger = ChildLogger.create(this.dataStoreRuntime.logger, "SignalLeaderElection");
@@ -37,6 +38,26 @@ export class LeaderElection {
         this.dataStoreRuntime.on("connected", () => {
             clearInterval(interval);
             interval = setInterval(() => this.runLeaderElection(), this.beatInEveryNSecs);
+        });
+
+        this.dataStoreRuntime.getAudience().on("addMember", (clientId) => {
+            if (this.leaderId === clientId) {
+                this.leaders.push(clientId);
+                this.logger.sendTelemetryEvent({
+                    eventName: "LeaderElected",
+                    testHarnessEvent: true,
+                });
+            }
+        });
+
+        this.dataStoreRuntime.getAudience().on("removeMember", (clientId) => {
+            if (this.leaders[this.leaders.length - 1] === clientId) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "LeaderElected",
+                    testHarnessEvent: true,
+                });
+                this.leaders.push(this.leaderId);
+            }
         });
     }
 
