@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ReadBuffer } from "../ReadBufferUtils";
+import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { TreeBuilderSerializer } from "../WriteBufferUtils";
 import {
     TreeBuilder,
@@ -28,7 +28,8 @@ function compareNodes(node1: NodeTypes, node2: NodeTypes) {
         }
     } else if (node1 instanceof BlobCore) {
         assert(node2 instanceof BlobCore, "Node2 should also be a blob");
-        assert(node1.toString() === node2.toString(), "Blob contents not same");
+        assert(Uint8ArrayToString(node1.buffer, "utf-8") === Uint8ArrayToString(node2.buffer, "utf-8"),
+            "Blob contents not same");
     } else if (typeof node1 === "number") {
         assert(Number.isInteger(node1), "Content 1 should be an integer");
         assert(Number.isInteger(node2), "Content 2 should be an integer");
@@ -180,7 +181,7 @@ describe("Tree Representation tests", () => {
     });
 
     it("blob instance test", async () => {
-        const blobNode = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
+        const blobNode = new BlobShallowCopy(new Uint8Array(), 0, 0);
         assertBlobCoreInstance(blobNode, "should be a blob");
 
         let success = true;
@@ -198,7 +199,7 @@ describe("Tree Representation tests", () => {
         assertNodeCoreInstance(node, "should be a node");
 
         let success = true;
-        const nonNode: NodeTypes = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
+        const nonNode: NodeTypes = new BlobShallowCopy(new Uint8Array(), 0, 0);
         try {
             assertNodeCoreInstance(nonNode, "should be a node");
         } catch (err) {
@@ -212,7 +213,7 @@ describe("Tree Representation tests", () => {
         assertNumberInstance(numNode, "should be a number");
 
         let success = true;
-        const nonNumberNode: NodeTypes = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
+        const nonNumberNode: NodeTypes = new BlobShallowCopy(new Uint8Array(), 0, 0);
         try {
             assertNumberInstance(nonNumberNode, "should be a number");
         } catch (err) {

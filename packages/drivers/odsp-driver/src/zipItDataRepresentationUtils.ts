@@ -151,18 +151,12 @@ export function iterate<T>(obj: { [Symbol.iterator]: () => IterableIterator<T>; 
  */
 export abstract class BlobCore {
     public abstract get buffer(): Uint8Array;
-    public get arrayBuffer(): ArrayBufferLike {
-        return Uint8ArrayToArrayBuffer(this.buffer);
-    }
+    public abstract get arrayBuffer(): ArrayBufferLike;
 
     /**
      * Represents a blob.
      */
     constructor() {}
-
-    public toString() {
-        return Uint8ArrayToString(this.buffer, "utf-8");
-    }
 }
 
 /**
@@ -181,6 +175,10 @@ class BlobDeepCopy extends BlobCore {
 
     public get buffer() {
         return this.data;
+    }
+
+    public get arrayBuffer(): ArrayBufferLike {
+        return Uint8ArrayToArrayBuffer(this.buffer);
     }
 
     public static read(buffer: ReadBuffer, lengthLen: number): BlobCore {
@@ -205,7 +203,7 @@ class BlobDeepCopy extends BlobCore {
      * @param end - End point of the blob in the buffer.
      */
     constructor(
-        protected data: ReadBuffer,
+        protected data: Uint8Array,
         protected start: number,
         protected end: number,
     ) {
@@ -213,14 +211,20 @@ class BlobDeepCopy extends BlobCore {
     }
 
     public get buffer() {
-        return this.data.buffer.subarray(this.start, this.end);
+        return this.data.subarray(this.start, this.end);
+    }
+
+    // Equivalent to Uint8ArrayToArrayBuffer(this.buffer)
+    public get arrayBuffer(): ArrayBufferLike {
+        const offset = this.data.byteOffset;
+        return this.data.buffer.slice(this.start + offset, this.end + offset);
     }
 
     public static read(buffer: ReadBuffer, lengthLen: number): BlobCore {
         const length = buffer.read(lengthLen);
         const pos = buffer.pos;
         buffer.skip(length);
-        return new BlobShallowCopy(buffer, pos, pos + length);
+        return new BlobShallowCopy(buffer.buffer, pos, pos + length);
     }
 }
 
