@@ -4,7 +4,7 @@
  */
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
-import * as api from "../../api";
+// import * as api from "../../api";
 
 /**
  * This command class is used to merge two branches based on the batch size provided.
@@ -48,12 +48,12 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
 
         const context = await this.getContext();
         const gitRepo = context.gitRepo;
-        const prExists: boolean = await api.pullRequestExists(flags.auth);
+        // const prExists: boolean = await api.pullRequestExists(flags.auth);
 
-        if (prExists) {
-            this.warn(`Open pull request exists`);
-            this.exit(-1);
-        }
+        // if (prExists) {
+        //     this.warn(`Open pull request exists`);
+        //     this.exit(-1);
+        // }
 
         const lastMergedCommit = await gitRepo.mergeBase(flags.source, flags.target);
         this.log(
@@ -134,29 +134,29 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             await gitRepo.setUpstream(`${flags.source}-${flags.target}-${unmergedCommitList[0]}`);
             await gitRepo.resetBranch(unmergedCommitList[0]);
             // fetch name of owner associated to the pull request
-            const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[0]);
-            this.log(`Fetch pull request info for commit id ${unmergedCommitList[0]}: ${data}`);
-            prNumber = await api.createPullRequest(
-                flags.auth,
-                `${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
-                flags.target,
-                "sonalivdeshpande",
-            );
+            // const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[0]);
+            // this.log(`Fetch pull request info for commit id ${unmergedCommitList[0]}: ${data}`);
+            // prNumber = await api.createPullRequest(
+            //     flags.auth,
+            //     `${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
+            //     flags.target,
+            //     "sonalivdeshpande",
+            // );
             this.log(
                 `Open pull request for commit id ${unmergedCommitList[0]}. Please resolve the merge conflicts.`,
             );
         } else {
             // fetch name of owner associated to the pull request
-            const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[commit]);
-            this.info(
-                `Fetch pull request info for commit id ${unmergedCommitList[commit]}: ${data}`,
-            );
-            prNumber = await api.createPullRequest(
-                flags.auth,
-                branchName,
-                flags.target,
-                "sonalivdeshpande",
-            );
+            // const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[commit]);
+            // this.info(
+            //     `Fetch pull request info for commit id ${unmergedCommitList[commit]}: ${data}`,
+            // );
+            // prNumber = await api.createPullRequest(
+            //     flags.auth,
+            //     branchName,
+            //     flags.target,
+            //     "sonalivdeshpande",
+            // );
             this.info(`Pull request opened for pushing bulk commits`);
         }
 
