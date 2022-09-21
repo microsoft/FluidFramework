@@ -89,7 +89,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger?: ITelemetryLogger;
         runSweep?: boolean;
         fullGC?: boolean;
-    }): Promise<IGCStats>;
+    }): Promise<IGCStats | undefined>;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)

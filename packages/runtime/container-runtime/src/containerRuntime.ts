@@ -1020,6 +1020,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
             getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
+            activeConnection: () => this.deltaManager.active,
         });
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1621,6 +1622,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.dataStores.setConnectionState(connected, clientId);
+        this.garbageCollector.setConnectionState(connected, clientId);
 
         raiseConnectedEvent(this.mc.logger, this, connected, clientId);
     }
@@ -2288,7 +2290,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Runs garbage collection and updates the reference / used state of the nodes in the container.
-     * @returns the statistics of the garbage collection run.
+     * @returns the statistics of the garbage collection run; undefined if GC did not run.
      */
     public async collectGarbage(
         options: {
@@ -2299,7 +2301,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             /** True to generate full GC data */
             fullGC?: boolean;
         },
-    ): Promise<IGCStats> {
+    ): Promise<IGCStats | undefined> {
         return this.garbageCollector.collectGarbage(options);
     }
 
