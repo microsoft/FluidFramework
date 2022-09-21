@@ -525,9 +525,7 @@ export interface IVersion {
 
 // @public (undocumented)
 export enum MessageType {
-    // (undocumented)
     Accept = "accept",
-    // (undocumented)
     ClientJoin = "join",
     ClientLeave = "leave",
     Control = "control",
@@ -535,7 +533,9 @@ export enum MessageType {
     NoOp = "noop",
     Operation = "op",
     Propose = "propose",
-    // (undocumented)
+    Reject = "reject",
+    RemoteHelp = "remoteHelp",
+    RoundTrip = "tripComplete",
     Summarize = "summarize",
     SummaryAck = "summaryAck",
     SummaryNack = "summaryNack"
