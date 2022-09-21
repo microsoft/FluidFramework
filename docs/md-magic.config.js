@@ -293,6 +293,7 @@ const mdMagicConfig = {
             return generateTrademarkSection(includeHeading);
         },
         TEMPLATE(content, options, config) {
+            const dir = pathLib.dirname(config.originalPath);
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);
 
             options = options || {};
