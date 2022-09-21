@@ -393,7 +393,7 @@ export class NodeCore {
                 {
                     const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
                     const content = dictionary[stringId];
-                    assert(content !== undefined, "const string not found");
+                    assert(content !== undefined, 0x3de /* const string not found */);
                     this.addDictionaryString(content);
                     continue;
                 }
@@ -439,10 +439,10 @@ export class NodeCore {
                     this.children.push(false);
                     continue;
                 case MarkerCodesEnd.list:
-                    assert(this.type === "list", "Mismatch in end of list");
+                    assert(this.type === "list", 0x3df /* Mismatch in end of list */);
                     return;
                 case MarkerCodesEnd.set:
-                    assert(this.type === "set", "Mismatch in end of set");
+                    assert(this.type === "set", 0x3e0 /* Mismatch in end of set */);
                     return;
                 default:
                     throw new Error(`Invalid code: ${code}`);
