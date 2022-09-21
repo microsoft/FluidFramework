@@ -6,39 +6,21 @@ export function SpanNodeToMarkdown(
     renderer: DocumentationNodeRenderer,
 ): string {
     let output: string[] = [];
-    let setBold = false;
-    let setItalics = false;
-    let setStrikethrough = false;
     if (span.textFormatting) {
-        const formatting = span.textFormatting;
-        if (formatting.bold && !renderer.applyingBold) {
-            output.push('**');
-            renderer.applyingBold = true;
-            setBold = true;
+        const { bold, italic, strikethrough } = span.textFormatting;
+        if (bold) {
+            renderer.setBold();
         }
-        if (formatting.italic && !renderer.applyingItalics) {
-            output.push('__');
-            renderer.applyingItalics = true;
-            setItalics = true;
+        if (italic) {
+            renderer.setItalic();
         }
-        if (formatting.strikethrough && !renderer.applyingStrikethrough) {
-            output.push('~~');
-            renderer.applyingStrikethrough = true;
-            setStrikethrough = true;
+        if (strikethrough) {
+            renderer.setStrikethrough();
         }
     }
-    output.push(...span.children.map(child => renderer.renderNode(child)));
-    if (setItalics) {
-        output.push('__');
-        renderer.applyingItalics = false;
-    }
-    if (setBold) {
-        output.push('**');
-        renderer.applyingBold = false;
-    }
-    if (setStrikethrough) {
-        output.push('~~');
-        renderer.applyingStrikethrough = false;
+
+    if (span.children && span.children.length) {
+        output.push(...span.children.map(child => renderer.renderNode(child)));
     }
 
     return output.join('');
