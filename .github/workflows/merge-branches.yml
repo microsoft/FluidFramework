@@ -7,8 +7,9 @@ name: Merge branches
 env:
   TARGET_BRANCH: next
   SOURCE_BRANCH: main
+  BATCH_SIZE: 7
 
 jobs:
   merge-branches:
     if: github.repository_owner == 'microsoft'
-    run: flub merge branches -a ${{ secrets.GITHUB_TOKEN }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b 7
+    run: flub merge branches -a ${{ secrets.GITHUB_TOKEN }} -s $SOURCE_BRANCH -t $TARGET_BRANCH -b $BATCH_SIZE
