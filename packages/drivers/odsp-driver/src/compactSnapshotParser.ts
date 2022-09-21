@@ -36,6 +36,25 @@ function readBlobSection(node: NodeTypes) {
     const blobs: Map<string, ArrayBuffer> = new Map();
     for (const blob of node) {
         assertNodeCoreInstance(blob, "blob should be node");
+
+        const length = blob.length;
+        assert((length % 2) === 0, "reading pairs");
+
+        /**
+         * Perf optimization - the most common cases!
+         * This is essentially unrolling code below for faster processing
+         * It speeds up tree parsing by 2-3x times!
+         */
+        if (blob.length === 4 && blob.getMaybeString(0) === "id" && blob.getMaybeString(2) === "data") {
+            // "id": <node name>
+            // "data": <blob>
+            blobs.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
+            continue;
+        }
+
+        /**
+         * More generalized workflow
+         */
         const records = getNodeProps(blob);
         assertBlobCoreInstance(records.data, "data should be of BlobCore type");
         const id = getStringInstance(records.id, "blob id should be string");
@@ -74,6 +93,58 @@ function readTreeSection(node: NodeCore) {
     };
     for (const treeNode of node) {
         assertNodeCoreInstance(treeNode, "tree nodes should be nodes");
+
+        const length = treeNode.length;
+        assert((length % 2) === 0, "reading pairs");
+
+        /**
+         * Perf optimization - the most common cases!
+         * This is essentially unrolling code below for faster processing
+         * It speeds up tree parsing by 2-3x times!
+         */
+        if (treeNode.getMaybeString(0) === "name") {
+            if (treeNode.length === 4) {
+                const content = treeNode.getMaybeString(2);
+                // "name": <node name>
+                // "children": <blob id>
+                if (content === "children") {
+                    trees[treeNode.getString(1)] = readTreeSection(treeNode.getNode(3));
+                    continue;
+                }
+                // "name": <node name>
+                // "value": <blob id>
+                if (content === "value") {
+                    snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
+                    continue;
+                }
+            }
+
+            // "name": <node name>
+            // "nodeType": 3
+            // "value": <blob id>
+            if (treeNode.length === 6 &&
+                    treeNode.getMaybeString(2) === "nodeType" &&
+                    treeNode.getMaybeString(4) === "value") {
+                snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
+                continue;
+            }
+
+            // "name": <node name>
+            // "unreferenced": true
+            // "children": <blob id>
+            if (treeNode.length === 6 &&
+                    treeNode.getMaybeString(2) === "unreferenced" &&
+                    treeNode.getMaybeString(4) === "children") {
+                trees[treeNode.getString(1)] = readTreeSection(treeNode.getNode(5));
+                assert(treeNode.getBool(3), "Unreferenced if present should be true");
+                snapshotTree.unreferenced = true;
+                continue;
+            }
+        }
+
+        /**
+         * More generalized workflow
+         */
         const records = getNodeProps(treeNode);
 
         if (records.unreferenced !== undefined) {
