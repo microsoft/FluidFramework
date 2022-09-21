@@ -9,14 +9,14 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { describeFullCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
  * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced
  */
-describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
+describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let container1: IContainer;
     let container2: IContainer;
