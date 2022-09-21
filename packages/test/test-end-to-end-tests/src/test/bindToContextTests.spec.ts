@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
+import { describeFullCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -48,17 +48,18 @@ class OuterDataObject extends DataObject implements ITestDataObject {
     private readonly innerDataStoreKey = "innerDataStore";
 
     protected async initializingFirstTime(): Promise<void> {
-        const innerDataStore = await innerDataObjectFactory.createInstance(this._context.containerRuntime);
+        const innerDataStoreRouter = await this._context.containerRuntime.createDataStore(innerDataObjectFactory.type);
+        const innerDataStore = await requestFluidObject<ITestDataObject>(innerDataStoreRouter, "");
+
         this.root.set(this.innerDataStoreKey, innerDataStore.handle);
+
+        // IMPORTANT: Without calling bindToContext, the requesting this inner object deadlocks (handle.get is fine)
+        (innerDataStoreRouter as IDataStoreWithBindToContext_Deprecated)?.fluidDataStoreChannel?.bindToContext?.();
     }
 
     protected async hasInitialized(): Promise<void> {
         const innerDataStoreHandle = this.root.get<IFluidHandle<InnerDataObject>>(this.innerDataStoreKey);
         assert(innerDataStoreHandle !== undefined, "inner data store handle is missing");
-        console.log("Got handle for inner data store. Requesting it");
-
-        // IMPORTANT: Without calling bindToContext, the subsequent request deadlocks
-        ((await innerDataStoreHandle.get())._runtime as any).bindToContext();
 
         const innerDataStore =
             await this._context.containerRuntime.request({ url: innerDataStoreHandle.absolutePath });
@@ -72,7 +73,7 @@ const outerDataObjectFactory = new DataObjectFactory(
     [],
 );
 
-describeNoCompat("Detached Container", (getTestObjectProvider) => {
+describeFullCompat("bindToContext tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
@@ -90,7 +91,6 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         const newDataStore =
             await mainDataStore._context.containerRuntime._createDataStoreWithProps(TestDataObjectType);
 
-        // Test will pass if this line doesn't throw a TypeError
         const bindToContext =
             (newDataStore as IDataStoreWithBindToContext_Deprecated)?.fluidDataStoreChannel?.bindToContext;
         assert.equal(typeof bindToContext, "function", "Expected to find bindToContext function");
