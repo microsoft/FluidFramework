@@ -39,14 +39,14 @@ export class ScheduleManager {
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly emitter: EventEmitter,
-        readonly clientId: () => string | undefined,
+        readonly getClientId: () => string | undefined,
         private readonly logger: ITelemetryLogger,
     ) {
         this.deltaScheduler = new DeltaScheduler(
             this.deltaManager,
             ChildLogger.create(this.logger, "DeltaScheduler"),
         );
-        void new ScheduleManagerCore(deltaManager, clientId, logger);
+        void new ScheduleManagerCore(deltaManager, getClientId, logger);
     }
 
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
@@ -102,7 +102,7 @@ class ScheduleManagerCore {
 
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        private readonly clientId: () => string | undefined,
+        private readonly getClientId: () => string | undefined,
         private readonly logger: ITelemetryLogger,
     ) {
         // Listen for delta manager sends and add batch metadata to messages
@@ -249,7 +249,7 @@ class ScheduleManagerCore {
                         runtimeVersion: pkgVersion,
                         batchClientId: this.currentBatchClientId,
                         pauseSequenceNumber: this.pauseSequenceNumber,
-                        localBatch: this.currentBatchClientId === this.clientId(),
+                        localBatch: this.currentBatchClientId === this.getClientId(),
                         messageType: message.type,
                     });
             }
@@ -276,8 +276,8 @@ class ScheduleManagerCore {
                         runtimeVersion: pkgVersion,
                         batchClientId: this.currentBatchClientId,
                         pauseSequenceNumber: this.pauseSequenceNumber,
-                        localBatch: this.currentBatchClientId === this.clientId(),
-                        localMessage: message.clientId === this.clientId(),
+                        localBatch: this.currentBatchClientId === this.getClientId(),
+                        localMessage: message.clientId === this.getClientId(),
                         ...extractSafePropertiesFromMessage(message),
                     });
             }
