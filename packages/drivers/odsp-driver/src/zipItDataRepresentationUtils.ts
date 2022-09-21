@@ -249,6 +249,12 @@ export interface IStringElement {
     _stringElement: true;
 }
 
+export interface IStringElementInternal extends Omit<IStringElement, "content"> {
+    content?: string;
+    startPos: number;
+    endPos: number;
+}
+
 /**
  * Three leaf types supported by tree:
  * 1. Node (sub-tree)
@@ -351,34 +357,53 @@ export class NodeCore {
     }
 
     // Can we do more efficiently here, without extra objects somehow??
-    private readString(buffer: ReadBuffer, code: number) {
+    private static readString(buffer: ReadBuffer, code: number, dictionary: boolean) {
         const lengthLen = getValueSafely(codeToBytesMap, code);
         const length = buffer.read(lengthLen);
-        const pos = buffer.pos;
+        const startPos = buffer.pos;
         buffer.skip(length);
-        return Uint8ArrayToString(buffer.buffer.subarray(pos, buffer.pos), "utf-8");
+        const result: IStringElementInternal = {
+            // Note: Setting here property 'content: undefined' makes code substantially slower!
+            dictionary,
+            _stringElement: true,
+            startPos,
+            endPos: buffer.pos,
+        };
+
+        // We are lying here in terms of presence of `content` property.
+        // This will be addressed at the bottom of NodeCore.load() by resolving all strings at once!
+        // It's equivalent (but much slower!) to do it here via
+        // result.content = Uint8ArrayToString(buffer.buffer.subarray(startPos, buffer.pos), "utf-8");
+        return result as IStringElementInternal & IStringElement;
     }
 
     /**
      * Load and parse the buffer into a tree.
      * @param buffer - buffer to read from.
      */
-    protected load(buffer: ReadBuffer, dictionary: string[]) {
+    protected load(buffer: ReadBuffer) {
+        let children = this.children;
+        const stack: NodeTypes[][] = [];
+        const strings: IStringElementInternal[] = [];
+        const dictionary: IStringElement[] = [];
+
         for (;!buffer.eof;) {
             const code = buffer.read();
             switch (code) {
                 case MarkerCodesStart.list:
                 case MarkerCodesStart.set: {
                     const childValue = new NodeCore(code === MarkerCodesStart.set ? "set" : "list");
-                    this.children.push(childValue);
-                    childValue.load(buffer, dictionary);
+                    children.push(childValue);
+                    stack.push(children);
+                    children = childValue.children;
                     continue;
                 }
                 case MarkerCodes.ConstStringDeclare:
                 case MarkerCodes.ConstStringDeclareBig:
                 {
                     const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
-                    const constString = this.readString(buffer, code);
+                    const constString = NodeCore.readString(buffer, code, true /* dictionary */);
+                    strings.push(constString);
                     dictionary[stringId] = constString;
                     continue;
                 }
@@ -389,7 +414,7 @@ export class NodeCore {
                     const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
                     const content = dictionary[stringId];
                     assert(content !== undefined, "const string not found");
-                    this.addDictionaryString(content);
+                    children.push(content);
                     continue;
                 }
                 case MarkerCodes.StringEmpty:
@@ -397,7 +422,9 @@ export class NodeCore {
                 case MarkerCodes.String16Length:
                 case MarkerCodes.String32Length:
                 {
-                    this.addString(this.readString(buffer, code));
+                    const str = NodeCore.readString(buffer, code, false /* dictionary */);
+                    strings.push(str);
+                    children.push(str);
                     continue;
                 }
                 case MarkerCodes.BinaryEmpty:
@@ -406,13 +433,13 @@ export class NodeCore {
                 case MarkerCodes.BinarySingle32:
                 case MarkerCodes.BinarySingle64:
                 {
-                    this.children.push(BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)));
+                    children.push(BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)));
                     continue;
                 }
                 // If integer is 0.
                 case MarkerCodes.Int0:
                 {
-                    this.children.push(0);
+                    children.push(0);
                     continue;
                 }
                 case MarkerCodes.UInt8:
@@ -424,24 +451,60 @@ export class NodeCore {
                 case MarkerCodes.Int32:
                 case MarkerCodes.Int64:
                 {
-                    this.children.push(buffer.read(getValueSafely(codeToBytesMap, code)));
+                    children.push(buffer.read(getValueSafely(codeToBytesMap, code)));
                     continue;
                 }
                 case MarkerCodes.BoolTrue:
-                    this.children.push(true);
+                    children.push(true);
                     continue;
                 case MarkerCodes.BoolFalse:
-                    this.children.push(false);
+                    children.push(false);
                     continue;
                 case MarkerCodesEnd.list:
-                    assert(this.type === "list", "Mismatch in end of list");
-                    return;
                 case MarkerCodesEnd.set:
-                    assert(this.type === "set", "Mismatch in end of set");
-                    return;
+                    // Note: We are not checking that end marker matches start marker.
+                    // I.e. that we do not have a case where we start a 'list' but end with a 'set'
+                    // Checking it would require more state tracking that seems not very useful, given
+                    // our code does not care.
+                    children = stack.pop()!;
+
+                    // To my surprise, checking children !== undefined adds measurable cost!
+                    // We will rely on children.push() crashing in case of mismatch, and check below
+                    // (outside of the loop)
+                    continue;
                 default:
                     throw new Error(`Invalid code: ${code}`);
             }
+        }
+
+        assert(children === this.children, "Unpaired start/end list/set markers!");
+
+        /**
+         * Process all the strings at once!
+         */
+        let length = 0;
+        for (const el of strings) {
+            length += el.endPos - el.startPos + 1;
+        }
+        const stringBuffer = new Uint8Array(length);
+
+        length = 0;
+        const input = buffer.buffer;
+        assert(input.byteOffset === 0, "code below assumes no offset");
+
+        for (const el of strings) {
+            for (let it = el.startPos; it < el.endPos; it++) {
+                stringBuffer[length] = input[it];
+                length++;
+            }
+            stringBuffer[length] = 0;
+            length++;
+        }
+        assert(length === stringBuffer.length, "test");
+        const result = Uint8ArrayToString(stringBuffer, "utf-8").split(String.fromCharCode(0));
+        assert(result.length === strings.length + 1, "String content has \\0 chars!");
+        for (let i = 0; i < strings.length; i++) {
+            strings[i].content = result[i];
         }
     }
 }
@@ -453,8 +516,7 @@ export class NodeCore {
 export class TreeBuilder extends NodeCore {
     static load(buffer: ReadBuffer): TreeBuilder {
         const builder = new TreeBuilder();
-        const dictionary = new Array<string>();
-        builder.load(buffer, dictionary);
+        builder.load(buffer);
         assert(buffer.eof, 0x233 /* "Unexpected data at the end of buffer" */);
         return builder;
     }
