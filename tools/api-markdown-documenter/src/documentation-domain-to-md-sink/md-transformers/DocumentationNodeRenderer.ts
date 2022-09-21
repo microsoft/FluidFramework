@@ -1,8 +1,18 @@
-import { DocumentNode, DocumentNodeType, DocumentationNode, PlainTextNode, ParagraphNode, SpanNode, LineBreakNode } from "../../documentation-domain";
-import { ParagraphNodeToMarkdown } from "./ParagraphToMd";
+import { DocumentNode, DocumentNodeType, DocumentationNode, PlainTextNode, ParagraphNode, SpanNode, LineBreakNode, AlertNode, BlockQuoteNode, CodeSpanNode, TableRowNode, FencedCodeBlockNode, MarkdownNode, HierarchicalSectionNode, OrderedListNode, LinkNode, TableNode, TableCellNode, UnorderedListNode } from "../../documentation-domain";
+import { AlertToMarkdown } from "./AlertToMd";
+import { BlockQuoteToMarkdown } from "./BlockQuoteToMd";
+import { CodeSpanToMarkdown } from "./CodeSpanToMd";
+import { FencedCodeBlockToMarkdown } from "./FencedCodeToMd";
+import { HierarchicalSectionToMarkdown } from "./HierarchicalSectionToMd";
+import { LinkToMarkdown } from "./LinkToMd";
+import { OrderedListToMarkdown } from "./OrderedListToMd";
+import { ParagraphToMarkdown } from "./ParagraphToMd";
 import { PlainTextToMarkdown } from "./PlainTextToMd";
-import { SpanNodeToMarkdown } from './SpanToMd';
-import * as os from 'os';
+import { SpanToMarkdown } from './SpanToMd';
+import { TableToMarkdown } from "./TableToMd";
+import { TableCellToMarkdown } from "./TableCellToMd";
+import { TableRowToMarkdown } from "./TableRowToMd";
+import { UnorderedListToMarkdown } from "./UnorderedListToMd";
 
 export type DocumentationNodeRenderFunction = (
     node: DocumentationNode,
@@ -11,47 +21,43 @@ export type DocumentationNodeRenderFunction = (
 
 // TODO: better name?
 export type NodeRenderers = {
-    [DocumentNodeType.Alert]: DocumentationNodeRenderFunction;
-    [DocumentNodeType.BlockQuote]: DocumentationNodeRenderFunction;
-    [DocumentNodeType.CodeSpan]: DocumentationNodeRenderFunction;
-    [DocumentNodeType.Document]: DocumentationNodeRenderFunction;
-    [DocumentNodeType.FencedCode]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.Alert]: (node: AlertNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.BlockQuote]: (node: BlockQuoteNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.CodeSpan]: (node: CodeSpanNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.FencedCode]: (node: FencedCodeBlockNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.LineBreak]: (node: LineBreakNode) => string;
-    [DocumentNodeType.Markdown]: DocumentationNodeRenderFunction;
-    [DocumentNodeType.NestedSection]: DocumentationNodeRenderFunction;
-    [DocumentNodeType.OrderedList]: DocumentationNodeRenderFunction;
+    [DocumentNodeType.Markdown]: (node: MarkdownNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.HierarchicalSection]: (node: HierarchicalSectionNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.OrderedList]: (node: OrderedListNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.Paragraph]: (node: ParagraphNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.PlainText]: (node: PlainTextNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.Span]:  (node: SpanNode, subtreeRenderer: DocumentationNodeRenderer) => string;
-    [DocumentNodeType.SymbolicLink]: DocumentationNodeRenderFunction;
-    [DocumentNodeType.Table]: DocumentationNodeRenderFunction;
-    [DocumentNodeType.TableCell] : DocumentationNodeRenderFunction;
-    [DocumentNodeType.TableRow] : DocumentationNodeRenderFunction;
-    [DocumentNodeType.UnorderedList] : DocumentationNodeRenderFunction;
-    [DocumentNodeType.UrlLink] : DocumentationNodeRenderFunction;
+    [DocumentNodeType.SymbolicLink]: (node: LinkNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.Table]: (node: TableNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.TableCell] : (node: TableCellNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.TableRow] : (node: TableRowNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.UnorderedList] : (node: UnorderedListNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.UrlLink] : (node: LinkNode, subtreeRenderer: DocumentationNodeRenderer) => string;
 };
 
-const noop = (node: DocumentationNode, renderer: DocumentationNodeRenderer) => "??? noop called";
-
 class DefaultNodeRenderers {
-    [DocumentNodeType.Alert] = noop;
-    [DocumentNodeType.BlockQuote] = noop;
-    [DocumentNodeType.CodeSpan] = noop;
-    [DocumentNodeType.Document] = noop; // There should never be any document nodes renders by RenderNode since there should never be a document under a document
-    [DocumentNodeType.FencedCode] = noop;
-    [DocumentNodeType.LineBreak] = (node: LineBreakNode) => `  ${os.EOL}`;
-    [DocumentNodeType.Markdown] = noop;
-    [DocumentNodeType.NestedSection] = noop;
-    [DocumentNodeType.OrderedList] = noop;
-    [DocumentNodeType.Paragraph] = ParagraphNodeToMarkdown;
+    [DocumentNodeType.Alert] = AlertToMarkdown;
+    [DocumentNodeType.BlockQuote] = BlockQuoteToMarkdown;
+    [DocumentNodeType.CodeSpan] = CodeSpanToMarkdown;
+    [DocumentNodeType.FencedCode] = FencedCodeBlockToMarkdown;
+    [DocumentNodeType.LineBreak] = (node: LineBreakNode) => `</br>`;
+    [DocumentNodeType.Markdown] = (node: MarkdownNode, subtreeRenderer: DocumentationNodeRenderer) => node.value as unknown as string;
+    [DocumentNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
+    [DocumentNodeType.OrderedList] = OrderedListToMarkdown;
+    [DocumentNodeType.Paragraph] = ParagraphToMarkdown;
     [DocumentNodeType.PlainText] = PlainTextToMarkdown;
-    [DocumentNodeType.Span] = SpanNodeToMarkdown;
-    [DocumentNodeType.SymbolicLink] = noop;
-    [DocumentNodeType.Table] = noop;
-    [DocumentNodeType.TableCell] = noop;
-    [DocumentNodeType.TableRow] = noop;
-    [DocumentNodeType.UnorderedList] = noop;
-    [DocumentNodeType.UrlLink] = noop;
+    [DocumentNodeType.Span] = SpanToMarkdown;
+    [DocumentNodeType.SymbolicLink] = LinkToMarkdown;
+    [DocumentNodeType.Table] = TableToMarkdown;
+    [DocumentNodeType.TableCell] = TableCellToMarkdown;
+    [DocumentNodeType.TableRow] = TableRowToMarkdown;
+    [DocumentNodeType.UnorderedList] = UnorderedListToMarkdown;
+    [DocumentNodeType.UrlLink] = LinkToMarkdown;
 }
 
 export interface RenderingContext {

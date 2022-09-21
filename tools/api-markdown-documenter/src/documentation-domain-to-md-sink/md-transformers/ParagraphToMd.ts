@@ -2,7 +2,7 @@ import { ParagraphNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 import * as os from 'os';
 
-export function ParagraphNodeToMarkdown(
+export function ParagraphToMarkdown(
     paragraph: ParagraphNode,
     renderer: DocumentationNodeRenderer,
 ): string {

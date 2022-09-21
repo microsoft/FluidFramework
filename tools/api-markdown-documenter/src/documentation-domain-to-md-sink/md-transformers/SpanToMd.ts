@@ -1,7 +1,7 @@
 import { SpanNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 
-export function SpanNodeToMarkdown(
+export function SpanToMarkdown(
     span: SpanNode,
     renderer: DocumentationNodeRenderer,
 ): string {

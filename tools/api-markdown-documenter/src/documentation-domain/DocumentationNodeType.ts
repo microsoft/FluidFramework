@@ -15,7 +15,7 @@ export enum DocumentNodeType {
     FencedCode = "FencedCode",
     LineBreak = "LineBreak",
     Markdown = "Markdown",
-    NestedSection = "NestedSection",
+    HierarchicalSection = "HierarchicalSection",
     OrderedList = "OrderedList",
     Paragraph = "Paragraph",
     PlainText = "PlainText",

@@ -368,7 +368,7 @@ export enum DocumentNodeType {
     // (undocumented)
     Markdown = "Markdown",
     // (undocumented)
-    NestedSection = "NestedSection",
+    HierarchicalSection = "HierarchicalSection",
     // (undocumented)
     OrderedList = "OrderedList",
     // (undocumented)
@@ -524,7 +524,7 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 export class HierarchicalSectionNode extends ParentNodeBase {
     constructor(children: DocumentationNode[]);
     // (undocumented)
-    readonly type = DocumentNodeType.NestedSection;
+    readonly type = DocumentNodeType.HierarchicalSection;
 }
 
 // @public

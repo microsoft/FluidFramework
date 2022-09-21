@@ -16,7 +16,7 @@ import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
  * @example TODO
  */
 export class HierarchicalSectionNode extends ParentNodeBase {
-    public readonly type = DocumentNodeType.NestedSection;
+    public readonly type = DocumentNodeType.HierarchicalSection;
 
     public constructor(children: DocumentationNode[]) {
         super(children);
