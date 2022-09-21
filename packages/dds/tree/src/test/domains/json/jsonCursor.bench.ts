@@ -12,7 +12,7 @@ import {
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { JsonCursor } from "../../../domains/json/jsonCursor";
-import { jsonableTreeFromCursorNew } from "../../../feature-libraries";
+import { jsonableTreeFromCursorNew, mapTreeFromCursor, singleMapTreeCursor } from "../../../feature-libraries";
 import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./json";
 import { averageLocation, sum, sumMap } from "./benchmarks";
 
@@ -75,6 +75,7 @@ function bench(
 
     const cursorFactories: [string, () => ITreeCursorNew][] = [
         ["TextCursor", () => singleTextCursorNew(encodedTree)],
+        ["MapCursor", () => singleMapTreeCursor(mapTreeFromCursor(singleTextCursorNew(encodedTree)))],
     ];
 
     const consumers: [
@@ -86,6 +87,7 @@ function bench(
         // TODO: finish porting other cursor code and enable this.
         // ["cursorToJsonObject", cursorToJsonObjectNew],
         ["jsonableTreeFromCursor", jsonableTreeFromCursorNew],
+        ["mapTreeFromCursor", mapTreeFromCursor],
         ["sum", sum],
         ["sum-map", sumMap],
         ["averageLocation", averageLocation],

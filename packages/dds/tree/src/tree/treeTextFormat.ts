@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeSchemaIdentifier } from "../schema-stored";
-import { FieldKey, TreeValue } from "./types";
+import { FieldKey, NodeData } from "./types";
 
 /**
  * This modules provides a simple human readable (and editable) tree format.
@@ -28,30 +27,12 @@ import { FieldKey, TreeValue } from "./types";
 
 /**
  * Json compatible map as object.
- * Keys are TraitLabels,
- * Values are the content of the trait specified by the key.
+ * Keys are FieldKey strings.
+ * Values are the content of the field specified by the key.
  * @public
  */
-export interface FieldMap<TChild> {
+export interface FieldMapObject<TChild> {
     [key: string]: TChild[];
-}
-
-/**
- * The fields required by a node in a tree
- * @public
- */
-export interface NodeData {
-    /**
-     * A payload of arbitrary serializable data
-     */
-    value?: TreeValue;
-
-    /**
-     * The meaning of this node.
-     * Provides contexts/semantics for this node and its content.
-     * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
-     */
-    readonly type: TreeSchemaIdentifier;
 }
 
 /**
@@ -60,8 +41,8 @@ export interface NodeData {
  * @public
  */
 export interface GenericTreeNode<TChild> extends NodeData {
-    [FieldScope.local]?: FieldMap<TChild>;
-    [FieldScope.global]?: FieldMap<TChild>;
+    [FieldScope.local]?: FieldMapObject<TChild>;
+    [FieldScope.global]?: FieldMapObject<TChild>;
 }
 
 /**
@@ -114,8 +95,8 @@ export const enum FieldScope {
 /**
  * Get a FieldMap from `node`, optionally modifying the tree to create it if missing.
  */
-export function getGenericTreeFieldMap<T>(
-    node: GenericTreeNode<T>, scope: FieldScope, createIfMissing: boolean): FieldMap<T> {
+function getGenericTreeFieldMap<T>(
+    node: GenericTreeNode<T>, scope: FieldScope, createIfMissing: boolean): FieldMapObject<T> {
     let children = node[scope];
     if (children === undefined) {
         children = {};
@@ -134,4 +115,11 @@ export function getGenericTreeFieldMap<T>(
 export function setGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, content: T[]): void {
     const children = getGenericTreeFieldMap(node, scopeFromKey(key), true);
     children[key as string] = content;
+}
+
+/**
+ * @returns keys for fields of `tree`.
+ */
+export function genericTreeKeys<T>(tree: GenericTreeNode<T>): readonly FieldKey[] {
+    return Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, FieldScope.local, false)) as FieldKey[];
 }
