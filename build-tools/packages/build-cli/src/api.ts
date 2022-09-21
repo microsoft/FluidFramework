@@ -13,13 +13,7 @@ export async function pullRequestExists(token: string, title: string): Promise<b
     const octokit = new Octokit({ auth: token });
     const response = await octokit.request("GET /repos/{owner}/{repo}/pulls", { owner, repo });
 
-    for (const data of response.data) {
-        if (data.title === title) {
-            return true;
-        }
-    }
-
-    return false;
+    return response.data.some((d) => d.title === title);
 }
 
 export async function pullRequestInfo(token: string, commit_sha: string) {

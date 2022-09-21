@@ -76,6 +76,12 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             }
 
             str += id;
+
+            if (str.length > 40) {
+                this.error(
+                    `Unexpected string. Incorrect commit id length. Please check the commit id`,
+                );
+            }
         }
 
         this.log(
@@ -109,8 +115,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
                 // eslint-disable-next-line no-await-in-loop
                 await gitRepo.merge(unmergedCommitList[i]);
             } catch (error: unknown) {
-                // eslint-disable-next-line no-await-in-loop
-                await gitRepo.mergeAbort();
                 this.error(`Merge abort for ${unmergedCommitList[i]}: ${error}`);
                 break;
             }
@@ -124,6 +128,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             this.log(
                 `Opening a pull request for a single commit (${unmergedCommitList[0]}) because it are merge conflicts with the ${flags.target} branch.`,
             );
+            await gitRepo.deleteBranch(branchName);
             await gitRepo.switchBranch(flags.source);
             await gitRepo.createBranch(`${flags.source}-${flags.target}-${unmergedCommitList[0]}`);
             await gitRepo.fetchBranch(
@@ -132,29 +137,29 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             );
             await gitRepo.setUpstream(`${flags.source}-${flags.target}-${unmergedCommitList[0]}`);
             await gitRepo.resetBranch(unmergedCommitList[0]);
+            // fetch name of owner associated to the pull request
+            const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[0]);
+            this.log(`Fetch pull request info for commit id ${unmergedCommitList[0]}: ${data}`);
             prNumber = await api.createPullRequest(
                 flags.auth,
                 `${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
                 flags.target,
                 "sonalivdeshpande",
             );
-            // fetch name of owner associated to the pull request
-            const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[0]);
-            this.log(`Fetch pull request info for commit id ${unmergedCommitList[0]}: ${data}`);
             this.log(
                 `Open pull request for commit id ${unmergedCommitList[0]}. Please resolve the merge conflicts.`,
             );
         } else {
+            // fetch name of owner associated to the pull request
+            const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[commit]);
+            this.info(
+                `Fetch pull request info for commit id ${unmergedCommitList[commit]}: ${data}`,
+            );
             prNumber = await api.createPullRequest(
                 flags.auth,
                 branchName,
                 flags.target,
                 "sonalivdeshpande",
-            );
-            // fetch name of owner associated to the pull request
-            const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[commit]);
-            this.info(
-                `Fetch pull request info for commit id ${unmergedCommitList[commit]}: ${data}`,
             );
             this.info(`Pull request opened for pushing bulk commits`);
         }
