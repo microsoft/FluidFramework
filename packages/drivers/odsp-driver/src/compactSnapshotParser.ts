@@ -96,8 +96,8 @@ function readTreeSection(node: NodeCore) {
          * This is essentially unrolling code below for faster processing
          * It speeds up tree parsing by 2-3x times!
          */
-        if (treeNode.getMaybeString(0) === "name") {
-            const length = treeNode.length;
+         const length = treeNode.length;
+         if (length > 0 && treeNode.getMaybeString(0) === "name") {
             if (length === 4) {
                 const content = treeNode.getMaybeString(2);
                 // "name": <node name>
@@ -127,7 +127,7 @@ function readTreeSection(node: NodeCore) {
             // "name": <node name>
             // "unreferenced": true
             // "children": <blob id>
-            if (treeNode.length === 6 &&
+            if (length === 6 &&
                     treeNode.getMaybeString(2) === "unreferenced" &&
                     treeNode.getMaybeString(4) === "children") {
                 trees[treeNode.getString(1)] = readTreeSection(treeNode.getNode(5));
