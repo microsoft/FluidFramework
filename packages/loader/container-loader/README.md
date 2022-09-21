@@ -170,7 +170,7 @@ one of the following:
 ### `permissions`
 There are two cases when it's true:
 
-1. User has no write permissions to to modify this container (which usually maps to file in storage, and lack of write permissions by a given user)
+1. User has no write permissions to modify this container (which usually maps to file in storage, and lack of write permissions by a given user)
 2. Container was closed, either due to critical error, or due to host closing container. See [Container Lifetime](#Container-lifetime) and [Error Handling](#Error-handling) for more details.
 
 ### `forced`
