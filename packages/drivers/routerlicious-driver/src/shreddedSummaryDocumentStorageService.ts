@@ -107,7 +107,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             requestVersion = versions[0];
         }
 
-        const cachedSnapshotTree = await this.snapshotTreeCache?.get(requestVersion.treeId);
+        const cachedSnapshotTree = await this.snapshotTreeCache?.get(this.getSnapshotCacheKey(requestVersion.treeId));
         if (cachedSnapshotTree) {
             return cachedSnapshotTree.snapshotTree as ISnapshotTreeEx;
         }
@@ -128,12 +128,15 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             },
         );
         const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
-        await this.snapshotTreeCache?.put(tree.id, { id: requestVersion.id, snapshotTree: tree });
+        await this.snapshotTreeCache?.put(
+            this.getSnapshotCacheKey(tree.id),
+            { id: requestVersion.id, snapshotTree: tree },
+        );
         return tree;
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const cachedBlob = await this.blobCache?.get(blobId);
+        const cachedBlob = await this.blobCache?.get(this.getBlobCacheKey(blobId));
         if (cachedBlob) {
             return cachedBlob;
         }
@@ -155,7 +158,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         );
         this.blobsShaCache.set(value.sha, "");
         const bufferContent = stringToBuffer(value.content, value.encoding);
-        await this.blobCache?.put(value.sha, bufferContent);
+        await this.blobCache?.put(this.getBlobCacheKey(value.sha), bufferContent);
         return bufferContent;
     }
 
@@ -211,5 +214,13 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                     return this.getSnapshotTree(versions[0]);
                 })
             : undefined;
+    }
+
+    private getBlobCacheKey(blobId: string): string {
+        return `${this.id}:${blobId}`;
+    }
+
+    private getSnapshotCacheKey(snapshotId: string): string {
+        return `${this.id}:${snapshotId}`;
     }
 }
