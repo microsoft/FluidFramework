@@ -560,7 +560,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create and reference another dataStore
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
             await provider.ensureSynchronized();
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
@@ -607,7 +606,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create and reference another dataStore
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
             await provider.ensureSynchronized(this.timeout() / 3);
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);

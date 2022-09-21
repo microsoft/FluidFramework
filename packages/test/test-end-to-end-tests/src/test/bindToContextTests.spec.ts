@@ -53,7 +53,7 @@ class OuterDataObject extends DataObject implements ITestDataObject {
 
         this.root.set(this.innerDataStoreKey, innerDataStore.handle);
 
-        // IMPORTANT: Without calling bindToContext, the requesting this inner object deadlocks (handle.get is fine)
+        // IMPORTANT: Without calling bindToContext, requesting this inner object deadlocks (handle.get is fine)
         (innerDataStoreRouter as IDataStoreWithBindToContext_Deprecated)?.fluidDataStoreChannel?.bindToContext?.();
     }
 
