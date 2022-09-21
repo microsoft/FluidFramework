@@ -143,6 +143,9 @@
       "RemovedInterfaceDeclaration_IPendingRuntimeState": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "ClassDeclaration_ScheduleManager": {
+        "forwardCompat": false
       }
     }
   }
