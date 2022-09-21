@@ -156,33 +156,43 @@ Please note that hosts can implement various strategies on how to handle disconn
 It's worth pointing out that being connected does not mean all user edits are preserved on container closure. There is latency in the system, and loader layer does not provide any guarantees here. Not every implementation needs a solution here (games likely do not care), and thus solving this problem is pushed to framework level (i.e. having a data store that can expose `'dirtyDocument'` signal from ContainerRuntime and request route that can return such data store).
 
 ## Readonly states
+
 User permissions can change over lifetime of Container. They can't change during single connection session (in other words, change in permissions causes disconnect and reconnect). Hosts are advised to recheck this property on every reconnect.
 
 DeltaManager will emit a `"readonly"` event when transitioning to a read-only state. Readonly events are accessible by data stores and DDSes (through ContainerRuntime.deltaManager). It's expected that data stores adhere to requirements and expose read-only (or rather 'no edit') experiences.
 
-`Container.readOnlyInfo` (and `DeltaManager.readOnlyInfo`) indicates to host if file is writable or not.
+`Container.readOnlyInfo` (and `DeltaManager.readOnlyInfo`) indicates to the host if the file is writable or not.
+It contains the following properties:
+
 ### `readonly`
-one of the following:
-- true: Container is readonly. One or more of the additional properties listed below will be true.
-- undefined: Runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
-- false: Container.forceReadonly() was never called or last call was with false, plus it's known that user has write permissions to a file.
+
+One of the following:
+
+- `true`: Container is read-only. One or more of the additional properties listed below will be `true`.
+- `undefined`: Runtime does not know yet if file is writable or not. Currently we get a signal here only when websocket connection is made to the server.
+- `false`: Container.forceReadonly() was never called or last call was with false, plus it's known that user has write permissions to a file.
 
 ### `permissions`
-There are two cases when it's true:
+
+There are two cases when it's `true`:
 
 1. User has no write permissions to modify this container (which usually maps to file in storage, and lack of write permissions by a given user)
 2. Container was closed, either due to critical error, or due to host closing container. See [Container Lifetime](#Container-lifetime) and [Error Handling](#Error-handling) for more details.
 
 ### `forced`
-Hosts can also force readonly-mode for a container via calling `Container.forceReadonly(true)`. This can be useful in scenarios like:
 
-- Loss of connectivity, in scenarios where host chooses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container
+`true` if the Container is in read-only mode due to the host calling `Container.forceReadonly(true)`.
+This can be useful in scenarios like:
+
+- Loss of connectivity, in scenarios where host chooses method of preventing user edits over (or in addition to) showing disconnected UX and warning user of potential data loss on closure of container.
 - Special view-only mode in host. For example can be used by hosts for previewing container content in-place with other host content, and leveraging full-screen / separate window experience for editing.
 
 ### `storageOnly`
-Storage-only mode is a readonly mode in which the container does not connect to the delta stream and is unable to submit or recieve ops. This is useful for viewing a specific version of a document.
+
+Storage-only mode is a read-only mode in which the container does not connect to the delta stream and is unable to submit or receive ops. This is useful for viewing a specific version of a document.
 
 ## Dirty events
+
 The Container runtime can communicate with the container to get the container's current state. In response, the container will raise two events - `"dirty"` and `"saved"` events. Transitions between these two events signify presence (or lack of) user changes that were not saved to storage. In other words, if container is dirty, closing it at that moment will result in data loss from user perspective, because not all user changes made it to storage.
 This information can be used by a host to build appropriate UX that allows user to be confident in the platform. For example, a host may chose to show a dialog asking the user if they want to save their changes before closing. Instead of, or in addition to this, the host may choose to show "Saving..." and "Saved" text somewhere in UX. Coupled with lack of connectivity to ordering service (and appropriate notification to the user) that may create enough continuous notification to user not to require a blocking dialog on closing.
 Note that when an active connection is in place, it's just a matter of time before changes will be flushed to storage unless there is some source of continuous local changes being generated that prevents container from ever being fully saved. But if there is no active connection, because the user is offline, for example, then a document may stay in a dirty state for very long time.
