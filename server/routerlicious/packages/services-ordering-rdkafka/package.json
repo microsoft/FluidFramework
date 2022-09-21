@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-ordering-rdkafka",
-  "version": "0.1037.3000",
+  "version": "0.1038.1000",
   "description": "Fluid server services rdkafka orderer implementation",
   "homepage": "https://fluidframework.com",
   "repository": {

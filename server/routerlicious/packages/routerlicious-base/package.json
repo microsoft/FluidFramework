@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-routerlicious-base",
-  "version": "0.1037.3000",
+  "version": "0.1038.1000",
   "description": "Fluid server base classes for routerlicious",
   "homepage": "https://fluidframework.com",
   "repository": {
