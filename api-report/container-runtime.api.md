@@ -683,13 +683,13 @@ export enum RuntimeMessage {
 
 // @public
 export class ScheduleManager {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, clientId: () => string | undefined, logger: ITelemetryLogger);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, getClientId: () => string | undefined, logger: ITelemetryLogger);
     // (undocumented)
     afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage): void;
     // (undocumented)
     beforeOpProcessing(message: ISequencedDocumentMessage): void;
     // (undocumented)
-    readonly clientId: () => string | undefined;
+    readonly getClientId: () => string | undefined;
 }
 
 // @public
