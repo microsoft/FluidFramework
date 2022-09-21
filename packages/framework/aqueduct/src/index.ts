@@ -10,8 +10,8 @@
  * get started quickly.
  *
  * @remarks
- * About the package name: An Aqueduct is a way to transport water from a source
- * to another location. The package name was chosen because its purpose is to
+ * About the library name: An "aqueduct" is a way to transport water from a source
+ * to another location. The library name was chosen because its purpose is to
  * facilitate using lower level constructs and therefore handle 'fluid' items
  * same as an aqueduct.
  *

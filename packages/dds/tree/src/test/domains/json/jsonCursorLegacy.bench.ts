@@ -20,8 +20,9 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { defaultSchemaPolicy, singleTextCursorNew } from "../../../feature-libraries";
 import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
-import { CoordinatesKey, FeatureKey, generateCanada, GeometryKey } from "./json";
-import { averageLocation, sum } from "./benchmarksLegacy";
+import { Canada, generateCanada } from "./canada";
+import { averageTwoValues, sum } from "./benchmarksLegacy";
+import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -106,7 +107,7 @@ function bench(
             ["cursorToJsonObject", cursorToJsonObject],
             ["jsonableTreeFromCursor", jsonableTreeFromCursor],
             ["sum", sum],
-            ["averageLocation", averageLocation],
+            ["averageTwoValues", averageTwoValues],
         ];
 
         for (const [consumerName, consumer] of consumers) {
@@ -137,10 +138,10 @@ const canada = generateCanada(
         : [2, 10]);
 
 function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
-    cursor.down(FeatureKey, 0);
+    cursor.down(Canada.FeatureKey, 0);
     cursor.down(EmptyKey, 0);
-    cursor.down(GeometryKey, 0);
-    cursor.down(CoordinatesKey, 0);
+    cursor.down(Canada.GeometryKey, 0);
+    cursor.down(Canada.CoordinatesKey, 0);
 
     let result = cursor.down(EmptyKey, 0);
     assert.equal(result, TreeNavigationResult.Ok, "Unexpected shape for Canada dataset");
@@ -173,6 +174,32 @@ function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number
     cursor.up();
 }
 
-describe("ITreeCursor(Legacy)", () => {
+function extractAvgValsFromTwitter(cursor: ITreeCursor, calculate: (x: number, y: number) => void): void {
+    cursor.down(TwitterStatus.statusesKey, 0);
+
+    let result = cursor.down(EmptyKey, 0);
+    while (result === TreeNavigationResult.Ok) {
+        cursor.down(TwitterStatus.retweetCountKey, 0);
+        const retweetCount = cursor.value as number;
+        cursor.up();
+
+        cursor.down(TwitterStatus.favoriteCountKey, 0);
+        const favoriteCount = cursor.value as number;
+        cursor.up();
+        calculate(retweetCount, favoriteCount);
+
+        result = cursor.seek(1);
+    }
+
+    // Reset the cursor state
+    cursor.up();
+    cursor.up();
+    cursor.up();
+}
+
+// The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+describe("ITreeCursor", () => {
     bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
+    bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
 });

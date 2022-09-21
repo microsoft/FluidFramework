@@ -239,9 +239,7 @@ export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) 
 export function forEachNode(
     cursor: ITreeCursor, f: (cursor: ITreeCursor) => void): void {
     assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
-    let inField = cursor.firstNode();
-    while (inField) {
+    for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
         f(cursor);
-        inField = cursor.nextField();
     }
 }
