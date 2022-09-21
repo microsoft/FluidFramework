@@ -21,7 +21,7 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
-import { TestFluidObjectFactory } from "@fluidframework/test-utils";
+import { ContainerRuntimeApiType, DataRuntimeApiType, TestFluidObjectFactory } from "@fluidframework/test-utils";
 
 // ContainerRuntime and Data Runtime API
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
@@ -59,13 +59,13 @@ const LoaderApi = {
     Loader,
 };
 
-const ContainerRuntimeApi = {
+const ContainerRuntimeApi: ContainerRuntimeApiType = {
     version: pkgVersion,
     ContainerRuntime,
     ContainerRuntimeFactoryWithDefaultDataStore,
 };
 
-const DataRuntimeApi = {
+const DataRuntimeApi: DataRuntimeApiType = {
     version: pkgVersion,
     DataObject,
     DataObjectFactory,
@@ -102,7 +102,7 @@ export function getLoaderApi(baseVersion: string, requested?: number | string): 
 export function getContainerRuntimeApi(
     baseVersion: string,
     requested?: number | string,
-): typeof ContainerRuntimeApi {
+): ContainerRuntimeApiType {
     const requestedStr = getRequestedRange(baseVersion, requested);
     if (semver.satisfies(pkgVersion, requestedStr)) {
         return ContainerRuntimeApi;
@@ -119,7 +119,7 @@ export function getContainerRuntimeApi(
 export function getDataRuntimeApi(
     baseVersion: string,
     requested?: number | string,
-): typeof DataRuntimeApi {
+): DataRuntimeApiType {
     const requestedStr = getRequestedRange(baseVersion, requested);
     if (semver.satisfies(pkgVersion, requestedStr)) {
         return DataRuntimeApi;

@@ -21,6 +21,7 @@ import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
 import { ChannelFactoryRegistry } from "./testFluidObject";
+import { ContainerRuntimeApiType, DataRuntimeApiType } from "./interfaces";
 
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
@@ -71,6 +72,9 @@ export interface ITestObjectProvider {
 
     documentId: string;
     driver: ITestDriver;
+
+    readonly containerRuntimeApi?: ContainerRuntimeApiType;
+    readonly dataRuntimeApi?: DataRuntimeApiType;
 }
 
 export enum DataObjectFactoryType {
@@ -211,6 +215,8 @@ export class TestObjectProvider implements ITestObjectProvider {
         public readonly LoaderConstructor: typeof Loader,
         public readonly driver: ITestDriver,
         public readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint,
+        public readonly containerRuntimeApi?: ContainerRuntimeApiType,
+        public readonly dataRuntimeApi?: DataRuntimeApiType,
     ) {
         this._documentIdStrategy = getDocumentIdStrategy(driver.type);
     }

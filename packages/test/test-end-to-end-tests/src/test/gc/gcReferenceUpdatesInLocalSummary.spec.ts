@@ -4,11 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -18,48 +14,96 @@ import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merg
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import {
+    ContainerRuntimeApiType,
+    DataRuntimeApiType,
+    ITestObjectProvider,
+    waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { ISharedDirectory } from "@fluidframework/map";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
+export interface ITestDataObject {
+    _root: ISharedDirectory;
+    _context: IFluidDataStoreContext;
+    matrix: SharedMatrix;
+    sharedString: SharedString;
+    undoRedoStackManager: UndoRedoStackManager;
+}
+
+function getVersionedDataObjectFactory(dataStoreApi: DataRuntimeApiType) {
+    class TestDataObject extends dataStoreApi.DataObject implements ITestDataObject {
+        public get _root() {
+            return this.root;
+        }
+
+        public get _context() {
+            return this.context;
+        }
+
+        private readonly matrixKey = "matrix";
+        public matrix!: SharedMatrix;
+        public undoRedoStackManager!: UndoRedoStackManager;
+
+        private readonly sharedStringKey = "sharedString";
+        public sharedString!: SharedString;
+
+        protected async initializingFirstTime() {
+            const sharedMatrix = SharedMatrix.create(this.runtime);
+            this.root.set(this.matrixKey, sharedMatrix.handle);
+
+            const sharedString = SharedString.create(this.runtime);
+            this.root.set(this.sharedStringKey, sharedString.handle);
+        }
+
+        protected async hasInitialized() {
+            const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
+            assert(matrixHandle !== undefined, "SharedMatrix not found");
+            this.matrix = await matrixHandle.get();
+
+            this.undoRedoStackManager = new UndoRedoStackManager();
+            this.matrix.insertRows(0, 3);
+            this.matrix.insertCols(0, 3);
+            this.matrix.openUndo(this.undoRedoStackManager);
+
+            const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
+            assert(sharedStringHandle !== undefined, "SharedMatrix not found");
+            this.sharedString = await sharedStringHandle.get();
+        }
     }
 
-    public get _context() {
-        return this.context;
-    }
+    return new dataStoreApi.DataObjectFactory(
+        "TestDataObject",
+        TestDataObject,
+        [SharedMatrix.getFactory(), SharedString.getFactory()],
+        [],
+    );
+}
 
-    private readonly matrixKey = "matrix";
-    public matrix!: SharedMatrix;
-    public undoRedoStackManager!: UndoRedoStackManager;
-
-    private readonly sharedStringKey = "sharedString";
-    public sharedString!: SharedString;
-
-    protected async initializingFirstTime() {
-        const sharedMatrix = SharedMatrix.create(this.runtime);
-        this.root.set(this.matrixKey, sharedMatrix.handle);
-
-        const sharedString = SharedString.create(this.runtime);
-        this.root.set(this.sharedStringKey, sharedString.handle);
-    }
-
-    protected async hasInitialized() {
-        const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
-        assert(matrixHandle !== undefined, "SharedMatrix not found");
-        this.matrix = await matrixHandle.get();
-
-        this.undoRedoStackManager = new UndoRedoStackManager();
-        this.matrix.insertRows(0, 3);
-        this.matrix.insertCols(0, 3);
-        this.matrix.openUndo(this.undoRedoStackManager);
-
-        const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(this.sharedStringKey);
-        assert(sharedStringHandle !== undefined, "SharedMatrix not found");
-        this.sharedString = await sharedStringHandle.get();
-    }
+function getVersionedContainerRuntimeFactory(
+    runtimeApi: ContainerRuntimeApiType,
+    dataObjectFactory: DataObjectFactory<DataObject>,
+) {
+    const runtimeOptions: IContainerRuntimeOptions = {
+        summaryOptions: {
+            disableSummaries: true,
+            summaryConfigOverrides: {
+                state: "disabled",
+            },
+         },
+        gcOptions: { gcAllowed: true },
+    };
+    return new runtimeApi.ContainerRuntimeFactoryWithDefaultDataStore(
+        dataObjectFactory,
+        [
+            [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
+        ],
+        undefined,
+        undefined,
+        runtimeOptions,
+    );
 }
 
 /**
@@ -71,34 +115,9 @@ class TestDataObject extends DataObject {
  */
 describeFullCompat("GC reference updates in local summary", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const factory = new DataObjectFactory(
-        "TestDataObject",
-        TestDataObject,
-        [SharedMatrix.getFactory(), SharedString.getFactory()],
-        []);
-
-    const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: {
-            disableSummaries: true,
-            summaryConfigOverrides: {
-                state: "disabled",
-            },
-         },
-        gcOptions: { gcAllowed: true },
-    };
-    const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-        factory,
-        [
-            [factory.type, Promise.resolve(factory)],
-        ],
-        undefined,
-        undefined,
-        runtimeOptions,
-    );
-
     let containerRuntime: ContainerRuntime;
-    let mainDataStore: TestDataObject;
-
+    let mainDataStore: ITestDataObject;
+    let dataObjectFactory: DataObjectFactory<DataObject>;
     /**
      * Validates that the data store with the given id is represented correctly in the summary.
      *
@@ -141,7 +160,9 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
         }
     }
 
-    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
+    async function createContainer(runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore): Promise<IContainer> {
+        return provider.createContainer(runtimeFactory);
+    }
 
     beforeEach(async function() {
         provider = getTestObjectProvider({ syncSummarizer: true });
@@ -151,8 +172,13 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
             this.skip();
         }
 
-        const container = await createContainer();
-        mainDataStore = await requestFluidObject<TestDataObject>(container, "/");
+        assert(provider.dataRuntimeApi !== undefined, "dataRuntimeApi");
+        dataObjectFactory = getVersionedDataObjectFactory(provider.dataRuntimeApi);
+        assert(provider.containerRuntimeApi !== undefined, "containerRuntimeApi");
+        const runtimeFactory = getVersionedContainerRuntimeFactory(provider.containerRuntimeApi, dataObjectFactory);
+
+        const container = await createContainer(runtimeFactory);
+        mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
         containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
         await waitForContainerConnection(container);
     });
@@ -161,7 +187,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
         it("should reflect handle updates with undo / redo immediately in the next summary", async () => {
             // Create a second data store (dataStore2).
 
-            const dataStore2 = await factory.createInstance(containerRuntime);
+            const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
             // Add the handle of dataStore2 to the matrix to mark it as referenced.
             {
                 mainDataStore.matrix.setCell(0, 0, dataStore2.handle);
@@ -192,7 +218,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
     describe("SharedString", () => {
         it("should reflect handle updates immediately in the next summary", async () => {
             // Create a second data store (dataStore2).
-            const dataStore2 = await factory.createInstance(containerRuntime);
+            const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
 
             // Add the handle of dataStore2 to the shared string to mark it as referenced.
             {

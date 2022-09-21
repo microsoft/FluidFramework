@@ -5,9 +5,13 @@
 ```ts
 
 import { ConfigTypes } from '@fluidframework/telemetry-utils';
+import { ConsensusQueue } from '@fluidframework/ordered-collection';
+import { ConsensusRegisterCollection } from '@fluidframework/register-collection';
 import { Container } from '@fluidframework/container-loader';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
+import { DataObject } from '@fluidframework/aqueduct';
+import { DataObjectFactory } from '@fluidframework/aqueduct';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
@@ -32,6 +36,7 @@ import { IGCRuntimeOptions } from '@fluidframework/container-runtime';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { ILoaderProps } from '@fluidframework/container-loader';
+import { Ink } from '@fluidframework/ink';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -53,10 +58,27 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { SharedCell } from '@fluidframework/cell';
+import { SharedCounter } from '@fluidframework/counter';
+import { SharedDirectory } from '@fluidframework/map';
+import { SharedMap } from '@fluidframework/map';
+import { SharedMatrix } from '@fluidframework/matrix';
+import { SharedString } from '@fluidframework/sequence';
+import { SparseMatrix } from '@fluidframework/sequence';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
+
+// @public (undocumented)
+export interface ContainerRuntimeApiType {
+    // (undocumented)
+    ContainerRuntime: typeof ContainerRuntime;
+    // (undocumented)
+    ContainerRuntimeFactoryWithDefaultDataStore: typeof ContainerRuntimeFactoryWithDefaultDataStore;
+    // (undocumented)
+    version: string;
+}
 
 // @public
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
@@ -95,6 +117,22 @@ export enum DataObjectFactoryType {
     Primed = 0,
     // (undocumented)
     Test = 1
+}
+
+// @public (undocumented)
+export interface DataRuntimeApiType {
+    // (undocumented)
+    DataObject: typeof DataObject;
+    // (undocumented)
+    DataObjectFactory: typeof DataObjectFactory;
+    // Warning: (ae-forgotten-export) The symbol "DDSTypes" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    dds: DDSTypes;
+    // (undocumented)
+    TestFluidObjectFactory: typeof TestFluidObjectFactory;
+    // (undocumented)
+    version: string;
 }
 
 // @public (undocumented)
@@ -169,11 +207,15 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
 // @public (undocumented)
 export interface ITestObjectProvider {
     // (undocumented)
+    readonly containerRuntimeApi?: ContainerRuntimeApiType;
+    // (undocumented)
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     // (undocumented)
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     // (undocumented)
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): IHostLoader;
+    // (undocumented)
+    readonly dataRuntimeApi?: DataRuntimeApiType;
     // (undocumented)
     defaultCodeDetails: IFluidCodeDetails;
     // (undocumented)
@@ -290,11 +332,15 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 // @public
 export class TestObjectProvider implements ITestObjectProvider {
-    constructor(LoaderConstructor: typeof Loader, driver: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    constructor(LoaderConstructor: typeof Loader, driver: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, containerRuntimeApi?: ContainerRuntimeApiType | undefined, dataRuntimeApi?: DataRuntimeApiType | undefined);
+    // (undocumented)
+    readonly containerRuntimeApi?: ContainerRuntimeApiType | undefined;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     // (undocumented)
     readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
+    // (undocumented)
+    readonly dataRuntimeApi?: DataRuntimeApiType | undefined;
     // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
     // (undocumented)

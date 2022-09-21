@@ -121,5 +121,11 @@ export async function getVersionedTestObjectProvider(
             [innerRequestHandler]);
     };
 
-    return new TestObjectProvider(loaderApi.Loader, driver, containerFactoryFn);
+    return new TestObjectProvider(
+        loaderApi.Loader,
+        driver,
+        containerFactoryFn,
+        containerRuntimeApi,
+        dataRuntimeApi,
+    );
 }
