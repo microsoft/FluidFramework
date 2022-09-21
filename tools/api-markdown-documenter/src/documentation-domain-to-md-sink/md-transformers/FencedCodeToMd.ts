@@ -3,7 +3,7 @@ import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 
 export function FencedCodeBlockToMarkdown(
     textNode: FencedCodeBlockNode,
-    renderer: DocumentationNodeRenderer
+    renderer: DocumentationNodeRenderer,
 ): string {
-    return 'Not yet implemented';
+    return "Not yet implemented";
 }

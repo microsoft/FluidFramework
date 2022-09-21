@@ -3,7 +3,7 @@ import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 
 export function OrderedListToMarkdown(
     textNode: OrderedListNode,
-    renderer: DocumentationNodeRenderer
+    renderer: DocumentationNodeRenderer,
 ): string {
-    return 'Not yet implemented';
+    return "Not yet implemented";
 }

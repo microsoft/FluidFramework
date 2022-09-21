@@ -364,11 +364,11 @@ export enum DocumentNodeType {
     // (undocumented)
     FencedCode = "FencedCode",
     // (undocumented)
+    HierarchicalSection = "HierarchicalSection",
+    // (undocumented)
     LineBreak = "LineBreak",
     // (undocumented)
     Markdown = "Markdown",
-    // (undocumented)
-    HierarchicalSection = "HierarchicalSection",
     // (undocumented)
     OrderedList = "OrderedList",
     // (undocumented)

@@ -3,7 +3,7 @@ import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 
 export function BlockQuoteToMarkdown(
     textNode: BlockQuoteNode,
-    renderer: DocumentationNodeRenderer
+    renderer: DocumentationNodeRenderer,
 ): string {
-    return 'Not yet implemented';
+    return "Not yet implemented";
 }

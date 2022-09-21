@@ -1,6 +1,7 @@
+import * as os from "os";
+
 import { ParagraphNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import * as os from 'os';
 
 export function ParagraphToMarkdown(
     paragraph: ParagraphNode,
@@ -10,5 +11,5 @@ export function ParagraphToMarkdown(
         ? paragraph.children.map((child) => renderer.renderNode(child))
         : [];
     output.push(`  ${os.EOL}`);
-    return output.join('');
+    return output.join("");
 }

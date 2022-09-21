@@ -3,7 +3,7 @@ import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 
 export function PlainTextToMarkdown(
     textNode: PlainTextNode,
-    renderer: DocumentationNodeRenderer
+    renderer: DocumentationNodeRenderer,
 ): string {
     /* TODO: Original emitter would emit text after running this regex to strip whitespace:
     // split out the [ leading whitespace, content, trailing whitespace ]
@@ -19,10 +19,10 @@ export function PlainTextToMarkdown(
     const output: string[] = [];
 
     let tagsChecked = [
-        {predicate: renderer.applyingBold, enter: '<b>', exit: '</b>'},
-        {predicate: renderer.applyingItalic, enter: '<i>', exit: '</i>'},
-        {predicate: renderer.applyingStrikethrough, enter: '<strike>', exit: '</strike>'},
-    ]
+        { predicate: renderer.applyingBold, enter: "<b>", exit: "</b>" },
+        { predicate: renderer.applyingItalic, enter: "<i>", exit: "</i>" },
+        { predicate: renderer.applyingStrikethrough, enter: "<strike>", exit: "</strike>" },
+    ];
 
     // Add bold, underline, strikethrough entry tags
     for (let tag of tagsChecked) {
@@ -41,5 +41,5 @@ export function PlainTextToMarkdown(
         }
     }
 
-    return output.join('');
+    return output.join("");
 }

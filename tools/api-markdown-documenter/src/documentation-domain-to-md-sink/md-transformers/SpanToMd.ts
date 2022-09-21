@@ -1,10 +1,7 @@
 import { SpanNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 
-export function SpanToMarkdown(
-    span: SpanNode,
-    renderer: DocumentationNodeRenderer,
-): string {
+export function SpanToMarkdown(span: SpanNode, renderer: DocumentationNodeRenderer): string {
     let output: string[] = [];
     if (span.textFormatting) {
         const { bold, italic, strikethrough } = span.textFormatting;
@@ -20,8 +17,8 @@ export function SpanToMarkdown(
     }
 
     if (span.children && span.children.length) {
-        output.push(...span.children.map(child => renderer.renderNode(child)));
+        output.push(...span.children.map((child) => renderer.renderNode(child)));
     }
 
-    return output.join('');
+    return output.join("");
 }
