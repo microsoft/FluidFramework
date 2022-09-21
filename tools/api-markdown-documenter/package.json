@@ -34,6 +34,7 @@
     "prettier:fix": "prettier --write .",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+    "test:hackathon": "mocha dist/documentation-domain-to-md-sink/**/*.test.js --unhandled-rejections=strict",
     "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict"
   },
   "dependencies": {
