@@ -49,7 +49,7 @@ export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 /**
  * Kafka producer using the node-rdkafka library
  */
-export class RdkafkaProducer3 extends RdkafkaBase implements IProducer {
+export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private readonly producerOptions: IKafkaProducerOptions;
 
 	/**
