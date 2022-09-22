@@ -65,7 +65,8 @@ type GcWithPrivates = IGarbageCollector & {
     readonly sessionExpiryTimer: Omit<Timer, "defaultTimeout"> & { defaultTimeout: number; };
 };
 
-describe("Garbage Collection Tests", () => {
+//* ONLY
+describe.only("Garbage Collection Tests", () => {
     // Nodes in the reference graph.
     const nodes: string[] = [
         "/node1",
@@ -331,33 +332,36 @@ describe("Garbage Collection Tests", () => {
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, 456, "sessionExpiryTimer incorrect");
                 validateSweepTimeout();
             });
-            describe("TestOverride.SweepTimeout", () => {
-                function testSessionExpiryMsOverride(expectedTimeoutMs: number) {
+            describe("TestOverride.SessionExpiryMs", () => {
+                function testSessionExpiryMsOverride(expectedTimeoutMs: number, expectedTimerValueMs?: number) {
                     assert(!!gc, "PRECONDITION: gc must be set before calling this helper");
-                    assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
-                    assert.equal(gc.sessionExpiryTimer.defaultTimeout, expectedTimeoutMs, "sessionExpiry used for timer should be the override value");
+                    assert.equal(gc.sessionExpiryTimeoutMs, expectedTimeoutMs, "sessionExpiryTimeoutMs incorrect");
+                    assert.equal(gc.sessionExpiryTimer.defaultTimeout, expectedTimerValueMs ?? expectedTimeoutMs, "sessionExpiry used for timer should be the override value");
 
-                    const expectedMetadata: IGCMetadata = { sweepEnabled: false, gcFeature: 1, sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs };
+                    const expectedMetadata: IGCMetadata = { sweepEnabled: false, gcFeature: 1, sessionExpiryTimeoutMs: expectedTimeoutMs };
                     const outputMetadata = gc.getMetadata();
                     assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
                 }
-                it("Setting applied to timeout but not written to file - New Container", () => {
+                it("Setting applied to timeout and written to file - New Container", () => {
                     injectedSettings[testOverrideSessionExpiryMsKey] = 789;
-                    gc = createGcWithPrivateMembers();
+                    gc = createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs: 99999 }); // this value will be overridden (so will default value)
                     testSessionExpiryMsOverride(789);
                     validateSweepTimeout();
                 });
                 it("Setting applied to timeout but not written to file - Existing Container", () => {
                     injectedSettings[testOverrideSessionExpiryMsKey] = 789;
                     gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs, gcFeature: 1 } /* metadata */);
-                    testSessionExpiryMsOverride(789);
+                    testSessionExpiryMsOverride(defaultSessionExpiryDurationMs, 789);
                     validateSweepTimeout();
                 });
                 it("Setting can only shrink the default/existing sessionExpiry value", () => {
                     injectedSettings[testOverrideSessionExpiryMsKey] = defaultSessionExpiryDurationMs + 1;
-                    assert.throws(
-                        () => createGcWithPrivateMembers(),
-                        "Expected error when overriding default value for new container");
+
+                    // Should be fine for new container
+                    gc = createGcWithPrivateMembers();
+                    testSessionExpiryMsOverride(defaultSessionExpiryDurationMs + 1);
+
+                    // Should fail for existing container
                     assert.throws(
                         () => createGcWithPrivateMembers({ sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs, gcFeature: 1 } /* metadata */),
                         "Expected error when overriding value for existing container");
@@ -370,11 +374,11 @@ describe("Garbage Collection Tests", () => {
                     assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
                     validateSweepTimeout();
                 });
-                it("Setting ignored if Disable SessionExpiry", () => {
+                it("Timer not set if Disable SessionExpiry", () => {
                     injectedSettings[disableSessionExpiryKey] = true;
-                    injectedSettings[testOverrideSessionExpiryMsKey] = 1234; // This override should be ignored
+                    injectedSettings[testOverrideSessionExpiryMsKey] = 1234;
                     gc = createGcWithPrivateMembers();
-                    assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs should be set even if disabled");
+                    assert.equal(gc.sessionExpiryTimeoutMs, 1234, "sessionExpiryTimeoutMs should be set even if disabled");
                     assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
                     // (validateSweepTimeout doesn't try to handle this case)
                     assert.equal(gc.sweepTimeoutMs, undefined, "sweepTimeoutMs should be undefined if SessionExpiry is disabled");

@@ -498,6 +498,11 @@ export class GarbageCollector implements IGarbageCollector {
 
         let prevSummaryGCVersion: number | undefined;
 
+        // This override applies to new documents, and will always adjust the timeout used in this session
+        // But it will not modify the value persisted in an existing container, and must not exceed that value.
+        const overrideSessionExpiryTimeoutMs =
+                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
+
         /**
          * The following GC state is enabled during container creation and cannot be changed throughout its lifetime:
          * 1. Whether running GC mark phase is allowed or not.
@@ -527,16 +532,15 @@ export class GarbageCollector implements IGarbageCollector {
 
             // Set the Session Expiry only if the flag is enabled and GC is enabled.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
-                this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
+                this.sessionExpiryTimeoutMs =
+                    overrideSessionExpiryTimeoutMs
+                    ?? this.gcOptions.sessionExpiryTimeoutMs
+                    ?? defaultSessionExpiryDurationMs;
             }
         }
 
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
         if (this.sessionExpiryTimeoutMs !== undefined && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
-            // If Test Override config is set, override Session Expiry timeout
-            // (but don't update the class member, which is used to compute Sweep Timeout and is persisted to the file)
-            const overrideSessionExpiryTimeoutMs =
-                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
             const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
             assert(timeoutMs <= this.sessionExpiryTimeoutMs,
                 "Cannot extend sessionExpiry via TestOverride setting");
