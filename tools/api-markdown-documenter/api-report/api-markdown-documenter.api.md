@@ -408,6 +408,8 @@ export class DocumentationNodeRenderer {
     // (undocumented)
     get applyingStrikethrough(): boolean;
     // (undocumented)
+    getLastRenderedCharacter(): string;
+    // (undocumented)
     get hierarchyDepth(): number;
     // (undocumented)
     increaseHierarchicalDepth(): void;
