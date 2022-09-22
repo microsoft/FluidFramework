@@ -5,7 +5,7 @@ package-lock.json
 dist/*
 
 # Test output
-src/test/snapshots/*
+src/**/test/snapshots/*
 
 # Dependencies
 node_modules/*
