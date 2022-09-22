@@ -131,7 +131,7 @@ function readTreeSection(node: NodeCore) {
                     treeNode.getMaybeString(2) === "unreferenced" &&
                     treeNode.getMaybeString(4) === "children") {
                 trees[treeNode.getString(1)] = readTreeSection(treeNode.getNode(5));
-                assert(treeNode.getBool(3), "Unreferenced if present should be true");
+                assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
                 snapshotTree.unreferenced = true;
                 continue;
             }
