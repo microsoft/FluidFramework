@@ -5,6 +5,7 @@
 
 /* eslint-disable camelcase */
 import { Octokit } from "@octokit/core";
+import { Logger } from "@fluidframework/build-tools";
 
 const OWNER = "microsoft";
 const REPO_NAME = "FluidFramework";
@@ -23,6 +24,7 @@ const DESCRIPTION = `
         > - Ensure CI is passing for this PR, fixing any issues. Please don't look into resolving **Real service e2e test** and **Stress test** failures as they are **non-required** CI failures.
         For more information about how to resolve merge conflicts and CI failures, visit [this wiki page](https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation).`;
 const TITLE = "Automate: Main Next Integrate";
+let logger: Logger;
 
 /**
  *
@@ -30,6 +32,7 @@ const TITLE = "Automate: Main Next Integrate";
  * @returns Returns true if pull request exists
  */
 export async function pullRequestExists(token: string): Promise<boolean> {
+    logger.verbose("CHECKING IF PULL REQUEST EXISTS");
     const octokit = new Octokit({ auth: token });
     const response = await octokit.request(PULL_REQUEST_EXISTS, { owner: OWNER, repo: REPO_NAME });
 
@@ -42,6 +45,7 @@ export async function pullRequestExists(token: string): Promise<boolean> {
  * @param commit_sha - Commit id for which we need pull request information
  */
 export async function pullRequestInfo(token: string, commit_sha: string): Promise<any> {
+    logger.verbose("PULL REQUEST INFO");
     const octokit = new Octokit({ auth: token });
     const prInfo = await octokit.request(PULL_REQUEST_INFO, {
         owner: OWNER,
@@ -66,6 +70,7 @@ export async function createPullRequest(
     target: string,
     assignee: string,
 ): Promise<any> {
+    logger.verbose(`CREATING A PULL REQUEST`);
     const octokit = new Octokit({ auth: token });
     const author = assignee === undefined || assignee === "" ? "sonalivdeshpande" : assignee;
     const newPr = await octokit.request(PULL_REQUEST, {
@@ -77,6 +82,7 @@ export async function createPullRequest(
         base: target,
     });
 
+    logger.verbose(`ASSIGNING A PULL REQUEST`);
     await octokit.request(ASSIGNEE, {
         owner: OWNER,
         repo: REPO_NAME,
@@ -84,6 +90,7 @@ export async function createPullRequest(
         assignees: [author],
     });
 
+    logger.verbose(`ADDING REVIEWER TO A PULL REQUEST`);
     await octokit.request(REVIEWER, {
         owner: OWNER,
         repo: REPO_NAME,
@@ -91,6 +98,7 @@ export async function createPullRequest(
         reviewer: [],
     });
 
+    logger.verbose(`ADDING LABELS TO A PULL REQUEST`);
     await octokit.request(LABEL, {
         owner: OWNER,
         repo: REPO_NAME,
