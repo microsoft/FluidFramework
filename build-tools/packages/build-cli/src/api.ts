@@ -7,7 +7,7 @@
 import { Octokit } from "@octokit/core";
 import { Logger, defaultLogger } from "@fluidframework/build-tools";
 
-const OWNER = "sonalivdeshpande";
+const OWNER = "microsoft";
 const REPO_NAME = "FluidFramework";
 const PULL_REQUEST_EXISTS = "GET /repos/{owner}/{repo}/pulls";
 const PULL_REQUEST_INFO = "GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls";
