@@ -70,6 +70,8 @@ describe("Container", () => {
         it("Fluid.Container.CatchUpBeforeDeclaringConnected = true, use CatchUpMonitor", () => {
             injectedSettings["Fluid.Container.CatchUpBeforeDeclaringConnected"] = true;
 
+            // @ts-expect-error Container's constructor is private but it's useful to
+            // to construct the class directly in tests
             const container = new Container({ services: { options: {} } } as Loader, {});
             const deltaManager: any = container.deltaManager;
             deltaManager.connectionManager.connection = {}; // Avoid assert 0x0df
@@ -80,6 +82,8 @@ describe("Container", () => {
         });
 
         it("Fluid.Container.CatchUpBeforeDeclaringConnected undefined, use ImmediateCatchUpMonitor", () => {
+            // @ts-expect-error Container's constructor is private but it's useful to
+            // to construct the class directly in tests
             const container = new Container({ services: { options: {} } } as Loader, {});
             const deltaManager: any = container.deltaManager;
             deltaManager.connectionManager.connection = {}; // Avoid assert 0x0df

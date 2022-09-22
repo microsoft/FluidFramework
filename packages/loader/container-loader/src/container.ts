@@ -555,7 +555,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private get scope() { return this.loader.services.scope; }
     private get codeLoader() { return this.loader.services.codeLoader; }
 
-    constructor(
+    private constructor(
         private readonly loader: Loader,
         config: IContainerConfig,
         private readonly protocolHandlerBuilder?: ProtocolHandlerBuilder,
