@@ -31,10 +31,7 @@ export function HierarchicalSectionToMarkdown(
         headerLine.push(getEscapedText(renderer.renderNode(sectionNode.heading.value)));
         output.push(headerLine.join(" "));
     }
-    if (sectionNode.heading) {
-        headerLine.push(getEscapedText(renderer.renderNode(sectionNode.heading.value)));
-    }
-    output.push(headerLine.join(" "));
+
     output.push(newlineOrBlankSpace(renderer.getLastRenderedCharacter())); // Add a line between the header and content
 
     const rows = sectionNode.children.map(
