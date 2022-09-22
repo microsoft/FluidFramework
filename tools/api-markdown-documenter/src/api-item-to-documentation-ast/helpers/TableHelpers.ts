@@ -119,11 +119,10 @@ export function createTableWithHeading(
 
     return table === undefined
         ? undefined
-        : new HierarchicalSectionNode([
-              // TODO: special heading hook?
+        : new HierarchicalSectionNode(
+              [table],
               HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
-              table,
-          ]);
+          );
 }
 
 /**

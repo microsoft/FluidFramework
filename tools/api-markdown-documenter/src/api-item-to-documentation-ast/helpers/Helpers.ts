@@ -28,7 +28,6 @@ import {
     FencedCodeBlockNode,
     HeadingNode,
     HierarchicalSectionNode,
-    LineBreakNode,
     LinkNode,
     ParagraphNode,
     PlainTextNode,
@@ -84,14 +83,10 @@ export function createSignatureSection(
                 contents.push(renderedHeritageTypes);
             }
 
-            return new HierarchicalSectionNode([
-                // TODO: special heading prop under section
-                HeadingNode.createFromPlainText(
-                    "Signature",
-                    `${getQualifiedApiItemName(apiItem)}-signature`,
-                ),
-                ...contents,
-            ]);
+            return wrapInSection(contents, {
+                title: "Signature",
+                id: `${getQualifiedApiItemName(apiItem)}-signature`,
+            });
         }
     }
     return undefined;
@@ -123,10 +118,10 @@ export function createSeeAlsoSection(
         transformSection(seeBlock, docNodeTransformOptions),
     );
 
-    return new HierarchicalSectionNode([
-        HeadingNode.createFromPlainText("See also", `${getQualifiedApiItemName(apiItem)}-see-also`),
-        ...contents,
-    ]);
+    return wrapInSection(contents, {
+        title: "See also",
+        id: `${getQualifiedApiItemName(apiItem)}-see-also`,
+    });
 }
 
 /**
@@ -456,11 +451,10 @@ export function createRemarksSection(
 
     const docNodeTransformOptions = getDocNodeTransformationOptions(config);
 
-    return new HierarchicalSectionNode([
-        // TODO: special heading prop under section
-        HeadingNode.createFromPlainText("Remarks", `${getQualifiedApiItemName(apiItem)}-remarks`),
-        transformSection(apiItem.tsdocComment.remarksBlock.content, docNodeTransformOptions),
-    ]);
+    return wrapInSection(
+        [transformSection(apiItem.tsdocComment.remarksBlock.content, docNodeTransformOptions)],
+        { title: "Remarks", id: `${getQualifiedApiItemName(apiItem)}-remarks` },
+    );
 }
 
 /**
@@ -489,11 +483,10 @@ export function createThrowsSection(
         transformSection(throwsBlock, docNodeTransformOptions),
     );
 
-    return new HierarchicalSectionNode([
-        // TODO: special heading prop under section
-        HeadingNode.createFromPlainText("Throws", `${getQualifiedApiItemName(apiItem)}-throws`),
-        ...paragraphs,
-    ]);
+    return wrapInSection(paragraphs, {
+        title: "Throws",
+        id: `${getQualifiedApiItemName(apiItem)}-throws`,
+    });
 }
 
 /**
@@ -564,11 +557,10 @@ export function renderExamplesSection(
         );
     }
 
-    return new HierarchicalSectionNode([
-        // TODO: special heading prop under section
-        HeadingNode.createFromPlainText("Examples", `${getQualifiedApiItemName(apiItem)}-examples`),
-        ...exampleSections,
-    ]);
+    return wrapInSection(exampleSections, {
+        title: "Examples",
+        id: `${getQualifiedApiItemName(apiItem)}-examples`,
+    });
 }
 
 /**
@@ -613,11 +605,10 @@ export function renderExampleSection(
         example.exampleNumber === undefined ? "" : example.exampleNumber
     }`;
 
-    return new HierarchicalSectionNode([
-        // TODO: special heading prop under section
-        HeadingNode.createFromPlainText(headingTitle, headingId),
-        transformSection(example.content, docNodeTransformOptions),
-    ]);
+    return wrapInSection([transformSection(example.content, docNodeTransformOptions)], {
+        title: headingTitle,
+        id: headingId,
+    });
 }
 
 /**
@@ -638,14 +629,10 @@ export function renderParametersSection(
         return undefined;
     }
 
-    return new HierarchicalSectionNode([
-        // TODO: special heading prop under section
-        HeadingNode.createFromPlainText(
-            "Parameters",
-            `${getQualifiedApiItemName(apiFunctionLike)}-parameters`,
-        ),
-        createParametersSummaryTable(apiFunctionLike.parameters, config),
-    ]);
+    return wrapInSection([createParametersSummaryTable(apiFunctionLike.parameters, config)], {
+        title: "Parameters",
+        id: `${getQualifiedApiItemName(apiFunctionLike)}-parameters`,
+    });
 }
 
 /**
@@ -697,14 +684,10 @@ export function createReturnsSection(
 
     return children.length === 0
         ? undefined
-        : // TODO: special heading prop under section
-          new HierarchicalSectionNode([
-              HeadingNode.createFromPlainText(
-                  "Returns",
-                  `${getQualifiedApiItemName(apiItem)}-returns`,
-              ),
-              ...children,
-          ]);
+        : wrapInSection(children, {
+              title: "Returns",
+              id: `${getQualifiedApiItemName(apiItem)}-returns`,
+          });
 }
 
 /**
@@ -769,10 +752,5 @@ export function createChildDetailsSection(
 }
 
 function wrapInSection(nodes: DocumentationNode[], heading: Heading): HierarchicalSectionNode {
-    // TODO: section format update (explicit heading)
-    return new HierarchicalSectionNode([
-        HeadingNode.createFromHeading(heading),
-        LineBreakNode.Singleton,
-        ...nodes,
-    ]);
+    return new HierarchicalSectionNode(nodes, HeadingNode.createFromHeading(heading));
 }

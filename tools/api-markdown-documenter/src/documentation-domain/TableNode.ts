@@ -6,6 +6,9 @@ import { DocumentNodeType } from "./DocumentationNodeType";
 import { ParentNodeBase } from "./DocumentionNode";
 import { TableRowNode } from "./TableRowNode";
 
+// TODOs:
+// - Support alignment properties in Table, TableRow and TableCell (inherit pattern for resolution)
+
 export class TableNode extends ParentNodeBase<TableRowNode> {
     public readonly type = DocumentNodeType.Table;
 

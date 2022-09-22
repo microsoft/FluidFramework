@@ -522,7 +522,9 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
 // @public
 export class HierarchicalSectionNode extends ParentNodeBase {
-    constructor(children: DocumentationNode[]);
+    constructor(children: DocumentationNode[], heading: HeadingNode);
+    // (undocumented)
+    readonly heading: HeadingNode;
     // (undocumented)
     readonly type = DocumentNodeType.HierarchicalSection;
 }

@@ -4,10 +4,10 @@
  */
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
+import { HeadingNode } from "./HeadingNode";
 
 // TODOs:
 // - Only Documents and Sections may contain Sections?
-// - Explicitly take in a Heading?
 
 /**
  * Represents a hierarchically nested section.
@@ -18,7 +18,10 @@ import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 export class HierarchicalSectionNode extends ParentNodeBase {
     public readonly type = DocumentNodeType.HierarchicalSection;
 
-    public constructor(children: DocumentationNode[]) {
+    public readonly heading: HeadingNode;
+
+    public constructor(children: DocumentationNode[], heading: HeadingNode) {
         super(children);
+        this.heading = heading;
     }
 }

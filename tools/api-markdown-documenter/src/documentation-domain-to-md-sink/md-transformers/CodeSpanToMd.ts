@@ -1,27 +1,23 @@
 import { CodeSpanNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { standardEOL, getTableEscapedText } from "./Utilities";
+import { getTableEscapedText, standardEOL } from "./Utilities";
 
 export function CodeSpanToMarkdown(
     codeSpanNode: CodeSpanNode,
     renderer: DocumentationNodeRenderer,
 ): string {
     renderer.setInsideCodeBlock();
-    const childContents = codeSpanNode.children.map(child => renderer.renderNode(child)).join('') // Render children
+    const childContents = codeSpanNode.children.map((child) => renderer.renderNode(child)).join(""); // Render children
 
-    let output:string[] = [];
+    let output: string[] = [];
     if (renderer.isInsideTable) {
         output = [
-            '<code>',
-            getTableEscapedText(childContents).split(/\r?\n/g).join('</code><br/><code>'),
-            '</code>'
+            "<code>",
+            getTableEscapedText(childContents).split(/\r?\n/g).join("</code><br/><code>"),
+            "</code>",
         ];
     } else {
-        output = [
-            '`',
-            childContents,
-            '`'
-        ];
+        output = ["`", childContents, "`"];
     }
     return output.join(standardEOL);
 }
