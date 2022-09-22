@@ -4,15 +4,19 @@
             "opRatePerMin": 120,
             "progressIntervalMs": 5000,
             "numClients": 10,
-            "totalSendCount": 1000,
-            "readWriteCycleMs": 10000
+            "totalSendCount": 1000
+        },
+        "gc_ci": {
+            "opRatePerMin": 120,
+            "progressIntervalMs": 5000,
+            "numClients": 10,
+            "totalSendCount": 72000
         },
         "gc_fault": {
             "opRatePerMin": 120,
             "progressIntervalMs": 5000,
             "numClients": 10,
             "totalSendCount": 1000,
-            "readWriteCycleMs": 10000,
             "faultInjectionMinMs": 0,
             "faultInjectionMaxMs": 50000
         },
