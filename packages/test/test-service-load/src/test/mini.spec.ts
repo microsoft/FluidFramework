@@ -9,7 +9,7 @@ import assert from "assert";
 const childArgs: string[] = [
     "./dist/nodeStressTest.js",
     "--driver", "tinylicious",
-    "--profile", "mini",
+    "--profile", "gc",
 ];
 
 describe("stress test", () => {
