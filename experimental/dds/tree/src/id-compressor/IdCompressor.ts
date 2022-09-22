@@ -632,7 +632,7 @@ export class IdCompressor {
 						// than fit in the expanded cluster, this will be the last final in the cluster
 						const newLastFinal = (newLastFinalizedFinal +
 							Math.min(newLastFinalizedLocal - lastLocal, this.newClusterCapacity)) as FinalCompressedId;
-						assert(newLastFinal >= newLastFinalizedFinal);
+						assert(newLastFinal >= newLastFinalizedFinal, 'The number of unfinalized locals should only be positive');
 						const finalPivot = (newLastFinalizedFinal - overflow + 1) as FinalCompressedId;
 						// Inform the normalizer of all IDs that we now know will end up being finalized into this cluster, including the ones
 						// that were given out as locals (non-eager) because they exceeded the bounds of the current cluster before it was expanded.
