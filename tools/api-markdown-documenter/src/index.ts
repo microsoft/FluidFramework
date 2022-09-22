@@ -20,7 +20,9 @@
 
 export * from "./new-system";
 export * from "./old-system";
+export * from "./utilities";
 
+export * from "./Configuration";
 export * from "./Heading";
 export * from "./Link";
 export * from "./LoadModel";

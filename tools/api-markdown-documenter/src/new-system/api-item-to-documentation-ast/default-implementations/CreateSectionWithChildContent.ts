@@ -5,8 +5,8 @@
 import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
+import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../../../utilities";
 import { HierarchicalSectionNode } from "../../documentation-domain";
-import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../../utilities";
 import {
     betaAlert,
     createDeprecationNoticeSection,

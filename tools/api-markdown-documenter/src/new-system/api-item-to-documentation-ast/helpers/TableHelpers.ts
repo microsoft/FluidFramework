@@ -17,6 +17,14 @@ import {
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
 import {
+    ApiFunctionLike,
+    ApiModifier,
+    getDefaultValueBlock,
+    getLinkForApiItem,
+    getModifiers,
+    isDeprecated,
+} from "../../../utilities";
+import {
     CodeSpanNode,
     DocumentationNode,
     HeadingNode,
@@ -28,14 +36,6 @@ import {
     TableNode,
     TableRowNode,
 } from "../../documentation-domain";
-import {
-    ApiFunctionLike,
-    ApiModifier,
-    getDefaultValueBlock,
-    getLinkForApiItem,
-    getModifiers,
-    isDeprecated,
-} from "../../utilities";
 import { transformSection } from "../DocNodeTransforms";
 import { createExcerptSpanWithHyperlinks } from "./Helpers";
 import { getDocNodeTransformationOptions } from "./InternalUtilities";

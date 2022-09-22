@@ -14,8 +14,8 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
+import { filterByKind } from "../../../utilities";
 import { HierarchicalSectionNode } from "../../documentation-domain";
-import { filterByKind } from "../../utilities";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
 /**

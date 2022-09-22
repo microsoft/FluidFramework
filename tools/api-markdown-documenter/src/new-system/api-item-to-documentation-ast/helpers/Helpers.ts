@@ -21,6 +21,20 @@ import { DocSection } from "@microsoft/tsdoc";
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
 import { Heading } from "../../../Heading";
 import {
+    ApiFunctionLike,
+    doesItemKindRequireOwnDocument,
+    doesItemRequireOwnDocument,
+    getAncestralHierarchy,
+    getDeprecatedBlock,
+    getExampleBlocks,
+    getHeadingForApiItem,
+    getLinkForApiItem,
+    getQualifiedApiItemName,
+    getReturnsBlock,
+    getSeeBlocks,
+    getThrowsBlocks,
+} from "../../../utilities";
+import {
     AlertKind,
     AlertNode,
     DocumentationNode,
@@ -35,20 +49,6 @@ import {
     SpanNode,
     UnorderedListNode,
 } from "../../documentation-domain";
-import {
-    ApiFunctionLike,
-    doesItemKindRequireOwnDocument,
-    doesItemRequireOwnDocument,
-    getAncestralHierarchy,
-    getDeprecatedBlock,
-    getExampleBlocks,
-    getHeadingForApiItem,
-    getLinkForApiItem,
-    getQualifiedApiItemName,
-    getReturnsBlock,
-    getSeeBlocks,
-    getThrowsBlocks,
-} from "../../utilities";
 import { transformSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "./InternalUtilities";
 import { createParametersSummaryTable } from "./TableHelpers";

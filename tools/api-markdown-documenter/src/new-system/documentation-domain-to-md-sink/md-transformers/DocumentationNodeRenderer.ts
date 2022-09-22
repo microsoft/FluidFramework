@@ -110,7 +110,7 @@ export type NodeRenderers = {
     ) => string;
 };
 
-class DefaultNodeRenderers {
+export class DefaultNodeRenderers {
     [DocumentNodeType.Alert] = AlertToMarkdown;
     [DocumentNodeType.BlockQuote] = BlockQuoteToMarkdown;
     [DocumentNodeType.CodeSpan] = CodeSpanToMarkdown;

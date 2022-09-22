@@ -1,8 +1,8 @@
 import { ApiItem } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
+import { getFilePathForApiItem } from "../../utilities";
 import { DocumentNode, DocumentationNode } from "../documentation-domain";
-import { getFilePathForApiItem } from "../utilities";
 
 /**
  * Helper function for creating a {@link DocumentNode} for an API item and its generated documentation contents.

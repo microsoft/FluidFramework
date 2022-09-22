@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
+import { ApiFunctionLike } from "../../../utilities";
 import { HierarchicalSectionNode } from "../../documentation-domain";
-import { ApiFunctionLike } from "../../utilities";
 import { createParametersSection, createReturnsSection } from "../helpers";
 
 /**

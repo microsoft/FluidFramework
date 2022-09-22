@@ -5,8 +5,8 @@
 import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../../Configuration";
+import { filterByKind } from "../../../utilities";
 import { HierarchicalSectionNode } from "../../documentation-domain";
-import { filterByKind } from "../../utilities";
 import { createMemberTables, wrapInSection } from "../helpers";
 
 /**

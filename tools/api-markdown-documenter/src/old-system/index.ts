@@ -1,5 +1,6 @@
 export {
     DocAlert,
+    DocAlertType,
     DocEmphasisSpan,
     DocHeading,
     DocList,

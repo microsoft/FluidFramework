@@ -23,8 +23,8 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
+import { doesItemRequireOwnDocument } from "../../utilities";
 import { DocumentNode, HierarchicalSectionNode } from "../documentation-domain";
-import { doesItemRequireOwnDocument } from "../utilities";
 import { createDocument } from "./Utilities";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
 
