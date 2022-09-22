@@ -271,7 +271,7 @@ export class DocumentationNodeRenderer {
     }
 
     public renderNodes(nodes: DocumentationNode[]): string {
-        return nodes.map(node => this.renderNode(node)).join('');
+        return nodes.map((node) => this.renderNode(node)).join("");
     }
 
     public setBold(): void {
@@ -313,5 +313,5 @@ export class DocumentationNodeRenderer {
 export function markdownFromDocumentNode(node: DocumentNode): string {
     // todo: configurability of individual node renderers
     const renderer = new DocumentationNodeRenderer();
-    return node.children.map((child) => renderer.renderNode(child)).join('');
+    return node.children.map((child) => renderer.renderNode(child)).join("");
 }

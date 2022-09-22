@@ -1,6 +1,6 @@
 import { TableNode } from "../../documentation-domain";
-import { standardEOL } from "./Utilities";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
+import { standardEOL } from "./Utilities";
 
 function getTableMaxColumns(tableNode: TableNode): number {
     let max = 0;
@@ -26,28 +26,28 @@ export function TableToMarkdown(tableNode: TableNode, renderer: DocumentationNod
     // First, write the table header (which is required by Markdown)
     // Don't render the header via renderNode(), because this header row needs to be handled specially to add more columns to fit the max amount of columns we found in the table.
     // We'll render each header cell individually
-    const headerRow = ['| ']
+    const headerRow = ["| "];
     for (let i = 0; i < columnsCount; ++i) {
-        headerRow.push(' ');
+        headerRow.push(" ");
         if (tableNode.headingRow && tableNode.headingRow.children.length < i) {
             headerRow.push(renderer.renderNode(tableNode.headingRow.children[i]));
         }
-        headerRow.push(' |')
+        headerRow.push(" |");
     }
 
-    output.push(`${headerRow.join('')}${standardEOL}`);
+    output.push(`${headerRow.join("")}${standardEOL}`);
 
     // Next we add in the divider row between the header and table contents
-    const dividerRow = ['| '];
+    const dividerRow = ["| "];
     for (let i = 0; i < columnsCount; ++i) {
-        dividerRow.push(' --- |');
+        dividerRow.push(" --- |");
     }
     dividerRow.push(standardEOL);
-    output.push(dividerRow.join(''));
+    output.push(dividerRow.join(""));
 
     // Now render the rows. Rows can be rendered via renderNode without issue.
     // Table rows will automatically append EOLs to the end of their row, so we wont need to add them here
-    output.push(... tableNode.children.map(childRow => renderer.renderNode(childRow)));
+    output.push(...tableNode.children.map((childRow) => renderer.renderNode(childRow)));
 
     return output.join();
 }

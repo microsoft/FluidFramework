@@ -8,12 +8,12 @@ export function TableRowToMarkdown(
 ): string {
     renderer.setInsideTable();
 
-    const output = ['| '];
+    const output = ["| "];
     for (const cell of tableRowNode.children) {
-        output.push(' ');
+        output.push(" ");
         output.push(renderer.renderNodes(cell.children));
-        output.push(' |');
+        output.push(" |");
     }
 
-    return `${output.join('')}${standardEOL}`;
+    return `${output.join("")}${standardEOL}`;
 }
