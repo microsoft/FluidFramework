@@ -143,7 +143,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             await gitRepo.resetBranch(unmergedCommitList[0]);
             // fetch name of owner associated to the pull request
             const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[0]);
-            this.log(`Fetch pull request info for commit id ${unmergedCommitList[0]}: ${data}`);
+            const data1 = JSON.stringify(data);
+            this.info(`Author name: ${data[0].user.login}`);
+            this.log(
+                `Fetch pull request info for single commit id ${unmergedCommitList[0]}: ${data1}`,
+            );
             prNumber = await api.createPullRequest(
                 flags.auth,
                 `${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
@@ -156,9 +160,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
         } else {
             // fetch name of owner associated to the pull request
             const data = await api.pullRequestInfo(flags.auth, unmergedCommitList[commit]);
+            const data1 = JSON.stringify(data);
             this.info(
-                `Fetch pull request info for commit id ${unmergedCommitList[commit]}: ${data}`,
+                `Fetch pull request info for bulk commit id ${unmergedCommitList[commit]}: ${data1}`,
             );
+            this.info(`Author name: ${data[0].user.login}`);
             prNumber = await api.createPullRequest(
                 flags.auth,
                 branchName,
