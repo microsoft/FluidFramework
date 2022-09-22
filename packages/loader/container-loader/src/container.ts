@@ -1181,19 +1181,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // ...load in the existing quorum
         // Initialize the protocol handler
-        this._protocolHandler = pendingLocalState === undefined
-            ? await this.initializeProtocolStateFromSnapshot(
+        if (pendingLocalState === undefined) {
+            await this.initializeProtocolStateFromSnapshot(
                 attributes,
                 this.storageService,
-                snapshot,
-            ) : this.initializeProtocolState(
-                attributes,
-                {
-                    members: pendingLocalState.protocol.members,
-                    proposals: pendingLocalState.protocol.proposals,
-                    values: pendingLocalState.protocol.values,
-                }, // pending IQuorumSnapshot
-            );
+                snapshot);
+        } else {
+                this.initializeProtocolState(
+                    attributes,
+                    {
+                        members: pendingLocalState.protocol.members,
+                        proposals: pendingLocalState.protocol.proposals,
+                        values: pendingLocalState.protocol.values,
+                    }, // pending IQuorumSnapshot
+                );
+        }
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
@@ -1268,7 +1270,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         const qValues = initQuorumValuesFromCodeDetails(source);
-        this._protocolHandler = await this.initializeProtocolState(
+        this._protocolHandler = this.initializeProtocolState(
             attributes,
             {
                 members: [],
@@ -1305,15 +1307,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             baseTree.blobs.quorumValues,
         );
         const codeDetails = getCodeDetailsFromQuorumValues(qValues);
-        this._protocolHandler =
-            await this.initializeProtocolState(
-                attributes,
-                {
-                    members: [],
-                    proposals: [],
-                    values: codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
-                }, // IQuorumSnapShot
-            );
+        this.initializeProtocolState(
+            attributes,
+            {
+                members: [],
+                proposals: [],
+                values: codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
+            }, // IQuorumSnapShot
+        );
 
         await this.instantiateContextDetached(
             true, // existing
@@ -1354,7 +1355,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
-    ): Promise<IProtocolHandler> {
+    ): Promise<void> {
         const quorumSnapshot: IQuorumSnapshot = {
             members: [],
             proposals: [],
@@ -1370,14 +1371,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ]);
         }
 
-        const protocolHandler = await this.initializeProtocolState(attributes, quorumSnapshot);
-        return protocolHandler;
+        this.initializeProtocolState(attributes, quorumSnapshot);
     }
 
     private initializeProtocolState(
         attributes: IDocumentAttributes,
         quorumSnapshot: IQuorumSnapshot,
-    ): IProtocolHandler {
+    ): void {
         const protocolHandlerBuilder =
             this.protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
         const protocol = protocolHandlerBuilder(
@@ -1420,7 +1420,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
             });
 
-        return protocol;
+        this._protocolHandler = protocol;
     }
 
     private captureProtocolSummary(): ISummaryTree {
