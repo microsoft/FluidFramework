@@ -50,16 +50,16 @@ export const generateLoaderOptions =
     };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
-    disableGC: booleanCases,
-    gcAllowed: booleanCases,
-    runFullGC: booleanCases,
+    disableGC: [false],
+    gcAllowed: [true],
+    runFullGC: [false],
     sweepAllowed: [false],
     sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
     disableSummaries: [false],
-    initialSummarizerDelayMs: numberCases,
+    initialSummarizerDelayMs: [500],
     summaryConfigOverrides: [undefined],
     maxOpsSinceLastSummary: numberCases,
     summarizerClientElection: [false],

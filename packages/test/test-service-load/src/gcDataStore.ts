@@ -4,6 +4,7 @@
  * Licensed under the MIT License.
  */
 
+import random from "random-js";
 import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, delay } from "@fluidframework/common-utils";
@@ -13,7 +14,7 @@ import { IRunConfig } from "./loadTestDataStore";
 
 export interface IGCDataStore {
     readonly handle: IFluidHandle;
-    run: (config: IRunConfig) => Promise<boolean>;
+    run: (config: IRunConfig, id?: string) => Promise<boolean>;
     stop: () => void;
 }
 
@@ -54,20 +55,32 @@ export class DataObjectType1 extends BaseDataObject implements IGCDataStore {
     }
 
     private shouldRun: boolean = false;
+    private myId: string | undefined;
 
-    public async run(config: IRunConfig) {
-        console.log("+++++++++ Starting child");
+    public async run(config: IRunConfig, id?: string) {
+        this.myId = id;
+        console.log(`+++++++++ Started child [${id}]`);
         this.shouldRun = true;
+
         const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
+
+        let localSendCount = 0;
         while (this.shouldRun && !this.runtime.disposed) {
+            if (localSendCount % 10 === 0) {
+                console.log(
+                    `+++++++++ Child Data Store [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
+            }
+
             this.counter.increment(1);
-            await delay(delayBetweenOpsMs);
+            localSendCount++;
+            // Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
+            await delay(delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, .5, true)(config.randEng));
         }
         return !this.runtime.disposed;
     }
 
     public stop() {
-        console.log("+++++++++ Stopping child");
+        console.log(`+++++++++ Stopped child [${this.myId}]`);
         this.shouldRun = false;
     }
 }
@@ -93,7 +106,14 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
 
     private shouldRun: boolean = false;
 
-    private readonly uniqueChildKey = `${uuid()}-child`;
+    // Create a unique Id for ourselves.
+    private readonly myId = uuid();
+
+    // The number of child data stores created.
+    private childCount = 1;
+
+    // The key against which handle to child data store is stored.
+    private readonly uniqueChildKey = `${this.myId}-child`;
     private child: IGCDataStore | undefined;
 
     public async run(config: IRunConfig) {
@@ -103,19 +123,21 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         let localSendCount = 0;
 
         while (this.shouldRun && localSendCount < clientSendCount && !this.runtime.disposed) {
-            if (localSendCount % 3 === 0) {
+            if (localSendCount % 10 === 0) {
                 console.log(
-                    `########## GC DATA STORE [${this.runtime.clientId}]: ${localSendCount} / ${this.counter.value}`);
+                    `########## GC DATA STORE [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
             }
 
-            // After every 3 ops, perform an activity.
-            if (localSendCount % 3 === 0) {
+            // After every 10 ops, perform an activity.
+            if (localSendCount % 10 === 0) {
                 await this.preformActivity(config);
             }
 
             this.counter.increment(1);
             localSendCount++;
-            await delay(delayBetweenOpsMs);
+
+            // Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
+            await delay(delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, .5, true)(config.randEng));
         }
         return !this.runtime.disposed;
     }
@@ -136,14 +158,23 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         this.root.set(this.uniqueChildKey, this.child.handle);
 
         // Set up the child to send ops 10 times faster than this data store.
-        const childConfig: IRunConfig = { ...config };
-        childConfig.testConfig.opRatePerMin = config.testConfig.opRatePerMin * 10;
+        const opRatePerMin = config.testConfig.opRatePerMin * 5;
+        const childConfig: IRunConfig = {
+            ...config,
+            testConfig: {
+                ...config.testConfig,
+                opRatePerMin,
+            },
+        };
 
-        this.child.run(childConfig).then((done: boolean) => {
+        // Give each child a unique id w.r.t. this data store's id.
+        const uniquechildId = `${this.myId}-${this.childCount.toString()}`;
+        this.child.run(childConfig, uniquechildId).then((done: boolean) => {
             throw new Error("Child was disposed while running");
         }).catch((error) => {
             throw new Error(`Error when running child: ${error}`);
         });
+        this.childCount++;
     }
 }
 
