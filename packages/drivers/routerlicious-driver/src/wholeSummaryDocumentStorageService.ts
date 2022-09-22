@@ -120,7 +120,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const cachedBlob = await this.blobCache.get(this.getBlobCacheKey(blobId));
+        const cachedBlob = await this.blobCache.get(this.getCacheKey(blobId));
         if (cachedBlob !== undefined) {
             return cachedBlob;
         }
@@ -142,7 +142,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         );
         const bufferValue = stringToBuffer(blob.content, blob.encoding);
 
-        await this.blobCache.put(this.getBlobCacheKey(blob.sha), bufferValue);
+        await this.blobCache.put(this.getCacheKey(blob.sha), bufferValue);
 
         return bufferValue;
     }
@@ -208,7 +208,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     private async fetchAndCacheSnapshotTree(versionId: string, disableCache?: boolean): Promise<ISnapshotTreeVersion> {
-        const cachedSnapshotTreeVersion = await this.snapshotTreeCache.get(this.getSnapshotCacheKey(versionId));
+        const cachedSnapshotTreeVersion = await this.snapshotTreeCache.get(this.getCacheKey(versionId));
         if (cachedSnapshotTreeVersion !== undefined) {
             return { id: cachedSnapshotTreeVersion.id, snapshotTree: cachedSnapshotTreeVersion.snapshotTree };
         }
@@ -236,7 +236,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 
         const cachePs: Promise<any>[] = [
             this.snapshotTreeCache.put(
-                this.getSnapshotCacheKey(snapshotTreeId),
+                this.getCacheKey(snapshotTreeId),
                 snapshotTreeVersion,
             ),
             this.initBlobCache(normalizedWholeSummary.blobs),
@@ -247,7 +247,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             // However, for something like Redis, this will cache the same value twice. Alternatively, could we simply
             // cache with versionId?
             cachePs.push(this.snapshotTreeCache.put(
-                this.getSnapshotCacheKey(versionId),
+                this.getCacheKey(versionId),
                 snapshotTreeVersion,
             ));
         }
@@ -260,17 +260,13 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     private async initBlobCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
         const blobCachePutPs: Promise<void>[] = [];
         blobs.forEach((value, id) => {
-            const cacheKey = this.getBlobCacheKey(id);
+            const cacheKey = this.getCacheKey(id);
             blobCachePutPs.push(this.blobCache.put(cacheKey, value));
         });
         await Promise.all(blobCachePutPs);
     }
 
-    private getBlobCacheKey(blobId: string): string {
+    private getCacheKey(blobId: string): string {
         return `${this.id}:${blobId}`;
-    }
-
-    private getSnapshotCacheKey(snapshotId: string): string {
-        return `${this.id}:${snapshotId}`;
     }
 }
