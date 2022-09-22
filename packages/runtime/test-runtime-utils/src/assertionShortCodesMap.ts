@@ -698,5 +698,6 @@ export const shortCodeMap = {
     "0x343": "Invalid usage. \"count\" should always be 1",
     "0x344": "this.pendingConnection should be undefined",
     "0x345": "this.pendingConnection is undefined when trying to cancel",
-    "0x346": "inboundQueuePausedFromInit should be true"
+    "0x346": "inboundQueuePausedFromInit should be true",
+    "0x396": "Refresh Summary Ack - Caller is responsible for checking lock"
 };
