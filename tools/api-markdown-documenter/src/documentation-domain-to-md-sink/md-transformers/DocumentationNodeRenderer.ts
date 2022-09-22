@@ -157,7 +157,7 @@ export class DocumentationNodeRenderer {
         italic: false,
         insideTable: false,
         insideCodeBlock: false,
-        depth: 0,
+        depth: 1,
     };
     public renderNode(node: DocumentationNode): string {
         const prevRenderingContext = this.renderingContext;
@@ -270,6 +270,10 @@ export class DocumentationNodeRenderer {
         return renderedNode;
     }
 
+    public renderNodes(nodes: DocumentationNode[]): string {
+        return nodes.map(node => this.renderNode(node)).join('');
+    }
+
     public setBold(): void {
         this.renderingContext.bold = true;
     }
@@ -309,5 +313,5 @@ export class DocumentationNodeRenderer {
 export function markdownFromDocumentNode(node: DocumentNode): string {
     // todo: configurability of individual node renderers
     const renderer = new DocumentationNodeRenderer();
-    return node.children.map((child) => renderer.renderNode(child)).join();
+    return node.children.map((child) => renderer.renderNode(child)).join('');
 }

@@ -7,7 +7,7 @@ export function CodeSpanToMarkdown(
     renderer: DocumentationNodeRenderer,
 ): string {
     renderer.setInsideCodeBlock();
-    const childContents = codeSpanNode.children.map(child => renderer.renderNode(child)).join('') // Render children
+    const childContents = renderer.renderNodes(codeSpanNode.children);
 
     let output:string[] = [];
     if (renderer.isInsideTable) {

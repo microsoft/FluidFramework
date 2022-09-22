@@ -8,7 +8,7 @@ export function FencedCodeBlockToMarkdown(
 ): string {
     const output = [markdownEOL, "```" + blockNode.language, standardEOL];
     renderer.setInsideCodeBlock();
-    const children = blockNode.children.map((child) => renderer.renderNode(child)).join("");
+    const children = renderer.renderNodes(blockNode.children);
     output.push(children);
     output.push(standardEOL);
     output.push("```");
