@@ -6,10 +6,7 @@ export function ParagraphToMarkdown(
     paragraph: ParagraphNode,
     renderer: DocumentationNodeRenderer,
 ): string {
-    const childContents: string = paragraph.children
-        .map((child) => renderer.renderNode(child))
-        .join("")
-        .trim();
+    const childContents: string = renderer.renderNodes(paragraph.children).trim();
 
     if (renderer.isInsideTable) {
         return childContents === "" ? "" : `<p>${childContents}</p>`;

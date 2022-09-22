@@ -2,8 +2,9 @@ import { TableCellNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 
 export function TableCellToMarkdown(
-    textNode: TableCellNode,
+    tableCellNode: TableCellNode,
     renderer: DocumentationNodeRenderer,
 ): string {
-    return "Not yet implemented";
+    renderer.setInsideTable();
+    return renderer.renderNodes(tableCellNode.children);
 }
