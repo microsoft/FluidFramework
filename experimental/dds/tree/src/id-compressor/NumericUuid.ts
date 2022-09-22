@@ -199,7 +199,6 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 	return newUuid as readonly [string, number] as NumericUuid;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace ChunkMath {
 	/*
 	 * Recall the UUID diagram from the top of this file which describes the layout of a Numeric UUID. To implement addition, we define
@@ -236,7 +235,7 @@ namespace ChunkMath {
 	/**
 	 * The upper chunk, denoted by 'U's in UUUUUUUU-UUUU-VVVV-vVVL-LLLLLLLLLLLL
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-namespace
+
 	export namespace Upper {
 		export function parse(stringEntry: string): string {
 			return stringEntry.slice(0, 8) + stringEntry.slice(9, 13);
@@ -254,7 +253,7 @@ namespace ChunkMath {
 	/**
 	 * The variant chunk, denoted by 'V's in UUUUUUUU-UUUU-VVVV-vVVL-LLLLLLLLLLLL
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-namespace
+
 	export namespace Variant {
 		export function parse(stringEntry: string): string {
 			return stringEntry.slice(15, 18) + stringEntry.slice(19, 22);
@@ -268,7 +267,7 @@ namespace ChunkMath {
 	/**
 	 * The lower chunk, denoted by 'L's in UUUUUUUU-UUUU-VVVV-vVVL-LLLLLLLLLLLL
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-namespace
+
 	export namespace Lower {
 		export function parse(stableId: StableId): string {
 			return stableId.slice(stringEntryLength, stringEntryLength + 1) + stableId.slice(stringEntryLength + 2);

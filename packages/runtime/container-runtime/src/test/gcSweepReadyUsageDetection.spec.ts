@@ -28,6 +28,7 @@ describe("Garbage Collection Tests", () => {
         // used to inject settings into MonitoringContext, and also to mock localStorage for the handler
         let mockLocalStorage: Record<string, ConfigTypes> = {};
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         const createHandler = (uniqueContainerKey: string = "key1", forceNoopStorage: boolean = false) => new SweepReadyUsageDetectionHandler(
             uniqueContainerKey,
             loggerToMonitoringContext(mockLogger),
