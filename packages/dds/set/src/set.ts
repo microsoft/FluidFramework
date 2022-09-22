@@ -4,17 +4,23 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+    ISequencedDocumentMessage,
+    MessageType,
+} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
     IChannelFactory,
-    Serializable,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import {
+    createSingleBlobSummary,
+    IFluidSerializer,
+    SharedObject,
+} from "@fluidframework/shared-object-base";
 import { SetFactory } from "./setFactory";
 import { ISharedSet, ISharedSetEvents } from "./interfaces";
 
@@ -86,7 +92,8 @@ const snapshotFileName = "header";
  * register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted
  * in response to a `set`, and `delete` will be emitted in response to a `delete`.
  */
-export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>>
+export class SharedSet<T = any>
+    extends SharedObject<ISharedSetEvents<T>>
     implements ISharedSet<T> {
     /**
      * Create a new shared set
@@ -110,7 +117,7 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>>
     /**
      * The data held by this set.
      */
-    private data: Serializable<T> | undefined;
+    private data: Set<T> | undefined;
 
     /**
      * This is used to assign a unique id to outgoing messages. It is used to track messages until
@@ -131,21 +138,25 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>>
      * @param runtime - data store runtime the shared map belongs to
      * @param id - optional name of the shared map
      */
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+    constructor(
+        id: string,
+        runtime: IFluidDataStoreRuntime,
+        attributes: IChannelAttributes,
+    ) {
         super(id, runtime, attributes, "fluid_set_");
     }
 
     /**
      * {@inheritDoc ISharedSet.get}
      */
-    public get(): Serializable<T> | undefined {
+    public get(): Set<T> | undefined {
         return this.data;
     }
 
     /**
      * {@inheritDoc ISharedSet.set}
      */
-    public set(value: Serializable<T>) {
+    public set(value: Set<T>) {
         // Serialize the value if required.
         const operationValue: ISetValue = {
             value: this.serializer.encode(value, this.handle),
@@ -153,6 +164,7 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>>
 
         // Set the value locally.
         this.setCore(value);
+        console.log(this.data);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -196,16 +208,24 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>>
      *
      * @returns the summary of the current state of the set
      */
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+    protected summarizeCore(
+        serializer: IFluidSerializer,
+    ): ISummaryTreeWithStats {
         const content: ISetValue = { value: this.data };
-        return createSingleBlobSummary(snapshotFileName, serializer.stringify(content, this.handle));
+        return createSingleBlobSummary(
+            snapshotFileName,
+            serializer.stringify(content, this.handle),
+        );
     }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<ISetValue>(storage, snapshotFileName);
+        const content = await readAndParse<ISetValue>(
+            storage,
+            snapshotFileName,
+        );
 
         this.data = this.decode(content);
     }
@@ -220,7 +240,7 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>>
     /**
      * Call back on disconnect
      */
-    protected onDisconnect() { }
+    protected onDisconnect() {}
 
     /**
      * Apply inner op
@@ -249,13 +269,20 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>>
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+    protected processCore(
+        message: ISequencedDocumentMessage,
+        local: boolean,
+        localOpMetadata: unknown,
+    ) {
         if (this.messageId !== this.messageIdObserved) {
             // We are waiting for an ACK on our change to this set - we will ignore all messages until we get it.
             if (local) {
                 const messageIdReceived = localOpMetadata as number;
-                assert(messageIdReceived !== undefined && messageIdReceived <= this.messageId,
-                    0x00c /* "messageId is incorrect from from the local client's ACK" */);
+                assert(
+                    messageIdReceived !== undefined &&
+                        messageIdReceived <= this.messageId,
+                    0x00c, /* "messageId is incorrect from from the local client's ACK" */
+                );
 
                 // We got an ACK. Update messageIdObserved.
                 this.messageIdObserved = localOpMetadata as number;
@@ -269,7 +296,7 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>>
         }
     }
 
-    private setCore(value: Serializable<T>) {
+    private setCore(value: Set<T>) {
         this.data = value;
         this.emit("valueChanged", value);
     }

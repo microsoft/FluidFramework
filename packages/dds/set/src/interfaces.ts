@@ -4,10 +4,9 @@
  */
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { Serializable } from "@fluidframework/datastore-definitions";
 
 export interface ISharedSetEvents<T> extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (value: Serializable<T>) => void);
+    (event: "valueChanged", listener: (value: Set<T>) => void);
     (event: "delete", listener: () => void);
 }
 
@@ -21,14 +20,14 @@ export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> 
      *
      * @returns - the value of the set
      */
-    get(): Serializable<T> | undefined;
+    get(): Set<T> | undefined;
 
     /**
      * Sets the set value.
      *
      * @param value - a JSON-able or SharedObject value to set the set to
      */
-    set(value: Serializable<T>): void;
+    set(value: Set<T>): void;
 
     /**
      * Checks whether set is empty or not.

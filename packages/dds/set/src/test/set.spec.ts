@@ -63,27 +63,27 @@ describe("Set", () => {
             });
 
             it("Can set and get set data", () => {
-                set.set("testValue");
-                assert.equal(set.get(), "testValue", "Could not retrieve set value");
+                set.set(new Set("testValue"));
+                assert.equal(set.get(), new Set("testValue"), "Could not retrieve set value");
             });
 
             it("can delete set data", () => {
-                set.set("testValue");
-                assert.equal(set.get(), "testValue", "Could not retrieve set value");
+                set.set(new Set("testValue"));
+                assert.equal(set.get(), new Set("testValue"), "Could not retrieve set value");
 
                 set.delete();
                 assert.equal(set.get(), undefined, "Could not delete set value");
             });
 
             it("can load a SharedSet from snapshot", async () => {
-                set.set("testValue");
-                assert.equal(set.get(), "testValue", "Could not retrieve set value");
+                set.set(new Set("testValue"));
+                assert.equal(set.get(), new Set("testValue"), "Could not retrieve set value");
 
                 const services = MockSharedObjectServices.createFromSummary(set.getAttachSummary().summary);
                 const set2 = new SharedSet("set2", new MockFluidDataStoreRuntime(), SetFactory.Attributes);
                 await set2.load(services);
 
-                assert.equal(set2.get(), "testValue", "Could not load SharedSet from snapshot");
+                assert.equal(set2.get(), new Set("testValue"), "Could not load SharedSet from snapshot");
             });
 
             it("can load a SharedSet with undefined value from snapshot", async () => {
@@ -100,7 +100,7 @@ describe("Set", () => {
                 const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
                 const set1 = new SharedSet("set1", dataStoreRuntime1, SetFactory.Attributes);
                 // Set a value in local state.
-                const value = "testValue";
+                const value = new Set("testValue");
                 set1.set(value);
 
                 // Load a new SharedSet in connected state from the snapshot of the first one.
@@ -127,7 +127,7 @@ describe("Set", () => {
                 assert.equal(set2.get(), value, "The second set does not have the key");
 
                 // Set a new value in the second SharedSet.
-                const newValue = "newvalue";
+                const newValue = new Set("newvalue");
                 set2.set(newValue);
 
                 // Process the message.
@@ -155,21 +155,21 @@ describe("Set", () => {
             });
 
             it("Can set and get set data", () => {
-                set1.set("testValue");
+                set1.set(new Set("testValue"));
 
                 containerRuntimeFactory.processAllMessages();
 
-                assert.equal(set1.get(), "testValue", "Could not retrieve set value");
-                assert.equal(set2.get(), "testValue", "Could not retrieve set value from remote client");
+                assert.equal(set1.get(), new Set("testValue"), "Could not retrieve set value");
+                assert.equal(set2.get(), new Set("testValue"), "Could not retrieve set value from remote client");
             });
 
             it("can delete set data", () => {
-                set1.set("testValue");
+                set1.set(new Set("testValue"));
 
                 containerRuntimeFactory.processAllMessages();
 
-                assert.equal(set1.get(), "testValue", "Could not retrieve set value");
-                assert.equal(set2.get(), "testValue", "Could not retrieve set value from remote client");
+                assert.equal(set1.get(), new Set("testValue"), "Could not retrieve set value");
+                assert.equal(set2.get(), new Set("testValue"), "Could not retrieve set value from remote client");
 
                 set1.delete();
 
@@ -203,7 +203,7 @@ describe("Set", () => {
         });
 
         it("can resend unacked ops on reconnection", async () => {
-            const value = "testValue";
+            const value = new Set("testValue");
 
             // Set a value on the first SharedSet.
             set1.set(value);
@@ -235,7 +235,7 @@ describe("Set", () => {
         });
 
         it("can store ops in disconnected state and resend them on reconnection", async () => {
-            const value = "testValue";
+            const value = new Set("testValue");
 
             // Disconnect the first client.
             containerRuntime1.connected = false;
@@ -273,15 +273,12 @@ describe("Set", () => {
 
     describe("Garbage Collection", () => {
         class GCSharedSetProvider implements IGCTestProvider {
-            private subSetCount = 0;
             private _expectedRoutes: string[] = [];
-            private readonly set1: ISharedSet;
             private readonly set2: ISharedSet;
             private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
             constructor() {
                 this.containerRuntimeFactory = new MockContainerRuntimeFactory();
-                this.set1 = createConnectedSet("set1", this.containerRuntimeFactory);
                 this.set2 = createConnectedSet("set2", this.containerRuntimeFactory);
             }
 
@@ -295,10 +292,6 @@ describe("Set", () => {
             }
 
             public async addOutboundRoutes() {
-                const newSubSet = createLocalSet(`subSet-${++this.subSetCount}`);
-                this.set1.set(newSubSet.handle);
-                this._expectedRoutes = [newSubSet.handle.absolutePath];
-                this.containerRuntimeFactory.processAllMessages();
             }
 
             public async deleteOutboundRoutes() {
@@ -308,17 +301,6 @@ describe("Set", () => {
             }
 
             public async addNestedHandles() {
-                const newSubSet = createLocalSet(`subSet-${++this.subSetCount}`);
-                const newSubSet2 = createLocalSet(`subSet-${++this.subSetCount}`);
-                const containingObject = {
-                    subsetHandle: newSubSet.handle,
-                    nestedObj: {
-                        subset2Handle: newSubSet2.handle,
-                    },
-                };
-                this.set1.set(containingObject);
-                this._expectedRoutes = [newSubSet.handle.absolutePath, newSubSet2.handle.absolutePath];
-                this.containerRuntimeFactory.processAllMessages();
             }
         }
 
