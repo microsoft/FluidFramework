@@ -5,7 +5,7 @@
 
 /* eslint-disable camelcase */
 import { Octokit } from "@octokit/core";
-import { Logger } from "@fluidframework/build-tools";
+import { Logger, defaultLogger } from "@fluidframework/build-tools";
 
 const OWNER = "microsoft";
 const REPO_NAME = "FluidFramework";
@@ -24,7 +24,7 @@ const DESCRIPTION = `
         > - Ensure CI is passing for this PR, fixing any issues. Please don't look into resolving **Real service e2e test** and **Stress test** failures as they are **non-required** CI failures.
         For more information about how to resolve merge conflicts and CI failures, visit [this wiki page](https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation).`;
 const TITLE = "Automate: Main Next Integrate";
-let logger: Logger;
+const logger: Logger = defaultLogger;
 
 /**
  *
