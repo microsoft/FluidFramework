@@ -268,11 +268,6 @@ export interface IPendingContainerState {
 
 const summarizerClientType = "summarizer";
 
-/**
- * The Container class represents a Fluid document. A host/loader can retrieve an existing one from remote storage,
- * or create a new one locally and then attach it to remote storage and connect it to an op stream so it can be
- * collaborated on.
- */
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
