@@ -25,10 +25,11 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
 
 /**
  * Snapshot directory to which generated test data will be copied.
- * Relative to dist/test.
+ * Relative to dist/old-system/test.
  */
 const snapshotsDirPath = Path.resolve(
     __dirname,
+    "..",
     "..",
     "..",
     "src",
