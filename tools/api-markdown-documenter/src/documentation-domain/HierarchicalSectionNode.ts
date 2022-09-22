@@ -18,9 +18,15 @@ import { HeadingNode } from "./HeadingNode";
 export class HierarchicalSectionNode extends ParentNodeBase {
     public readonly type = DocumentNodeType.HierarchicalSection;
 
-    public readonly heading: HeadingNode;
+    /**
+     * Optional heading to display for the section.
+     *
+     * @remarks If not specified, no heading will be displayed in the section contents.
+     * Note that this section will still influence heading hierarchy of child contents regardless.
+     */
+    public readonly heading?: HeadingNode;
 
-    public constructor(children: DocumentationNode[], heading: HeadingNode) {
+    public constructor(children: DocumentationNode[], heading?: HeadingNode) {
         super(children);
         this.heading = heading;
     }
