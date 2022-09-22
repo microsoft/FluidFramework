@@ -50,7 +50,7 @@ stages:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
           login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          #FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # stress tests tinylicious
   - stage:
@@ -65,5 +65,5 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:t9s:gc:ci
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        #env:
+          #FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
