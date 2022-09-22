@@ -1187,14 +1187,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.storageService,
                 snapshot);
         } else {
-                this.initializeProtocolState(
-                    attributes,
-                    {
-                        members: pendingLocalState.protocol.members,
-                        proposals: pendingLocalState.protocol.proposals,
-                        values: pendingLocalState.protocol.values,
-                    }, // pending IQuorumSnapshot
-                );
+            this.initializeProtocolState(
+                attributes,
+                {
+                    members: pendingLocalState.protocol.members,
+                    proposals: pendingLocalState.protocol.proposals,
+                    values: pendingLocalState.protocol.values,
+                }, // pending IQuorumSnapshot
+            );
         }
 
         const codeDetails = this.getCodeDetailsFromQuorum();
