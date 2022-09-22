@@ -1,9 +1,12 @@
 import { OrderedListNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
+import { standardEOL } from "./Utilities";
 
 export function OrderedListToMarkdown(
-    textNode: OrderedListNode,
+    listNode: OrderedListNode,
     renderer: DocumentationNodeRenderer,
 ): string {
-    return "Not yet implemented";
+    return listNode.children
+        .map((child, index) => `${index + 1}. ${renderer.renderNode(child)}`)
+        .join(standardEOL);
 }
