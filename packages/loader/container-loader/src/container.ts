@@ -1419,7 +1419,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     });
                 }
             });
-
+        // we need to make sure this member get set in a synchronous context,
+        // or other things can happen after the object that will be set is created, but not yet set
+        // this was breaking this._initialClients handling
+        //
         this._protocolHandler = protocol;
     }
 
