@@ -15,13 +15,12 @@ describe("Paragraph markdown tests", () => {
         const renderedForm = renderer.renderNode(new ParagraphNode([]));
         expect(renderedForm).to.equal(`  ${os.EOL}`);
     }),
-
-    it("Renders plain text nodes", () => {
-        const node1 = new PlainTextNode("This is some text. ");
-        const node2 = new PlainTextNode("This is more text!");
-        const paragraph = new ParagraphNode([node1, node2]);
-        const renderer = new DocumentationNodeRenderer();
-        const renderedForm = renderer.renderNode(paragraph);
-        expect(renderedForm).to.equal(`This is some text. This is more text!  ${os.EOL}`);
-    });
+        it("Renders plain text nodes", () => {
+            const node1 = new PlainTextNode("This is some text. ");
+            const node2 = new PlainTextNode("This is more text!");
+            const paragraph = new ParagraphNode([node1, node2]);
+            const renderer = new DocumentationNodeRenderer();
+            const renderedForm = renderer.renderNode(paragraph);
+            expect(renderedForm).to.equal(`This is some text. This is more text!  ${os.EOL}`);
+        });
 });
