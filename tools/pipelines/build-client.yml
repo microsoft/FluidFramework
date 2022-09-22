@@ -26,6 +26,13 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
+# - name: taskTestOverride
+#   displayName: taskTest Override (false to skip tests)
+#   type: string
+#   default: ci:test
+#   values:
+#     - ci:test
+#     - false
 - name: nonScopedPackages
   displayName: Non-scoped packages to publish
   type: object
@@ -89,13 +96,10 @@ extends:
     packageManager: pnpm
     buildDirectory: .
     tagName: client
+#    taskTestOverride: ${{ parameters.taskTestOverride }}
     poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskTest:
-    - ci:test:mocha
-    - ci:test:jest
-    - ci:test:realsvc:local
-    - ci:test:realsvc:tinylicious
     - ci:test:stress:tinylicious
     - test:copyresults

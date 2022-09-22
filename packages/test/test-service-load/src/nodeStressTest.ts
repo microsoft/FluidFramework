@@ -141,38 +141,34 @@ async function orchestratorProcess(
 		  // In case testId is provided, name of the file to be created is taken as the testId provided
 		  initialize(testDriver, seed, endpoint, profile, args.verbose === true, args.testId));
 
-	const estRunningTimeMin = Math.floor(
-		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),
-	);
-	console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
-	console.log(`Selected test profile: ${args.profileName}`);
-	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
+    const estRunningTimeMin = Math.floor(profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
+    console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
+    console.log(`Selected test profile: ${profile.name}`);
+    console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
-	const runnerArgs: string[][] = [];
-	for (let i = 0; i < profile.numClients; i++) {
-		const childArgs: string[] = [
-			"./dist/runner.js",
-			"--driver",
-			driver,
-			"--profile",
-			args.profileName,
-			"--runId",
-			i.toString(),
-			"--url",
-			url,
-			"--seed",
-			seedArg,
-		];
-		if (args.debug === true) {
-			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
-			childArgs.unshift(`--inspect-brk=${debugPort}`);
-		}
-		if (args.verbose === true) {
-			childArgs.push("--verbose");
-		}
-		if (args.enableMetrics === true) {
-			childArgs.push("--enableOpsMetrics");
-		}
+    const startTime = new Date();
+    console.log(`start time: ${startTime.toTimeString()}`);
+
+    const runnerArgs: string[][] = [];
+    for (let i = 0; i < profile.numClients; i++) {
+        const childArgs: string[] = [
+            "./dist/runner.js",
+            "--driver", driver,
+            "--profile", profile.name,
+            "--runId", i.toString(),
+            "--url", url,
+            "--seed", seedArg,
+        ];
+        if (args.debug === true) {
+            const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
+            childArgs.unshift(`--inspect-brk=${debugPort}`);
+        }
+        if (args.verbose === true) {
+            childArgs.push("--verbose");
+        }
+        if (args.enableMetrics === true) {
+            childArgs.push("--enableOpsMetrics");
+        }
 
 		if (endpoint) {
 			childArgs.push(`--driverEndpoint`, endpoint);
@@ -229,12 +225,16 @@ async function orchestratorProcess(
 					setupTelemetry(runnerProcess, logger, index, username);
 				}
 
-				return new Promise((resolve) => runnerProcess.once("close", resolve));
-			}),
-		);
-	} finally {
-		await safeExit(0, url);
-	}
+            return new Promise((resolve) => runnerProcess.once("close", resolve));
+        }));
+    } finally {
+        const endTime = new Date();
+        console.log(`Duration: ${new Date(endTime.valueOf() - startTime.valueOf()).toISOString().split(/T|Z/)[1]}`);
+        if (logger !== undefined) {
+            await logger.flush();
+        }
+        await safeExit(0, url);
+    }
 }
 
 /**

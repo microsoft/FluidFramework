@@ -45,33 +45,11 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
-        testCommand: start:odsp
+        testCommand: start:odsp:gc:ci
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
           login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-
-  # stress tests odsp dogfood
-  - stage:
-    displayName:  Stress tests - Odspdf
-    dependsOn: []
-    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
-    variables:
-    - group: stress-odspdf-lock
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Large
-        testPackage: ${{ variables.testPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
-        testCommand: start:odspdf
-        env:
-          login__microsoft__clientId: $(login-microsoft-clientId)
-          login__microsoft__secret: $(login-microsoft-secret)
-          login__odspdf__test__tenants: $(automation-stress-login-odspdf-test-tenants)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # stress tests tinylicious
@@ -86,40 +64,6 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
-        testCommand: start:t9s
+        testCommand: start:t9s:gc:ci
         env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          # Disable colorization for tinylicious logs (not useful when printing to a file)
-          logger__colorize: false
-          logger__morganFormat: tiny
-        additionalSteps:
-
-        # Publish the tinylicious log
-        - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - Tinylicious Log
-          inputs:
-            # NOTE: this depends on knowledge of what the template does and where it puts things.
-            # If the template changes its logic, we might need to adjust this path.
-            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/tinylicious.log'
-            artifactName: 'tinyliciousLog'
-            publishLocation: 'pipeline'
-
-  # stress tests frs
-  - stage:
-    displayName: Stress tests - frs
-    dependsOn: []
-    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
-    variables:
-    - group: stress-frs-lock
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Large
-        testPackage: ${{ variables.testPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
-        testCommand: start:frs
-        env:
-          fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

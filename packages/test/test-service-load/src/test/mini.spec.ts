@@ -11,7 +11,7 @@ const childArgs: string[] = [
 	"--driver",
 	"tinylicious",
 	"--profile",
-	"mini",
+	"gc",
 ];
 
 describe("stress test", () => {
