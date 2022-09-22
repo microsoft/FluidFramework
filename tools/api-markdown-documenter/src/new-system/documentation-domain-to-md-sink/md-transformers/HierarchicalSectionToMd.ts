@@ -1,6 +1,6 @@
 import { HierarchicalSectionNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { getEscapedText, standardEOL } from "./Utilities";
+import { getEscapedText, addNewlineOrBlank as newlineOrBlankSpace } from "./Utilities";
 
 export function HierarchicalSectionToMarkdown(
     sectionNode: HierarchicalSectionNode,
@@ -8,7 +8,9 @@ export function HierarchicalSectionToMarkdown(
 ): string {
     renderer.increaseHierarchicalDepth();
 
-    const output = [""]; // Starting with an empty line to ensure a newline gets added at the start of this section
+    const output: string[] = [newlineOrBlankSpace(renderer.getLastRenderedCharacter())];
+
+    // Starting with an empty line to ensure a newline gets added at the start of this section
     const headingLevel = sectionNode.heading?.level ?? renderer.hierarchyDepth;
 
     if (sectionNode.heading) {
@@ -29,9 +31,17 @@ export function HierarchicalSectionToMarkdown(
         headerLine.push(getEscapedText(renderer.renderNode(sectionNode.heading.value)));
         output.push(headerLine.join(" "));
     }
+    if (sectionNode.heading) {
+        headerLine.push(getEscapedText(renderer.renderNode(sectionNode.heading.value)));
+    }
+    output.push(headerLine.join(" "));
+    output.push(newlineOrBlankSpace(renderer.getLastRenderedCharacter())); // Add a line between the header and content
 
-    output.push(""); // Add a line between the header and content
-    output.push(renderer.renderNodes(sectionNode.children));
+    const rows = sectionNode.children.map(
+        (child) =>
+            renderer.renderNode(child) + newlineOrBlankSpace(renderer.getLastRenderedCharacter()),
+    );
+    output.push(...rows);
 
-    return output.join(standardEOL);
+    return output.join("");
 }
