@@ -24,7 +24,7 @@ describe("OrderedList markdown tests", () => {
                 new PlainTextNode("Item 3"),
             ]),
         );
-        const expected = ["1. Item 1", "2. Item 2", "3. Item 3"].join(standardEOL);
+        const expected = ["1. Item 1", "2. Item 2", "3. Item 3", ""].join(standardEOL);
         expect(renderedForm).to.equal(expected);
     });
 });

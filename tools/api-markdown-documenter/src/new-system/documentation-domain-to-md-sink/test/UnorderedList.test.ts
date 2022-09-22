@@ -24,7 +24,7 @@ describe("UnorderedListNode markdown tests", () => {
                 new PlainTextNode("Item 3"),
             ]),
         );
-        const expected = ["- Item 1", "- Item 2", "- Item 3"].join(standardEOL);
+        const expected = ["- Item 1", "- Item 2", "- Item 3", ""].join(standardEOL);
         expect(renderedForm).to.equal(expected);
     });
 });

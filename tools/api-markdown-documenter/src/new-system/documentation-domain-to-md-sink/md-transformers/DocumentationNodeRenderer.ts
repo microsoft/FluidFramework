@@ -241,9 +241,9 @@ export class DocumentationNodeRenderer {
                     this,
                 );
                 break;
-            case DocumentNodeType.TableCell:
-                renderedNode = this.renderers[DocumentNodeType.TableCell](
-                    node as unknown as TableCellNode,
+            case DocumentNodeType.TableRow:
+                renderedNode = this.renderers[DocumentNodeType.TableRow](
+                    node as unknown as TableRowNode,
                     this,
                 );
                 break;
