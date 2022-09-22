@@ -173,7 +173,7 @@ export function getSchemaString(data: SchemaData): string {
 export function parseSchemaString(data: string): SchemaData {
     // Currently no Fluid handles are used, so just use JSON.parse.
     const parsed = JSON.parse(data) as Format;
-    assert(parsed.version === version, "Got unsupported schema format version");
+    assert(parsed.version === version, 0x3d7 /* Got unsupported schema format version */);
     return decode(parsed);
 }
 
@@ -245,7 +245,7 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
     public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
         const [hasString, hasBlob] = await Promise.all(
             [services.contains(schemaStringKey), services.contains(schemaBlobKey)]);
-        assert(hasString || hasBlob, "Schema is required in summary");
+        assert(hasString || hasBlob, 0x3d8 /* Schema is required in summary */);
         let schemaBuffer: ArrayBufferLike;
         if (hasBlob) {
             const handleBuffer = await services.readBlob(schemaBlobKey);
@@ -260,9 +260,9 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
         // This detects any schema that could have been accidently added through
         // invalid means and are about to be overwritten.
         assert(this.schema.treeSchema.size === 0,
-            "there should not already be stored schema when loading stored schema");
+            0x3d9 /* there should not already be stored schema when loading stored schema */);
         assert(this.schema.globalFieldSchema.size === 0,
-            "there should not already be stored schema when loading stored schema");
+            0x3da /* there should not already be stored schema when loading stored schema */);
 
         const schemaString = bufferToString(schemaBuffer, "utf-8");
         const decoded = parseSchemaString(schemaString);
