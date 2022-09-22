@@ -55,5 +55,5 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 120
         testCommand: start:t9s:gc:ci
-        #env:
+        env:
           #FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
