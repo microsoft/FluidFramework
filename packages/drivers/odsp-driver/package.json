@@ -101,6 +101,23 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {}
+    "broken": {
+      "RemovedClassDeclaration_ReadBuffer": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedFunctionDeclaration_parseCompactSnapshotResponse": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedVariableDeclaration_snapshotMinReadVersion": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedVariableDeclaration_currentReadVersion": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }

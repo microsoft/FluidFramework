@@ -9,6 +9,7 @@
 */
 
 import { assert, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ReadBuffer } from "./ReadBufferUtils";
@@ -381,12 +382,12 @@ export class NodeCore {
      * Load and parse the buffer into a tree.
      * @param buffer - buffer to read from.
      */
-    protected load(buffer: ReadBuffer) {
-        let children = this.children;
+    protected load(buffer: ReadBuffer, logger: ITelemetryLogger) {
         const stack: NodeTypes[][] = [];
-        const strings: IStringElementInternal[] = [];
+        const stringsToResolve: IStringElementInternal[] = [];
         const dictionary: IStringElement[] = [];
 
+        let children = this.children;
         for (;!buffer.eof;) {
             const code = buffer.read();
             switch (code) {
@@ -403,7 +404,7 @@ export class NodeCore {
                 {
                     const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
                     const constString = NodeCore.readString(buffer, code, true /* dictionary */);
-                    strings.push(constString);
+                    stringsToResolve.push(constString);
                     dictionary[stringId] = constString;
                     continue;
                 }
@@ -423,7 +424,7 @@ export class NodeCore {
                 case MarkerCodes.String32Length:
                 {
                     const str = NodeCore.readString(buffer, code, false /* dictionary */);
-                    strings.push(str);
+                    stringsToResolve.push(str);
                     children.push(str);
                     continue;
                 }
@@ -477,13 +478,14 @@ export class NodeCore {
             }
         }
 
+        // This also ensures that stack.length === 0.
         assert(children === this.children, "Unpaired start/end list/set markers!");
 
         /**
          * Process all the strings at once!
          */
         let length = 0;
-        for (const el of strings) {
+        for (const el of stringsToResolve) {
             length += el.endPos - el.startPos + 1;
         }
         const stringBuffer = new Uint8Array(length);
@@ -492,7 +494,7 @@ export class NodeCore {
         const input = buffer.buffer;
         assert(input.byteOffset === 0, "code below assumes no offset");
 
-        for (const el of strings) {
+        for (const el of stringsToResolve) {
             for (let it = el.startPos; it < el.endPos; it++) {
                 stringBuffer[length] = input[it];
                 length++;
@@ -500,11 +502,20 @@ export class NodeCore {
             stringBuffer[length] = 0;
             length++;
         }
-        assert(length === stringBuffer.length, "test");
-        const result = Uint8ArrayToString(stringBuffer, "utf-8").split(String.fromCharCode(0));
-        assert(result.length === strings.length + 1, "String content has \\0 chars!");
-        for (let i = 0; i < strings.length; i++) {
-            strings[i].content = result[i];
+
+        if (length === stringBuffer.length) {
+            // All is good, we expect all the cases to get here
+            const result = Uint8ArrayToString(stringBuffer, "utf-8").split(String.fromCharCode(0));
+            assert(result.length === stringsToResolve.length + 1, "String content has \\0 chars!");
+            for (let i = 0; i < stringsToResolve.length; i++) {
+                stringsToResolve[i].content = result[i];
+            }
+        } else {
+            // Recovery code
+            logger.sendErrorEvent({ eventName: "StringParsingError" });
+            for (const el of stringsToResolve) {
+                assert(el.content === Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf-8"), "test");
+            }
         }
     }
 }
@@ -514,9 +525,9 @@ export class NodeCore {
   * Provides loading and serialization capabilities.
   */
 export class TreeBuilder extends NodeCore {
-    static load(buffer: ReadBuffer): TreeBuilder {
+    static load(buffer: ReadBuffer, logger: ITelemetryLogger): TreeBuilder {
         const builder = new TreeBuilder();
-        builder.load(buffer);
+        builder.load(buffer, logger);
         assert(buffer.eof, 0x233 /* "Unexpected data at the end of buffer" */);
         return builder;
     }

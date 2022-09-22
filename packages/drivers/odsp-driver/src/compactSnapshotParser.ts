@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import {
@@ -119,8 +120,8 @@ function readSnapshotSection(node: NodeTypes): ISnapshotSection {
  * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
  * @returns - tree, blobs and ops from the snapshot.
  */
-export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotContents {
-    const builder = TreeBuilder.load(buffer);
+export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLogger): ISnapshotContents {
+    const builder = TreeBuilder.load(new ReadBuffer(buffer), logger);
     assert(builder.length === 1, 0x219 /* "1 root should be there" */);
     const root = builder.getNode(0);
 
