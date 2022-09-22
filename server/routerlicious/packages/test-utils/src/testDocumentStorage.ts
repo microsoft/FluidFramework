@@ -61,7 +61,6 @@ export class TestDocumentStorage implements IDocumentStorage {
         initialHash: string,
         ordererUrl: string,
         historianUrl: string,
-        deltaStreamUrl: string,
         values: [string, ICommittedProposal][],
         enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
@@ -137,7 +136,6 @@ export class TestDocumentStorage implements IDocumentStorage {
         const session: ISession = {
             ordererUrl,
             historianUrl,
-            deltaStreamUrl,
             isSessionAlive: true,
             isSessionActive: true,
         };
