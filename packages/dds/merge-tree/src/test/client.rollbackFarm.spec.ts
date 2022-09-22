@@ -41,8 +41,8 @@ describe("MergeTree.Client", () => {
                 const mt = random.engines.mt19937();
                 mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, minLength, opsPerRollback]);
 
-                // A: readonly, B: rollback + edit, C: edit
-                const clients = createClientsAtInitialState("", "A", "B", "C");
+                // A: readonly, B: rollback, C: rollback + edit, D: edit
+                const clients = createClientsAtInitialState("", "A", "B", "C", "D");
                 let seq = 0;
 
                 for (let round = 0; round < defaultOptions.rounds; round++) {
@@ -50,11 +50,11 @@ describe("MergeTree.Client", () => {
 
                     const logger = new TestClientLogger(clients.all, `Round ${round}`);
 
-                    // initialize and ack 10 random actions on either B or C
+                    // initialize and ack 10 random actions on either C or D
                     const initialMsgs = generateOperationMessagesForClients(
                         mt,
                         seq,
-                        clients.all,
+                        [clients.A, clients.C, clients.D],
                         logger,
                         defaultOptions.initialOps,
                         minLength,
@@ -71,18 +71,18 @@ describe("MergeTree.Client", () => {
 
                     logger.validate();
 
-                    // generate messages to rollback on B, then rollback
+                    // generate messages to rollback on B or C, then rollback
                     const rollbackMsgs = generateOperationMessagesForClients(
                         mt,
                         seq,
-                        [clients.A, clients.B],
+                        [clients.A, clients.B, clients.C],
                         logger,
                         opsPerRollback,
                         minLength,
                         defaultOptions.operations);
                     while (rollbackMsgs.length > 0) {
-                        const rollbackOp = rollbackMsgs.pop();
-                        clients.B.rollback?.({ type: rollbackOp![0].contents.type }, rollbackOp![1]);
+                        const msg = rollbackMsgs.pop();
+                        clients[msg![0].clientId].rollback?.({ type: msg![0].contents.type }, msg![1]);
                     }
 
                     logger.validate();
