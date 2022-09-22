@@ -23,10 +23,11 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 import {
-    DataObjectParent,
-    dataObjectParentFactory,
-    DataObjectWithCounter,
-    dataObjectWithCounterFactory,
+    RootDataObject,
+    rootDataObjectFactory,
+    DataObjectType1,
+    dataObjectType1Factory,
+    IGCDataStore,
 } from "./gcDataStore";
 
 export interface IRunConfig {
