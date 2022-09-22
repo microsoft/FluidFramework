@@ -4,9 +4,9 @@
 
 ## Variables
 
-| Variable                                                     | Modifiers             | Description              |
-| ------------------------------------------------------------ | --------------------- | ------------------------ |
-| [foo](./simple-suite-test/testmodule-namespace#foo-variable) | <code>readonly</code> | Test constant in module. |
+|  Variable | Modifiers | Description |
+|  --- | --- | --- |
+|  [foo](./simple-suite-test/testmodule-namespace#foo-variable) | <code>readonly</code> | Test constant in module. |
 
 ## Variable Details
 
@@ -17,5 +17,5 @@ Test constant in module.
 #### Signature {#foo-signature}
 
 ```typescript
-foo = 2;
+foo = 2
 ```

@@ -5,7 +5,7 @@ Test Constant
 ## Signature {#testconst-signature}
 
 ```typescript
-testConst = 42;
+testConst = 42
 ```
 
 ## Remarks {#testconst-remarks}

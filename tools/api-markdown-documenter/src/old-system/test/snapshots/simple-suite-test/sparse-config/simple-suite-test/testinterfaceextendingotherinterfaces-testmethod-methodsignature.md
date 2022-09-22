@@ -14,9 +14,9 @@ Here are some remarks about the method
 
 ## Parameters {#testmethod-parameters}
 
-| Parameter | Type   | Description |
-| --------- | ------ | ----------- |
-| input     | string | A string    |
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  input | string | A string |
 
 ## Returns {#testmethod-returns}
 

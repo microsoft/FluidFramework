@@ -5,7 +5,7 @@ Test enum value 2 (number)
 ## Signature {#testenumvalue2-signature}
 
 ```typescript
-TestEnumValue2 = 3;
+TestEnumValue2 = 3
 ```
 
 ## Remarks {#testenumvalue2-remarks}

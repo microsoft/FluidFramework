@@ -10,9 +10,9 @@ function testFunction(testParameter: number): number;
 
 ## Parameters {#testfunction-parameters}
 
-| Parameter     | Type   | Description |
-| ------------- | ------ | ----------- |
-| testParameter | number | 📝          |
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  testParameter | number | 📝 |
 
 ## Returns {#testfunction-returns}
 

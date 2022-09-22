@@ -5,7 +5,7 @@ Test Enum
 ## Signature {#testenum-signature}
 
 ```typescript
-export declare enum TestEnum
+export declare enum TestEnum 
 ```
 
 ## Remarks {#testenum-remarks}
@@ -19,7 +19,7 @@ Here are some remarks about the enum
 Some example
 
 ```typescript
-const foo = TestEnum.TestEnumValue1;
+const foo = TestEnum.TestEnumValue1
 ```
 
 ### Example 2 {#testenum-example2}
@@ -27,16 +27,16 @@ const foo = TestEnum.TestEnumValue1;
 Another example
 
 ```ts
-const bar = TestEnum.TestEnumValue2;
+const bar = TestEnum.TestEnumValue2
 ```
 
 ## Flags
 
-| Flag                                                                        | Description                 |
-| --------------------------------------------------------------------------- | --------------------------- |
-| [TestEnumValue1](docs/simple-suite-test/testenum-testenumvalue1-enummember) | Test enum value 1 (string)  |
-| [TestEnumValue2](docs/simple-suite-test/testenum-testenumvalue2-enummember) | Test enum value 2 (number)  |
-| [TestEnumValue3](docs/simple-suite-test/testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
+|  Flag | Description |
+|  --- | --- |
+|  [TestEnumValue1](docs/simple-suite-test/testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
+|  [TestEnumValue2](docs/simple-suite-test/testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
+|  [TestEnumValue3](docs/simple-suite-test/testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
 
 ## FlagDetails
 
@@ -45,7 +45,7 @@ Test enum value 1 (string)
 ### Signature {#testenumvalue1-signature}
 
 ```typescript
-TestEnumValue1 = "test-enum-value-1";
+TestEnumValue1 = "test-enum-value-1"
 ```
 
 ### Remarks {#testenumvalue1-remarks}
@@ -57,7 +57,7 @@ Test enum value 2 (number)
 ### Signature {#testenumvalue2-signature}
 
 ```typescript
-TestEnumValue2 = 3;
+TestEnumValue2 = 3
 ```
 
 ### Remarks {#testenumvalue2-remarks}
@@ -69,7 +69,7 @@ Test enum value 3 (default)
 ### Signature {#testenumvalue3-signature}
 
 ```typescript
-TestEnumValue3 = 4;
+TestEnumValue3 = 4
 ```
 
 ### Remarks {#testenumvalue3-remarks}

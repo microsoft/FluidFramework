@@ -5,5 +5,5 @@ Test Constant
 ## Signature {#testconst-signature}
 
 ```typescript
-TestConst = "Hello world!";
+TestConst = "Hello world!"
 ```
