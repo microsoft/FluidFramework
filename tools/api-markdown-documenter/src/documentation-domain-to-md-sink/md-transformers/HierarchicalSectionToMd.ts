@@ -8,26 +8,26 @@ export function HierarchicalSectionToMarkdown(
 ): string {
     renderer.increaseHierarchicalDepth();
 
-    const output = ['']; // Starting with an empty line to ensure a newline gets added at the start of this section
+    const output = [""]; // Starting with an empty line to ensure a newline gets added at the start of this section
     const headingLevel = sectionNode.heading.level ?? renderer.hierarchyDepth;
 
     const headerLine: string[] = [];
     switch (headingLevel) {
         case 1:
-            headerLine.push('##');
+            headerLine.push("##");
             break;
         case 2:
-            headerLine.push('###');
+            headerLine.push("###");
             break;
         case 3:
-            headerLine.push('###');
+            headerLine.push("###");
             break;
         default:
-            headerLine.push('####');
+            headerLine.push("####");
     }
     headerLine.push(getEscapedText(renderer.renderNode(sectionNode.heading.value)));
-    output.push(headerLine.join(' '));
-    output.push(''); // Add a line between the header and content
+    output.push(headerLine.join(" "));
+    output.push(""); // Add a line between the header and content
     output.push(renderer.renderNodes(sectionNode.children));
 
     return output.join(standardEOL);
