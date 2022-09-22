@@ -1270,7 +1270,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         const qValues = initQuorumValuesFromCodeDetails(source);
-        this._protocolHandler = this.initializeProtocolState(
+        this.initializeProtocolState(
             attributes,
             {
                 members: [],
