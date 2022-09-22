@@ -12,7 +12,7 @@ import {
     ITestObjectProvider,
     TestContainerRuntimeFactory,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat } from "@fluidframework/test-version-utils";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
 const runtimeFactory: IProvideRuntimeFactory = {
@@ -28,7 +28,7 @@ const runtimeFactory: IProvideRuntimeFactory = {
 // a write) so we get nack'd and bumped into write mode.
 const forceWriteMode = async (scheduler: IAgentScheduler): Promise<void> => scheduler.register("makeWriteMode");
 
-describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
+describeFullInternalCompat("AgentScheduler", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     const createContainer = async (): Promise<IContainer> =>

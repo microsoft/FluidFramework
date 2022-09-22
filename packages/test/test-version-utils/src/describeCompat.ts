@@ -14,7 +14,7 @@ import { getVersionedTestObjectProvider, getInternalVersionedTestObjectProvider 
 function createCompatSuite(
     tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
     enableInternalCompat: boolean,
-    compatFilter: CompatKind[],
+    compatFilter?: CompatKind[],
 ) {
     return function(this: Mocha.Suite) {
         let configs = configList.value;
@@ -133,7 +133,7 @@ export type DescribeCompatSuite =
 
 export type DescribeCompat = DescribeCompatSuite & Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
 
-function createCompatDescribe(enableInternalCompat: boolean, compatFilter: CompatKind[]): DescribeCompat {
+function createCompatDescribe(enableInternalCompat: boolean, compatFilter?: CompatKind[]): DescribeCompat {
     const d: DescribeCompat =
         (name, tests) => describe(name, createCompatSuite(tests, enableInternalCompat, compatFilter));
     d.skip = (name, tests) => describe.skip(name, createCompatSuite(tests, enableInternalCompat, compatFilter));
@@ -146,6 +146,6 @@ export const describeNoCompat: DescribeCompat = createCompatDescribe(false, [Com
 
 export const describeLoaderCompat: DescribeCompat = createCompatDescribe(false, [CompatKind.None, CompatKind.Loader]);
 
-export const describeFullCompat: DescribeCompat = createCompatDescribe(false, []);
+export const describeFullCompat: DescribeCompat = createCompatDescribe(false);
 
-export const describeFullInternalCompat: DescribeCompat = createCompatDescribe(true, []);
+export const describeFullInternalCompat: DescribeCompat = createCompatDescribe(true);
