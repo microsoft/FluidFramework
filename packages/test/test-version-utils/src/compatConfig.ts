@@ -30,10 +30,12 @@ interface CompatConfig {
     dataRuntime?: string | number;
 }
 
-// N, N - 1, and N - 2
-const defaultVersions = [0, -1, -2];
-// we are currently supporting 0.45 long-term
-const LTSVersions = ["^0.45.0"];
+const DefaultCompatVersions = {
+    // N, N - 1, and N - 2
+    CurrentVersionDeltas: [0, -1, -2],
+    // we are currently supporting 0.45 long-term
+    LTSVersions: ["^0.45.0"],
+};
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
     if (compatVersion === 0) {
@@ -109,22 +111,34 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
     ];
 }
 
-const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
-    return [
-        {
-            name: `compat LTS ${compatVersion} - old loader`,
-            kind: CompatKind.Loader,
-            compatVersion,
-            loader: compatVersion,
-        },
-        {
-            name: `compat LTS ${compatVersion} - old loader + old driver`,
-            kind: CompatKind.LoaderDriver,
-            compatVersion,
-            driver: compatVersion,
-            loader: compatVersion,
-        },
-    ];
+const genLTSConfig = (compatVersion: number | string): CompatConfig[] => [
+    {
+        name: `compat LTS ${compatVersion} - old loader`,
+        kind: CompatKind.Loader,
+        compatVersion,
+        loader: compatVersion,
+    },
+    {
+        name: `compat LTS ${compatVersion} - old loader + old driver`,
+        kind: CompatKind.LoaderDriver,
+        compatVersion,
+        driver: compatVersion,
+        loader: compatVersion,
+    },
+];
+
+export const getInternalCompatConfig = () => {
+    const allDefaultVersions = DefaultCompatVersions
+        .CurrentVersionDeltas
+        .map((delta) => ({ base: pkgVersion, delta }))
+        .concat(DefaultCompatVersions.LTSVersions.map((ltsVersion) => ({ base: ltsVersion, delta: 0 })));
+
+    return allDefaultVersions.map((createVersion) => allDefaultVersions.map((loadVersion) => ({
+        name: `Create with ${createVersion.base}${createVersion.delta === 0 ? "" : createVersion.delta}, \
+load with ${loadVersion.base}${loadVersion.delta === 0 ? "" : loadVersion.delta}`,
+        createWith: createVersion,
+        loadWith: loadVersion,
+    }))).reduce((a, b) => a.concat(b)).filter((config) => config.createWith !== config.loadWith);
 };
 
 export const configList = new Lazy<readonly CompatConfig[]>(() => {
@@ -142,16 +156,16 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 
     let _configList: CompatConfig[] = [];
     if (!compatVersions || compatVersions.length === 0) {
-        defaultVersions.forEach((value) => {
+        DefaultCompatVersions.CurrentVersionDeltas.forEach((value) => {
             _configList.push(...genConfig(value));
         });
-        LTSVersions.forEach((value) => {
+        DefaultCompatVersions.LTSVersions.forEach((value) => {
             _configList.push(...genLTSConfig(value));
         });
     } else {
         compatVersions.forEach((value) => {
             if (value === "LTS") {
-                LTSVersions.forEach((lts) => {
+                DefaultCompatVersions.LTSVersions.forEach((lts) => {
                     _configList.push(...genLTSConfig(lts));
                 });
             } else {
