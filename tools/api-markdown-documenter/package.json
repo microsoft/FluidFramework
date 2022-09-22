@@ -14,7 +14,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build": "npm run build:genver && npm run build:copy-test-resources && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:compile": "tsc",
     "build:copy-test-resources": "copyfiles \"src/test/test-data/**\" dist --up 1",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
