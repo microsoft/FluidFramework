@@ -53,9 +53,6 @@ export function createOdspCreateContainerRequest(siteUrl: string, driveId: strin
 // @public
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 
-// @public (undocumented)
-export const currentReadVersion = "1.0";
-
 // @public
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string;
 
@@ -174,9 +171,6 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     fileVersion?: string;
 }
 
-// @public
-export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLogger): ISnapshotContents;
-
 // Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -193,9 +187,6 @@ export enum SharingLinkHeader {
     // (undocumented)
     isSharingLinkToRedeem = "isSharingLinkToRedeem"
 }
-
-// @public (undocumented)
-export const snapshotMinReadVersion = "1.0";
 
 // @public
 export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void;
