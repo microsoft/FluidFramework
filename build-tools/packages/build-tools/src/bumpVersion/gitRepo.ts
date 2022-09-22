@@ -243,7 +243,8 @@ export class GitRepo {
      * @return The list of unmerged commit ids between passed commit id and branch
      */
     public async revList(commitId: string, branchName: string) {
-        return await this.exec(`rev-list ${commitId}...${branchName} --reverse`, `lists commit objects in chronological order`);
+        await this.switchBranch(branchName);
+        return await this.exec(`rev-list ${commitId}..HEAD --reverse`, `lists commit objects in chronological order`);
     }
 
     public async resetBranch(commitId: string) {
