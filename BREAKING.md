@@ -119,6 +119,7 @@ bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and
 - [Remove deprecated data structures from `@fluidframework/sequence`](#remove-deprecated-data-structures-from-fluidframeworksequence)
 - [Renamed lockTask to volunteerForTask from @fluid-experimental/task-manager](renamed-lockTask-to-volunteerForTask-from-@fluid-experimental/task-manager)
 - [Renamed haveTaskLock to assigned from @fluid-experimental/task-manager](renamed-haveTaskLock-to-assigned-from-@fluid-experimental/task-manager)
+- [`Container` constructor is now private](container-constructor-is-now-private)
 
 ###  Update to React 17
 The following packages use React and thus were impacted:
@@ -248,6 +249,12 @@ The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use 
 
 ### Renamed haveTaskLock to assigned from @fluid-experimental/task-manager
 `TaskManager.haveTaskLock()` has been renamed `assigned()`. Please update all usages accordingly.
+
+### `Container` constructor is now private
+
+The constructor for the `Container` class was not indended to be used outside the class itself so it is now private.
+The correct way to create a Container is through the existing static methods `Container.load()`,
+`Container.createDetached()`, and `Container.rehydrateDetachedFromSnapshot()`.
 
 # 1.2.0
 

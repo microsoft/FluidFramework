@@ -56,7 +56,6 @@ export enum ConnectionState {
 
 // @public (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
     // (undocumented)
