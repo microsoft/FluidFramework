@@ -13,7 +13,6 @@ import {
     generateOperationMessagesForClients,
     insertAtRefPos,
     removeRange,
-    runMergeTreeOperationRunner,
     TestOperation,
 } from "./mergeTreeOperationRunner";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
@@ -27,9 +26,8 @@ const allOperations: TestOperation[] = [
 const defaultOptions = {
     minLength: { min: 1, max: 32 },
     opsPerRollbackRange: { min: 1, max: 32 },
-    opsPerRoundRange: { min: 10, max: 10 },
     rounds: 10,
-    initialOps: 10,
+    opsPerRound: 10,
     operations: allOperations,
     growthFunc: (input: number) => input * 2,
 };
@@ -56,18 +54,10 @@ describe("MergeTree.Client", () => {
                         seq,
                         [clients.A, clients.C, clients.D],
                         logger,
-                        defaultOptions.initialOps,
+                        defaultOptions.opsPerRound,
                         minLength,
                         defaultOptions.operations);
                     seq = applyMessages(seq, initialMsgs, clients.all, logger);
-
-                    seq = runMergeTreeOperationRunner(
-                        mt,
-                        seq,
-                        clients.all,
-                        minLength,
-                        defaultOptions,
-                    );
 
                     logger.validate();
 
