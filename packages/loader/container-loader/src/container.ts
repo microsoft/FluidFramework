@@ -268,6 +268,12 @@ export interface IPendingContainerState {
 
 const summarizerClientType = "summarizer";
 
+/**
+ * The Container class represents a Fluid document, i.e. an actual unit of storage that lives in some Fluid server and
+ * whose content is meant to be collaborated on. Think, for example, of a collaborative Word document, a Loop workspace,
+ * or a collaborative OneNote page. A host/loader can retrieve an existing Container from remote storage, or create a
+ * new one locally and then attach it to remote storage and connect it to an op stream so it can be collaborated on.
+ */
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 

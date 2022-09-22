@@ -54,7 +54,7 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
-// @public (undocumented)
+// @public
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
