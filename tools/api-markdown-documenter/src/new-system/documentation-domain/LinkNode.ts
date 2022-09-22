@@ -4,13 +4,17 @@
  */
 import { Link, UrlTarget } from "../../Link";
 import { DocumentNodeType } from "./DocumentationNodeType";
-import { ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
+import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
+import { compareNodeArrays } from "./Utilities";
 
 export class LinkNode
     extends ParentNodeBase<SingleLineElementNode>
     implements SingleLineElementNode
 {
+    /**
+     * {@inheritDoc DocumentationNode."type"}
+     */
     public readonly type = DocumentNodeType.UrlLink;
 
     public readonly target: UrlTarget;
@@ -26,5 +30,22 @@ export class LinkNode
 
     public static createFromPlainTextLink(link: Link): LinkNode {
         return this.createFromPlainText(link.text, link.url);
+    }
+
+    /**
+     * {@inheritDoc DocumentationNode.equals}
+     */
+    public equals(other: DocumentationNode): boolean {
+        if (this.type !== other.type) {
+            return false;
+        }
+
+        const otherLink = other as LinkNode;
+
+        if (this.target !== otherLink.target) {
+            return false;
+        }
+
+        return compareNodeArrays(this.children, otherLink.children);
     }
 }

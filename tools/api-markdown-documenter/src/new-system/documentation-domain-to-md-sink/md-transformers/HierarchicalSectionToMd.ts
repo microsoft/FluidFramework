@@ -1,6 +1,6 @@
 import { HierarchicalSectionNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { getEscapedText, addNewlineOrBlank as newlineOrBlankSpace, standardEOL } from "./Utilities";
+import { addNewlineOrBlank as newlineOrBlankSpace, standardEOL } from "./Utilities";
 
 export function HierarchicalSectionToMarkdown(
     sectionNode: HierarchicalSectionNode,
@@ -28,10 +28,8 @@ export function HierarchicalSectionToMarkdown(
             default:
                 headerLine.push("####");
         }
-        headerLine.push(
-            getEscapedText(renderer.renderNode(sectionNode.heading.value)) +
-                newlineOrBlankSpace(renderer.getLastRenderedCharacter()),
-        );
+        const child = renderer.renderNode(sectionNode.heading);
+        headerLine.push(child);
         output.push(`${standardEOL}${headerLine.join(" ")}${standardEOL}`); // Markdown best practices: surround headers with newlines
     }
 

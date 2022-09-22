@@ -3,13 +3,30 @@
  * Licensed under the MIT License.
  */
 import { DocumentNodeType } from "./DocumentationNodeType";
-import { ParentNodeBase } from "./DocumentionNode";
+import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { TableCellNode } from "./TableCellNode";
+import { compareNodeArrays } from "./Utilities";
 
 export class TableRowNode extends ParentNodeBase<TableCellNode> {
+    /**
+     * {@inheritDoc DocumentationNode."type"}
+     */
     public readonly type = DocumentNodeType.TableRow;
 
     public constructor(cells: TableCellNode[]) {
         super(cells);
+    }
+
+    /**
+     * {@inheritDoc DocumentationNode.equals}
+     */
+    public equals(other: DocumentationNode): boolean {
+        if (this.type !== other.type) {
+            return false;
+        }
+
+        const otherRow = other as TableRowNode;
+
+        return compareNodeArrays(this.children, otherRow.children);
     }
 }

@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 import { DocumentNodeType } from "./DocumentationNodeType";
-import { ParentNodeBase } from "./DocumentionNode";
+import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { TableRowNode } from "./TableRowNode";
+import { compareNodeArrays } from "./Utilities";
 
 // TODOs:
 // - Support alignment properties in Table, TableRow and TableCell (inherit pattern for resolution)
 
 export class TableNode extends ParentNodeBase<TableRowNode> {
+    /**
+     * {@inheritDoc DocumentationNode."type"}
+     */
     public readonly type = DocumentNodeType.Table;
 
     public readonly headingRow?: TableRowNode;
@@ -17,5 +21,31 @@ export class TableNode extends ParentNodeBase<TableRowNode> {
     public constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode) {
         super(bodyRows);
         this.headingRow = headingRow;
+    }
+
+    /**
+     * {@inheritDoc DocumentationNode.equals}
+     */
+    public equals(other: DocumentationNode): boolean {
+        if (this.type !== other.type) {
+            return false;
+        }
+
+        const otherTable = other as TableNode;
+
+        if (this.headingRow === undefined) {
+            if (otherTable.headingRow !== undefined) {
+                return false;
+            }
+        } else {
+            if (otherTable.headingRow === undefined) {
+                return false;
+            }
+            if (!this.headingRow.equals(otherTable.headingRow)) {
+                return false;
+            }
+        }
+
+        return compareNodeArrays(this.children, otherTable.children);
     }
 }

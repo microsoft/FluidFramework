@@ -7,6 +7,7 @@ import { Parent as UnistParent } from "unist";
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { DocumentationNode } from "./DocumentionNode";
 import { ParagraphNode } from "./ParagraphNode";
+import { compareNodeArrays } from "./Utilities";
 
 // TODOs:
 // - Take in optional front-matter?
@@ -19,6 +20,9 @@ import { ParagraphNode } from "./ParagraphNode";
  * and cannot be parented under other Documentation nodes.
  */
 export class DocumentNode implements UnistParent<DocumentationNode> {
+    /**
+     * {@inheritDoc DocumentationNode."type"}
+     */
     public readonly type = DocumentNodeType.Document;
 
     public readonly children: DocumentationNode[];
@@ -41,5 +45,38 @@ export class DocumentNode implements UnistParent<DocumentationNode> {
         this.frontMatter = frontMatter;
         this.header = header;
         this.footer = footer;
+    }
+
+    /**
+     * {@inheritDoc DocumentationNode.equals}
+     */
+    public equals(other: DocumentationNode): boolean {
+        if (this.type !== other.type) {
+            return false;
+        }
+
+        const otherHeading = other as DocumentNode;
+
+        if (this.filePath !== otherHeading.filePath) {
+            return false;
+        }
+
+        if (this.title !== otherHeading.title) {
+            return false;
+        }
+
+        if (this.frontMatter !== otherHeading.frontMatter) {
+            return false;
+        }
+
+        if (this.header !== otherHeading.header) {
+            return false;
+        }
+
+        if (this.footer !== otherHeading.footer) {
+            return false;
+        }
+
+        return compareNodeArrays(this.children, otherHeading.children);
     }
 }

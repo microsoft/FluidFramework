@@ -9,7 +9,6 @@ import {
     HierarchicalSectionNode,
     LineBreakNode,
     LinkNode,
-    MarkdownNode,
     OrderedListNode,
     ParagraphNode,
     PlainTextNode,
@@ -60,10 +59,6 @@ export type NodeRenderers = {
     ) => string;
     [DocumentNodeType.LineBreak]: (
         node: LineBreakNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
-    [DocumentNodeType.Markdown]: (
-        node: MarkdownNode,
         subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
     [DocumentNodeType.HierarchicalSection]: (
@@ -119,10 +114,6 @@ export class DefaultNodeRenderers {
         node: LineBreakNode,
         subtreeRenderer: DocumentationNodeRenderer,
     ) => (subtreeRenderer.isInsideCodeBlock ? standardEOL : `<br/>`);
-    [DocumentNodeType.Markdown] = (
-        node: MarkdownNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => node.value as unknown as string;
     [DocumentNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
     [DocumentNodeType.OrderedList] = OrderedListToMarkdown;
     [DocumentNodeType.Paragraph] = ParagraphToMarkdown;
@@ -199,12 +190,6 @@ export class DocumentationNodeRenderer {
             case DocumentNodeType.LineBreak:
                 renderedNode = this.renderers[DocumentNodeType.Paragraph](
                     node as unknown as ParagraphNode,
-                    this,
-                );
-                break;
-            case DocumentNodeType.Markdown:
-                renderedNode = this.renderers[DocumentNodeType.Markdown](
-                    node as unknown as MarkdownNode,
                     this,
                 );
                 break;

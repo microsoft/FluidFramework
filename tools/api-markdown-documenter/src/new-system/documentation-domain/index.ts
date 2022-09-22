@@ -14,7 +14,6 @@ export * from "./HeadingNode";
 export * from "./HierarchicalSectionNode";
 export * from "./LineBreakNode";
 export * from "./LinkNode";
-export * from "./MarkdownNode";
 export * from "./OrderedListNode";
 export * from "./ParagraphNode";
 export * from "./PlainTextNode";

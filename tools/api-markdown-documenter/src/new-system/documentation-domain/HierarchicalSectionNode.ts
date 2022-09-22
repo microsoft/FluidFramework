@@ -5,6 +5,7 @@
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { HeadingNode } from "./HeadingNode";
+import { compareNodeArrays } from "./Utilities";
 
 // TODOs:
 // - Only Documents and Sections may contain Sections?
@@ -16,6 +17,9 @@ import { HeadingNode } from "./HeadingNode";
  * @example TODO
  */
 export class HierarchicalSectionNode extends ParentNodeBase {
+    /**
+     * {@inheritDoc DocumentationNode."type"}
+     */
     public readonly type = DocumentNodeType.HierarchicalSection;
 
     /**
@@ -29,5 +33,31 @@ export class HierarchicalSectionNode extends ParentNodeBase {
     public constructor(children: DocumentationNode[], heading?: HeadingNode) {
         super(children);
         this.heading = heading;
+    }
+
+    /**
+     * {@inheritDoc DocumentationNode.equals}
+     */
+    public equals(other: DocumentationNode): boolean {
+        if (this.type !== other.type) {
+            return false;
+        }
+
+        const otherSection = other as HierarchicalSectionNode;
+
+        if (this.heading === undefined) {
+            if (otherSection.heading !== undefined) {
+                return false;
+            }
+        } else {
+            if (otherSection.heading === undefined) {
+                return false;
+            }
+            if (!this.heading.equals(otherSection.heading)) {
+                return false;
+            }
+        }
+
+        return compareNodeArrays(this.children, otherSection.children);
     }
 }

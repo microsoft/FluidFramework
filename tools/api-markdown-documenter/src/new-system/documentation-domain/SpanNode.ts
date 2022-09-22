@@ -5,6 +5,7 @@
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
+import { compareNodeArrays } from "./Utilities";
 
 export interface TextFormatting {
     /**
@@ -26,9 +27,16 @@ export interface TextFormatting {
     // TODO: what else?
 }
 
+export function compareTextFormatting(a: TextFormatting, b: TextFormatting): boolean {
+    return a.bold === b.bold && a.italic === b.italic && a.strikethrough === b.strikethrough;
+}
+
 export class SpanNode<
     TDocumentNode extends DocumentationNode = DocumentationNode,
 > extends ParentNodeBase<TDocumentNode> {
+    /**
+     * {@inheritDoc DocumentationNode."type"}
+     */
     public readonly type = DocumentNodeType.Span;
 
     /**
@@ -46,6 +54,32 @@ export class SpanNode<
         formatting?: TextFormatting,
     ): SingleLineSpanNode<PlainTextNode> {
         return new SpanNode([new PlainTextNode(text)], formatting);
+    }
+
+    /**
+     * {@inheritDoc DocumentationNode.equals}
+     */
+    public equals(other: DocumentationNode): boolean {
+        if (this.type !== other.type) {
+            return false;
+        }
+
+        const otherSpan = other as SpanNode;
+
+        if (this.textFormatting === undefined) {
+            if (otherSpan.textFormatting !== undefined) {
+                return false;
+            }
+        } else {
+            if (otherSpan.textFormatting === undefined) {
+                return false;
+            }
+            if (!compareTextFormatting(this.textFormatting, otherSpan.textFormatting)) {
+                return false;
+            }
+        }
+
+        return compareNodeArrays(this.children, otherSpan.children);
     }
 }
 

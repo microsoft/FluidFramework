@@ -12,6 +12,8 @@ import { DocumentNodeType } from "./DocumentationNodeType";
  */
 export interface DocumentationNode<TData extends object = UnistData> extends UnistNode<TData> {
     readonly type: DocumentNodeType;
+
+    equals(other: DocumentationNode): boolean;
 }
 
 /**
@@ -25,7 +27,11 @@ export interface SingleLineElementNode extends DocumentationNode {}
 export interface ParentNode<TDocumentNode extends DocumentationNode = DocumentationNode>
     extends UnistParent<TDocumentNode, UnistData>,
         DocumentationNode {
+    /**
+     * {@inheritDoc DocumentationNode."type"}
+     */
     readonly type: DocumentNodeType;
+
     readonly children: TDocumentNode[];
 }
 
@@ -33,6 +39,9 @@ export interface ParentNode<TDocumentNode extends DocumentationNode = Documentat
  * A documentation node that is a terminal (i.e. has no children).
  */
 export interface LiteralNode<T = unknown> extends UnistLiteral<T>, DocumentationNode {
+    /**
+     * {@inheritDoc DocumentationNode."type"}
+     */
     readonly type: DocumentNodeType;
 }
 
@@ -42,11 +51,22 @@ export interface LiteralNode<T = unknown> extends UnistLiteral<T>, Documentation
 export abstract class ParentNodeBase<TDocumentNode extends DocumentationNode = DocumentationNode>
     implements ParentNode<TDocumentNode>
 {
+    /**
+     * {@inheritDoc DocumentationNode."type"}
+     */
     public abstract type: DocumentNodeType;
 
+    /**
+     * {@inheritDoc ParentNode.children}
+     */
     public readonly children: TDocumentNode[];
 
     protected constructor(children: TDocumentNode[]) {
         this.children = children;
     }
+
+    /**
+     * {@inheritDoc DocumentationNode.equals}
+     */
+    public abstract equals(other: DocumentationNode): boolean;
 }
