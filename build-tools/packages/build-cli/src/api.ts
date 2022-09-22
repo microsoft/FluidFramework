@@ -61,12 +61,12 @@ export async function pullRequestInfo(token: string, commit_sha: string): Promis
  * @returns Pull request number
  */
 export async function createPullRequest(
-    auth: string,
+    token: string,
     source: string,
     target: string,
     author: string,
 ): Promise<any> {
-    const octokit = new Octokit({ auth });
+    const octokit = new Octokit({ auth: token });
     const newPr = await octokit.request(PULL_REQUEST, {
         owner: OWNER,
         repo: REPO_NAME,
