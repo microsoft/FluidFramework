@@ -8,12 +8,8 @@ import { NewlineKind } from "@rushstack/node-core-library";
 
 import { Logger, defaultConsoleLogger } from "./Logging";
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
-import {
-    ApiItemTransformationConfiguration,
-    defaultApiItemTransformations,
-} from "./api-item-to-documentation-ast";
-import { CustomDocNodes } from "./doc-nodes";
-import { RenderingPolicies, defaultRenderingPolicies } from "./rendering";
+import { ApiItemTransformationConfiguration, defaultApiItemTransformations } from "./new-system";
+import { CustomDocNodes, RenderingPolicies, defaultRenderingPolicies } from "./old-system";
 
 /**
  * Configuration options for the Markdown documenter.
@@ -43,6 +39,7 @@ export interface MarkdownDocumenterConfiguration
      */
     readonly newlineKind?: NewlineKind;
 
+    // TODO: remove this
     /**
      * TSDoc Configuration to use when parsing source-code documentation.
      * If not provided, a default configuration will be used.
