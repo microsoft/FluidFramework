@@ -3056,25 +3056,29 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        const { snapshotTree } = await this.fetchSnapshotFromStorage(
-            ackHandle,
-            summaryLogger,
-            {
-                eventName: "RefreshLatestSummaryGetSnapshot",
-                ackHandle,
-                summaryRefSeq,
-                fetchLatest: false,
-            },
-        );
-        const result = await this.summarizerNode.refreshLatestSummary(
-            proposalHandle,
-            summaryRefSeq,
-            async () => snapshotTree,
-            readAndParseBlob,
-            summaryLogger,
-        );
+        // The call to fetch the snapshot is very expensive and not always needed.
+        // It should only be done by the summarizerNode, if required.
+        const snapshotTreeFetcher = async () => {
+            const fetchResult = await this.fetchSnapshotFromStorage(
+             ackHandle,
+             summaryLogger,
+             {
+                 eventName: "RefreshLatestSummaryGetSnapshot",
+                 ackHandle,
+                 summaryRefSeq,
+                 fetchLatest: false,
+             });
+             return fetchResult.snapshotTree;
+         };
+         const result = await this.summarizerNode.refreshLatestSummary(
+             proposalHandle,
+             summaryRefSeq,
+             snapshotTreeFetcher,
+             readAndParseBlob,
+             summaryLogger,
+         );
 
-        // Notify the garbage collector so it can update its latest summary state.
+         // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
     }
 
