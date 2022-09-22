@@ -18,34 +18,17 @@
 // - bundle helper libraries as module (namespace) exports?
 // - Remove DocNode types from exports
 
-export * from "./api-item-to-documentation-ast";
-export {
-    DocAlert,
-    DocEmphasisSpan,
-    DocHeading,
-    DocList,
-    DocNoteBox,
-    DocTable,
-    DocTableCell,
-    DocTableRow,
-    IDocAlertParameters,
-    IDocHeadingParameters,
-    IDocListParameters,
-    ListKind,
-} from "./doc-nodes";
-export * from "./documentation-domain";
-export * from "./rendering";
+export * from "./new-system";
+export * from "./old-system";
 export * from "./utilities";
 
+export * from "./Configuration";
 export * from "./Heading";
 export * from "./Link";
 export * from "./LoadModel";
 export * from "./Logging";
-export * from "./MarkdownDocument";
-export * from "./MarkdownDocumenter";
-export * from "./Configuration";
-export * from "./MarkdownEmitter";
 export * from "./Policies";
+export * from "./utilities";
 
 // Conveinence re-exports of API model types
 export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
