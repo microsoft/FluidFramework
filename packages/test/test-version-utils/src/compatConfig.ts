@@ -127,15 +127,27 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => [
     },
 ];
 
-export const getInternalCompatConfig = () => {
+export interface InternalVersion {
+    base: string;
+    delta: number;
+}
+
+export interface InternalVersionCompatConfig {
+    name: string;
+    createWith: InternalVersion;
+    loadWith: InternalVersion;
+}
+
+export const getInternalCompatConfig = (): InternalVersionCompatConfig[] => {
     const allDefaultVersions = DefaultCompatVersions
         .CurrentVersionDeltas
         .map((delta) => ({ base: pkgVersion, delta }))
         .concat(DefaultCompatVersions.LTSVersions.map((ltsVersion) => ({ base: ltsVersion, delta: 0 })));
 
     return allDefaultVersions.map((createVersion) => allDefaultVersions.map((loadVersion) => ({
-        name: `Create with ${createVersion.base}${createVersion.delta === 0 ? "" : createVersion.delta}, \
-load with ${loadVersion.base}${loadVersion.delta === 0 ? "" : loadVersion.delta}`,
+        name: `Internal compat \
+create with [${createVersion.base}${createVersion.delta === 0 ? "" : createVersion.delta}], \
+load with [${loadVersion.base}${loadVersion.delta === 0 ? "" : loadVersion.delta}]`,
         createWith: createVersion,
         loadWith: loadVersion,
     }))).reduce((a, b) => a.concat(b)).filter((config) => config.createWith !== config.loadWith);

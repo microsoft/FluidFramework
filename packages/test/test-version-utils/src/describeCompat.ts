@@ -23,98 +23,78 @@ function createCompatSuite(
         }
 
         for (const config of configs) {
-            describe(config.name, function() {
-                let provider: TestObjectProvider;
-                let resetAfterEach: boolean;
-                before(async function() {
-                    provider = await getVersionedTestObjectProvider(
-                        baseVersion,
-                        config.loader,
+            wrapTest(config.name, tests, async () =>
+                getVersionedTestObjectProvider(
+                    baseVersion,
+                    config.loader,
+                    {
+                        type: driver,
+                        version: config.driver,
+                        config: {
+                            r11s: { r11sEndpointName },
+                            odsp: { tenantIndex },
+                        },
+                    },
+                    config.containerRuntime,
+                    config.dataRuntime,
+                ));
+        }
+
+        if (enableInternalCompat) {
+            getInternalCompatConfig().forEach((config) => {
+                wrapTest(config.name, tests, async () =>
+                    getInternalVersionedTestObjectProvider(
+                        config.createWith,
+                        config.createWith,
                         {
                             type: driver,
-                            version: config.driver,
                             config: {
                                 r11s: { r11sEndpointName },
                                 odsp: { tenantIndex },
                             },
                         },
-                        config.containerRuntime,
-                        config.dataRuntime,
-                    );
-
-                    Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
-                });
-                tests.bind(this)((options?: ITestObjectProviderOptions) => {
-                    resetAfterEach = options?.resetAfterEach ?? true;
-                    if (options?.syncSummarizer === true) {
-                        provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
-                    }
-                    return provider;
-                });
-
-                afterEach(function(done: Mocha.Done) {
-                    const logErrors = getUnexpectedLogErrorException(provider.logger);
-                    // if the test failed for another reason
-                    // then we don't need to check errors
-                    // and fail the after each as well
-                    if (this.currentTest?.state === "passed") {
-                        done(logErrors);
-                    } else {
-                        done();
-                    }
-                    if (resetAfterEach) {
-                        provider.reset();
-                    }
-                });
-            });
-        }
-
-        if (enableInternalCompat) {
-            getInternalCompatConfig().forEach((config) => {
-                describe(config.name, function() {
-                    let provider: TestObjectProvider;
-                    let resetAfterEach: boolean;
-                    before(async function() {
-                        provider = await getInternalVersionedTestObjectProvider(
-                            config.createWith,
-                            config.createWith,
-                            {
-                                type: driver,
-                                config: {
-                                    r11s: { r11sEndpointName },
-                                    odsp: { tenantIndex },
-                                },
-                            },
-                        );
-
-                        Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
-                    });
-                    tests.bind(this)((options?: ITestObjectProviderOptions) => {
-                        resetAfterEach = options?.resetAfterEach ?? true;
-                        if (options?.syncSummarizer === true) {
-                            provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
-                        }
-                        return provider;
-                    });
-
-                    afterEach(function(done: Mocha.Done) {
-                        const logErrors = getUnexpectedLogErrorException(provider.logger);
-                        // if the test failed for another reason
-                        // then we don't need to check errors
-                        // and fail the after each as well
-                        if (this.currentTest?.state === "passed") {
-                            done(logErrors);
-                        } else {
-                            done();
-                        }
-                        if (resetAfterEach) {
-                            provider.reset();
-                        }
-                    });
-                });
+                    ));
             });
         }
     };
+}
+
+function wrapTest(
+    name: string,
+    tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
+    makeProvider: () => Promise<TestObjectProvider>,
+) {
+    describe(name, function() {
+        let provider: TestObjectProvider;
+        let resetAfterEach: boolean;
+        before(async function() {
+            provider = await makeProvider();
+            Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
+        });
+
+        tests.bind(this)((options?: ITestObjectProviderOptions) => {
+            resetAfterEach = options?.resetAfterEach ?? true;
+            if (options?.syncSummarizer === true) {
+                provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
+            }
+            return provider;
+        });
+
+        afterEach(function(done: Mocha.Done) {
+            const logErrors = getUnexpectedLogErrorException(provider.logger);
+            // if the test failed for another reason
+            // then we don't need to check errors
+            // and fail the after each as well
+            if (this.currentTest?.state === "passed") {
+                done(logErrors);
+            } else {
+                done();
+            }
+            if (resetAfterEach) {
+                provider.reset();
+            }
+        });
+    });
 }
 
 export interface ITestObjectProviderOptions {

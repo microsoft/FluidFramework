@@ -24,6 +24,7 @@ import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluidframework/test-drivers";
 import { pkgVersion } from "./packageVersion";
 import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, getDriverApi } from "./testApi";
+import { InternalVersion } from "./compatConfig";
 
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
@@ -127,14 +128,8 @@ export async function getVersionedTestObjectProvider(
 }
 
 export async function getInternalVersionedTestObjectProvider(
-    createVersion: {
-        base: string;
-        delta: number;
-    },
-    loadVersion: {
-        base: string;
-        delta: number;
-    },
+    createVersion: InternalVersion,
+    loadVersion: InternalVersion,
     driverConfig?: {
         type?: TestDriverTypes;
         config?: FluidTestDriverConfig;
