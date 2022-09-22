@@ -1186,7 +1186,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 attributes,
                 this.storageService,
                 snapshot,
-            ) : await this.initializeProtocolState(
+            ) : this.initializeProtocolState(
                 attributes,
                 {
                     members: pendingLocalState.protocol.members,
@@ -1374,10 +1374,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return protocolHandler;
     }
 
-    private async initializeProtocolState(
+    private initializeProtocolState(
         attributes: IDocumentAttributes,
         quorumSnapshot: IQuorumSnapshot,
-    ): Promise<IProtocolHandler> {
+    ): IProtocolHandler {
         const protocolHandlerBuilder =
             this.protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
         const protocol = protocolHandlerBuilder(
