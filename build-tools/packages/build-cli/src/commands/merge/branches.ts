@@ -109,7 +109,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
 
         await gitRepo.switchBranch(flags.target);
         await gitRepo.createBranch(branchName);
-        // await gitRepo.fetchBranch(flags.target, branchName);
         await gitRepo.setUpstream(branchName);
 
         // passed a set of commit ids, return the commit id upto which the branch should get reset to
@@ -144,13 +143,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             // fetch name of owner associated to the pull request
             const prInfo = await api.pullRequestInfo(flags.auth, unmergedCommitList[0]);
             this.info(
-                `Fetch pull request info for single commit id ${unmergedCommitList[0]}: ${prInfo[0].data[0].user.login}`,
+                `Fetch pull request info for single commit id ${unmergedCommitList[0]}: ${prInfo[0].data[0].user}`,
             );
             prNumber = await api.createPullRequest(
                 flags.auth,
                 `${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
                 flags.target,
-                "sonalivdeshpande",
+                prInfo[0].data[0].user.login,
             );
             this.log(
                 `Open pull request for commit id ${unmergedCommitList[0]}. Please resolve the merge conflicts.`,
@@ -159,13 +158,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             // fetch name of owner associated to the pull request
             const prInfo = await api.pullRequestInfo(flags.auth, unmergedCommitList[commit]);
             this.info(
-                `Fetch pull request info for bulk commit id ${unmergedCommitList[commit]}: ${prInfo[0].data[0].user.login}`,
+                `Fetch pull request info for bulk commit id ${unmergedCommitList[commit]}: ${prInfo[0].data[0].user}`,
             );
             prNumber = await api.createPullRequest(
                 flags.auth,
                 branchName,
                 flags.target,
-                "sonalivdeshpande",
+                prInfo[0].data[0].user.login,
             );
             this.info(`Pull request opened for pushing bulk commits`);
         }

@@ -64,9 +64,10 @@ export async function createPullRequest(
     token: string,
     source: string,
     target: string,
-    author: string,
+    assignee: string,
 ): Promise<any> {
     const octokit = new Octokit({ auth: token });
+    const author = assignee === undefined || assignee === "" ? "sonalivdeshpande" : assignee;
     const newPr = await octokit.request(PULL_REQUEST, {
         owner: OWNER,
         repo: REPO_NAME,
