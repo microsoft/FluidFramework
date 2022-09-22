@@ -855,6 +855,7 @@ export class GarbageCollector implements IGarbageCollector {
             const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
 
             const gcStats = await this.runPostGCSteps(gcData, gcResult, logger, currentReferenceTimestampMs);
+            console.log(`................. GC: ${gcStats.unrefDataStoreCount} / ${gcStats.dataStoreCount}`);
             event.end({ ...gcStats });
             this.completedRuns++;
             return gcStats;
