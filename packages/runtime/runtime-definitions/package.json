@@ -61,7 +61,6 @@
         "forwardCompat": false
       },
       "InterfaceDeclaration_IFluidDataStoreContext": {
-        "backCompat": false,
         "forwardCompat": false
       },
       "InterfaceDeclaration_IFluidDataStoreChannel": {
@@ -69,7 +68,6 @@
         "forwardCompat": false
       },
       "InterfaceDeclaration_IFluidDataStoreContextDetached": {
-        "backCompat": false,
         "forwardCompat": false
       }
     }
