@@ -1,0 +1,50 @@
+name: Breaking Change Warning
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    branches:
+      - main
+      - release/*
+      - next
+
+jobs:
+  check_broken_types:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: get-files
+        run: |
+          echo "::set-output name=files::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | xargs)"
+
+      - name: Check for changes to broken types
+        id: check
+        run: |
+          declare -a arr=(${{ steps.get-files.outputs.files }})
+          for i in "${arr[@]}"; do
+            if [[ ! "$i" =~ package.json$ ]]; then
+              continue
+            fi
+
+            git checkout ${{ github.head_ref }} --quiet
+            pr=$(jq .typeValidation.broken "$i" | tr -d '\n')
+
+            git checkout ${{ github.base_ref }} --quiet
+            base=$(jq .typeValidation.broken "$i" | tr -d '\n')
+
+            if [ "$pr" != "$base" ]; then
+              echo '::set-output name=isBrokenDetected::true'
+              break
+            fi
+          done
+
+      - name: Comment on PR
+        if: steps.check.outputs.isBrokenDetected == 'true'
+        uses: marocchino/sticky-pull-request-comment@39c5b5dc7717447d0cba270cd115037d32d28443 # pin@v2
+        with:
+          message: |
+            @${{ github.event.pull_request.user.login }} it looks like this PR might include a breaking change. If so, please ensure you follow the [guidelines](https://github.com/microsoft/FluidFramework/wiki/Communicating-breaking-changes) on how to introduce a breaking change.
