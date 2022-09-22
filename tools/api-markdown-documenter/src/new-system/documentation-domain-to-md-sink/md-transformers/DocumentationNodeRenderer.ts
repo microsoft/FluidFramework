@@ -322,5 +322,10 @@ export class DocumentationNodeRenderer {
 export function markdownFromDocumentNode(node: DocumentNode): string {
     // todo: configurability of individual node renderers
     const renderer = new DocumentationNodeRenderer();
-    return node.children.map((child) => renderer.renderNode(child)).join("");
+    const output: string[] = [];
+    if (node.title) {
+        output.push(`# ${node.title}${standardEOL}${standardEOL}`);
+    }
+    output.push(...node.children.map((child) => renderer.renderNode(child)));
+    return output.join("");
 }

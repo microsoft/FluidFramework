@@ -25,29 +25,9 @@ export function PlainTextToMarkdown(
     ];
 
     // Add bold, underline, strikethrough entry tags
-    let tagApplied = false;
     for (let tag of tagsChecked) {
         if (tag.predicate) {
             output.push(tag.enter);
-            tagApplied = true;
-        }
-    }
-
-    if (!tagApplied) {
-        switch (renderer.getLastRenderedCharacter()) {
-            case "":
-            case "\n":
-            case " ":
-            case "[":
-            case ">":
-                // okay to put a symbol
-                break;
-            default:
-                // This is no problem:        "**one** *two* **three**"
-                // But this is trouble:       "**one***two***three**"
-                // The most general solution: "**one**<!-- -->*two*<!-- -->**three**"
-                output.push("<!-- -->");
-                break;
         }
     }
 
