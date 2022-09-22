@@ -308,6 +308,9 @@ export class DocumentationNodeRenderer {
     public get isInsideCodeBlock() {
         return this.renderingContext.insideCodeBlock;
     }
+    public get hierarchyDepth() {
+        return this.renderingContext.depth;
+    }
 }
 
 export function markdownFromDocumentNode(node: DocumentNode): string {
