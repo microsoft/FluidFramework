@@ -67,7 +67,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
         );
 
         const listCommits = await gitRepo.revList(lastMergedCommit, flags.source);
-        this.info(`List of commit ids: ${listCommits} ${typeof listCommits}`);
         const unmergedCommitList: string[] = [];
         let str = "";
 
