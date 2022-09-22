@@ -19,7 +19,6 @@
 // - Remove DocNode types from exports
 
 export * from "./api-item-to-documentation-ast";
-export * from "./doc-node-to-documentation-ast";
 export {
     DocAlert,
     DocEmphasisSpan,

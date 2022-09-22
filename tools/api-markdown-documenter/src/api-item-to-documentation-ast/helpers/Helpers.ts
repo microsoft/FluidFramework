@@ -20,7 +20,6 @@ import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { Heading } from "../../Heading";
-import { transformSection } from "../../doc-node-to-documentation-ast";
 import {
     AlertNode,
     DocAlertType,
@@ -50,6 +49,7 @@ import {
     getSeeBlocks,
     getThrowsBlocks,
 } from "../../utilities";
+import { transformSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "./InternalUtilities";
 import { createParametersSummaryTable } from "./TableHelpers";
 
@@ -532,7 +532,7 @@ export function createDeprecationNoticeSection(
  *
  * @returns The doc section if the API item had any `@example` comment blocks, otherwise `undefined`.
  */
-export function renderExamplesSection(
+export function createExamplesSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode | undefined {
@@ -544,13 +544,13 @@ export function renderExamplesSection(
 
     // If there is only 1 example, render it with a single default (un-numbered) heading
     if (exampleBlocks.length === 1) {
-        return renderExampleSection({ apiItem, content: exampleBlocks[0] }, config);
+        return createExampleSection({ apiItem, content: exampleBlocks[0] }, config);
     }
 
     const exampleSections: HierarchicalSectionNode[] = [];
     for (let i = 0; i < exampleBlocks.length; i++) {
         exampleSections.push(
-            renderExampleSection(
+            createExampleSection(
                 { apiItem, content: exampleBlocks[i], exampleNumber: i + 1 },
                 config,
             ),
@@ -592,7 +592,7 @@ export interface DocExampleProperties {
  * @param example - The example to render.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderExampleSection(
+export function createExampleSection(
     example: DocExampleProperties,
     config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode {
@@ -621,7 +621,7 @@ export function renderExampleSection(
  *
  * @returns The doc section if the item had any parameters, otherwise `undefined`.
  */
-export function renderParametersSection(
+export function createParametersSection(
     apiFunctionLike: ApiFunctionLike,
     config: Required<MarkdownDocumenterConfiguration>,
 ): HierarchicalSectionNode | undefined {
@@ -751,6 +751,12 @@ export function createChildDetailsSection(
     return sections.length === 0 ? undefined : sections;
 }
 
-function wrapInSection(nodes: DocumentationNode[], heading: Heading): HierarchicalSectionNode {
-    return new HierarchicalSectionNode(nodes, HeadingNode.createFromHeading(heading));
+export function wrapInSection(
+    nodes: DocumentationNode[],
+    heading?: Heading,
+): HierarchicalSectionNode {
+    return new HierarchicalSectionNode(
+        nodes,
+        heading ? HeadingNode.createFromHeading(heading) : undefined,
+    );
 }

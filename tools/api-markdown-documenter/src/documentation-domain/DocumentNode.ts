@@ -6,9 +6,9 @@ import { Parent as UnistParent } from "unist";
 
 import { DocumentNodeType } from "./DocumentationNodeType";
 import { DocumentationNode } from "./DocumentionNode";
+import { ParagraphNode } from "./ParagraphNode";
 
 // TODOs:
-// - Take in an optional title?
 // - Take in optional front-matter?
 // - Take in optional Header / footer?
 
@@ -23,9 +23,23 @@ export class DocumentNode implements UnistParent<DocumentationNode> {
 
     public readonly children: DocumentationNode[];
     public readonly filePath: string;
-
-    public constructor(children: DocumentationNode[], filePath: string) {
+    public readonly title?: string;
+    public readonly frontMatter?: string;
+    public readonly header?: ParagraphNode;
+    public readonly footer?: ParagraphNode;
+    public constructor(
+        children: DocumentationNode[],
+        filePath: string,
+        title?: string,
+        frontMatter?: string,
+        header?: ParagraphNode,
+        footer?: ParagraphNode,
+    ) {
         this.children = children;
         this.filePath = filePath;
+        this.title = title;
+        this.frontMatter = frontMatter;
+        this.header = header;
+        this.footer = footer;
     }
 }

@@ -8,13 +8,20 @@ import { NewlineKind } from "@rushstack/node-core-library";
 
 import { Logger, defaultConsoleLogger } from "./Logging";
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
+import {
+    ApiItemTransformationConfiguration,
+    defaultApiItemTransformations,
+} from "./api-item-to-documentation-ast";
 import { CustomDocNodes } from "./doc-nodes";
 import { RenderingPolicies, defaultRenderingPolicies } from "./rendering";
 
 /**
  * Configuration options for the Markdown documenter.
  */
-export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
+export interface MarkdownDocumenterConfiguration
+    extends PolicyOptions,
+        RenderingPolicies,
+        ApiItemTransformationConfiguration {
     /**
      * API Model for which the documentation is being generated.
      * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
@@ -68,6 +75,7 @@ export function markdownDocumenterConfigurationWithDefaults(
         logger: defaultConsoleLogger,
         ...defaultPolicyOptions,
         ...defaultRenderingPolicies,
+        ...defaultApiItemTransformations,
         ...partialConfig,
     };
 }

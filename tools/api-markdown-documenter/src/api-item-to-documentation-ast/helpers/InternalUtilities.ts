@@ -7,8 +7,8 @@ import { DocDeclarationReference } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { UrlTarget } from "../../Link";
-import { DocNodeTransformOptions } from "../../doc-node-to-documentation-ast";
 import { getLinkUrlForApiItem } from "../../utilities";
+import { DocNodeTransformOptions } from "../DocNodeTransforms";
 
 export function getDocNodeTransformationOptions(
     config: Required<MarkdownDocumenterConfiguration>,

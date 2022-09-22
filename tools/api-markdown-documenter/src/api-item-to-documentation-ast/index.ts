@@ -8,7 +8,10 @@
  */
 
 // TODOs:
-// - configurable transformation dispatch options with defaults
 // - scope exports to reduce API clutter?
 
 export * from "./helpers";
+export * from "./DocNodeTransforms";
+export * from "./Configuration";
+export * from "./TransformApiItem";
+export * from "./TransformApiPackage";

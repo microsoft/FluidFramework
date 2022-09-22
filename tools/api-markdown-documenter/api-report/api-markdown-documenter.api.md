@@ -73,6 +73,32 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public
+export function apiItemToDocument(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocumentNode;
+
+// @public
+export function apiItemToSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode;
+
+// @public
+export interface ApiItemTransformationConfiguration {
+    createSectionWithChildContent?: CreateSectionWithChildContent;
+    transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
+    transformApiClass?: TransformApiItemWithChildren<ApiClass>;
+    transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+    transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
+    transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
+    transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
+    transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
+    transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
+    transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
+    transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
+    transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
+    transformApiPackage?: TransformApiItemWithChildren<ApiPackage>;
+    transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
+    transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
+    transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
+}
+
+// @public
 export type ApiMemberKind = Omit<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
 
 export { ApiModel }
@@ -90,6 +116,9 @@ export enum ApiModifier {
 export type ApiModuleLike = ApiPackage | ApiNamespace;
 
 export { ApiPackage }
+
+// @public
+export function apiPackageToDocument(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>): DocumentNode;
 
 // @public
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
@@ -152,6 +181,12 @@ export function createDeprecatedCell(apiItem: ApiItem): TableCellNode;
 export function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): AlertNode | undefined;
 
 // @public
+export function createExampleSection(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode;
+
+// @public
+export function createExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
+
+// @public
 export function createExcerptSpanWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): SpanNode<SingleLineElementNode> | undefined;
 
 // @public
@@ -171,6 +206,9 @@ export function createModifiersCell(apiItem: ApiItem, modifiersToOmit?: ApiModif
 
 // @public
 export function createPackagesTable(apiPackages: readonly ApiPackage[], config: Required<MarkdownDocumenterConfiguration>): TableNode | undefined;
+
+// @public
+export function createParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
 
 // @public
 export function createParametersSummaryTable(apiParameters: readonly Parameter[], config: Required<MarkdownDocumenterConfiguration>): TableNode;
@@ -200,6 +238,9 @@ export function createReturnsSection(apiItem: ApiItem, config: Required<Markdown
 export function createReturnTypeCell(apiItem: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): TableCellNode;
 
 // @public
+export type CreateSectionWithChildContent = (apiItem: ApiItem, childSections: HierarchicalSectionNode[] | undefined, config: Required<MarkdownDocumenterConfiguration>) => HierarchicalSectionNode;
+
+// @public
 export function createSeeAlsoSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
 
 // @public
@@ -222,6 +263,9 @@ export function createTypeExcerptCell(typeExcerpt: Excerpt, config: Required<Mar
 
 // @public
 export function createTypeParametersSpan(typeParameters: readonly TypeParameter[], config: Required<MarkdownDocumenterConfiguration>): SpanNode | undefined;
+
+// @public
+export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -342,11 +386,19 @@ export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
 export class DocumentNode implements Parent<DocumentationNode> {
-    constructor(children: DocumentationNode[], filePath: string);
+    constructor(children: DocumentationNode[], filePath: string, title?: string, frontMatter?: string, header?: ParagraphNode, footer?: ParagraphNode);
     // (undocumented)
     readonly children: DocumentationNode[];
     // (undocumented)
     readonly filePath: string;
+    // (undocumented)
+    readonly footer?: ParagraphNode;
+    // (undocumented)
+    readonly frontMatter?: string;
+    // (undocumented)
+    readonly header?: ParagraphNode;
+    // (undocumented)
+    readonly title?: string;
     // (undocumented)
     readonly type = DocumentNodeType.Document;
 }
@@ -522,9 +574,8 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
 // @public
 export class HierarchicalSectionNode extends ParentNodeBase {
-    constructor(children: DocumentationNode[], heading: HeadingNode);
-    // (undocumented)
-    readonly heading: HeadingNode;
+    constructor(children: DocumentationNode[], heading?: HeadingNode);
+    readonly heading?: HeadingNode;
     // (undocumented)
     readonly type = DocumentNodeType.HierarchicalSection;
 }
@@ -626,7 +677,7 @@ export interface MarkdownDocument {
 }
 
 // @public
-export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
+export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies, ApiItemTransformationConfiguration {
     apiModel: ApiModel;
     readonly logger?: Logger;
     readonly newlineKind?: NewlineKind;
@@ -816,16 +867,10 @@ function renderEmptyTableCell(config: Required<MarkdownDocumenterConfiguration>)
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public
-export function renderExampleSection(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode;
+function renderExampleSection(example: DocExampleProperties_2, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
-function renderExampleSection_2(example: DocExampleProperties_2, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public
-export function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
-
-// @public
-function renderExamplesSection_2(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocNode[] | undefined;
@@ -863,9 +908,9 @@ declare namespace RenderingHelpers {
         renderRemarksSection,
         renderThrowsSection,
         renderDeprecationNoticeSection,
-        renderExamplesSection_2 as renderExamplesSection,
-        renderExampleSection_2 as renderExampleSection,
-        renderParametersSection_2 as renderParametersSection,
+        renderExamplesSection,
+        renderExampleSection,
+        renderParametersSection,
         renderReturnsSection,
         renderChildDetailsSection,
         renderChildrenUnderHeading,
@@ -956,10 +1001,7 @@ function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownD
 function renderPackagesTable(apiPackages: readonly ApiPackage[], config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
 // @public
-export function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): HierarchicalSectionNode | undefined;
-
-// @public
-function renderParametersSection_2(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderParametersSummaryTable(apiParameters: readonly Parameter[], config: Required<MarkdownDocumenterConfiguration>): DocTable;
@@ -1084,6 +1126,12 @@ export interface TextFormatting {
 }
 
 // @public
+export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>, generateChildSection: (apiItem: ApiItem) => HierarchicalSectionNode) => HierarchicalSectionNode;
+
+// @public
+export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => HierarchicalSectionNode;
+
+// @public
 export function transformCodeSpan(node: DocCodeSpan, options: DocNodeTransformOptions): CodeSpanNode;
 
 // @public
@@ -1119,5 +1167,8 @@ export type UrlTarget = string;
 
 // @public
 export const verboseConsoleLogger: Logger;
+
+// @public (undocumented)
+export function wrapInSection(nodes: DocumentationNode[], heading?: Heading): HierarchicalSectionNode;
 
 ```

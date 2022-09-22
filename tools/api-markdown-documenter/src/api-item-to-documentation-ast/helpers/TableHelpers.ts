@@ -16,7 +16,6 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
-import { transformSection } from "../../doc-node-to-documentation-ast";
 import {
     CodeSpanNode,
     DocumentationNode,
@@ -37,6 +36,7 @@ import {
     getModifiers,
     isDeprecated,
 } from "../../utilities";
+import { transformSection } from "../DocNodeTransforms";
 import { createExcerptSpanWithHyperlinks } from "./Helpers";
 import { getDocNodeTransformationOptions } from "./InternalUtilities";
 
