@@ -158,7 +158,7 @@ export class DocumentationNodeRenderer {
         italic: false,
         insideTable: false,
         insideCodeBlock: false,
-        depth: 1,
+        depth: 0,
     };
     public renderNode(node: DocumentationNode): string {
         const prevRenderingContext = this.renderingContext;

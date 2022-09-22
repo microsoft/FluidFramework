@@ -1,6 +1,6 @@
 import { HierarchicalSectionNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { getEscapedText, addNewlineOrBlank as newlineOrBlankSpace } from "./Utilities";
+import { getEscapedText, addNewlineOrBlank as newlineOrBlankSpace, standardEOL } from "./Utilities";
 
 export function HierarchicalSectionToMarkdown(
     sectionNode: HierarchicalSectionNode,
@@ -28,16 +28,17 @@ export function HierarchicalSectionToMarkdown(
             headerLine.push("####");
     }
     if (sectionNode.heading) {
-        headerLine.push(getEscapedText(renderer.renderNode(sectionNode.heading.value)));
+        headerLine.push(
+            getEscapedText(renderer.renderNode(sectionNode.heading.value)) +
+                newlineOrBlankSpace(renderer.getLastRenderedCharacter()),
+        );
     }
-    output.push(headerLine.join(" "));
-    output.push(newlineOrBlankSpace(renderer.getLastRenderedCharacter())); // Add a line between the header and content
+    output.push(`${standardEOL}${headerLine.join(" ")}${standardEOL}`); // Markdown best practices: surround headers with newlines
 
-    const rows = sectionNode.children.map(
-        (child) =>
-            renderer.renderNode(child) + newlineOrBlankSpace(renderer.getLastRenderedCharacter()),
-    );
-    output.push(...rows);
+    if (sectionNode.children.length) {
+        output.push(renderer.renderNodes(sectionNode.children));
+        output.push(newlineOrBlankSpace(renderer.getLastRenderedCharacter())); // Add a line if the last content element didn't
+    }
 
     return output.join("");
 }

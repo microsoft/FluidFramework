@@ -28,5 +28,5 @@ export function addNewlineOrBlank(lastCharPrinted: string) {
         return standardEOL;
     }
 
-    return ";";
+    return "";
 }
