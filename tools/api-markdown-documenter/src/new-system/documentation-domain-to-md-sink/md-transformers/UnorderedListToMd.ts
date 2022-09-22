@@ -1,10 +1,17 @@
 import { UnorderedListNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { standardEOL } from "./Utilities";
+import { addNewlineOrBlank } from "./Utilities";
 
 export function UnorderedListToMarkdown(
     listNode: UnorderedListNode,
     renderer: DocumentationNodeRenderer,
 ): string {
-    return listNode.children.map((child) => `- ${renderer.renderNode(child)}`).join(standardEOL);
+    return listNode.children
+        .map(
+            (child) =>
+                `- ${renderer.renderNode(child)}${addNewlineOrBlank(
+                    renderer.getLastRenderedCharacter(),
+                )}`,
+        )
+        .join("");
 }

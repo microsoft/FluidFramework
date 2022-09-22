@@ -13,12 +13,12 @@ describe("PlainText markdown tests", () => {
         const renderer = new DocumentationNodeRenderer();
         const renderedForm = renderer.renderNode(emptyNode);
         expect(renderedForm).to.equal("");
-    }),
-        it("Renders text when given text", () => {
-            const expectedString = `this is some text`;
-            const contentNode = new PlainTextNode(expectedString);
-            const renderer = new DocumentationNodeRenderer();
-            const renderedForm = renderer.renderNode(contentNode);
-            expect(renderedForm).to.equal(expectedString);
-        });
+    });
+    it("Renders text when given text", () => {
+        const expectedString = `this is some text`;
+        const contentNode = new PlainTextNode(expectedString);
+        const renderer = new DocumentationNodeRenderer();
+        const renderedForm = renderer.renderNode(contentNode);
+        expect(renderedForm).to.equal(expectedString);
+    });
 });

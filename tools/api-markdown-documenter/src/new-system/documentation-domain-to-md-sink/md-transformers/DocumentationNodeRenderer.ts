@@ -226,9 +226,9 @@ export class DocumentationNodeRenderer {
                     this,
                 );
                 break;
-            case DocumentNodeType.TableCell:
-                renderedNode = this.renderers[DocumentNodeType.TableCell](
-                    node as unknown as TableCellNode,
+            case DocumentNodeType.TableRow:
+                renderedNode = this.renderers[DocumentNodeType.TableRow](
+                    node as unknown as TableRowNode,
                     this,
                 );
                 break;
@@ -307,5 +307,10 @@ export class DocumentationNodeRenderer {
 export function markdownFromDocumentNode(node: DocumentNode): string {
     // todo: configurability of individual node renderers
     const renderer = new DocumentationNodeRenderer();
-    return node.children.map((child) => renderer.renderNode(child)).join("");
+    const output: string[] = [];
+    if (node.title) {
+        output.push(`# ${node.title}${standardEOL}${standardEOL}`);
+    }
+    output.push(...node.children.map((child) => renderer.renderNode(child)));
+    return output.join("");
 }

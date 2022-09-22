@@ -28,8 +28,8 @@ export function TableToMarkdown(tableNode: TableNode, renderer: DocumentationNod
     // We'll render each header cell individually
     const headerRow = ["| "];
     for (let i = 0; i < columnsCount; ++i) {
-        headerRow.push(" ");
-        if (tableNode.headingRow && tableNode.headingRow.children.length < i) {
+        headerRow.push(i > 0 ? " " : "");
+        if (tableNode.headingRow && i < tableNode.headingRow.children.length) {
             headerRow.push(renderer.renderNode(tableNode.headingRow.children[i]));
         }
         headerRow.push(" |");
@@ -49,5 +49,5 @@ export function TableToMarkdown(tableNode: TableNode, renderer: DocumentationNod
     // Table rows will automatically append EOLs to the end of their row, so we wont need to add them here
     output.push(...tableNode.children.map((childRow) => renderer.renderNode(childRow)));
 
-    return output.join();
+    return output.join("");
 }
