@@ -7,7 +7,7 @@ import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import {
     IContainerRuntimeBase,
     IFluidDataStoreContext,
-    IFluidDataStoreFactory
+    IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map";
