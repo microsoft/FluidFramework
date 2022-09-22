@@ -105,7 +105,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
         const commitToReset = unmergedCommitList[commitSize - 1];
         const branchName = `${flags.source}-${flags.target}-${commitToReset}`;
 
-        this.info(`Branch name: ${branchName}`);
+        this.info(`Branch name: ${branchName} ${commitSize}`);
 
         await gitRepo.switchBranch(flags.target);
         await gitRepo.createBranch(branchName);
