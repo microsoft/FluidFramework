@@ -24,10 +24,9 @@ export function getTableEscapedText(text: string): string {
 }
 
 export function addNewlineOrBlank(lastCharPrinted: string) {
-    if (lastCharPrinted !== '\n' && lastCharPrinted !== '')
-    {
+    if (lastCharPrinted !== "\n" && lastCharPrinted !== "") {
         return standardEOL;
     }
 
-    return ';'
+    return ";";
 }

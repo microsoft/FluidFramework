@@ -150,7 +150,7 @@ export interface RenderingContext {
 
 export const DefaultRenderers = new DefaultNodeRenderers();
 export class DocumentationNodeRenderer {
-    private lastRenderedCharacter = '';
+    private lastRenderedCharacter = "";
     private renderers: NodeRenderers = DefaultRenderers;
     private renderingContext: RenderingContext = {
         bold: false,
@@ -267,7 +267,9 @@ export class DocumentationNodeRenderer {
                 break;
         }
         this.renderingContext = prevRenderingContext;
-        this.lastRenderedCharacter = renderedNode.length ? renderedNode[renderedNode.length - 1] : '';
+        this.lastRenderedCharacter = renderedNode.length
+            ? renderedNode[renderedNode.length - 1]
+            : "";
         return renderedNode;
     }
 

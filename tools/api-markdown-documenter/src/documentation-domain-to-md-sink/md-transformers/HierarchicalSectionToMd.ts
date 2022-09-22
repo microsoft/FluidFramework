@@ -1,6 +1,6 @@
 import { HierarchicalSectionNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { addNewlineOrBlank as newlineOrBlankSpace, getEscapedText, standardEOL } from "./Utilities";
+import { getEscapedText, addNewlineOrBlank as newlineOrBlankSpace } from "./Utilities";
 
 export function HierarchicalSectionToMarkdown(
     sectionNode: HierarchicalSectionNode,
@@ -11,28 +11,33 @@ export function HierarchicalSectionToMarkdown(
     const output: string[] = [newlineOrBlankSpace(renderer.getLastRenderedCharacter())];
 
     // Starting with an empty line to ensure a newline gets added at the start of this section
-    const headingLevel = sectionNode.heading.level ?? renderer.hierarchyDepth;
+    const headingLevel = sectionNode.heading?.level ?? renderer.hierarchyDepth;
 
     const headerLine: string[] = [];
     switch (headingLevel) {
         case 1:
-            headerLine.push('##');
+            headerLine.push("##");
             break;
         case 2:
-            headerLine.push('###');
+            headerLine.push("###");
             break;
         case 3:
-            headerLine.push('###');
+            headerLine.push("###");
             break;
         default:
-            headerLine.push('####');
+            headerLine.push("####");
     }
-    headerLine.push(getEscapedText(renderer.renderNode(sectionNode.heading.value)));
-    output.push(headerLine.join(' '));
+    if (sectionNode.heading) {
+        headerLine.push(getEscapedText(renderer.renderNode(sectionNode.heading.value)));
+    }
+    output.push(headerLine.join(" "));
     output.push(newlineOrBlankSpace(renderer.getLastRenderedCharacter())); // Add a line between the header and content
 
-    const rows = sectionNode.children.map((child) => renderer.renderNode(child) + newlineOrBlankSpace(renderer.getLastRenderedCharacter()))
+    const rows = sectionNode.children.map(
+        (child) =>
+            renderer.renderNode(child) + newlineOrBlankSpace(renderer.getLastRenderedCharacter()),
+    );
     output.push(...rows);
 
-    return output.join('');
+    return output.join("");
 }
