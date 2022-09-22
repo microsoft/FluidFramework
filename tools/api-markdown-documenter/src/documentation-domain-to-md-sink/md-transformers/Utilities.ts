@@ -22,3 +22,12 @@ export function getTableEscapedText(text: string): string {
         .replace(/>/g, "&gt;")
         .replace(/\|/g, "&#124;");
 }
+
+export function addNewlineOrBlank(lastCharPrinted: string) {
+    if (lastCharPrinted !== '\n' && lastCharPrinted !== '')
+    {
+        return standardEOL;
+    }
+
+    return ';'
+}
