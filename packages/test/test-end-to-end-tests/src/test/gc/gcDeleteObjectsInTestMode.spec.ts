@@ -10,7 +10,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestContainerConfig, ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
-    describeFullCompat,
+    describeFullInternalCompat,
     describeNoCompat,
     ITestDataObject,
     TestDataObjectType,
@@ -91,7 +91,7 @@ function validateChildReferenceStates(summary: ISummaryTree, referenced: boolean
         }
         assert(
             summaryObject.unreferenced === expectedUnreferenced,
-            `Summary tree ${id} should be ${ referenced ? "referenced" : "unreferenced" }`,
+            `Summary tree ${id} should be ${referenced ? "referenced" : "unreferenced"}`,
         );
         validateChildReferenceStates(summaryObject, referenced);
     }
@@ -120,7 +120,7 @@ async function validateDataStoreLoad(
     const expectedStatus = deleteContent && !referenced ? 404 : 200;
     assert(
         response.status === expectedStatus,
-        `Data store ${dataStoreId} ${ referenced ? "should" : "should not" } have loaded`,
+        `Data store ${dataStoreId} ${referenced ? "should" : "should not"} have loaded`,
     );
 }
 
@@ -162,7 +162,7 @@ async function validateDataStoreReferenceState(
         assert(dataStoreTree !== undefined, `Data store ${dataStoreId} is not in the summary!`);
         assert(
             dataStoreTree.unreferenced === expectedUnreferenced,
-            `Data store ${dataStoreId} should be ${ referenced ? "referenced" : "unreferenced" }`,
+            `Data store ${dataStoreId} should be ${referenced ? "referenced" : "unreferenced"}`,
         );
 
         // Validate that the summary trees of its children are marked as referenced. Currently, GC only runs
@@ -174,7 +174,7 @@ async function validateDataStoreReferenceState(
 /**
  * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
  */
-describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => {
+describeFullInternalCompat("GC delete objects in test mode", (getTestObjectProvider) => {
     // If deleteContent is true, GC is run in test mode where content that is not referenced is
     // deleted after each GC run.
     const tests = (deleteContent: boolean = false) => {
@@ -277,7 +277,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
  * Validates the reference state of the attachment blob with the given handle in the GC summary tree and in
  * the blob summary tree.
  */
- async function validateBlobsReferenceState(
+async function validateBlobsReferenceState(
     provider: ITestObjectProvider,
     containerRuntime: ContainerRuntime,
     deleteContent: boolean,

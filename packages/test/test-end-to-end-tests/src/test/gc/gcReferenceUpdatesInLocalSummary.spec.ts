@@ -19,7 +19,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 class TestDataObject extends DataObject {
@@ -69,7 +69,7 @@ class TestDataObject extends DataObject {
  * property set to true. If the handle to a data store exists or it's a root data store, its summary tree does not have
  * the "unreferenced" property.
  */
-describeFullCompat("GC reference updates in local summary", (getTestObjectProvider) => {
+describeFullInternalCompat("GC reference updates in local summary", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(
         "TestDataObject",
@@ -83,7 +83,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
             summaryConfigOverrides: {
                 state: "disabled",
             },
-         },
+        },
         gcOptions: { gcAllowed: true },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
