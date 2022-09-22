@@ -1,5 +1,21 @@
 {
     "profiles": {
+        "gc": {
+            "opRatePerMin": 120,
+            "progressIntervalMs": 5000,
+            "numClients": 10,
+            "totalSendCount": 1000,
+            "readWriteCycleMs": 10000
+        },
+        "gc_fault": {
+            "opRatePerMin": 120,
+            "progressIntervalMs": 5000,
+            "numClients": 10,
+            "totalSendCount": 1000,
+            "readWriteCycleMs": 10000,
+            "faultInjectionMinMs": 0,
+            "faultInjectionMaxMs": 50000
+        },
         "ci": {
             "opRatePerMin": 10,
             "progressIntervalMs": 15000,

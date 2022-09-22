@@ -22,10 +22,11 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 import {
-    DataObjectParent,
-    dataObjectParentFactory,
-    DataObjectWithCounter,
-    dataObjectWithCounterFactory,
+    RootDataObject,
+    rootDataObjectFactory,
+    DataObjectType1,
+    dataObjectType1Factory,
+    IGCDataStore,
 } from "./gcDataStore";
 
 export interface IRunConfig {
@@ -423,11 +424,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     protected async initializingFirstTime() {
         this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
 
-        const gcDataStore = await dataObjectParentFactory.createInstance(this.context.containerRuntime);
+        const gcDataStore = await rootDataObjectFactory.createInstance(this.context.containerRuntime);
         this.root.set(gcDataStore2Key, gcDataStore.handle);
-    }
-
-    protected async hasInitialized(): Promise<void> {
     }
 
     public async detached(config: Omit<IRunConfig, "runId">, logger) {
@@ -442,8 +440,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     public async run(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
-        const gcDataStore = await this.root.get<IFluidHandle<DataObjectParent>>(gcDataStore2Key)?.get();
-        return gcDataStore?.run(config) ?? true;
+        const gcDataStoreHandle = this.root.get<IFluidHandle<IGCDataStore>>(gcDataStore2Key);
+        assert(gcDataStoreHandle !== undefined, "Could not find GC data store handle");
+        const gcDataStore = await gcDataStoreHandle.get();
+        return gcDataStore.run(config);
     }
 
     public async run_old(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
@@ -524,8 +524,8 @@ export const createFluidExport = (options: IContainerRuntimeOptions) =>
         LoadTestDataStoreInstantiationFactory,
         [
             [LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)],
-            [DataObjectWithCounter.type, Promise.resolve(dataObjectWithCounterFactory)],
-            [DataObjectParent.type, Promise.resolve(dataObjectParentFactory)],
+            [DataObjectType1.type, Promise.resolve(dataObjectType1Factory)],
+            [RootDataObject.type, Promise.resolve(rootDataObjectFactory)],
         ],
         undefined,
         [innerRequestHandler],
