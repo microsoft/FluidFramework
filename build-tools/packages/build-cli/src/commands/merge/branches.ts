@@ -149,7 +149,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
                 flags.auth,
                 `${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
                 flags.target,
-                prInfo[0].data[0].user.login,
+                "sonalivdeshpande",
             );
             this.log(
                 `Open pull request for commit id ${unmergedCommitList[0]}. Please resolve the merge conflicts.`,
@@ -164,7 +164,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
                 flags.auth,
                 branchName,
                 flags.target,
-                prInfo[0].data[0].user.login,
+                "sonalivdeshpande",
             );
             this.info(`Pull request opened for pushing bulk commits`);
         }
