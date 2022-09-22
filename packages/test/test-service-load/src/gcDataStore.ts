@@ -119,18 +119,26 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     public async run(config: IRunConfig) {
         this.shouldRun = true;
         const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
-        const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
+        const totalSendCount = config.testConfig.totalSendCount;
         let localSendCount = 0;
+        let childFailed = false;
 
-        while (this.shouldRun && localSendCount < clientSendCount && !this.runtime.disposed) {
+        while (this.shouldRun && this.counter.value < totalSendCount && !this.runtime.disposed && !childFailed) {
             if (localSendCount % 10 === 0) {
                 console.log(
                     `########## GC DATA STORE [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
             }
 
-            // After every 10 ops, perform an activity.
+            // After every few ops, perform an activity.
             if (localSendCount % 10 === 0) {
-                await this.preformActivity(config);
+                // We do no await for the activity because we want any child created to run asynchronously.
+                this.preformActivity(config).then((done: boolean) => {
+                    if (!done) {
+                        childFailed = true;
+                    }
+                }).catch((error) => {
+                    childFailed = true;
+                });
             }
 
             this.counter.increment(1);
@@ -139,7 +147,10 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
             // Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
             await delay(delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, .5, true)(config.randEng));
         }
-        return !this.runtime.disposed;
+
+        this.child?.stop();
+        const notDone = this.runtime.disposed || childFailed;
+        return !notDone;
     }
 
     public stop() {
@@ -157,7 +168,7 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         // This will unreference the previous child and reference the new one.
         this.root.set(this.uniqueChildKey, this.child.handle);
 
-        // Set up the child to send ops 10 times faster than this data store.
+        // Set up the child to send ops a few times faster than this data store.
         const opRatePerMin = config.testConfig.opRatePerMin * 5;
         const childConfig: IRunConfig = {
             ...config,
@@ -169,12 +180,9 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
 
         // Give each child a unique id w.r.t. this data store's id.
         const uniquechildId = `${this.myId}-${this.childCount.toString()}`;
-        this.child.run(childConfig, uniquechildId).then((done: boolean) => {
-            throw new Error("Child was disposed while running");
-        }).catch((error) => {
-            throw new Error(`Error when running child: ${error}`);
-        });
         this.childCount++;
+
+        return this.child.run(childConfig, uniquechildId);
     }
 }
 
