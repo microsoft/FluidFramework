@@ -20,14 +20,14 @@ export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> 
      *
      * @returns - the value of the set
      */
-    get(): Set<T> | undefined;
+    get(): Map<string, boolean>;
 
     /**
-     * Sets the set value.
+     * add the set value.
      *
      * @param value - a JSON-able or SharedObject value to set the set to
      */
-    set(value: Set<T>): void;
+    add(value: T): void;
 
     /**
      * Checks whether set is empty or not.

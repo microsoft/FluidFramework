@@ -20,17 +20,23 @@ const getMySet = async () => {
         : // If there is an id in the hash of the url, connect to previous container
           await getContainerWithId(containerId);
 
-    return container.initialObjects.mySet;
+    return container.initialObjects.mySet as SharedSet;
 };
 const getContainerWithoutId = async () => {
     const { container } = await client.createContainer(containerSchema);
-    container.initialObjects.mySet.set(Date.now().toString());
+    const mySet = container.initialObjects.mySet as SharedSet;
+    mySet.add(Date.now().toString());
     const id = await container.attach();
     window.location.hash = id;
     return container;
 };
-const getContainerWithId = async (containerId: string) =>
-    ({ container } = await client.getContainer(containerId, containerSchema));
+const getContainerWithId = async (containerId: string) => {
+    const { container } = await client.getContainer(
+        containerId,
+        containerSchema
+    );
+    return container;
+};
 
 const App = (): ReactElement<any, any> => {
     const [fluidSet, setFluidSet] = useState<SharedSet>();
@@ -40,7 +46,7 @@ const App = (): ReactElement<any, any> => {
         getMySet().then((mySet) => setFluidSet(mySet));
         if (fluidSet !== undefined) {
             // sync Fluid data into view state
-            const syncView = () => setViewData(fluidSet.get());
+            const syncView = () => setViewData("");
             // ensure sync runs at least once
             syncView();
             // update state each time our map changes
@@ -55,7 +61,7 @@ const App = (): ReactElement<any, any> => {
     if (!viewData || !fluidSet) return <div />;
 
     // business logic could be passed into the view via context
-    const setTime = () => fluidSet.set(Date.now().toString());
+    const setTime = () => fluidSet.add(Date.now().toString());
 
     return (
         <div>

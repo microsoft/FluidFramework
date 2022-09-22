@@ -13,21 +13,20 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
 export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> {
+    add(value: T): void;
     delete(): void;
     empty(): boolean;
-    get(): Serializable<T> | undefined;
-    set(value: Serializable<T>): void;
+    get(): Map<string, boolean>;
 }
 
 // @public (undocumented)
 export interface ISharedSetEvents<T> extends ISharedObjectEvents {
     // (undocumented)
-    (event: "valueChanged", listener: (value: Serializable<T>) => void): any;
+    (event: "valueChanged", listener: (value: Set<T>) => void): any;
     // (undocumented)
     (event: "delete", listener: () => void): any;
 }
@@ -35,19 +34,20 @@ export interface ISharedSetEvents<T> extends ISharedObjectEvents {
 // @public
 export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>> implements ISharedSet<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    add(value: T): void;
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedSet<any>;
     delete(): void;
     empty(): boolean;
-    get(): Serializable<T> | undefined;
+    get(): Map<string, boolean>;
     static getFactory(): IChannelFactory;
+    has(value: T): boolean;
     protected initializeLocalCore(): void;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    set(value: Serializable<T>): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 

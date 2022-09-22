@@ -28,6 +28,7 @@ import { ISharedSet, ISharedSetEvents } from "./interfaces";
  * Description of a set delta operation
  */
 type ISetOperation = ISetSetOperation | IDeleteSetOperation;
+type isDeleted = boolean;
 
 interface ISetSetOperation {
     type: "setSet";
@@ -117,7 +118,7 @@ export class SharedSet<T = any>
     /**
      * The data held by this set.
      */
-    private data: Set<T> | undefined;
+    private data: Map<string, isDeleted> = new Map<string, isDeleted>();
 
     /**
      * This is used to assign a unique id to outgoing messages. It is used to track messages until
@@ -146,24 +147,37 @@ export class SharedSet<T = any>
         super(id, runtime, attributes, "fluid_set_");
     }
 
+    private hash(value: T) {
+        return JSON.stringify(value);
+    }
+
     /**
      * {@inheritDoc ISharedSet.get}
      */
-    public get(): Set<T> | undefined {
+    public get(): Map<string, boolean> {
         return this.data;
     }
 
     /**
-     * {@inheritDoc ISharedSet.set}
+     * Check if a key exists in the map.
+     * @param key - The key to check
+     * @returns True if the key exists, false otherwise
      */
-    public set(value: Set<T>) {
+    public has(value: T): boolean {
+        return this.data.has(this.hash(value));
+    }
+
+    /**
+     * {@inheritDoc ISharedSet.add}
+     */
+    public add(value: T) {
         // Serialize the value if required.
         const operationValue: ISetValue = {
             value: this.serializer.encode(value, this.handle),
         };
 
         // Set the value locally.
-        this.setCore(value);
+        this.setCore(this.hash(value));
         console.log(this.data);
 
         // If we are not attached, don't submit the op.
@@ -234,7 +248,7 @@ export class SharedSet<T = any>
      * Initialize a local instance of set
      */
     protected initializeLocalCore() {
-        this.data = undefined;
+        this.data = new Map<string, boolean>();
     }
 
     /**
@@ -296,13 +310,13 @@ export class SharedSet<T = any>
         }
     }
 
-    private setCore(value: Set<T>) {
-        this.data = value;
-        this.emit("valueChanged", value);
+    private setCore(key: string, isDeleted: boolean = false) {
+        this.data[key] = isDeleted;
+        this.emit("valueChanged", key);
     }
 
     private deleteCore() {
-        this.data = undefined;
+        this.data = new Map<string, isDeleted>();
         this.emit("delete");
     }
 
