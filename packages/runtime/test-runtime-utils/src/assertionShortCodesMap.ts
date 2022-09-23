@@ -794,7 +794,7 @@ export const shortCodeMap = {
     "0x3c4": "It is invalid to access an EditableTree node which no longer exists",
     "0x3c5": "invalid non sequence",
     "0x3c6": "invalid non sequence",
-    "0x3c7": "`undefined` values not allowed for primitive fields",
+    "0x3c7": "undefined` values not allowed for primitive field",
     "0x3c8": "invalid non sequence",
     "0x3c9": "no batch markup on single message",
     "0x3ca": "no start batch markup",
