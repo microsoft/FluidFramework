@@ -15,7 +15,7 @@ export enum DocumentationNodeType {
     FencedCode = "FencedCode",
     Heading = "Heading",
     LineBreak = "LineBreak",
-    Link = "UrlLink",
+    Link = "Link",
     HierarchicalSection = "HierarchicalSection",
     OrderedList = "OrderedList",
     Paragraph = "Paragraph",

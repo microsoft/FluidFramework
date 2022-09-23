@@ -321,6 +321,8 @@ export class DefaultNodeRenderers {
     // (undocumented)
     [DocumentationNodeType.LineBreak]: (node: LineBreakNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     // (undocumented)
+    [DocumentationNodeType.Link]: typeof LinkToMarkdown;
+    // (undocumented)
     [DocumentationNodeType.OrderedList]: typeof OrderedListToMarkdown;
     // (undocumented)
     [DocumentationNodeType.Paragraph]: typeof ParagraphToMarkdown;
@@ -336,8 +338,6 @@ export class DefaultNodeRenderers {
     [DocumentationNodeType.TableRow]: typeof TableRowToMarkdown;
     // (undocumented)
     [DocumentationNodeType.UnorderedList]: typeof UnorderedListToMarkdown;
-    // (undocumented)
-    [DocumentationNodeType.Link]: typeof LinkToMarkdown;
 }
 
 // @public (undocumented)
@@ -513,7 +513,7 @@ export enum DocumentationNodeType {
     // (undocumented)
     LineBreak = "LineBreak",
     // (undocumented)
-    Link = "UrlLink",
+    Link = "Link",
     // (undocumented)
     OrderedList = "OrderedList",
     // (undocumented)

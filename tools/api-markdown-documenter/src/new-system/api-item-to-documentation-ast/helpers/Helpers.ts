@@ -76,7 +76,9 @@ export function createSignatureSection(
         if (signatureExcerpt !== "") {
             const contents: DocumentationNode[] = [];
 
-            contents.push(FencedCodeBlockNode.createFromPlainText(signatureExcerpt, "typescript"));
+            contents.push(
+                FencedCodeBlockNode.createFromPlainText(signatureExcerpt.trim(), "typescript"),
+            );
 
             const renderedHeritageTypes = createHeritageTypesSpan(apiItem, config);
             if (renderedHeritageTypes !== undefined) {

@@ -2,7 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiItem, ApiItemKind, ApiModel, ApiVariable } from "@microsoft/api-extractor-model";
+import {
+    ApiInterface,
+    ApiItem,
+    ApiItemKind,
+    ApiModel,
+    ApiVariable,
+} from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 import * as Path from "path";
 
@@ -12,10 +18,17 @@ import {
 } from "../../../Configuration";
 import { getQualifiedApiItemName } from "../../../utilities";
 import {
+    CodeSpanNode,
     FencedCodeBlockNode,
     HierarchicalSectionNode,
+    LinkNode,
     ParagraphNode,
+    SpanNode,
+    TableCellNode,
+    TableNode,
+    TableRowNode,
 } from "../../documentation-domain";
+import { apiItemToSection } from "../TransformApiItem";
 import { createHeadingForApiItem, wrapInSection } from "../helpers";
 
 /**
@@ -70,7 +83,7 @@ function createConfig(
 }
 
 describe("ApiItem to Documentation transformation tests", () => {
-    it("test-variable", () => {
+    it("Transform ApiVariable", () => {
         const model = generateModel("test-variable.json");
         const members = getApiItems(model);
         const apiVariable = findApiMember(
@@ -105,23 +118,107 @@ describe("ApiItem to Documentation transformation tests", () => {
         expect(result).deep.equals(expected);
     });
 
-    // it("test-interface", () => {
-    //     const model = generateModel("test-interface.json");
-    //     const members = getApiItems(model);
-    //     const apiInterface = findApiMember(
-    //         members,
-    //         "TestInterface",
-    //         ApiItemKind.Interface,
-    //     ) as ApiInterface;
+    it("Transform ApiInterface", () => {
+        const model = generateModel("test-interface.json");
+        const members = getApiItems(model);
+        const apiInterface = findApiMember(
+            members,
+            "TestInterface",
+            ApiItemKind.Interface,
+        ) as ApiInterface;
 
-    //     const config = createConfig(defaultPartialConfig, model);
+        const config = createConfig(defaultPartialConfig, model);
 
-    //     const result = config.transformApiInterface(apiInterface, config, (childItem) =>
-    //         apiItemToSection(childItem, config),
-    //     );
+        const result = config.transformApiInterface(apiInterface, config, (childItem) =>
+            apiItemToSection(childItem, config),
+        );
 
-    //     const expected = new HierarchicalSectionNode([]);
+        const expected = new HierarchicalSectionNode([
+            // Summary section
+            wrapInSection([ParagraphNode.createFromPlainText("Test interface")]),
+            // Signature section
+            wrapInSection(
+                [
+                    FencedCodeBlockNode.createFromPlainText(
+                        "export interface TestInterface",
+                        "typescript",
+                    ),
+                ],
+                {
+                    title: "Signature",
+                    id: `${getQualifiedApiItemName(apiInterface)}-signature`,
+                },
+            ),
+            // Remarks section
+            wrapInSection(
+                [ParagraphNode.createFromPlainText("Here are some remarks about the interface")],
+                {
+                    title: "Remarks",
+                    id: `${getQualifiedApiItemName(apiInterface)}-remarks`,
+                },
+            ),
 
-    //     expect(result).deep.equals(expected);
-    // });
+            // Properties section
+            wrapInSection(
+                [
+                    new TableNode(
+                        [
+                            new TableRowNode([
+                                new TableCellNode([
+                                    LinkNode.createFromPlainText(
+                                        "testOptionalInterfaceProperty",
+                                        "./test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
+                                    ),
+                                ]),
+                                new TableCellNode([CodeSpanNode.createFromPlainText("optional")]),
+                                TableCellNode.createFromPlainText("0"),
+                                new TableCellNode([SpanNode.createFromPlainText("number")]),
+                                TableCellNode.createFromPlainText("Test optional property"),
+                            ]),
+                        ],
+                        new TableRowNode([
+                            TableCellNode.createFromPlainText("Property"),
+                            TableCellNode.createFromPlainText("Modifiers"),
+                            TableCellNode.createFromPlainText("Default Value"),
+                            TableCellNode.createFromPlainText("Type"),
+                            TableCellNode.createFromPlainText("Description"),
+                        ]),
+                    ),
+                ],
+                { title: "Properties" },
+            ),
+
+            // Property details section
+            wrapInSection(
+                [
+                    wrapInSection(
+                        [
+                            wrapInSection([
+                                ParagraphNode.createFromPlainText("Test optional property"),
+                            ]),
+                            wrapInSection(
+                                [
+                                    FencedCodeBlockNode.createFromPlainText(
+                                        "testOptionalInterfaceProperty?: number;",
+                                        "typescript",
+                                    ),
+                                ],
+                                {
+                                    title: "Signature",
+                                    id: "testoptionalinterfaceproperty-signature",
+                                },
+                            ),
+                        ],
+                        {
+                            title: "testOptionalInterfaceProperty",
+                            id: "testoptionalinterfaceproperty-propertysignature",
+                        },
+                    ),
+                ],
+                { title: "Property Details" },
+            ),
+        ]);
+
+        expect(result).deep.equals(expected);
+    });
 });
