@@ -1384,10 +1384,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             attributes,
             quorumSnapshot,
             (key, value) => this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
-            this._initialClients ?? [],
         );
-
-        this._initialClients = undefined;
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1513,20 +1510,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.inboundSignal.pause();
 
         deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
-            if (this._protocolHandler === undefined) {
-                // Store the initial clients so that they can be submitted to the
-                // protocol handler when it is created.
-                this._initialClients = details.initialClients;
-            } else {
-                // When reconnecting, the protocol handler is already created,
-                // so we can update the audience right now.
-                this._protocolHandler.audience.clear();
-
-                for (const priorClient of details.initialClients ?? []) {
-                    this._protocolHandler.audience.addMember(priorClient.clientId, priorClient.client);
-                }
-            }
-
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,
