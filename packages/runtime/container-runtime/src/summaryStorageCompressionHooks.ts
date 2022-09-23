@@ -15,12 +15,7 @@ import { IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 // import { getBlobAtPath, listBlobPaths, replaceSummaryObject, SummaryStorageHooks } from "./summaryStorageAdapter";
 import { SummaryStorageHooks } from "./summaryStorageAdapter";
 import { BlobHeaderBuilder, readBlobHeader, skipHeader, writeBlobHeader } from "./summaryBlobProtocol";
-
-export enum Algorithms {
-    None = 1,
-    LZ4 = 2,
-    Deflate = 3,
-}
+import { SummaryCompressionAlgorithms } from "./containerRuntime";
 
 const algorithmKey = "ALG";
 
@@ -52,11 +47,13 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
             return input;
         }
     };
-    constructor(private readonly _algorithm: Algorithms) { }
+    constructor(private readonly _algorithm: SummaryCompressionAlgorithms | undefined) { }
     public onPreCreateBlob(file: ArrayBufferLike): ArrayBufferLike {
+        console.log("Using Summary Compression : CreateBlob ");
         return this.encodeBlob(file);
     }
     public onPostReadBlob(file: ArrayBufferLike): ArrayBufferLike {
+        console.log("Using Summary Compression : ReadBlob ");
         return this.decodeBlob(file);
     }
 
@@ -71,6 +68,7 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
      */
     public onPreUploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext):
         { prepSummary: ISummaryTree; prepContext: ISummaryContext; } {
+        console.log("Using Summary Compression : UploadSummaryWithContext ");
         return { prepSummary: recursivelyReplace(summary, this.blobReplacer, context), prepContext: context };
     }
     /**
@@ -88,13 +86,13 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
 
     private encodeBlob(file: ArrayBufferLike): ArrayBufferLike {
         let compressed: ArrayBufferLike;
-        if (this._algorithm === Algorithms.None) {
+        if (this._algorithm === undefined || this._algorithm === SummaryCompressionAlgorithms.None) {
             return file;
         } else {
-            if (this._algorithm === Algorithms.Deflate) {
+            if (this._algorithm === SummaryCompressionAlgorithms.Deflate) {
                 compressed = deflate(file) as ArrayBufferLike;
             } else {
-                if (this._algorithm === Algorithms.LZ4) {
+                if (this._algorithm === SummaryCompressionAlgorithms.LZ4) {
                     compressed = compress(file) as ArrayBufferLike;
                 } else {
                     throw Error(`Unknown Algorithm ${this._algorithm}`);
@@ -124,10 +122,10 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         let decompressed: ArrayBufferLike;
         const input = skipHeader(compressedEncoded);
         const myAlgorithm = Number(header.getValue(algorithmKey));
-        if (myAlgorithm === Algorithms.Deflate) {
+        if (myAlgorithm === SummaryCompressionAlgorithms.Deflate) {
             decompressed = inflate(input) as ArrayBufferLike;
         } else
-            if (myAlgorithm === Algorithms.LZ4) {
+            if (myAlgorithm === SummaryCompressionAlgorithms.LZ4) {
                 decompressed = decompress(input) as ArrayBufferLike;
             } else {
                 throw Error(`Unknown Algorithm ${this._algorithm}`);

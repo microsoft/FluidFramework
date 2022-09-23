@@ -557,6 +557,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryBaseConfiguration {
+    compressionAlgorithm?: SummaryCompressionAlgorithms;
     initialSummarizerDelayMs: number;
     maxAckWaitTime: number;
     maxOpsSinceLastSummary: number;
@@ -768,6 +769,16 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     unsetPendingAckTimerTimeoutCallback(): void;
     waitFlushed(): Promise<IAckedSummary | undefined>;
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
+}
+
+// @public (undocumented)
+export enum SummaryCompressionAlgorithms {
+    // (undocumented)
+    Deflate = 3,
+    // (undocumented)
+    LZ4 = 2,
+    // (undocumented)
+    None = 1
 }
 
 // @public (undocumented)
