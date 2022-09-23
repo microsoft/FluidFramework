@@ -146,9 +146,9 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
     public connectionStateChanged(value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) {
         switch (value) {
             case ConnectionState.Connected:
-                assert(this._connectionState === ConnectionState.CatchingUp, "connectivity transitions");
+                assert(this._connectionState === ConnectionState.CatchingUp, 0x3e1 /* connectivity transitions */);
                 assert(this.catchUpMonitor !== undefined,
-                    "catchUpMonitor should always be set if pendingClientId is set");
+                    0x3e2 /* catchUpMonitor should always be set if pendingClientId is set */);
                 this.catchUpMonitor.on("caughtUp", this.transitionToConnectedState);
                 return;
             case ConnectionState.Disconnected:
@@ -156,9 +156,9 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
                 this.catchUpMonitor = undefined;
                 break;
             case ConnectionState.CatchingUp:
-                assert(this._connectionState === ConnectionState.Disconnected, "connectivity transitions");
+                assert(this._connectionState === ConnectionState.Disconnected, 0x3e3 /* connectivity transitions */);
                 // We may want to catch up to known ops as of now before transitioning to Connected state
-                assert(this.catchUpMonitor === undefined, "catchUpMonitor should be gone");
+                assert(this.catchUpMonitor === undefined, 0x3e4 /* catchUpMonitor should be gone */);
                 this.catchUpMonitor = new CatchUpMonitor(this.deltaManager);
                 break;
             default:
@@ -170,8 +170,8 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
     private readonly transitionToConnectedState = () => {
         // Defensive measure, we should always be in Connecting state when this is called.
         const state = this.pimpl.connectionState;
-        assert(state === ConnectionState.Connected, "invariant broken");
-        assert(this._connectionState === ConnectionState.CatchingUp, "invariant broken");
+        assert(state === ConnectionState.Connected, 0x3e5 /* invariant broken */);
+        assert(this._connectionState === ConnectionState.CatchingUp, 0x3e6 /* invariant broken */);
         this._connectionState = ConnectionState.Connected;
         this.inputs.connectionStateChanged(ConnectionState.Connected, ConnectionState.CatchingUp, "caught up");
     };

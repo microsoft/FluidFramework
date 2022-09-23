@@ -297,6 +297,11 @@ export class NodeCore {
         return getStringInstance(node, "getString should return string");
     }
 
+    public getMaybeString(index: number) {
+        const node = this.children[index];
+        return getMaybeStringInstance(node);
+    }
+
     public getBlob(index: number): BlobCore {
         const node = this.children[index];
         assertBlobCoreInstance(node, "getBlob should return a blob");
@@ -414,7 +419,7 @@ export class NodeCore {
                 {
                     const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
                     const content = dictionary[stringId];
-                    assert(content !== undefined, "const string not found");
+                    assert(content !== undefined, 0x3de /* const string not found */);
                     children.push(content);
                     continue;
                 }
@@ -530,6 +535,13 @@ export class TreeBuilder extends NodeCore {
         builder.load(buffer, logger);
         assert(buffer.eof, 0x233 /* "Unexpected data at the end of buffer" */);
         return builder;
+    }
+}
+
+export function getMaybeStringInstance(node: NodeTypes): string | undefined {
+    const maybeString = node as IStringElement;
+    if (maybeString._stringElement) {
+        return maybeString.content;
     }
 }
 

@@ -236,7 +236,7 @@ function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore, dictionary: 
         } else if (typeof child === "boolean") {
             buffer.write(boolToCodeMap[child ? 1 : 0]);
         } else {
-            assert(child._stringElement, "Unsupported node type");
+            assert(child._stringElement, 0x3dd /* Unsupported node type */);
             if (child.dictionary) {
                 serializeDictionaryString(buffer, child.content, dictionary);
             } else {
