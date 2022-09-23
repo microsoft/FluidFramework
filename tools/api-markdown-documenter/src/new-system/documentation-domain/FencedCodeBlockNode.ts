@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { LineBreakNode } from "./LineBreakNode";
 import { PlainTextNode } from "./PlainTextNode";
@@ -25,7 +25,7 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.FencedCode;
+    public readonly type = DocumentationNodeType.FencedCode;
 
     /**
      * @defaultValue No language tag

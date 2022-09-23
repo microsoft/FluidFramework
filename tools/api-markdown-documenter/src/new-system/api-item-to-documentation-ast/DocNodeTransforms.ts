@@ -18,7 +18,7 @@ import { UrlTarget } from "../../Link";
 import { Logger } from "../../Logging";
 import {
     CodeSpanNode,
-    DocumentNodeType,
+    DocumentationNodeType,
     DocumentationNode,
     FencedCodeBlockNode,
     LineBreakNode,
@@ -183,7 +183,7 @@ function createParagraph(
     // return it, rather than wrapping it.
     if (
         transformedChildren.length === 1 &&
-        transformedChildren[0].type === DocumentNodeType.Paragraph
+        transformedChildren[0].type === DocumentationNodeType.Paragraph
     ) {
         return transformedChildren[0] as ParagraphNode;
     }
@@ -226,7 +226,7 @@ function collapseAdjacentLineBreaks(nodes: readonly DocumentationNode[]): Docume
     const result: DocumentationNode[] = [];
     let onNewline = false;
     for (const node of nodes) {
-        if (node.type === DocumentNodeType.LineBreak) {
+        if (node.type === DocumentationNodeType.LineBreak) {
             if (onNewline) {
                 continue;
             } else {
@@ -259,7 +259,7 @@ function trimLeadingAndTrailingLineBreaks(
     let endIndex = nodes.length - 1;
 
     for (let i = 0; i < nodes.length; i++) {
-        if (nodes[i].type === DocumentNodeType.LineBreak) {
+        if (nodes[i].type === DocumentationNodeType.LineBreak) {
             startIndex++;
         } else {
             break;
@@ -267,7 +267,7 @@ function trimLeadingAndTrailingLineBreaks(
     }
 
     for (let i = nodes.length - 1; i > startIndex; i--) {
-        if (nodes[i].type === DocumentNodeType.LineBreak) {
+        if (nodes[i].type === DocumentationNodeType.LineBreak) {
             endIndex--;
         } else {
             break;
@@ -291,11 +291,11 @@ function filterNewlinesAdjacentToParagraphs(
 
     const result: DocumentationNode[] = [];
     for (let i = 0; i < nodes.length; i++) {
-        if (nodes[i].type === DocumentNodeType.LineBreak) {
+        if (nodes[i].type === DocumentationNodeType.LineBreak) {
             const previousIsParagraph =
-                i > 0 ? nodes[i - 1].type === DocumentNodeType.Paragraph : false;
+                i > 0 ? nodes[i - 1].type === DocumentationNodeType.Paragraph : false;
             const nextIsParagraph =
-                i < nodes.length - 1 ? nodes[i + 1].type === DocumentNodeType.Paragraph : false;
+                i < nodes.length - 1 ? nodes[i + 1].type === DocumentationNodeType.Paragraph : false;
             if (previousIsParagraph || nextIsParagraph) {
                 continue;
             }

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { HeadingNode } from "./HeadingNode";
 import { compareNodeArrays } from "./Utilities";
@@ -20,7 +20,7 @@ export class HierarchicalSectionNode extends ParentNodeBase {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.HierarchicalSection;
+    public readonly type = DocumentationNodeType.HierarchicalSection;
 
     /**
      * Optional heading to display for the section.

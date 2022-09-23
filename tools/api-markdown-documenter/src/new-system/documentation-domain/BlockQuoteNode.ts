@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { compareNodeArrays } from "./Utilities";
 
@@ -19,7 +19,7 @@ export class BlockQuoteNode extends ParentNodeBase {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.BlockQuote;
+    public readonly type = DocumentationNodeType.BlockQuote;
 
     public constructor(children: DocumentationNode[]) {
         super(children);

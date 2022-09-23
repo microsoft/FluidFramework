@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 import { compareNodeArrays } from "./Utilities";
@@ -11,7 +11,7 @@ export class TableCellNode extends ParentNodeBase {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.TableCell;
+    public readonly type = DocumentationNodeType.TableCell;
 
     public static readonly Empty = new TableCellNode([]);
 

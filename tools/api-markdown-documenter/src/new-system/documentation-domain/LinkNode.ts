@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Link, UrlTarget } from "../../Link";
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 import { compareNodeArrays } from "./Utilities";
@@ -15,7 +15,7 @@ export class LinkNode
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.Link;
+    public readonly type = DocumentationNodeType.Link;
 
     public readonly target: UrlTarget;
 

@@ -5,14 +5,14 @@ import {
     Parent as UnistParent,
 } from "unist";
 
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 
 /**
  * Base type for documentation nodes.
  */
 export interface DocumentationNode<TData extends object = UnistData> extends UnistNode<TData> {
     // TODO: rename
-    readonly type: DocumentNodeType;
+    readonly type: DocumentationNodeType;
 
     /**
      * Deep equality comparison.
@@ -34,7 +34,7 @@ export interface ParentNode<TDocumentationNode extends DocumentationNode = Docum
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    readonly type: DocumentNodeType;
+    readonly type: DocumentationNodeType;
 
     readonly children: TDocumentationNode[];
 }
@@ -46,7 +46,7 @@ export interface LiteralNode<T = unknown> extends UnistLiteral<T>, Documentation
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    readonly type: DocumentNodeType;
+    readonly type: DocumentationNodeType;
 }
 
 /**
@@ -59,7 +59,7 @@ export abstract class ParentNodeBase<
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public abstract type: DocumentNodeType;
+    public abstract type: DocumentationNodeType;
 
     /**
      * {@inheritDoc ParentNode.children}

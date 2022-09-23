@@ -4,7 +4,7 @@
  */
 import { Parent as UnistParent } from "unist";
 
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode } from "./DocumentionNode";
 import { ParagraphNode } from "./ParagraphNode";
 import { compareNodeArrays } from "./Utilities";
@@ -19,7 +19,7 @@ export class DocumentNode implements UnistParent<DocumentationNode> {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.Document;
+    public readonly type = DocumentationNodeType.Document;
 
     public readonly children: DocumentationNode[];
     public readonly filePath: string;
