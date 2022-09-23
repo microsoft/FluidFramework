@@ -41,9 +41,11 @@ describe("Document markdown tests", () => {
             "# Sample Document",
             "",
             "This is a sample document. It has very basic content  ",
+            "",
             "## Section Heading",
             "",
             "This is test inside of a paragraph. It is also inside of a hierarchical section node. That's real neat-o.  ",
+            "",
             "",
         ].join(standardEOL);
         expect(markdownFromDocumentNode(document)).to.equal(expected);

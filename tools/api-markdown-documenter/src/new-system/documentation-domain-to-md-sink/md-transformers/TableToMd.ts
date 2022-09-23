@@ -14,6 +14,13 @@ function getTableMaxColumns(tableNode: TableNode): number {
     return max;
 }
 
+/**
+ * Recursively enumerates an TableNode to generate table using markdown syntax.
+ *
+ * @param tableNode - TableNode to convert into markdown
+ * @param renderer - Renderer to recursively render child subtrees
+ * @returns The markdown representation of the TableNode as a string
+ */
 export function TableToMarkdown(tableNode: TableNode, renderer: DocumentationNodeRenderer): string {
     renderer.setInsideTable();
 

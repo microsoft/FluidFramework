@@ -2,6 +2,13 @@ import { CodeSpanNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 import { getTableEscapedText } from "./Utilities";
 
+/**
+ * Recursively enumerates an CodeSpanNode to generate a markdown code span block.
+ *
+ * @param codeSpanNode - CodeSpanNode to convert into markdown
+ * @param renderer - Renderer to recursively render child subtrees
+ * @returns The markdown representation of the CodeSpanNode as a string
+ */
 export function CodeSpanToMarkdown(
     codeSpanNode: CodeSpanNode,
     renderer: DocumentationNodeRenderer,

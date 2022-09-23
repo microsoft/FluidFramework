@@ -14,7 +14,7 @@ describe("HierarchicalSectionNode markdown tests", () => {
         const renderedForm = renderer.renderNode(
             new HierarchicalSectionNode([], HeadingNode.createFromPlainText("Heading")),
         );
-        expect(renderedForm).to.equal(`## Heading${standardEOL}${standardEOL}`);
+        expect(renderedForm).to.equal(`${standardEOL}## Heading${standardEOL}${standardEOL}`);
     });
 
     it("Can render child content beneath a heading", () => {
@@ -29,7 +29,7 @@ describe("HierarchicalSectionNode markdown tests", () => {
             ),
         );
         expect(renderedForm).to.equal(
-            `## Heading${standardEOL}${standardEOL}This is some content text. This is more content text.${standardEOL}`,
+            `${standardEOL}## Heading${standardEOL}${standardEOL}This is some content text. This is more content text.${standardEOL}`,
         );
     });
 
@@ -74,6 +74,7 @@ describe("HierarchicalSectionNode markdown tests", () => {
             ),
         );
         const expectedOutput = [
+            "", // Subheadings prefer 1 blank space above and below
             "## Heading 1",
             "",
             "Section 1",

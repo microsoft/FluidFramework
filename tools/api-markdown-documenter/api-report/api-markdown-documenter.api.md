@@ -79,7 +79,7 @@ export class AlertNode extends ParentNodeBase {
     readonly type = DocumentationNodeType.Alert;
 }
 
-// @public (undocumented)
+// @public
 export function AlertToMarkdown(alertNode: AlertNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -151,7 +151,7 @@ export class BlockQuoteNode extends ParentNodeBase {
     readonly type = DocumentationNodeType.BlockQuote;
 }
 
-// @public (undocumented)
+// @public
 export function BlockQuoteToMarkdown(blockQuoteNode: BlockQuoteNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -178,7 +178,7 @@ export class CodeSpanNode extends ParentNodeBase<SingleLineElementNode> implemen
     readonly type = DocumentationNodeType.CodeSpan;
 }
 
-// @public (undocumented)
+// @public
 export function CodeSpanToMarkdown(codeSpanNode: CodeSpanNode, renderer: DocumentationNodeRenderer): string;
 
 // @public (undocumented)
@@ -297,6 +297,9 @@ export class CustomDocNodes {
     // (undocumented)
     static get configuration(): TSDocConfiguration;
 }
+
+// @public (undocumented)
+export type CustomNodeRenderers = Partial<NodeRenderers>;
 
 // @public
 export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
@@ -457,6 +460,7 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 
 // @public (undocumented)
 export class DocumentationNodeRenderer {
+    constructor(customRenderers?: CustomNodeRenderers);
     // (undocumented)
     get applyingBold(): boolean;
     // (undocumented)
@@ -464,7 +468,7 @@ export class DocumentationNodeRenderer {
     // (undocumented)
     get applyingStrikethrough(): boolean;
     // (undocumented)
-    getLastRenderedCharacter(): string;
+    get countTrailingNewlines(): number;
     // (undocumented)
     get hierarchyDepth(): number;
     // (undocumented)
@@ -594,7 +598,7 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
     readonly type = DocumentationNodeType.FencedCode;
 }
 
-// @public (undocumented)
+// @public
 export function FencedCodeBlockToMarkdown(blockNode: FencedCodeBlockNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -685,7 +689,7 @@ export class HeadingNode extends ParentNodeBase<SingleLineElementNode> {
 // @public
 export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
-// @public (undocumented)
+// @public
 export function HeadingToMarkdown(headingNode: HeadingNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -697,7 +701,7 @@ export class HierarchicalSectionNode extends ParentNodeBase {
     readonly type = DocumentationNodeType.HierarchicalSection;
 }
 
-// @public (undocumented)
+// @public
 export function HierarchicalSectionToMarkdown(sectionNode: HierarchicalSectionNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -762,7 +766,7 @@ export class LinkNode extends ParentNodeBase<SingleLineElementNode> implements S
 // @public
 export type LinkTextPolicy = (apiItem: ApiItem) => string;
 
-// @public (undocumented)
+// @public
 export function LinkToMarkdown(linkNode: LinkNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -844,7 +848,7 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
 }
 
 // @public (undocumented)
-export function markdownFromDocumentNode(node: DocumentNode): string;
+export function markdownFromDocumentNode(node: DocumentNode, customRenderers?: CustomNodeRenderers): string;
 
 // @public
 export const maxHeadingLevel = 6;
@@ -896,7 +900,7 @@ export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
     readonly type = DocumentationNodeType.OrderedList;
 }
 
-// @public (undocumented)
+// @public
 export function OrderedListToMarkdown(listNode: OrderedListNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -915,7 +919,7 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
     readonly type = DocumentationNodeType.Paragraph;
 }
 
-// @public (undocumented)
+// @public
 export function ParagraphToMarkdown(paragraph: ParagraphNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -947,7 +951,7 @@ export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode
     readonly value: string;
 }
 
-// @public (undocumented)
+// @public
 export function PlainTextToMarkdown(textNode: PlainTextNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -1248,7 +1252,7 @@ export class SpanNode<TDocumentNode extends DocumentationNode = DocumentationNod
     readonly type = DocumentationNodeType.Span;
 }
 
-// @public (undocumented)
+// @public
 export function SpanToMarkdown(span: SpanNode, renderer: DocumentationNodeRenderer): string;
 
 // @public (undocumented)
@@ -1263,7 +1267,7 @@ export class TableCellNode extends ParentNodeBase {
     readonly type = DocumentationNodeType.TableCell;
 }
 
-// @public (undocumented)
+// @public
 export function TableCellToMarkdown(tableCellNode: TableCellNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
@@ -1294,10 +1298,10 @@ export class TableRowNode extends ParentNodeBase<TableCellNode> {
     readonly type = DocumentationNodeType.TableRow;
 }
 
-// @public (undocumented)
+// @public
 export function TableRowToMarkdown(tableRowNode: TableRowNode, renderer: DocumentationNodeRenderer): string;
 
-// @public (undocumented)
+// @public
 export function TableToMarkdown(tableNode: TableNode, renderer: DocumentationNodeRenderer): string;
 
 // @public (undocumented)
@@ -1345,7 +1349,7 @@ export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
     readonly type = DocumentationNodeType.UnorderedList;
 }
 
-// @public (undocumented)
+// @public
 export function UnorderedListToMarkdown(listNode: UnorderedListNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
