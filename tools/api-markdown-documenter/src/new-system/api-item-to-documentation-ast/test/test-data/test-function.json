@@ -173,30 +173,77 @@
       "preserveMemberOrder": false,
       "members": [
         {
-          "kind": "Variable",
-          "canonicalReference": "test-package!TestConst:var",
-          "docComment": "/**\n * Test Constant\n *\n * @public\n */\n",
+          "kind": "Function",
+          "canonicalReference": "test-package!testFunction:function(1)",
+          "docComment": "/**\n * Test function\n *\n * @param testParameter - A test parameter\n *\n * @param testOptionalParameter - An optional parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns   The provided parameter\n *\n * @throws\n *\n * An Error when something bad happens.\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
-              "text": "TestConst = "
+              "text": "export declare function testFunction<TTypeParameter>(testParameter: "
             },
             {
               "kind": "Content",
-              "text": "\"Hello world!\""
+              "text": "TTypeParameter"
+            },
+            {
+              "kind": "Content",
+              "text": ", testOptionalParameter?: "
+            },
+            {
+              "kind": "Content",
+              "text": "TTypeParameter"
+            },
+            {
+              "kind": "Content",
+              "text": "): "
+            },
+            {
+              "kind": "Content",
+              "text": "TTypeParameter"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
             }
           ],
-          "initializerTokenRange": {
-            "startIndex": 1,
-            "endIndex": 2
+          "returnTypeTokenRange": {
+            "startIndex": 5,
+            "endIndex": 6
           },
-          "isReadonly": true,
           "releaseTag": "Public",
-          "name": "TestConst",
-          "variableTypeTokenRange": {
-            "startIndex": 0,
-            "endIndex": 0
-          }
+          "overloadIndex": 1,
+          "parameters": [
+            {
+              "parameterName": "testParameter",
+              "parameterTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isOptional": false
+            },
+            {
+              "parameterName": "testOptionalParameter",
+              "parameterTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "isOptional": true
+            }
+          ],
+          "typeParameters": [
+            {
+              "typeParameterName": "TTypeParameter",
+              "constraintTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            }
+          ],
+          "name": "testFunction"
         }
       ]
     }

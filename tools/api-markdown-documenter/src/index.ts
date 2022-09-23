@@ -18,7 +18,6 @@
 // - bundle helper libraries as module (namespace) exports?
 // - Remove DocNode types from exports
 
-export * from "./new-system";
 export * from "./old-system";
 export * from "./utilities";
 

@@ -126,7 +126,7 @@ export function transformFencedCode(
     node: DocFencedCode,
     options: DocNodeTransformOptions,
 ): FencedCodeBlockNode {
-    return FencedCodeBlockNode.createFromPlainText(node.code, node.language);
+    return FencedCodeBlockNode.createFromPlainText(node.code.trim(), node.language);
 }
 
 /**
@@ -138,7 +138,7 @@ export function transformLinkTag(
 ): LinkNode | SingleLineSpanNode {
     if (node.codeDestination !== undefined) {
         // If link text was not provided, use the name of the referenced element.
-        const linkText = node.linkText ?? node.codeDestination.emitAsTsdoc();
+        const linkText = node.linkText?.trim() ?? node.codeDestination.emitAsTsdoc().trim();
 
         const urlTarget = options.resolveApiReference(node.codeDestination);
         return urlTarget === undefined
@@ -167,17 +167,41 @@ export function transformLinkTag(
  * 1. Remove leading and trailing line breaks within the paragraph (see
  * {@link trimLeadingAndTrailingLineBreaks}).
  *
- * 2. If there is only a single resulting child and it is a paragraph, return it rather than wrapping
+ * 2. Trim leading whitespace from first child if it is plain-text, and trim trailing whitespace from
+ * last child if it is plain-text.
+ *
+ * 3. If there is only a single resulting child and it is a paragraph, return it rather than wrapping
  * it in another paragraph.
  */
 function createParagraph(
     children: readonly DocNode[],
     options: DocNodeTransformOptions,
 ): ParagraphNode {
+    // Note: transformChildren does some of its own cleanup on the initial transformed contents
     let transformedChildren = transformChildren(children, options);
 
     // Trim leading and trailing line breaks, which are effectively redudant
     transformedChildren = trimLeadingAndTrailingLineBreaks(transformedChildren);
+
+    // Trim leading whitespace from first child if it is plain text,
+    // and trim trailing whitespace from last child if it is plain text.
+    if (transformedChildren.length > 0) {
+        if (transformedChildren[0].type === DocumentationNodeType.PlainText) {
+            transformedChildren[0] = new PlainTextNode(
+                (transformedChildren[0] as PlainTextNode).value.trimStart(),
+            );
+        }
+        if (
+            transformedChildren[transformedChildren.length - 1].type ===
+            DocumentationNodeType.PlainText
+        ) {
+            transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
+                (
+                    transformedChildren[transformedChildren.length - 1] as PlainTextNode
+                ).value.trimEnd(),
+            );
+        }
+    }
 
     // To reduce unecessary hierarchy, if the only child of this paragraph is a single paragraph,
     // return it, rather than wrapping it.
