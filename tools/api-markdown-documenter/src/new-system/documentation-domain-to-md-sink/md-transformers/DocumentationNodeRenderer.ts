@@ -6,6 +6,7 @@ import {
     DocumentNodeType,
     DocumentationNode,
     FencedCodeBlockNode,
+    HeadingNode,
     HierarchicalSectionNode,
     LineBreakNode,
     LinkNode,
@@ -22,6 +23,7 @@ import { AlertToMarkdown } from "./AlertToMd";
 import { BlockQuoteToMarkdown } from "./BlockQuoteToMd";
 import { CodeSpanToMarkdown } from "./CodeSpanToMd";
 import { FencedCodeBlockToMarkdown } from "./FencedCodeToMd";
+import { HeadingToMarkdown } from "./HeadingToMd";
 import { HierarchicalSectionToMarkdown } from "./HierarchicalSectionToMd";
 import { LinkToMarkdown } from "./LinkToMd";
 import { OrderedListToMarkdown } from "./OrderedListToMd";
@@ -55,6 +57,10 @@ export type NodeRenderers = {
     ) => string;
     [DocumentNodeType.FencedCode]: (
         node: FencedCodeBlockNode,
+        subtreeRenderer: DocumentationNodeRenderer,
+    ) => string;
+    [DocumentNodeType.Heading]: (
+        node: HeadingNode,
         subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
     [DocumentNodeType.LineBreak]: (
@@ -102,10 +108,11 @@ export class DefaultNodeRenderers {
     [DocumentNodeType.BlockQuote] = BlockQuoteToMarkdown;
     [DocumentNodeType.CodeSpan] = CodeSpanToMarkdown;
     [DocumentNodeType.FencedCode] = FencedCodeBlockToMarkdown;
+    [DocumentNodeType.Heading] = HeadingToMarkdown;
     [DocumentNodeType.LineBreak] = (
         node: LineBreakNode,
         subtreeRenderer: DocumentationNodeRenderer,
-    ) => (subtreeRenderer.isInsideCodeBlock ? standardEOL : `<br/>`);
+    ) => (subtreeRenderer.isInsideCodeBlock ? `<br/>` : standardEOL);
     [DocumentNodeType.Link] = LinkToMarkdown;
     [DocumentNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
     [DocumentNodeType.OrderedList] = OrderedListToMarkdown;
@@ -143,7 +150,7 @@ export class DocumentationNodeRenderer {
         const prevRenderingContext = this.renderingContext;
         const newRenderingContext = { ...prevRenderingContext };
         this.renderingContext = newRenderingContext;
-        let renderedNode = "TODO: UNKNOWN NODE ENCOUNTERED";
+        let renderedNode = `TODO: UNKNOWN NODE (${node.type}) ENCOUNTERED`;
         switch (node.type) {
             case DocumentNodeType.Alert:
                 renderedNode = this.renderers[DocumentNodeType.Alert](
@@ -169,6 +176,12 @@ export class DocumentationNodeRenderer {
                     this,
                 );
                 break;
+            case DocumentNodeType.Heading:
+                renderedNode = this.renderers[DocumentNodeType.Heading](
+                    node as unknown as HeadingNode,
+                    this,
+                );
+                break;
             case DocumentNodeType.HierarchicalSection:
                 renderedNode = this.renderers[DocumentNodeType.HierarchicalSection](
                     node as unknown as HierarchicalSectionNode,
@@ -176,8 +189,8 @@ export class DocumentationNodeRenderer {
                 );
                 break;
             case DocumentNodeType.LineBreak:
-                renderedNode = this.renderers[DocumentNodeType.Paragraph](
-                    node as unknown as ParagraphNode,
+                renderedNode = this.renderers[DocumentNodeType.LineBreak](
+                    node as unknown as LineBreakNode,
                     this,
                 );
                 break;

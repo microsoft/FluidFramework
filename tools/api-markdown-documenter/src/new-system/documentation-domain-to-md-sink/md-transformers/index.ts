@@ -4,6 +4,7 @@ export { AlertToMarkdown } from "./AlertToMd";
 export { BlockQuoteToMarkdown } from "./BlockQuoteToMd";
 export { CodeSpanToMarkdown } from "./CodeSpanToMd";
 export { FencedCodeBlockToMarkdown } from "./FencedCodeToMd";
+export { HeadingToMarkdown } from "./HeadingToMd";
 export { HierarchicalSectionToMarkdown } from "./HierarchicalSectionToMd";
 export { LinkToMarkdown } from "./LinkToMd";
 export { OrderedListToMarkdown } from "./OrderedListToMd";
