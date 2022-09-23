@@ -298,7 +298,7 @@ export class CustomDocNodes {
     static get configuration(): TSDocConfiguration;
 }
 
-// @public (undocumented)
+// @public
 export type CustomNodeRenderers = Partial<NodeRenderers>;
 
 // @public
@@ -307,7 +307,7 @@ export const defaultApiItemTransformations: Required<ApiItemTransformationConfig
 // @public
 export const defaultConsoleLogger: Logger;
 
-// @public (undocumented)
+// @public
 export class DefaultNodeRenderers {
     // (undocumented)
     [DocumentationNodeType.Alert]: typeof AlertToMarkdown;
@@ -458,43 +458,25 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
     readonly type: DocumentationNodeType;
 }
 
-// @public (undocumented)
+// @public
 export class DocumentationNodeRenderer {
     constructor(customRenderers?: CustomNodeRenderers);
-    // (undocumented)
     get applyingBold(): boolean;
-    // (undocumented)
     get applyingItalic(): boolean;
-    // (undocumented)
     get applyingStrikethrough(): boolean;
-    // (undocumented)
     get countTrailingNewlines(): number;
-    // (undocumented)
     get hierarchyDepth(): number;
-    // (undocumented)
     increaseHierarchicalDepth(): void;
-    // (undocumented)
     get isInsideCodeBlock(): boolean;
-    // (undocumented)
     get isInsideTable(): boolean;
-    // (undocumented)
     renderNode(node: DocumentationNode): string;
-    // (undocumented)
     renderNodes(nodes: DocumentationNode[]): string;
-    // (undocumented)
     setBold(): void;
-    // (undocumented)
     setInsideCodeBlock(): void;
-    // (undocumented)
     setInsideTable(): void;
-    // (undocumented)
     setItalic(): void;
-    // (undocumented)
     setStrikethrough(): void;
 }
-
-// @public (undocumented)
-export type DocumentationNodeRenderFunction = (node: DocumentationNode, renderer: DocumentationNodeRenderer) => string;
 
 // @public
 export enum DocumentationNodeType {
@@ -847,7 +829,7 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
     protected writeTable(docTable: DocTable, context: EmitterContext, docNodeSiblings: boolean): void;
 }
 
-// @public (undocumented)
+// @public
 export function markdownFromDocumentNode(node: DocumentNode, customRenderers?: CustomNodeRenderers): string;
 
 // @public
@@ -872,7 +854,7 @@ interface MemberTableProperties_2 {
 // @public
 export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocConfiguration): DocSection;
 
-// @public (undocumented)
+// @public
 export type NodeRenderers = {
     [DocumentationNodeType.Alert]: (node: AlertNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentationNodeType.BlockQuote]: (node: BlockQuoteNode, subtreeRenderer: DocumentationNodeRenderer) => string;
@@ -1048,23 +1030,6 @@ function renderHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocu
 
 // @public
 function renderHeritageTypes(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public (undocumented)
-interface RenderingContext_2 {
-    // (undocumented)
-    bold: boolean;
-    // (undocumented)
-    depth: number;
-    // (undocumented)
-    insideCodeBlock: boolean;
-    // (undocumented)
-    insideTable: boolean;
-    // (undocumented)
-    italic: boolean;
-    // (undocumented)
-    strikethrough: boolean;
-}
-export { RenderingContext_2 as RenderingContext }
 
 declare namespace RenderingHelpers {
     export {
