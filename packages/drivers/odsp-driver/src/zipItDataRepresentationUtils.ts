@@ -8,7 +8,7 @@
  * https://microsoft.sharepoint-df.com/:w:/t/ODSPFileStore/ER06b64K_XdDjEyAKl-UT60BJiId39SCVkYSyo_2pvH9gQ?e=KYQ0c5
 */
 
-import { assert, IsoBuffer, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ReadBuffer } from "./ReadBufferUtils";
@@ -111,19 +111,11 @@ export function getValueSafely(map: { [index: number]: number; }, key: number) {
     return val;
 }
 
-export function getAndValidateNodeProps(node: NodeCore, props: string[], enforceAllProps = true) {
-    const propSet = new Set(props);
+export function getNodeProps(node: NodeCore) {
     const res: Record<string, NodeTypes> = {};
     for (const [keyNode, valueNode] of node.iteratePairs()) {
-        assertBlobCoreInstance(keyNode, "keynode should be a blob");
-        const keyStr = keyNode.toString();
-        if (propSet.has(keyStr)) {
-            propSet.delete(keyStr);
-            res[keyStr] = valueNode;
-        }
-    }
-    if (enforceAllProps) {
-        assert(propSet.size === 0, 0x288 /* All properties should exist */);
+        const id = getStringInstance(keyNode, "keynode should be a string");
+        res[id] = valueNode;
     }
     return res;
 }
@@ -159,20 +151,12 @@ export function iterate<T>(obj: { [Symbol.iterator]: () => IterableIterator<T>; 
  */
 export abstract class BlobCore {
     public abstract get buffer(): Uint8Array;
-    public get arrayBuffer(): ArrayBufferLike {
-        return Uint8ArrayToArrayBuffer(this.buffer);
-    }
+    public abstract get arrayBuffer(): ArrayBufferLike;
 
     /**
      * Represents a blob.
-     * @param constString - Whether it contains const string declaration.
-     * @param useUtf8Code - Represents if the utf8 string marker code should be used when representing.
      */
-    constructor(public readonly constString: boolean, public readonly useUtf8Code: boolean = false) {}
-
-    public toString() {
-        return Uint8ArrayToString(this.buffer, "utf-8");
-    }
+    constructor() {}
 }
 
 /**
@@ -184,24 +168,26 @@ class BlobDeepCopy extends BlobCore {
     /**
      * Represents a deep copy of the blob.
      * @param data - Data array of the blob
-     * @param constString - Whether it contains const string declaration.
-     * @param useUtf8Code - Represents if the utf8 string marker code should be used when representing.
      */
-    constructor(protected readonly data: Uint8Array, constString: boolean, useUtf8Code: boolean = false) {
-        super(constString, useUtf8Code);
+    constructor(protected readonly data: Uint8Array) {
+        super();
     }
 
     public get buffer() {
         return this.data;
     }
 
-    public static read(buffer: ReadBuffer, lengthLen: number, constString: boolean): BlobCore {
+    public get arrayBuffer(): ArrayBufferLike {
+        return Uint8ArrayToArrayBuffer(this.buffer);
+    }
+
+    public static read(buffer: ReadBuffer, lengthLen: number): BlobCore {
         const length = buffer.read(lengthLen);
         const data = new Uint8Array(length);
         for (let counter = 0; counter < length; counter++) {
             data[counter] = buffer.read();
         }
-        return new BlobDeepCopy(data, constString);
+        return new BlobDeepCopy(data);
     }
 }
 
@@ -215,39 +201,53 @@ class BlobDeepCopy extends BlobCore {
      * @param data - Data array of the blob
      * @param start - Start point of the blob in the buffer.
      * @param end - End point of the blob in the buffer.
-     * @param constString - Whether it contains const string declaration.
      */
     constructor(
-        protected data: ReadBuffer,
+        protected data: Uint8Array,
         protected start: number,
         protected end: number,
-        constString: boolean,
     ) {
-        super(constString);
+        super();
     }
 
     public get buffer() {
-        return this.data.buffer.subarray(this.start, this.end);
+        return this.data.subarray(this.start, this.end);
     }
 
-    public static read(buffer: ReadBuffer, lengthLen: number, constString: boolean): BlobCore {
+    // Equivalent to Uint8ArrayToArrayBuffer(this.buffer)
+    public get arrayBuffer(): ArrayBufferLike {
+        const offset = this.data.byteOffset;
+        return this.data.buffer.slice(this.start + offset, this.end + offset);
+    }
+
+    public static read(buffer: ReadBuffer, lengthLen: number): BlobCore {
         const length = buffer.read(lengthLen);
         const pos = buffer.pos;
         buffer.skip(length);
-        return new BlobShallowCopy(buffer, pos, pos + length, constString);
+        return new BlobShallowCopy(buffer.buffer, pos, pos + length);
     }
 }
 
 export const addStringProperty =
-    (node: NodeCore, a: string, b: string, encodeValAsConstString: boolean = false) => {
-        node.addString(a, true); node.addString(b, encodeValAsConstString);
+    (node: NodeCore, a: string, b: string) => {
+        node.addDictionaryString(a); node.addString(b);
+    };
+export const addDictionaryStringProperty =
+    (node: NodeCore, a: string, b: string) => {
+        node.addDictionaryString(a); node.addString(b);
     };
 export const addNumberProperty = (node: NodeCore, a: string, b: number) => {
-    node.addString(a, true); node.addNumber(b);
+    node.addDictionaryString(a); node.addNumber(b);
 };
 export const addBoolProperty = (node: NodeCore, a: string, b: boolean) => {
-    node.addString(a, true); node.addBool(b);
+    node.addDictionaryString(a); node.addBool(b);
 };
+
+export interface IStringElement {
+    content: string;
+    dictionary: boolean;
+    _stringElement: true;
+}
 
 /**
  * Three leaf types supported by tree:
@@ -256,7 +256,7 @@ export const addBoolProperty = (node: NodeCore, a: string, b: boolean) => {
  * 3. integer
  * 4. boolean
  */
-export type NodeTypes = NodeCore | BlobCore | number | boolean;
+export type NodeTypes = NodeCore | BlobCore | number | boolean | IStringElement;
 
 export type NodeCoreTypes = "list" | "set";
 
@@ -287,8 +287,12 @@ export class NodeCore {
 
     public getString(index: number): string {
         const node = this.children[index];
-        assertBlobCoreInstance(node, "getString should return stringblob");
-        return node.toString();
+        return getStringInstance(node, "getString should return string");
+    }
+
+    public getMaybeString(index: number) {
+        const node = this.children[index];
+        return getMaybeStringInstance(node);
     }
 
     public getBlob(index: number): BlobCore {
@@ -321,12 +325,24 @@ export class NodeCore {
         return node;
     }
 
-    public addBlob(blob: Uint8Array, constString: boolean, useUtf8Code: boolean = false) {
-        this.children.push(new BlobDeepCopy(blob, constString, useUtf8Code));
+    public addBlob(blob: Uint8Array) {
+        this.children.push(new BlobDeepCopy(blob));
     }
 
-    public addString(payload: string, constString: boolean) {
-        this.addBlob(IsoBuffer.from(payload, "utf-8"), constString, true);
+    public addDictionaryString(payload: string) {
+        this.children.push({
+            content: payload,
+            dictionary: true,
+            _stringElement: true,
+        });
+    }
+
+    public addString(payload: string) {
+        this.children.push({
+            content: payload,
+            dictionary: false,
+            _stringElement: true,
+        });
     }
 
     public addNumber(payload: number | undefined) {
@@ -339,59 +355,70 @@ export class NodeCore {
         this.children.push(payload);
     }
 
+    // Can we do more efficiently here, without extra objects somehow??
+    private readString(buffer: ReadBuffer, code: number) {
+        const lengthLen = getValueSafely(codeToBytesMap, code);
+        const length = buffer.read(lengthLen);
+        const pos = buffer.pos;
+        buffer.skip(length);
+        return Uint8ArrayToString(buffer.buffer.subarray(pos, buffer.pos), "utf-8");
+    }
+
     /**
      * Load and parse the buffer into a tree.
      * @param buffer - buffer to read from.
      */
-    protected load(buffer: ReadBuffer, dictionary: BlobCore[]) {
+    protected load(buffer: ReadBuffer, dictionary: string[]) {
         for (;!buffer.eof;) {
-            let childValue: NodeTypes | undefined;
             const code = buffer.read();
             switch (code) {
                 case MarkerCodesStart.list:
                 case MarkerCodesStart.set: {
-                    childValue = new NodeCore(code === MarkerCodesStart.set ? "set" : "list");
+                    const childValue = new NodeCore(code === MarkerCodesStart.set ? "set" : "list");
                     this.children.push(childValue);
                     childValue.load(buffer, dictionary);
-                    break;
+                    continue;
                 }
                 case MarkerCodes.ConstStringDeclare:
                 case MarkerCodes.ConstStringDeclareBig:
                 {
                     const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
-                    const constString = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code), true);
+                    const constString = this.readString(buffer, code);
                     dictionary[stringId] = constString;
-                    break;
+                    continue;
                 }
                 case MarkerCodes.ConstString8Id:
                 case MarkerCodes.ConstString16Id:
                 case MarkerCodes.ConstString32Id:
                 {
                     const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
-                    childValue = dictionary[stringId];
-                    this.children.push(childValue);
-                    break;
+                    const content = dictionary[stringId];
+                    assert(content !== undefined, 0x3de /* const string not found */);
+                    this.addDictionaryString(content);
+                    continue;
                 }
                 case MarkerCodes.StringEmpty:
                 case MarkerCodes.String8Length:
                 case MarkerCodes.String16Length:
                 case MarkerCodes.String32Length:
+                {
+                    this.addString(this.readString(buffer, code));
+                    continue;
+                }
                 case MarkerCodes.BinaryEmpty:
                 case MarkerCodes.BinarySingle8:
                 case MarkerCodes.BinarySingle16:
                 case MarkerCodes.BinarySingle32:
                 case MarkerCodes.BinarySingle64:
                 {
-                    childValue = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code), false);
-                    this.children.push(childValue);
-                    break;
+                    this.children.push(BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)));
+                    continue;
                 }
                 // If integer is 0.
                 case MarkerCodes.Int0:
                 {
-                    childValue = 0;
-                    this.children.push(childValue);
-                    break;
+                    this.children.push(0);
+                    continue;
                 }
                 case MarkerCodes.UInt8:
                 case MarkerCodes.UInt16:
@@ -402,18 +429,20 @@ export class NodeCore {
                 case MarkerCodes.Int32:
                 case MarkerCodes.Int64:
                 {
-                    childValue = buffer.read(getValueSafely(codeToBytesMap, code));
-                    this.children.push(childValue);
-                    break;
+                    this.children.push(buffer.read(getValueSafely(codeToBytesMap, code)));
+                    continue;
                 }
                 case MarkerCodes.BoolTrue:
                     this.children.push(true);
-                    break;
+                    continue;
                 case MarkerCodes.BoolFalse:
                     this.children.push(false);
-                    break;
+                    continue;
                 case MarkerCodesEnd.list:
+                    assert(this.type === "list", 0x3df /* Mismatch in end of list */);
+                    return;
                 case MarkerCodesEnd.set:
+                    assert(this.type === "set", 0x3e0 /* Mismatch in end of set */);
                     return;
                 default:
                     throw new Error(`Invalid code: ${code}`);
@@ -429,11 +458,29 @@ export class NodeCore {
 export class TreeBuilder extends NodeCore {
     static load(buffer: ReadBuffer): TreeBuilder {
         const builder = new TreeBuilder();
-        const dictionary = new Array<BlobCore>();
+        const dictionary = new Array<string>();
         builder.load(buffer, dictionary);
         assert(buffer.eof, 0x233 /* "Unexpected data at the end of buffer" */);
         return builder;
     }
+}
+
+export function getMaybeStringInstance(node: NodeTypes): string | undefined {
+    const maybeString = node as IStringElement;
+    if (maybeString._stringElement) {
+        return maybeString.content;
+    }
+}
+
+export function getStringInstance(
+    node: NodeTypes,
+    message: string,
+): string {
+    const maybeString = node as IStringElement;
+    if (maybeString._stringElement) {
+        return maybeString.content;
+    }
+    throwBufferParseException(node, "BlobCore", message);
 }
 
 export function assertBlobCoreInstance(
@@ -500,8 +547,10 @@ function getNodeType(value: NodeTypes): NodeType {
         return "NodeCore";
     } else if (typeof value === "boolean") {
         return "Boolean";
+    } else if (value._stringElement) {
+        return "String";
     }
     return "UnknownType";
 }
 
-type NodeType = "Number" | "BlobCore" | "NodeCore" | "Boolean" | "UnknownType";
+type NodeType = "Number" | "BlobCore" | "NodeCore" | "Boolean" | "UnknownType" | "String";

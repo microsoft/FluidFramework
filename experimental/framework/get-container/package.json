@@ -38,7 +38,7 @@
     "@fluidframework/local-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/protocol-definitions": "^1.0.0",
     "@fluidframework/routerlicious-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/server-local-server": "^0.1037.2000-91174",
+    "@fluidframework/server-local-server": "^0.1038.1000",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/tinylicious-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "jsonwebtoken": "^8.4.0"
