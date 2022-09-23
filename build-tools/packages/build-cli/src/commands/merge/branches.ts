@@ -145,6 +145,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             this.info(
                 `Fetch pull request info for single commit id ${unmergedCommitList[0]} and assignee ${prInfo.data[0].assignee.login}`,
             );
+            const user = await api.getUserAccess(flags.auth);
+            this.info(`List users with push access to main branch ${user}`);
             prNumber = await api.createPullRequest(
                 flags.auth,
                 `${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
@@ -160,6 +162,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             this.info(
                 `Fetch pull request info for bulk commit ids till ${unmergedCommitList[commit]} and assignee ${prInfo.data[0].assignee.login}`,
             );
+            const user = await api.getUserAccess(flags.auth);
+            this.info(`List users with push access to main branch ${user}`);
             prNumber = await api.createPullRequest(
                 flags.auth,
                 branchName,

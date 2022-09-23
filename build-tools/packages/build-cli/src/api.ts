@@ -15,7 +15,7 @@ const PULL_REQUEST = "POST /repos/{owner}/{repo}/pulls";
 const ASSIGNEE = "POST /repos/{owner}/{repo}/issues/{issue_number}/assignees";
 const REVIEWER = "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
 const LABEL = "POST /repos/{owner}/{repo}/issues/{issue_number}/labels";
-
+const GET_USER = "GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users";
 const DESCRIPTION = `
         ## Main-next integrate PR
         The aim of this pull request is to sync main and next branch. The expectation from the assignee is as follows:
@@ -54,6 +54,23 @@ export async function pullRequestInfo(token: string, commit_sha: string): Promis
     });
 
     return prInfo;
+}
+
+/**
+ *
+ * @param token - GitHub authentication token
+ * @returns Lists the user who have push access to this branch
+ */
+export async function getUserAccess(token: string): Promise<any> {
+    const octokit = new Octokit({ auth: token });
+
+    const user = await octokit.request(GET_USER, {
+        owner: OWNER,
+        repo: REPO_NAME,
+        branch: "main",
+    });
+
+    return user;
 }
 
 /**

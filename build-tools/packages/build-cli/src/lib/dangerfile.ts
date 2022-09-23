@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Logger } from "@fluidframework/build-tools";
+import { defaultLogger, Logger } from "@fluidframework/build-tools";
 import {
     ADOSizeComparator,
     BundleComparisonResult,
@@ -24,7 +24,7 @@ const adoConstants = {
 };
 
 const localReportPath = "./artifacts/bundleAnalysis";
-let logger: Logger;
+const logger: Logger = defaultLogger;
 
 export async function dangerfile() {
     if (process.env.ADO_API_TOKEN === undefined) {
