@@ -20,7 +20,7 @@ export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> 
      *
      * @returns - the value of the set
      */
-    get(): Map<string, boolean>;
+    get(): Set<T>;
 
     /**
      * add the set value.
@@ -39,5 +39,5 @@ export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> 
     /**
      * Delete the value from the set.
      */
-    delete(): void;
+    delete(value: T): void;
 }

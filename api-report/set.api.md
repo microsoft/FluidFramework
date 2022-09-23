@@ -18,9 +18,9 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 // @public
 export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> {
     add(value: T): void;
-    delete(): void;
+    delete(value: T): void;
     empty(): boolean;
-    get(): Map<string, boolean>;
+    get(): Set<T>;
 }
 
 // @public (undocumented)
@@ -38,9 +38,9 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>> implem
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedSet<any>;
-    delete(): void;
+    delete(value: T): void;
     empty(): boolean;
-    get(): Map<string, boolean>;
+    get(): Set<T>;
     static getFactory(): IChannelFactory;
     has(value: T): boolean;
     protected initializeLocalCore(): void;

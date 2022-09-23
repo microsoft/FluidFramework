@@ -28,7 +28,7 @@ import { ISharedSet, ISharedSetEvents } from "./interfaces";
  * Description of a set delta operation
  */
 type ISetOperation = ISetSetOperation | IDeleteSetOperation;
-type isDeleted = boolean;
+// type isDeleted = boolean;
 
 interface ISetSetOperation {
     type: "setSet";
@@ -118,7 +118,12 @@ export class SharedSet<T = any>
     /**
      * The data held by this set.
      */
-    private data: Map<string, isDeleted> = new Map<string, isDeleted>();
+    private data: Set<T> = new Set<T>();
+
+    /**
+     * The tombstone held by this set.
+     */
+    private readonly tombstoneSet: Set<T> = new Set<T>();
 
     /**
      * This is used to assign a unique id to outgoing messages. It is used to track messages until
@@ -147,14 +152,10 @@ export class SharedSet<T = any>
         super(id, runtime, attributes, "fluid_set_");
     }
 
-    private hash(value: T) {
-        return JSON.stringify(value);
-    }
-
     /**
      * {@inheritDoc ISharedSet.get}
      */
-    public get(): Map<string, boolean> {
+    public get(): Set<T> {
         return this.data;
     }
 
@@ -164,7 +165,7 @@ export class SharedSet<T = any>
      * @returns True if the key exists, false otherwise
      */
     public has(value: T): boolean {
-        return this.data.has(this.hash(value));
+        return this.data.has(value) && !this.tombstoneSet.has(value);
     }
 
     /**
@@ -177,8 +178,9 @@ export class SharedSet<T = any>
         };
 
         // Set the value locally.
-        this.setCore(this.hash(value));
+        this.data.add(value);
         console.log(this.data);
+        this.emit("valueChanged", value);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -195,9 +197,13 @@ export class SharedSet<T = any>
     /**
      * {@inheritDoc ISharedSet.delete}
      */
-    public delete() {
+    public delete(value: T) {
         // Delete the value locally.
-        this.deleteCore();
+        if (this.has(value)) {
+            this.tombstoneSet.add(value);
+        }
+        this.emit("delete");
+        console.log("tombstoneSet", this.tombstoneSet);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -248,7 +254,7 @@ export class SharedSet<T = any>
      * Initialize a local instance of set
      */
     protected initializeLocalCore() {
-        this.data = new Map<string, boolean>();
+        this.data = new Set();
     }
 
     /**
@@ -263,11 +269,11 @@ export class SharedSet<T = any>
     private applyInnerOp(content: ISetOperation) {
         switch (content.type) {
             case "setSet":
-                this.setCore(this.decode(content.value));
+                // this.setCore(this.decode(content.value));
                 break;
 
             case "deleteSet":
-                this.deleteCore();
+                // this.deleteCore();
                 break;
 
             default:
@@ -310,15 +316,19 @@ export class SharedSet<T = any>
         }
     }
 
-    private setCore(key: string, isDeleted: boolean = false) {
-        this.data[key] = isDeleted;
-        this.emit("valueChanged", key);
-    }
+    // private setCore(key: string, isDeleted: boolean = false) {
+    //     // this.data.add();
+    //     this.data[key] = isDeleted;
+    //     this.emit("valueChanged", key);
+    // }
 
-    private deleteCore() {
-        this.data = new Map<string, isDeleted>();
-        this.emit("delete");
-    }
+    // private deleteCore(value: T) {
+    //     this.data = new Set();
+    //     // if (this.has(value)) {
+    //     //     this.tombstoneSet.add(value);
+    //     // }
+    //     this.emit("delete");
+    // }
 
     private decode(setValue: ISetValue) {
         const value = setValue.value;

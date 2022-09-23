@@ -5,58 +5,56 @@
 
 import React, { useEffect, useState } from "react";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
-import { SharedSet } from "@fluidframework/set";
+import { SharedMap } from "@fluidframework/map";
 
 
 const client = new TinyliciousClient();
 
 const containerSchema = {
-    initialObjects: { mySet: SharedSet }
+    initialObjects: { myMap: SharedMap }
 };
+
+const timeKey = "time-key";
 
 const getMyMap = async () => {
     let container;
     const containerId = window.location.hash.substring(1);
     if (!containerId) {
         ({ container } = await client.createContainer(containerSchema));
-        const mySet = container.initialObjects.mySet as SharedSet
-        mySet.add(Date.now().toString());
+        const myMap = container.initialObjects.myMap as SharedMap
+        myMap.set(timeKey, Date.now().toString());
         const id = await container.attach();
         window.location.hash = id;
     } else {
         ({ container } = await client.getContainer(containerId, containerSchema));
     }
-    return container.initialObjects.mySet as SharedSet;
+    return container.initialObjects.myMap as SharedMap;
 }
 
-function App() {
+function App2() {
 
-    const [fluidMap, setFluidMap] = useState<SharedSet>();
+    const [fluidMap, setFluidMap] = useState<SharedMap>();
     useEffect(() => {
-        getMyMap().then((mySet:SharedSet) => setFluidMap(mySet));
+        getMyMap().then(myMap => setFluidMap(myMap));
     }, []);
 
+    // const [viewData, setViewData] = React.useState(undefined);
     useEffect(() => {
         if (fluidMap !== undefined) {
-            // sync Fluid data into view state
-            console.log(fluidMap)
         }
     }, [fluidMap])
 
+    const setTime = () => fluidMap?.set(Date.now().toString(), Date.now().toString());
 
-
-    // business logic could be passed into the view via context
-    const addTime = () => {
-        if(fluidMap === undefined) return console.log("undefined fluidMap")
-        fluidMap.add(Date.now().toString());
-    }
+    // if (!viewData) return <button onClick={setTime}> click </button>;
 
     return (
         <div>
-            <button onClick={addTime}> click </button>
+            <button onClick={setTime}> click </button>
+            {/* <span>{viewData.time}</span> */}
         </div>
     )
 }
 
-export default App;
+export default App2;
 

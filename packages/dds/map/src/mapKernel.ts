@@ -485,6 +485,7 @@ export class MapKernel {
         const previousLocalValue = this.data.get(key);
         const previousValue = previousLocalValue?.value;
         this.data.set(key, value);
+        console.log(this.data);
         this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
         return previousLocalValue;
     }
