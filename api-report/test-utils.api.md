@@ -127,6 +127,16 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @public (undocumented)
+export interface IDocumentIdStrategy {
+    // (undocumented)
+    get(): string;
+    // (undocumented)
+    reset(): void;
+    // (undocumented)
+    update(resolvedUrl?: IResolvedUrl): void;
+}
+
+// @public (undocumented)
 export interface IOpProcessingController {
     // (undocumented)
     pauseProcessing(...containers: IContainer[]): Promise<void>;
@@ -301,8 +311,6 @@ export class TestObjectProvider implements ITestObjectProvider {
     protected _documentCreated: boolean;
     // (undocumented)
     get documentId(): string;
-    // Warning: (ae-forgotten-export) The symbol "IDocumentIdStrategy" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     protected readonly _documentIdStrategy: IDocumentIdStrategy;
     // (undocumented)

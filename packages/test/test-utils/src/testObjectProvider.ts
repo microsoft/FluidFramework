@@ -94,7 +94,7 @@ export interface ITestContainerConfig {
 
 export const createDocumentId = (): string => uuid();
 
-interface IDocumentIdStrategy {
+export interface IDocumentIdStrategy {
     get(): string;
     update(resolvedUrl?: IResolvedUrl): void;
     reset(): void;
