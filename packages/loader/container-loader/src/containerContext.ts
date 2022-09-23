@@ -51,9 +51,7 @@ import { Container } from "./container";
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
- * The ContainerContext is the "permanent" part of a Container. The Container's runtime could change during a session
- * while a client has the Container loaded (e.g. if a new code proposal is accepted), but the context would remain
- * the same.
+ * {@inheritDoc IContainerContext}
  */
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(

@@ -114,11 +114,10 @@ export interface IBatchMessage {
 
 /**
  * The ContainerContext is a proxy standing between the Container and the Container's IRuntime.
- * This allows the Container to terminate the connection to the IRuntime.
- *
- * Specifically, there is an event on Container, onContextChanged, which mean a new code proposal has been loaded,
- * so the old IRuntime is no longer valid, as its ContainerContext has been revoked,
- * and the Container has created a new ContainerContext.
+ * This allows the Container to terminate the connection to the IRuntime when it's necessary to
+ * instantiate a new one (for example, when a code proposal is accepted). It can be thought of as
+ * the "permanent" part of the Container, in contrast with the Container Runtime which can be
+ * thought of as swappable.
  */
 export interface IContainerContext extends IDisposable {
     readonly existing: boolean | undefined;
