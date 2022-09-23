@@ -112,7 +112,7 @@ export class DefaultNodeRenderers {
     [DocumentNodeType.LineBreak] = (
         node: LineBreakNode,
         subtreeRenderer: DocumentationNodeRenderer,
-    ) => (subtreeRenderer.isInsideCodeBlock ? standardEOL : `<br/>`);
+    ) => (subtreeRenderer.isInsideCodeBlock ? `<br/>` : standardEOL);
     [DocumentNodeType.Link] = LinkToMarkdown;
     [DocumentNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
     [DocumentNodeType.OrderedList] = OrderedListToMarkdown;
@@ -189,8 +189,8 @@ export class DocumentationNodeRenderer {
                 );
                 break;
             case DocumentNodeType.LineBreak:
-                renderedNode = this.renderers[DocumentNodeType.Paragraph](
-                    node as unknown as ParagraphNode,
+                renderedNode = this.renderers[DocumentNodeType.LineBreak](
+                    node as unknown as LineBreakNode,
                     this,
                 );
                 break;
