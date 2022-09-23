@@ -9,10 +9,6 @@ import { DocumentationNode } from "./DocumentionNode";
 import { ParagraphNode } from "./ParagraphNode";
 import { compareNodeArrays } from "./Utilities";
 
-// TODOs:
-// - Take in optional front-matter?
-// - Take in optional Header / footer?
-
 /**
  * Represents the root of a document.
  *
