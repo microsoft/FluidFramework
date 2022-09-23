@@ -12,6 +12,12 @@ import {
 } from "../../../Configuration";
 import { HierarchicalSectionNode } from "../../documentation-domain";
 import { apiItemToSection } from "../TransformApiItem";
+import {
+    createHeadingForApiItem,
+    createSignatureSection,
+    createSummaryParagraph,
+    wrapInSection,
+} from "../helpers";
 
 /**
  * Sample "default" configuration.
@@ -65,20 +71,51 @@ function createConfig(
 }
 
 describe("api-markdown-documenter full-suite tests", () => {
-    it("test-interface", () => {
-        const model = generateModel("test-interface.json");
+    it("test-variable", () => {
+        const model = generateModel("test-variable.json");
         const members = getApiItems(model);
-        const apiInterface = findApiMember(
+        const apiVariable = findApiMember(
             members,
-            "TestInterface",
-            ApiItemKind.Interface,
+            "TestConst",
+            ApiItemKind.Variable,
         ) as ApiInterface;
 
         const config = createConfig(defaultPartialConfig, model);
 
-        const result = config.transformApiInterface(apiInterface, config, (childItem) =>
+        const result = config.transformApiInterface(apiVariable, config, (childItem) =>
             apiItemToSection(childItem, config),
         );
-        expect(result.equals(new HierarchicalSectionNode([]))).to.be.true;
+
+        const expected = new HierarchicalSectionNode(
+            [
+                new HierarchicalSectionNode([
+                    wrapInSection([createSummaryParagraph(apiVariable, config)!]),
+                    createSignatureSection(apiVariable, config)!,
+                ]),
+            ],
+            createHeadingForApiItem(apiVariable, config),
+        );
+
+        expect(result).deep.equals(expected);
     });
+
+    // it("test-interface", () => {
+    //     const model = generateModel("test-interface.json");
+    //     const members = getApiItems(model);
+    //     const apiInterface = findApiMember(
+    //         members,
+    //         "TestInterface",
+    //         ApiItemKind.Interface,
+    //     ) as ApiInterface;
+
+    //     const config = createConfig(defaultPartialConfig, model);
+
+    //     const result = config.transformApiInterface(apiInterface, config, (childItem) =>
+    //         apiItemToSection(childItem, config),
+    //     );
+
+    //     const expected = new HierarchicalSectionNode([]);
+
+    //     expect(result).deep.equals(expected);
+    // });
 });
