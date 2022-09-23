@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/bundle-size-tests",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "private": true,
   "description": "A package for understanding the bundle size of Fluid Framework",
   "homepage": "https://fluidframework.com",
@@ -28,13 +28,13 @@
     "webpack:profile": "npm run webpack"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^1.2.6",
-    "@fluidframework/container-loader": "^1.2.6",
-    "@fluidframework/container-runtime": "^1.2.6",
-    "@fluidframework/map": "^1.2.6",
-    "@fluidframework/matrix": "^1.2.6",
-    "@fluidframework/odsp-driver": "^1.2.6",
-    "@fluidframework/sequence": "^1.2.6",
+    "@fluidframework/aqueduct": "^1.2.7",
+    "@fluidframework/container-loader": "^1.2.7",
+    "@fluidframework/container-runtime": "^1.2.7",
+    "@fluidframework/map": "^1.2.7",
+    "@fluidframework/matrix": "^1.2.7",
+    "@fluidframework/odsp-driver": "^1.2.7",
+    "@fluidframework/sequence": "^1.2.7",
     "source-map-loader": "^2.0.0"
   },
   "devDependencies": {
