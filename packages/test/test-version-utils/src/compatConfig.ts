@@ -145,8 +145,8 @@ export const getInternalCompatConfig = (): InternalVersionCompatConfig[] => {
 
     return allDefaultDeltaVersions.map((createVersion) => allDefaultDeltaVersions.map((loadVersion) => ({
         name: `Internal compat \
-create with [${createVersion.base}${createVersion.delta === 0 ? "" : createVersion.delta}], \
-load with [${loadVersion.base}${loadVersion.delta === 0 ? "" : loadVersion.delta}]`,
+create with [${createVersion.base} ${createVersion.delta === 0 ? "" : createVersion.delta}], \
+load with [${loadVersion.base} ${loadVersion.delta === 0 ? "" : loadVersion.delta}]`,
         createWith: createVersion,
         loadWith: loadVersion,
     }))).reduce((a, b) => a.concat(b)).filter((config) => config.createWith !== config.loadWith);
