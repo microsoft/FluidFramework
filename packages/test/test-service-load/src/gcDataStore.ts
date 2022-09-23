@@ -62,7 +62,13 @@ export class DataObjectType1 extends BaseDataObject implements IGCDataStore {
     private shouldRun: boolean = false;
     private myId: string | undefined;
 
-    public async run(config: IRunConfig, id?: string) {
+    public async run(config: IRunConfig | { zombie: true; }, id?: string) {
+        if ("zombie" in config) {
+            this.counter.increment(1000);
+            console.log(`xxxxxxxxx Zombie child [${id}]: ${this.counter.value}`);
+            return true; // done
+        }
+
         console.log(`+++++++++ Started child [${id}]`);
         this.myId = id;
         this.shouldRun = true;
@@ -160,6 +166,15 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         this.shouldRun = false;
     }
 
+    private scheduleReviveInactiveChild(child?: IGCDataStore) {
+        if (!child) { return; }
+        setTimeout(() => {
+            this.root.set(`${this.uniqueChildKey}_REVIVED`, child.handle);
+            child.run({ zombie: true } as any as IRunConfig, this.uniqueChildKey).catch(console.error);
+        },
+        20000); // Long enough for GC to have run
+    }
+
     /**
      * Perform the following activity:
      * - Ask the current child data store to stop running and unreferenced it.
@@ -167,6 +182,7 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
      */
     private async preformActivity(config: IRunConfig) {
         this.child?.stop();
+        this.scheduleReviveInactiveChild(this.child);
         this.child = await dataObjectType1Factory.createInstance(this.context.containerRuntime);
         // This will unreference the previous child and reference the new one.
         this.root.set(this.uniqueChildKey, this.child.handle);

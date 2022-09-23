@@ -48,6 +48,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         if (this.error && runInfo !== undefined) {
             const logs = this.logs;
             const outputDir = `${__dirname}/output/${crypto.createHash("md5").update(runInfo.url).digest("hex")}`;
+            console.log(`======================= ${outputDir} =======================`);
             if (!fs.existsSync(outputDir)) {
                 fs.mkdirSync(outputDir, { recursive: true });
             }
@@ -81,6 +82,11 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
             this.error = true;
         }
         this.logs.push(event);
+
+        if (event.eventName.includes("InactiveObject_") || event.eventName.includes("SweepReadyObject_")) {
+//            this.flush().catch(() => {}).finally(() => console.log("^^^^^^^^^^^^^^ FLUSHED ^^^^^^^^^^^^"));
+//            throw new Error(`BLOWING UP ${event.eventName}`);
+        }
     }
 }
 

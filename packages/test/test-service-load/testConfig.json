@@ -1,19 +1,19 @@
 {
     "profiles": {
         "gc": {
-            "opRatePerMin": 120,
+            "opRatePerMin": 60,
             "progressIntervalMs": 5000,
-            "numClients": 10,
-            "totalSendCount": 1000,
+            "numClients": 2,
+            "totalSendCount": 100,
             "optionOverrides":{
                 "tinylicious":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [2000]
                     }
                 },
                 "odsp":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [2000]
                     }
                 }
             }
