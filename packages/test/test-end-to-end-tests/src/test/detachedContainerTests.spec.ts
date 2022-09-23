@@ -32,7 +32,7 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
@@ -73,7 +73,7 @@ const createFluidObject = (async (
         "");
 });
 
-describeFullCompat("Detached Container", (getTestObjectProvider) => {
+describeFullInternalCompat("Detached Container", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let request: IRequest;
     let loader: Loader;

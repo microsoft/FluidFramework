@@ -19,7 +19,7 @@ import {
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat, describeNoCompat } from "@fluidframework/test-version-utils";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -75,7 +75,7 @@ async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
     }));
 }
 
-describeFullCompat("Flushing ops", (getTestObjectProvider) => {
+describeFullInternalCompat("Flushing ops", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();

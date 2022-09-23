@@ -29,7 +29,7 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat } from "@fluidframework/test-version-utils";
 import {
     getSnapshotTreeFromSerializedContainer,
 // eslint-disable-next-line import/no-internal-modules
@@ -113,7 +113,7 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
     };
 }
 
-describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
+describeFullInternalCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
     function assertSubtree(tree: ISnapshotTreeWithBlobContents, key: string, msg?: string):
         ISnapshotTreeWithBlobContents {
         const subTree = tree.trees[key];

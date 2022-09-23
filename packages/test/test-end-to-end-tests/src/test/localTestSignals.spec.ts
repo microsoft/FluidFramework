@@ -14,7 +14,7 @@ import {
     ITestFluidObject,
     timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat } from "@fluidframework/test-version-utils";
 
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
@@ -32,7 +32,7 @@ const waitForSignal =
                             errorMsg: `Signaller[${index}] Timeout`,
                         })));
 
-describeFullCompat("TestSignals", (getTestObjectProvider) => {
+describeFullInternalCompat("TestSignals", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;

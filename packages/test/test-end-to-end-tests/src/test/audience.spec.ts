@@ -12,7 +12,7 @@ import {
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, timeoutPromise, ensureContainerConnected } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
@@ -22,7 +22,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-describeFullCompat("Audience correctness", (getTestObjectProvider) => {
+describeFullInternalCompat("Audience correctness", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",

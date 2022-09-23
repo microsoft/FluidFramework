@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/test-utils";
 
 import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat } from "@fluidframework/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
 import { SequenceDeltaEvent, SharedString, SharedStringFactory } from "@fluidframework/sequence";
@@ -39,7 +39,7 @@ const testConfigs =
         ddsSaveAfterAttach: [true, false],
     });
 
-describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
+describeFullInternalCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
     before(function() {
         const provider = getTestObjectProvider();
         switch (provider.driver.type) {

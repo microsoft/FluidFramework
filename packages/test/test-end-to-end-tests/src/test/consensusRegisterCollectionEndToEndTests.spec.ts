@@ -20,7 +20,7 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat } from "@fluidframework/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -37,7 +37,7 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
-    describeFullCompat(name, (getTestObjectProvider) => {
+    describeFullInternalCompat(name, (getTestObjectProvider) => {
         let provider: ITestObjectProvider;
         beforeEach(() => {
             provider = getTestObjectProvider();

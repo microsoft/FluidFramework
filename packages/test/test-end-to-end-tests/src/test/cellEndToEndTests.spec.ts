@@ -14,7 +14,7 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { Container } from "@fluidframework/container-loader";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
@@ -27,7 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedCell", (getTestObjectProvider) => {
+describeFullInternalCompat("SharedCell", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();

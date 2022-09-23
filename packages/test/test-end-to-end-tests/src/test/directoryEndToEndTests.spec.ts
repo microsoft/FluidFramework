@@ -17,7 +17,7 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat, describeNoCompat } from "@fluidframework/test-version-utils";
 
 const directoryId = "directoryKey";
 const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
@@ -26,7 +26,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
+describeFullInternalCompat("SharedDirectory", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();

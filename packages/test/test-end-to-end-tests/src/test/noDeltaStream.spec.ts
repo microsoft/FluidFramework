@@ -17,7 +17,7 @@ import { Container } from "@fluidframework/container-loader";
 import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { generatePairwiseOptions } from "@fluidframework/test-pairwise-generator";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullInternalCompat } from "@fluidframework/test-version-utils";
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
@@ -66,7 +66,7 @@ const testContainerConfigDisabled: ITestContainerConfig = {
     },
 };
 
-describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
+describeFullInternalCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
     const scenarioToContainerUrl = new Map<string, string>();
     before(() => {
         // clear first, so each version combination gets a new container

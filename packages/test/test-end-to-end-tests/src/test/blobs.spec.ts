@@ -20,7 +20,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import {
-    describeFullCompat,
+    describeFullInternalCompat,
     describeNoCompat,
     ExpectedEvents,
     ITestDataObject,
@@ -80,7 +80,7 @@ const ContainerCloseUsageError: ExpectedEvents = {
     tinylicious: [{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage }],
 };
 
-describeFullCompat("blobs", (getTestObjectProvider) => {
+describeFullInternalCompat("blobs", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(async function() {
         provider = getTestObjectProvider();
