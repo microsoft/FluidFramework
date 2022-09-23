@@ -7,10 +7,10 @@ export function AlertToMarkdown(alertNode: AlertNode, renderer: DocumentationNod
     if (alertNode.title) {
         headerText += `: ${alertNode.title}`;
     }
-    headerText += " </bold>";
+    headerText += ` </bold>${standardEOL}`;
 
     let output: string[] = [headerText, standardEOL];
-    output.push(...renderer.renderNodes(alertNode.children));
+    output.push(renderer.renderNodes(alertNode.children));
     output = output.map((line) => `> ${line}`);
     output.unshift(standardEOL);
     output.push(standardEOL);
