@@ -80,7 +80,7 @@ export class AlertNode extends ParentNodeBase {
 }
 
 // @public (undocumented)
-export function AlertToMarkdown(textNode: AlertNode, renderer: DocumentationNodeRenderer): string;
+export function AlertToMarkdown(alertNode: AlertNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -314,6 +314,8 @@ export class DefaultNodeRenderers {
     [DocumentNodeType.CodeSpan]: typeof CodeSpanToMarkdown;
     // (undocumented)
     [DocumentNodeType.FencedCode]: typeof FencedCodeBlockToMarkdown;
+    // (undocumented)
+    [DocumentNodeType.Heading]: typeof HeadingToMarkdown;
     // (undocumented)
     [DocumentNodeType.HierarchicalSection]: typeof HierarchicalSectionToMarkdown;
     // (undocumented)
@@ -683,6 +685,9 @@ export class HeadingNode extends ParentNodeBase<SingleLineElementNode> {
 // @public
 export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
+// @public (undocumented)
+export function HeadingToMarkdown(headingNode: HeadingNode, renderer: DocumentationNodeRenderer): string;
+
 // @public
 export class HierarchicalSectionNode extends ParentNodeBase {
     constructor(children: DocumentationNode[], heading?: HeadingNode);
@@ -869,6 +874,7 @@ export type NodeRenderers = {
     [DocumentNodeType.BlockQuote]: (node: BlockQuoteNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.CodeSpan]: (node: CodeSpanNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.FencedCode]: (node: FencedCodeBlockNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.Heading]: (node: HeadingNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.LineBreak]: (node: LineBreakNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.Link]: (node: LinkNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.HierarchicalSection]: (node: HierarchicalSectionNode, subtreeRenderer: DocumentationNodeRenderer) => string;
