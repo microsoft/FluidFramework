@@ -75,7 +75,7 @@ export class RelativeLoader implements ILoader {
                 const resolvedUrl = this.container.resolvedUrl;
                 ensureFluidResolvedUrl(resolvedUrl);
                 const container = await Container.load(
-                    (this.loader as Loader)?.services,
+                    this.loader as Loader,
                     {
                         canReconnect: request.headers?.[LoaderHeader.reconnect],
                         clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
@@ -315,15 +315,13 @@ export class Loader implements IHostLoader {
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.services.subLogger, "Loader"));
         this.protocolHandlerBuilder = loaderProps.protocolHandlerBuilder;
-
-        Container.loader = this;
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
 
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
         const container = await Container.createDetached(
-            this.services,
+            this,
             codeDetails,
             this.protocolHandlerBuilder,
         );
@@ -342,7 +340,7 @@ export class Loader implements IHostLoader {
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
-        return Container.rehydrateDetachedFromSnapshot(this.services, snapshot, this.protocolHandlerBuilder);
+        return Container.rehydrateDetachedFromSnapshot(this, snapshot, this.protocolHandlerBuilder);
     }
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
@@ -485,7 +483,7 @@ export class Loader implements IHostLoader {
         pendingLocalState?: IPendingContainerState,
     ): Promise<Container> {
         return Container.load(
-            this.services,
+            this,
             {
                 canReconnect: request.headers?.[LoaderHeader.reconnect],
                 clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],

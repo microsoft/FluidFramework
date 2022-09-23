@@ -15,7 +15,7 @@ import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Container, waitContainerToCatchUp } from "../container";
-import { ILoaderServices } from "../loader";
+import { Loader } from "../loader";
 import { CatchUpMonitor } from "../catchUpMonitor";
 import { ConnectionState } from "../connectionState";
 
@@ -70,7 +70,7 @@ describe("Container", () => {
         it("Fluid.Container.CatchUpBeforeDeclaringConnected = true, use CatchUpMonitor", () => {
             injectedSettings["Fluid.Container.CatchUpBeforeDeclaringConnected"] = true;
 
-            const container = new Container({ options: {} } as unknown as ILoaderServices, {});
+            const container = new Container({ services: { options: {} } } as Loader, {});
             const deltaManager: any = container.deltaManager;
             deltaManager.connectionManager.connection = {}; // Avoid assert 0x0df
             (deltaManager as EventEmitter).emit("connect", { clientId: "someClientId" });
