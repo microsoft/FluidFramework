@@ -633,7 +633,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectionStateHandler = createConnectionStateHandler(
             {
                 logger: this.mc.logger,
-                quorumClients: () => this._protocolHandler?.quorum,
                 connectionStateChanged: (value, oldState, reason) => {
                     if (value === ConnectionState.Connected) {
                         this._clientId = this.connectionStateHandler.pendingClientId;
