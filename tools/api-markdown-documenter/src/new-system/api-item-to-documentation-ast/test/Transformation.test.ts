@@ -96,7 +96,7 @@ describe("api-markdown-documenter full-suite tests", () => {
             createHeadingForApiItem(apiVariable, config),
         );
 
-        expect(result).deep.equals(expected);
+        expect(expected).deep.equals(result);
     });
 
     // it("test-interface", () => {
@@ -116,6 +116,6 @@ describe("api-markdown-documenter full-suite tests", () => {
 
     //     const expected = new HierarchicalSectionNode([]);
 
-    //     expect(result).deep.equals(expected);
+    //     expect(expected).deep.equals(result);
     // });
 });
