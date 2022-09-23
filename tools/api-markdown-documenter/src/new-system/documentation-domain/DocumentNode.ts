@@ -4,14 +4,10 @@
  */
 import { Parent as UnistParent } from "unist";
 
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode } from "./DocumentionNode";
 import { ParagraphNode } from "./ParagraphNode";
 import { compareNodeArrays } from "./Utilities";
-
-// TODOs:
-// - Take in optional front-matter?
-// - Take in optional Header / footer?
 
 /**
  * Represents the root of a document.
@@ -23,7 +19,7 @@ export class DocumentNode implements UnistParent<DocumentationNode> {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.Document;
+    public readonly type = DocumentationNodeType.Document;
 
     public readonly children: DocumentationNode[];
     public readonly filePath: string;

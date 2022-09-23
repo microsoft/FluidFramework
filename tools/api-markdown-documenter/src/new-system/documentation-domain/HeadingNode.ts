@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Heading } from "../../Heading";
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 import { compareNodeArrays } from "./Utilities";
@@ -12,7 +12,7 @@ export class HeadingNode extends ParentNodeBase<SingleLineElementNode> {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.Heading;
+    public readonly type = DocumentationNodeType.Heading;
 
     public readonly id?: string;
 

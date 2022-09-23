@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, LiteralNode, SingleLineElementNode } from "./DocumentionNode";
 
 export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.PlainText;
+    public readonly type = DocumentationNodeType.PlainText;
     public readonly value: string;
 
     public constructor(value: string) {

@@ -1,4 +1,4 @@
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase } from "./DocumentionNode";
 import { compareNodeArrays } from "./Utilities";
 
@@ -17,7 +17,7 @@ export class AlertNode extends ParentNodeBase {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.Alert;
+    public readonly type = DocumentationNodeType.Alert;
 
     public readonly alertKind: AlertKind;
     public readonly title?: string;

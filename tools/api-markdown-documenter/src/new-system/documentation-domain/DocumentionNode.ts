@@ -5,14 +5,14 @@ import {
     Parent as UnistParent,
 } from "unist";
 
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 
 /**
  * Base type for documentation nodes.
  */
 export interface DocumentationNode<TData extends object = UnistData> extends UnistNode<TData> {
     // TODO: rename
-    readonly type: DocumentNodeType;
+    readonly type: DocumentationNodeType;
 
     /**
      * Deep equality comparison.
@@ -28,15 +28,15 @@ export interface SingleLineElementNode extends DocumentationNode {}
 /**
  * A documentation node that has child nodes.
  */
-export interface ParentNode<TDocumentNode extends DocumentationNode = DocumentationNode>
-    extends UnistParent<TDocumentNode, UnistData>,
+export interface ParentNode<TDocumentationNode extends DocumentationNode = DocumentationNode>
+    extends UnistParent<TDocumentationNode, UnistData>,
         DocumentationNode {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    readonly type: DocumentNodeType;
+    readonly type: DocumentationNodeType;
 
-    readonly children: TDocumentNode[];
+    readonly children: TDocumentationNode[];
 }
 
 /**
@@ -46,26 +46,27 @@ export interface LiteralNode<T = unknown> extends UnistLiteral<T>, Documentation
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    readonly type: DocumentNodeType;
+    readonly type: DocumentationNodeType;
 }
 
 /**
  * Helper base class for {@link ParentNode} implementations.
  */
-export abstract class ParentNodeBase<TDocumentNode extends DocumentationNode = DocumentationNode>
-    implements ParentNode<TDocumentNode>
+export abstract class ParentNodeBase<
+    TDocumentationNode extends DocumentationNode = DocumentationNode,
+> implements ParentNode<TDocumentationNode>
 {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public abstract type: DocumentNodeType;
+    public abstract type: DocumentationNodeType;
 
     /**
      * {@inheritDoc ParentNode.children}
      */
-    public readonly children: TDocumentNode[];
+    public readonly children: TDocumentationNode[];
 
-    protected constructor(children: TDocumentNode[]) {
+    protected constructor(children: TDocumentationNode[]) {
         this.children = children;
     }
 

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { compareNodeArrays } from "./Utilities";
 
@@ -13,7 +13,7 @@ export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.OrderedList;
+    public readonly type = DocumentationNodeType.OrderedList;
 
     public constructor(children: SingleLineElementNode[]) {
         super(children);

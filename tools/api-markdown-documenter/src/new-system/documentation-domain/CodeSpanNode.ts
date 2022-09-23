@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { PlainTextNode } from "./PlainTextNode";
 import { compareNodeArrays } from "./Utilities";
@@ -14,7 +14,7 @@ export class CodeSpanNode
     extends ParentNodeBase<SingleLineElementNode>
     implements SingleLineElementNode
 {
-    public readonly type = DocumentNodeType.CodeSpan;
+    public readonly type = DocumentationNodeType.CodeSpan;
     /**
      * {@inheritDoc DocumentationNode."type"}
      */

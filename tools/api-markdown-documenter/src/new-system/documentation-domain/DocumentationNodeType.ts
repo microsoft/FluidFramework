@@ -7,7 +7,7 @@
  * @remarks Any given {@link DocumentationNode} implementation will specify a unique value as
  * its {@link DocumentationNode."type"}.
  */
-export enum DocumentNodeType {
+export enum DocumentationNodeType {
     Alert = "Alert",
     BlockQuote = "BlockQuote",
     CodeSpan = "CodeSpan",

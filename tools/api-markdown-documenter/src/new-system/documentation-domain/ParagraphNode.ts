@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentNodeType } from "./DocumentationNodeType";
+import { DocumentationNodeType } from "./DocumentationNodeType";
 import { DocumentationNode, ParentNodeBase, SingleLineElementNode } from "./DocumentionNode";
 import { LineBreakNode } from "./LineBreakNode";
 import { PlainTextNode } from "./PlainTextNode";
@@ -18,7 +18,7 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.Paragraph;
+    public readonly type = DocumentationNodeType.Paragraph;
 
     public constructor(children: ParagraphChildren[]) {
         super(children);

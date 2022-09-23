@@ -18,6 +18,7 @@ import { UrlTarget } from "../../Link";
 import { Logger } from "../../Logging";
 import {
     CodeSpanNode,
+    DocumentationNodeType,
     DocumentationNode,
     FencedCodeBlockNode,
     LineBreakNode,
@@ -95,8 +96,7 @@ export function transformParagraph(
     node: DocParagraph,
     options: DocNodeTransformOptions,
 ): ParagraphNode {
-    const children = node.nodes.map((child) => transformDocNode(child, options));
-    return new ParagraphNode(children);
+    return createParagraph(node.nodes, options);
 }
 
 /**
@@ -106,8 +106,7 @@ export function transformSection(
     node: DocSection,
     options: DocNodeTransformOptions,
 ): ParagraphNode {
-    const children = node.nodes.map((child) => transformDocNode(child, options));
-    return new ParagraphNode(children);
+    return createParagraph(node.nodes, options);
 }
 
 /**
@@ -158,4 +157,150 @@ export function transformLinkTag(
     throw new Error(
         `DocLinkTag contained neither a URL destination nor a code destination, which is not expected.`,
     );
+}
+
+/**
+ * Helper function for creating {@link {ParagraphNode}s from input nodes that simply wrap child contents.
+ *
+ * Also performs the following cleanup steps:
+ *
+ * 1. Remove leading and trailing line breaks within the paragraph (see
+ * {@link trimLeadingAndTrailingLineBreaks}).
+ *
+ * 2. If there is only a single resulting child and it is a paragraph, return it rather than wrapping
+ * it in another paragraph.
+ */
+function createParagraph(
+    children: readonly DocNode[],
+    options: DocNodeTransformOptions,
+): ParagraphNode {
+    let transformedChildren = transformChildren(children, options);
+
+    // Trim leading and trailing line breaks, which are effectively redudant
+    transformedChildren = trimLeadingAndTrailingLineBreaks(transformedChildren);
+
+    // To reduce unecessary hierarchy, if the only child of this paragraph is a single paragraph,
+    // return it, rather than wrapping it.
+    if (
+        transformedChildren.length === 1 &&
+        transformedChildren[0].type === DocumentationNodeType.Paragraph
+    ) {
+        return transformedChildren[0] as ParagraphNode;
+    }
+
+    return new ParagraphNode(transformedChildren);
+}
+
+/**
+ * Transforms the provided list of child elements, and performs the following cleanup steps:
+ *
+ * 1. Collapses groups of adjacent newline nodes to reduce clutter.
+ *
+ * 2. Remove line break nodes adjacent to paragraph nodes.
+ */
+function transformChildren(
+    children: readonly DocNode[],
+    options: DocNodeTransformOptions,
+): DocumentationNode[] {
+    // Transform child items into Documentation domain
+    const transformedChildren = children.map((child) => transformDocNode(child, options));
+
+    // Collapse groups of adjacent line breaks to reduce unecessary clutter in the output.
+    let filteredChildren = collapseAdjacentLineBreaks(transformedChildren);
+
+    // Remove line breaks adjacent to paragraphs, as they are redundant
+    filterNewlinesAdjacentToParagraphs(filteredChildren);
+
+    return filteredChildren;
+}
+
+/**
+ * Collapses adjacent groups of 1+ line break nodes into a single line break node to reduce clutter
+ * in output tree.
+ */
+function collapseAdjacentLineBreaks(nodes: readonly DocumentationNode[]): DocumentationNode[] {
+    if (nodes.length === 0) {
+        return [];
+    }
+
+    const result: DocumentationNode[] = [];
+    let onNewline = false;
+    for (const node of nodes) {
+        if (node.type === DocumentationNodeType.LineBreak) {
+            if (onNewline) {
+                continue;
+            } else {
+                onNewline = true;
+                result.push(node);
+            }
+        } else {
+            onNewline = false;
+            result.push(node);
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Trims an line break nodes found at the beginning or end of the list.
+ *
+ * @remarks Useful for cleaning up {@link ParagraphNode} child contents, since leading and trailing
+ * newlines are effectively redundant.
+ */
+function trimLeadingAndTrailingLineBreaks(
+    nodes: readonly DocumentationNode[],
+): DocumentationNode[] {
+    if (nodes.length === 0) {
+        return [];
+    }
+
+    let startIndex = 0;
+    let endIndex = nodes.length - 1;
+
+    for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].type === DocumentationNodeType.LineBreak) {
+            startIndex++;
+        } else {
+            break;
+        }
+    }
+
+    for (let i = nodes.length - 1; i > startIndex; i--) {
+        if (nodes[i].type === DocumentationNodeType.LineBreak) {
+            endIndex--;
+        } else {
+            break;
+        }
+    }
+
+    return nodes.slice(startIndex, endIndex + 1);
+}
+
+/**
+ * Filters out line break nodes that are adjacent to paragraph nodes.
+ * Since paragraph nodes inherently create line breaks on either side, these nodes are redundant and
+ * clutter the output tree.
+ */
+function filterNewlinesAdjacentToParagraphs(
+    nodes: readonly DocumentationNode[],
+): DocumentationNode[] {
+    if (nodes.length === 0) {
+        return [];
+    }
+
+    const result: DocumentationNode[] = [];
+    for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].type === DocumentationNodeType.LineBreak) {
+            const previousIsParagraph =
+                i > 0 ? nodes[i - 1].type === DocumentationNodeType.Paragraph : false;
+            const nextIsParagraph =
+                i < nodes.length - 1 ? nodes[i + 1].type === DocumentationNodeType.Paragraph : false;
+            if (previousIsParagraph || nextIsParagraph) {
+                continue;
+            }
+        }
+        result.push(nodes[i]);
+    }
+    return result;
 }
