@@ -253,7 +253,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
                 }
                 const details = {
                     protocolInitialized: this.protocol !== undefined,
-                    clientId: this.pendingClientId,
+                    pendingClientId: this.pendingClientId,
                     clientJoined: this.hasMember(this.pendingClientId),
                     waitingForLeaveOp: this.waitingForLeaveOp,
                 };
@@ -336,8 +336,8 @@ class ConnectionStateHandler implements IConnectionStateHandler {
                 category: source === "timeout" ? "error" : "generic",
                 details: JSON.stringify({
                     source,
-                    clientId: this.pendingClientId,
-                    oldClientId: this.clientId,
+                    pendingClientId: this.pendingClientId,
+                    clientId: this.clientId,
                     waitingForLeaveOp: this.waitingForLeaveOp,
                     clientJoined: this.hasMember(this.pendingClientId),
                 }),
