@@ -15,7 +15,7 @@ export class LinkNode
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
-    public readonly type = DocumentNodeType.UrlLink;
+    public readonly type = DocumentNodeType.Link;
 
     public readonly target: UrlTarget;
 

@@ -72,7 +72,6 @@ export class AlertNode extends ParentNodeBase {
     constructor(children: DocumentationNode[], alertKind: AlertKind, title?: string);
     // (undocumented)
     readonly alertKind: AlertKind;
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly title?: string;
@@ -147,7 +146,6 @@ export const betaAlert: AlertNode;
 // @public (undocumented)
 export class BlockQuoteNode extends ParentNodeBase {
     constructor(children: DocumentationNode[]);
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly type = DocumentNodeType.BlockQuote;
@@ -175,7 +173,6 @@ export class CodeSpanNode extends ParentNodeBase<SingleLineElementNode> implemen
     constructor(children: SingleLineElementNode[]);
     // (undocumented)
     static createFromPlainText(text: string): CodeSpanNode;
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly type = DocumentNodeType.CodeSpan;
@@ -330,8 +327,6 @@ export class DefaultNodeRenderers {
     // (undocumented)
     [DocumentNodeType.Span]: typeof SpanToMarkdown;
     // (undocumented)
-    [DocumentNodeType.SymbolicLink]: (node: DocumentationNode, subtreeRenderer: DocumentationNodeRenderer) => string;
-    // (undocumented)
     [DocumentNodeType.Table]: typeof TableToMarkdown;
     // (undocumented)
     [DocumentNodeType.TableCell]: typeof TableCellToMarkdown;
@@ -340,7 +335,7 @@ export class DefaultNodeRenderers {
     // (undocumented)
     [DocumentNodeType.UnorderedList]: typeof UnorderedListToMarkdown;
     // (undocumented)
-    [DocumentNodeType.UrlLink]: typeof LinkToMarkdown;
+    [DocumentNodeType.Link]: typeof LinkToMarkdown;
 }
 
 // @public (undocumented)
@@ -453,7 +448,6 @@ export { DocTableRow }
 
 // @public
 export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly type: DocumentNodeType;
@@ -504,7 +498,6 @@ export class DocumentNode implements Parent<DocumentationNode> {
     constructor(children: DocumentationNode[], filePath: string, title?: string, frontMatter?: string, header?: ParagraphNode, footer?: ParagraphNode);
     // (undocumented)
     readonly children: DocumentationNode[];
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly filePath: string;
@@ -539,6 +532,8 @@ export enum DocumentNodeType {
     // (undocumented)
     LineBreak = "LineBreak",
     // (undocumented)
+    Link = "UrlLink",
+    // (undocumented)
     OrderedList = "OrderedList",
     // (undocumented)
     Paragraph = "Paragraph",
@@ -547,17 +542,13 @@ export enum DocumentNodeType {
     // (undocumented)
     Span = "Span",
     // (undocumented)
-    SymbolicLink = "SymbolicLink",
-    // (undocumented)
     Table = "Table",
     // (undocumented)
     TableCell = "TableCell",
     // (undocumented)
     TableRow = "TableRow",
     // (undocumented)
-    UnorderedList = "UnorderedList",
-    // (undocumented)
-    UrlLink = "UrlLink"
+    UnorderedList = "UnorderedList"
 }
 
 // @public
@@ -594,7 +585,6 @@ export class FencedCodeBlockNode extends ParentNodeBase<FencedCodeBlockChildren>
     constructor(children: FencedCodeBlockChildren[], language?: string);
     // (undocumented)
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly language?: string;
@@ -682,7 +672,6 @@ export class HeadingNode extends ParentNodeBase<SingleLineElementNode> {
     static createFromHeading(heading: Heading): HeadingNode;
     // (undocumented)
     static createFromPlainText(text: string, id?: string, level?: number): HeadingNode;
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly id?: string;
@@ -697,7 +686,6 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 // @public
 export class HierarchicalSectionNode extends ParentNodeBase {
     constructor(children: DocumentationNode[], heading?: HeadingNode);
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     readonly heading?: HeadingNode;
     // (undocumented)
@@ -739,7 +727,6 @@ export function isStatic(apiItem: ApiItem): boolean;
 // @public (undocumented)
 export class LineBreakNode implements DocumentationNode {
     constructor();
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     static readonly Singleton: LineBreakNode;
@@ -760,12 +747,11 @@ export class LinkNode extends ParentNodeBase<SingleLineElementNode> implements S
     static createFromPlainText(text: string, target: UrlTarget): LinkNode;
     // (undocumented)
     static createFromPlainTextLink(link: Link): LinkNode;
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly target: UrlTarget;
     // (undocumented)
-    readonly type = DocumentNodeType.UrlLink;
+    readonly type = DocumentNodeType.Link;
 }
 
 // @public
@@ -884,23 +870,21 @@ export type NodeRenderers = {
     [DocumentNodeType.CodeSpan]: (node: CodeSpanNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.FencedCode]: (node: FencedCodeBlockNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.LineBreak]: (node: LineBreakNode, subtreeRenderer: DocumentationNodeRenderer) => string;
+    [DocumentNodeType.Link]: (node: LinkNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.HierarchicalSection]: (node: HierarchicalSectionNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.OrderedList]: (node: OrderedListNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.Paragraph]: (node: ParagraphNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.PlainText]: (node: PlainTextNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.Span]: (node: SpanNode, subtreeRenderer: DocumentationNodeRenderer) => string;
-    [DocumentNodeType.SymbolicLink]: (node: DocumentationNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.Table]: (node: TableNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.TableCell]: (node: TableCellNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.TableRow]: (node: TableRowNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.UnorderedList]: (node: UnorderedListNode, subtreeRenderer: DocumentationNodeRenderer) => string;
-    [DocumentNodeType.UrlLink]: (node: LinkNode, subtreeRenderer: DocumentationNodeRenderer) => string;
 };
 
 // @public (undocumented)
 export class OrderedListNode extends ParentNodeBase<SingleLineElementNode> {
     constructor(children: SingleLineElementNode[]);
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly type = DocumentNodeType.OrderedList;
@@ -920,7 +904,6 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
     constructor(children: ParagraphChildren[]);
     // (undocumented)
     static createFromPlainText(text: string): ParagraphNode;
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly type = DocumentNodeType.Paragraph;
@@ -943,7 +926,6 @@ export abstract class ParentNodeBase<TDocumentNode extends DocumentationNode = D
     protected constructor(children: TDocumentNode[]);
     // (undocumented)
     readonly children: TDocumentNode[];
-    // (undocumented)
     abstract equals(other: DocumentationNode): boolean;
     // (undocumented)
     abstract type: DocumentNodeType;
@@ -952,7 +934,6 @@ export abstract class ParentNodeBase<TDocumentNode extends DocumentationNode = D
 // @public (undocumented)
 export class PlainTextNode implements LiteralNode<string>, SingleLineElementNode {
     constructor(value: string);
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly type = DocumentNodeType.PlainText;
@@ -1254,7 +1235,6 @@ export class SpanNode<TDocumentNode extends DocumentationNode = DocumentationNod
     constructor(children: TDocumentNode[], formatting?: TextFormatting);
     // (undocumented)
     static createFromPlainText(text: string, formatting?: TextFormatting): SingleLineSpanNode<PlainTextNode>;
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly textFormatting?: TextFormatting;
@@ -1272,7 +1252,6 @@ export class TableCellNode extends ParentNodeBase {
     static createFromPlainText(text: string): TableCellNode;
     // (undocumented)
     static readonly Empty: TableCellNode;
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly type = DocumentNodeType.TableCell;
@@ -1289,7 +1268,6 @@ export interface TableCreationOptions {
 // @public (undocumented)
 export class TableNode extends ParentNodeBase<TableRowNode> {
     constructor(bodyRows: TableRowNode[], headingRow?: TableRowNode);
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly headingRow?: TableRowNode;
@@ -1305,7 +1283,6 @@ interface TableRenderingOptions {
 // @public (undocumented)
 export class TableRowNode extends ParentNodeBase<TableCellNode> {
     constructor(cells: TableCellNode[]);
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly type = DocumentNodeType.TableRow;
@@ -1357,7 +1334,6 @@ export function transformSection(node: DocSection, options: DocNodeTransformOpti
 // @public (undocumented)
 export class UnorderedListNode extends ParentNodeBase<SingleLineElementNode> {
     constructor(children: SingleLineElementNode[]);
-    // (undocumented)
     equals(other: DocumentationNode): boolean;
     // (undocumented)
     readonly type = DocumentNodeType.UnorderedList;

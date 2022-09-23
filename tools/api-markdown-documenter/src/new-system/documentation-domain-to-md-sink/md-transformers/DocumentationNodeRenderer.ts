@@ -61,6 +61,7 @@ export type NodeRenderers = {
         node: LineBreakNode,
         subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
+    [DocumentNodeType.Link]: (node: LinkNode, subtreeRenderer: DocumentationNodeRenderer) => string;
     [DocumentNodeType.HierarchicalSection]: (
         node: HierarchicalSectionNode,
         subtreeRenderer: DocumentationNodeRenderer,
@@ -78,11 +79,6 @@ export type NodeRenderers = {
         subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
     [DocumentNodeType.Span]: (node: SpanNode, subtreeRenderer: DocumentationNodeRenderer) => string;
-    [DocumentNodeType.SymbolicLink]: (
-        // TODO: Valid?
-        node: DocumentationNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
     [DocumentNodeType.Table]: (
         node: TableNode,
         subtreeRenderer: DocumentationNodeRenderer,
@@ -99,10 +95,6 @@ export type NodeRenderers = {
         node: UnorderedListNode,
         subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.UrlLink]: (
-        node: LinkNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => string;
 };
 
 export class DefaultNodeRenderers {
@@ -114,20 +106,16 @@ export class DefaultNodeRenderers {
         node: LineBreakNode,
         subtreeRenderer: DocumentationNodeRenderer,
     ) => (subtreeRenderer.isInsideCodeBlock ? standardEOL : `<br/>`);
+    [DocumentNodeType.Link] = LinkToMarkdown;
     [DocumentNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
     [DocumentNodeType.OrderedList] = OrderedListToMarkdown;
     [DocumentNodeType.Paragraph] = ParagraphToMarkdown;
     [DocumentNodeType.PlainText] = PlainTextToMarkdown;
     [DocumentNodeType.Span] = SpanToMarkdown;
-    [DocumentNodeType.SymbolicLink] = (
-        node: DocumentationNode,
-        subtreeRenderer: DocumentationNodeRenderer,
-    ) => "TODO: Are symbolic links valid?";
     [DocumentNodeType.Table] = TableToMarkdown;
     [DocumentNodeType.TableCell] = TableCellToMarkdown;
     [DocumentNodeType.TableRow] = TableRowToMarkdown;
     [DocumentNodeType.UnorderedList] = UnorderedListToMarkdown;
-    [DocumentNodeType.UrlLink] = LinkToMarkdown;
 }
 
 export interface RenderingContext {
@@ -193,6 +181,9 @@ export class DocumentationNodeRenderer {
                     this,
                 );
                 break;
+            case DocumentNodeType.Link:
+                renderedNode = this.renderers[DocumentNodeType.Link](node as LinkNode, this);
+                break;
             case DocumentNodeType.OrderedList:
                 renderedNode = this.renderers[DocumentNodeType.OrderedList](
                     node as unknown as OrderedListNode,
@@ -217,9 +208,6 @@ export class DocumentationNodeRenderer {
                     this,
                 );
                 break;
-            case DocumentNodeType.SymbolicLink:
-                renderedNode = this.renderers[DocumentNodeType.SymbolicLink](node, this);
-                break;
             case DocumentNodeType.Table:
                 renderedNode = this.renderers[DocumentNodeType.Table](
                     node as unknown as TableNode,
@@ -241,12 +229,6 @@ export class DocumentationNodeRenderer {
             case DocumentNodeType.UnorderedList:
                 renderedNode = this.renderers[DocumentNodeType.UnorderedList](
                     node as unknown as UnorderedListNode,
-                    this,
-                );
-                break;
-            case DocumentNodeType.UrlLink:
-                renderedNode = this.renderers[DocumentNodeType.UrlLink](
-                    node as unknown as LinkNode,
                     this,
                 );
                 break;
