@@ -2,6 +2,13 @@ import { BlockQuoteNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
 import { standardEOL } from "./Utilities";
 
+/**
+ * Recursively enumerates an BlockQuoteNode to generate block quote in markdown.
+ *
+ * @param blockQuoteNode - BlockQuoteNode to convert into markdown
+ * @param renderer - Renderer to recursively render child subtrees
+ * @returns The markdown representation of the BlockQuoteNode as a string
+ */
 export function BlockQuoteToMarkdown(
     blockQuoteNode: BlockQuoteNode,
     renderer: DocumentationNodeRenderer,
