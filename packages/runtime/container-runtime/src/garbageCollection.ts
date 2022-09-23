@@ -567,15 +567,12 @@ export class GarbageCollector implements IGarbageCollector {
              * but make it one day to be safe.
              */
             if (snapshotCacheExpiryMs !== undefined) {
-                const overrideSweepTimeoutMs =
-                    this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SweepTimeoutMs");
+                const overrideSweepBufferMs =
+                    this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SweepBufferMs");
+                //* Do I need to assert the override is less than 1 day? What about > 0... -_-
+                const buffer = overrideSweepBufferMs ?? oneDayMs;
 
-                this.sweepTimeoutMs =
-                    overrideSweepTimeoutMs
-                    ?? this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs;
-
-                assert(this.sweepTimeoutMs > this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs,
-                    "SweepTimeout must exceed sessionExpiry + snapshotCacheExpiry even if using TestOverride");
+                this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + buffer;
             }
         }
 
