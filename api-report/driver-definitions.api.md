@@ -34,7 +34,6 @@ export enum DriverErrorType {
     fetchFailure = "fetchFailure",
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
     fileOverwrittenInStorage = "fileOverwrittenInStorage",
-    // (undocumented)
     fluidInvalidSchema = "fluidInvalidSchema",
     genericError = "genericError",
     genericNetworkError = "genericNetworkError",
@@ -176,15 +175,13 @@ export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: number;
-    // (undocumented)
     readonly minBlobSize?: number;
 }
 
 // @public
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
-    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage |
-    DriverErrorType.fluidInvalidSchema;
+    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema;
     // (undocumented)
     readonly statusCode?: number;
 }
