@@ -27,6 +27,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { waitContainerToCatchUp } from "@fluidframework/container-loader";
 
 const counterKey = "count";
 
@@ -287,9 +288,11 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 
                 container1 = await createContainer(documentId, testDataObjectFactory);
                 dataObject1 = await requestFluidObject<TestDataObject>(container1, "default");
+                await waitContainerToCatchUp(container1);
 
                 container2 = await loadContainer(documentId, container1.resolvedUrl, testDataObjectFactory);
                 dataObject2 = await requestFluidObject<TestDataObject>(container2, "default");
+                await waitContainerToCatchUp(container2);
             });
 
             it("Controlled inbounds and outbounds", async function() {
