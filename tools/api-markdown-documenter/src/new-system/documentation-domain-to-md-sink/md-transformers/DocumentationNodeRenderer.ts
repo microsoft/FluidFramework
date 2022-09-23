@@ -34,7 +34,7 @@ import { TableCellToMarkdown } from "./TableCellToMd";
 import { TableRowToMarkdown } from "./TableRowToMd";
 import { TableToMarkdown } from "./TableToMd";
 import { UnorderedListToMarkdown } from "./UnorderedListToMd";
-import { standardEOL } from "./Utilities";
+import { addNewlineOrBlank, standardEOL } from "./Utilities";
 
 export type DocumentationNodeRenderFunction = (
     node: DocumentationNode,
@@ -303,9 +303,30 @@ export function markdownFromDocumentNode(node: DocumentNode): string {
     // todo: configurability of individual node renderers
     const renderer = new DocumentationNodeRenderer();
     const output: string[] = [];
+
+    if (node.frontMatter) {
+        output.push(`${node.frontMatter}${standardEOL}`);
+    }
     if (node.title) {
         output.push(`# ${node.title}${standardEOL}${standardEOL}`);
     }
+    if (node.header) {
+        output.push(
+            `${renderer.renderNode(node.header)}${addNewlineOrBlank(
+                renderer.getLastRenderedCharacter(),
+            )}`,
+        );
+    }
+
     output.push(...node.children.map((child) => renderer.renderNode(child)));
+
+    if (node.footer) {
+        output.push(
+            `${addNewlineOrBlank(
+                renderer.getLastRenderedCharacter(),
+            )}${standardEOL}${renderer.renderNode(node.footer)}`,
+        );
+    }
+
     return output.join("");
 }
