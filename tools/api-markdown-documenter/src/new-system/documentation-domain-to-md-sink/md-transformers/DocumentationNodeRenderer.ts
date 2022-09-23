@@ -320,7 +320,7 @@ export function markdownFromDocumentNode(node: DocumentNode): string {
         output.push(
             `${renderer.renderNode(node.header)}${addNewlineOrBlank(
                 renderer.getLastRenderedCharacter(),
-            )}`,
+            )}${standardEOL}`,
         );
     }
 
@@ -330,7 +330,9 @@ export function markdownFromDocumentNode(node: DocumentNode): string {
         output.push(
             `${addNewlineOrBlank(
                 renderer.getLastRenderedCharacter(),
-            )}${standardEOL}${renderer.renderNode(node.footer)}`,
+            )}${standardEOL}${renderer.renderNode(node.footer)}${addNewlineOrBlank(
+                renderer.getLastRenderedCharacter(),
+            )}${standardEOL}`,
         );
     }
 

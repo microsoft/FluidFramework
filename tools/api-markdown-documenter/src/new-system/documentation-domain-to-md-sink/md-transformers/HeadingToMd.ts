@@ -10,10 +10,7 @@ export function HeadingToMarkdown(
     headingNode: HeadingNode,
     renderer: DocumentationNodeRenderer,
 ): string {
-    // Starting with an empty line to ensure a newline gets added at the start of this section
     const output: string[] = [newlineOrBlankSpace(renderer.getLastRenderedCharacter())];
-
-    // Starting with an empty line to ensure a newline gets added at the start of this section
     const headingLevel = headingNode.level ?? renderer.hierarchyDepth;
     const headerLine: string[] = [];
     switch (headingLevel) {

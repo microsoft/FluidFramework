@@ -1,5 +1,4 @@
 export * from "./DocumentationNodeRenderer";
-export { DefaultNodeRenderers } from "./DocumentationNodeRenderer";
 export { AlertToMarkdown } from "./AlertToMd";
 export { BlockQuoteToMarkdown } from "./BlockQuoteToMd";
 export { CodeSpanToMarkdown } from "./CodeSpanToMd";
