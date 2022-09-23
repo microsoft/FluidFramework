@@ -139,12 +139,11 @@ export interface InternalVersionCompatConfig {
 }
 
 export const getInternalCompatConfig = (): InternalVersionCompatConfig[] => {
-    const allDefaultVersions = DefaultCompatVersions
+    const allDefaultDeltaVersions = DefaultCompatVersions
         .CurrentVersionDeltas
-        .map((delta) => ({ base: pkgVersion, delta }))
-        .concat(DefaultCompatVersions.LTSVersions.map((ltsVersion) => ({ base: ltsVersion, delta: 0 })));
+        .map((delta) => ({ base: pkgVersion, delta }));
 
-    return allDefaultVersions.map((createVersion) => allDefaultVersions.map((loadVersion) => ({
+    return allDefaultDeltaVersions.map((createVersion) => allDefaultDeltaVersions.map((loadVersion) => ({
         name: `Internal compat \
 create with [${createVersion.base}${createVersion.delta === 0 ? "" : createVersion.delta}], \
 load with [${loadVersion.base}${loadVersion.delta === 0 ? "" : loadVersion.delta}]`,
