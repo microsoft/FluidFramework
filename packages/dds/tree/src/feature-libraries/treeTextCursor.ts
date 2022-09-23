@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    FieldMapObject,
     genericTreeKeys,
     getGenericTreeField,
     JsonableTree,
@@ -13,6 +12,7 @@ import {
     CursorLocationType,
     mapCursorFieldNew as mapCursorField,
     ITreeCursorSynchronous,
+    setGenericTreeField,
 } from "../tree";
 import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
@@ -55,27 +55,17 @@ const adapter: CursorAdapter<JsonableTree> = {
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
-    assert(cursor.mode === CursorLocationType.Nodes, "must start at node");
-    let fields: FieldMapObject<JsonableTree> | undefined;
-    let inField = cursor.firstField();
-    while (inField) {
-        fields ??= {};
-        const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
-        fields[cursor.getFieldKey() as string] = field;
-        inField = cursor.nextNode();
-    }
-
+    assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);
     const node: JsonableTree = {
         type: cursor.type,
-        value: cursor.value,
-        fields,
     };
     // Normalize object by only including fields that are required.
-    if (fields === undefined) {
-        delete node.fields;
+    if (cursor.value !== undefined) {
+        node.value = cursor.value;
     }
-    if (node.value === undefined) {
-        delete node.value;
+    for (let inFields = cursor.firstField(); inFields; inFields = cursor.nextField()) {
+        const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
+        setGenericTreeField(node, cursor.getFieldKey(), field);
     }
     return node;
 }

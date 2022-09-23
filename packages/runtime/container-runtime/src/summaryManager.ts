@@ -302,8 +302,8 @@ export class SummaryManager implements IDisposable {
 
     /**
      * Implements initial delay before creating summarizer
-     * @returns true, if creation is delayed due to heuristics (not many ops to summarize).
-     *          False if summarizer should start immediately due to too many unsummarized ops.
+     * @returns `true`, if creation is delayed due to heuristics (not many ops to summarize).
+     * `false` if summarizer should start immediately due to too many unsummarized ops.
      */
     private async delayBeforeCreatingSummarizer(): Promise<boolean> {
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections

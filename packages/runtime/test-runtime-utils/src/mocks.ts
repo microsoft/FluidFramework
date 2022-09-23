@@ -211,11 +211,7 @@ export class MockContainerRuntimeFactory {
     public getMinSeq(): number {
         let minSeq: number | undefined;
         for (const [, clientSeq] of this.minSeq) {
-            if (minSeq === undefined) {
-                minSeq = clientSeq;
-            } else {
-                minSeq = Math.min(minSeq, clientSeq);
-            }
+            minSeq = minSeq === undefined ? clientSeq : Math.min(minSeq, clientSeq);
         }
         return minSeq ?? 0;
     }

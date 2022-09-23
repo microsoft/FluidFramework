@@ -83,7 +83,7 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
     }
 
     private getStackedFieldKey(height: number): FieldKey {
-        assert(height % 2 === 1, "must field height");
+        assert(height % 2 === 1, 0x3b8 /* must field height */);
         return this.siblingStack[height][this.indexStack[height]] as FieldKey;
     }
 
@@ -113,7 +113,7 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
     }
 
     public getPath(): UpPath | undefined {
-        assert(this.mode === CursorLocationType.Nodes, "must be in nodes mode");
+        assert(this.mode === CursorLocationType.Nodes, 0x3b9 /* must be in nodes mode */);
         // Even since in nodes mode
         const length = this.indexStack.length;
         if (length === 0) {

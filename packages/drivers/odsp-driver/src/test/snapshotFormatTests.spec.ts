@@ -6,17 +6,16 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
 import { ISnapshotContents } from "../odspPublicUtils";
-import { ISnapshotTreeEx } from "../contracts";
 
-const snapshotTree: ISnapshotTreeEx = {
+const snapshotTree: ISnapshotTree = {
     id: "SnapshotId",
     blobs: {},
-    commits: {},
     trees: {
         ".protocol": {
             blobs: {
@@ -24,29 +23,24 @@ const snapshotTree: ISnapshotTreeEx = {
                 quorumMembers: "bARBkx1nses1pHL1vKnmFUfIC",
                 quorumProposals: "bARBkx1nses1pHL1vKnmFUfIC",
             },
-            commits: {},
             trees: {},
         },
         ".app": {
             blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
-            commits: {},
             trees: {
                 ".channels": {
                     blobs: {},
-                    commits: {},
                     trees: {
                         default: {
                             blobs: {
                                 ".component": "bARC6dCXlcrPxQHw3PeROtmKc",
                                 "gc": "bARDNMoBed+nKrsf04id52iUA",
                             },
-                            commits: {},
                             trees: {
                                 ".channels": {
                                     blobs: {},
-                                    commits: {},
                                     trees: {
-                                        root: { blobs: {}, commits: {}, trees: {} },
+                                        root: { blobs: {}, trees: {} },
                                     },
                                 },
                             },
@@ -54,7 +48,7 @@ const snapshotTree: ISnapshotTreeEx = {
                     },
                     unreferenced: true,
                 },
-                ".blobs": { blobs: {}, commits: {}, trees: {} },
+                ".blobs": { blobs: {}, trees: {} },
             },
             unreferenced: true,
         },
@@ -109,7 +103,7 @@ describe("Snapshot Format Conversion Tests", () => {
             latestSequenceNumber: 2,
         };
         const compactSnapshot = convertToCompactSnapshot(snapshotContents);
-        const result = parseCompactSnapshotResponse(compactSnapshot);
+        const result = parseCompactSnapshotResponse(compactSnapshot, new TelemetryUTLogger());
         assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
         assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
         assert.deepStrictEqual(result.ops, ops, "Ops should match");

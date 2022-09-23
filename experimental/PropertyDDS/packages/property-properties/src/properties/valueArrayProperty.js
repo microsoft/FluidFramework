@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable new-cap */
+
 /**
  * @fileoverview Definition of the valuearray property class
  */
@@ -398,11 +398,9 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
         for (var i = 0; i < this._dataArrayGetLength(); i++) {
             // TODO: The 'toString()' function is defined on Integer64Property, so we need to create
             // such object to use it. It would be better to have it in Integer64.prototype.toString
-            if (this._dataArrayGetValue(i) instanceof Int64) {
-                int64Prop = new Int64Property({});
-            } else {
-                int64Prop = new Uint64Property({});
-            }
+            int64Prop = this._dataArrayGetValue(i) instanceof Int64
+                ? new Int64Property({})
+                : new Uint64Property({});
             int64Prop.setValueLow(this._dataArrayGetValue(i).getValueLow());
             int64Prop.setValueHigh(this._dataArrayGetValue(i).getValueHigh());
             printFct(childIndent + i + ': ' + int64Prop);

@@ -49,12 +49,16 @@ class SummaryNodeWithGC extends SummaryNode {
 
 /**
  * Extends the functionality of SummarizerNode to manage this node's garbage collection data:
+ *
  * - Adds a new API `getGCData` to return GC data of this node.
+ *
  * - Caches the result of `getGCData` to be used if nothing changes between summaries.
+ *
  * - Manages the used routes of this node. These are used to identify if this node is referenced in the document
- *   and to determine if the node's used state changed since last summary.
+ * and to determine if the node's used state changed since last summary.
+ *
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
- *   directly into summarizeInternal method.
+ * directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
     // Tracks the work-in-progress used routes during summary.
