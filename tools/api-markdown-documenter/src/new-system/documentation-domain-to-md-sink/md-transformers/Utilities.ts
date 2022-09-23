@@ -28,7 +28,7 @@ export function addNewlineOrBlank(predicate: boolean): string {
 }
 
 export function countTrailingNewlines(text: string): number {
-    const matches = text.match(/(\r?\n)*$/);
+    const matches = text.match(/(\r?\n)*$/); // TODO: Do we need to account for whitespace chars?
     const trailingNewlines = matches ? matches[0] : null;
     if (!trailingNewlines) {
         return 0;
