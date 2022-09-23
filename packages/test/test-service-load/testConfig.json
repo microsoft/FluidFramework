@@ -4,13 +4,37 @@
             "opRatePerMin": 120,
             "progressIntervalMs": 5000,
             "numClients": 10,
-            "totalSendCount": 1000
+            "totalSendCount": 1000,
+            "optionOverrides":{
+                "tinylicious":{
+                    "configurations":{
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                    }
+                },
+                "odsp":{
+                    "configurations":{
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                    }
+                }
+            }
         },
         "gc_ci": {
             "opRatePerMin": 120,
             "progressIntervalMs": 5000,
             "numClients": 10,
-            "totalSendCount": 72000
+            "totalSendCount": 72000,
+            "optionOverrides":{
+                "tinylicious":{
+                    "configurations":{
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                    }
+                },
+                "odsp":{
+                    "configurations":{
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                    }
+                }
+            }
         },
         "gc_fault": {
             "opRatePerMin": 120,
@@ -18,7 +42,19 @@
             "numClients": 10,
             "totalSendCount": 1000,
             "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 50000
+            "faultInjectionMaxMs": 50000,
+            "optionOverrides":{
+                "tinylicious":{
+                    "configurations":{
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                    }
+                },
+                "odsp":{
+                    "configurations":{
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                    }
+                }
+            }
         },
         "ci": {
             "opRatePerMin": 10,
