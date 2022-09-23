@@ -13,14 +13,35 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IRunConfig } from "./loadTestDataStore";
 
 /**
- * How much faster than its parent should a data stores at each level sends ops.
+ * How much faster than its parent should a data stores at each level send ops.
  */
 const opRateMultiplierPerLevel = 5;
+
+/**
+ * Activities that data stores perform.
+ */
+const GCActivityType = {
+    /** Create a child data store and reference it. */
+    CreateAndReference: 0,
+    /** Unreference a referenced child data store. */
+    Unreference: 1,
+    /** Revive an unreferenced child data store. */
+    Revive: 2,
+};
+type GCActivityType = typeof GCActivityType[keyof typeof GCActivityType];
 
 export interface IGCDataStore {
     readonly handle: IFluidHandle;
     run: (config: IRunConfig, id?: string) => Promise<boolean>;
     stop: () => void;
+}
+
+/**
+ * The details of a child that is tracked by a data store.
+ */
+interface IChildDetails {
+    id: string;
+    child: IGCDataStore;
 }
 
 /**
@@ -62,14 +83,14 @@ export class DataObjectType1 extends BaseDataObject implements IGCDataStore {
     private shouldRun: boolean = false;
     private myId: string | undefined;
 
-    public async run(config: IRunConfig, id?: string) {
+    public async run(config: IRunConfig, id?: string): Promise<boolean> {
         console.log(`+++++++++ Started child [${id}]`);
         this.myId = id;
         this.shouldRun = true;
         const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
         let localSendCount = 0;
         while (this.shouldRun && !this.runtime.disposed) {
-            if (localSendCount % 10 === 0) {
+            if (localSendCount % 50 === 0) {
                 console.log(
                     `+++++++++ Child Data Store [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
             }
@@ -116,10 +137,13 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     private childCount = 1;
 
     // The key against which handle to child data store is stored.
-    private readonly uniqueChildKey = `${this.myId}-child`;
+    private readonly uniquechildId = `${this.myId}-child`;
     private child: IGCDataStore | undefined;
 
-    public async run(config: IRunConfig) {
+    private readonly unreferencedChildrenDetails: IChildDetails[] = [];
+    private readonly referencedChildrenDetails: IChildDetails[] = [];
+
+    public async run(config: IRunConfig): Promise<boolean> {
         this.shouldRun = true;
         const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
         const totalSendCount = config.testConfig.totalSendCount;
@@ -135,7 +159,7 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
             // After every few ops, perform an activity.
             if (localSendCount % 10 === 0) {
                 // We do no await for the activity because we want any child created to run asynchronously.
-                this.preformActivity(config).then((done: boolean) => {
+                this.performActivity(config).then((done: boolean) => {
                     if (!done) {
                         childFailed = true;
                     }
@@ -151,25 +175,32 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
             await delay(delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, .5, true)(config.randEng));
         }
 
-        this.child?.stop();
+        this.stop();
         const notDone = this.runtime.disposed || childFailed;
+        console.log(
+            `########## Stopping [${this.myId}]: ${this.runtime.disposed} / ${childFailed} / ${localSendCount}`);
         return !notDone;
     }
 
     public stop() {
         this.shouldRun = false;
+        this.referencedChildrenDetails.forEach((childDetails: IChildDetails) => {
+            childDetails.child.stop();
+        });
     }
 
     /**
+     * @deprecated - Keeping this around for now while the new logic runs in CI few times.
+     *
      * Perform the following activity:
      * - Ask the current child data store to stop running and unreferenced it.
      * - Create a child data store, reference it and asks it to run.
      */
-    private async preformActivity(config: IRunConfig) {
+    public async performActivityOld(config: IRunConfig) {
         this.child?.stop();
         this.child = await dataObjectType1Factory.createInstance(this.context.containerRuntime);
         // This will unreference the previous child and reference the new one.
-        this.root.set(this.uniqueChildKey, this.child.handle);
+        this.root.set(this.uniquechildId, this.child.handle);
 
         // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
         const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
@@ -186,6 +217,119 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         this.childCount++;
 
         return this.child.run(childConfig, uniquechildId);
+    }
+
+    /**
+     * Performs one of the following activity at random:
+     * 1. CreateAndReference - Create a child data store, reference it and ask it to run.
+     * 2. Unreference - Unreference the oldest referenced child and asks it to stop running.
+     * 3. Revive - Re-reference the oldest unreferenced child and ask it to run.
+     */
+    private async performActivity(config: IRunConfig): Promise<boolean> {
+        /**
+         * Tracks if the random activity completed. Keeps trying to run an activity until one completes.
+         * For Unreference and Revive activities to complete, there has to be referenced and unreferenced
+         * children respectively. If there are none, choose another activity to run.
+        */
+        let activityCompleted = false;
+        while (!activityCompleted) {
+            activityCompleted = false;
+            const action = random.integer(0, 2)(config.randEng);
+            switch (action) {
+                case GCActivityType.CreateAndReference: {
+                    console.log("########## Creating child");
+                    return this.createAndReferenceChild(config);
+                }
+                case GCActivityType.Unreference: {
+                    console.log("########## Unreferencing child");
+                    if (this.referencedChildrenDetails.length > 0) {
+                        this.unreferenceChild();
+                        activityCompleted = true;
+                    }
+                    break;
+                }
+                case GCActivityType.Revive: {
+                    console.log("########## Reviving child");
+                    /**
+                     * Skip this for now because this may lead to inactive object error.
+                     * Reviving will be added in a follow up PR.
+                     */
+                    // if (this.unreferencedChildrenDetails.length > 0) {
+                    //     return this.reviveChild(config);
+                    // }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Creates a new child data store, reference it and ask it to run.
+     */
+    private async createAndReferenceChild(config: IRunConfig): Promise<boolean> {
+        // Give each child a unique id w.r.t. this data store's id.
+        const childId = `${this.myId}-${this.childCount.toString()}`;
+        this.childCount++;
+
+        const child = await dataObjectType1Factory.createInstance(this.context.containerRuntime);
+        this.root.set(childId, child.handle);
+        this.referencedChildrenDetails.push({
+            id: childId,
+            child,
+        });
+
+        // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
+        const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
+        const childConfig: IRunConfig = {
+            ...config,
+            testConfig: {
+                ...config.testConfig,
+                opRatePerMin,
+            },
+        };
+        return child.run(childConfig, childId);
+    }
+
+    /**
+     * Retrieves the oldest referenced child, asks it to stop running and unreferences it.
+     */
+    private unreferenceChild() {
+        const childDetails = this.referencedChildrenDetails.shift();
+        assert(childDetails !== undefined, "Cannot find child to unreference");
+
+        const childHandle = this.root.get<IFluidHandle<IGCDataStore>>(childDetails.id);
+        assert(childHandle !== undefined, "Could not get handle for child");
+
+        childDetails.child.stop();
+
+        this.root.delete(childDetails.id);
+        this.unreferencedChildrenDetails.push(childDetails);
+    }
+
+    /**
+     * Retrieves the oldes unreferenced child, references it and asks it to run.
+     * TODO - Change this to private once it is used. Kept it here for now for PR review.
+     */
+    public async reviveChild(config: IRunConfig): Promise<boolean> {
+        const childDetails = this.unreferencedChildrenDetails.shift();
+        assert(childDetails !== undefined, "Cannot find child to revive");
+
+        this.root.set(childDetails.id, childDetails.child.handle);
+        this.referencedChildrenDetails.push(childDetails);
+
+        // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
+        const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
+        const childConfig: IRunConfig = {
+            ...config,
+            testConfig: {
+                ...config.testConfig,
+                opRatePerMin,
+            },
+        };
+        return childDetails.child.run(childConfig, childDetails.id);
     }
 }
 
