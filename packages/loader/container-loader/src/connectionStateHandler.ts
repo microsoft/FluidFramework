@@ -147,9 +147,14 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
         switch (value) {
             case ConnectionState.Connected:
                 assert(this._connectionState === ConnectionState.CatchingUp, 0x3e1 /* connectivity transitions */);
-                assert(this.catchUpMonitor !== undefined,
-                    0x3e2 /* catchUpMonitor should always be set if pendingClientId is set */);
-                this.catchUpMonitor.on("caughtUp", this.transitionToConnectedState);
+                // Create catch-up monitor here (not earlier), as we might get more exact info by now about how far
+                // client is behind through join signal. This is only true if base layer uses signals (i.e. audience,
+                // not quorum, including for "rea" connections) to make decisions about moving to "connected" state.
+                // In addition to that, in its current form, doing this in ConnectionState.CatchingUp is dangerous as
+                // we might get callback right away, and it will screw up state transition (as code outside of switch
+                // statement will overwrite current state).
+                assert(this.catchUpMonitor === undefined, "catchUpMonitor should be gone");
+                this.catchUpMonitor = new CatchUpMonitor(this.deltaManager, this.transitionToConnectedState);
                 return;
             case ConnectionState.Disconnected:
                 this.catchUpMonitor?.dispose();
@@ -157,9 +162,6 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
                 break;
             case ConnectionState.CatchingUp:
                 assert(this._connectionState === ConnectionState.Disconnected, 0x3e3 /* connectivity transitions */);
-                // We may want to catch up to known ops as of now before transitioning to Connected state
-                assert(this.catchUpMonitor === undefined, 0x3e4 /* catchUpMonitor should be gone */);
-                this.catchUpMonitor = new CatchUpMonitor(this.deltaManager);
                 break;
             default:
         }
