@@ -143,13 +143,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             // fetch name of owner associated to the pull request
             const prInfo = await api.pullRequestInfo(flags.auth, unmergedCommitList[0]);
             this.info(
-                `Fetch pull request info for single commit id ${unmergedCommitList[0]}: ${prInfo}`,
+                `Fetch pull request info for single commit id ${unmergedCommitList[0]} and assignee ${prInfo.data[0].assignee.login}`,
             );
             prNumber = await api.createPullRequest(
                 flags.auth,
                 `${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
                 flags.target,
-                "sonalivdeshpande",
+                prInfo.data[0].assignee.login,
             );
             this.log(
                 `Open pull request for commit id ${unmergedCommitList[0]}. Please resolve the merge conflicts.`,
@@ -158,13 +158,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
             // fetch name of owner associated to the pull request
             const prInfo = await api.pullRequestInfo(flags.auth, unmergedCommitList[commit]);
             this.info(
-                `Fetch pull request info for bulk commit id ${unmergedCommitList[commit]}: ${prInfo}`,
+                `Fetch pull request info for bulk commit ids till ${unmergedCommitList[commit]} and assignee ${prInfo.data[0].assignee.login}`,
             );
             prNumber = await api.createPullRequest(
                 flags.auth,
                 branchName,
                 flags.target,
-                "sonalivdeshpande",
+                prInfo.data[0].assignee.login,
             );
             this.info(`Pull request opened for pushing bulk commits`);
         }
