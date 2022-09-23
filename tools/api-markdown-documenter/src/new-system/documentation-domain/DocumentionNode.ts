@@ -28,15 +28,15 @@ export interface SingleLineElementNode extends DocumentationNode {}
 /**
  * A documentation node that has child nodes.
  */
-export interface ParentNode<TDocumentNode extends DocumentationNode = DocumentationNode>
-    extends UnistParent<TDocumentNode, UnistData>,
+export interface ParentNode<TDocumentationNode extends DocumentationNode = DocumentationNode>
+    extends UnistParent<TDocumentationNode, UnistData>,
         DocumentationNode {
     /**
      * {@inheritDoc DocumentationNode."type"}
      */
     readonly type: DocumentNodeType;
 
-    readonly children: TDocumentNode[];
+    readonly children: TDocumentationNode[];
 }
 
 /**
@@ -52,8 +52,8 @@ export interface LiteralNode<T = unknown> extends UnistLiteral<T>, Documentation
 /**
  * Helper base class for {@link ParentNode} implementations.
  */
-export abstract class ParentNodeBase<TDocumentNode extends DocumentationNode = DocumentationNode>
-    implements ParentNode<TDocumentNode>
+export abstract class ParentNodeBase<TDocumentationNode extends DocumentationNode = DocumentationNode>
+    implements ParentNode<TDocumentationNode>
 {
     /**
      * {@inheritDoc DocumentationNode."type"}
@@ -63,9 +63,9 @@ export abstract class ParentNodeBase<TDocumentNode extends DocumentationNode = D
     /**
      * {@inheritDoc ParentNode.children}
      */
-    public readonly children: TDocumentNode[];
+    public readonly children: TDocumentationNode[];
 
-    protected constructor(children: TDocumentNode[]) {
+    protected constructor(children: TDocumentationNode[]) {
         this.children = children;
     }
 
