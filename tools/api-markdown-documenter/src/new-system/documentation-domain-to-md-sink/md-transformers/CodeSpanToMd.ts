@@ -1,6 +1,6 @@
 import { CodeSpanNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { getTableEscapedText, standardEOL } from "./Utilities";
+import { getTableEscapedText } from "./Utilities";
 
 export function CodeSpanToMarkdown(
     codeSpanNode: CodeSpanNode,
@@ -19,5 +19,5 @@ export function CodeSpanToMarkdown(
     } else {
         output = ["`", childContents, "`"];
     }
-    return output.join(standardEOL);
+    return output.join("");
 }
