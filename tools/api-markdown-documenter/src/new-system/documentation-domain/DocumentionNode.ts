@@ -52,8 +52,9 @@ export interface LiteralNode<T = unknown> extends UnistLiteral<T>, Documentation
 /**
  * Helper base class for {@link ParentNode} implementations.
  */
-export abstract class ParentNodeBase<TDocumentationNode extends DocumentationNode = DocumentationNode>
-    implements ParentNode<TDocumentationNode>
+export abstract class ParentNodeBase<
+    TDocumentationNode extends DocumentationNode = DocumentationNode,
+> implements ParentNode<TDocumentationNode>
 {
     /**
      * {@inheritDoc DocumentationNode."type"}
