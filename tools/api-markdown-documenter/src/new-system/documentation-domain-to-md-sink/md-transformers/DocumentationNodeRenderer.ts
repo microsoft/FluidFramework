@@ -3,8 +3,8 @@ import {
     BlockQuoteNode,
     CodeSpanNode,
     DocumentNode,
-    DocumentationNodeType,
     DocumentationNode,
+    DocumentationNodeType,
     FencedCodeBlockNode,
     HeadingNode,
     HierarchicalSectionNode,
@@ -41,88 +41,94 @@ export type DocumentationNodeRenderFunction = (
     renderer: DocumentationNodeRenderer,
 ) => string;
 
-// TODocumentationNodeType
+// TODO: better name?
 export type NodeRenderers = {
-    [DocumentNodeType.Alert]: (
+    [DocumentationNodeType.Alert]: (
         node: AlertNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
+        subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.BlockQuote]: (
+    [DocumentationNodeType.BlockQuote]: (
         node: BlockQuoteNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
+        subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.CodeSpan]: (
+    [DocumentationNodeType.CodeSpan]: (
         node: CodeSpanNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
+        subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.FencedCode]: (
+    [DocumentationNodeType.FencedCode]: (
         node: FencedCodeBlockNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
+        subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.Heading]: (
+    [DocumentationNodeType.Heading]: (
         node: HeadingNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
-    )DocumentationNodeType
-    [DocumentNodeType.LineBreak]: (
+        subtreeRenderer: DocumentationNodeRenderer,
+    ) => string;
+    [DocumentationNodeType.LineBreak]: (
         node: LineBreakNode,
         subtreeRenderer: DocumentationNodeRenderer,
-    )DocumentationNodeType
-    [DocumentNodeType.Link]: (node: LinkNode, subtreeRenderer: DocumentationNodeRenderer) => string;
-    [DocumentNodeType.HierarchicalSection]: (
+    ) => string;
+    [DocumentationNodeType.Link]: (
+        node: LinkNode,
+        subtreeRenderer: DocumentationNodeRenderer,
+    ) => string;
+    [DocumentationNodeType.HierarchicalSection]: (
         node: HierarchicalSectionNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
+        subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.OrderedList]: (
+    [DocumentationNodeType.OrderedList]: (
         node: OrderedListNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
+        subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.Paragraph]: (
+    [DocumentationNodeType.Paragraph]: (
         node: ParagraphNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
-    )DocumentationNodeType
-    [DocumentNodeType.PlainText]: (
+        subtreeRenderer: DocumentationNodeRenderer,
+    ) => string;
+    [DocumentationNodeType.PlainText]: (
         node: PlainTextNode,
         subtreeRenderer: DocumentationNodeRenderer,
-    )DocumentationNodeType
-    [DocumentNodeType.Span]: (node: SpanNode, subtreeRenderer: DocumentationNodeRenderer) => string;
-    [DocumentNodeType.Table]: (
+    ) => string;
+    [DocumentationNodeType.Span]: (
+        node: SpanNode,
+        subtreeRenderer: DocumentationNodeRenderer,
+    ) => string;
+    [DocumentationNodeType.Table]: (
         node: TableNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
+        subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.TableCell]: (
+    [DocumentationNodeType.TableCell]: (
         node: TableCellNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
+        subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.TableRow]: (
+    [DocumentationNodeType.TableRow]: (
         node: TableRowNode,
         subtreeRenderer: DocumentationNodeRenderer,
     ) => string;
-    [DocumentNodeType.UnorderedList]: (
-     DocumentationNodeTypeedListNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
-    )DocumentationNodeType
-};DocumentationNodeType
-DocumentationNodeType
+    [DocumentationNodeType.UnorderedList]: (
+        node: UnorderedListNode,
+        subtreeRenderer: DocumentationNodeRenderer,
+    ) => string;
+};
+
 export class DefaultNodeRenderers {
-    [DocumentNodeType.Alert] = AlertToMarkdown;
-    [DocumentNodeType.BlockQuote] = BlockQuoteToMarkdown;
+    [DocumentationNodeType.Alert] = AlertToMarkdown;
+    [DocumentationNodeType.BlockQuote] = BlockQuoteToMarkdown;
     [DocumentationNodeType.CodeSpan] = CodeSpanToMarkdown;
     [DocumentationNodeType.FencedCode] = FencedCodeBlockToMarkdown;
     [DocumentationNodeType.Heading] = HeadingToMarkdown;
     [DocumentationNodeType.LineBreak] = (
-     DocumentationNodeTypeakNode,
-     DocumentationNodeTypeer: DocumentationNodeRenderer,
-    )DocumentationNodeTypeerer.isInsideCodeBlock ? `<br/>` : standardEOL);
+        node: LineBreakNode,
+        subtreeRenderer: DocumentationNodeRenderer,
+    ) => (subtreeRenderer.isInsideCodeBlock ? `<br/>` : standardEOL);
     [DocumentationNodeType.Link] = LinkToMarkdown;
     [DocumentationNodeType.HierarchicalSection] = HierarchicalSectionToMarkdown;
     [DocumentationNodeType.OrderedList] = OrderedListToMarkdown;
-    [DocumentNodeType.Paragraph] = ParagraphToMarkdown;
-    [DocumentNodeType.PlainText] = PlainTextToMarkdown;
-    [DocumentNodeType.Span] = SpanToMarkdown;
-    [DocumentNodeType.Table] = TableToMarkdown;
-    [DocumentNodeType.TableCell] = TableCellToMarkdown;
-    [DocumentNodeType.TableRow] = TableRowToMarkdown;
-    [DocumentNodeType.UnorderedList] = UnorderedListToMarkdown;
+    [DocumentationNodeType.Paragraph] = ParagraphToMarkdown;
+    [DocumentationNodeType.PlainText] = PlainTextToMarkdown;
+    [DocumentationNodeType.Span] = SpanToMarkdown;
+    [DocumentationNodeType.Table] = TableToMarkdown;
+    [DocumentationNodeType.TableCell] = TableCellToMarkdown;
+    [DocumentationNodeType.TableRow] = TableRowToMarkdown;
+    [DocumentationNodeType.UnorderedList] = UnorderedListToMarkdown;
 }
 
 export interface RenderingContext {
@@ -145,102 +151,102 @@ export class DocumentationNodeRenderer {
         insideTable: false,
         insideCodeBlock: false,
         depth: 0,
-    };DocumentationNodeType
-    public renderNode(node: DocumentationNode)DocumentationNodeType
+    };
+    public renderNode(node: DocumentationNode): string {
         const prevRenderingContext = this.renderingContext;
         const newRenderingContext = { ...prevRenderingContext };
         this.renderingContext = newRenderingContext;
         let renderedNode = `TODO: UNKNOWN NODE (${node.type}) ENCOUNTERED`;
-        switch (nDocumentationNodeType
-            case DocumentNodeType.Alert:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.Alert](
+        switch (node.type) {
+            case DocumentationNodeType.Alert:
+                renderedNode = this.renderers[DocumentationNodeType.Alert](
                     node as unknown as AlertNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.BlockQuote:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.BlockQuote](
+                break;
+            case DocumentationNodeType.BlockQuote:
+                renderedNode = this.renderers[DocumentationNodeType.BlockQuote](
                     node as unknown as BlockQuoteNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.CodeSpan:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.CodeSpan](
+                break;
+            case DocumentationNodeType.CodeSpan:
+                renderedNode = this.renderers[DocumentationNodeType.CodeSpan](
                     node as unknown as CodeSpanNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.FencedCode:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.FencedCode](
+                break;
+            case DocumentationNodeType.FencedCode:
+                renderedNode = this.renderers[DocumentationNodeType.FencedCode](
                     node as unknown as FencedCodeBlockNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.Heading:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.Heading](
+                break;
+            case DocumentationNodeType.Heading:
+                renderedNode = this.renderers[DocumentationNodeType.Heading](
                     node as unknown as HeadingNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.HierarchicalDocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.HierarchicalSection](
-                 DocumentationNodeTypewn as HierarchicalSectionNode,
-                    this,DocumentationNodeType
+                break;
+            case DocumentationNodeType.HierarchicalSection:
+                renderedNode = this.renderers[DocumentationNodeType.HierarchicalSection](
+                    node as unknown as HierarchicalSectionNode,
+                    this,
                 );
                 break;
-            case DocumentNodeType.LineBreak:
-                renderedNode = this.renderers[DocumentNodeType.LineBreak](
-                 DocumentationNodeTypewn as LineBreakNode,
-                    this,DocumentationNodeType
+            case DocumentationNodeType.LineBreak:
+                renderedNode = this.renderers[DocumentationNodeType.LineBreak](
+                    node as unknown as LineBreakNode,
+                    this,
                 );
                 break;
-            case DocumentNodeType.Link:
-                renderedNode = this.renderers[DocumentNodeType.Link](node as LinkNode, this);
-                bDocumentationNodeType
-            case DocumentNodeType.OrderedList:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.OrderedList](
+            case DocumentationNodeType.Link:
+                renderedNode = this.renderers[DocumentationNodeType.Link](node as LinkNode, this);
+                break;
+            case DocumentationNodeType.OrderedList:
+                renderedNode = this.renderers[DocumentationNodeType.OrderedList](
                     node as unknown as OrderedListNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.Paragraph:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.Paragraph](
+                break;
+            case DocumentationNodeType.Paragraph:
+                renderedNode = this.renderers[DocumentationNodeType.Paragraph](
                     node as unknown as ParagraphNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.PlainText:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.PlainText](
+                break;
+            case DocumentationNodeType.PlainText:
+                renderedNode = this.renderers[DocumentationNodeType.PlainText](
                     node as unknown as PlainTextNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.Span:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.Span](
+                break;
+            case DocumentationNodeType.Span:
+                renderedNode = this.renderers[DocumentationNodeType.Span](
                     node as unknown as SpanNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.Table:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.Table](
+                break;
+            case DocumentationNodeType.Table:
+                renderedNode = this.renderers[DocumentationNodeType.Table](
                     node as unknown as TableNode,
                     this,
                 );
-                bDocumentationNodeType
-            case DocumentNodeType.TableRow:DocumentationNodeType
-                renderedNode = this.renderers[DocumentNodeType.TableRow](
+                break;
+            case DocumentationNodeType.TableRow:
+                renderedNode = this.renderers[DocumentationNodeType.TableRow](
                     node as unknown as TableRowNode,
                     this,
                 );
                 break;
-            case DocumentNodeType.TableCell:
-                renderedNode = this.renderers[DocumentNodeType.TableCell](
+            case DocumentationNodeType.TableCell:
+                renderedNode = this.renderers[DocumentationNodeType.TableCell](
                     node as unknown as TableCellNode,
                     this,
                 );
                 break;
-            case DocumentNodeType.UnorderedList:
-                renderedNode = this.renderers[DocumentNodeType.UnorderedList](
+            case DocumentationNodeType.UnorderedList:
+                renderedNode = this.renderers[DocumentationNodeType.UnorderedList](
                     node as unknown as UnorderedListNode,
                     this,
                 );

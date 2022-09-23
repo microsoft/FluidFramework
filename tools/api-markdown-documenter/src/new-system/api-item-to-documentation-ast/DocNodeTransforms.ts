@@ -18,8 +18,8 @@ import { UrlTarget } from "../../Link";
 import { Logger } from "../../Logging";
 import {
     CodeSpanNode,
-    DocumentationNodeType,
     DocumentationNode,
+    DocumentationNodeType,
     FencedCodeBlockNode,
     LineBreakNode,
     LinkNode,
@@ -295,7 +295,9 @@ function filterNewlinesAdjacentToParagraphs(
             const previousIsParagraph =
                 i > 0 ? nodes[i - 1].type === DocumentationNodeType.Paragraph : false;
             const nextIsParagraph =
-                i < nodes.length - 1 ? nodes[i + 1].type === DocumentationNodeType.Paragraph : false;
+                i < nodes.length - 1
+                    ? nodes[i + 1].type === DocumentationNodeType.Paragraph
+                    : false;
             if (previousIsParagraph || nextIsParagraph) {
                 continue;
             }
