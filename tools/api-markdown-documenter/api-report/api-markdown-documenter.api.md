@@ -913,19 +913,19 @@ export class ParagraphNode extends ParentNodeBase<ParagraphChildren> {
 export function ParagraphToMarkdown(paragraph: ParagraphNode, renderer: DocumentationNodeRenderer): string;
 
 // @public
-interface ParentNode_2<TDocumentNode extends DocumentationNode = DocumentationNode> extends Parent<TDocumentNode, Data>, DocumentationNode {
+interface ParentNode_2<TDocumentationNode extends DocumentationNode = DocumentationNode> extends Parent<TDocumentationNode, Data>, DocumentationNode {
     // (undocumented)
-    readonly children: TDocumentNode[];
+    readonly children: TDocumentationNode[];
     // (undocumented)
     readonly type: DocumentNodeType;
 }
 export { ParentNode_2 as ParentNode }
 
 // @public
-export abstract class ParentNodeBase<TDocumentNode extends DocumentationNode = DocumentationNode> implements ParentNode_2<TDocumentNode> {
-    protected constructor(children: TDocumentNode[]);
+export abstract class ParentNodeBase<TDocumentationNode extends DocumentationNode = DocumentationNode> implements ParentNode_2<TDocumentationNode> {
+    protected constructor(children: TDocumentationNode[]);
     // (undocumented)
-    readonly children: TDocumentNode[];
+    readonly children: TDocumentationNode[];
     abstract equals(other: DocumentationNode): boolean;
     // (undocumented)
     abstract type: DocumentNodeType;
