@@ -21,8 +21,9 @@ const getMyMap = async () => {
         ({ container } = await client.createContainer(containerSchema));
         const mySet = container.initialObjects.mySet as SharedSet
         mySet.add(Date.now().toString());
-        const id = await container.attach();
-        window.location.hash = id;
+    console.log("here")
+    const id = await container.attach();
+    window.location.hash = id;
     } else {
         ({ container } = await client.getContainer(containerId, containerSchema));
     }
@@ -32,14 +33,13 @@ const getMyMap = async () => {
 function App() {
 
     const [fluidMap, setFluidMap] = useState<SharedSet>();
-    useEffect(() => {
-        getMyMap().then((mySet:SharedSet) => setFluidMap(mySet));
-    }, []);
 
     useEffect(() => {
         if (fluidMap !== undefined) {
             // sync Fluid data into view state
             console.log(fluidMap)
+        }else{
+            getMyMap().then((mySet:SharedSet) => setFluidMap(mySet));
         }
     }, [fluidMap])
 
