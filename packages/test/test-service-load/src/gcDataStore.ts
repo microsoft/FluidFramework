@@ -13,7 +13,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IRunConfig } from "./loadTestDataStore";
 
 /**
- * How much faster than its parent should a data stores at each level sends ops.
+ * How much faster than its parent should a data stores at each level send ops.
  */
 const opRateMultiplierPerLevel = 5;
 
