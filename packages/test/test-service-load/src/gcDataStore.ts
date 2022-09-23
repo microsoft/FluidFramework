@@ -12,6 +12,11 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IRunConfig } from "./loadTestDataStore";
 
+/**
+ * How much faster than its parent should a data stores at each level sends ops.
+ */
+const opRateMultiplierPerLevel = 5;
+
 export interface IGCDataStore {
     readonly handle: IFluidHandle;
     run: (config: IRunConfig, id?: string) => Promise<boolean>;
@@ -58,12 +63,10 @@ export class DataObjectType1 extends BaseDataObject implements IGCDataStore {
     private myId: string | undefined;
 
     public async run(config: IRunConfig, id?: string) {
-        this.myId = id;
         console.log(`+++++++++ Started child [${id}]`);
+        this.myId = id;
         this.shouldRun = true;
-
         const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
-
         let localSendCount = 0;
         while (this.shouldRun && !this.runtime.disposed) {
             if (localSendCount % 10 === 0) {
@@ -168,8 +171,8 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         // This will unreference the previous child and reference the new one.
         this.root.set(this.uniqueChildKey, this.child.handle);
 
-        // Set up the child to send ops a few times faster than this data store.
-        const opRatePerMin = config.testConfig.opRatePerMin * 5;
+        // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
+        const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
         const childConfig: IRunConfig = {
             ...config,
             testConfig: {
