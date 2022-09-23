@@ -136,26 +136,14 @@ use_old_FunctionDeclaration_createOdspUrl(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_currentReadVersion": {"forwardCompat": false}
+* "RemovedVariableDeclaration_currentReadVersion": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_currentReadVersion():
-    TypeOnly<typeof old.currentReadVersion>;
-declare function use_current_VariableDeclaration_currentReadVersion(
-    use: TypeOnly<typeof current.currentReadVersion>);
-use_current_VariableDeclaration_currentReadVersion(
-    get_old_VariableDeclaration_currentReadVersion());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_currentReadVersion": {"backCompat": false}
+* "RemovedVariableDeclaration_currentReadVersion": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_currentReadVersion():
-    TypeOnly<typeof current.currentReadVersion>;
-declare function use_old_VariableDeclaration_currentReadVersion(
-    use: TypeOnly<typeof old.currentReadVersion>);
-use_old_VariableDeclaration_currentReadVersion(
-    get_current_VariableDeclaration_currentReadVersion());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -688,26 +676,14 @@ use_old_FunctionDeclaration_prefetchLatestSnapshot(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ReadBuffer": {"forwardCompat": false}
+* "RemovedClassDeclaration_ReadBuffer": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_ReadBuffer():
-    TypeOnly<old.ReadBuffer>;
-declare function use_current_ClassDeclaration_ReadBuffer(
-    use: TypeOnly<current.ReadBuffer>);
-use_current_ClassDeclaration_ReadBuffer(
-    get_old_ClassDeclaration_ReadBuffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ReadBuffer": {"backCompat": false}
+* "RemovedClassDeclaration_ReadBuffer": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_ReadBuffer():
-    TypeOnly<current.ReadBuffer>;
-declare function use_old_ClassDeclaration_ReadBuffer(
-    use: TypeOnly<old.ReadBuffer>);
-use_old_ClassDeclaration_ReadBuffer(
-    get_current_ClassDeclaration_ReadBuffer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -760,26 +736,14 @@ use_old_EnumDeclaration_SharingLinkHeader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_snapshotMinReadVersion": {"forwardCompat": false}
+* "RemovedVariableDeclaration_snapshotMinReadVersion": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_snapshotMinReadVersion():
-    TypeOnly<typeof old.snapshotMinReadVersion>;
-declare function use_current_VariableDeclaration_snapshotMinReadVersion(
-    use: TypeOnly<typeof current.snapshotMinReadVersion>);
-use_current_VariableDeclaration_snapshotMinReadVersion(
-    get_old_VariableDeclaration_snapshotMinReadVersion());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_snapshotMinReadVersion": {"backCompat": false}
+* "RemovedVariableDeclaration_snapshotMinReadVersion": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_snapshotMinReadVersion():
-    TypeOnly<typeof current.snapshotMinReadVersion>;
-declare function use_old_VariableDeclaration_snapshotMinReadVersion(
-    use: TypeOnly<typeof old.snapshotMinReadVersion>);
-use_old_VariableDeclaration_snapshotMinReadVersion(
-    get_current_VariableDeclaration_snapshotMinReadVersion());
 
 /*
 * Validate forward compat by using old type in place of current type
