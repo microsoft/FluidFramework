@@ -50,9 +50,7 @@ import { Container } from "./container";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-/**
- * {@inheritDoc IContainerContext}
- */
+/** {@inheritDoc @fluidframework/container-definitions#IContainerContext} */
 export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
