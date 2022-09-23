@@ -31,3 +31,5 @@ export * from "./odspDriverUrlResolver";
 
 // It's used by URL resolve code, but also has some public functions
 export * from "./odspFluidFileLink";
+
+export { parseCompactSnapshotResponse } from "./compactSnapshotParser";

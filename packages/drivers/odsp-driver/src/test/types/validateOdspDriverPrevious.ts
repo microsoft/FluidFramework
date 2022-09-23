@@ -628,14 +628,26 @@ use_old_InterfaceDeclaration_OdspFluidDataStoreLocator(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_parseCompactSnapshotResponse": {"forwardCompat": false}
+* "FunctionDeclaration_parseCompactSnapshotResponse": {"forwardCompat": false}
 */
+declare function get_old_FunctionDeclaration_parseCompactSnapshotResponse():
+    TypeOnly<typeof old.parseCompactSnapshotResponse>;
+declare function use_current_FunctionDeclaration_parseCompactSnapshotResponse(
+    use: TypeOnly<typeof current.parseCompactSnapshotResponse>);
+use_current_FunctionDeclaration_parseCompactSnapshotResponse(
+    get_old_FunctionDeclaration_parseCompactSnapshotResponse());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_parseCompactSnapshotResponse": {"backCompat": false}
+* "FunctionDeclaration_parseCompactSnapshotResponse": {"backCompat": false}
 */
+declare function get_current_FunctionDeclaration_parseCompactSnapshotResponse():
+    TypeOnly<typeof current.parseCompactSnapshotResponse>;
+declare function use_old_FunctionDeclaration_parseCompactSnapshotResponse(
+    use: TypeOnly<typeof old.parseCompactSnapshotResponse>);
+use_old_FunctionDeclaration_parseCompactSnapshotResponse(
+    get_current_FunctionDeclaration_parseCompactSnapshotResponse());
 
 /*
 * Validate forward compat by using old type in place of current type

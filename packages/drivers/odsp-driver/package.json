@@ -106,10 +106,6 @@
         "forwardCompat": false,
         "backCompat": false
       },
-      "RemovedFunctionDeclaration_parseCompactSnapshotResponse": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
       "RemovedVariableDeclaration_snapshotMinReadVersion": {
         "forwardCompat": false,
         "backCompat": false

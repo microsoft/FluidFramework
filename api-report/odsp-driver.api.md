@@ -171,6 +171,9 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     fileVersion?: string;
 }
 
+// @public
+export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLogger): ISnapshotContents;
+
 // Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
 //
 // @public
