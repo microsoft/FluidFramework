@@ -127,16 +127,6 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @public (undocumented)
-export interface IDocumentIdStrategy {
-    // (undocumented)
-    get(): string;
-    // (undocumented)
-    reset(): void;
-    // (undocumented)
-    update(resolvedUrl?: IResolvedUrl): void;
-}
-
-// @public (undocumented)
 export interface IOpProcessingController {
     // (undocumented)
     pauseProcessing(...containers: IContainer[]): Promise<void>;
@@ -308,11 +298,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
     // (undocumented)
-    protected _documentCreated: boolean;
-    // (undocumented)
     get documentId(): string;
-    // (undocumented)
-    protected readonly _documentIdStrategy: IDocumentIdStrategy;
     // (undocumented)
     get documentServiceFactory(): IDocumentServiceFactory;
     // (undocumented)

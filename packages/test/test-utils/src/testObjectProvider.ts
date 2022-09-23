@@ -94,7 +94,7 @@ export interface ITestContainerConfig {
 
 export const createDocumentId = (): string => uuid();
 
-export interface IDocumentIdStrategy {
+interface IDocumentIdStrategy {
     get(): string;
     update(resolvedUrl?: IResolvedUrl): void;
     reset(): void;
@@ -198,9 +198,9 @@ export class TestObjectProvider implements ITestObjectProvider {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
     private _logger: EventAndErrorTrackingLogger | undefined;
-    protected readonly _documentIdStrategy: IDocumentIdStrategy;
+    private readonly _documentIdStrategy: IDocumentIdStrategy;
     // Since documentId doesn't change we can only create/make one container. Call the load functions instead.
-    protected _documentCreated = false;
+    private _documentCreated = false;
 
     /**
      * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
