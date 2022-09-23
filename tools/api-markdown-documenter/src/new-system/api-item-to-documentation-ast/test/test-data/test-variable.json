@@ -174,7 +174,7 @@
       "members": [
         {
           "kind": "Variable",
-          "canonicalReference": "simple-suite-test!TestConst:var",
+          "canonicalReference": "test-package!TestConst:var",
           "docComment": "/**\n * Test Constant\n *\n * @public\n */\n",
           "excerptTokens": [
             {
