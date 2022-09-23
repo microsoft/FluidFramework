@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiInterface, ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItem, ApiItemKind, ApiModel, ApiVariable } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 import * as Path from "path";
 
@@ -10,14 +10,13 @@ import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "../../../Configuration";
-import { HierarchicalSectionNode } from "../../documentation-domain";
-import { apiItemToSection } from "../TransformApiItem";
+import { getQualifiedApiItemName } from "../../../utilities";
 import {
-    createHeadingForApiItem,
-    createSignatureSection,
-    createSummaryParagraph,
-    wrapInSection,
-} from "../helpers";
+    FencedCodeBlockNode,
+    HierarchicalSectionNode,
+    ParagraphNode,
+} from "../../documentation-domain";
+import { createHeadingForApiItem, wrapInSection } from "../helpers";
 
 /**
  * Sample "default" configuration.
@@ -70,7 +69,7 @@ function createConfig(
     });
 }
 
-describe("api-markdown-documenter full-suite tests", () => {
+describe("ApiItem to Documentation transformation tests", () => {
     it("test-variable", () => {
         const model = generateModel("test-variable.json");
         const members = getApiItems(model);
@@ -78,25 +77,32 @@ describe("api-markdown-documenter full-suite tests", () => {
             members,
             "TestConst",
             ApiItemKind.Variable,
-        ) as ApiInterface;
+        ) as ApiVariable;
 
         const config = createConfig(defaultPartialConfig, model);
 
-        const result = config.transformApiInterface(apiVariable, config, (childItem) =>
-            apiItemToSection(childItem, config),
-        );
+        const result = config.transformApiVariable(apiVariable, config);
 
         const expected = new HierarchicalSectionNode(
             [
-                new HierarchicalSectionNode([
-                    wrapInSection([createSummaryParagraph(apiVariable, config)!]),
-                    createSignatureSection(apiVariable, config)!,
-                ]),
+                wrapInSection([ParagraphNode.createFromPlainText("Test Constant")]),
+                wrapInSection(
+                    [
+                        FencedCodeBlockNode.createFromPlainText(
+                            'TestConst = "Hello world!"',
+                            "typescript",
+                        ),
+                    ],
+                    {
+                        title: "Signature",
+                        id: `${getQualifiedApiItemName(apiVariable)}-signature`,
+                    },
+                ),
             ],
             createHeadingForApiItem(apiVariable, config),
         );
 
-        expect(expected).deep.equals(result);
+        expect(result).deep.equals(expected);
     });
 
     // it("test-interface", () => {
@@ -116,6 +122,6 @@ describe("api-markdown-documenter full-suite tests", () => {
 
     //     const expected = new HierarchicalSectionNode([]);
 
-    //     expect(expected).deep.equals(result);
+    //     expect(result).deep.equals(expected);
     // });
 });
