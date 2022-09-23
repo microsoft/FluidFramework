@@ -266,6 +266,7 @@ export const shortCodeMap = {
     "0x138": "Failed to get snapshot from storage",
     "0x139": "Undefined package path",
     "0x13a": "Data store ID contains slash",
+    "0x13b": "datastore context is already in bound state",
     "0x13c": "undefined channel on datastore context",
     "0x13d": "Detached runtime creation on realize()",
     "0x13e": "Unexpected package path",
