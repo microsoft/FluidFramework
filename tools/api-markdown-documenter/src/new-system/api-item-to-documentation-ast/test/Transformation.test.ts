@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import {
+    ApiFunction,
     ApiInterface,
     ApiItem,
     ApiItemKind,
@@ -16,13 +17,14 @@ import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "../../../Configuration";
-import { getQualifiedApiItemName } from "../../../utilities";
 import {
     CodeSpanNode,
     FencedCodeBlockNode,
+    HeadingNode,
     HierarchicalSectionNode,
     LinkNode,
     ParagraphNode,
+    PlainTextNode,
     SpanNode,
     TableCellNode,
     TableNode,
@@ -108,11 +110,113 @@ describe("ApiItem to Documentation transformation tests", () => {
                     ],
                     {
                         title: "Signature",
-                        id: `${getQualifiedApiItemName(apiVariable)}-signature`,
+                        id: `testconst-signature`,
                     },
                 ),
             ],
             createHeadingForApiItem(apiVariable, config),
+        );
+
+        expect(result).deep.equals(expected);
+    });
+
+    it("Transform ApiFunction", () => {
+        const model = generateModel("test-function.json");
+        const members = getApiItems(model);
+        const apiFunction = findApiMember(
+            members,
+            "testFunction",
+            ApiItemKind.Function,
+        ) as ApiFunction;
+
+        const config = createConfig(defaultPartialConfig, model);
+
+        const result = config.transformApiFunction(apiFunction, config);
+
+        const expected = new HierarchicalSectionNode(
+            [
+                // Summary section
+                wrapInSection([ParagraphNode.createFromPlainText("Test function")]),
+
+                // Signature section
+                wrapInSection(
+                    [
+                        new FencedCodeBlockNode(
+                            [
+                                new PlainTextNode(
+                                    "export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
+                                ),
+                            ],
+                            "typescript",
+                        ),
+                    ],
+                    {
+                        title: "Signature",
+                        id: `testfunction-signature`,
+                    },
+                ),
+
+                // Parameters table section
+                wrapInSection(
+                    [
+                        new TableNode(
+                            [
+                                new TableRowNode([
+                                    TableCellNode.createFromPlainText("testParameter"),
+                                    TableCellNode.Empty,
+                                    new TableCellNode([
+                                        SpanNode.createFromPlainText("TTypeParameter"),
+                                    ]),
+                                    TableCellNode.createFromPlainText("A test parameter"),
+                                ]),
+                                new TableRowNode([
+                                    TableCellNode.createFromPlainText("testOptionalParameter"),
+                                    TableCellNode.createFromPlainText("optional"),
+                                    new TableCellNode([
+                                        SpanNode.createFromPlainText("TTypeParameter"),
+                                    ]),
+                                    TableCellNode.createFromPlainText("An optional parameter"),
+                                ]),
+                            ],
+                            new TableRowNode([
+                                TableCellNode.createFromPlainText("Parameter"),
+                                TableCellNode.createFromPlainText("Modifiers"),
+                                TableCellNode.createFromPlainText("Type"),
+                                TableCellNode.createFromPlainText("Description"),
+                            ]),
+                        ),
+                    ],
+                    {
+                        title: "Parameters",
+                        id: "testfunction-parameters",
+                    },
+                ),
+
+                // Returns section
+                wrapInSection(
+                    [
+                        ParagraphNode.createFromPlainText("The provided parameter"),
+                        new ParagraphNode([
+                            SpanNode.createFromPlainText("Return type: ", { bold: true }),
+                            SpanNode.createFromPlainText("TTypeParameter"),
+                        ]),
+                    ],
+                    {
+                        title: "Returns",
+                        id: "testfunction-returns",
+                    },
+                ),
+
+                // Throws section
+                wrapInSection(
+                    [ParagraphNode.createFromPlainText("An Error when something bad happens.")],
+                    {
+                        title: "Throws",
+                        id: `testfunction-throws`,
+                    },
+                ),
+            ],
+            HeadingNode.createFromPlainText("testFunction", "testfunction-function"),
         );
 
         expect(result).deep.equals(expected);
@@ -146,7 +250,7 @@ describe("ApiItem to Documentation transformation tests", () => {
                 ],
                 {
                     title: "Signature",
-                    id: `${getQualifiedApiItemName(apiInterface)}-signature`,
+                    id: `testinterface-signature`,
                 },
             ),
             // Remarks section
@@ -154,7 +258,7 @@ describe("ApiItem to Documentation transformation tests", () => {
                 [ParagraphNode.createFromPlainText("Here are some remarks about the interface")],
                 {
                     title: "Remarks",
-                    id: `${getQualifiedApiItemName(apiInterface)}-remarks`,
+                    id: `testinterface-remarks`,
                 },
             ),
 
