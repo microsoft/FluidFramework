@@ -307,7 +307,7 @@ describe("Garbage Collection Tests", () => {
         describe("Session Expiry and Sweep Timeout", () => {
             beforeEach(() => {
                 injectedSettings[runSessionExpiryKey] = true;
-                injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than sweep timeout
+                injectedSettings[testOverrideInactiveTimeoutMsKey] = 1; // To ensure it's less than sweep timeout
             });
 
             // Config sources for Session Expiry:
@@ -333,6 +333,13 @@ describe("Garbage Collection Tests", () => {
                 assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, defaultSessionExpiryDurationMs, "sessionExpiryTimer incorrect");
                 assert.equal(gc.sweepTimeoutMs, 7890, "sweepTimeoutMs incorrect");
+            });
+            it("defaultSessionExpiryDurationMs with TestOverride.DisableSnapshotCache", () => {
+                injectedSettings[testOverrideDisableSnapshotCacheKey] = true;
+                gc = createGcWithPrivateMembers(undefined /* metadata */, {}, 12345); // 12345 should be ignored
+                assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
+                assert.equal(gc.sessionExpiryTimer.defaultTimeout, defaultSessionExpiryDurationMs, "sessionExpiryTimer incorrect");
+                validateSweepTimeout(0); // 0 due to TestOverride.DisableSnapshotCache setting
             });
             it("IGCRuntimeOptions.sessionExpiryTimeoutMs", () => {
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs: 123 });
