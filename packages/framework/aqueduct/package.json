@@ -105,7 +105,6 @@
     "version": "2.0.0",
     "broken": {
       "InterfaceDeclaration_IDataObjectProps": {
-        "backCompat": false,
         "forwardCompat": false
       }
     }

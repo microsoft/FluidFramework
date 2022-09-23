@@ -109,8 +109,7 @@
     "version": "2.0.0",
     "broken": {
       "InterfaceDeclaration_ITestDataObject": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": false
       }
     }
   }
