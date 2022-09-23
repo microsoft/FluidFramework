@@ -11,8 +11,12 @@ import { DocumentNodeType } from "./DocumentationNodeType";
  * Base type for documentation nodes.
  */
 export interface DocumentationNode<TData extends object = UnistData> extends UnistNode<TData> {
+    // TODO: rename
     readonly type: DocumentNodeType;
 
+    /**
+     * Deep equality comparison.
+     */
     equals(other: DocumentationNode): boolean;
 }
 
