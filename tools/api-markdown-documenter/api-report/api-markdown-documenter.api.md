@@ -474,8 +474,6 @@ export class DocumentationNodeRenderer {
     // (undocumented)
     get isInsideTable(): boolean;
     // (undocumented)
-    lastRenderedThing: string;
-    // (undocumented)
     renderNode(node: DocumentationNode): string;
     // (undocumented)
     renderNodes(nodes: DocumentationNode[]): string;
