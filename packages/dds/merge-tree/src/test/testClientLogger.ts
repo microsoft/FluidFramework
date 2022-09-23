@@ -275,11 +275,9 @@ export class TestClientLogger {
                         if (node.removedSeq) {
                             if (node.removedSeq === UnassignedSequenceNumber) {
                                 acked += "_".repeat(node.text.length);
-                                if (node.seq === UnassignedSequenceNumber) {
-                                    local += "*".repeat(node.text.length);
-                                } else {
-                                    local += "-".repeat(node.text.length);
-                                }
+                                local += node.seq === UnassignedSequenceNumber
+                                    ? "*".repeat(node.text.length)
+                                    : "-".repeat(node.text.length);
                             } else {
                                 acked += "-".repeat(node.text.length);
                                 local += " ".repeat(node.text.length);
