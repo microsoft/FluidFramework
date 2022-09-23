@@ -476,9 +476,11 @@ export function createApiSummaryCell(
     if (apiItem instanceof ApiDocumentedItem) {
         const docNodeTransformOptions = getDocNodeTransformationOptions(config);
         if (apiItem.tsdocComment !== undefined) {
-            contents.push(
-                transformSection(apiItem.tsdocComment.summarySection, docNodeTransformOptions),
+            const summaryComment = transformSection(
+                apiItem.tsdocComment.summarySection,
+                docNodeTransformOptions,
             );
+            contents.push(...summaryComment.children);
         }
     }
 
@@ -533,16 +535,16 @@ export function createModifiersCell(
 ): TableCellNode {
     const modifiers = getModifiers(apiItem, modifiersToOmit);
 
-    const docNodes: DocumentationNode[] = [];
+    const contents: DocumentationNode[] = [];
     let needsComma = false;
     for (const modifier of modifiers) {
         if (needsComma) {
-            docNodes.push(new PlainTextNode(", "));
+            contents.push(new PlainTextNode(", "));
         }
-        docNodes.push(CodeSpanNode.createFromPlainText(modifier));
+        contents.push(CodeSpanNode.createFromPlainText(modifier));
     }
 
-    return modifiers.length === 0 ? TableCellNode.Empty : new TableCellNode(docNodes);
+    return modifiers.length === 0 ? TableCellNode.Empty : new TableCellNode(contents);
 }
 
 /**
@@ -559,9 +561,15 @@ export function createDefaultValueCell(
 
     const defaultValueSection = getDefaultValueBlock(apiItem, config);
 
-    return defaultValueSection === undefined
-        ? TableCellNode.Empty
-        : new TableCellNode([transformSection(defaultValueSection, docNodeTransformOptions)]);
+    if (defaultValueSection === undefined) {
+        return TableCellNode.Empty;
+    }
+
+    const contents = transformSection(defaultValueSection, docNodeTransformOptions);
+
+    // Since we are sticking the contents into a table cell, we can remove the outer Paragraph node
+    // from the hierarchy to simplify things.
+    return new TableCellNode(contents.children);
 }
 
 /**
@@ -641,7 +649,9 @@ export function createParameterSummaryCell(
         docNodeTransformOptions,
     );
 
-    return new TableCellNode([cellContent]);
+    // Since we are putting the contents into a table cell anyways, omit the Paragraph
+    // node from the hierarchy to simplify it.
+    return new TableCellNode(cellContent.children);
 }
 
 /**
