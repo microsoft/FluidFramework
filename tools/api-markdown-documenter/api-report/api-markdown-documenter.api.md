@@ -464,7 +464,7 @@ export class DocumentationNodeRenderer {
     // (undocumented)
     get applyingStrikethrough(): boolean;
     // (undocumented)
-    getLastRenderedCharacter(): string;
+    get countTrailingNewlines(): number;
     // (undocumented)
     get hierarchyDepth(): number;
     // (undocumented)
@@ -473,6 +473,8 @@ export class DocumentationNodeRenderer {
     get isInsideCodeBlock(): boolean;
     // (undocumented)
     get isInsideTable(): boolean;
+    // (undocumented)
+    lastRenderedThing: string;
     // (undocumented)
     renderNode(node: DocumentationNode): string;
     // (undocumented)

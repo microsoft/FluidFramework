@@ -7,16 +7,15 @@ export function FencedCodeBlockToMarkdown(
     renderer: DocumentationNodeRenderer,
 ): string {
     const output = [
-        addNewlineOrBlank(renderer.getLastRenderedCharacter()),
+        addNewlineOrBlank(renderer.countTrailingNewlines < 1),
         "```" + blockNode.language,
         standardEOL,
     ];
     renderer.setInsideCodeBlock();
     const children = renderer.renderNodes(blockNode.children);
     output.push(children);
-    output.push(addNewlineOrBlank(renderer.getLastRenderedCharacter()));
+    output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
     output.push("```");
-    output.push(standardEOL);
 
     return output.join("");
 }

@@ -1,6 +1,6 @@
 import { HierarchicalSectionNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { addNewlineOrBlank as newlineOrBlankSpace } from "./Utilities";
+import { addNewlineOrBlank, countTrailingNewlines } from "./Utilities";
 
 export function HierarchicalSectionToMarkdown(
     sectionNode: HierarchicalSectionNode,
@@ -8,14 +8,15 @@ export function HierarchicalSectionToMarkdown(
 ): string {
     renderer.increaseHierarchicalDepth();
 
-    const output: string[] = [newlineOrBlankSpace(renderer.getLastRenderedCharacter())];
+    const output: string[] = [addNewlineOrBlank(renderer.countTrailingNewlines < 1)];
     if (sectionNode.heading) {
         output.push(renderer.renderNode(sectionNode.heading));
     }
 
     if (sectionNode.children.length) {
-        output.push(renderer.renderNodes(sectionNode.children));
-        output.push(newlineOrBlankSpace(renderer.getLastRenderedCharacter())); // Add a line if the last content element didn't
+        const renderedChildren = renderer.renderNodes(sectionNode.children);
+        output.push(renderedChildren);
+        output.push(addNewlineOrBlank(countTrailingNewlines(renderedChildren) < 1)); // Add a line if the last content element didn't
     }
 
     return output.join("");

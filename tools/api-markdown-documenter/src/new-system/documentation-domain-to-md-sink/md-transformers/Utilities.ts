@@ -23,10 +23,19 @@ export function getTableEscapedText(text: string): string {
         .replace(/\|/g, "&#124;");
 }
 
-export function addNewlineOrBlank(lastCharPrinted: string) {
-    if (lastCharPrinted !== "\n" && lastCharPrinted !== "") {
-        return standardEOL;
-    }
+export function addNewlineOrBlank(predicate: boolean): string {
+    return predicate ? standardEOL : "";
+}
 
-    return "";
+export function countTrailingNewlines(text: string): number {
+    const matches = text.match(/(\r?\n)*$/);
+    const trailingNewlines = matches ? matches[0] : null;
+    if (!trailingNewlines) {
+        return 0;
+    }
+    let count = 0;
+    for (let i = 0; i < trailingNewlines.length; i++) {
+        if (trailingNewlines[i] === "\n") count++;
+    }
+    return count;
 }

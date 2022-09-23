@@ -34,7 +34,7 @@ import { TableCellToMarkdown } from "./TableCellToMd";
 import { TableRowToMarkdown } from "./TableRowToMd";
 import { TableToMarkdown } from "./TableToMd";
 import { UnorderedListToMarkdown } from "./UnorderedListToMd";
-import { addNewlineOrBlank, standardEOL } from "./Utilities";
+import { addNewlineOrBlank, countTrailingNewlines, standardEOL } from "./Utilities";
 
 export type DocumentationNodeRenderFunction = (
     node: DocumentationNode,
@@ -141,8 +141,9 @@ export interface RenderingContext {
 }
 
 export const DefaultRenderers = new DefaultNodeRenderers();
+
 export class DocumentationNodeRenderer {
-    private lastRenderedCharacter = "";
+    private trailingNewlinesCount = 1; // Start the document at 1 so elements don't unnecessarily prepend newlines
     private renderers: NodeRenderers = DefaultRenderers;
     private renderingContext: RenderingContext = {
         bold: false,
@@ -152,6 +153,7 @@ export class DocumentationNodeRenderer {
         insideCodeBlock: false,
         depth: 0,
     };
+
     public renderNode(node: DocumentationNode): string {
         const prevRenderingContext = this.renderingContext;
         const newRenderingContext = { ...prevRenderingContext };
@@ -253,9 +255,9 @@ export class DocumentationNodeRenderer {
                 break;
         }
         this.renderingContext = prevRenderingContext;
-        this.lastRenderedCharacter = renderedNode.length
-            ? renderedNode[renderedNode.length - 1]
-            : "";
+        this.trailingNewlinesCount = renderedNode.length
+            ? countTrailingNewlines(renderedNode)
+            : this.trailingNewlinesCount;
         return renderedNode;
     }
 
@@ -300,8 +302,8 @@ export class DocumentationNodeRenderer {
     public get hierarchyDepth() {
         return this.renderingContext.depth;
     }
-    public getLastRenderedCharacter(): string {
-        return this.lastRenderedCharacter;
+    public get countTrailingNewlines(): number {
+        return this.trailingNewlinesCount;
     }
 }
 
@@ -319,19 +321,18 @@ export function markdownFromDocumentNode(node: DocumentNode): string {
     if (node.header) {
         output.push(
             `${renderer.renderNode(node.header)}${addNewlineOrBlank(
-                renderer.getLastRenderedCharacter(),
+                renderer.countTrailingNewlines < 2,
             )}${standardEOL}`,
         );
     }
 
     output.push(...node.children.map((child) => renderer.renderNode(child)));
+    output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 2));
 
     if (node.footer) {
         output.push(
-            `${addNewlineOrBlank(
-                renderer.getLastRenderedCharacter(),
-            )}${standardEOL}${renderer.renderNode(node.footer)}${addNewlineOrBlank(
-                renderer.getLastRenderedCharacter(),
+            `${standardEOL}${renderer.renderNode(node.footer)}${addNewlineOrBlank(
+                renderer.countTrailingNewlines < 2,
             )}${standardEOL}`,
         );
     }

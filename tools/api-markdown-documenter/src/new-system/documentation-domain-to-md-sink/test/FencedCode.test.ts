@@ -8,7 +8,7 @@ import { FencedCodeBlockNode, PlainTextNode } from "../../documentation-domain";
 import { DocumentationNodeRenderer } from "../md-transformers";
 import { standardEOL } from "../md-transformers/Utilities";
 
-describe("CodeSpan markdown tests", () => {
+describe("FencedCodeBlock markdown tests", () => {
     it("Can render a simple FencedCodeBlock", () => {
         const renderer = new DocumentationNodeRenderer();
         const renderedForm = renderer.renderNode(
@@ -17,7 +17,7 @@ describe("CodeSpan markdown tests", () => {
                 "typescript",
             ),
         );
-        const expectedOutput = ["```typescript", "console.log('hello world');", "```", ""].join(
+        const expectedOutput = ["```typescript", "console.log('hello world');", "```"].join(
             standardEOL,
         );
         expect(renderedForm).to.equal(expectedOutput);

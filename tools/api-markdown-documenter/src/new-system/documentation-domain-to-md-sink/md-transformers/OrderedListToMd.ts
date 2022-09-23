@@ -10,7 +10,7 @@ export function OrderedListToMarkdown(
         .map(
             (child, index) =>
                 `${index + 1}. ${renderer.renderNode(child)}${addNewlineOrBlank(
-                    renderer.getLastRenderedCharacter(),
+                    renderer.countTrailingNewlines < 1,
                 )}`,
         )
         .join("");
