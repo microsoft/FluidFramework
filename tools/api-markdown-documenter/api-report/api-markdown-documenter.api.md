@@ -298,6 +298,9 @@ export class CustomDocNodes {
     static get configuration(): TSDocConfiguration;
 }
 
+// @public (undocumented)
+export type CustomNodeRenderers = Partial<NodeRenderers>;
+
 // @public
 export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration>;
 
@@ -457,6 +460,7 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 
 // @public (undocumented)
 export class DocumentationNodeRenderer {
+    constructor(customRenderers?: CustomNodeRenderers);
     // (undocumented)
     get applyingBold(): boolean;
     // (undocumented)
@@ -844,7 +848,7 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
 }
 
 // @public (undocumented)
-export function markdownFromDocumentNode(node: DocumentNode): string;
+export function markdownFromDocumentNode(node: DocumentNode, customRenderers?: CustomNodeRenderers): string;
 
 // @public
 export const maxHeadingLevel = 6;

@@ -131,6 +131,8 @@ export class DefaultNodeRenderers {
     [DocumentationNodeType.UnorderedList] = UnorderedListToMarkdown;
 }
 
+export type CustomNodeRenderers = Partial<NodeRenderers>;
+
 export interface RenderingContext {
     bold: boolean;
     italic: boolean;
@@ -153,6 +155,15 @@ export class DocumentationNodeRenderer {
         insideCodeBlock: false,
         depth: 0,
     };
+
+    public constructor(customRenderers?: CustomNodeRenderers) {
+        if (customRenderers) {
+            this.renderers = {
+                ...DefaultRenderers,
+                ...customRenderers,
+            };
+        }
+    }
 
     public renderNode(node: DocumentationNode): string {
         const prevRenderingContext = this.renderingContext;
@@ -307,9 +318,12 @@ export class DocumentationNodeRenderer {
     }
 }
 
-export function markdownFromDocumentNode(node: DocumentNode): string {
+export function markdownFromDocumentNode(
+    node: DocumentNode,
+    customRenderers?: CustomNodeRenderers,
+): string {
     // todo: configurability of individual node renderers
-    const renderer = new DocumentationNodeRenderer();
+    const renderer = new DocumentationNodeRenderer(customRenderers);
     const output: string[] = [];
 
     if (node.frontMatter) {
