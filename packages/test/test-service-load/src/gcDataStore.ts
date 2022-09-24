@@ -159,6 +159,7 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
 
     public async run(config: IRunConfig): Promise<boolean> {
         assert(config.testConfig.inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
+        // Set the local inactive timeout 500 less than the actual to keep buffer when expiring data stores.
         this._inactiveTimeoutMs = config.testConfig.inactiveTimeoutMs - 500;
 
         this.shouldRun = true;
