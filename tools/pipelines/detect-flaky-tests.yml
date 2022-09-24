@@ -1,0 +1,232 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# detect-flaky-tests pipeline
+
+name: $(Build.BuildId)
+
+parameters:
+- name: releaseBuildOverride
+  displayName: Release Build (default = not released)
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
+- name: nonScopedPackages
+  displayName: Non-scoped packages to publish
+  type: object
+  default:
+  - fluid-framework
+
+schedules:
+  - cron: "0 0 * * *"
+    displayName: Daily midnight build
+    branches:
+      include:
+      - main
+      - next
+      - lts
+      - release/*
+
+jobs:
+  - job: JobA
+    steps:
+    - template: templates/build-npm-package.yml
+      parameters:
+        publishOverride: ${{ parameters.publishOverride }}
+        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+        nonScopedPackages: ${{ parameters.nonScopedPackages }}
+        buildDirectory: .
+        tagName: client
+        poolBuild: Large
+        cgSubDirectory: packages
+        checkoutSubmodules: true
+        taskBundleAnalysis: true
+
+        preCG:
+        - task: UseNode@1
+          displayName: Use Node 14.x
+          inputs:
+            version: 14.x
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            customCommand: 'ci --ignore-scripts'
+            customRegistry: 'useNpmrc'
+        - task: Bash@3
+          displayName: 'Generate Mono repo package json'
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Generate the package/package lock for the lerna project so we would scan it.
+              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
+              cp repo-package.json packages/package.json
+              cp repo-package-lock.json packages/package-lock.json
+
+
+  - job: JobB
+    steps:
+    - template: templates/build-npm-package.yml
+      parameters:
+        publishOverride: ${{ parameters.publishOverride }}
+        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+        nonScopedPackages: ${{ parameters.nonScopedPackages }}
+        buildDirectory: .
+        tagName: client
+        poolBuild: Large
+        cgSubDirectory: packages
+        checkoutSubmodules: true
+        taskBundleAnalysis: true
+
+        preCG:
+        - task: UseNode@1
+          displayName: Use Node 14.x
+          inputs:
+            version: 14.x
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            customCommand: 'ci --ignore-scripts'
+            customRegistry: 'useNpmrc'
+        - task: Bash@3
+          displayName: 'Generate Mono repo package json'
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Generate the package/package lock for the lerna project so we would scan it.
+              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
+              cp repo-package.json packages/package.json
+              cp repo-package-lock.json packages/package-lock.json
+
+  - job: JobC
+    steps:
+    - template: templates/build-npm-package.yml
+      parameters:
+        publishOverride: ${{ parameters.publishOverride }}
+        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+        nonScopedPackages: ${{ parameters.nonScopedPackages }}
+        buildDirectory: .
+        tagName: client
+        poolBuild: Large
+        cgSubDirectory: packages
+        checkoutSubmodules: true
+        taskBundleAnalysis: true
+
+        preCG:
+        - task: UseNode@1
+          displayName: Use Node 14.x
+          inputs:
+            version: 14.x
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            customCommand: 'ci --ignore-scripts'
+            customRegistry: 'useNpmrc'
+        - task: Bash@3
+          displayName: 'Generate Mono repo package json'
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Generate the package/package lock for the lerna project so we would scan it.
+              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
+              cp repo-package.json packages/package.json
+              cp repo-package-lock.json packages/package-lock.json
+
+  - job: JobD
+    steps:
+    - template: templates/build-npm-package.yml
+      parameters:
+        publishOverride: ${{ parameters.publishOverride }}
+        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+        nonScopedPackages: ${{ parameters.nonScopedPackages }}
+        buildDirectory: .
+        tagName: client
+        poolBuild: Large
+        cgSubDirectory: packages
+        checkoutSubmodules: true
+        taskBundleAnalysis: true
+
+        preCG:
+        - task: UseNode@1
+          displayName: Use Node 14.x
+          inputs:
+            version: 14.x
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            customCommand: 'ci --ignore-scripts'
+            customRegistry: 'useNpmrc'
+        - task: Bash@3
+          displayName: 'Generate Mono repo package json'
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Generate the package/package lock for the lerna project so we would scan it.
+              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
+              cp repo-package.json packages/package.json
+              cp repo-package-lock.json packages/package-lock.json
+
+  - job: JobE
+    steps:
+    - template: templates/build-npm-package.yml
+      parameters:
+        publishOverride: ${{ parameters.publishOverride }}
+        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+        nonScopedPackages: ${{ parameters.nonScopedPackages }}
+        buildDirectory: .
+        tagName: client
+        poolBuild: Large
+        cgSubDirectory: packages
+        checkoutSubmodules: true
+        taskBundleAnalysis: true
+
+        preCG:
+        - task: UseNode@1
+          displayName: Use Node 14.x
+          inputs:
+            version: 14.x
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            customCommand: 'ci --ignore-scripts'
+            customRegistry: 'useNpmrc'
+        - task: Bash@3
+          displayName: 'Generate Mono repo package json'
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Generate the package/package lock for the lerna project so we would scan it.
+              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
+              cp repo-package.json packages/package.json
+              cp repo-package-lock.json packages/package-lock.json
+
+  - job: Final
+    dependsOn:
+    - jobA
+    - jobB
+    - jobC
+    - jobD
+    - jobE
+    steps:
+    - script: echo Hello from final job
+
+
