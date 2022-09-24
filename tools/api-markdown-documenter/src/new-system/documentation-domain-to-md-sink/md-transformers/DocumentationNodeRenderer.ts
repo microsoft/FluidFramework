@@ -316,6 +316,24 @@ export class DocumentationNodeRenderer {
     public get countTrailingNewlines(): number {
         return this.trailingNewlinesCount;
     }
+
+    /**
+     * Determines whether additional newlines are required to ensure new content is preceeded by the
+     * specified number of newlines.
+     *
+     * @param requiredBlankLineCount - The number of required preceeding blank lines.
+     *
+     * @returns If newlines are required, this will return a string containing those required
+     * newline characters.
+     * Otherwise, will return an empty string.
+     */
+    public ensurePreceedingBlankLines(requiredBlankLineCount: number): string {
+        const preceedingBlankLines = this.countTrailingNewlines - 1;
+        if (preceedingBlankLines > requiredBlankLineCount) {
+            return "";
+        }
+        return standardEOL.repeat(requiredBlankLineCount - preceedingBlankLines + 1);
+    }
 }
 
 export function markdownFromDocumentNode(
