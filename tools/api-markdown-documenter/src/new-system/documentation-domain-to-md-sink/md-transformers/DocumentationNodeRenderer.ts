@@ -36,12 +36,9 @@ import { TableToMarkdown } from "./TableToMd";
 import { UnorderedListToMarkdown } from "./UnorderedListToMd";
 import { addNewlineOrBlank, countTrailingNewlines, standardEOL } from "./Utilities";
 
-export type DocumentationNodeRenderFunction = (
-    node: DocumentationNode,
-    renderer: DocumentationNodeRenderer,
-) => string;
-
-// TODO: better name?
+/**
+ * All known node types this renderer supports by default
+ */
 export type NodeRenderers = {
     [DocumentationNodeType.Alert]: (
         node: AlertNode,
@@ -109,6 +106,9 @@ export type NodeRenderers = {
     ) => string;
 };
 
+/**
+ * Simple class which provides default rendering implementations for nodes
+ */
 export class DefaultNodeRenderers {
     [DocumentationNodeType.Alert] = AlertToMarkdown;
     [DocumentationNodeType.BlockQuote] = BlockQuoteToMarkdown;
@@ -131,23 +131,20 @@ export class DefaultNodeRenderers {
     [DocumentationNodeType.UnorderedList] = UnorderedListToMarkdown;
 }
 
+/**
+ * Partial type which can be used to provide custom implementations for any or all rendering functions
+ */
 export type CustomNodeRenderers = Partial<NodeRenderers>;
-
-export interface RenderingContext {
-    bold: boolean;
-    italic: boolean;
-    strikethrough: boolean;
-    insideTable: boolean;
-    insideCodeBlock: boolean;
-    depth: number;
-}
-
 export const DefaultRenderers = new DefaultNodeRenderers();
 
+/**
+ * Class for recursively rendering node trees and maintaining state (style, hierarchy depth, count of trailing newlines) while rendering nodes.
+ * Generally doesn't need to be instantiated directly. Use markdownFromDocumentNode to generate markdown from a document node instead of creating this directly.
+ */
 export class DocumentationNodeRenderer {
     private trailingNewlinesCount = 1; // Start the document at 1 so elements don't unnecessarily prepend newlines
     private renderers: NodeRenderers = DefaultRenderers;
-    private renderingContext: RenderingContext = {
+    private renderingContext = {
         bold: false,
         strikethrough: false,
         italic: false,
@@ -156,6 +153,13 @@ export class DocumentationNodeRenderer {
         depth: 0,
     };
 
+    /**
+     * Creates a new helper object for rendering node subtrees
+     *
+     * @param customRenderers - Custom renderers to override default implementations.
+     * @remarks The custom renderers object can also include custom node types that this renderer isn't explicitly aware of. Provide a key/value pair where the key is the node type as a string, and the value is a
+     * callback function. If the renderer encounters a custom node type, it will invoke the provided custom function.
+     */
     public constructor(customRenderers?: CustomNodeRenderers) {
         if (customRenderers) {
             this.renderers = {
@@ -165,6 +169,12 @@ export class DocumentationNodeRenderer {
         }
     }
 
+    /**
+     * Renders a given a node into markdown.
+     *
+     * @param node - Node to render
+     * @returns A markdown version of the given node
+     */
     public renderNode(node: DocumentationNode): string {
         const prevRenderingContext = this.renderingContext;
         const newRenderingContext = { ...prevRenderingContext };
@@ -264,6 +274,13 @@ export class DocumentationNodeRenderer {
                     this,
                 );
                 break;
+            default:
+                const rendererForNode = this.renderers[node.type] as unknown;
+                if (rendererForNode && typeof rendererForNode === "function") {
+                    // We don't recognize this node type, but a renderer was given to us (probably from custom renderers). We'll invoke it and hope for the best
+                    renderedNode = rendererForNode(node, this);
+                }
+                break;
         }
         this.renderingContext = prevRenderingContext;
         this.trailingNewlinesCount = renderedNode.length
@@ -272,47 +289,103 @@ export class DocumentationNodeRenderer {
         return renderedNode;
     }
 
+    /**
+     * Helper function - iterates through all given nodes and invokes renderNode() on each of them
+     *
+     * @param nodes - Nodes to render
+     * @returns A single string, which is the combined output of every node's renderNode() call
+     */
     public renderNodes(nodes: DocumentationNode[]): string {
         return nodes.map((node) => this.renderNode(node)).join("");
     }
 
+    /**
+     * Sets the bold style flag for all content beneath the current node.
+     */
     public setBold(): void {
         this.renderingContext.bold = true;
     }
+
+    /**
+     * Sets the italic style flag for all content beneath the current node.
+     */
     public setItalic(): void {
         this.renderingContext.italic = true;
     }
+
+    /**
+     * Sets the strikethrough style flag for all content beneath the current node.
+     */
     public setStrikethrough(): void {
         this.renderingContext.strikethrough = true;
     }
+
+    /**
+     * Flags the content beneath the current node as being nested inside of a table.
+     */
     public setInsideTable(): void {
         this.renderingContext.insideTable = true;
     }
+
+    /**
+     * Flags the content beneath the current node as being nested inside of a code block.
+     */
     public setInsideCodeBlock(): void {
         this.renderingContext.insideCodeBlock = true;
     }
+
+    /**
+     * Increases the hierarchical depth for all children of the current node (used for headings)
+     */
     public increaseHierarchicalDepth(): void {
         this.renderingContext.depth++;
     }
 
+    /**
+     * True if the subtree should apply bold styles to rendered content
+     */
     public get applyingBold() {
         return this.renderingContext.bold;
     }
+
+    /**
+     * True if the subtree should apply italic styles to rendered content
+     */
     public get applyingItalic() {
         return this.renderingContext.italic;
     }
+
+    /**
+     * True if the subtree should apply strikethrough styles to rendered content
+     */
     public get applyingStrikethrough() {
         return this.renderingContext.strikethrough;
     }
+
+    /**
+     * True if the current node is being rendered inside of a table
+     */
     public get isInsideTable() {
         return this.renderingContext.insideTable;
     }
+
+    /**
+     * True if the current node is being rendered inside of a code block
+     */
     public get isInsideCodeBlock() {
         return this.renderingContext.insideCodeBlock;
     }
+
+    /**
+     * Returns how deep into nested HierarchicalSectionNodes the renderer currently is
+     */
     public get hierarchyDepth() {
         return this.renderingContext.depth;
     }
+
+    /**
+     * Returns the number of trailing newlines in the last element this renderer rendered.
+     */
     public get countTrailingNewlines(): number {
         return this.trailingNewlinesCount;
     }
@@ -336,6 +409,13 @@ export class DocumentationNodeRenderer {
     }
 }
 
+/**
+ * Generates markdown for a DocumentNode
+ *
+ * @param node - Node to convert into narkdown
+ * @param customRenderers - Optional custom node renderers
+ * @returns
+ */
 export function markdownFromDocumentNode(
     node: DocumentNode,
     customRenderers?: CustomNodeRenderers,

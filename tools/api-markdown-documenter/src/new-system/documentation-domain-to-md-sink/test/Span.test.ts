@@ -23,5 +23,11 @@ describe("Span markdown tests", () => {
         expect(renderedForm).to.equal(`This is some text. This is more text!`);
     });
 
-    // TODO: Style tests
+    it("Renders plain text nodes", () => {
+        const node1 = new PlainTextNode("This is some text");
+        const span = new SpanNode([node1], { bold: true });
+        const renderer = new DocumentationNodeRenderer();
+        const renderedForm = renderer.renderNode(span);
+        expect(renderedForm).to.equal(`<b>This is some text</b>`);
+    });
 });
