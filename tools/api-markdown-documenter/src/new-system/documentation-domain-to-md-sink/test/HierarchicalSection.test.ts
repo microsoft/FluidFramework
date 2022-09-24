@@ -29,7 +29,7 @@ describe("HierarchicalSectionNode markdown tests", () => {
             ),
         );
         expect(renderedForm).to.equal(
-            `${standardEOL}## Heading${standardEOL}${standardEOL}This is some content text. This is more content text.${standardEOL}`,
+            `${standardEOL}# Heading${standardEOL}This is some content text. This is more content text.${standardEOL}`,
         );
     });
 
@@ -75,27 +75,27 @@ describe("HierarchicalSectionNode markdown tests", () => {
         );
         const expectedOutput = [
             "", // Subheadings prefer 1 blank space above and below
-            "## Heading 1",
+            "# Heading 1",
             "",
             "Section 1",
             "",
-            "### Heading 2",
+            "## Heading 2",
             "",
             "Section 2",
             "",
-            "### Heading 3",
+            "## Heading 3",
             "",
             "Section 3",
             "",
-            "#### Heading 4",
+            "### Heading 4",
             "",
             "Section 4",
             "",
-            "#### Heading 5",
+            "### Heading 5",
             "",
             "Section 5",
             "",
-            "#### Heading 6",
+            "### Heading 6",
             "",
             "Section 6",
             "",

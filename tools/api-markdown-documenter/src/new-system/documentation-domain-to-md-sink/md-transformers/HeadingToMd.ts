@@ -20,9 +20,7 @@ export function HeadingToMarkdown(
     headingNode: HeadingNode,
     renderer: DocumentationNodeRenderer,
 ): string {
-    const output: string[] = [addNewlineOrBlank(
-        renderer.countTrailingNewlines < 2,
-    )];
+    const output: string[] = [addNewlineOrBlank(renderer.countTrailingNewlines < 2)];
     const headingLevel = headingNode.level ?? renderer.hierarchyDepth;
     const headerLine: string[] = [];
 
@@ -44,9 +42,7 @@ export function HeadingToMarkdown(
     }
 
     output.push(headerLine.join(" "));
-    output.push(addNewlineOrBlank(
-        renderer.countTrailingNewlines < 1,
-    ));
+    output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
     // Markdown best practices: Include one extra newline after a header
     output.push(standardEOL);
 

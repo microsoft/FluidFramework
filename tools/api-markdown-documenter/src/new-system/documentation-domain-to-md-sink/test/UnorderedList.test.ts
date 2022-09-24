@@ -12,7 +12,7 @@ describe("UnorderedListNode markdown tests", () => {
     it("Does nothing with an empty list", () => {
         const renderer = new DocumentationNodeRenderer();
         const renderedForm = renderer.renderNode(new UnorderedListNode([]));
-        expect(renderedForm).to.equal(``);
+        expect(renderedForm).to.equal(`\n`);
     });
 
     it("Creates an unordered list from content elements", () => {
@@ -24,7 +24,7 @@ describe("UnorderedListNode markdown tests", () => {
                 new PlainTextNode("Item 3"),
             ]),
         );
-        const expected = ["- Item 1", "- Item 2", "- Item 3", ""].join(standardEOL);
+        const expected = ["- Item 1", "- Item 2", "- Item 3", "", ""].join(standardEOL);
         expect(renderedForm).to.equal(expected);
     });
 });

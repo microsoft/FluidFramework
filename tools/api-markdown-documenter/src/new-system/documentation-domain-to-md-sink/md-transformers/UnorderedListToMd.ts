@@ -1,6 +1,6 @@
 import { UnorderedListNode } from "../../documentation-domain";
 import type { DocumentationNodeRenderer } from "./DocumentationNodeRenderer";
-import { addNewlineOrBlank } from "./Utilities";
+import { addNewlineOrBlank, standardEOL } from "./Utilities";
 
 /**
  * Recursively enumerates an UnorderedListNode to generate an ordered list in markdown
@@ -13,12 +13,19 @@ export function UnorderedListToMarkdown(
     listNode: UnorderedListNode,
     renderer: DocumentationNodeRenderer,
 ): string {
-    return listNode.children
-        .map(
+    const output: string[] = [addNewlineOrBlank(renderer.countTrailingNewlines < 1)];
+
+    output.push(
+        ...listNode.children.map(
             (child) =>
                 `- ${renderer.renderNode(child)}${addNewlineOrBlank(
                     renderer.countTrailingNewlines < 1,
                 )}`,
-        )
-        .join("");
+        ),
+    );
+
+    output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
+    output.push(standardEOL);
+
+    return output.join("");
 }
