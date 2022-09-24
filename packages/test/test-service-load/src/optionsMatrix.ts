@@ -67,7 +67,7 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
     disableSummaries: [false],
-    initialSummarizerDelayMs: [500],
+    initialSummarizerDelayMs: [undefined],
     summaryConfigOverrides: [undefined],
 };
 
@@ -86,8 +86,8 @@ export function generateRuntimeOptions(
 	);
 
 	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
-		gcOptions: [undefined, ...gcOptions],
-		summaryOptions: [undefined, ...summaryOptions],
+		gcOptions: [...gcOptions],
+        summaryOptions: [...summaryOptions],
 		loadSequenceNumberVerification: [undefined],
 		enableOfflineLoad: [undefined],
 		flushMode: [undefined],
