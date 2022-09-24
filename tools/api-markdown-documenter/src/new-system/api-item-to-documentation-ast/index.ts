@@ -15,3 +15,4 @@ export * from "./DocNodeTransforms";
 export * from "./Configuration";
 export * from "./TransformApiItem";
 export * from "./TransformApiPackage";
+export * from "./TransformModel";
