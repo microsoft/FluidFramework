@@ -23,6 +23,8 @@ export function FencedCodeBlockToMarkdown(
     output.push(children);
     output.push(addNewlineOrBlank(renderer.countTrailingNewlines < 1));
     output.push("```");
+    output.push(standardEOL);
+    output.push(standardEOL);
 
     return output.join("");
 }
