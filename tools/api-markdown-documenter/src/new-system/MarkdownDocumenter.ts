@@ -11,8 +11,11 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "../Configuration";
 import { doesItemRequireOwnDocument } from "../utilities";
-import { apiItemToDocument, apiPackageToDocument } from "./api-item-to-documentation-ast";
-import { apiModelToDocument } from "./api-item-to-documentation-ast/TransformModel";
+import {
+    apiItemToDocument,
+    apiModelToDocument,
+    apiPackageToDocument,
+} from "./api-item-to-documentation-ast";
 import { DocumentNode } from "./documentation-domain";
 import { CustomNodeRenderers, markdownFromDocumentNode } from "./documentation-domain-to-md-sink";
 
@@ -99,8 +102,7 @@ export function createDocuments(partialConfig: MarkdownDocumenterConfiguration):
  * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
  * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
  * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
- * @param markdownEmitter - The emitter to use for generating Markdown output.
- * If not provided, a {@link MarkdownEmitter | default implementation} will be used.
+ * @param customRenderers - TODO
  */
 export async function renderFiles(
     partialConfig: MarkdownDocumenterConfiguration,
