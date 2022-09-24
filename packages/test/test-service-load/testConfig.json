@@ -20,20 +20,20 @@
             }
         },
         "gc_ci": {
-            "opRatePerMin": 120,
+            "opRatePerMin": 240,
             "progressIntervalMs": 5000,
             "numClients": 10,
             "totalSendCount": 72000,
-            "inactiveTimeoutMs": [10000],
+            "inactiveTimeoutMs": [60000],
             "optionOverrides":{
                 "tinylicious":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [10000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [60000]
                     }
                 },
                 "odsp":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [10000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [60000]
                     }
                 }
             }
