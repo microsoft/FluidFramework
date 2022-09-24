@@ -14,6 +14,7 @@ import { IRunConfig } from "./loadTestDataStore";
 
 /**
  * How much faster than its parent should a data stores at each level send ops.
+ * Keeping this 1 for now to prevent throttling of ops.
  */
 const opRateMultiplierPerLevel = 1;
 
@@ -44,6 +45,9 @@ interface IChildDetails {
     child: IGCDataStore;
 }
 
+/**
+ * The details of an unreferenced child. It includes the timestamp when the child was unreferenced.
+ */
 interface IUnreferencedChildDetails extends IChildDetails {
     unreferencedTimestamp: number;
 }
@@ -161,13 +165,13 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         assert(config.testConfig.inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
         // Set the local inactive timeout 500 less than the actual to keep buffer when expiring data stores.
         this._inactiveTimeoutMs = config.testConfig.inactiveTimeoutMs - 500;
-
         this.shouldRun = true;
-        const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
+
+        const opRatePerClient = config.testConfig.opRatePerMin / config.testConfig.numClients;
+        const delayBetweenOpsMs = 60 * 1000 / opRatePerClient;
         const totalSendCount = config.testConfig.totalSendCount;
         let localSendCount = 0;
         let childFailed = false;
-
         while (this.shouldRun && this.counter.value < totalSendCount && !this.runtime.disposed && !childFailed) {
             if (localSendCount % 10 === 0) {
                 console.log(
