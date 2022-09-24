@@ -21,6 +21,10 @@ export interface ILoadTestConfig {
     numClients: number;
     totalSendCount: number;
     readWriteCycleMs: number;
+    /**
+     * Required for GC tests. The time after which unreferenced objects become inactive.
+     */
+    inactiveTimeoutMs?: number;
     faultInjectionMaxMs?: number;
     faultInjectionMinMs?: number;
     /**
