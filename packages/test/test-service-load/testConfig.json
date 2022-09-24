@@ -5,15 +5,16 @@
             "progressIntervalMs": 5000,
             "numClients": 10,
             "totalSendCount": 1000,
+            "inactiveTimeoutMs": [10000],
             "optionOverrides":{
                 "tinylicious":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [10000]
                     }
                 },
                 "odsp":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [10000]
                     }
                 }
             }
@@ -23,15 +24,16 @@
             "progressIntervalMs": 5000,
             "numClients": 10,
             "totalSendCount": 72000,
+            "inactiveTimeoutMs": [10000],
             "optionOverrides":{
                 "tinylicious":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [10000]
                     }
                 },
                 "odsp":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [10000]
                     }
                 }
             }
@@ -43,15 +45,16 @@
             "totalSendCount": 1000,
             "faultInjectionMinMs": 0,
             "faultInjectionMaxMs": 50000,
+            "inactiveTimeoutMs": [10000],
             "optionOverrides":{
                 "tinylicious":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [10000]
                     }
                 },
                 "odsp":{
                     "configurations":{
-                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [5000]
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [10000]
                     }
                 }
             }

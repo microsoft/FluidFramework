@@ -15,7 +15,7 @@ import { IRunConfig } from "./loadTestDataStore";
 /**
  * How much faster than its parent should a data stores at each level send ops.
  */
-const opRateMultiplierPerLevel = 5;
+const opRateMultiplierPerLevel = 1;
 
 /**
  * Activities that data stores perform.
@@ -42,6 +42,10 @@ export interface IGCDataStore {
 interface IChildDetails {
     id: string;
     child: IGCDataStore;
+}
+
+interface IUnreferencedChildDetails extends IChildDetails {
+    unreferencedTimestamp: number;
 }
 
 /**
@@ -140,10 +144,24 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     private readonly uniquechildId = `${this.myId}-child`;
     private child: IGCDataStore | undefined;
 
-    private readonly unreferencedChildrenDetails: IChildDetails[] = [];
+    private _inactiveTimeoutMs: number | undefined;
+    /**
+     * Should not be called before "run" is called which initializes inactiveTimeoutMs.
+     */
+    public get inactiveTimeoutMs(): number {
+        assert(this._inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
+        return this._inactiveTimeoutMs;
+    }
+
+    private readonly unreferencedChildrenDetails: IUnreferencedChildDetails[] = [];
     private readonly referencedChildrenDetails: IChildDetails[] = [];
+    private readonly expiredChildrenDetails: IChildDetails[] = [];
 
     public async run(config: IRunConfig): Promise<boolean> {
+        assert(config.testConfig.inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
+        // Set the local inactive timeout 500 less than the actual to keep buffer when expiring data stores.
+        this._inactiveTimeoutMs = config.testConfig.inactiveTimeoutMs - 500;
+
         this.shouldRun = true;
         const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
         const totalSendCount = config.testConfig.totalSendCount;
@@ -250,13 +268,10 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
                 }
                 case GCActivityType.Revive: {
                     console.log("########## Reviving child");
-                    /**
-                     * Skip this for now because this may lead to inactive object error.
-                     * Reviving will be added in a follow up PR.
-                     */
-                    // if (this.unreferencedChildrenDetails.length > 0) {
-                    //     return this.reviveChild(config);
-                    // }
+                    const revivableChildDetails = this.getRevivableChild();
+                    if (revivableChildDetails !== undefined) {
+                        return this.reviveChild(config, revivableChildDetails);
+                    }
                     break;
                 }
                 default:
@@ -306,17 +321,16 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         childDetails.child.stop();
 
         this.root.delete(childDetails.id);
-        this.unreferencedChildrenDetails.push(childDetails);
+        this.unreferencedChildrenDetails.push({
+            ...childDetails,
+            unreferencedTimestamp: Date.now(),
+        });
     }
 
     /**
      * Retrieves the oldes unreferenced child, references it and asks it to run.
-     * TODO - Change this to private once it is used. Kept it here for now for PR review.
      */
-    public async reviveChild(config: IRunConfig): Promise<boolean> {
-        const childDetails = this.unreferencedChildrenDetails.shift();
-        assert(childDetails !== undefined, "Cannot find child to revive");
-
+    private async reviveChild(config: IRunConfig, childDetails: IChildDetails): Promise<boolean> {
         this.root.set(childDetails.id, childDetails.child.handle);
         this.referencedChildrenDetails.push(childDetails);
 
@@ -330,6 +344,23 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
             },
         };
         return childDetails.child.run(childConfig, childDetails.id);
+    }
+
+    /**
+     * If there is a child that can be revived, returns its details. Otherwise, returns undefined.
+     * It also moves any expired child to the expired child list.
+     */
+    private getRevivableChild(): IUnreferencedChildDetails | undefined {
+        let childDetails = this.unreferencedChildrenDetails.shift();
+        while (childDetails !== undefined) {
+            if (Date.now() - childDetails.unreferencedTimestamp > (this.inactiveTimeoutMs)) {
+                this.expiredChildrenDetails.push(childDetails);
+            } else {
+                break;
+            }
+            childDetails = this.unreferencedChildrenDetails.shift();
+        }
+        return childDetails;
     }
 }
 
