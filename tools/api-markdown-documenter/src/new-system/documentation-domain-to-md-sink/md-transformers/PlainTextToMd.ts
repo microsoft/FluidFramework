@@ -13,14 +13,8 @@ export function PlainTextToMarkdown(
     textNode: PlainTextNode,
     renderer: DocumentationNodeRenderer,
 ): string {
-    // split out the [ leading whitespace, content, trailing whitespace ]
-    const parts = textNode.value.match(/^(\s*)(.*?)(\s*)$/) || [];
-
-    // If there's no actual content (eg, parts[1] is empty), return the leading space
-    if (parts.length === 0) return "";
-    if (parts.length === 1 || !parts[1] || parts[1].length === 0) return parts[0];
-
-    const output = [parts[0]]; // Start by including the leading whitespace
+    // TODO: Include leading whitespace but trim trailing
+    const output: string[] = [""];
 
     let tagsChecked = [
         { predicate: renderer.applyingBold, enter: "<b>", exit: "</b>" },
