@@ -5,6 +5,9 @@
 
 name: $(Build.BuildId)
 
+pool:
+  vmImage: ubuntu-latest
+
 parameters:
 - name: releaseBuildOverride
   displayName: Release Build (default = not released)
