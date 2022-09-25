@@ -377,17 +377,23 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
         }
     };
 
-    let submitedOps = 0;
+    let submittedOpsSize = 0;
+    let submittedOps = 0;
     container.deltaManager.on("submitOp", (message) => {
         if (message?.type === "op") {
-            submitedOps++;
+            submittedOps++;
+            var currOpSize = (JSON.stringify(message)).length;
+            submittedOpsSize += currOpSize;
         }
     });
 
+    let receivedOpsSize = 0;
     let receivedOps = 0;
     container.deltaManager.on("op", (message) => {
         if (message?.type === "op") {
             receivedOps++;
+            var currOpSize = (JSON.stringify(message)).length;
+            receivedOpsSize += currOpSize;
         }
     });
 
@@ -403,12 +409,12 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
 
     let t: NodeJS.Timeout | undefined;
     const sendMetrics = () => {
-        if (submitedOps > 0) {
+        if (submittedOps > 0) {
             logger.send({
                 category: "metric",
                 eventName: "Fluid Operations Sent",
                 testHarnessEvent: true,
-                value: submitedOps,
+                value: submittedOps,
                 clientId: container.clientId,
                 userName: getUserName(container),
             });
@@ -444,11 +450,33 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
                 userName: getUserName(container),
             });
         }
+        if (submittedOps > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Size of Fluid Operations Sent",
+                testHarnessEvent: true,
+                value: submittedOpsSize,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+        if (receivedOps > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Size of Fluid Operations Received",
+                testHarnessEvent: true,
+                value: receivedOpsSize,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
 
-        submitedOps = 0;
+        submittedOps = 0;
         receivedOps = 0;
         submittedSignals = 0;
         receivedSignals = 0;
+        submittedOpsSize = 0;
+        receivedOpsSize = 0;
 
         t = setTimeout(sendMetrics, progressIntervalMs);
     };
