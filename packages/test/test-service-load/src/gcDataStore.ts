@@ -5,11 +5,11 @@
  */
 
 import random from "random-js";
-import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert, delay } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
+import { SharedMap } from "@fluidframework/map";
 import { IRunConfig } from "./loadTestDataStore";
 
 /**
@@ -56,10 +56,8 @@ interface IUnreferencedChildDetails extends IChildDetails {
  * Base data object that creates and initializes a SharedCounter. This can be extended by all data objects
  * to send ops by incrementing the counter.
  */
-class BaseDataObject extends DataObject {
-    public static get type(): string {
-        return "DataObjectWithCounter";
-    }
+abstract class BaseDataObject extends DataObject {
+    public static type: string;
 
     private readonly counterKey = "counter";
     private _counter: SharedCounter | undefined;
@@ -88,8 +86,8 @@ export class DataObjectType1 extends BaseDataObject implements IGCDataStore {
         return "DataObjectType1";
     }
 
-    private shouldRun: boolean = false;
     private myId: string | undefined;
+    private shouldRun: boolean = false;
 
     public async run(config: IRunConfig, id?: string): Promise<boolean> {
         console.log(`+++++++++ Started child [${id}]`);
@@ -136,35 +134,67 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         return "RootDataObject";
     }
 
+    protected myId: string | undefined;
     private shouldRun: boolean = false;
-
-    // Create a unique Id for ourselves.
-    private readonly myId = uuid();
 
     // The number of child data stores created.
     private childCount = 1;
 
-    // The key against which handle to child data store is stored.
-    private readonly uniquechildId = `${this.myId}-child`;
-    private child: IGCDataStore | undefined;
-
-    private _inactiveTimeoutMs: number | undefined;
     /**
      * Should not be called before "run" is called which initializes inactiveTimeoutMs.
      */
+    private _inactiveTimeoutMs: number | undefined;
     public get inactiveTimeoutMs(): number {
         assert(this._inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
         return this._inactiveTimeoutMs;
+    }
+
+    /**
+     * Should not be called before "run" is called which initializes runConfig.
+     */
+    private _runConfig: IRunConfig | undefined;
+    protected get runConfig(): IRunConfig {
+        assert(this._runConfig !== undefined, "Run config must be available");
+        return this._runConfig;
+    }
+
+    private readonly childMapKey = "childMap";
+    private _childMap: SharedMap | undefined;
+    protected get childMap(): SharedMap {
+        assert(this._childMap !== undefined, "Child map cannot be retrieving before initialization");
+        return this._childMap;
     }
 
     private readonly unreferencedChildrenDetails: IUnreferencedChildDetails[] = [];
     private readonly referencedChildrenDetails: IChildDetails[] = [];
     private readonly expiredChildrenDetails: IChildDetails[] = [];
 
+    protected async initializingFirstTime(): Promise<void> {
+        await super.initializingFirstTime();
+        this.root.set<IFluidHandle>(this.childMapKey, SharedMap.create(this.runtime).handle);
+    }
+
+    protected async hasInitialized(): Promise<void> {
+        await super.hasInitialized();
+        const handle = this.root.get<IFluidHandle<SharedMap>>(this.childMapKey);
+        assert(handle !== undefined, "The child map handle should exist on initialization");
+        this._childMap = await handle.get();
+    }
+
     public async run(config: IRunConfig): Promise<boolean> {
         assert(config.testConfig.inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
         // Set the local inactive timeout 500 less than the actual to keep buffer when expiring data stores.
         this._inactiveTimeoutMs = config.testConfig.inactiveTimeoutMs - 500;
+        // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
+        const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
+        this._runConfig = {
+            ...config,
+            testConfig: {
+                ...config.testConfig,
+                opRatePerMin,
+            },
+        };
+        this.myId = `client${config.runId + 1}`;
         this.shouldRun = true;
 
         const opRatePerClient = config.testConfig.opRatePerMin / config.testConfig.numClients;
@@ -212,36 +242,6 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     }
 
     /**
-     * @deprecated - Keeping this around for now while the new logic runs in CI few times.
-     *
-     * Perform the following activity:
-     * - Ask the current child data store to stop running and unreferenced it.
-     * - Create a child data store, reference it and asks it to run.
-     */
-    public async performActivityOld(config: IRunConfig) {
-        this.child?.stop();
-        this.child = await dataObjectType1Factory.createInstance(this.context.containerRuntime);
-        // This will unreference the previous child and reference the new one.
-        this.root.set(this.uniquechildId, this.child.handle);
-
-        // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
-        const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
-        const childConfig: IRunConfig = {
-            ...config,
-            testConfig: {
-                ...config.testConfig,
-                opRatePerMin,
-            },
-        };
-
-        // Give each child a unique id w.r.t. this data store's id.
-        const uniquechildId = `${this.myId}-${this.childCount.toString()}`;
-        this.childCount++;
-
-        return this.child.run(childConfig, uniquechildId);
-    }
-
-    /**
      * Performs one of the following activity at random:
      * 1. CreateAndReference - Create a child data store, reference it and ask it to run.
      * 2. Unreference - Unreference the oldest referenced child and asks it to stop running.
@@ -259,11 +259,9 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
             const action = random.integer(0, 2)(config.randEng);
             switch (action) {
                 case GCActivityType.CreateAndReference: {
-                    console.log("########## Creating child");
                     return this.createAndReferenceChild(config);
                 }
                 case GCActivityType.Unreference: {
-                    console.log("########## Unreferencing child");
                     if (this.referencedChildrenDetails.length > 0) {
                         this.unreferenceChild();
                         activityCompleted = true;
@@ -271,7 +269,6 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
                     break;
                 }
                 case GCActivityType.Revive: {
-                    console.log("########## Reviving child");
                     const revivableChildDetails = this.getRevivableChild();
                     if (revivableChildDetails !== undefined) {
                         return this.reviveChild(config, revivableChildDetails);
@@ -290,11 +287,12 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
      */
     private async createAndReferenceChild(config: IRunConfig): Promise<boolean> {
         // Give each child a unique id w.r.t. this data store's id.
-        const childId = `${this.myId}-${this.childCount.toString()}`;
+        const childId = `${this.myId}/${this.childCount.toString()}`;
+        console.log(`########## Creating child [${childId}]`);
         this.childCount++;
 
         const child = await dataObjectType1Factory.createInstance(this.context.containerRuntime);
-        this.root.set(childId, child.handle);
+        this.childMap.set(childId, child.handle);
         this.referencedChildrenDetails.push({
             id: childId,
             child,
@@ -318,13 +316,14 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     private unreferenceChild() {
         const childDetails = this.referencedChildrenDetails.shift();
         assert(childDetails !== undefined, "Cannot find child to unreference");
+        console.log(`########## Unreferencing child [${childDetails.id}]`);
 
-        const childHandle = this.root.get<IFluidHandle<IGCDataStore>>(childDetails.id);
+        const childHandle = this.childMap.get<IFluidHandle<IGCDataStore>>(childDetails.id);
         assert(childHandle !== undefined, "Could not get handle for child");
 
         childDetails.child.stop();
 
-        this.root.delete(childDetails.id);
+        this.childMap.delete(childDetails.id);
         this.unreferencedChildrenDetails.push({
             ...childDetails,
             unreferencedTimestamp: Date.now(),
@@ -335,7 +334,8 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
      * Retrieves the oldes unreferenced child, references it and asks it to run.
      */
     private async reviveChild(config: IRunConfig, childDetails: IChildDetails): Promise<boolean> {
-        this.root.set(childDetails.id, childDetails.child.handle);
+        console.log(`########## Reviving child [${childDetails.id}]`);
+        this.childMap.set(childDetails.id, childDetails.child.handle);
         this.referencedChildrenDetails.push(childDetails);
 
         // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
@@ -371,6 +371,64 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
 export const rootDataObjectFactory = new DataObjectFactory(
     RootDataObject.type,
     RootDataObject,
-    [SharedCounter.getFactory()],
+    [SharedCounter.getFactory(), SharedMap.getFactory()],
+    {},
+);
+
+/**
+ * Root data object for the stress tests that does the following when asked to run:
+ * - It sends ops at a regular interval. The interval is defined by the config passed to the run method.
+ * - After every few ops, it does an activity. Example activities:
+ *     - Create a child data store, reference it and asks it to run. When other clients learn about this, they may also
+ *       start running their local copy of this child data store.
+ *     - Ask a child data store to stop running and unreferenced it. When other clients learn about this, they may stop
+ *       running this child data store.
+ */
+ export class RootDataObject2 extends RootDataObject implements IGCDataStore {
+    public static get type(): string {
+        return "RootDataObject2";
+    }
+
+    public async run(config: IRunConfig): Promise<boolean> {
+        const partnerId1 = `client${config.runId + 2}`;
+        const partnerId2 = `client${config.runId + 3}`;
+        this.childMap.on("valueChanged", (changed, local) => {
+            if (local) {
+                return;
+            }
+
+            /**
+             * Only collaborate with two other partner clients. If we collaborate with all clients, there would be too
+             * many ops and we might get throttled.
+             */
+            if (!changed.key.startsWith(partnerId1) && !changed.key.startsWith(partnerId2)) {
+                return;
+            }
+
+            if (this.childMap.has(changed.key)) {
+                console.log(`---------- Received remote child add [${this.myId}] / [${changed.key}]`);
+                const childHandle = this.childMap.get(changed.key) as IFluidHandle<IGCDataStore>;
+                childHandle.get().then((child: IGCDataStore) => {
+                    console.log(`---------- Running remote child [${changed.key}]`);
+                    child.run(this.runConfig, `${this.myId}/${changed.key}`).catch((error) => {});
+                }).catch((error) => {});
+            } else {
+                console.log(`---------- Received remote child delete [${this.myId}] /[${changed.key}]`);
+                const childHandle = changed.previousValue as IFluidHandle<IGCDataStore>;
+                childHandle.get().then((child: IGCDataStore) => {
+                    console.log(`---------- Stopping remote child [${changed.key}]`);
+                    child.stop();
+                }).catch((error) => {});
+            }
+        });
+
+        return super.run(config);
+    }
+}
+
+export const rootDataObjectFactory2 = new DataObjectFactory(
+    RootDataObject2.type,
+    RootDataObject2,
+    [SharedCounter.getFactory(), SharedMap.getFactory()],
     {},
 );
