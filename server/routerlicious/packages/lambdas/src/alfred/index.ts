@@ -90,7 +90,8 @@ function sanitizeMessage(message: any): IDocumentMessage {
         referenceSequenceNumber: message.referenceSequenceNumber,
         traces: message.traces,
         type: message.type,
-    };
+        compression: message.compression,
+    } as any;
 
     return sanitizedMessage;
 }

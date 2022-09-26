@@ -1194,7 +1194,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             timestamp: message.timestamp,
             traces: message.operation.traces,
             type: message.operation.type,
-        };
+            compression: (message.operation as any).compression,
+        } as any;
         if (message.operation.type === MessageType.Summarize || message.operation.type === MessageType.NoClient) {
             const augmentedOutputMessage = outputMessage as ISequencedDocumentAugmentedMessage;
             if (message.operation.type === MessageType.Summarize ||

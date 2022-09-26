@@ -154,6 +154,12 @@ export interface IDocumentMessage {
      * Traces related to the packet.
      */
     traces?: ITrace[];
+
+    /**
+     * The compression algorithm that was used to compress contents of this op.
+     * @experimental Not ready for use
+     */
+     compression?: string;
 }
 
 /**
@@ -265,6 +271,12 @@ export interface ISequencedDocumentMessage {
      * @alpha
      */
     expHash1?: string;
+
+    /**
+     * The compression algorithm that was used to compress contents of this op.
+     * @experimental Not ready for use.
+     */
+     compression?: string;
 }
 
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
