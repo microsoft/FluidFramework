@@ -81,10 +81,10 @@ a[href^=http]:not(.no-external-icon)::after
   background-repeat: no-repeat;
   background-size: contain;
   display: inline-block;
-  background-color: #0098ff;
+  background-color: $banner-link-color;
 }
 
-// This selector changes all visited external link's colors
+// This selector changed all visited external link's colors
 a[href^=http]:not(.no-external-icon):visited::after
 {
   background-color: $visited-link-color;
