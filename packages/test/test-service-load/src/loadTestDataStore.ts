@@ -22,8 +22,8 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 import {
-    RootDataObject,
-    rootDataObjectFactory,
+    RootDataObject2,
+    rootDataObjectFactory2,
     DataObjectType1,
     dataObjectType1Factory,
     IGCDataStore,
@@ -424,7 +424,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     protected async initializingFirstTime() {
         this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
 
-        const gcDataStore = await rootDataObjectFactory.createInstance(this.context.containerRuntime);
+        const gcDataStore = await rootDataObjectFactory2.createInstance(this.context.containerRuntime);
         this.root.set(gcDataStore2Key, gcDataStore.handle);
     }
 
@@ -525,7 +525,7 @@ export const createFluidExport = (options: IContainerRuntimeOptions) =>
         [
             [LoadTestDataStore.DataStoreName, Promise.resolve(LoadTestDataStoreInstantiationFactory)],
             [DataObjectType1.type, Promise.resolve(dataObjectType1Factory)],
-            [RootDataObject.type, Promise.resolve(rootDataObjectFactory)],
+            [RootDataObject2.type, Promise.resolve(rootDataObjectFactory2)],
         ],
         undefined,
         [innerRequestHandler],
