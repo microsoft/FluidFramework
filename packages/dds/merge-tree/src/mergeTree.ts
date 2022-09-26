@@ -953,11 +953,11 @@ export class MergeTree {
     }
 
     /**
-     * @internal
-     *
      * Compute local partial length information
      *
      * Public only for use by internal tests
+     *
+     * @internal
      */
     public computeLocalPartials(refSeq: number) {
         if (this.localPartialsComputed) {
