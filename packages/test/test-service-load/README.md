@@ -14,7 +14,7 @@ core aspects of these tests are:
 * Collaborate with other clients that are connected to the document. Basically, mimic typical user scenarios where users
 work on same or different parts of a document simultaneously.
 
-# Architecture
+## Architecture
 
 The following picture shows how the clients / containers are set up. The dashes line indicate collaboration happening between data stores.
 ![Architecture](./gcStressTestArchitecture.png)
