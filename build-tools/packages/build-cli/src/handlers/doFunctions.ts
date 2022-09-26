@@ -94,7 +94,6 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
     }
 
     const remainingReleaseGroupsToBump = difference(preReleaseGroups, updatedDeps);
-
     const remainingPackagesToBump = difference(preReleasePackages, updatedPkgs);
 
     if (remainingReleaseGroupsToBump.size === 0 && remainingPackagesToBump.size === 0) {

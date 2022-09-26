@@ -158,16 +158,15 @@ export async function bumpReleaseGroup(
 
     if (releaseGroupOrPackage instanceof MonoRepo) {
         workingDir = releaseGroupOrPackage.repoPath;
-        cmd = `npx lerna version ${translatedVersion.version} --no-push --no-git-tag-version -y && npm run build:genver`;
         name = releaseGroupOrPackage.kind;
+        cmd = `npx lerna version ${translatedVersion.version} --no-push --no-git-tag-version -y && npm run build:genver`;
     } else {
         workingDir = releaseGroupOrPackage.directory;
+        name = releaseGroupOrPackage.name;
         cmd = `npm version ${translatedVersion.version}`;
         if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
             cmd += " && npm run build:genver";
         }
-
-        name = releaseGroupOrPackage.name;
     }
 
     const results = await exec(cmd, workingDir, `Error bumping ${name}`);
