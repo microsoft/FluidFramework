@@ -83,6 +83,10 @@ export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
+/**
+ * Having snapshot cache of no more than this is a requirement of the driver if GC is to work properly
+ */
+export const maximumSnapshotCacheExpiryMs: number = 2 * oneDayMs; // 2 days
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -544,11 +548,9 @@ export class GarbageCollector implements IGarbageCollector {
             );
             this.sessionExpiryTimer.start();
 
-            // Hardcode a value of 2 days which is the value used in the ODSP driver.
-            // Having snapshot cache be fresher than this is a requirement of using GC with other drivers.
             const snapshotCacheExpiryMs = createParams.snapshotCacheDisabledForTesting
                 ? 0
-                : 2 * 24 * 60 * 60 * 1000;
+                : maximumSnapshotCacheExpiryMs;
 
             /**
              * Sweep timeout is the time after which unreferenced content can be swept.
