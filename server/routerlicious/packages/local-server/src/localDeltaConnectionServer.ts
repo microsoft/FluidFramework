@@ -46,6 +46,7 @@ export interface ILocalDeltaConnectionServer {
     databaseManager: IDatabaseManager;
     testDbFactory: ITestDbFactory;
     close(): Promise<void>;
+    hasPendingWork(): Promise<boolean>;
     connectWebSocket(
         tenantId: string,
         documentId: string,
@@ -135,6 +136,13 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     public async close() {
         await this.webSocketServer.close();
         await this.ordererManager.close();
+    }
+
+    /**
+     * Returns true if there are any received ops that are not yet ordered.
+     */
+    public async hasPendingWork(): Promise<boolean> {
+        return this.ordererManager.hasPendingWork();
     }
 
     public connectWebSocket(

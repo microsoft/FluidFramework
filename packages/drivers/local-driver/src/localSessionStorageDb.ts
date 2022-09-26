@@ -12,6 +12,9 @@ import { v4 as uuid } from "uuid";
  * Functions include database operations such as queries, insertion and update.
  */
 class LocalSessionStorageCollection<T> implements ICollection<T> {
+    /**
+     * @param collectionName - data type of the collection, e.g. blobs, deltas, trees, etc.
+     */
     constructor(private readonly collectionName: string) { }
 
     public aggregate(pipeline: any, options?: any): any {

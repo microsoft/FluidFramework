@@ -220,6 +220,14 @@ export class LocalOrderer implements IOrderer {
         this.closeLambdas();
     }
 
+    public hasPendingWork(): boolean {
+        if (this.broadcasterLambda?.lambda) {
+            return (this.broadcasterLambda.lambda as BroadcasterLambda).hasPendingWork();
+        }
+
+        return false;
+    }
+
     private setupKafkas() {
         const deliState: IDeliState = JSON.parse(this.dbObject.deli);
         this.rawDeltasKafka = new LocalKafka(deliState.logOffset + 1);

@@ -45,6 +45,21 @@ export class LocalOrdererManager implements IOrdererManager {
         this.ordererMap.clear();
     }
 
+    /**
+     * Returns true if there are any received ops that are not yet ordered.
+     */
+    public async hasPendingWork(): Promise<boolean> {
+        return Promise.all(this.ordererMap.values()).then((orderers) => {
+            for (const orderer of orderers) {
+                // We know that it ia LocalOrderer, break the abstraction
+                if ((orderer as LocalOrderer).hasPendingWork()) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
     public async getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
         const key = `${tenantId}/${documentId}`;
 
