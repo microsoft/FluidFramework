@@ -36,6 +36,7 @@ import {
     RangeStackMap,
     ReferencePosition,
     ReferenceType,
+    MergeTreeRevertibleDriver,
     SegmentGroup,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -106,7 +107,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 export abstract class SharedSegmentSequence<T extends ISegment>
     extends SharedObject<ISharedSegmentSequenceEvents>
-    implements ISharedIntervalCollection<SequenceInterval> {
+    implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
     }
@@ -429,6 +430,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      */
     public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
         const insertOp = this.client.insertAtReferencePositionLocal(pos, segment);
+        if (insertOp) {
+            this.submitSequenceMessage(insertOp);
+        }
+    }
+    /**
+     * Inserts a segment
+     * @param start - The position to insert the segment at
+     * @param spec - The segment to inserts spec
+     */
+    public insertFromSpec(pos: number, spec: IJSONSegment) {
+        const segment = this.segmentFromSpec(spec);
+        const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
             this.submitSequenceMessage(insertOp);
         }

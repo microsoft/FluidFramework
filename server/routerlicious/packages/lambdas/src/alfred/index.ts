@@ -228,11 +228,7 @@ export function configureWebSocketServices(
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
         function isWriter(scopes: string[], mode: ConnectionMode): boolean {
-            if (hasWriteAccess(scopes)) {
-                return mode === "write";
-            } else {
-                return false;
-            }
+            return hasWriteAccess(scopes) ? mode === "write" : false;
         }
 
         function clearExpirationTimer() {

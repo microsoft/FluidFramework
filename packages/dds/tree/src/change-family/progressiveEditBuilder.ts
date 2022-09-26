@@ -15,6 +15,8 @@ export abstract class ProgressiveEditBuilder<TChange> {
 
     /**
      * Subclasses add editing methods which call this with their generated edits.
+     *
+     * @sealed
      */
     protected applyChange(change: TChange): void {
         this.changes.push(change);
@@ -25,6 +27,7 @@ export abstract class ProgressiveEditBuilder<TChange> {
 
     /**
      * @returns a copy of the internal change list so far.
+     * @sealed
      */
     public getChanges(): TChange[] {
         return [...this.changes];

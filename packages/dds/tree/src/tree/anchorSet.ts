@@ -14,13 +14,17 @@ import { Value } from "./types";
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
-/** A singleton which represents a permanently invalid location (i.e. there is never a node there) */
+/**
+ * A singleton which represents a permanently invalid location (i.e. there is never a node there)
+ */
 const NeverAnchor: Anchor = brand(0);
 
 /**
  * Collection of Anchors at a specific revision.
  *
  * See {@link Rebaser} for how to update across revisions.
+ *
+ * @sealed
  */
 export class AnchorSet {
     /**

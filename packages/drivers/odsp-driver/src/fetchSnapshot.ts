@@ -49,7 +49,6 @@ export enum SnapshotFormatSupportType {
  * @param token - token used for authorization in the request
  * @param storageFetchWrapper - Implementation of the get/post methods used to fetch the snapshot
  * @param versionId - id of specific snapshot to be fetched
- * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
  * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header
  * @returns A promise of the snapshot and the status code of the response
  */
@@ -57,22 +56,14 @@ export async function fetchSnapshot(
     snapshotUrl: string,
     token: string | null,
     versionId: string,
-    fetchFullSnapshot: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: (url: string, fetchOptions: { [index: string]: any; }) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
-    let queryParams: ISnapshotOptions = {};
-
-    if (fetchFullSnapshot) {
-        if (versionId !== "latest") {
-            queryParams = { channels: 1, blobs: 2 };
-        } else {
-            queryParams = { deltas: 1, channels: 1, blobs: 2 };
-        }
-    }
-
+    // We just want to fetch tree here. So explicitly set to not fetch blobs and deltas
+    // as by default server will send that.
+    const queryParams: ISnapshotOptions = { deltas: 0, blobs: 0 };
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(
         `${snapshotUrl}${path}${queryString}`, token, forceAccessTokenViaAuthorizationHeader);

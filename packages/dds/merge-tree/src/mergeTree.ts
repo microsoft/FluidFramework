@@ -906,9 +906,9 @@ export class MergeTree {
             }
         } else {
             for (const ref of refsToSlide) {
-                ref.callbacks?.beforeSlide?.();
+                ref.callbacks?.beforeSlide?.(ref);
                 segment.localRefs?.removeLocalRef(ref);
-                ref.callbacks?.afterSlide?.();
+                ref.callbacks?.afterSlide?.(ref);
             }
         }
         // TODO is it required to update the path lengths?
@@ -1895,7 +1895,7 @@ export class MergeTree {
         seq: number,
         overwrite = false,
         opArgs: IMergeTreeDeltaOpArgs,
-    ) {
+    ): void {
         let _overwrite = overwrite;
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);

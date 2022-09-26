@@ -685,7 +685,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     /**
-     * @deprecated - Sets the datastore as root, for aliasing purposes: #7948
+     * @deprecated Sets the datastore as root, for aliasing purposes: #7948
      * This method should not be used outside of the aliasing context.
      * It will be removed, as the source of truth for this flag will be the aliasing blob.
      */
@@ -965,7 +965,10 @@ export class LocalDetachedFluidDataStoreContext
         registry: IProvideFluidDataStoreFactory,
         dataStoreChannel: IFluidDataStoreChannel) {
         assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
+        this.detachedRuntimeCreation = false;
+
         assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
+        this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
         const factory = registry.IFluidDataStoreFactory;
 
@@ -974,9 +977,6 @@ export class LocalDetachedFluidDataStoreContext
 
         assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
         this.registry = entry.registry;
-
-        this.detachedRuntimeCreation = false;
-        this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
         super.bindRuntime(dataStoreChannel);
 

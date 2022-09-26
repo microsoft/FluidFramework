@@ -95,10 +95,10 @@ type Pass = (delta: Delta.MarkList, props: PassProps) => void;
 
 interface ModifyLike {
     setValue?: Value;
-    fields?: Delta.FieldMarks<Delta.Mark>;
+    fields?: Delta.FieldMarks;
 }
 
-function visitFieldMarks(fields: Delta.FieldMarks<Delta.Mark>, props: PassProps, func: Pass): void {
+function visitFieldMarks(fields: Delta.FieldMarks, props: PassProps, func: Pass): void {
     for (const [key, field] of fields) {
         props.visitor.enterField(key);
         func(field, { ...props, startIndex: 0 });

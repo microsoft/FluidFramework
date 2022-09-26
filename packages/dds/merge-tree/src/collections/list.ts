@@ -51,7 +51,7 @@ class DataNode<T> extends HeadNode<T> implements ListNode<T> {
     }
 }
 
-function insertAfter<T>(node: DataNode<T> | HeadNode<T>, ... items: T[]): ListNodeRange<T> | undefined {
+function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRange<T> {
     let previousNode = node;
     const oldNext = previousNode._next;
     let newRange: ListNodeRange<T> | undefined;
@@ -68,6 +68,14 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, ... items: T[]): ListNo
     });
     oldNext._prev = previousNode;
     previousNode._next = oldNext;
+    // explicitly prevent newRange from being undefined without casting,
+    // and without additional conditionals, as this is used in some perf critical areas.
+    // i could have just asserted, but that throws a non-user friendly error,
+    // so i went with a more user-friendly error, which describes the
+    // only condition that could lead to this being undefined in the current code.
+    if (newRange === undefined) {
+        throw new UsageError("items must not be empty");
+    }
     return newRange;
 }
 
@@ -75,25 +83,50 @@ export class List<T> implements
     Iterable<ListNode<T>>,
     Partial<ListNodeRange<T>>,
     // try to match array signature and semantics where possible
-    Pick<ListNode<T>[], "pop" | "shift" | "length" | "includes"> {
+    Pick<ListNode<T>[], "pop" | "shift" | "length" | "includes" > {
+    map<U>(callbackfn: (value: ListNode<T>) => U): Iterable<U> {
+        let node = this.first;
+        const iterator: IterableIterator<U> = {
+            next(): IteratorResult<U> {
+                if (node === undefined) {
+                    return { done: true, value: undefined };
+                }
+                const rtn = { value: callbackfn(node), done: false };
+                node = node.next;
+                return rtn;
+            },
+            [Symbol.iterator]() {
+                return this;
+            },
+        };
+        return iterator;
+    }
+
+    insertAfter(preceding: ListNode<T>, ...items: T[]): ListNodeRange<T> {
+        if (!this._includes(preceding)) {
+            throw new Error("preceding not in list");
+        }
+        this._len += items.length;
+        return insertAfter(preceding, items);
+    }
+
     pop(): ListNode<T> | undefined {
         return this.remove(this.last);
     }
 
-    push(item: T): ListNodeRange<T>;
-    push(...items: T[]): ListNodeRange<T> | undefined {
+    push(...items: T[]): ListNodeRange<T> {
         this._len += items.length;
         const start = this.headNode._prev;
-        return insertAfter(start, ... items);
+        return insertAfter(start, items);
     }
 
     shift(): ListNode<T> | undefined {
         return this.remove(this.first);
     }
 
-    unshift(...items: T[]): ListNodeRange<T> | undefined {
+    unshift(...items: T[]): ListNodeRange<T> {
         this._len += items.length;
-        return insertAfter(this.headNode, ... items);
+        return insertAfter(this.headNode, items);
     }
 
     public includes(node: ListNode<T> | undefined): node is ListNode<T> {

@@ -18,9 +18,12 @@ import {
 import { Index, SummaryElement, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
 import { JsonableTree, Delta } from "../tree";
-import { jsonableTreeFromCursor } from "./treeTextCursor";
+import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
+import { singleTextCursor } from "./treeTextCursor";
 
-/** The storage key for the blob in the summary containing tree data */
+/**
+ * The storage key for the blob in the summary containing tree data
+ */
 const treeBlobKey = "ForestTree";
 
 /**
@@ -127,7 +130,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
             const treeBufferString = bufferToString(treeBuffer, "utf8");
             const tree = parse(treeBufferString) as string;
             const placeholderTree = JSON.parse(tree) as JsonableTree[];
-            initializeForest(this.forest, placeholderTree);
+            initializeForest(this.forest, placeholderTree.map(singleTextCursor));
         }
     }
 }

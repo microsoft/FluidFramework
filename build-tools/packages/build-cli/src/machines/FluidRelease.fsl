@@ -1,0 +1,276 @@
+// This state machine encodes the Fluid Release Process, which is used to drive
+// flub release command. It is written in Finite State Language (FSL). The best
+// available tutorial for FSL is here:
+//
+//   https://github.com/StoneCypher/fsl/blob/master/draft%20tutorial.md
+//
+// The state machine is somewhat complex, so it's easiest
+// to look at the SVG diagram, which can be found in the repo or on GitHub at:
+//
+//   https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/machines/FluidRelease.fsl.svg
+//
+// To edit the state machine, you can copy this definition into the editor here:
+//
+//   https://stonecypher.github.io/jssm-viz-demo/graph_explorer.html
+//
+// From there you can see the graph while you edit the machine.
+//
+// State names:
+//
+// By design, the number of actions is small. Most states only use 'success' and
+// 'failure'. This makes rearranging states much easier, and makes the machine
+// logic more manageable because each state only has to determine success or
+// failure.
+//
+// One drawback is that we often need to run the same "logic" in different parts
+// of the process. For example, we need to check if we are on a release branch
+// several times, but the path that each checks lies in is different, and we
+// want them to branch differently. But their core logic is the same.
+//
+// We could alternatively solve this problem with a lot more actions/transitions,
+// but the more exits there are for a state, the more complex the handling of that
+// state becomes. Tradeoffs!
+//
+// By convention, for states that are intended to represent the same "logic",
+// they are named State1, State2, State3, etc. This makes it easier to find them.
+// This is just a convention.
+//
+// States also use common prefixes that help indicate what's expected to happen in
+// that state. The prefixes are:
+//
+// Check - These states check either input from the user or from another source like
+// the repo state. If the check succeeds, the state signals 'success.'
+//
+// Ask - These states ask the user for input.
+//
+// Do - These states represent the beginning of a major part of the release process,
+// such as 'DoPatchRelease'. They are unique in that they usually only signal 'success',
+// though there are exceptions. Another way to think of them is as "sub-state-machines."
+// They're a self-contained subset of the overall machine. They're used largely for
+// organizational purposes.
+//
+// Prompt - These states output instructions for the user. They're usually terminal
+// (ending) states because the user needs to do something externally to move forward.
+// The canonical example is triggering a release build in ADO. The user is prompted
+// to do this then re-run the release command again to proceed.
+//
+// There are other states defined: Init, Failed, and ReleaseComplete. These should be
+// self-explanatory.
+
+machine_name: "Fluid Unified Release Process";
+
+// BEGIN Init and optional checks
+// The machine initializes and first does several optional, skippable checks.
+
+Init 'success'
+=> CheckShouldRunOptionalChecks 'success'
+=> CheckValidReleaseGroup 'success'
+=> CheckPolicy 'success'
+=> CheckHasRemote 'success'
+=> CheckBranchUpToDate 'success'
+=> CheckNoPrereleaseDependencies 'success'
+=> AskForReleaseType;
+
+// There are pre-release dependencies, so bump those first.
+CheckNoPrereleaseDependencies 'failure'
+-> DoBumpReleasedDependencies;
+
+// If any checks fail, immediately go to the failed state.
+[
+Init
+CheckValidReleaseGroup
+CheckPolicy
+CheckHasRemote
+CheckBranchUpToDate
+CheckShouldRunOptionalChecks
+] 'failure' -> Failed;
+// END Init and optional checks
+
+
+// BEGIN DoBumpReleasedDependencies
+
+// Tries to bump pre-release dependencies, and prompts the user to release them
+// if needed.
+DoBumpReleasedDependencies 'success' // No dependencies to bump
+=> CheckNoPrereleaseDependencies2 'success'
+=> CheckShouldCommitDeps 'success'
+=> PromptToPRDeps;
+
+DoBumpReleasedDependencies 'failure' // Dependencies were bumped
+=> CheckNoPrereleaseDependencies3 'failure'
+=> PromptToReleaseDeps;
+
+CheckNoPrereleaseDependencies3 'success'
+=> CheckShouldCommitReleasedDepsBump 'success'
+=> PromptToPRReleasedDepsBump;
+
+CheckNoPrereleaseDependencies2 'failure'
+=> PromptToReleaseDeps;
+
+CheckShouldCommitReleasedDepsBump 'failure'
+=> PromptToCommitReleasedDepsBump;
+
+CheckShouldCommitDeps 'failure'
+=> PromptToCommitDeps;
+
+// END DoBumpReleasedDependencies
+
+
+// START DoReleaseGroupBump
+// Bumps a release group and prompts to push/PR or commit changes
+
+DoReleaseGroupBump 'success'
+=> CheckShouldCommitBump 'success'
+=> PromptToPRBump;
+
+CheckShouldCommitBump 'failure'
+-> PromptToCommitBump;
+
+// END DoReleaseGroupBump
+
+
+// BEGIN PATCH RELEASE
+
+// Fully successful path
+AskForReleaseType 'patch'
+=> DoPatchRelease 'success'
+=> CheckDoesReleaseFromReleaseBranch 'success'
+=> CheckOnReleaseBranch 'success'
+=> CheckReleaseIsDone 'success'
+=> CheckReleaseGroupIsBumpedPatch 'success'
+=> CheckTypeTestPrepare 'success'
+=> CheckTypeTestGenerate 'success'
+=> ReleaseComplete;
+
+CheckDoesReleaseFromReleaseBranch 'failure'
+-> CheckReleaseIsDone 'failure'
+-> PromptToRelease;
+
+CheckOnReleaseBranch 'failure'
+-> Failed;
+
+CheckReleaseGroupIsBumpedPatch 'failure'
+-> DoReleaseGroupBump;
+
+[
+CheckTypeTestPrepare
+CheckTypeTestPrepare2
+CheckTypeTestGenerate
+CheckTypeTestGenerate2
+] 'failure'
+-> PromptToRunTypeTests;
+
+// END PATCH RELEASE
+
+
+// BEGIN MINOR RELEASE
+
+// Fully successful path
+AskForReleaseType 'minor'
+=> DoMinorRelease 'success'
+=> CheckDoesReleaseFromReleaseBranch2 'success'
+=> CheckOnReleaseBranch2 'success'
+=> CheckReleaseGroupIsBumpedPatch2 'success'
+=> CheckReleaseIsDone2 'success'
+=> CheckReleaseGroupIsBumpedMinor2 'success'
+=> CheckTypeTestPrepare2 'success'
+=> CheckTypeTestGenerate2 'success'
+=> ReleaseComplete;
+
+CheckDoesReleaseFromReleaseBranch2 'failure'
+-> CheckReleaseIsDone2 'failure'
+-> PromptToRelease;
+
+[
+CheckReleaseGroupIsBumpedMinor2
+CheckReleaseGroupIsBumpedPatch2
+] 'failure'
+-> DoReleaseGroupBump;
+
+CheckOnReleaseBranch2 'failure'
+-> CheckReleaseGroupIsBumpedMinor 'success'
+=> CheckReleaseBranchExists 'success'
+=> CheckReleaseIsDone;
+
+CheckReleaseBranchExists 'failure'
+-> PromptToCreateReleaseBranch;
+
+CheckReleaseGroupIsBumpedMinor 'failure'
+-> DoReleaseGroupBump;
+
+// END MINOR RELEASE
+
+
+// BEGIN MAJOR RELEASE
+
+AskForReleaseType 'major'
+=> DoMajorRelease 'success'
+=> CheckDoesReleaseFromReleaseBranch3 'success'
+=> CheckMainNextIntegrated 'success'
+=> CheckReleaseIsDone3 'failure' // The release hasn't been done
+// -> PromptToRunMinorReleaseCommand;
+-> DoMinorRelease;
+
+CheckMainNextIntegrated 'failure'
+-> CheckOnReleaseBranch3 'success'
+=> Failed;
+
+CheckDoesReleaseFromReleaseBranch3 'failure'
+-> CheckReleaseIsDone3 'success'
+=> PromptToRelease;
+
+CheckOnReleaseBranch3 'failure'
+-> CheckBranchName 'success'
+=> PromptToIntegrateNext;
+
+CheckBranchName 'failure'
+-> Failed;
+
+// END MAJOR RELEASE
+
+
+// visual styling
+state DoMajorRelease: {
+   background-color : steelblue;
+   text-color       : white;
+};
+
+state DoMinorRelease: {
+   background-color : steelblue;
+   text-color       : white;
+};
+
+state DoPatchRelease: {
+   background-color : steelblue;
+   text-color       : white;
+};
+
+state DoReleaseGroupBump: {
+   background-color : steelblue;
+   text-color       : white;
+};
+
+state DoBumpReleasedDependencies: {
+   background-color : steelblue;
+   text-color       : white;
+};
+
+state DoChecks: {
+   background-color : steelblue;
+   text-color       : white;
+};
+
+// state PromptToCommitReleasedDepsBump: {
+//   background-color : #ffdddd;
+//   text-color       : black;
+// };
+
+state AskForReleaseType: {
+   background-color : purple;
+   text-color       : white;
+};
+
+state ReleaseComplete: {
+   background-color : green;
+   text-color       : white;
+};
