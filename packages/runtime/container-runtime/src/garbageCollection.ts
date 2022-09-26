@@ -855,7 +855,7 @@ export class GarbageCollector implements IGarbageCollector {
             const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
 
             const gcStats = await this.runPostGCSteps(gcData, gcResult, logger, currentReferenceTimestampMs);
-            event.end({ ...gcStats });
+            event.end({ ...gcStats, timestamp: currentReferenceTimestampMs });
             this.completedRuns++;
             return gcStats;
         }, { end: true, cancel: "error" });
