@@ -202,6 +202,13 @@ export interface IContainerRuntimeBase extends
     getAudience(): IAudience;
 }
 
+/** @deprecated - Used only in deprecated API bindToContext */
+export enum BindState {
+    NotBound = "NotBound",
+    Binding = "Binding",
+    Bound = "Bound",
+}
+
 /**
  * Minimal interface a data store runtime need to provide for IFluidDataStoreContext to bind to control
  *
@@ -386,6 +393,12 @@ export interface IFluidDataStoreContext extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
+
+    /**
+     * @deprecated - To be removed in favor of makeVisible.
+     * Register the runtime to the container
+     */
+    bindToContext(): void;
 
     /**
      * Called to make the data store locally visible in the container. This happens automatically for root data stores

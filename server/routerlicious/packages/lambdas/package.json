@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-lambdas",
-  "version": "0.1037.3000",
+  "version": "0.1038.2000",
   "description": "Fluid service lambdas",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -53,13 +53,13 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/gitresources": "^0.1037.3000",
-    "@fluidframework/protocol-base": "^0.1037.3000",
+    "@fluidframework/gitresources": "^0.1038.2000",
+    "@fluidframework/protocol-base": "^0.1038.2000",
     "@fluidframework/protocol-definitions": "^1.0.0",
-    "@fluidframework/server-lambdas-driver": "^0.1037.3000",
-    "@fluidframework/server-services-client": "^0.1037.3000",
-    "@fluidframework/server-services-core": "^0.1037.3000",
-    "@fluidframework/server-services-telemetry": "^0.1037.3000",
+    "@fluidframework/server-lambdas-driver": "^0.1038.2000",
+    "@fluidframework/server-services-client": "^0.1038.2000",
+    "@fluidframework/server-services-core": "^0.1038.2000",
+    "@fluidframework/server-services-telemetry": "^0.1038.2000",
     "@types/semver": "^6.0.1",
     "async": "^3.2.2",
     "axios": "^0.26.0",
@@ -75,7 +75,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@fluidframework/server-test-utils": "^0.1037.3000",
+    "@fluidframework/server-test-utils": "^0.1038.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/async": "^3.2.9",
     "@types/json-stringify-safe": "^5.0.0",

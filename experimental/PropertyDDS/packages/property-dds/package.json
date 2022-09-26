@@ -61,7 +61,7 @@
     "@fluidframework/local-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/sequence": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/server-local-server": "^0.1037.2000-91174",
+    "@fluidframework/server-local-server": "^0.1038.1000",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/test-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",

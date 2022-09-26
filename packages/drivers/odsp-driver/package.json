@@ -66,10 +66,10 @@
     "@fluidframework/driver-base": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/driver-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/driver-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/gitresources": "^0.1037.2000-91174",
+    "@fluidframework/gitresources": "^0.1038.1000",
     "@fluidframework/odsp-doclib-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/protocol-base": "^0.1037.2000-91174",
+    "@fluidframework/protocol-base": "^0.1038.1000",
     "@fluidframework/protocol-definitions": "^1.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "abort-controller": "^3.0.0",
@@ -101,6 +101,19 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {}
+    "broken": {
+      "RemovedClassDeclaration_ReadBuffer": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedVariableDeclaration_snapshotMinReadVersion": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedVariableDeclaration_currentReadVersion": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }
