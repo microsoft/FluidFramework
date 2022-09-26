@@ -23,7 +23,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
     private snapshotTreeId: string | undefined;
 
     constructor(
-        logger: ITelemetryLogger,
+        private readonly logger: ITelemetryLogger,
         private readonly localSnapshot: Uint8Array | string,
     ) {
         super(logger);

@@ -115,26 +115,26 @@ class BlobCache {
 }
 
 export abstract class OdspDocumentStorageServiceBase implements IDocumentStorageService {
-    get policies(): IDocumentStorageServicePolicies {
-        return {
-            // By default, ODSP tells the container not to prefetch/cache.
-            caching: LoaderCachingPolicy.NoCaching,
+    readonly policies: IDocumentStorageServicePolicies = {
+        // By default, ODSP tells the container not to prefetch/cache.
+        caching: LoaderCachingPolicy.NoCaching,
 
-            // ODSP storage works better if it has less number of blobs / edges
-            // Runtime creating many small blobs results in sub-optimal perf.
-            // 2K seems like the sweat spot:
-            // The smaller the number, less blobs we aggregate. Most storages are very likely to have notion
-            // of minimal "cluster" size, so having small blobs is wasteful
-            // At the same time increasing the limit ensure that more blobs with user content are aggregated,
-            // reducing possibility for de-duping of same blobs (i.e. .attributes rolled into aggregate blob
-            // are not reused across data stores, or even within data store, resulting in duplication of content)
-            // Note that duplication of content should not have significant impact for bytes over wire as
-            // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
-            minBlobSize: 2048,
-            maximumCacheDurationMs: defaultCacheExpiryTimeoutMs,
-            snapshotCacheDisabledForTesting: loggerToMonitoringContext(this.logger).config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache"),
-        };
-    }
+        // ODSP storage works better if it has less number of blobs / edges
+        // Runtime creating many small blobs results in sub-optimal perf.
+        // 2K seems like the sweat spot:
+        // The smaller the number, less blobs we aggregate. Most storages are very likely to have notion
+        // of minimal "cluster" size, so having small blobs is wasteful
+        // At the same time increasing the limit ensure that more blobs with user content are aggregated,
+        // reducing possibility for de-duping of same blobs (i.e. .attributes rolled into aggregate blob
+        // are not reused across data stores, or even within data store, resulting in duplication of content)
+        // Note that duplication of content should not have significant impact for bytes over wire as
+        // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
+        minBlobSize: 2048,
+        maximumCacheDurationMs: defaultCacheExpiryTimeoutMs,
+        snapshotCacheDisabledForTesting: this.snapshotCacheDisabledForTesting,
+    };
+
+    private readonly snapshotCacheDisabledForTesting?: boolean;
 
     protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
 
@@ -147,8 +147,11 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
     protected readonly blobCache = new BlobCache();
 
     constructor(
-        protected readonly logger: ITelemetryLogger,
-    ) { }
+        logger: ITelemetryLogger,
+    ) {
+        this.snapshotCacheDisabledForTesting =
+            loggerToMonitoringContext(logger).config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache");
+    }
 
     public set ops(ops: api.ISequencedDocumentMessage[] | undefined) {
         assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);

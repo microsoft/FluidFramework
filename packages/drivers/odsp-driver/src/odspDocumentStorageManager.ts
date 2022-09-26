@@ -87,7 +87,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     constructor(
         private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-        logger: ITelemetryLogger,
+        private readonly logger: ITelemetryLogger,
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
