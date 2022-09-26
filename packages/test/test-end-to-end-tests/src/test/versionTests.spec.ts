@@ -13,7 +13,7 @@ import { ITestFluidObject, ITestObjectProvider, TestFluidObjectFactory } from "@
 import { DefaultSummaryConfiguration, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-const oldVersions = ["1.0.0", "1.0.1"];
+const oldVersions = ["1.0.0", "1.0.1", "0.56.0"];
 
 describeWithVersions({ specificVersions: oldVersions }, 30000 /* timeout */)(
     "Tests with different Fluid versions installed",
