@@ -16,42 +16,17 @@ import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { filterByKind, mergeSections } from "../../utilities";
-import { renderMemberTables } from "../helpers";
-import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
+import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
 /**
  * Default policy for rendering doc sections for `Interface` items.
  *
  * @remarks Format:
  *
- * - Tables
+ * - Tables: constructor-signatures, event properties, properties, methods, call-signatures, index-signatures
  *
- *   - constructor-signatures
- *
- *   - event properties
- *
- *   - properties
- *
- *   - methods
- *
- *   - call-signatures
- *
- *   - index-signatures
- *
- * - Details (for any types not rendered to their own documents - see
- *   {@link PolicyOptions.documentBoundaries})
- *
- *   - constructor-signatures
- *
- *   - event properties
- *
- *   - properties
- *
- *   - methods
- *
- *   - call-signatures
- *
- *   - index-signatures
+ * - Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries}):
+ * constructor-signatures, event properties, properties, methods, call-signatures, index-signatures
  */
 export function renderInterfaceSection(
     apiInterface: ApiInterface,

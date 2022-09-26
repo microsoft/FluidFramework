@@ -70,8 +70,7 @@ export function renderSignature(
     if (apiItem instanceof ApiDeclaredItem) {
         const signatureExcerpt = apiItem.getExcerptWithModifiers();
         if (signatureExcerpt !== "") {
-            const docNodes: DocNode[] = [];
-            docNodes.push(
+            const docNodes: DocNode[] = [
                 renderHeading(
                     {
                         title: "Signature",
@@ -79,14 +78,12 @@ export function renderSignature(
                     },
                     config,
                 ),
-            );
-            docNodes.push(
                 new DocFencedCode({
                     configuration: config.tsdocConfiguration,
                     code: signatureExcerpt,
                     language: "typescript",
                 }),
-            );
+            ];
 
             const renderedHeritageTypes = renderHeritageTypes(apiItem, config);
             if (renderedHeritageTypes !== undefined) {
@@ -354,6 +351,8 @@ export function renderExcerptWithHyperlinks(
         // If it's hyperlink-able, then append a DocLinkTag
         if (token.kind === ExcerptTokenKind.Reference && token.canonicalReference) {
             const apiItemResult: IResolveDeclarationReferenceResult =
+                // False positive
+                // eslint-disable-next-line unicorn/no-useless-undefined
                 config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
 
             if (apiItemResult.resolvedApiItem) {
@@ -419,8 +418,8 @@ export function renderBreadcrumb(
             docNodes.push(separator);
         }
 
-        const link = getLinkForApiItem(hierarchyItem, config);
-        docNodes.push(renderLink(link, config));
+        const ancestorLink = getLinkForApiItem(hierarchyItem, config);
+        docNodes.push(renderLink(ancestorLink, config));
 
         writtenAnythingYet = true;
     }

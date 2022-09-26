@@ -38,7 +38,8 @@ import { ApiMemberKind, getQualifiedApiItemName, getUnscopedPackageName } from "
  * ...
  * ```
  *
- * will result in separate documents being generated for `Namespace` items, but will not for other item kinds (`Classes`, `Interfaces`, etc.).
+ * will result in separate documents being generated for `Namespace` items, but will not for other item kinds
+ * (`Classes`, `Interfaces`, etc.).
  */
 export type DocumentBoundaries = ApiMemberKind[];
 
@@ -127,7 +128,8 @@ export type LinkTextPolicy = (apiItem: ApiItem) => string;
  * Policy for filtering packages.
  *
  * @param apiPackage - The package that may or may not be filtered.
- * @returns `true` if the package should be filtered out of documentation generation (i.e. **should not** be included in the output). `false` otherwise.
+ * @returns `true` if the package should be filtered out of documentation generation (i.e. **should not** be included
+ * in the output). `false` otherwise.
  */
 export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
 
@@ -211,6 +213,7 @@ export interface PolicyOptions {
     emptyTableCellText?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DefaultPolicies {
     /**
      * Default {@link PolicyOptions.documentBoundaries}.

@@ -106,6 +106,8 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     protected readonly generateFrontMatter?: (contextApiItem: ApiItem) => string;
 
     /**
+     * Constructor.
+     *
      * @param apiModel - See {@link MarkdownEmitter.apiModel}.
      * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
      */
@@ -225,7 +227,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                     context,
                 );
             }
-        } else if (result.errorMessage) {
+        } else if (result.errorMessage !== undefined) {
             const elementText = docLinkTag.codeDestination.emitAsTsdoc();
             logger?.warning(`Unable to resolve reference "${elementText}": ${result.errorMessage}`);
 
@@ -312,7 +314,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         if (headingLevel <= maxHeadingLevel) {
             const prefix = "#".repeat(headingLevel);
             let suffix: string = "";
-            if (docHeading.id) {
+            if (docHeading.id !== undefined) {
                 suffix = ` {#${docHeading.id}}`;
             }
 
@@ -443,7 +445,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
 
         // Markdown table rows can have inconsistent cell counts.  Size the table based on the longest row.
         let columnCount: number = 0;
-        if (docTable.header) {
+        if (docTable.header !== undefined) {
             columnCount = docTable.header.cells.length;
         }
         for (const row of docTable.rows) {
@@ -456,9 +458,9 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         writer.write("| ");
         for (let i: number = 0; i < columnCount; ++i) {
             writer.write(" ");
-            if (docTable.header) {
+            if (docTable.header !== undefined) {
                 const cell: DocTableCell | undefined = docTable.header.cells[i];
-                if (cell) {
+                if (cell !== undefined) {
                     this.writeNode(cell.content, childContext, false);
                 }
             }
@@ -516,9 +518,9 @@ export function emitMarkdown(
 ): string {
     const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 
-    markdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
+    const resolvedMarkdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
 
-    return markdownEmitter.emit(new StringBuilder(), document.contents, {
+    return resolvedMarkdownEmitter.emit(new StringBuilder(), document.contents, {
         contextApiItem: document.apiItem,
         getLinkUrlApiItem: (_apiItem) => getLinkUrlForApiItem(_apiItem, config),
     });

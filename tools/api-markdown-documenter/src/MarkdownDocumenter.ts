@@ -113,13 +113,13 @@ export async function renderFiles(
     const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 
     await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
-    markdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
+    const resolvedMarkdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
 
     const documents = renderDocuments(config);
 
     await Promise.all(
         documents.map(async (document) => {
-            const emittedDocumentContents = markdownEmitter!.emit(
+            const emittedDocumentContents = resolvedMarkdownEmitter.emit(
                 new StringBuilder(),
                 document.contents,
                 {

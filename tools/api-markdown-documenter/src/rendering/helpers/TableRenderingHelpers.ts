@@ -193,7 +193,7 @@ export function renderDefaultSummaryTable(
     }
 
     // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiItems.some(isDeprecated);
+    const hasDeprecated = apiItems.some((apiItem) => isDeprecated(apiItem));
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiItems.some(
@@ -265,8 +265,10 @@ export function renderParametersSummaryTable(
         if (hasOptionalParameters) {
             rowCells.push(renderModifierCell(apiParameter));
         }
-        rowCells.push(renderParameterTypeCell(apiParameter, config));
-        rowCells.push(renderParameterSummaryCell(apiParameter, config));
+        rowCells.push(
+            renderParameterTypeCell(apiParameter, config),
+            renderParameterSummaryCell(apiParameter, config),
+        );
 
         tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
     }
@@ -300,7 +302,7 @@ export function renderFunctionLikeSummaryTable(
     }
 
     // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiItems.some(isDeprecated);
+    const hasDeprecated = apiItems.some((apiItem) => isDeprecated(apiItem));
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiItems.some(
@@ -364,7 +366,7 @@ export function renderPropertiesTable(
     }
 
     // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiProperties.some(isDeprecated);
+    const hasDeprecated = apiProperties.some((apiItem) => isDeprecated(apiItem));
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiProperties.some(
@@ -398,8 +400,10 @@ export function renderPropertiesTable(
         if (hasDefaultValues) {
             rowCells.push(renderDefaultValueCell(apiProperty, config));
         }
-        rowCells.push(renderPropertyTypeCell(apiProperty, config));
-        rowCells.push(renderApiSummaryCell(apiProperty, config));
+        rowCells.push(
+            renderPropertyTypeCell(apiProperty, config),
+            renderApiSummaryCell(apiProperty, config),
+        );
 
         tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
     }
@@ -430,7 +434,7 @@ export function renderPackagesTable(
     }
 
     // Only display "Alerts" column if there are any deprecated items in the list.
-    const hasDeprecated = apiPackages.some(isDeprecated);
+    const hasDeprecated = apiPackages.some((apiItem) => isDeprecated(apiItem));
 
     const headerTitles: string[] = ["Package"];
     if (hasDeprecated) {

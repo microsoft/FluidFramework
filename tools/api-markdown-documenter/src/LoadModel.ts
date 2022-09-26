@@ -27,7 +27,7 @@ import { Logger } from "./Logging";
  * @param logger - Optional logger for reporting system events while loading the model.
  */
 export async function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel> {
-    if (!(await FileSystem.exists(reportsDirectoryPath))) {
+    if (!(await FileSystem.existsAsync(reportsDirectoryPath))) {
         throw new Error(`Provided directory does not exist: "${reportsDirectoryPath}".`);
     }
 
@@ -81,14 +81,14 @@ function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger):
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment) {
         const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment.inheritDocTag;
 
-        if (inheritDocTag && inheritDocTag.declarationReference) {
+        if (inheritDocTag?.declarationReference !== undefined) {
             // Attempt to resolve the declaration reference
             const result: IResolveDeclarationReferenceResult = apiModel.resolveDeclarationReference(
                 inheritDocTag.declarationReference,
                 apiItem,
             );
 
-            if (result.errorMessage) {
+            if (result.errorMessage !== undefined) {
                 if (logger !== undefined) {
                     logger.warning(
                         `Unresolved @inheritDoc tag for ${apiItem.displayName}: ${result.errorMessage}.`,
