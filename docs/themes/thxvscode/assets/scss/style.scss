@@ -84,7 +84,7 @@ a[href^=http]:not(.no-external-icon)::after
   background-color: #0098ff;
 }
 
-// This selector changed all visited external link's colors
+// This selector changes all visited external link's colors
 a[href^=http]:not(.no-external-icon):visited::after
 {
   background-color: $visited-link-color;
