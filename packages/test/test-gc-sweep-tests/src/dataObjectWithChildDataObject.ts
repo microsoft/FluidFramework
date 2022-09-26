@@ -18,6 +18,7 @@ import { DataObjectWithCounter, dataObjectWithCounterFactory } from "./dataObjec
 export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
     private child?: DataObjectWithCounter;
     private readonly opsToWait = 1000;
+    private localOpsPerformed: number = 0;
     private uniqueId?: string;
     private get childKey(): string {
         assert(this.uniqueId !== undefined, `A uniqueId needs to be defined to retrieve the child key!`);
@@ -42,6 +43,8 @@ export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
     }
 
     private async createAndReferenceChild() {
+        // If this assert is hit, we may potentially have a child that is running and we did not stop it.
+        assert(this.child === undefined, "A child should not exist!");
         this.child = await dataObjectWithCounterFactory.createInstance(this.context.containerRuntime);
         this.root.set(this.childKey, this.child.handle);
         this.child.start();
@@ -49,27 +52,28 @@ export class RootDataObjectWithChildDataObject extends DataObjectWithCounter {
 
     protected async run() {
         assert(this.isRunning === true, "Should be running to send ops");
+
         // The ideal loop is to send a number of counter ops, and then reference or unreference a child.
         while (this.isRunning && !this.disposed) {
-            let opsPerformed = 0;
-            // This inner loop generates a number of ops set by this.opsToWait.
-            while (opsPerformed < this.opsToWait) {
-                this.counter.increment(1);
-                // This data is local and allows us to understand the number of changes a local client has created
-                opsPerformed++;
-                await delay(this.delayPerOpMs);
-
-                if (!this.isRunning || this.disposed) {
-                    return;
+            // Every this.opsToWait, we want to either reference or unreference a datastore.
+            if (this.localOpsPerformed % this.opsToWait === 0) {
+                // Reference the child if there is none, unreference if there is one.
+                // Referencing and unreferencing should automatically stop and start the child.
+                // TODO: potentially reference an old child
+                if (this.child === undefined) {
+                    await this.createAndReferenceChild();
+                } else {
+                    this.unreferenceChild();
                 }
             }
 
-            // Reference the child if there is none, unreference if there is one
-            if (this.child === undefined) {
-                await this.createAndReferenceChild();
-            } else {
-                this.unreferenceChild();
-            }
+            // Count total ops performed on the datastore.
+            this.counter.increment(1);
+            // This data is local and allows us to understand the number of changes a local client has created.
+            this.localOpsPerformed++;
+
+            // This delay is const for now, potentially we would want to vary this value.
+            await delay(this.delayPerOpMs);
         }
     }
 }

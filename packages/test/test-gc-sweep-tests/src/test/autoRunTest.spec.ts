@@ -51,6 +51,8 @@ describeNoCompat("GC InactiveObjectX tests", (getTestObjectProvider) => {
     );
 
     // const sessionExpiryDurationMs = 3000; // 3 seconds
+    // TODO: create a config setup to allow for cohesive numbers
+    // This value needs to be cohesive with a bunch of other values, for now it's hard coded
     const inactiveTimeoutMs = 10 * 1000; // 10 seconds
 
     // Set settings here, may be useful to put everything in the mockConfigProvider
@@ -70,8 +72,8 @@ describeNoCompat("GC InactiveObjectX tests", (getTestObjectProvider) => {
     // Note: can run with npm run test:build to build and run the test
     // TODO: have this configurable via mocha cmd arguments
     // TODO: setup test to run in CI
-    const numberOfTests = 1;
-    for (let i = 0; i < numberOfTests; i++) {
+    const numberOfTestPasses = 1;
+    for (let i = 0; i < numberOfTestPasses; i++) {
         const seed = Math.random();
         const liveContainers = 10;
         const random = makeRandom();
@@ -88,13 +90,24 @@ describeNoCompat("GC InactiveObjectX tests", (getTestObjectProvider) => {
             const containerManager = new ContainerManager(runtimeFactory, configProvider, provider);
             await containerManager.createContainer();
             const testStart = Date.now();
+            while (containerManager.connectedContainerCount < liveContainers) {
+                await containerManager.loadContainer();
+            }
+
             while (Date.now() - testStart < testTimeout) {
                 if (containerManager.connectedContainerCount < liveContainers) {
                     await containerManager.loadContainer();
                 } else {
                     containerManager.closeRandomContainer(random);
                 }
+
+                // This delay timeout is temporary until we decide a reasonable set of waits.
                 await delay(inactiveTimeoutMs);
+            }
+
+            // Cleanup/Close all active containers.
+            while (containerManager.hasConnectedContainers()) {
+                containerManager.closeRandomContainer(random);
             }
 
             overrideLogger.logEvents(seed);
