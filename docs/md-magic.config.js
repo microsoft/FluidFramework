@@ -292,6 +292,7 @@ const mdMagicConfig = {
             const includeHeading = options.includeHeading !== "FALSE";
             return generateTrademarkSection(includeHeading);
         },
+        /* Match <!-- AUTO-GENERATED-CONTENT:START (TEMPLATE:src="<name-of-template-file under `/.md-magic-templates`>") --> */
         TEMPLATE(content, options, config) {
             const dir = pathLib.dirname(config.originalPath);
             const pkg = getPackageJsonFromOriginalPath(config.originalPath);

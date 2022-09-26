@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
- * @fileoverview In this file, we will test Float32
- *    object described in /src/properties/float32.js
+ * @fileoverview In this file, we will test Float32 object described in /src/properties/float32.js
  */
+
 describe('Float32', function() {
   var Float32Property;
 

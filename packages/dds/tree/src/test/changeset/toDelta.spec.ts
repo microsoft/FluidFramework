@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
+import { strict as assert } from "assert";
 import {
-    jsonableTreeFromCursorNew,
     ProtoNode,
     singleTextCursorNew,
     toDelta as toDeltaImpl,
@@ -13,7 +12,7 @@ import {
 } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKey, Delta, ITreeCursorSynchronous } from "../../tree";
-import { brand, brandOpaque, JsonCompatibleReadOnly } from "../../util";
+import { brand, brandOpaque } from "../../util";
 import { deepFreeze, assertMarkListEqual } from "../utils";
 
 function toDelta(changeset: T.LocalChangeset): Delta.Root {

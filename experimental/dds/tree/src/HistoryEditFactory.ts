@@ -183,13 +183,16 @@ function createInvertedInsert(
  * Information on the nodes that were detached is obtained by going to the revision before the detach.
  *
  * The anchor for the resulting Insert is chosen in the following order:
+ *
+ * ```markdown
  *     1. If detach.source.start.side is After: detach.source.start
  *
  *        ex: For nodes A B [C..F] G H where [C..F] represents the detached nodes,
  *            if detach.source.start is "After B", the anchor for the resulting Insert will also be "After B".
  *
  *            For nodes [A..F] G H where [A..F] represents the detached nodes,
- *            if detach.source.start is "After start of trait", the anchor for the resulting Insert will also be "After start of trait".
+ *            if detach.source.start is "After start of trait", the anchor for the resulting Insert will also be
+ *            "After start of trait".
  *
  *     2. Else if detach.source.end.side is Before: detach.source.end
  *
@@ -202,9 +205,10 @@ function createInvertedInsert(
  *        ex: For nodes A B [C..F] G H where [C..F] represents the detached nodes,
  *            if detach.source.start is "Before C" and detach.source.end is "After F",
  *            the anchor for the resulting Insert will be "After B".
+ * ```
  *
- *  When choosing the anchor, the existing anchors on detach.source are preferred when they have a valid sibling. Otherwise, the valid
- *  anchor to the left of the originally detached nodes is chosen.
+ * When choosing the anchor, the existing anchors on detach.source are preferred when they have a valid sibling.
+ * Otherwise, the valid anchor to the left of the originally detached nodes is chosen.
  */
 function createInvertedDetach(
 	detach: DetachInternal,

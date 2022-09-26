@@ -207,7 +207,7 @@ export interface ContainerRuntimeMessage {
 
 export interface ISummaryBaseConfiguration {
     /**
-     *  Delay before first attempt to spawn summarizing container.
+     * Delay before first attempt to spawn summarizing container.
      */
     initialSummarizerDelayMs: number;
 
@@ -550,9 +550,12 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 
 /**
  * Unpacks runtime messages
- * @internal - no promises RE back-compat - this is internal API.
+ *
+ * @remarks This API makes no promises regarding backward-compatability. This is internal API.
  * @param message - message (as it observed in storage / service)
  * @returns unpacked runtime message
+ *
+ * @internal
  */
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
     if (message.metadata?.compressed) {
@@ -918,11 +921,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
             return true;
         }
-        if (this.summaryConfiguration.state !== "disabled") {
-            return this.summaryConfiguration.summarizerClientElection === true;
-        } else {
-            return false;
-        }
+        return this.summaryConfiguration.state !== "disabled"
+            ? this.summaryConfiguration.summarizerClientElection === true
+            : false;
     }
     private readonly maxOpsSinceLastSummary: number;
     private getMaxOpsSinceLastSummary(): number {
@@ -931,11 +932,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary !== undefined) {
             return this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary;
         }
-        if (this.summaryConfiguration.state !== "disabled") {
-            return this.summaryConfiguration.maxOpsSinceLastSummary;
-        } else {
-            return 0;
-        }
+        return this.summaryConfiguration.state !== "disabled"
+            ? this.summaryConfiguration.maxOpsSinceLastSummary
+            : 0;
     }
 
     private readonly initialSummarizerDelayMs: number;
@@ -945,11 +944,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.initialSummarizerDelayMs !== undefined) {
             return this.runtimeOptions.summaryOptions.initialSummarizerDelayMs;
         }
-        if (this.summaryConfiguration.state !== "disabled") {
-            return this.summaryConfiguration.initialSummarizerDelayMs;
-        } else {
-            return 0;
-        }
+        return this.summaryConfiguration.state !== "disabled"
+            ? this.summaryConfiguration.initialSummarizerDelayMs
+            : 0;
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
@@ -1020,6 +1017,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
             getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
+            getContainerDiagnosticId: () => this.context.id,
             activeConnection: () => this.deltaManager.active,
         });
 
@@ -1341,15 +1339,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
                 const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
-                if (blob) {
-                    return {
+                return blob
+                    ? {
                         status: 200,
                         mimeType: "fluid/object",
                         value: blob,
-                    };
-                } else {
-                    return create404Response(request);
-                }
+                    } : create404Response(request);
             } else if (requestParser.pathParts.length > 0) {
                 const dataStore = await this.getDataStoreFromRequest(id, request);
                 const subRequest = requestParser.createSubRequest(1);
@@ -1594,7 +1589,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._perfSignalData.trackingSignalSequenceNumber = undefined;
         } else {
             assert(this.attachState === AttachState.Attached,
-                "Connection is possible only if container exists in storage");
+                0x3cd /* Connection is possible only if container exists in storage */);
         }
 
         // Fail while disconnected
@@ -1690,7 +1685,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.Rejoin:
                     break;
                 default:
-                    assert(!runtimeMessage, "Runtime message of unknown type");
+                    assert(!runtimeMessage, 0x3ce /* Runtime message of unknown type */);
             }
 
             // For back-compat, notify only about runtime messages for now.
@@ -1796,7 +1791,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const batch = this.batchManager.popBatch();
         this.flushBatch(batch);
 
-        assert(this.batchManager.empty, "reentrancy");
+        assert(this.batchManager.empty, 0x3cf /* reentrancy */);
     }
 
     protected flushBatch(batch: BatchMessage[]): void {
@@ -1876,7 +1871,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
             clientSequenceNumber -= batch.length - 1;
-            assert(clientSequenceNumber >= 0, "clientSequenceNumber can't be negative");
+            assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
         }
 
         // Let the PendingStateManager know that a message was submitted.
@@ -2336,7 +2331,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
-        assert(this.batchManager.empty, "Can't trigger summary in the middle of a batch");
+        assert(this.batchManager.empty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
         let latestSnapshotVersionId: string | undefined;
         if (refreshLatestAck) {
@@ -2427,7 +2422,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
             try {
                 summarizeResult = await this.summarize({
-                    fullTree: fullTree || forcedFullTree,
+                    fullTree: fullTree ?? forcedFullTree,
                     trackState: true,
                     summaryLogger: summaryNumberLogger,
                     runGC: this.garbageCollector.shouldRunGC,
@@ -2600,11 +2595,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private updateDocumentDirtyState(dirty: boolean) {
         if (this.attachState !== AttachState.Attached) {
-            assert(dirty, "Non-attached container is dirty");
+            assert(dirty, 0x3d2 /* Non-attached container is dirty */);
         } else {
             // Other way is not true = see this.isContainerMessageDirtyable()
             assert(!dirty || this.hasPendingMessages(),
-                "if doc is dirty, there has to be pending ops");
+                0x3d3 /* if doc is dirty, there has to be pending ops */);
         }
 
         if (this.dirtyContainer === dirty) {
@@ -2719,17 +2714,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
         // System message should not be sent in the middle of the batch.
-        assert(this.batchManager.empty, "System op in the middle of a batch");
+        assert(this.batchManager.empty, 0x3d4 /* System op in the middle of a batch */);
 
         // back-compat: ADO #1385: Make this call unconditional in the future
-        if (this.context.submitSummaryFn !== undefined) {
-            return this.context.submitSummaryFn(contents);
-        } else {
-            return this.context.submitFn(
+        return this.context.submitSummaryFn !== undefined
+            ? this.context.submitSummaryFn(contents)
+            : this.context.submitFn(
                 MessageType.Summarize,
                 contents,
-                false); // batch
-        }
+                false);
     }
 
     /**
@@ -3007,7 +3000,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // If it's not the case, we should take it into account when calculating dirty state.
         assert(this.context.attachState === AttachState.Attached,
-            "this function is called for attached containers only");
+            0x3d5 /* this function is called for attached containers only */);
         if (!this.hasPendingMessages()) {
             this.updateDocumentDirtyState(false);
         }

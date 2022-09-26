@@ -760,11 +760,7 @@ export class PartialSequenceLengths {
         for (const clientId in this.clientSeqNumbers) {
             if (this.clientSeqNumbers[clientId].size > 0) {
                 buf += `Client `;
-                if (glc) {
-                    buf += `${glc(+clientId)}`;
-                } else {
-                    buf += `${clientId}`;
-                }
+                buf += glc ? `${glc(+clientId)}` : `${clientId}`;
                 buf += "[";
                 for (const partial of this.clientSeqNumbers[clientId].items) {
                     buf += `(${partial.seq},${partial.len})`;
