@@ -2,19 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Loader } from "@fluidframework/container-loader";
+import { Container } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     AttachState,
     IContainer,
-    IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     ContainerSchema,
-    DOProviderContainerRuntimeFactory,
     FluidContainer,
     IFluidContainer,
     RootDataObject,
@@ -79,12 +77,17 @@ export class AzureClient {
         container: IFluidContainer;
         services: AzureContainerServices;
     }> {
-        const loader = this.createLoader(containerSchema);
-
-        const container = await loader.createDetachedContainer({
-            package: "no-dynamic-package",
-            config: {},
-        });
+        const container = await Container.createDetached(
+            {
+                urlResolver: createCachedResolver(this.urlResolver),
+                documentServiceFactory: this.documentServiceFactory,
+                codeLoader,
+                subLogger: this.props.logger,
+            },
+            {
+                package: "no-dynamic-package",
+                config: {},
+            });
 
         const fluidContainer = await this.createFluidContainer(container, this.props.connection);
         const services = this.getContainerServices(container);
@@ -199,24 +202,6 @@ export class AzureClient {
         return {
             audience: new AzureAudience(container),
         };
-    }
-
-    private createLoader(containerSchema: ContainerSchema): Loader {
-        const runtimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
-        const load = async (): Promise<IFluidModuleWithDetails> => {
-            return {
-                module: { fluidExport: runtimeFactory },
-                details: { package: "no-dynamic-package", config: {} },
-            };
-        };
-
-        const codeLoader = { load };
-        return new Loader({
-            urlResolver: this.urlResolver,
-            documentServiceFactory: this.documentServiceFactory,
-            codeLoader,
-            logger: this.props.logger,
-        });
     }
 
     private async createFluidContainer(
