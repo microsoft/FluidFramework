@@ -38,20 +38,19 @@ The default format is currently `JSON`
 ### Additional telemetry properties
 There is an optional command line option `telemetryProps` that allows you to specify additional properties that will be added to every telemetry entry. The format of this option is strict and must match the following:
 - every key is separated from the value by the `=` symbol
-- every key-value-pair is separated by whitespace
-- values cannot contain whitespace characters
+- every key-value-pair is separated by the `,` character
+- a value may not be empty
 
 Example of valid usages:
 ```
---telemetryProps="prop1=value1"
---telemetryProps="    prop1=value1    prop2=value2     "
+--telemetryProps="prop1=value1,prop2=value2"
+--telemetryProps="    prop1=value1  ,  prop2=value2     "
 ```
 
 Example of invalid usages:
 ```
 --telemetryProps="prop1=="
 --telemetryProps="prop1="
---telemetryProps="prop1= "
 --telemetryProps="prop1"
 ```
 

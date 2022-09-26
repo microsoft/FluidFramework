@@ -9,7 +9,7 @@ import { exportFile } from "./exportFile";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
 // eslint-disable-next-line import/no-internal-modules
-import { validateAndParseTelemetryOptions } from "./logger/fileLogger";
+import { validateAndParseTelemetryOptions } from "./logger/loggerUtils";
 import { validateCommandLineArgs } from "./utils";
 
 /**

@@ -8,8 +8,10 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
 import { createContainerAndExecute, IExportFileResponse } from "./exportFile";
 import { getArgsValidationError } from "./getArgsValidationError";
-// eslint-disable-next-line import/no-internal-modules
-import { createLogger, getTelemetryFileValidationError, ITelemetryOptions } from "./logger/fileLogger";
+/* eslint-disable import/no-internal-modules */
+import { ITelemetryOptions } from "./logger/fileLogger";
+import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
+/* eslint-enable import/no-internal-modules */
 import { getSnapshotFileContent } from "./utils";
 
 const clientArgsValidationError = "Client_ArgsValidationError";

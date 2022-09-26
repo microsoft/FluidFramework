@@ -7,7 +7,8 @@
 export { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle";
 export * from "./exportFile";
 export { fluidRunner } from "./fluidRunner";
-export { OutputFormat, createLogger, getTelemetryFileValidationError } from "./logger/fileLogger";
+export { OutputFormat } from "./logger/fileLogger";
+export { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
 export * from "./parseBundleAndExportFile";
 export { getSnapshotFileContent } from "./utils";
 /* eslint-enable import/no-internal-modules */
