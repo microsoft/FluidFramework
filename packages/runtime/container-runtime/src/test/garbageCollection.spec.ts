@@ -156,10 +156,6 @@ describe("Garbage Collection Tests", () => {
         };
         const customSessionExpiryDurationMs = defaultSessionExpiryDurationMs + 1;
         describe("Existing container", () => {
-            //* Tests
-            // Reads the two values from metadata - assumes default values if missing
-            // Logs Error if snapshotCache status mismatch
-            // Metadata roundtrip
             it("No metadata", () => {
                 gc = createGcWithPrivateMembers({});
                 assert(!gc.gcEnabled, "gcEnabled incorrect");
@@ -203,7 +199,6 @@ describe("Garbage Collection Tests", () => {
         describe("New Container", () => {
             //* Test cases
             // Respects snapshotCacheDisable param
-            // Persists both values
             it("No options", () => {
                 injectedSettings[runSessionExpiryKey] = true;
                 gc = createGcWithPrivateMembers(undefined /* metadata */, {});
@@ -395,8 +390,8 @@ describe("Garbage Collection Tests", () => {
                     { shouldRunGC: false, setSweepTimeout: true, sweepEnabled: true, runSweep: true, expectedResult: false },
                     { shouldRunGC: true, setSweepTimeout: false, sweepEnabled: true, runSweep: true, expectedResult: false },
                     { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, runSweep: false, expectedResult: false },
-                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, runSweep: true, expectedResult: true },
-                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, expectedResult: true },
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, runSweep: true, expectedResult: false }, // { expectedResult: true } once TEMPORARY snapshotCacheExpiryMs measure is reverted
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, expectedResult: false }, // { expectedResult: true } once TEMPORARY snapshotCacheExpiryMs measure is reverted
                     { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, expectedResult: false },
                 ];
                 testCases.forEach((testCase) => {

@@ -512,7 +512,6 @@ export class GarbageCollector implements IGarbageCollector {
             this.gcEnabled = prevSummaryGCVersion > 0;
             this.sweepEnabled = metadata?.sweepEnabled ?? false;
             this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-            //* Check SnapshotCacheDisabled flag
         } else {
             // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
             // scenario but explicitly failing makes it clearer and promotes correct usage.
@@ -545,7 +544,6 @@ export class GarbageCollector implements IGarbageCollector {
             );
             this.sessionExpiryTimer.start();
 
-            //* Store this on the class and persist it to summary
             // Hardcode a value of 2 days which is the value used in the ODSP driver.
             // Having snapshot cache be fresher than this is a requirement of using GC with other drivers.
             const snapshotCacheExpiryMs = createParams.snapshotCacheDisabledForTesting
@@ -593,10 +591,10 @@ export class GarbageCollector implements IGarbageCollector {
          * 3. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
          * feature flag.
          */
-        this.shouldRunSweep =
-            this.shouldRunGC
-            && this.sweepTimeoutMs !== undefined
-            && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
+        this.shouldRunSweep = false; // disable TEMPORARILY until Sweep Timeout constituents are persisted to snapshot
+            // this.shouldRunGC
+            // && this.sweepTimeoutMs !== undefined
+            // && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
