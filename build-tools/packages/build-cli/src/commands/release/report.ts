@@ -18,8 +18,9 @@ import inquirer from "inquirer";
 import sortJson from "sort-json";
 import { table } from "table";
 import { BaseCommand } from "../../base";
-import { getAllVersions, sortVersions, VersionDetails } from "../../lib";
+import { filterVersionsOlderThan, getAllVersions, sortVersions, VersionDetails } from "../../lib";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../../releaseGroups";
+import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
 
 const MAX_BUSINESS_DAYS_TO_CONSIDER_RECENT = 10;
 const DEFAULT_MIN_VERSION = "0.0.0";
@@ -89,6 +90,23 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 "Output a full report. A full report includes additional metadata for each package, including the time of the release, the type of release (patch, minor, major), and whether the release is new.",
             dependsOn: ["output"],
         }),
+        all: Flags.boolean({
+            description:
+                "List all releases. Useful when you want to see all the releases done for a release group or package. The number of results can be limited using the --limit argument.",
+            exclusive: ["output"],
+        }),
+        releaseGroup: releaseGroupFlag({
+            dependsOn: ["all"],
+            exclusive: ["package"],
+        }),
+        package: packageSelectorFlag({
+            dependsOn: ["all"],
+            exclusive: ["releaseGroup"],
+        }),
+        limit: Flags.integer({
+            dependsOn: ["all"],
+            description: `Limits the number of displayed releases for each release group.`,
+        }),
         ...BaseCommand.flags,
     };
 
@@ -100,12 +118,18 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         const flags = this.processedFlags;
         const versionData: PackageReleaseData = {};
 
-        const mode = flags.highest ? "version" : flags.mostRecent ? "date" : "interactive";
+        const mode =
+            flags.all || flags.highest ? "version" : flags.mostRecent ? "date" : "interactive";
+        const filter = flags.releaseGroup ?? flags.package;
 
         this.log(`Collecting version data for release groups...`);
         /* eslint-disable no-await-in-loop */
-        // collect version data for each release group
         for (const rg of context.repo.releaseGroups.keys()) {
+            if (filter !== undefined && filter !== rg) {
+                this.verbose(`Skipping '${rg} because it's excluded.`);
+                continue;
+            }
+
             const name = rg;
             const repoVersion = context.getVersion(rg);
 
@@ -122,8 +146,12 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         }
 
         this.log(`Collecting version data for independent packages...`);
-        // collect version data for each release package (independent packages)
         for (const pkg of context.independentPackages) {
+            if (filter !== undefined && filter !== pkg.name) {
+                this.verbose(`Skipping '${pkg.name} because it's excluded.`);
+                continue;
+            }
+
             const name = pkg.name;
             const repoVersion = pkg.version;
 
@@ -139,6 +167,27 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             }
         }
         /* eslint-enable no-await-in-loop */
+
+        if (flags.all === true) {
+            for (const [pkgOrReleaseGroup, data] of Object.entries(versionData)) {
+                const versions = sortVersions([...data.versions], "version");
+                // const recentReleases = filterVersionsOlderThan(versions, flags.days);
+                // if(recentReleases.length === 0) {
+                //     recentReleases.push(versions[0]);
+                // }
+
+                const t = this.generateAllReleasesTable(pkgOrReleaseGroup, versions);
+
+                this.log(
+                    table(t, {
+                        // columns: [{ alignment: "left" }, { alignment: "left" }, { alignment: "center" }, { alignment: "left" }, { alignment: "left" }],
+                        singleLine: true,
+                    }),
+                );
+            }
+
+            this.exit();
+        }
 
         const report: ReleaseReport = await this.generateReleaseReport(versionData);
         const packageList: PackageVersionList = await this.generatePackageList(versionData);
@@ -202,8 +251,8 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             return undefined;
         }
 
-        const sortedByVersion = await sortVersions(versions, "version");
-        const sortedByDate = await sortVersions(versions, "date");
+        const sortedByVersion = sortVersions(versions, "version");
+        const sortedByDate = sortVersions(versions, "date");
         const versionCount = sortedByVersion.length;
 
         if (sortedByDate === undefined) {
@@ -216,11 +265,10 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             case "interactive": {
                 let answer: inquirer.Answers | undefined;
 
-                const recentReleases = sortedByDate.filter((v) => {
-                    const diff =
-                        v.date === undefined ? 0 : differenceInBusinessDays(Date.now(), v.date);
-                    return diff <= numberBusinessDaysToConsiderRecent;
-                });
+                const recentReleases = filterVersionsOlderThan(
+                    sortedByDate,
+                    numberBusinessDaysToConsiderRecent,
+                );
 
                 // No recent releases, so set the latest to the highest semver
                 if (recentReleases.length === 0) {
@@ -421,10 +469,73 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
 
     private isRecentRelease(data: RawReleaseData): boolean {
         const latestDate = data.latestReleasedVersion.date;
+        return this.isRecentReleaseByDate(latestDate);
+    }
 
-        return latestDate === undefined
+    private isRecentReleaseByDate(date?: Date): boolean {
+        return date === undefined
             ? false
-            : differenceInBusinessDays(Date.now(), latestDate) < this.processedFlags.days;
+            : differenceInBusinessDays(Date.now(), date) < this.processedFlags.days;
+    }
+
+    private generateAllReleasesTable(
+        pkgOrReleaseGroup: ReleasePackage | ReleaseGroup,
+        versions: VersionDetails[],
+    ): string[][] {
+        const tableData: string[][] = [];
+        const releases = sortVersions(versions, "version").reverse();
+
+        let index = 0;
+        for (const ver of releases) {
+            const displayPreviousVersion =
+                index >= 1 ? releases[index - 1].version : DEFAULT_MIN_VERSION;
+
+            const displayDate =
+                ver.date === undefined
+                    ? "--no date--"
+                    : formatISO9075(ver.date, { representation: "date" });
+
+            const highlight = this.isRecentReleaseByDate(ver.date) ? chalk.green : chalk.white;
+
+            let displayRelDate: string;
+            if (ver.date === undefined) {
+                displayRelDate = "";
+            } else {
+                const relDate = `${formatDistanceToNow(ver.date)} ago`;
+                displayRelDate = highlight(relDate);
+            }
+
+            const bumpType = detectBumpType(displayPreviousVersion, ver.version);
+            const displayBumpType = highlight(`${bumpType}`);
+
+            const displayVersionSection = chalk.grey(
+                `${highlight(ver.version)} <= ${displayPreviousVersion}`,
+            );
+
+            tableData.push([
+                pkgOrReleaseGroup,
+                displayBumpType,
+                displayRelDate,
+                displayDate,
+                displayVersionSection,
+            ]);
+
+            index++;
+        }
+
+        // tableData.reverse();
+        const limit = this.processedFlags.limit;
+
+        if (limit !== undefined && tableData.length > limit) {
+            this.verbose(
+                `Reached the release limit (${limit}), ignoring the remaining ${
+                    tableData.length - limit
+                } releases.`,
+            );
+            return tableData.slice(-limit);
+        }
+
+        return tableData;
     }
 }
 
