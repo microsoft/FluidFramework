@@ -17,35 +17,6 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
-# 3.0.0
-
-## 3.0.0 Upcoming changes
-- [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
-- [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
-- [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
-- [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
--
-### Remove `type` field from `ShareLinkInfoType`
-This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
-
-### Remove `ShareLinkTypes` interface
-`ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Singnature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
-```diff
-    function createOdspCreateContainerRequest(
-        siteUrl: string,
-        driveId: string,
-        filePath: string,
-        fileName: string,
--       createShareLinkType?: ShareLinkTypes,
-+       createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
-    ):
-```
-
-
-### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
-`enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
-### Add assertion that prevents sending op while processing another op
-`preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
@@ -56,6 +27,10 @@ This field has been deprecated and will be removed in a future breaking change. 
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
 - [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
+- [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
+- [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
+- [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
 
 ### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
 
@@ -105,6 +80,28 @@ to be `string | undefined`.
 `SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
 To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
 The corresponding method on `IMergeTreeTexHelper` will also be removed.
+
+### Remove `type` field from `ShareLinkInfoType`
+This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
+
+### Remove `ShareLinkTypes` interface
+`ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Singnature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
+```diff
+    function createOdspCreateContainerRequest(
+        siteUrl: string,
+        driveId: string,
+        filePath: string,
+        fileName: string,
+-       createShareLinkType?: ShareLinkTypes,
++       createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
+    ):
+```
+
+
+### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
+`enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
+### Add assertion that prevents sending op while processing another op
+`preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
 
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
@@ -158,6 +155,9 @@ The `aliasing` return value from `AliasResult` has been removed from `@fluidfram
 
 ### Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported
 The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use aliasing instead. See [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated). The `isRoot` parameter from `IContainerRuntimeBase._createDataStoreWithProps` has also been removed. Additionally, the feature gate which would switch to using aliasing behind the aforementioned deleted APIs, `Fluid.ContainerRuntime.UseDataStoreAliasing` will no longer be observed by the runtime. As aliasing is the default behavior for creating such datastores, the `useDataStoreAliasing` property from `IContainerRuntimeOptions` has been removed.
+
+### Remove ICodeLoader from `@fluidframework/container-definitions`
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 # 1.2.0
 
@@ -334,8 +334,6 @@ Additionally, please note that the `Connecting` state is being renamed to `Catch
 `ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
 `ConnectionState.Connecting` will be removed in the following major release.
 
-### Remove ICodeLoader from `@fluidframework/container-definitions`
-`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 # 0.59
 
