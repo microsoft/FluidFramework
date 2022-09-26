@@ -582,7 +582,7 @@ export function renderModifiersCell(
               {
                   configuration: config.tsdocConfiguration,
               },
-              docNodes,
+              [new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes)],
           );
 }
 
