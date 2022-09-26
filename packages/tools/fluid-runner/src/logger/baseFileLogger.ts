@@ -14,7 +14,7 @@ export abstract class BaseFileLogger implements IFileLogger {
     public supportsTags?: true | undefined;
 
     /** Hold events in memory until flushed */
-    protected events: string[] = [];
+    protected events: any[] = [];
     protected hasWrittenToFile = false;
 
     /**
@@ -31,8 +31,7 @@ export abstract class BaseFileLogger implements IFileLogger {
     public send(event: ITelemetryBaseEvent): void {
         // eslint-disable-next-line no-param-reassign
         event = { ...event, ...this.defaultProps };
-        const logEvent = JSON.stringify(event);
-        this.events.push(logEvent);
+        this.events.push(event);
 
         if (this.events.length >= this.eventsPerFlush || event.category === "error") {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -40,14 +39,13 @@ export abstract class BaseFileLogger implements IFileLogger {
         }
     }
 
-    protected abstract flush(): Promise<void>;
-
-    protected async flushCore(outputPath: string, delimitter: string): Promise<void> {
+    protected async flush(): Promise<void> {
         if (this.events.length > 0) {
+            const contentToWrite = this.events.map((it) => JSON.stringify(it)).join(",");
             if (this.hasWrittenToFile) {
-                fs.appendFileSync(outputPath, delimitter + this.events.join(delimitter));
+                fs.appendFileSync(this.filePath, `,${contentToWrite}`);
             } else {
-                fs.appendFileSync(outputPath, this.events.join(delimitter));
+                fs.appendFileSync(this.filePath, contentToWrite);
             }
             this.events = [];
             this.hasWrittenToFile = true;

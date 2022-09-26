@@ -20,10 +20,6 @@ export class JSONFileLogger extends BaseFileLogger {
         fs.appendFileSync(this.filePath, "[");
     }
 
-    public async flush(): Promise<void> {
-        return super.flushCore(this.filePath, ",");
-    }
-
     public async close(): Promise<void> {
         await super.close();
         fs.appendFileSync(this.filePath, "]");
