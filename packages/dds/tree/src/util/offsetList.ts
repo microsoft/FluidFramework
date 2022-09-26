@@ -7,9 +7,12 @@ export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = 
 
 /**
  * Helper class for constructing an offset list that...
- *  - Does not insert offsets if there is no content after them
- *  - Does not insert 0-sized offsets
- *  - Merges runs of offsets together
+ *
+ * - Does not insert offsets if there is no content after them
+ *
+ * - Does not insert 0-sized offsets
+ *
+ * - Merges runs of offsets together
  */
 export class OffsetListFactory<TContent> {
     private offset = 0;

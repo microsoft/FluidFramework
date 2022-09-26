@@ -52,10 +52,9 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/azure-client"
+        testPackage: "@fluidframework/azure-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:azure
-        testFileTarName: azure-client
         extraDependencies: "cross-env mocha @fluidframework/test-client-utils"
         downloadAzureTestArtifacts: true
         env:
@@ -70,10 +69,9 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        testPackage: "@fluidframework/azure-client"
+        testPackage: "@fluidframework/azure-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:tinylicious
-        testFileTarName: azure-client
         extraDependencies: "cross-env mocha start-server-and-test @fluidframework/test-client-utils"
         downloadAzureTestArtifacts: true
         env:
