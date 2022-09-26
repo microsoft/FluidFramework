@@ -126,8 +126,10 @@ export class OdspSummaryUploadManager {
     }
 
     /**
-     * Following are the goals of this function.
-     *  a.) Converts the summary tree to a snapshot/odsp tree to be uploaded. Always upload full snapshot tree.
+     * Following are the goals of this function:
+     *
+     * a. Converts the summary tree to a snapshot/odsp tree to be uploaded. Always upload full snapshot tree.
+     *
      * @param parentHandle - Handle of the last uploaded summary or detach new summary.
      * @param tree - Summary Tree which will be converted to snapshot tree to be uploaded.
      * @param rootNodeName - Root node name of the summary tree.
@@ -169,19 +171,16 @@ export class OdspSummaryUploadManager {
                     break;
                 }
                 case api.SummaryType.Blob: {
-                    if (typeof summaryObject.content === "string") {
-                        value = {
+                    value = typeof summaryObject.content === "string"
+                        ? {
                             type: "blob",
                             content: summaryObject.content,
                             encoding: "utf-8",
-                        };
-                    } else {
-                        value = {
+                        } : {
                             type: "blob",
                             content: Uint8ArrayToString(summaryObject.content, "base64"),
                             encoding: "base64",
                         };
-                    }
                     blobs++;
                     break;
                 }

@@ -259,13 +259,18 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
                 }
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const value = JSON.parse(sessionStorage.getItem(ssKey!)!);
+                let foundMismatch = false;
                 for (const qk of queryKeys) {
                     if (value[qk] !== query[qk]) {
-                        continue;
+                        foundMismatch = true;
+                        break;
                     }
                 }
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return value;
+
+                if (!foundMismatch) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                    return value;
+                }
             }
         }
         return null;

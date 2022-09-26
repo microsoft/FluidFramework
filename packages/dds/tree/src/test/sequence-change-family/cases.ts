@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceChangeset } from "../../feature-libraries";
+import { Transposed as T, SequenceChangeset } from "../../feature-libraries";
 import { brand } from "../../util";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Value } from "../../tree";
@@ -35,6 +35,12 @@ export function setChildValueTo(value: Value): SequenceChangeset {
                 },
             }],
         },
+    };
+}
+
+export function asForest(markList: T.MarkList): SequenceChangeset {
+    return {
+        marks: { root: markList },
     };
 }
 

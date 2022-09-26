@@ -56,10 +56,6 @@ export async function ErrorPopup<
     }
   } catch (err: any) {
     processError(err);
-    if (catchErr) {
-      return Promise.resolve();
-    } else {
-      return Promise.reject(err);
-    }
+    return catchErr ? Promise.resolve() : Promise.reject(err);
   }
 }
