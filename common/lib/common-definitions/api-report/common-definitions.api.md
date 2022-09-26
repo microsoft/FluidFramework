@@ -196,15 +196,15 @@ export interface ILoggingError extends Error {
 }
 
 // @public
-export interface ITaggedTelemetryPropertyType {
+export interface ITaggedTelemetryPropertyType<TValue> {
     // (undocumented)
     tag: string;
     // (undocumented)
-    value: TelemetryEventPropertyType;
+    value: TValue;
 }
 
 // @public
-export interface ITelemetryBaseEvent extends ITelemetryProperties {
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
     category: string;
     // (undocumented)
@@ -215,6 +215,12 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 export interface ITelemetryBaseLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public (undocumented)
+export interface ITelemetryBaseProperties {
+    // (undocumented)
+    [index: string]: OptionallyTaggedTelemetryProperty<TelemetryBaseEventPropertyType>;
 }
 
 // @public
@@ -248,8 +254,11 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 // @public
 export interface ITelemetryProperties {
     // (undocumented)
-    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+    [index: string]: OptionallyTaggedTelemetryProperty<TelemetryEventPropertyType>;
 }
+
+// @public (undocumented)
+export type OptionallyTaggedTelemetryProperty<T> = T | ITaggedTelemetryPropertyType<T>;
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
@@ -257,10 +266,13 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 } : L;
 
 // @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+
+// @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @public
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+export type TelemetryEventPropertyType = string | number | boolean | undefined | (string | number | boolean)[];
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;

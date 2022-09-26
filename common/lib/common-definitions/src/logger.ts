@@ -15,32 +15,47 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
  * General best practice is to explicitly log the fields you care about from objects.
  */
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+ export type TelemetryEventPropertyType =
+    | string
+    | number
+    | boolean
+    | undefined
+    | (string | number | boolean)[];
 
 /**
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
  */
-export interface ITaggedTelemetryPropertyType {
-    value: TelemetryEventPropertyType;
+export interface ITaggedTelemetryPropertyType<TValue> {
+    value: TValue;
     tag: string;
 }
+
+export type OptionallyTaggedTelemetryProperty<T> = T | ITaggedTelemetryPropertyType<T>;
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
  */
 export interface ITelemetryProperties {
-    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+    [index: string]: OptionallyTaggedTelemetryProperty<TelemetryEventPropertyType>;
 }
 
+/**
+ * Set of properties defined for the base logger to use only primitive types.
+ */
+ export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+
+ export interface ITelemetryBaseProperties {
+     [index: string]: OptionallyTaggedTelemetryProperty<TelemetryBaseEventPropertyType>;
+ }
 /**
  * Base interface for logging telemetry statements.
  * Can contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  */
-export interface ITelemetryBaseEvent extends ITelemetryProperties {
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     category: string;
     eventName: string;
 }
