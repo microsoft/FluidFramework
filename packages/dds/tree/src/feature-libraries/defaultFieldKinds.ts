@@ -341,7 +341,12 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
                 if (fieldChange === undefined) {
                     fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
                 }
-                fieldChange.newContent = change.fieldChange.newContent;
+
+                if (change.fieldChange.newContent !== undefined) {
+                    fieldChange.newContent = change.fieldChange.newContent;
+                } else {
+                    delete fieldChange.newContent;
+                }
 
                 // The previous changes applied to a different value, so we discard them.
                 // TODO: Represent muted changes
@@ -357,7 +362,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
             composed.fieldChange = fieldChange;
         }
 
-        if (childChanges !== undefined) {
+        if (childChanges.length > 0) {
             composed.childChange = composeChild(childChanges);
         }
 
