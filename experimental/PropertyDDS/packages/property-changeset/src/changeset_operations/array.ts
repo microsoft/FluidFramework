@@ -26,14 +26,45 @@ const { isPrimitiveType } = TypeIdHelper;
  * @enum number
  */
 enum ArrayChangeSetRangeType {
-    completeA, // a complete operation of change set A
-    completeB, // a complete operation of change set B
-    partOfA, // a partial operation of change set A
-    partOfB, // a partial operation of change set B
-    completeApartOfB, // a complete operation of change set A overlapping with a partial operation of change set B
-    completeBpartOfA, // a complete operation of change set B overlapping with a partial operation of change set A
-    completeAcompleteB, // a complete operation of change set A overlapping a complete operation of change set B
-    partOfApartOfB, // a partial operation of change set A, a partial operation of change set B
+    /**
+     * A complete operation of change set A.
+     */
+    completeA,
+
+    /**
+     * A complete operation of change set B.
+     */
+    completeB,
+
+    /**
+     * A partial operation of change set A.
+     */
+    partOfA,
+
+    /**
+     * A partial operation of change set B.
+     */
+    partOfB,
+
+    /**
+     * A complete operation of change set A overlapping with a partial operation of change set B.
+     */
+    completeApartOfB,
+
+    /**
+     * A complete operation of change set B overlapping with a partial operation of change set A.
+     */
+    completeBpartOfA,
+
+    /**
+     * A complete operation of change set A overlapping a complete operation of change set B.
+     */
+    completeAcompleteB,
+
+    /**
+     * A partial operation of change set A, a partial operation of change set B.
+     */
+    partOfApartOfB,
 }
 
 interface SegmentType<T = GenericOperation, K = GenericOperation, L = GenericOperation> {
@@ -183,11 +214,7 @@ const getRangeForAppliedOperation = function(
 
     io_resultingRange.begin = in_operation.operation[0];
     io_resultingRange.op._absoluteBegin = in_operation.operation[0];
-    if (in_flag !== undefined) {
-        io_resultingRange.flag = in_flag;
-    } else {
-        io_resultingRange.flag = ArrayChangeSetRangeType.completeB;
-    }
+    io_resultingRange.flag = in_flag !== undefined ? in_flag : ArrayChangeSetRangeType.completeB;
 
     switch (in_operation.type) {
         case ArrayChangeSetIterator.types.INSERT:
@@ -204,11 +231,9 @@ const getRangeForAppliedOperation = function(
             let numberOfRemovedElements = getOpLength(in_operation.operation);
 
             io_resultingRange.end = in_operation.operation[0] + numberOfRemovedElements;
-            if (Array.isArray(in_operation.operation[1])) {
-                io_resultingRange.op.operation[1] = in_operation.operation[1].slice();
-            } else {
-                io_resultingRange.op.operation[1] = in_operation.operation[1];
-            }
+            io_resultingRange.op.operation[1] = Array.isArray(in_operation.operation[1])
+                ? in_operation.operation[1].slice()
+                : in_operation.operation[1];
             io_resultingRange.removeInsertOperation = in_operation.removeInsertOperation;
             return;
         case ArrayChangeSetIterator.types.MODIFY:
@@ -502,19 +527,13 @@ const splitOverlapping = function(
                 io_resultingSegment.op = undefined; // This is used to indicate that we don't need any operation
 
                 if (io_rangeB.op.operation[1].length === rangeLength) {
-                    if (io_rangeA.op.operation[1].length === rangeLength) {
-                        // We consume both A and B
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.completeAcompleteB;
-                    } else {
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.completeBpartOfA;
-                    }
+                    io_resultingSegment.flag = io_rangeA.op.operation[1].length === rangeLength
+                        ? ArrayChangeSetRangeType.completeAcompleteB
+                        : ArrayChangeSetRangeType.completeBpartOfA;
                 } else {
-                    if (io_rangeA.op.operation[1].length === rangeLength) {
-                        // We consume A and leave a part of B
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.completeApartOfB;
-                    } else {
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.partOfApartOfB;
-                    }
+                    io_resultingSegment.flag = io_rangeA.op.operation[1].length === rangeLength
+                        ? ArrayChangeSetRangeType.completeApartOfB
+                        : ArrayChangeSetRangeType.partOfApartOfB;
                 }
                 // cut the remaining segment entry
                 if (io_resultingSegment.flag === ArrayChangeSetRangeType.partOfApartOfB ||
@@ -887,12 +906,7 @@ const handleCombinations = function(in_segment: SegmentType, in_isPrimitiveType:
                 }
                 case ArrayChangeSetIterator.types.REMOVE: {
                     // Attention: B removes A completely, kill A to avoid zero inserts
-                    let opBLen;
-                    if (isNumber(opB.operation[1])) {
-                        opBLen = opB.operation[1];
-                    } else {
-                        opBLen = opB.operation[1].length;
-                    }
+                    const opBLen = isNumber(opB.operation[1]) ? opB.operation[1] : opB.operation[1].length;
                     if (opBLen !== opA.operation[1].length) {
                         throw new Error("handleCombinations: insert-remove: unequal number of affected entries");
                     }
@@ -1007,21 +1021,27 @@ const arraysHaveSameValues = function(in_arr1: arrayModifyList[1], in_arr2: arra
  *
  * We have to handle the conflicting rebase changes. The changes we do, are summarized in this table.
  * Other is the modified, rebased (on own) changeset.
+ *
+ * ```
  *                   BASE
  *                  /    \
  *                 /      \
  *               OWN      OTHER
+ * ```
  *
  * gets rebased to:
  *
+ * ```
  *                 BASE
  *                  /
  *               OWN
  *                  \
  *                OTHER
+ * ```
  *
  * conflict default behavior in ()
  *
+ * ```
  * -------|-----------------+------------------+------------------|
  *    \Own|    insert       |       modify     |     remove       |
  *     \  |                 |                  |                  |
@@ -1040,6 +1060,7 @@ const arraysHaveSameValues = function(in_arr1: arrayModifyList[1], in_arr2: arra
  * remove | change          | change           | change           |
  *        | [rem orig. data]| (note the user)  | [rem dupl. rem]  |
  * -------|-----------------+------------------+------------------|
+ * ```
  *
  * @param {{opA:{}, opB:{}}} in_segment - The two ops to be combined
  * @param {Array.<property-changeset.ChangeSet.ConflictInfo>} out_conflicts - A list of paths that resulted in
@@ -1134,17 +1155,8 @@ const handleRebaseCombinations = function(
                 case ArrayChangeSetIterator.types.REMOVE: {
                     // Remove already in A, no need to add the same again -> write nop
 
-                    let opBLen; let opALen;
-                    if (isNumber(opB.operation[1])) {
-                        opBLen = opB.operation[1];
-                    } else {
-                        opBLen = opB.operation[1].length;
-                    }
-                    if (isNumber(opA.operation[1])) {
-                        opALen = opA.operation[1];
-                    } else {
-                        opALen = opA.operation[1].length;
-                    }
+                    const opBLen = isNumber(opB.operation[1]) ? opB.operation[1] : opB.operation[1].length;
+                    const opALen = isNumber(opA.operation[1]) ? opA.operation[1] : opA.operation[1].length;
 
                     if (opBLen !== opALen) {
                         throw new Error("handleRebaseCombinations: remove-remove: unequal number of affected entries, " +
@@ -1311,8 +1323,8 @@ const applyRebaseSegment = function(
     }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ChangeSetArrayFunctions {
-
     /**
      * Applies a changeset to a given array property. The ChangeSet is assumed to be relative to the same
      * property root and it will be applied behind the base ChangeSet (assuming that the changes are relative to the
@@ -1607,21 +1619,27 @@ export namespace ChangeSetArrayFunctions {
      *
      * We have to handle the conflicting rebase changes. The changes we do, are summarized in this table.
      * Other is the modified, rebased (on own) changeset.
+     *
+     * ```
      *                   BASE
      *                  /    \
      *                 /      \
      *               OWN      OTHER
+     * ```
      *
      * gets rebased to:
      *
+     * ```
      *                 BASE
      *                  /
      *               OWN
      *                  \
      *                OTHER
+     * ```
      *
      * conflict default behavior in ()
      *
+     * ```
      * -------|-----------------+------------------+------------------|----------------|
      *    \Own|    insert       |       modify     |     remove       |   String set   |
      *     \  |                 |                  |                  |                |
@@ -1642,6 +1660,7 @@ export namespace ChangeSetArrayFunctions {
      *  set   |           'other's set overwrites whatever happend before              |
      *        |                 |                  |                  |                |
      * --------------------------------------------------------------------------------|
+     * ```
      *
      * @param in_ownPropertyChangeSet - The ChangeSet for the property stored in this object
      * @param io_rebasePropertyChangeSetParent - The Array containing the ChangeSet for the property to be rebased
@@ -1649,7 +1668,6 @@ export namespace ChangeSetArrayFunctions {
      * @param in_basePath - Base path to get to the property processed by this function
      * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict
      */
-
     export function _rebaseChangeSetForString(
         in_ownPropertyChangeSet: SerializedChangeSet,
         io_rebasePropertyChangeSetParent: SerializedChangeSet,

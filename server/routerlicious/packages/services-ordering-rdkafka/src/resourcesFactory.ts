@@ -5,6 +5,7 @@
 
 import {
     IConsumer,
+    IPartitionLambdaPlugin,
     IPartitionLambdaFactory,
     IResources,
     IResourcesFactory,
@@ -38,14 +39,16 @@ export class RdkafkaResources implements IRdkafkaResources {
 export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResources> {
     constructor(
         private readonly name: string,
-        private readonly lambdaModule: string,
+        private readonly lambdaModule: string | IPartitionLambdaPlugin,
         private readonly zookeeperClientConstructor: ZookeeperClientConstructor) {
     }
 
     public async create(config: Provider): Promise<RdkafkaResources> {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-        const plugin = require(this.lambdaModule);
-        const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
+        const plugin: IPartitionLambdaPlugin = typeof this.lambdaModule === "string"
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            ? require(this.lambdaModule)
+            : this.lambdaModule;
+        const lambdaFactory = await plugin.create(config);
 
         // Inbound Kafka configuration
         const kafkaEndpoint: string = config.get("kafka:lib:endpoint");

@@ -75,10 +75,12 @@ export const VisibilityState = {
 
     /**
      * Indicates that the object is visible globally to all clients. This is the state of an object in 2 scenarios:
+     *
      * 1. It is attached to the container's graph when the container is globally visible. The object's state goes from
-     *    not visible to globally visible.
+     * not visible to globally visible.
+     *
      * 2. When a container becomes globally visible, all locally visible objects go from locally visible to globally
-     *    visible.
+     * visible.
      */
     GloballyVisible: "GloballyVisible",
 };
@@ -198,6 +200,13 @@ export interface IContainerRuntimeBase extends
      * Returns the current audience.
      */
     getAudience(): IAudience;
+}
+
+/** @deprecated - Used only in deprecated API bindToContext */
+export enum BindState {
+    NotBound = "NotBound",
+    Binding = "Binding",
+    Bound = "Bound",
 }
 
 /**
@@ -384,6 +393,12 @@ export interface IFluidDataStoreContext extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
+
+    /**
+     * @deprecated - To be removed in favor of makeVisible.
+     * Register the runtime to the container
+     */
+    bindToContext(): void;
 
     /**
      * Called to make the data store locally visible in the container. This happens automatically for root data stores

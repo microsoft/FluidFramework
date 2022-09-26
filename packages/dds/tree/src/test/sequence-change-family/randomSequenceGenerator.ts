@@ -60,19 +60,19 @@ export function generateRandomChange(seed: number, pathGenerator: (seed: number)
     switch (operation) {
         case Operation.SetValue:
             builder.setValue(
-                pathGenerator(random.real()),
+                pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
                 random.integer(0, Number.MAX_SAFE_INTEGER),
             );
             break;
         case Operation.Insert:
             builder.insert(
-                pathGenerator(random.real()),
+                pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
                 singleTextCursor({ type: jsonNumber.name, value: random.integer(0, Number.MAX_SAFE_INTEGER) }),
             );
             break;
         case Operation.Delete:
             builder.delete(
-                pathGenerator(random.real()),
+                pathGenerator(random.integer(0, Number.MAX_SAFE_INTEGER)),
                 random.integer(1, 10),
             );
             break;

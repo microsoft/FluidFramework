@@ -8,10 +8,14 @@ import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
- *  - Does not insert offsets if there is no content after them
- *  - Does not insert 0-sized offsets
- *  - Merges runs of offsets together
- *  - Merges marks together
+ *
+ * - Does not insert offsets if there is no content after them
+ *
+ * - Does not insert 0-sized offsets
+ *
+ * - Merges runs of offsets together
+ *
+ * - Merges marks together
  */
 export class MarkListFactory {
     private offset = 0;
