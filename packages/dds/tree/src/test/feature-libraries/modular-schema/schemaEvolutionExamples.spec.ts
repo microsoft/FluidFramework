@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import {
     FieldTypeView, FullSchemaPolicy, TreeViewSchema, ViewSchemaCollection, allowsFieldSuperset,
-    allowsTreeSuperset, ViewSchema, allowsRepoSuperset,
+    allowsTreeSuperset, ViewSchema,
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema";

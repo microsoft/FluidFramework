@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
-import { ApiDeclaredItem, ApiItem, ApiItemKind, ApiPackage } from "@microsoft/api-extractor-model";
+import {
+    ApiDeclaredItem,
+    ApiItem,
+    ApiItemKind,
+    ApiPackage,
+    Excerpt,
+} from "@microsoft/api-extractor-model";
 
 import { ApiMemberKind, getQualifiedApiItemName, getUnscopedPackageName } from "./utilities";
 
@@ -216,7 +222,6 @@ export namespace DefaultPolicies {
      * - Interface
      *
      * - Namespace
-     *
      */
     export const defaultDocumentBoundaries: ApiMemberKind[] = [
         ApiItemKind.Class,
@@ -279,14 +284,7 @@ export namespace DefaultPolicies {
                 // For signature items, the display-name is not particularly useful information
                 // ("(constructor)", "(call)", etc.).
                 // Instead, we will use a cleaned up variation on the type signature.
-                // Regex replaces line breaks with spaces to ensure everything ends up on a single line.
-                let signatureExcerpt = (apiItem as ApiDeclaredItem).excerpt.text
-                    .trim()
-                    .replace(/[\r\n\s]+/g, " ");
-                if (signatureExcerpt.endsWith(";")) {
-                    signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);
-                }
-                return signatureExcerpt;
+                return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
             default:
                 return apiItem.displayName;
         }
@@ -301,6 +299,13 @@ export namespace DefaultPolicies {
         switch (apiItem.kind) {
             case ApiItemKind.Model:
                 return "Packages";
+            case ApiItemKind.CallSignature:
+            case ApiItemKind.ConstructSignature:
+            case ApiItemKind.IndexSignature:
+                // For signature items, the display-name is not particularly useful information
+                // ("(constructor)", "(call)", etc.).
+                // Instead, we will use a cleaned up variation on the type signature.
+                return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
             default:
                 return Utilities.getConciseSignature(apiItem);
         }
@@ -331,3 +336,20 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
     packageFilterPolicy: DefaultPolicies.defaultPackageFilterPolicy,
     emptyTableCellText: "",
 };
+
+/**
+ * Extracts the text from the provided excerpt and adjusts it to be on a single line, and to omit any trailing `;`.
+ *
+ * @privateRemarks If we find that this is useful in more places, we might consider moving this to a
+ * public utilities module and make it part of the public helper suite.
+ */
+function getSingleLineExcerptText(excerpt: Excerpt): string {
+    // Regex replaces line breaks with spaces to ensure everything ends up on a single line.
+    let signatureExcerpt = excerpt.text.trim().replace(/[\r\n\s]+/g, " ");
+
+    if (signatureExcerpt.endsWith(";")) {
+        signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);
+    }
+
+    return signatureExcerpt;
+}

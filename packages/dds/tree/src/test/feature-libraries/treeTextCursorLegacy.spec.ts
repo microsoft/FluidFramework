@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { Jsonable } from "@fluidframework/datastore-definitions";
-import { JsonCursor, jsonTypeSchema } from "../../domains";
-import { defaultSchemaPolicy, ObjectForest, singleMapTreeCursor, singleTextCursorNew } from "../../feature-libraries";
+import { jsonTypeSchema } from "../../domains";
+import { defaultSchemaPolicy, ObjectForest, singleTextCursorNew } from "../../feature-libraries";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
@@ -14,8 +13,6 @@ import { jsonableTreeFromCursor, singleTextCursor } from "../../feature-librarie
 import { initializeForest, ITreeCursor, TreeNavigationResult } from "../../forest";
 import { SchemaData, StoredSchemaRepository } from "../../schema-stored";
 import { cursorTestCases, testCursors, testJsonCompatibleCursor } from "../cursorLegacy.spec";
-import { JsonableTree } from "../../tree";
-import { brand } from "../../util";
 
 // Tests for TextCursor and jsonableTreeFromCursor.
 // Checks to make sure singleTextCursor and test datasets are working properly,
@@ -29,13 +26,13 @@ testJsonCompatibleCursor(
 // TODO: put these in a better place / unify with object forest tests.
 testJsonCompatibleCursor(
     "object-forest cursor",
-    (data: Jsonable): ITreeCursor => {
+    (data): ITreeCursor => {
         const schemaData: SchemaData = {
             globalFieldSchema: new Map(),
             treeSchema: jsonTypeSchema,
         };
         const forest = new ObjectForest(new StoredSchemaRepository(defaultSchemaPolicy, schemaData));
-        initializeForest(forest, [singleTextCursor(data)]);
+        initializeForest(forest, [singleTextCursorNew(data)]);
         const cursor = forest.allocateCursor();
         assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
         return cursor;

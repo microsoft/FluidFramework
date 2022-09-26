@@ -3,24 +3,23 @@
 //  * Licensed under the MIT License.
 //  */
 
-// import { strict as assert } from "assert";
-// import { Jsonable } from "@fluidframework/datastore-definitions";
-// import { JsonCursor } from "../../domains";
-// import { jsonableTreeFromCursorNew, singleMapTreeCursor } from "../../feature-libraries";
-
-// // Allow importing from this specific file which is being tested:
-// /* eslint-disable-next-line import/no-internal-modules */
+// Allow importing from this specific file which is being tested:
+/* eslint-disable-next-line import/no-internal-modules */
 // import { jsonableTreeFromCursor, singleTextCursor } from "../../feature-libraries/treeTextCursor";
-// import { ITreeCursorNew as ITreeCursor } from "../../forest";
-// import { StoredSchemaRepository } from "../../schema-stored";
 
-// import { JsonableTree } from "../../tree";
+// import { JsonableTree, ITreeCursorNew as ITreeCursor } from "../../tree";
 // import { brand } from "../../util";
-// import { testCursors, testJsonCompatibleCursor } from "../cursor.spec";
 
 // const testCases: [string, JsonableTree][] = [
 //     ["minimal", { type: brand("Foo") }],
 //     ["value", { type: brand("Foo"), value: "test" }],
+//     ["local field", { type: brand("Foo"), fields: { x: [{ type: brand("Bar") }] } }],
+//     ["global field", { type: brand("Foo"), globalFields: { x: [{ type: brand("Bar") }] } }],
+//     ["both fields", {
+//         type: brand("Foo"),
+//         fields: { x: [{ type: brand("Bar") }] },
+//         globalFields: { x: [{ type: brand("Baz") }] },
+//     }],
 //     ["nested", { type: brand("Foo"), fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] } }],
 //     ["multiple fields", {
 //         type: brand("Foo"),
@@ -65,7 +64,7 @@
 //         },
 //     }],
 // ];
-
+//
 // function checkTextCursorRequirements(clone: Jsonable, expected: Jsonable) {
 //     // Check objects are actually json compatible
 //     if (typeof clone === "object") {

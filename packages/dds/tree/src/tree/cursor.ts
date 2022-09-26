@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, TreeType, UpPath, Value } from "../tree";
+import { UpPath } from "./pathTree";
+import { FieldKey, TreeType, Value } from "./types";
 
 /**
  * A stateful low-level interface for reading tree data.
@@ -210,14 +211,17 @@ export const enum CursorLocationType {
     Fields,
 }
 
-export interface ITreeCursorSynchronous extends ITreeCursor{
+/**
+ * {@link ITreeCursor} that is never pending.
+ */
+export interface ITreeCursorSynchronous extends ITreeCursor {
     readonly pending: false;
 }
 
 /**
  * @param cursor - tree whose field will be visited.
  * @param f - builds output from field member, which will be selected in cursor when cursor is provided.
- *  If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
  * @returns array resulting from applying `f` to each item of the current field on `cursor`.
  * Returns an empty array if the field is empty or not present (which are considered the same).
  */
@@ -230,14 +234,12 @@ export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) 
 /**
  * @param cursor - cursor at a field whose nodes will be visited.
  * @param f - For on each node.
- *  If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
  */
 export function forEachNode(
     cursor: ITreeCursor, f: (cursor: ITreeCursor) => void): void {
-    assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
-    let inField = cursor.firstNode();
-    while (inField) {
+    assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
+    for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
         f(cursor);
-        inField = cursor.nextField();
     }
 }

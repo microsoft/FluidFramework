@@ -4,9 +4,14 @@
  */
 
 import { EventEmitter } from "events";
+import { Provider } from "nconf";
 import { safelyParseJSON } from "@fluidframework/common-utils";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
+
+export interface IPartitionLambdaPlugin {
+    create(config: Provider): Promise<IPartitionLambdaFactory>;
+}
 
 /**
  * Reasons why a lambda is closing

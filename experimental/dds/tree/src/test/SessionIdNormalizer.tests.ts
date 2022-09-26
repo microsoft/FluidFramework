@@ -42,7 +42,8 @@ describe('SessionIdNormalizer', () => {
 		 * Calling `addFinalIds` with first === last === 9 results in the following:
 		 * Locals: [-1, -2,  X,  -4,  X]
 		 * Finals: [ 0,  1,  2,   5,  9]
-		 *                            ^should fail
+		 *
+		 * ^should fail
 		 */
 		const normalizer = makeTestNormalizer();
 		normalizer.addLocalId(); // -1

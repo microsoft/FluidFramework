@@ -32,11 +32,12 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { ensureFluidResolvedUrl, InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
-import { MultiUrlResolver } from "./multiResolver";
-import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
+import { getUrlResolver } from "./getUrlResolver";
+import { deltaConns, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
+import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -158,7 +159,7 @@ async function createWebLoader(
     documentId: string,
     fluidModule: IFluidModule,
     options: RouteOptions,
-    urlResolver: MultiUrlResolver,
+    urlResolver: InsecureUrlResolver | OdspUrlResolver | LocalResolver,
     codeDetails: IFluidCodeDetails,
     testOrderer: boolean = false,
     odspPersistantCache?: IPersistedCache,
@@ -174,7 +175,7 @@ async function createWebLoader(
     // Create the inner document service which will be wrapped inside local driver. The inner document service
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
-        const resolvedUrl = await urlResolver.resolve(await urlResolver.createRequestForCreateNew(documentId));
+        const resolvedUrl = await urlResolver.resolve(await urlResolver.createCreateNewRequest(documentId));
         assert(resolvedUrl !== undefined, 0x318 /* resolvedUrl is undefined */);
         const innerDocumentService = await documentServiceFactory.createDocumentService(
             resolvedUrl,
@@ -200,8 +201,7 @@ async function createWebLoader(
     );
 
     return new Loader({
-        urlResolver: testOrderer ?
-            new MultiUrlResolver(documentId, window.location.origin, options, true) : urlResolver,
+        urlResolver: testOrderer ? new LocalResolver() : urlResolver,
         documentServiceFactory,
         codeLoader,
     });
@@ -243,7 +243,7 @@ export async function start(
         config: {},
     };
 
-    const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+    const urlResolver = getUrlResolver(options);
     const odspPersistantCache = new OdspPersistentCache();
 
     // Create the loader that is used to load the Container.
@@ -393,7 +393,7 @@ async function attachContainer(
     loader: Loader,
     container: IContainer,
     fluidObjectUrl: string,
-    urlResolver: MultiUrlResolver,
+    urlResolver: InsecureUrlResolver | OdspUrlResolver | LocalResolver,
     documentId: string,
     url: string,
     leftDiv: HTMLDivElement,
@@ -425,7 +425,7 @@ async function attachContainer(
     // To test orderer, we use local driver as wrapper for actual document service. So create request
     // using local resolver.
     const attachUrl = testOrderer ? new LocalResolver().createCreateNewRequest(documentId)
-        : await urlResolver.createRequestForCreateNew(documentId);
+        : await urlResolver.createCreateNewRequest(documentId);
 
     if (manualAttach) {
         // Create an "Attach Container" button that the user can click when they want to attach the container.
@@ -458,12 +458,9 @@ async function attachContainer(
             rehydrateButton.onclick = async () => {
                 const snapshot = summaryList.value;
                 currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
-                let newLeftDiv: HTMLDivElement;
-                if (rightDiv !== undefined) {
-                    newLeftDiv = makeSideBySideDiv(uuid());
-                } else {
-                    newLeftDiv = document.createElement("div");
-                }
+                const newLeftDiv = rightDiv !== undefined
+                    ? makeSideBySideDiv(uuid())
+                    : document.createElement("div");
                 currentLeftDiv.replaceWith(newLeftDiv);
                 currentLeftDiv = newLeftDiv;
                 // Load and render the component.
