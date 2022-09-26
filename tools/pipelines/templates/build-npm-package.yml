@@ -351,7 +351,7 @@ stages:
             displayName: Publish Artifact - Tinylicious Log
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/logs'
-              ArtifactName: 'logs'
+              ArtifactName: 'tinyliciousLog'
               publishLocation: 'Container'
 
         # Collect/publish/run bundle analysis
