@@ -150,12 +150,16 @@ describe("Garbage Collection Tests", () => {
     });
 
     describe("Configuration", () => {
-        const createGcWithPrivateMembers = (gcMetadata?: IGCMetadata, gcOptions?: IGCRuntimeOptions, snapshotCacheExpiryMs?: number): GcWithPrivates => {
+        const createGcWithPrivateMembers = (gcMetadata?: IGCMetadata, gcOptions?: IGCRuntimeOptions, snapshotCacheDisabledForTesting?: boolean): GcWithPrivates => {
             const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && { summaryFormatVersion: 1, message: undefined, ...gcMetadata };
-            return createGarbageCollector({ metadata, gcOptions, snapshotCacheExpiryMs }) as GcWithPrivates;
+            return createGarbageCollector({ metadata, gcOptions, snapshotCacheDisabledForTesting }) as GcWithPrivates;
         };
         const customSessionExpiryDurationMs = defaultSessionExpiryDurationMs + 1;
         describe("Existing container", () => {
+            //* Tests
+            // Reads the two values from metadata - assumes default values if missing
+            // Logs Error if snapshotCache status mismatch
+            // Metadata roundtrip
             it("No metadata", () => {
                 gc = createGcWithPrivateMembers({});
                 assert(!gc.gcEnabled, "gcEnabled incorrect");
@@ -197,6 +201,9 @@ describe("Garbage Collection Tests", () => {
         });
 
         describe("New Container", () => {
+            //* Test cases
+            // Respects snapshotCacheDisable param
+            // Persists both values
             it("No options", () => {
                 injectedSettings[runSessionExpiryKey] = true;
                 gc = createGcWithPrivateMembers(undefined /* metadata */, {});
@@ -220,13 +227,14 @@ describe("Garbage Collection Tests", () => {
                     (e) => e.errorType === "usageError",
                     "Should be unsupported");
             });
+            //* switch to testing boolean param
             it("sweepAllowed true, gcAllowed true, no snapshotCacheExpiryMs", () => {
                 injectedSettings[runSessionExpiryKey] = true;
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true, sweepAllowed: true });
                 assert(gc.gcEnabled, "gcEnabled incorrect");
                 assert(gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(!gc.shouldRunSweep, "shouldRunSweep incorrect");
-                assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect"); // Only because of TEMPORARY measure to provide default value of snapshotExpiry
+                assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
             });
             it("sweepAllowed true, gcAllowed true, with snapshotCacheExpiryMs", () => {
@@ -268,6 +276,8 @@ describe("Garbage Collection Tests", () => {
         });
 
         describe("Session Expiry and Sweep Timeout", () => {
+            //* Test cases
+            // Pass true for disable param
             const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
             const defaultSnapshotCacheExpiryMs = 2 * 24 * 60 * 60 * 1000;
             beforeEach(() => {
@@ -385,8 +395,8 @@ describe("Garbage Collection Tests", () => {
                     { shouldRunGC: false, setSweepTimeout: true, sweepEnabled: true, runSweep: true, expectedResult: false },
                     { shouldRunGC: true, setSweepTimeout: false, sweepEnabled: true, runSweep: true, expectedResult: false },
                     { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, runSweep: false, expectedResult: false },
-                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, runSweep: true, expectedResult: false }, // { expectedResult: true } once TEMPORARY snapshotCacheExpiryMs measure is reverted
-                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, expectedResult: false }, // { expectedResult: true } once TEMPORARY snapshotCacheExpiryMs measure is reverted
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, runSweep: true, expectedResult: true },
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, expectedResult: true },
                     { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, expectedResult: false },
                 ];
                 testCases.forEach((testCase) => {
@@ -494,12 +504,13 @@ describe("Garbage Collection Tests", () => {
             };
         };
 
+        //* I think we can ditch the snapshotCache stuff and just use the default value
         const summarizerContainerTests = (
             timeout: number,
             revivedEventName: string,
             changedEventName: string,
             loadedEventName: string,
-            snapshotCacheExpiryMs?: number,
+            snapshotCacheDisabledForTesting?: boolean,
             expectDeleteLogs?: boolean,
         ) => {
             const deleteEventName = "GarbageCollector:GCObjectDeleted";
@@ -519,7 +530,7 @@ describe("Garbage Collection Tests", () => {
                 baseSnapshot?: ISnapshotTree,
                 gcBlobsMap?: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase>,
             ) => {
-                return createGarbageCollector({ baseSnapshot, snapshotCacheExpiryMs }, gcBlobsMap);
+                return createGarbageCollector({ baseSnapshot, snapshotCacheDisabledForTesting }, gcBlobsMap);
             };
 
             it("doesn't generate events for referenced nodes", async () => {
