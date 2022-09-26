@@ -159,11 +159,8 @@ export interface IDocumentAttributes {
 // @public
 export interface IDocumentMessage {
     clientSequenceNumber: number;
-<<<<<<< HEAD
     compression?: string;
     // (undocumented)
-=======
->>>>>>> next
     contents: any;
     metadata?: any;
     referenceSequenceNumber: number;
@@ -298,11 +295,8 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 export interface ISequencedDocumentMessage {
     clientId: string;
     clientSequenceNumber: number;
-<<<<<<< HEAD
     compression?: string;
     // (undocumented)
-=======
->>>>>>> next
     contents: any;
     // (undocumented)
     data?: string;
