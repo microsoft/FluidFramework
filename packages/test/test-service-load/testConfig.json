@@ -209,11 +209,11 @@
                 }
             }
         },
-        "gc_ci": {
+        "ci": {
             "opRatePerMin": 240,
             "progressIntervalMs": 5000,
             "numClients": 10,
-            "totalSendCount": 72000,
+            "totalSendCount": 720,
             "inactiveTimeoutMs": [60000],
             "optionOverrides":{
                 "tinylicious":{
@@ -249,7 +249,7 @@
                 }
             }
         },
-        "ci": {
+        "ci_bak": {
             "opRatePerMin": 10,
             "signalsPerMin":  10,
             "progressIntervalMs": 15000,
@@ -274,6 +274,11 @@
                 }
             },
             "optionOverrides":{
+                "tinylicious":{
+                    "configurations":{
+                        "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [60000]
+                    }
+                },
                 "odsp":{
                     "configurations":{
                         "Fluid.Container.summarizeProtocolTree2": [true, false]
