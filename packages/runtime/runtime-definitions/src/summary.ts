@@ -14,7 +14,6 @@ import {
 import {
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 
 /**
@@ -166,20 +165,7 @@ export interface ISummarizerNode {
      * path is "/a/.channels/b", then the additional path part is ".channels".
      * @param snapshot - the base summary to parse
      */
-    loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
-    /**
-     * Does all the work of loadBaseSummaryWithoutDifferential. Additionally if
-     * the base summary is a differential summary containing handle + outstanding ops blob,
-     * then this will return the innermost base summary, and update the state by
-     * tracking the outstanding ops.
-     * @param snapshot - the base summary to parse
-     * @param readAndParseBlob - function to read and parse blobs from storage
-     * @returns the base summary to be used
-     */
-    loadBaseSummary(
-        snapshot: ISnapshotTree,
-        readAndParseBlob: <T>(id: string) => Promise<T>,
-    ): Promise<ISnapshotTree>;
+    updateBaseSummaryState(snapshot: ISnapshotTree): void;
     /**
      * Records an op representing a change to this node/subtree.
      * @param op - op of change to record
@@ -243,7 +229,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-        getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
+        getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
     ): ISummarizerNodeWithGC;
 
     /**
@@ -269,20 +255,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      * 2. To identify if this node or any of its children's used routes changed since last summary.
      *
      * @param usedRoutes - The routes that are used in this node.
-     * @param gcTimestamp - The time when GC was run that generated these used routes. If a node becomes unreferenced
-     * as part of this GC run, this timestamp is used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
-
-    /**
-     * Returns the GC details that may be added to this node's summary.
-     *
-     * @deprecated Renamed to {@link ISummarizerNodeWithGC.getBaseGCDetails}.
-     */
-    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
-
-    /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
-    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 export const channelsTreeName = ".channels";
