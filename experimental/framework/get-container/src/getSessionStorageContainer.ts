@@ -29,7 +29,7 @@ export async function getSessionStorageContainer(
 ): Promise<IContainer> {
     let deltaConnection = deltaConnectionMap.get(documentId);
     if (deltaConnection === undefined) {
-        deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
+        deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
         deltaConnectionMap.set(documentId, deltaConnection);
     }
 

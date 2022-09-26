@@ -26,7 +26,7 @@ export function getDocumentServiceFactory(
     odspHostStoragePolicy?: HostStoragePolicy,
 ): IDocumentServiceFactory {
     const deltaConn = deltaConns.get(documentId) ??
-        LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
+        LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
     deltaConns.set(documentId, deltaConn);
 
     const getUser = (): IDevServerUser => ({

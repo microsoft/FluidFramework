@@ -12,10 +12,7 @@ import { v4 as uuid } from "uuid";
  * Functions include database operations such as queries, insertion and update.
  */
 class LocalSessionStorageCollection<T> implements ICollection<T> {
-    private readonly collectionName: string;
-    constructor(namespace, name) {
-        this.collectionName = `${namespace}-${name}`;
-    }
+    constructor(private readonly collectionName: string) { }
 
     public aggregate(pipeline: any, options?: any): any {
         throw new Error("Method Not Implemented");
@@ -282,15 +279,12 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
  */
 class LocalSessionStorageDb extends EventEmitter implements IDb {
     private readonly collections = new Map<string, LocalSessionStorageCollection<any>>();
-    constructor(private readonly namespace) {
-        super();
-    }
     public async close(): Promise<void> {
         return Promise.resolve();
     }
     public collection<T>(name: string): ICollection<T> {
         if (!this.collections.has(name)) {
-            this.collections.set(name, new LocalSessionStorageCollection<T>(`${this.namespace}-db`, name));
+            this.collections.set(name, new LocalSessionStorageCollection<T>(name));
         }
         return this.collections.get(name) as LocalSessionStorageCollection<T>;
     }
@@ -308,10 +302,7 @@ class LocalSessionStorageDb extends EventEmitter implements IDb {
  * A database factory for testing that stores data in the browsers session storage
  */
 export class LocalSessionStorageDbFactory implements ITestDbFactory {
-    public readonly testDatabase: IDb;
-    constructor(namespace: string) {
-        this.testDatabase = new LocalSessionStorageDb(namespace);
-    }
+    public readonly testDatabase: IDb = new LocalSessionStorageDb();
     public async connect(): Promise<IDb> {
         return this.testDatabase;
     }
