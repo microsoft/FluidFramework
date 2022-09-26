@@ -91,6 +91,7 @@ export interface IDocumentDeltaStorageService {
     ): IStream<ISequencedDocumentMessage[]>;
 }
 
+/** These policies expose some implementation details of the driver needed for proper interop with Loader/Runtime */
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
 
@@ -101,9 +102,16 @@ export interface IDocumentStorageServicePolicies {
     readonly minBlobSize?: number;
 
     /**
+     * @deprecated Use snapshotCacheDisabledForTesting instead - Only enabling/disabling will be exposed
      * This policy tells the runtime that the driver will not use cached snapshots older than this value.
      */
     readonly maximumCacheDurationMs?: number;
+
+    /**
+     * If true, the driver will not use the snapshot cache but will always fetch from the service. Defaults to false.
+     * This configuration is only expected to be used for test scenarios.
+     */
+    readonly snapshotCacheDisabledForTesting?: boolean;
 }
 
 /**

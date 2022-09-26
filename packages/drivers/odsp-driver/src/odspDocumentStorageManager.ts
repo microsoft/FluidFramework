@@ -87,7 +87,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     constructor(
         private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-        private readonly logger: ITelemetryLogger,
+        logger: ITelemetryLogger,
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
@@ -95,7 +95,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         private readonly relayServiceTenantAndSessionId: () => string,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
-        super();
+        super(logger);
 
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
