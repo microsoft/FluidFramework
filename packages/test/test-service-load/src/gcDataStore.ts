@@ -12,11 +12,20 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { IRunConfig } from "./loadTestDataStore";
 
+export interface IGCDataStore {
+    readonly handle: IFluidHandle;
+    run: (config: IRunConfig, id?: string) => Promise<boolean>;
+    stop: () => void;
+}
+
 /**
  * How much faster than its parent should a data stores at each level send ops.
  * Keeping this 1 for now to prevent throttling of ops.
  */
 const opRateMultiplierPerLevel = 1;
+
+/** The number of ops after which the data object performs an activity. */
+const activityThreshold = 10;
 
 /**
  * Activities that data stores perform.
@@ -30,12 +39,6 @@ const GCActivityType = {
     Revive: 2,
 };
 type GCActivityType = typeof GCActivityType[keyof typeof GCActivityType];
-
-export interface IGCDataStore {
-    readonly handle: IFluidHandle;
-    run: (config: IRunConfig, id?: string) => Promise<boolean>;
-    stop: () => void;
-}
 
 /**
  * The details of a child that is tracked by a data store.
@@ -78,27 +81,27 @@ abstract class BaseDataObject extends DataObject {
 }
 
 /**
- * Data object type 1 that does the following when asked to run:
- * - It sends ops at a regular interval. The interval is defined by the config passed to the run method.
+ * Data object that should be the leaf in the data object hierarchy. It does not create any data stores but simply
+ * sends ops at a regular interval by incementing a counter.
  */
-export class DataObjectType1 extends BaseDataObject implements IGCDataStore {
+export class DataObjectLeaf extends BaseDataObject implements IGCDataStore {
     public static get type(): string {
-        return "DataObjectType1";
+        return "DataObjectLeaf";
     }
 
     private myId: string | undefined;
     private shouldRun: boolean = false;
 
     public async run(config: IRunConfig, id?: string): Promise<boolean> {
-        console.log(`+++++++++ Started child [${id}]`);
+        console.log(`+++++++++ Started leaf child [${id}]`);
         this.myId = id;
         this.shouldRun = true;
         const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
         let localSendCount = 0;
         while (this.shouldRun && !this.runtime.disposed) {
-            if (localSendCount % 50 === 0) {
+            if (localSendCount % 10 === 0) {
                 console.log(
-                    `+++++++++ Child Data Store [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
+                    `+++++++++ Leaf child [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
             }
 
             this.counter.increment(1);
@@ -106,42 +109,47 @@ export class DataObjectType1 extends BaseDataObject implements IGCDataStore {
             // Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
             await delay(delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, .5, true)(config.randEng));
         }
+        console.log(`+++++++++ Stopped leaf child [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
         return !this.runtime.disposed;
     }
 
     public stop() {
-        console.log(`+++++++++ Stopped child [${this.myId}]`);
+        console.log(`+++++++++ Stopped leaf child (in stop) [${this.myId}]: ${this.counter.value}`);
         this.shouldRun = false;
     }
 }
 
-export const dataObjectType1Factory = new DataObjectFactory(
-    DataObjectType1.type,
-    DataObjectType1,
+export const dataObjectFactoryLeaf = new DataObjectFactory(
+    DataObjectLeaf.type,
+    DataObjectLeaf,
     [SharedCounter.getFactory()],
     {},
 );
 
 /**
- * Root data object for the stress tests that does the following when asked to run:
+ * Data object that can create other data objects and run then. It does not however interact with the data objects
+ * created by other clients (i.e., it's not collab). This emulates user scenarios where each user is working on
+ * their own part of a document.
+ * This data object does the following:
  * - It sends ops at a regular interval. The interval is defined by the config passed to the run method.
- * - After every few ops, it does an activity. Example activities:
- *     - Create a child data store, reference it and asks it to run.
- *     - Ask a child data store to stop running and unreferenced it.
+ * - After every few ops, it does a random activity. Example of activities it can perform:
+ *   - Create a child data store, reference it and asks it to run.
+ *   - Ask a child data store to stop running and unreferenced it.
  */
-export class RootDataObject extends BaseDataObject implements IGCDataStore {
+export class DataObjectNonCollab extends BaseDataObject implements IGCDataStore {
     public static get type(): string {
-        return "RootDataObject";
+        return "DataObjectNonCollab";
     }
 
     protected myId: string | undefined;
     private shouldRun: boolean = false;
 
-    // The number of child data stores created.
+    /** The number of child data stores created. */
     private childCount = 1;
 
     /**
-     * Should not be called before "run" is called which initializes inactiveTimeoutMs.
+     * The inactive timeout after which a child data object should not be revived.
+     * Note: This should not be called before "run" is called which initializes it.
      */
     private _inactiveTimeoutMs: number | undefined;
     public get inactiveTimeoutMs(): number {
@@ -150,15 +158,20 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     }
 
     /**
-     * Should not be called before "run" is called which initializes runConfig.
+     * The config with which to run a child data object.
+     * Note: This should not be called before "run" is called which initializes it.
      */
-    private _runConfig: IRunConfig | undefined;
-    protected get runConfig(): IRunConfig {
-        assert(this._runConfig !== undefined, "Run config must be available");
-        return this._runConfig;
+    private _childRunConfig: IRunConfig | undefined;
+    protected get childRunConfig(): IRunConfig {
+        assert(this._childRunConfig !== undefined, "Run config must be available");
+        return this._childRunConfig;
     }
 
     private readonly childMapKey = "childMap";
+    /**
+     * The map that stores the fluid handles to all child data objects.
+     * Note: This should not be called before "run" is called which initializes it.
+     */
     private _childMap: SharedMap | undefined;
     protected get childMap(): SharedMap {
         assert(this._childMap !== undefined, "Child map cannot be retrieving before initialization");
@@ -167,7 +180,7 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
 
     private readonly unreferencedChildrenDetails: IUnreferencedChildDetails[] = [];
     private readonly referencedChildrenDetails: IChildDetails[] = [];
-    private readonly expiredChildrenDetails: IChildDetails[] = [];
+    private readonly inactiveChildrenDetails: IChildDetails[] = [];
 
     protected async initializingFirstTime(): Promise<void> {
         await super.initializingFirstTime();
@@ -181,35 +194,32 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         this._childMap = await handle.get();
     }
 
-    public async run(config: IRunConfig): Promise<boolean> {
+    public async run(config: IRunConfig, id?: string): Promise<boolean> {
+        console.log(`########## Started child [${id}]`);
         assert(config.testConfig.inactiveTimeoutMs !== undefined, "inactive timeout is required for GC tests");
-        // Set the local inactive timeout 500 less than the actual to keep buffer when expiring data stores.
+        // Set the local inactive timeout 500 less than the actual to keep buffer when marking data stores as inactive.
         this._inactiveTimeoutMs = config.testConfig.inactiveTimeoutMs - 500;
         // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
         const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
-        this._runConfig = {
+        this._childRunConfig = {
             ...config,
             testConfig: {
                 ...config.testConfig,
                 opRatePerMin,
             },
         };
-        this.myId = `client${config.runId + 1}`;
+        this.myId = id;
         this.shouldRun = true;
 
-        const opRatePerClient = config.testConfig.opRatePerMin / config.testConfig.numClients;
-        const delayBetweenOpsMs = 60 * 1000 / opRatePerClient;
-        const totalSendCount = config.testConfig.totalSendCount;
+        const delayBetweenOpsMs = 60 * 1000 / config.testConfig.opRatePerMin;
         let localSendCount = 0;
         let childFailed = false;
-        while (this.shouldRun && this.counter.value < totalSendCount && !this.runtime.disposed && !childFailed) {
-            if (localSendCount % 10 === 0) {
-                console.log(
-                    `########## GC DATA STORE [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
-            }
-
+        while (this.shouldRun && !this.runtime.disposed && !childFailed) {
             // After every few ops, perform an activity.
-            if (localSendCount % 10 === 0) {
+            if (localSendCount % activityThreshold === 0) {
+                console.log(
+                    `########## Child data store [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
+
                 // We do no await for the activity because we want any child created to run asynchronously.
                 this.performActivity(config).then((done: boolean) => {
                     if (!done) {
@@ -227,10 +237,9 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
             await delay(delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, .5, true)(config.randEng));
         }
 
+        console.log(`########## Stopped child [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
         this.stop();
         const notDone = this.runtime.disposed || childFailed;
-        console.log(
-            `########## Stopping [${this.myId}]: ${this.runtime.disposed} / ${childFailed} / ${localSendCount}`);
         return !notDone;
     }
 
@@ -259,7 +268,7 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
             const action = random.integer(0, 2)(config.randEng);
             switch (action) {
                 case GCActivityType.CreateAndReference: {
-                    return this.createAndReferenceChild(config);
+                    return this.createAndReferenceChild();
                 }
                 case GCActivityType.Unreference: {
                     if (this.referencedChildrenDetails.length > 0) {
@@ -271,7 +280,7 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
                 case GCActivityType.Revive: {
                     const revivableChildDetails = this.getRevivableChild();
                     if (revivableChildDetails !== undefined) {
-                        return this.reviveChild(config, revivableChildDetails);
+                        return this.reviveChild(revivableChildDetails);
                     }
                     break;
                 }
@@ -285,29 +294,19 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     /**
      * Creates a new child data store, reference it and ask it to run.
      */
-    private async createAndReferenceChild(config: IRunConfig): Promise<boolean> {
+    private async createAndReferenceChild(): Promise<boolean> {
         // Give each child a unique id w.r.t. this data store's id.
         const childId = `${this.myId}/${this.childCount.toString()}`;
         console.log(`########## Creating child [${childId}]`);
         this.childCount++;
 
-        const child = await dataObjectType1Factory.createInstance(this.context.containerRuntime);
+        const child = await dataObjectFactoryLeaf.createChildInstance(this.context);
         this.childMap.set(childId, child.handle);
         this.referencedChildrenDetails.push({
             id: childId,
             child,
         });
-
-        // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
-        const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
-        const childConfig: IRunConfig = {
-            ...config,
-            testConfig: {
-                ...config.testConfig,
-                opRatePerMin,
-            },
-        };
-        return child.run(childConfig, childId);
+        return child.run(this.childRunConfig, childId);
     }
 
     /**
@@ -333,21 +332,11 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     /**
      * Retrieves the oldes unreferenced child, references it and asks it to run.
      */
-    private async reviveChild(config: IRunConfig, childDetails: IChildDetails): Promise<boolean> {
+    private async reviveChild(childDetails: IChildDetails): Promise<boolean> {
         console.log(`########## Reviving child [${childDetails.id}]`);
         this.childMap.set(childDetails.id, childDetails.child.handle);
         this.referencedChildrenDetails.push(childDetails);
-
-        // Set up the child to send ops opRateMultiplierPerLevel times faster than this data store.
-        const opRatePerMin = config.testConfig.opRatePerMin * opRateMultiplierPerLevel;
-        const childConfig: IRunConfig = {
-            ...config,
-            testConfig: {
-                ...config.testConfig,
-                opRatePerMin,
-            },
-        };
-        return childDetails.child.run(childConfig, childDetails.id);
+        return childDetails.child.run(this.childRunConfig, childDetails.id);
     }
 
     /**
@@ -358,7 +347,7 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
         let childDetails = this.unreferencedChildrenDetails.shift();
         while (childDetails !== undefined) {
             if (Date.now() - childDetails.unreferencedTimestamp > (this.inactiveTimeoutMs)) {
-                this.expiredChildrenDetails.push(childDetails);
+                this.inactiveChildrenDetails.push(childDetails);
             } else {
                 break;
             }
@@ -368,30 +357,44 @@ export class RootDataObject extends BaseDataObject implements IGCDataStore {
     }
 }
 
-export const rootDataObjectFactory = new DataObjectFactory(
-    RootDataObject.type,
-    RootDataObject,
+export const dataObjectFactoryNonCollab = new DataObjectFactory(
+    DataObjectNonCollab.type,
+    DataObjectNonCollab,
     [SharedCounter.getFactory(), SharedMap.getFactory()],
     {},
+    [
+        [DataObjectLeaf.type, Promise.resolve(dataObjectFactoryLeaf)],
+    ],
 );
 
 /**
- * Root data object for the stress tests that does the following when asked to run:
- * - It sends ops at a regular interval. The interval is defined by the config passed to the run method.
- * - After every few ops, it does an activity. Example activities:
- *     - Create a child data store, reference it and asks it to run. When other clients learn about this, they may also
- *       start running their local copy of this child data store.
- *     - Ask a child data store to stop running and unreferenced it. When other clients learn about this, they may stop
- *       running this child data store.
+ * Data object that does every thing DataObjectNotCollab does. In addition, it interacts with the data objects
+ * created by other clients (i.e., it's collab). This emulates user scenarios where multiple users are working on
+ * a common part of a document.
  */
- export class RootDataObject2 extends RootDataObject implements IGCDataStore {
+ export class DataObjectCollab extends DataObjectNonCollab implements IGCDataStore {
     public static get type(): string {
-        return "RootDataObject2";
+        return "DataObjectCollab";
     }
 
-    public async run(config: IRunConfig): Promise<boolean> {
-        const partnerId1 = `client${config.runId + 2}`;
-        const partnerId2 = `client${config.runId + 3}`;
+    public async run(config: IRunConfig, id?: string): Promise<boolean> {
+        this.myId = id;
+
+        /**
+         * Just some weird math to get the ids of two other clients to collaborate with.
+         */
+        const halfClients = Math.floor(config.testConfig.numClients / 2);
+        const myRunId = config.runId + 1;
+        const partnerRunId1 = ((myRunId + halfClients) % config.testConfig.numClients) + 1;
+        const partnerRunId2 = ((myRunId + halfClients + 1) % config.testConfig.numClients) + 1;
+        const partnerId1 = `client${partnerRunId1}`;
+        const partnerId2 = `client${partnerRunId2}`;
+        console.log(`---------- Collab data store partners [${this.myId}]: ${partnerId1} / ${partnerId2}`);
+
+        /**
+         * Set up an event handler that listens for changes in the child map meaning that a child data store
+         * was referenced or unreferenced by a client.
+         */
         this.childMap.on("valueChanged", (changed, local) => {
             if (local) {
                 return;
@@ -405,15 +408,19 @@ export const rootDataObjectFactory = new DataObjectFactory(
                 return;
             }
 
+            /**
+             * If a new child was referenced, run our corresponding local child.
+             * If a child was unreferenced, stop running our corresponding local child.
+             * TODO: Handle scenario where these children fail. Also, when we are asked to stop, we should stop these
+             * children as well.
+             */
             if (this.childMap.has(changed.key)) {
-                console.log(`---------- Received remote child add [${this.myId}] / [${changed.key}]`);
                 const childHandle = this.childMap.get(changed.key) as IFluidHandle<IGCDataStore>;
                 childHandle.get().then((child: IGCDataStore) => {
                     console.log(`---------- Running remote child [${changed.key}]`);
-                    child.run(this.runConfig, `${this.myId}/${changed.key}`).catch((error) => {});
+                    child.run(this.childRunConfig, `${this.myId}/${changed.key}`).catch((error) => {});
                 }).catch((error) => {});
             } else {
-                console.log(`---------- Received remote child delete [${this.myId}] /[${changed.key}]`);
                 const childHandle = changed.previousValue as IFluidHandle<IGCDataStore>;
                 childHandle.get().then((child: IGCDataStore) => {
                     console.log(`---------- Stopping remote child [${changed.key}]`);
@@ -422,13 +429,130 @@ export const rootDataObjectFactory = new DataObjectFactory(
             }
         });
 
-        return super.run(config);
+        return super.run(config, id);
     }
 }
 
-export const rootDataObjectFactory2 = new DataObjectFactory(
-    RootDataObject2.type,
-    RootDataObject2,
+export const dataObjectFactoryCollab = new DataObjectFactory(
+    DataObjectCollab.type,
+    DataObjectCollab,
     [SharedCounter.getFactory(), SharedMap.getFactory()],
     {},
+    [
+        [DataObjectLeaf.type, Promise.resolve(dataObjectFactoryLeaf)],
+    ],
+);
+
+/**
+ * Root data object that creates a collab and a non-collab child and runs them.
+ * It also controls how long the test runs by controlling the run time of each client. Basically, this data object in
+ * each client increments a shared counter. When the counter value reaches "totalSendCount", the client finishes.
+ */
+export class RootDataObject extends BaseDataObject implements IGCDataStore {
+    public static get type(): string {
+        return "RootDataObject";
+    }
+
+    private myId: string | undefined;
+    private shouldRun: boolean = false;
+
+    private readonly dataObjectNonCollabKey = "nonCollabChild";
+    private readonly dataObjectCollabKey = "collabChild";
+
+    private nonCollabChild: IGCDataStore | undefined;
+    private collabChild: IGCDataStore | undefined;
+
+    protected async initializingFirstTime(): Promise<void> {
+        await super.initializingFirstTime();
+
+        const nonCollabChild = await dataObjectFactoryNonCollab.createChildInstance(this.context);
+        this.root.set<IFluidHandle>(this.dataObjectNonCollabKey, nonCollabChild.handle);
+
+        const collabChild = await dataObjectFactoryCollab.createChildInstance(this.context);
+        this.root.set<IFluidHandle>(this.dataObjectCollabKey, collabChild.handle);
+    }
+
+    public async run(config: IRunConfig): Promise<boolean> {
+        this.myId = `client${config.runId + 1}Root`;
+        this.shouldRun = true;
+
+        const nonCollabChildHandle = this.root.get<IFluidHandle<IGCDataStore>>(this.dataObjectNonCollabKey);
+        assert(nonCollabChildHandle !== undefined, "Non collab data store not present");
+        this.nonCollabChild = await nonCollabChildHandle.get();
+
+        const collabChildHandle = this.root.get<IFluidHandle<IGCDataStore>>(this.dataObjectCollabKey);
+        assert(collabChildHandle !== undefined, "Collab data store not present");
+        this.collabChild = await collabChildHandle.get();
+
+        /**
+         * Adjust the op rate per minute of this client and for the child data objects.
+        */
+        const opRatePerMinPerClient = config.testConfig.opRatePerMin / config.testConfig.numClients;
+        const opRatePerMinPerChild = opRatePerMinPerClient / 2;
+        const childConfig = {
+            ...config,
+            testConfig: {
+                ...config.testConfig,
+                opRatePerMin: opRatePerMinPerChild,
+            },
+        };
+
+        /**
+         * TODO: Handle running these children and their errors correctly.
+         */
+        let childFailed = false;
+        this.nonCollabChild.run(childConfig, `client${config.runId + 1}NonCollab`).then((done: boolean) => {
+            if (!done) {
+                childFailed = true;
+            }
+        }).catch((error) => {
+            childFailed = true;
+        });
+
+        this.collabChild.run(childConfig, `client${config.runId + 1}Collab`).then((done: boolean) => {
+            if (!done) {
+                childFailed = true;
+            }
+        }).catch((error) => {
+            childFailed = true;
+        });
+
+        const delayBetweenOpsMs = 60 * 1000 / opRatePerMinPerClient;
+        const totalSendCount = config.testConfig.totalSendCount;
+        let localSendCount = 0;
+        while (this.shouldRun && this.counter.value < totalSendCount && !this.runtime.disposed && !childFailed) {
+            if (localSendCount % 10 === 0) {
+                console.log(
+                    `>>>>>>>>>> Root data store [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
+            }
+            this.counter.increment(1);
+            localSendCount++;
+
+            // Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
+            await delay(delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, .5, true)(config.randEng));
+        }
+
+        this.stop();
+        const notDone = this.runtime.disposed || childFailed;
+        console.log(
+            `>>>>>>>>> Stopping [${this.myId}]: ${localSendCount} / ${this.counter.value}`);
+        return !notDone;
+    }
+
+    public stop() {
+        this.shouldRun = false;
+        this.nonCollabChild?.stop();
+        this.collabChild?.stop();
+    }
+}
+
+export const rootDataObjectFactory = new DataObjectFactory(
+    RootDataObject.type,
+    RootDataObject,
+    [SharedCounter.getFactory()],
+    {},
+    [
+        [DataObjectNonCollab.type, Promise.resolve(dataObjectFactoryNonCollab)],
+        [DataObjectCollab.type, Promise.resolve(dataObjectFactoryCollab)],
+    ],
 );
