@@ -25,7 +25,7 @@
     "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "clean": "rimraf _api-extractor-temp .nyc_output dist *.tsbuildinfo *.build.log",
     "eslint": "eslint src",
-    "eslint:fix": "npm run eslint -- --fix",
+    "eslint:fix": "eslint src --fix",
     "format": "npm run prettier:fix",
     "format-and-build": "npm run format && npm run build",
     "lint": "npm run prettier && npm run eslint",
