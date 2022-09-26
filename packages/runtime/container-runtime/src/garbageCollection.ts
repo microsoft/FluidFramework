@@ -34,10 +34,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
-    IConfigProvider,
-    IFluidErrorBase,
     loggerToMonitoringContext,
-    LoggingError,
     MonitoringContext,
     PerformanceEvent,
     TelemetryDataTag,
@@ -45,6 +42,7 @@ import {
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
+import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
     getGCVersion,
     GCVersion,
@@ -79,25 +77,6 @@ export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionEx
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-/**
- * Feature gate key to enable closing the container if SweepReady objects are used.
- * Only known values are accepted, otherwise return undefined.
- *
- * mainContainer: Detect these errors only in the main container
- */
-export const sweepReadyUsageDetectionSetting = {
-    read(config: IConfigProvider) {
-        const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
-        const value = config.getString(sweepReadyUsageDetectionKey);
-        if (value === undefined) {
-            return { mainContainer: false, summarizer: false };
-        }
-        return {
-            mainContainer: value.includes("mainContainer"),
-            summarizer: value.includes("summarizer"),
-        };
-    },
-};
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -155,7 +134,7 @@ export interface IGarbageCollectionRuntime {
     /** Returns the type of the GC node. */
     getNodeType(nodePath: string): GCNodeType;
     /** Called when the runtime should close because of an error. */
-    closeFn(error?: ICriticalContainerError): void;
+    closeFn: (error?: ICriticalContainerError) => void;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -210,6 +189,7 @@ export interface IGarbageCollectorCreateParams {
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly activeConnection: () => boolean;
+    readonly getContainerDiagnosticId: () => string;
     readonly snapshotCacheExpiryMs?: number;
 }
 
@@ -324,19 +304,6 @@ export class UnreferencedStateTracker {
         this.clearTimers();
         this._state = UnreferencedState.Active;
     }
-}
-
-/**
- * Error class raised when a SweepReady object is used, indicating a bug in how
- * references are managed in the container by the application, or a bug in how
- * GC tracks those references.
- *
- * There's a chance for false positives when this error is raised by a Main Container,
- * since only the Summarizer has the latest truth about unreferenced node tracking
- */
-class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
-    /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
-    public errorType: string = "unreferencedObjectUsedAfterGarbageCollected";
 }
 
 /**
@@ -504,6 +471,9 @@ export class GarbageCollector implements IGarbageCollector {
         };
     }
 
+    /** Handler to respond to when a SweepReady object is used */
+    private readonly sweepReadyUsageHandler: SweepReadyUsageDetectionHandler;
+
     protected constructor(createParams: IGarbageCollectorCreateParams) {
         this.runtime = createParams.runtime;
         this.isSummarizerClient = createParams.isSummarizerClient;
@@ -519,6 +489,12 @@ export class GarbageCollector implements IGarbageCollector {
         this.mc = loggerToMonitoringContext(ChildLogger.create(
             createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
         ));
+
+        this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
+            createParams.getContainerDiagnosticId(),
+            this.mc,
+            this.runtime.closeFn,
+        );
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -1457,16 +1433,11 @@ export class GarbageCollector implements IGarbageCollector {
                 });
             }
 
-            // If SweepReady Usage Detection is enabed, close the main container
+            // If SweepReady Usage Detection is enabed, the handler may close the interactive container.
             // Once Sweep is fully implemented, this will be removed since the objects will be gone
             // and errors will arise elsewhere in the runtime
-            if (state === UnreferencedState.SweepReady &&
-                sweepReadyUsageDetectionSetting.read(this.mc.config).mainContainer
-            ) {
-                const error = new SweepReadyUsageError(
-                    "SweepReady object used in Non-Summarizer Client",
-                    { errorDetails: JSON.stringify(propsToLog) });
-                this.runtime.closeFn(error);
+            if (state === UnreferencedState.SweepReady) {
+                this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({ ...propsToLog, usageType });
             }
         }
     }

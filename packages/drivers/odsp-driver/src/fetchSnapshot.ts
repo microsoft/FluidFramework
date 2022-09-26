@@ -30,7 +30,6 @@ import {
 import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
-import { ReadBuffer } from "./ReadBufferUtils";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion } from "./packageVersion";
 
@@ -266,7 +265,8 @@ async function fetchLatestSnapshotCore(
                             const content = await odspResponse.content.arrayBuffer();
                             propsToLog.bodySize = content.byteLength;
                             const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
-                                new ReadBuffer(new Uint8Array(content)));
+                                new Uint8Array(content),
+                                logger);
                             if (snapshotContents.snapshotTree.trees === undefined ||
                                 snapshotContents.snapshotTree.blobs === undefined) {
                                     throw new NonRetryableError(

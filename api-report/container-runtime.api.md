@@ -346,7 +346,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 
 // @public
 export interface IGarbageCollectionRuntime {
-    closeFn(error?: ICriticalContainerError): void;
+    closeFn: (error?: ICriticalContainerError) => void;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
@@ -683,11 +683,13 @@ export enum RuntimeMessage {
 
 // @public
 export class ScheduleManager {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, getClientId: () => string | undefined, logger: ITelemetryLogger);
     // (undocumented)
     afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage): void;
     // (undocumented)
     beforeOpProcessing(message: ISequencedDocumentMessage): void;
+    // (undocumented)
+    readonly getClientId: () => string | undefined;
 }
 
 // @public
