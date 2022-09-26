@@ -163,6 +163,7 @@ export interface IDocumentAttributes {
 export interface IDocumentMessage {
     // (undocumented)
     clientSequenceNumber: number;
+    compression?: string;
     // (undocumented)
     contents: any;
     // (undocumented)
@@ -310,6 +311,7 @@ export interface ISequencedDocumentMessage {
     clientId: string;
     // (undocumented)
     clientSequenceNumber: number;
+    compression?: string;
     // (undocumented)
     contents: any;
     // (undocumented)
