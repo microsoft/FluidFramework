@@ -36,11 +36,6 @@ export interface FlushResult {
 // This allows reconnection after receiving a nack to be smooth
 const socketReferenceBufferTime = 2000;
 
-enum DisconnectReason {
-    serverDisconnect = "server_disconnect",
-    disconnectDocument = "disconnect_document",
-};
-
 export interface ISocketEvents extends IEvent {
     (event: "server_disconnect", listener: (error: IFluidErrorBase & OdspError) => void);
     (event: "disconnect_document", listener: (error: IFluidErrorBase & OdspError, clientId: string) => void);
@@ -84,17 +79,15 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
      * Once the ref count hits 0, the socket is disconnected and removed
      * @param key - socket reference key
      * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
-     * @param avoidSocketClose - Caller suggesting not to close socket.
      */
-    public removeSocketIoReference(isFatalError: boolean, avoidSocketClose?: boolean) {
+    public removeSocketIoReference(isFatalError: boolean) {
         assert(this.references > 0, 0x09f /* "No more socketIO refs to remove!" */);
         this.references--;
 
         // see comment in disconnected() getter
         this.isPendingInitialConnection = false;
 
-        // In case the socket is disconnected we still want to close it.
-        if ((isFatalError && !avoidSocketClose) || this.disconnected) {
+        if (isFatalError || this.disconnected) {
             this.closeSocket();
             return;
         }
@@ -122,10 +115,11 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
         SocketReference.socketIoSockets.set(key, this);
 
-        const disconnectHandler = (socketError: IOdspSocketError, reason: string, clientId?: string) => {
+        const disconnectHandler = (socketError: IOdspSocketError, clientId?: string) => {
             // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
             // filter out retryable vs. non-retryable cases.
-            const error = errorObjectFromSocketError(socketError, reason);
+            const error = errorObjectFromSocketError(socketError, clientId
+                ? "disconnect_document" : "server_disconnect");
             error.canRetry = true;
 
             // see comment in disconnected() getter
@@ -133,24 +127,24 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            if (reason === DisconnectReason.serverDisconnect) {
-                this.emit("server_disconnect", error);
-                this.closeSocket();
-            } else if (reason === DisconnectReason.disconnectDocument) {
+            if (clientId !== undefined) {
                 // We don't need to close the socket in case of this event.
                 this.emit("disconnect_document", error, clientId);
+                return;
             }
+            this.emit("server_disconnect", error);
+            this.closeSocket();
         };
 
         // The server always closes the socket after sending this message
         // fully remove the socket reference now
         socket.on("server_disconnect", (socketError: IOdspSocketError) => {
-            disconnectHandler(socketError, "server_disconnect");
+            disconnectHandler(socketError);
         });
 
         // Server sends this event when it wants to disconnected a particular client.
         socket.on("disconnect_document", (clientId: string, socketError: IOdspSocketError) => {
-            disconnectHandler(socketError, "disconnect_document", clientId);
+            disconnectHandler(socketError, clientId);
         });
     }
 
@@ -461,13 +455,17 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
         this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.clientId }, error);
-        this.disposeCore(true, error);
+        this.disposeCore(true, // socketProtocolError
+            error, // error
+        );
     };
 
     protected documentDisconnectHandler = (error: IFluidErrorBase & OdspError, clientId: string) => {
         if (clientId === this.clientId) {
             this.logger.sendTelemetryEvent({ eventName: "DocumentDisconnect", clientId: this.clientId }, error);
-            this.disposeCore(true, error, true);
+            this.disposeCore(false, // socketProtocolError
+                error, // error
+            );
         }
     };
 
@@ -609,7 +607,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Disconnect from the websocket
      */
-    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError, avoidSocketClose?: boolean) {
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 
@@ -622,7 +620,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             this.socket.emit("disconnect_document", this.clientId, this.documentId);
         }
 
-        socket.removeSocketIoReference(socketProtocolError, avoidSocketClose);
+        socket.removeSocketIoReference(socketProtocolError);
         this.emit("disconnect", reason);
     }
 }
