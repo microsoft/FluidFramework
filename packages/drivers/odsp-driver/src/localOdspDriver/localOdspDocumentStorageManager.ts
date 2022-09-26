@@ -13,7 +13,6 @@ import { ISnapshotContents } from "../odspPublicUtils";
 import { IOdspSnapshot } from "../contracts";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
-import { ReadBuffer } from "../ReadBufferUtils";
 
 /**
  * ODSP document storage service that works on a provided snapshot for all its processing.
@@ -48,7 +47,8 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
             snapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
         } else {
             snapshotContents = parseCompactSnapshotResponse(
-                new ReadBuffer(this.localSnapshot));
+                this.localSnapshot,
+                this.logger);
         }
 
         this.snapshotTreeId = this.initializeFromSnapshot(snapshotContents);
