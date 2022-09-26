@@ -467,7 +467,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                 clientId: this.clientId,
                 receivedClientId: clientId },
             error);
-            this.disposeCore(false, // socketProtocolError
+            this.disposeCore(false, // socketProtocolError. Server just wants to disconnect this particular client.
                 error, // error
             );
         }
