@@ -11,5 +11,5 @@ export {
 } from "./schema";
 export { StoredSchemaRepository, SchemaData } from "./storedSchemaRepository";
 export {
-    treeSchema, fieldSchema, rootFieldKey, emptyMap, emptySet, TreeSchemaBuilder, namedTreeSchema,
+    treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder, namedTreeSchema,
 } from "./builders";

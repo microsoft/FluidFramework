@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AnchorSet, FieldKey, DetachedField, Delta, JsonableTree, detachedFieldAsKey, Anchor } from "../tree";
+import { AnchorSet, FieldKey, DetachedField, Delta, detachedFieldAsKey, Anchor, ITreeCursorSynchronous } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
 /**
@@ -27,7 +27,7 @@ export interface IEditableForest extends IForestSubscription {
     applyDelta(delta: Delta.Root): void;
 }
 
-export function initializeForest(forest: IEditableForest, content: JsonableTree[]): void {
+export function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void {
     // TODO: maybe assert forest is empty?
     const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
     const rootField = detachedFieldAsKey(forest.rootField);

@@ -5,7 +5,7 @@
 import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extractor-model";
 import { DocSection } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { doesItemRequireOwnDocument, mergeSections } from "../../utilities";
 import {
     renderBetaAlert,

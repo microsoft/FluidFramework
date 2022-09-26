@@ -1895,7 +1895,7 @@ export class MergeTree {
         seq: number,
         overwrite = false,
         opArgs: IMergeTreeDeltaOpArgs,
-    ) {
+    ): void {
         let _overwrite = overwrite;
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);

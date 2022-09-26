@@ -34,13 +34,10 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 // @public
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
     abandon(taskId: string): void;
     // (undocumented)
     applyStashedOp(): void;
-    // (undocumented)
     assigned(taskId: string): boolean;
-    // (undocumented)
     complete(taskId: string): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
     static getFactory(): IChannelFactory;
@@ -56,17 +53,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected onDisconnect(): void;
     // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
     queued(taskId: string): boolean;
     // @internal
     protected reSubmitCore(): void;
-    // (undocumented)
     subscribed(taskId: string): boolean;
-    // (undocumented)
     subscribeToTask(taskId: string): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    // (undocumented)
     volunteerForTask(taskId: string): Promise<boolean>;
 }
 

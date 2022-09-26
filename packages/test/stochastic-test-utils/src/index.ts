@@ -9,3 +9,4 @@ export * from "./types";
 export * from "./performActions";
 export { makeRandom } from "./random";
 export { XSadd } from "./xsadd";
+export { PerformanceWordMarkovChain, SpaceEfficientWordMarkovChain } from "./markovChain";
