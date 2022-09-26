@@ -234,15 +234,13 @@ export class ConnectionManager implements IConnectionManager {
      * about current or last connection (if there is no connection at the moment)
     */
     public get connectionProps(): ITelemetryProperties {
-        if (this.connection !== undefined) {
-            return this._connectionProps;
-        } else {
-            return {
+        return this.connection !== undefined
+            ? this._connectionProps
+            : {
                 ...this._connectionProps,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
-        }
     }
 
     public shouldJoinWrite(): boolean {

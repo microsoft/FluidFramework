@@ -114,7 +114,15 @@ export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
  * but instead mostly restricts access to it.
  */
 // eslint-disable-next-line @rushstack/no-new-null
-export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | { [P in string]: JsonCompatible; };
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+
+/**
+ * Use for Json object compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleObject = { [P in string]: JsonCompatible; };
 
 /**
  * Use for readonly view of Json compatible data.

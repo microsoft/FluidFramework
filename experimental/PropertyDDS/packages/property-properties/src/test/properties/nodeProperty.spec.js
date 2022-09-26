@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals assert, sinon */
-/* eslint-disable no-unused-expressions */
+
 /**
- * @fileoverview In this file, we will test the NodeProperty
- *    object described in properties/nodeProperty.js
+ * @fileoverview In this file, we will test the NodeProperty object described in properties/nodeProperty.js
  */
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const { generateGUID } = require('@fluid-experimental/property-common').GuidUtils;

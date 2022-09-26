@@ -14,11 +14,10 @@ import {
     DetachedField,
     detachedFieldAsKey,
     FieldKey,
-    FieldMap,
-    FieldScope,
+    genericTreeKeys,
     getGenericTreeField,
-    getGenericTreeFieldMap,
     JsonableTree,
+    setGenericTreeField,
     TreeType,
     UpPath,
     Value,
@@ -100,8 +99,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     }
 
     get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(
-            getGenericTreeFieldMap(this.getNode(), FieldScope.local, false)) as Iterable<FieldKey>;
+        return genericTreeKeys(this.getNode());
     }
 
     down(key: FieldKey, index: number): SynchronousNavigationResult {
@@ -192,24 +190,16 @@ export class RootedTextCursor extends TextCursor {
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
-    let fields: FieldMap<JsonableTree> | undefined;
-    for (const key of cursor.keys) {
-        fields ??= {};
-        const field: JsonableTree[] = mapCursorField(cursor, key, jsonableTreeFromCursor);
-        fields[key as string] = field;
-    }
-
     const node: JsonableTree = {
         type: cursor.type,
-        value: cursor.value,
-        fields,
     };
     // Normalize object by only including fields that are required.
-    if (fields === undefined) {
-        delete node.fields;
+    if (cursor.value !== undefined) {
+        node.value = cursor.value;
     }
-    if (node.value === undefined) {
-        delete node.value;
+    for (const key of cursor.keys) {
+        const field: JsonableTree[] = mapCursorField(cursor, key, jsonableTreeFromCursor);
+        setGenericTreeField(node, key, field);
     }
     return node;
 }

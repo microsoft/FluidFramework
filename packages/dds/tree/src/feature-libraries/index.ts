@@ -7,13 +7,13 @@ export * from "./object-forest";
 export * from "./editable-tree";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
-export * from "./schemaIndex";
+export { SchemaIndex } from "./schemaIndex";
 export * from "./treeTextCursorLegacy";
 export {
 	singleTextCursor as singleTextCursorNew,
-	TextCursor as TextCursorNew,
 	jsonableTreeFromCursor as jsonableTreeFromCursorNew,
 } from "./treeTextCursor";
+export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export * from "./sequence-change-family";
 export * from "./defaultSchema";
 export {
@@ -39,6 +39,7 @@ export {
     FieldKind,
     Multiplicity,
     FullSchemaPolicy,
+    allowsRepoSuperset,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
