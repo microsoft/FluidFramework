@@ -82,7 +82,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         const databaseManager = new MongoDatabaseManager(
             false,
             mongoManager,
-            null,
+            mongoManager,
             nodesCollectionName,
             documentsCollectionName,
             deltasCollectionName,

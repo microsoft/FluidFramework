@@ -48,12 +48,13 @@ export class LocalOrdererManager implements IOrdererManager {
     public async getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
         const key = `${tenantId}/${documentId}`;
 
-        if (!this.ordererMap.has(key)) {
-            const orderer = this.createLocalOrderer(tenantId, documentId);
+        let orderer = this.ordererMap.get(key);
+        if (orderer === undefined) {
+            orderer = this.createLocalOrderer(tenantId, documentId);
             this.ordererMap.set(key, orderer);
         }
 
-        return this.ordererMap.get(key);
+        return orderer;
     }
 
     private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
@@ -88,9 +89,12 @@ export class LocalOrdererManager implements IOrdererManager {
             orderer.scribeLambda,
             orderer.scriptoriumLambda,
         ];
-        await Promise.all(lambdas.map(async (l) => {
-            if (l.state === "created") {
-                return new Promise<void>((resolve) => l.once("started", () => resolve()));
+        await Promise.all(lambdas.map(async (lambda) => {
+            if (lambda === undefined) {
+                throw new Error("We expect lambdas to be defined by now.");
+            }
+            if (lambda.state === "created") {
+                return new Promise<void>((resolve) => lambda.once("started", () => resolve()));
             }
         }));
 
