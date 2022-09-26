@@ -42,11 +42,12 @@ function isNonEmptyChange(
     return "inputContext" in change;
 }
 
-function mint(inputContext: readonly number[], intention: number): NonEmptyTestChange {
+function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
+    const intentions = Array.isArray(intention) ? intention : [intention];
     return {
         inputContext: [...inputContext],
-        intentions: [intention],
-        outputContext: composeIntentions(inputContext, [intention]),
+        intentions,
+        outputContext: composeIntentions(inputContext, intentions),
     };
 }
 

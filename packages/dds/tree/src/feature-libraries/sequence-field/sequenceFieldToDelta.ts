@@ -4,8 +4,10 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, clone, fail, OffsetListFactory } from "../../util";
+import { brandOpaque, fail, OffsetListFactory } from "../../util";
 import { Delta } from "../../tree";
+import { applyModifyToTree } from "../deltaUtils";
+import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { singleTextCursor } from "../treeTextCursor";
 import * as F from "./format";
 import { isSkipMark } from "./utils";
@@ -27,8 +29,7 @@ export function sequenceFieldToDelta<TNodeChange>(
                 case "Insert": {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
-                        // TODO: can we skip this clone?
-                        content: clone(mark.content).map(singleTextCursor),
+                        content: mark.content.map(singleTextCursor),
                     };
                     out.pushContent(insertMark);
                     break;
@@ -134,9 +135,10 @@ function cloneAndModify<TNodeChange>(
     deltaFromChild: ToDelta<TNodeChange>,
 ): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
-    const outNode = clone(insert.content);
-    const outModifications = Delta.applyModifyToInsert(outNode, deltaFromChild(insert.changes));
-    return { content: singleTextCursor(outNode), fields: outModifications };
+    const cursor = singleTextCursor(insert.content);
+    const mutableTree = mapTreeFromCursor(cursor);
+    const outModifications = applyModifyToTree(mutableTree, deltaFromChild(insert.changes));
+    return { content: singleMapTreeCursor(mutableTree), fields: outModifications };
 }
 
 /**

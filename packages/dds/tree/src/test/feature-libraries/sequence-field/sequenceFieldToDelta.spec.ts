@@ -4,12 +4,19 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { Delta, ITreeCursorSynchronous } from "../../../tree";
-import { SequenceField as SF, singleTextCursorNew } from "../../../feature-libraries";
+import { Delta, FieldKey, ITreeCursorSynchronous } from "../../../tree";
+import {
+    FieldChange,
+    FieldKind,
+    Multiplicity,
+    NodeChangeset,
+    SequenceField as SF,
+    singleTextCursorNew,
+} from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque } from "../../../util";
 import { TestChange } from "../../testChange";
-import { deepFreeze } from "../../utils";
+import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { TestChangeset } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -18,6 +25,7 @@ const content = [nodeX];
 const contentCursor: ITreeCursorSynchronous[] = [singleTextCursorNew(nodeX)];
 const opId = 42;
 const moveId = brandOpaque<Delta.MoveId>(opId);
+const fooField = brand<FieldKey>("foo");
 
 function toDelta(change: TestChangeset): Delta.MarkList {
     deepFreeze(change);
@@ -145,7 +153,7 @@ describe("SequenceField - toDelta", () => {
         assert.deepStrictEqual(actual, expected);
     });
 
-    it("Insert and modify", () => {
+    it("Insert and modify => insert", () => {
         const changeset: TestChangeset = [
             {
                 type: "MInsert",
@@ -163,6 +171,53 @@ describe("SequenceField - toDelta", () => {
         };
         const expected: Delta.MarkList = [mark];
         const actual = toDelta(changeset);
-        assert.deepStrictEqual(actual, expected);
+        assertMarkListEqual(actual, expected);
+    });
+
+    // This test requires more support for MoveIn
+    it.skip("Insert and modify => Insert and modify", () => {
+        const sequenceField = new FieldKind(
+            brand("Sequence"),
+            Multiplicity.Sequence,
+            SF.sequenceFieldChangeHandler,
+            () => false,
+            new Set(),
+        );
+        const nestedChange: FieldChange = {
+            fieldKind: sequenceField.identifier,
+            change: brand({
+                type: "MoveIn",
+                id: opId,
+                count: 42,
+            }),
+       };
+        const nodeChange = {
+            fieldChanges: new Map([
+                [fooField, nestedChange],
+            ]),
+        };
+        const changeset: SF.Changeset = [
+            {
+                type: "MInsert",
+                id: opId,
+                content: content[0],
+                changes: nodeChange,
+            },
+        ];
+        const nestedMoveDelta = new Map([
+            [fooField, [{ type: Delta.MarkType.MoveIn, moveId }]],
+        ]);
+        const mark: Delta.InsertAndModify = {
+            type: Delta.MarkType.InsertAndModify,
+            content: contentCursor[0],
+            fields: nestedMoveDelta,
+        };
+        const expected: Delta.MarkList = [mark];
+        const deltaFromChild = (child: NodeChangeset): Delta.Modify => {
+            assert.deepEqual(child, nodeChange);
+            return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
+        };
+        const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+        assertMarkListEqual(actual, expected);
     });
 });

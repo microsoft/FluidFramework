@@ -20,6 +20,7 @@ export * from "./sequence-change-family";
 import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
+export * from "./deltaUtils";
 export * from "./defaultSchema";
 export {
     isNeverField,
