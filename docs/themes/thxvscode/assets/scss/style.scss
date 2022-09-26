@@ -83,5 +83,5 @@ a[href^=http]:not(.no-external-icon)::after
 }
 a[href^=http]:not(.no-external-icon):visited::after
 {
-  background-color: #ac7ee1;
+  background-color: $visited-link-color;
 }

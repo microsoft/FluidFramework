@@ -229,7 +229,7 @@ iframe[name='google_conversion_frame'] {
   a {
     color: $banner-link-color;
     &:visited {
-      color: #ac7ee1;
+      color: $visited-link-color;
     }
   }
 }
