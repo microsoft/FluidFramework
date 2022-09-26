@@ -89,6 +89,13 @@ export enum DriverErrorType {
      * ! Should match the value of ContainerErrorType.usageError
      */
     usageError = "usageError",
+
+    /**
+     * When a file is not a Fluid file, but has Fluid extension such as ".note",
+     * server won't be able to open it and will return this error. The innerMostErrorCode will be
+     * "fluidInvalidSchema"
+     */
+     fluidInvalidSchema = "fluidInvalidSchema",
 }
 
 /**
@@ -143,7 +150,8 @@ export interface IDriverBasicError extends IDriverErrorBase {
     | DriverErrorType.fetchFailure
     | DriverErrorType.incorrectServerResponse
     | DriverErrorType.fileOverwrittenInStorage
-    | DriverErrorType.usageError;
+    | DriverErrorType.usageError
+    | DriverErrorType.fluidInvalidSchema;
     readonly statusCode?: number;
 }
 

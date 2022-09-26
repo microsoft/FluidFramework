@@ -71,6 +71,21 @@ export class DeltaStreamConnectionForbiddenError extends LoggingError implements
     }
 }
 
+/**
+ * FluidInvalidSchema error class.
+ */
+export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    readonly errorType = DriverErrorType.fluidInvalidSchema;
+    readonly canRetry = false;
+
+    constructor(
+        message: string,
+        props: DriverErrorTelemetryProps,
+    ) {
+        super(message, props);
+    }
+}
+
 export class AuthorizationError extends LoggingError implements IAuthorizationError, IFluidErrorBase {
     readonly errorType = DriverErrorType.authorizationError;
     readonly canRetry = false;
