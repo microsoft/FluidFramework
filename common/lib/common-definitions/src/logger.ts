@@ -15,7 +15,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
  * General best practice is to explicitly log the fields you care about from objects.
  */
- export type TelemetryEventPropertyType =
+export type TelemetryEventPropertyType =
     | string
     | number
     | boolean
@@ -44,11 +44,11 @@ export interface ITelemetryProperties {
 /**
  * Set of properties defined for the base logger to use only primitive types.
  */
- export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
- export interface ITelemetryBaseProperties {
-     [index: string]: OptionallyTaggedTelemetryProperty<TelemetryBaseEventPropertyType>;
- }
+export interface ITelemetryBaseProperties {
+    [index: string]: OptionallyTaggedTelemetryProperty<TelemetryBaseEventPropertyType>;
+}
 /**
  * Base interface for logging telemetry statements.
  * Can contain any number of properties that get serialized as json payload.
