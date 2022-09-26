@@ -13,14 +13,13 @@ import {
 } from "../../../feature-libraries/modular-schema/comparison";
 import {
     FieldSchema,
-    GlobalFieldKey,
     NamedTreeSchema,
     TreeSchema,
     ValueSchema,
     TreeTypeSet,
     emptyMap, emptySet, fieldSchema, StoredSchemaRepository,
 } from "../../../schema-stored";
-import { brand, brandOpaque } from "../../../util";
+import { brand } from "../../../util";
 import { defaultSchemaPolicy, emptyField, FieldKinds, neverField, neverTree } from "../../../feature-libraries";
 
 describe("Schema Comparison", () => {

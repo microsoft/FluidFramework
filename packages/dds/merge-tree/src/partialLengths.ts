@@ -725,11 +725,7 @@ export class PartialSequenceLengths {
         for (const clientId in this.clientSeqNumbers) {
             if (this.clientSeqNumbers[clientId].length > 0) {
                 buf += `Client `;
-                if (glc) {
-                    buf += `${glc(+clientId)}`;
-                } else {
-                    buf += `${clientId}`;
-                }
+                buf += glc ? `${glc(+clientId)}` : `${clientId}`;
                 buf += "[";
                 for (const partial of this.clientSeqNumbers[clientId]) {
                     buf += `(${partial.seq},${partial.len})`;
@@ -802,20 +798,12 @@ export class PartialSequenceLengths {
 
     private cliLatestLEQ(clientId: number, refSeq: number) {
         const cliSeqs = this.clientSeqNumbers[clientId];
-        if (cliSeqs) {
-            return latestLEQ(cliSeqs, refSeq);
-        } else {
-            return -1;
-        }
+        return cliSeqs ? latestLEQ(cliSeqs, refSeq) : -1;
     }
 
     private cliLatest(clientId: number) {
         const cliSeqs = this.clientSeqNumbers[clientId];
-        if (cliSeqs && (cliSeqs.length > 0)) {
-            return cliSeqs.length - 1;
-        } else {
-            return -1;
-        }
+        return cliSeqs && (cliSeqs.length > 0) ? cliSeqs.length - 1 : -1;
     }
 }
 

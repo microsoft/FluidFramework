@@ -31,7 +31,7 @@ import { IVersionedValueWithEpoch } from "./contracts";
  *
  * @param resolvedUrl - Resolved url to fetch the snapshot.
  * @param getStorageToken - function that can provide the storage token for a given site. This is
- *  is also referred to as the "VROOM" token in SPO.
+ * is also referred to as the "VROOM" token in SPO.
  * @param persistedCache - Cache to store the fetched snapshot.
  * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header.
  * @param logger - Logger to have telemetry events.

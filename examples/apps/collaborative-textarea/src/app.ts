@@ -39,10 +39,6 @@ async function start() {
     if (contentDiv !== null) {
         ReactDOM.render(React.createElement(CollaborativeTextView, { text: defaultObject.text }), contentDiv);
     }
-
-    // Setting "fluidStarted" is just for our test automation
-    // eslint-disable-next-line @typescript-eslint/dot-notation
-    window["fluidStarted"] = true;
 }
 
 start().catch((e) => {

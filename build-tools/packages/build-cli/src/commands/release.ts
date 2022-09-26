@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { detectVersionScheme, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
+import { detectVersionScheme, VersionBumpType } from "@fluid-tools/version-tools";
 import {
     bumpTypeFlag,
     checkFlags,
@@ -14,7 +14,6 @@ import {
 import { FluidReleaseStateHandler, FluidReleaseStateHandlerData, StateHandler } from "../handlers";
 import { PromptWriter } from "../instructionalPromptWriter";
 import { FluidReleaseMachine } from "../machines";
-import { ReleaseGroup, ReleasePackage } from "../releaseGroups";
 import { StateMachineCommand } from "../stateMachineCommand";
 
 /**
