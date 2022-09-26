@@ -77,17 +77,6 @@ export function testJsonCompatibleCursor(
         describe("extract roundtrip", () => {
             for (const [name, data] of cursorTestCases) {
                 it(`${name}: ${JSON.stringify(data)}`, () => {
-                    // const cursor = factory(expected);
-
-                    // assert.deepEqual(dataFromCursor(cursor), expected,
-                    //     `${suiteName} results must match source.`);
-
-                    // // Read tree a second time to verify that the previous traversal returned the cursor's
-                    // // internal state machine to the root (i.e., stacks should be empty.)
-                    // const clone = dataFromCursor(cursor);
-                    // assert.deepEqual(clone, expected,
-                    //     `${suiteName} must return same results on second traversal.`);
-
                     const cursor = factory(data);
                     const clone = dataFromCursor(cursor);
                     assert.deepEqual(clone, data);
