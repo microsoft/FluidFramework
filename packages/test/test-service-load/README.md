@@ -4,6 +4,35 @@ _Note: This tool has dependencies on Microsoft-internal systems._
 
 NodeJs-based test to simulate many clients and a high rate of op generation.
 
+## Goal
+
+The goal of these tests is to validate that garbage collection (GC) works correctly and there are no unexpected errors. The most
+core aspects of these tests are:
+* Reference data stores and have them send ops, i.e., use them.
+* Unreference data stores and have them stop sending ops, i.e., stop using them.
+* Re-reference previously unreferenced data stores safely. Basically don't use data stores after they are GC'd.
+* Collaborate with other clients that are connected to the document. Basically, mimic typical user scenarios where users
+work on same or different parts of a document simultaneously.
+
+# Architecture
+
+The following picture shows how the clients / containers are set up. The dashes line indicate collaboration happening between data stores.
+![Architecture](./gcStressTestArchitecture.png)
+
+There are n clients that are running in parallel and each client does the following when the test is run:
+* It starts by loading a root data store and calling "run" on it.
+* Root data store - This data store does the following:
+  * It controls how long the test runs and propagates the result back to the test runner. Basically, it sends ops with a delay between each op until the total number of ops reach a specific count.
+  * It loads two child data stores - a collab data store and a non-collab data store and calls "run" on them.
+* Collab data store - This data stores collaborates with other clients connected to the document. It continuously sends ops with a delay between each and after every few ops, it performs one of the following activities:
+  * CreateAndReference - It creates a leaf data store, references it and calls "run" on it.
+  * Unreference - It unreferences a previously referenced leaf data store. It also calls "stop" on it so that it does not do any activity.
+  * Revive - It references a previously unreferenced leaf data store. It does so safely such that inactive or GC'd data stores are not referenced as that can lead to use-after-delete errors.
+All other clients are listening to these activities, they may choose to call "run" or "stop" on their local copy of the corresponding leaf data store. This is the collaboration part which mimics user scenarios where multiple users collaborate on same part of the document simultaneously.
+* Non-collab data store - This data store does not collaborate with other clients. It works exactly the same way as the collab data store expect that other clients do not listen to activities of other clients.
+This mimics user scenarios where multiple users work on different parts of a document simultaneously.
+* Leaf data store - This data store does not create any data stores and hence is the leaf node in the reference hierarchy. It continuously sends ops with a delay between each op until "stop" is called on it. It mimics user actions on a part of a document.
+
 ## Pre-requisites
 
 * Run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve required OAuth tokens and passwords.
@@ -73,7 +102,7 @@ If present, launch in Test Runner mode with the given runId (to distinguish from
 
 Launches each test runner with `--inspect-brk` and a unique Node debugging port. (Not compatible with `--runId`)
 
-#### --createTestId	
+#### --createTestId
 
 If the `testId` argument is specified, the `createTestId` flag determines whether to load an exisiting
 document corresponding to the `testId` specified, or create a new one. When `createTestId` is set to true,
