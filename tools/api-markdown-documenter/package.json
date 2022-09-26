@@ -14,9 +14,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:genver && npm run build:copy-test-resources && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "tsc",
-    "build:copy-test-resources": "copyfiles \"src/test/test-data/**\" dist --up 1",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build:compile": "concurrently npm:tsc npm:build:copy",
+    "build:copy": "copyfiles \"src/test/test-data/**\" dist --up 1",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -34,7 +34,8 @@
     "prettier:fix": "prettier --write .",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict"
+    "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict",
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,

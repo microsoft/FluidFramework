@@ -21,10 +21,11 @@
   ],
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext npm:webpack:svgs",
+    "build:compile": "concurrently npm:tsc npm:build:esnext npm:build:webpack",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:webpack": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -34,8 +35,7 @@
     "test": "npm run test:jest",
     "test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit",
     "test:jest": "jest",
-    "tsc": "tsc",
-    "webpack:svgs": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\""
+    "tsc": "tsc"
   },
   "dependencies": {
     "@hig/fonts": "^1.0.2",
