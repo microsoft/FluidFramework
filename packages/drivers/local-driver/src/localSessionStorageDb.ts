@@ -85,7 +85,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      * {@inheritDoc @fluidframework/server-services-core#ICollection.findAll}
      */
     public async findAll(): Promise<any[]> {
-        return Promise.resolve(this.getAllInternal());
+        return this.getAllInternal();
     }
 
     /**
@@ -95,7 +95,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      * Query is expected to have a member "_id" which is a string used to find value in the database.
      */
     public async findOne(query: any): Promise<any> {
-        return Promise.resolve(this.findOneInternal(query));
+        return this.findOneInternal(query);
     }
 
     /**
@@ -279,9 +279,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
  */
 class LocalSessionStorageDb extends EventEmitter implements IDb {
     private readonly collections = new Map<string, LocalSessionStorageCollection<any>>();
-    public async close(): Promise<void> {
-        return Promise.resolve();
-    }
+    public async close(): Promise<void> { }
     public collection<T>(name: string): ICollection<T> {
         if (!this.collections.has(name)) {
             this.collections.set(name, new LocalSessionStorageCollection<T>(name));

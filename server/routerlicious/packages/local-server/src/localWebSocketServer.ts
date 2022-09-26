@@ -82,7 +82,6 @@ export class LocalWebSocketServer implements core.IWebSocketServer {
 
     public async close(): Promise<void> {
         this.events.removeAllListeners();
-        return Promise.resolve();
     }
 
     public createConnection(): LocalWebSocket {
