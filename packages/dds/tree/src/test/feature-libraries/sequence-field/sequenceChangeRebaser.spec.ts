@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand } from "../../../util";
-import { TestChange, TestChangeRebaser } from "../../testChange";
+import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -34,11 +34,11 @@ describe("SequenceField - Rebaser Axioms", () => {
                         /**
                          * These cases are currently disabled because:
                          * - Marks that affect existing content are removed instead of muted
-                         *   when rebased over the deletion of that content. This prevents us
-                         *   from then reinstating the mark when rebasing over the revive.
+                         * when rebased over the deletion of that content. This prevents us
+                         * from then reinstating the mark when rebasing over the revive.
                          * - Tombs are not added when rebasing an insert over a gap that is
-                         *   immediately left of deleted content. This prevents us from being able to
-                         *   accurately track the position of the insert.
+                         * immediately left of deleted content. This prevents us from being able to
+                         * accurately track the position of the insert.
                          */
                     });
                 } else {

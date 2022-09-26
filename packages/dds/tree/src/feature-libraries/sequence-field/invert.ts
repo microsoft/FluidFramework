@@ -22,7 +22,7 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
  *
  * WARNING! This implementation is incomplete:
  * - It is unable to produce adequate inverses for set-value and delete operations.
- *   This is because changesets are not given IDs.
+ * This is because changesets are not given IDs.
  * - Support for moves is not implemented.
  * - Support for slices is not implemented.
  */

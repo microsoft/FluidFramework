@@ -21,7 +21,7 @@ function compose(changes: TestChangeset[]): TestChangeset {
 
 function composeNoVerify(changes: TestChangeset[]): TestChangeset {
     changes.forEach(deepFreeze);
-    return SF.compose(changes, (changes: TestChange[]) => TestChange.compose(changes, false));
+    return SF.compose(changes, (cs: TestChange[]) => TestChange.compose(cs, false));
 }
 
 function shallowCompose(changes: SF.Changeset[]): SF.Changeset {
