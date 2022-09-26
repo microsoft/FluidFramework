@@ -85,6 +85,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      * {@inheritDoc @fluidframework/server-services-core#ICollection.findAll}
      */
     public async findAll(): Promise<any[]> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.getAllInternal();
     }
 
@@ -95,6 +96,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
      * Query is expected to have a member "_id" which is a string used to find value in the database.
      */
     public async findOne(query: any): Promise<any> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.findOneInternal(query);
     }
 

@@ -126,11 +126,11 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
      * @param disconnectReason - The reason of the disconnection.
      */
     public disconnectClient(clientId: string, disconnectReason: string) {
-        if (!this.documentDeltaConnectionsMap.has(clientId)) {
+        const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
+        if (documentDeltaConnection === undefined) {
             throw new Error(`No client with the id: ${clientId}`);
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.documentDeltaConnectionsMap.get(clientId)!.disconnectClient(disconnectReason);
+        documentDeltaConnection.disconnectClient(disconnectReason);
     }
 
     /**
@@ -141,10 +141,10 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
      * @param message - A message about the nack for debugging/logging/telemetry purposes.
      */
     public nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any) {
-        if (!this.documentDeltaConnectionsMap.has(clientId)) {
+        const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
+        if (documentDeltaConnection === undefined) {
             throw new Error(`No client with the id: ${clientId}`);
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.documentDeltaConnectionsMap.get(clientId)!.nackClient(code, type, message);
+        documentDeltaConnection.nackClient(code, type, message);
     }
 }
