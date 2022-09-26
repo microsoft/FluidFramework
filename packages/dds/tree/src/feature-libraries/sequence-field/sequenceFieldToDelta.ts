@@ -118,7 +118,6 @@ export function sequenceFieldToDelta<TNodeChange>(
             }
         }
     }
-    // TODO: add runtime checks
     return out.list;
 }
 
