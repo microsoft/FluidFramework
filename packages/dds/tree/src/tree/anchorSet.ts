@@ -329,10 +329,14 @@ export class AnchorSet {
  * prefix-tree style.
  *
  * These anchors are used instead of just holding onto the node objects in forests for several reasons:
+ *
  * - Update policy might be more complex than just tracking a node object in the forest.
+ *
  * - Not all forests will have node objects: some may use compressed binary formats with no objects to reference.
- * - Anchors are need even when not using forests,
- *      and for nodes that are outside the currently loaded part of the forest.
+ *
+ * - Anchors are need even when not using forests, and for nodes that are outside the currently loaded part of the
+ * forest.
+ *
  * - Forest in general do not need to sport up pointers, but they are needed for anchors.
  *
  * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors,

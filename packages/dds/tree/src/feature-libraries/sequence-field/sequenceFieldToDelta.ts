@@ -6,6 +6,7 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { brandOpaque, clone, fail, OffsetListFactory } from "../../util";
 import { Delta } from "../../tree";
+import { singleTextCursor } from "../treeTextCursor";
 import * as F from "./format";
 import { isSkipMark } from "./utils";
 
@@ -26,7 +27,8 @@ export function sequenceFieldToDelta<TNodeChange>(
                 case "Insert": {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
-                        content: cloneTreeContent(mark.content),
+                        // TODO: can we skip this clone?
+                        content: clone(mark.content).map(singleTextCursor),
                     };
                     out.pushContent(insertMark);
                     break;
@@ -122,15 +124,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 }
 
 /**
- * Clones the content described by a Changeset into tree content expected by Delta.
- */
-function cloneTreeContent(content: F.ProtoNode[]): Delta.ProtoNode[] {
-    // The changeset and Delta format currently use the same interface to represent inserted content.
-    // This is an implementation detail that may not remain true.
-    return clone(content);
-}
-
-/**
  * Converts inserted content into the format expected in Delta instances.
  * This involves applying all except MoveIn changes.
  *
@@ -141,9 +134,9 @@ function cloneAndModify<TNodeChange>(
     deltaFromChild: ToDelta<TNodeChange>,
 ): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
-    const outNode = cloneTreeContent([insert.content])[0];
+    const outNode = clone(insert.content);
     const outModifications = Delta.applyModifyToInsert(outNode, deltaFromChild(insert.changes));
-    return { content: outNode, fields: outModifications };
+    return { content: singleTextCursor(outNode), fields: outModifications };
 }
 
 /**

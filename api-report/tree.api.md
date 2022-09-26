@@ -29,7 +29,7 @@ export class AnchorSet {
 }
 
 // @public
-function applyModifyToInsert(node: ProtoNode_2, modify: Modify): Map<FieldKey, MarkList>;
+function applyModifyToInsert(node: JsonableTree, modify: Modify): Map<FieldKey, MarkList>;
 
 // @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -158,7 +158,7 @@ declare namespace Delta {
         ProtoNode_2 as ProtoNode,
         MoveId,
         Offset,
-        FieldMap_2 as FieldMap,
+        FieldMap,
         FieldMarks,
         MarkType
     }
@@ -325,17 +325,17 @@ export interface FieldLocation {
     readonly parent: ForestLocation;
 }
 
+// @public (undocumented)
+type FieldMap<T> = Map<FieldKey, T>;
+
 // @public
-export interface FieldMap<TChild> {
+export interface FieldMapObject<TChild> {
     // (undocumented)
     [key: string]: TChild[];
 }
 
 // @public (undocumented)
-type FieldMap_2<T> = Map<FieldKey, T>;
-
-// @public (undocumented)
-type FieldMarks = FieldMap_2<MarkList>;
+type FieldMarks = FieldMap<MarkList>;
 
 // @public (undocumented)
 export interface FieldSchema {
@@ -347,7 +347,7 @@ export interface FieldSchema {
 // @public
 export const enum FieldScope {
     // (undocumented)
-    global = "fields",
+    global = "globalFields",
     // (undocumented)
     local = "fields"
 }
@@ -367,11 +367,15 @@ export interface FullSchemaPolicy extends SchemaPolicy {
 export type GapCount = number;
 
 // @public
-export interface GenericTreeNode<TChild> extends NodeData {
+export interface GenericFieldsNode<TChild> {
     // (undocumented)
-    [FieldScope.local]?: FieldMap<TChild>;
+    [FieldScope.local]?: FieldMapObject<TChild>;
     // (undocumented)
-    [FieldScope.global]?: FieldMap<TChild>;
+    [FieldScope.global]?: FieldMapObject<TChild>;
+}
+
+// @public
+export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
 
 // @public
@@ -507,6 +511,12 @@ export interface ITreeCursorNew {
 }
 
 // @public
+export interface ITreeCursorSynchronous extends ITreeCursorNew {
+    // (undocumented)
+    readonly pending: false;
+}
+
+// @public
 export interface ITreeSubscriptionCursor extends ITreeCursor {
     buildAnchor(): Anchor;
     clear(): void;
@@ -525,7 +535,7 @@ export enum ITreeSubscriptionCursorState {
 }
 
 // @public
-export interface JsonableTree extends PlaceholderTree {
+export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 }
 
 // @public
@@ -541,7 +551,10 @@ export const jsonArray: NamedTreeSchema;
 export const jsonBoolean: NamedTreeSchema;
 
 // @public
-export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | {
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+
+// @public
+export type JsonCompatibleObject = {
     [P in string]: JsonCompatible;
 };
 
@@ -797,9 +810,6 @@ export type OpId = number;
 const optional: FieldKind;
 
 // @public
-export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
-
-// @public
 export interface PlacePath extends UpPath {
 }
 
@@ -819,7 +829,7 @@ export abstract class ProgressiveEditBuilder<TChange> {
 export type ProtoNode = JsonableTree;
 
 // @public
-type ProtoNode_2 = JsonableTree;
+type ProtoNode_2 = ITreeCursorSynchronous;
 
 // @public
 export const proxyTargetSymbol: unique symbol;
@@ -941,7 +951,7 @@ export class SimpleDependee implements Dependee {
 export function singleTextCursor(root: JsonableTree): TextCursor;
 
 // @public (undocumented)
-export function singleTextCursorNew(root: JsonableTree): TextCursorNew;
+export function singleTextCursorNew(root: JsonableTree): ITreeCursorSynchronous;
 
 // @public (undocumented)
 export type Skip = number;
@@ -1010,51 +1020,6 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     get type(): TreeType;
     // (undocumented)
     up(): SynchronousNavigationResult;
-    // (undocumented)
-    get value(): Value;
-}
-
-// @public
-export class TextCursorNew implements ITreeCursorNew {
-    constructor(root: JsonableTree);
-    // (undocumented)
-    get chunkLength(): number;
-    // (undocumented)
-    get chunkStart(): number;
-    // (undocumented)
-    enterField(key: FieldKey): void;
-    // (undocumented)
-    enterNode(index: number): void;
-    // (undocumented)
-    exitField(): void;
-    // (undocumented)
-    exitNode(): void;
-    // (undocumented)
-    get fieldIndex(): number;
-    // (undocumented)
-    firstField(): boolean;
-    // (undocumented)
-    firstNode(): boolean;
-    // (undocumented)
-    getFieldKey(): FieldKey;
-    // (undocumented)
-    getFieldLength(): number;
-    // (undocumented)
-    getPath(): UpPath | undefined;
-    // (undocumented)
-    get mode(): CursorLocationType;
-    // (undocumented)
-    nextField(): boolean;
-    // (undocumented)
-    nextNode(): boolean;
-    // (undocumented)
-    get pending(): boolean;
-    // (undocumented)
-    seekNodes(offset: number): boolean;
-    // (undocumented)
-    skipPendingFields(): boolean;
-    // (undocumented)
-    get type(): TreeType;
     // (undocumented)
     get value(): Value;
 }

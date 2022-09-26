@@ -4,8 +4,8 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { Delta } from "../../../tree";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { Delta, ITreeCursorSynchronous } from "../../../tree";
+import { SequenceField as SF, singleTextCursorNew } from "../../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
 import { brand, brandOpaque } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -15,6 +15,7 @@ import { TestChangeset } from "./utils";
 const type: TreeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: "X" };
 const content = [nodeX];
+const contentCursor: ITreeCursorSynchronous[] = [singleTextCursorNew(nodeX)];
 const opId = 42;
 const moveId = brandOpaque<Delta.MoveId>(opId);
 
@@ -57,7 +58,7 @@ describe("SequenceField - toDelta", () => {
         ];
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
-            content,
+            content: contentCursor,
         };
         const expected: Delta.MarkList = [mark];
         const actual = toDelta(changeset);
@@ -133,7 +134,7 @@ describe("SequenceField - toDelta", () => {
         };
         const ins: Delta.Insert = {
             type: Delta.MarkType.Insert,
-            content,
+            content: contentCursor,
         };
         const set: Delta.Modify = {
             type: Delta.MarkType.Modify,
@@ -155,10 +156,10 @@ describe("SequenceField - toDelta", () => {
         ];
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
-            content: [{
+            content: [singleTextCursorNew({
                 type,
                 value: "1",
-            }],
+            })],
         };
         const expected: Delta.MarkList = [mark];
         const actual = toDelta(changeset);
