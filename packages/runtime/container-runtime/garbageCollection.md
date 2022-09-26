@@ -1,9 +1,13 @@
 # Garbage Collection
 Garbage collection (GC) identifies Fluid objects that are not used and deletes them from the Fluid document. This reduces the size of the Fluid file, the in-memory content and the summary that is uploaded to / downloaded from the server. It also makes processing faster as there is less data to process.
 
-Before understanding the details of how GC works, lets take a look at how to add a reference to Fluid objects when they are in use and remove the reference when they are not in use.
+## Requirements
+
+- **2-day maximum age of cached snapshots:** In order for GC to accurately compute when an object will never be referenced again and can be deleted, the driver must guarantee it does not load from snapshots older than 2 days.  Note: This requirement will be dropped at some point, when the Runtime layer takes responsibility for snapshot caching.
 
 ## Fluid object references
+Before understanding the details of how GC works, lets take a look at how to add a reference to Fluid objects when they are in use and remove the reference when they are not in use.
+
 - All Fluid objects that are in use must be marked as referenced so that they are not deleted by GC. There are 2 ways to mark objects as referenced:
   - Create them as `root`. These objects are always referenced and cannot be marked unreferenced later. For example, `root` data stores are always referenced.
 

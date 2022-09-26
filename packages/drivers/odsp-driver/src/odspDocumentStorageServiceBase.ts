@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
-import { defaultCacheExpiryTimeoutMs } from "./epochTracker";
+import { snapshotCacheExpiryTimeoutMs } from "./epochTracker";
 import { ISnapshotContents } from "./odspPublicUtils";
 
 /* eslint-disable max-len */
@@ -130,7 +130,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
         // Note that duplication of content should not have significant impact for bytes over wire as
         // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
         minBlobSize: 2048,
-        maximumCacheDurationMs: defaultCacheExpiryTimeoutMs,
+        maximumCacheDurationMs: snapshotCacheExpiryTimeoutMs,
         snapshotCacheDisabledForTesting: this.snapshotCacheDisabledForTesting,
     };
 

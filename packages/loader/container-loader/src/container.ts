@@ -670,7 +670,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     if (this.loader.services.detachedBlobStorage !== undefined) {
                         return new BlobOnlyStorage(this.loader.services.detachedBlobStorage, this.mc.logger);
                     }
-                    this.mc.logger.sendErrorEvent({
+                    this.mc.logger.sendTelemetryEvent({
                         eventName: "NoRealStorageInDetachedContainer",
                     });
                     throw new Error("Real storage calls not allowed in Unattached container");
