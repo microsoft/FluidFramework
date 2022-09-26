@@ -431,6 +431,7 @@ export type ErrorString = string;
  */
 export type Result<TOk, TError> = Result.Ok<TOk> | Result.Error<TError>;
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Result {
 	/**
 	 * Factory function for making a successful Result.

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { singleMapTreeCursor, singleTextCursorNew } from "../../feature-libraries";
+import { singleTextCursorNew } from "../../feature-libraries";
 import { Anchor, AnchorSet, clonePath, Delta, FieldKey, JsonableTree, UpPath } from "../../tree";
 import { brand } from "../../util";
 

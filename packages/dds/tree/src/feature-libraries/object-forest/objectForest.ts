@@ -108,12 +108,9 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             },
             onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
                 assert(currentField !== undefined, 0x367 /* must be in field to onMoveOut */);
-                let srcField: ObjectField;
-                if (cursor.state === ITreeSubscriptionCursorState.Cleared) {
-                    srcField = this.getRoot(keyAsDetachedField(currentField));
-                } else {
-                    srcField = getGenericTreeField(cursor.getNode(), currentField, false);
-                }
+                const srcField = cursor.state === ITreeSubscriptionCursorState.Cleared
+                    ? this.getRoot(keyAsDetachedField(currentField))
+                    : getGenericTreeField(cursor.getNode(), currentField, false);
                 const field = this.detachRangeOfChildren(srcField, index, index + count);
                 if (id !== undefined) {
                     moves.set(id, field);
@@ -139,12 +136,9 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             },
             enterNode: (index: number): void => {
                 assert(currentField !== undefined, 0x36b /* must be in field to enterNode */);
-                let result: TreeNavigationResult;
-                if (cursor.state === ITreeSubscriptionCursorState.Cleared) {
-                    result = this.tryMoveCursorTo(this.root(keyAsDetachedField(currentField), index), cursor);
-                } else {
-                    result = cursor.down(currentField, index);
-                }
+                const result = cursor.state === ITreeSubscriptionCursorState.Cleared
+                    ? this.tryMoveCursorTo(this.root(keyAsDetachedField(currentField), index), cursor)
+                    : cursor.down(currentField, index);
                 assert(result === TreeNavigationResult.Ok, 0x36c /* can only enter existing nodes */);
                 currentField = undefined;
             },

@@ -33,13 +33,13 @@ export function alternativeMorganLoggerMiddleware(loggerFormat: string) {
 export function jsonMorganLoggerMiddleware(
     serviceName: string,
     computeAdditionalProperties?: (
-        tokens: morgan.TokenIndexer,
+        tokens: morgan.TokenIndexer<express.Request, express.Response>,
         req: express.Request,
         res: express.Response) => Record<string, any>,
     ): express.RequestHandler {
     return (request, response, next): void => {
         const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
-        morgan((tokens, req, res) => {
+        morgan<express.Request, express.Response>((tokens, req, res) => {
             let additionalProperties = {};
             if (computeAdditionalProperties) {
                 additionalProperties = computeAdditionalProperties(tokens, req, res);
