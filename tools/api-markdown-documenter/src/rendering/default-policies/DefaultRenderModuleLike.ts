@@ -68,7 +68,7 @@ export function renderModuleLikeSection(
 ): DocSection {
     const docSections: DocSection[] = [];
 
-    const hasAnyChildren = apiItem.members.length !== 0;
+    const hasAnyChildren = apiItem.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items

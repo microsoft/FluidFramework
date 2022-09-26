@@ -65,7 +65,7 @@ export function renderClassSection(
 ): DocSection {
     const docSections: DocSection[] = [];
 
-    const hasAnyChildren = apiClass.members.length !== 0;
+    const hasAnyChildren = apiClass.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items

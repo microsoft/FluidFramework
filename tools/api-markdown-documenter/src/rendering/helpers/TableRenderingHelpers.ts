@@ -197,7 +197,7 @@ export function renderDefaultSummaryTable(
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiItems.some(
-        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
+        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
     );
 
     const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
@@ -251,8 +251,7 @@ export function renderParametersSummaryTable(
     if (hasOptionalParameters) {
         headerTitles.push("Modifiers");
     }
-    headerTitles.push("Type");
-    headerTitles.push("Description");
+    headerTitles.push("Type", "Description");
 
     function renderModifierCell(apiParameter: Parameter): DocTableCell {
         return apiParameter.isOptional
@@ -305,7 +304,7 @@ export function renderFunctionLikeSummaryTable(
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiItems.some(
-        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
+        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
     );
     const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
 
@@ -369,7 +368,7 @@ export function renderPropertiesTable(
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiProperties.some(
-        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length !== 0,
+        (apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
     );
     const hasDefaultValues = apiProperties.some(
         (apiItem) => getDefaultValueBlock(apiItem, config) !== undefined,
@@ -385,8 +384,7 @@ export function renderPropertiesTable(
     if (hasDefaultValues) {
         headerTitles.push("Default Value");
     }
-    headerTitles.push("Type");
-    headerTitles.push("Description");
+    headerTitles.push("Type", "Description");
 
     const tableRows: DocTableRow[] = [];
     for (const apiProperty of apiProperties) {
@@ -473,8 +471,7 @@ export function renderApiSummaryCell(
 ): DocTableCell {
     const docNodes: DocNode[] = [];
 
-    if (ApiReleaseTagMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.releaseTag === ReleaseTag.Beta) {
+    if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
             docNodes.push(
                 new DocEmphasisSpan(
                     {
@@ -491,13 +488,10 @@ export function renderApiSummaryCell(
                 ),
             );
         }
-    }
 
-    if (apiItem instanceof ApiDocumentedItem) {
-        if (apiItem.tsdocComment !== undefined) {
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
             docNodes.push(apiItem.tsdocComment.summarySection);
         }
-    }
 
     return docNodes.length === 0
         ? renderEmptyTableCell(config)
@@ -575,6 +569,7 @@ export function renderModifiersCell(
                 code: modifier,
             }),
         );
+        needsComma = true;
     }
 
     return modifiers.length === 0

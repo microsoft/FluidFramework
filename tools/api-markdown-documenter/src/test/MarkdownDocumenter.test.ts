@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
 import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 import { Suite } from "mocha";
-import * as Path from "path";
 
 import {
     MarkdownDocumenterConfiguration,

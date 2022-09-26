@@ -60,7 +60,7 @@ export function renderInterfaceSection(
 ): DocSection {
     const docSections: DocSection[] = [];
 
-    const hasAnyChildren = apiInterface.members.length !== 0;
+    const hasAnyChildren = apiInterface.members.length > 0;
 
     if (hasAnyChildren) {
         // Accumulate child items

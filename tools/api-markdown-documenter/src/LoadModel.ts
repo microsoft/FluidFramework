@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
 import {
     ApiDocumentedItem,
     ApiItem,
@@ -11,7 +12,6 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocComment, DocInheritDocTag } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
-import * as Path from "path";
 
 import { Logger } from "./Logging";
 
@@ -34,7 +34,7 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
 
     const apiReportFilePaths: string[] = [];
     for (const filename of FileSystem.readFolderItemNames(reportsDirectoryPath)) {
-        if (filename.match(/\.api\.json$/i)) {
+        if (/\.api\.json$/i.test(filename)) {
             console.log(`Reading ${filename}`);
             const filenamePath: string = Path.join(reportsDirectoryPath, filename);
             apiReportFilePaths.push(filenamePath);
@@ -77,8 +77,7 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
  * this issue: {@link https://github.com/microsoft/rushstack/issues/2062}.
  */
 function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger): void {
-    if (apiItem instanceof ApiDocumentedItem) {
-        if (apiItem.tsdocComment) {
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment) {
             const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment.inheritDocTag;
 
             if (inheritDocTag && inheritDocTag.declarationReference) {
@@ -104,7 +103,6 @@ function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger):
                 }
             }
         }
-    }
 
     // Recurse members
     if (ApiItemContainerMixin.isBaseClassOf(apiItem)) {

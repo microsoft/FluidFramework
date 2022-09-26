@@ -345,7 +345,7 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
  */
 function getSingleLineExcerptText(excerpt: Excerpt): string {
     // Regex replaces line breaks with spaces to ensure everything ends up on a single line.
-    let signatureExcerpt = excerpt.text.trim().replace(/[\r\n\s]+/g, " ");
+    let signatureExcerpt = excerpt.text.trim().replace(/\s+/g, " ");
 
     if (signatureExcerpt.endsWith(";")) {
         signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);

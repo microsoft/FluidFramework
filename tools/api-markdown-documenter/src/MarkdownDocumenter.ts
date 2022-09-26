@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
 import { ApiItem } from "@microsoft/api-extractor-model";
 import { StringBuilder } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
-import * as Path from "path";
 
 import {
     MarkdownDocumenterConfiguration,
@@ -54,7 +54,7 @@ export function renderDocuments(
     const filteredPackages = apiModel.packages.filter(
         (apiPackage) => !config.packageFilterPolicy(apiPackage),
     );
-    if (filteredPackages.length !== 0) {
+    if (filteredPackages.length > 0) {
         // For each package, walk the child graph to find API items which should be rendered to their own document
         // per provided policy.
 

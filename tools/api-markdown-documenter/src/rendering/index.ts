@@ -6,11 +6,11 @@
 /**
  * Rendering types and related functionality.
  */
-import * as DefaultRenderingPolicies from "./default-policies";
-import * as RenderingHelpers from "./helpers";
+ import * as DefaultRenderingPolicies from "./default-policies";
+ import * as RenderingHelpers from "./helpers";
 
-export { DefaultRenderingPolicies };
-export { RenderingHelpers };
+ export { DefaultRenderingPolicies };
+ export { RenderingHelpers };
 
-export * from "./Rendering";
-export * from "./RenderingPolicy";
+ export * from "./Rendering";
+ export * from "./RenderingPolicy";

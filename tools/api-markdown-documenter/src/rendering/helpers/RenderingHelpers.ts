@@ -289,9 +289,8 @@ export function renderTypeParameters(
                     new DocPlainText({
                         configuration: config.tsdocConfiguration,
                         text: ": ",
-                    }),
+                    }), ...typeParameter.tsdocTypeParamBlock.content.nodes,
                 );
-                paragraphNodes.push(...typeParameter.tsdocTypeParamBlock.content.nodes);
             }
 
             listItemNodes.push(
@@ -347,7 +346,7 @@ export function renderExcerptWithHyperlinks(
         // Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
         // the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
         // discard any newlines and let the renderer do normal word-wrapping.
-        const unwrappedTokenText: string = token.text.replace(/[\r\n]+/g, " ");
+        const unwrappedTokenText: string = token.text.replace(/[\n\r]+/g, " ");
 
         let wroteHyperlink = false;
 
@@ -622,10 +621,10 @@ export function renderExamplesSection(
     }
 
     const exampleSections: DocSection[] = [];
-    for (let i = 0; i < exampleBlocks.length; i++) {
+    for (const [i, exampleBlock] of exampleBlocks.entries()) {
         exampleSections.push(
             renderExampleSection(
-                { apiItem, content: exampleBlocks[i], exampleNumber: i + 1 },
+                { apiItem, content: exampleBlock, exampleNumber: i + 1 },
                 config,
             ),
         );
@@ -746,10 +745,12 @@ export function renderReturnsSection(
         }
     }
 
-    if (ApiReturnTypeMixin.isBaseClassOf(apiItem) && apiItem.returnTypeExcerpt.text.trim() !== "") {
+    if (ApiReturnTypeMixin.isBaseClassOf(apiItem) &&
+        apiItem.returnTypeExcerpt.text.trim() !== "" &&
         // Special case to detect when the return type is `void`.
         // We will skip declaring the return type in this case.
-        if (apiItem.returnTypeExcerpt.text.trim() !== "void") {
+        apiItem.returnTypeExcerpt.text.trim() !== "void"
+    ) {
             const renderedTypeExcerpt = renderExcerptWithHyperlinks(
                 apiItem.returnTypeExcerpt,
                 config,
@@ -776,7 +777,6 @@ export function renderReturnsSection(
                 );
             }
         }
-    }
 
     return docSections.length === 0
         ? undefined
@@ -842,7 +842,7 @@ export function renderChildDetailsSection(
         // Also only render the section if it actually has contents to render (to avoid empty headings).
         if (
             !doesItemKindRequireOwnDocument(childSection.itemKind, config.documentBoundaries) &&
-            childSection.items.length !== 0
+            childSection.items.length > 0
         ) {
             const renderedChildSection = renderChildrenUnderHeading(
                 childSection.items,

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as Path from "node:path";
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
     ApiCallSignature,
@@ -23,7 +24,6 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
-import * as Path from "path";
 
 import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { Heading } from "../Heading";
