@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { Deferred } from "./promises";
 
 
 interface Task {
@@ -17,24 +18,20 @@ interface Task {
  */
 export default class IdleTaskScheduler {
     //List of tasks waiting to be run
-    private idleTaskList:  Task[] = [];
+    private idleTaskList = [];
     // A reference to the task currently being processed.
-    private taskHandle = 0;
+    private taskHandle: ReturnType | undefined = undefined;
 
     /*
     Add tasks to FIFO queue of tasks that are run during idle callback period.
     Creates idle callback if it doesn't exist with a timeout of 1s.
     */
     public enqueueTask<T>(task: () => T){
-        let newTask: Task;
-        newTask = {
-            handle: task
-        }
-        this.idleTaskList.push(newTask)
-
-        if (this.taskHandle) {
-            this.taskHandle = requestIdleCallback(this.runTaskQueue, { timeout: 1000 });
-          }
+        const deferred = new Deferred();
+        this.idleTaskList.push(() => {
+            deferred.resolve(await task());
+        });
+        return deferred.promise;
     }
 
     // Called and runs enqueued tasks when enough idle time avail or 1s timeout expires.
@@ -54,14 +51,15 @@ export default class IdleTaskScheduler {
     support requestIdleCallback
     */
     public scheduleIdleTask<T> (callback: () => T, timeout: number, props: ITelemetryProperties) {
-        if('requestIdleCallback' in window){
-            this.enqueueTask(callback);
-            requestIdleCallback(callback, {timeout: timeout});
-
-        } else {
+        if (this.taskHandle !== undefined) {
+            if (typeof window === "object" && typeof window?.requestIdleCallback === "function")
+            this.taskHandle = window.requestIdleCallback(this.runTaskQueue, { timeout: 1000 });
+        } else{
             setTimeout(() => {
                 callback;
-            }, 100)
+            }, Promise.resolve().then(() => {
+
+            }))
         }
     }
 }
