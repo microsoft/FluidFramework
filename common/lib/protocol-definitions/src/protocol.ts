@@ -159,7 +159,7 @@ export interface IDocumentMessage {
      * The compression algorithm that was used to compress contents of this op.
      * @experimental Not ready for use
      */
-     compression?: string;
+    compression?: string;
 }
 
 /**
@@ -276,7 +276,7 @@ export interface ISequencedDocumentMessage {
      * The compression algorithm that was used to compress contents of this op.
      * @experimental Not ready for use.
      */
-     compression?: string;
+    compression?: string;
 }
 
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
