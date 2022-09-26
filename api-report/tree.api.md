@@ -347,7 +347,7 @@ export interface FieldSchema {
 // @public
 export const enum FieldScope {
     // (undocumented)
-    global = "fields",
+    global = "globalFields",
     // (undocumented)
     local = "fields"
 }
@@ -367,11 +367,15 @@ export interface FullSchemaPolicy extends SchemaPolicy {
 export type GapCount = number;
 
 // @public
-export interface GenericTreeNode<TChild> extends NodeData {
+export interface GenericFieldsNode<TChild> {
     // (undocumented)
     [FieldScope.local]?: FieldMapObject<TChild>;
     // (undocumented)
     [FieldScope.global]?: FieldMapObject<TChild>;
+}
+
+// @public
+export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
 
 // @public
@@ -531,7 +535,7 @@ export enum ITreeSubscriptionCursorState {
 }
 
 // @public
-export interface JsonableTree extends PlaceholderTree {
+export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 }
 
 // @public
@@ -547,7 +551,10 @@ export const jsonArray: NamedTreeSchema;
 export const jsonBoolean: NamedTreeSchema;
 
 // @public
-export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | {
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+
+// @public
+export type JsonCompatibleObject = {
     [P in string]: JsonCompatible;
 };
 
@@ -801,9 +808,6 @@ export type OpId = number;
 
 // @public
 const optional: FieldKind;
-
-// @public
-export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 // @public
 export interface PlacePath extends UpPath {

@@ -190,29 +190,26 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
   private readonly renderShareButton = () => {
     const { classes } = this.props;
 
-    if (this.isPublic) {
-      return (
-        <Button
-          color="primary"
-          className={classes.shareButton}
-          onClick={this.disablePublicSharing}
-          disabled={this.state.progress}
-        >
-          Disable Public Access
-        </Button>
-      );
-    } else {
-      return (
-        <Button
-          color="primary"
-          className={classes.shareButton}
-          onClick={this.enablePublicSharing}
-          disabled={this.state.progress || this.isPublic}
-        >
-          Enable Public Access
-        </Button>
-      );
-    }
+    return this.isPublic
+        ? (
+            <Button
+            color="primary"
+            className={classes.shareButton}
+            onClick={this.disablePublicSharing}
+            disabled={this.state.progress}
+            >
+            Disable Public Access
+            </Button>
+        ) : (
+            <Button
+            color="primary"
+            className={classes.shareButton}
+            onClick={this.enablePublicSharing}
+            disabled={this.state.progress || this.isPublic}
+            >
+            Enable Public Access
+            </Button>
+        );
   };
 
   private renderPublicSharingStatus() {

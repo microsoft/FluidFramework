@@ -7,7 +7,7 @@ export * from "./object-forest";
 export * from "./editable-tree";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
-export * from "./schemaIndex";
+export { SchemaIndex } from "./schemaIndex";
 export * from "./treeTextCursorLegacy";
 export {
 	singleTextCursor as singleTextCursorNew,
@@ -39,6 +39,7 @@ export {
     FieldKind,
     Multiplicity,
     FullSchemaPolicy,
+    allowsRepoSuperset,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
