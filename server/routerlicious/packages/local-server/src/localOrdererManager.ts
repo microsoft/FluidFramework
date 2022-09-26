@@ -18,7 +18,10 @@ import {
 } from "@fluidframework/server-services-core";
 
 export class LocalOrdererManager implements IOrdererManager {
-    private readonly map = new Map<string, Promise<IOrderer>>();
+    /**
+     * Map of "tenantId/documentId" to the orderer for that document.
+     */
+    private readonly ordererMap = new Map<string, Promise<IOrderer>>();
 
     constructor(
         private readonly storage: IDocumentStorage,
@@ -38,34 +41,19 @@ export class LocalOrdererManager implements IOrdererManager {
      * Closes all local orderers
      */
     public async close() {
-        await Promise.all(Array.from(this.map.values()).map(async (orderer) => (await orderer).close()));
-        this.map.clear();
-    }
-
-    /**
-     * Returns true if there are any received ops that are not yet ordered.
-     */
-    public async hasPendingWork(): Promise<boolean> {
-        return Promise.all(this.map.values()).then((orderers) => {
-            for (const orderer of orderers) {
-                // We know that it ia LocalOrderer, break the abstraction
-                if ((orderer as LocalOrderer).hasPendingWork()) {
-                    return true;
-                }
-            }
-            return false;
-        });
+        await Promise.all(Array.from(this.ordererMap.values()).map(async (orderer) => (await orderer).close()));
+        this.ordererMap.clear();
     }
 
     public async getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
         const key = `${tenantId}/${documentId}`;
 
-        if (!this.map.has(key)) {
+        if (!this.ordererMap.has(key)) {
             const orderer = this.createLocalOrderer(tenantId, documentId);
-            this.map.set(key, orderer);
+            this.ordererMap.set(key, orderer);
         }
 
-        return this.map.get(key);
+        return this.ordererMap.get(key);
     }
 
     private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
