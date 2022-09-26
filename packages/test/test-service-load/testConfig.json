@@ -2,9 +2,11 @@
     "profiles": {
         "ci": {
             "opRatePerMin": 10,
+            "signalsPerMin":  10,
             "progressIntervalMs": 15000,
             "numClients": 120,
             "totalSendCount": 10000,
+            "totalSignalsSendCount":  10000,
             "totalBlobCount": 480,
             "blobSize": 256,
             "readWriteCycleMs": 30000,
@@ -115,6 +117,17 @@
                     }
                 }
             }
+        },
+        "scale_with_signals":  {
+            "opRatePerMin":  7,
+            "signalsPerMin":  46,
+            "totalSignalsSendCount":  420000,
+            "progressIntervalMs":  20000,
+            "numClients":  10,
+            "totalSendCount":  70000,
+            "readWriteCycleMs":  30000,
+            "faultInjectionMinMs":  900000,
+            "faultInjectionMaxMs":  1800000
         }
     }
 }

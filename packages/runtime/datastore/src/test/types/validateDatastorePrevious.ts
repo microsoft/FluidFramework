@@ -59,7 +59,6 @@ declare function get_current_ClassDeclaration_FluidDataStoreRuntime():
 declare function use_old_ClassDeclaration_FluidDataStoreRuntime(
     use: TypeOnly<old.FluidDataStoreRuntime>);
 use_old_ClassDeclaration_FluidDataStoreRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FluidDataStoreRuntime());
 
 /*
