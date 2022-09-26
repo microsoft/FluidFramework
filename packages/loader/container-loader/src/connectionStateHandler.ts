@@ -43,17 +43,22 @@ const JoinOpTimeoutMs = 45000;
  *
  * The job of this class is to encapsulate the transition period during reconnect, which is identified by
  * ConnectionState.CatchingUp. Specifically, before moving to Connected state with the new clientId, it ensures that:
- * (A) We process the Leave op for the previous clientId. This allows us to properly handle any acks from in-flight ops
- *     that got sequenced with the old clientId (we'll recognize them as local ops). After the Leave op, any other
- *     pending ops can safely be submitted with the new clientId without fear of duplication in the sequenced op stream.
- * (B) We process the Join op for the new clientId (identified when the underlying connection was first established),
- *     indicating the service is ready to sequence ops sent with the new clientId.
- * (C) We process all ops known at the time the underlying connection was established (so we are "caught up")
  *
- * For (A) we give up waiting after some time (same timeout as server uses), and go ahead and transition to Connected.
- * For (B) we log telemetry if it takes too long, but still only transition to Connected when the Join op is processed
+ * a. We process the Leave op for the previous clientId. This allows us to properly handle any acks from in-flight ops
+ * that got sequenced with the old clientId (we'll recognize them as local ops). After the Leave op, any other
+ * pending ops can safely be submitted with the new clientId without fear of duplication in the sequenced op stream.
+ *
+ * b. We process the Join op for the new clientId (identified when the underlying connection was first established),
+ * indicating the service is ready to sequence ops sent with the new clientId.
+ *
+ * c. We process all ops known at the time the underlying connection was established (so we are "caught up")
+ *
+ * For (a) we give up waiting after some time (same timeout as server uses), and go ahead and transition to Connected.
+ *
+ * For (b) we log telemetry if it takes too long, but still only transition to Connected when the Join op is processed
  * and we are added to the Quorum.
- * For (C) this is optional behavior, controlled by the parameters of receivedConnectEvent
+ *
+ * For (c) this is optional behavior, controlled by the parameters of receivedConnectEvent
  */
 export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;

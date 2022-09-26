@@ -78,8 +78,9 @@
 * manifests in a few ways:
 *
 * - Removed segments in a TrackingGroup will not be garbage collected from the
-*   backing tree structure.
-* - Segments can only be merged if they have all the same TrackingGroups.
+* backing tree structure.
+*
+ * - Segments can only be merged if they have all the same TrackingGroups.
 *
 * This object minimizes the number of TrackingGroups created, so this overhead
 * is very low. This undo redo infrastructure is entirely in-memory so it does

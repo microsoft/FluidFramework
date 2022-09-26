@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions */
+
 /**
  * @fileoverview In this file, we will test the functions of a EnumProperty object
- *    described in /src/properties/enumProperty.js
+ * described in /src/properties/enumProperty.js
  */
 
 var PropertyFactory, TestEnumTemplate, TestInlineEnumTemplate, TestEnumArrayTemplate,

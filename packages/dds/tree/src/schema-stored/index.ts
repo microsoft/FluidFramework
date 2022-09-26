@@ -7,7 +7,7 @@ export {
     FieldSchema, ValueSchema, GlobalFieldKey, TreeSchema,
     TreeSchemaIdentifier, LocalFieldKey, NamedTreeSchema,
     Named, TreeTypeSet, SchemaPolicy, FieldKindIdentifier,
-    SchemaDataReader,
+    SchemaDataReader, NamedFieldSchema,
 } from "./schema";
 export { StoredSchemaRepository, SchemaData } from "./storedSchemaRepository";
 export {
