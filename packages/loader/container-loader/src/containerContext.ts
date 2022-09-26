@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
@@ -113,8 +113,13 @@ export class ContainerContext implements IContainerContext {
         return this.container.clientDetails;
     }
 
+    private _connected: boolean;
+    /**
+     * When true, ops are free to flow
+     * When false, ops should be kept as pending or rejected
+     */
     public get connected(): boolean {
-        return this.container.connected;
+        return this._connected;
     }
 
     public get canSummarize(): boolean {
@@ -183,6 +188,7 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
+        this._connected = this.container.connected;
         this._quorum = quorum;
         this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
@@ -192,9 +198,10 @@ export class ContainerContext implements IContainerContext {
     }
 
     /**
-     * @deprecated - Temporary migratory API, to be removed when customers no longer need it.  When removed,
-     * ContainerContext should only take an IQuorumClients rather than an IQuorum.  See IContainerContext for more
-     * details.
+     * @deprecated Temporary migratory API, to be removed when customers no longer need it.
+     * When removed, `ContainerContext` should only take an {@link @fluidframework/container-definitions#IQuorumClients}
+     * rather than an {@link @fluidframework/protocol-definitions#IQuorum}.
+     * See {@link @fluidframework/container-definitions#IContainerContext} for more details.
      */
     public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
         return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;
@@ -232,9 +239,7 @@ export class ContainerContext implements IContainerContext {
 
     public setConnectionState(connected: boolean, clientId?: string) {
         const runtime = this.runtime;
-
-        assert(connected === this.connected, 0x0de /* "Mismatch in connection state while setting" */);
-
+        this._connected = connected;
         runtime.setConnectionState(connected, clientId);
     }
 

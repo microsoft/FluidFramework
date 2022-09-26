@@ -71,19 +71,16 @@ export function convertSummaryTreeToWholeSummaryTree(
                 break;
             }
             case SummaryType.Blob: {
-                if (typeof summaryObject.content === "string") {
-                    value = {
+                value = typeof summaryObject.content === "string"
+                    ? {
                         type: "blob",
                         content: summaryObject.content,
                         encoding: "utf-8",
-                    };
-                } else {
-                    value = {
+                    } : {
                         type: "blob",
                         content: Uint8ArrayToString(summaryObject.content, "base64"),
                         encoding: "base64",
                     };
-                }
                 break;
             }
             case SummaryType.Handle: {

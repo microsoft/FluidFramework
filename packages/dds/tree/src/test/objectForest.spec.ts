@@ -10,17 +10,17 @@ import { strict as assert } from "assert";
 import { ObjectForest } from "../feature-libraries/object-forest";
 
 import {
-    fieldSchema, rootFieldKey,
+    fieldSchema,
     SchemaData,
     StoredSchemaRepository,
 } from "../schema-stored";
 import { IEditableForest, initializeForest, TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../domains";
 import { recordDependency } from "../dependency-tracking";
-import { clonePath, Delta, detachedFieldAsKey, JsonableTree, UpPath } from "../tree";
+import { clonePath, Delta, detachedFieldAsKey, JsonableTree, UpPath, rootFieldKey } from "../tree";
 import { jsonableTreeFromCursor } from "..";
 import { brand } from "../util";
-import { defaultSchemaPolicy, FieldKinds, isNeverField } from "../feature-libraries";
+import { defaultSchemaPolicy, FieldKinds, isNeverField, singleTextCursorNew } from "../feature-libraries";
 import { MockDependent } from "./utils";
 
 /**
@@ -52,9 +52,10 @@ function testForest(suiteName: string, factory: (schema: StoredSchemaRepository)
                     // Check schema is actually valid. If we forgot to add some required types this would fail.
                     assert(!isNeverField(defaultSchemaPolicy, schema, rootFieldSchema));
 
+                    // TODO: use new JsonCursor directly when ready instead of converting.
                     const insertCursor = new JsonCursor(data);
-                    const content: JsonableTree[] = [jsonableTreeFromCursor(insertCursor)];
-                    initializeForest(forest, content);
+                    const content: JsonableTree = jsonableTreeFromCursor(insertCursor);
+                    initializeForest(forest, [singleTextCursorNew(content)]);
 
                     const reader = forest.allocateCursor();
                     assert.equal(
@@ -70,8 +71,8 @@ function testForest(suiteName: string, factory: (schema: StoredSchemaRepository)
 
         it("setValue", () => {
             const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
-            const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
-            initializeForest(forest, content);
+            const content: JsonableTree = { type: jsonNumber.name, value: 1 };
+            initializeForest(forest, [singleTextCursorNew(content)]);
             const anchor = forest.root(forest.rootField);
 
             const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
@@ -88,8 +89,8 @@ function testForest(suiteName: string, factory: (schema: StoredSchemaRepository)
 
         it("clear value", () => {
             const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
-            const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
-            initializeForest(forest, content);
+            const content: JsonableTree = { type: jsonNumber.name, value: 1 };
+            initializeForest(forest, [singleTextCursorNew(content)]);
             const anchor = forest.root(forest.rootField);
 
             const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: undefined };
@@ -107,7 +108,7 @@ function testForest(suiteName: string, factory: (schema: StoredSchemaRepository)
         it("delete", () => {
             const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
             const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }, { type: jsonNumber.name, value: 2 }];
-            initializeForest(forest, content);
+            initializeForest(forest, content.map(singleTextCursorNew));
             const anchor = forest.root(forest.rootField);
 
             // TODO: does does this select what to delete?
@@ -134,7 +135,7 @@ function testForest(suiteName: string, factory: (schema: StoredSchemaRepository)
                     { type: jsonNumber.name, value: 1 }, { type: jsonNumber.name, value: 2 }],
                 } },
             ];
-            initializeForest(forest, content);
+            initializeForest(forest, content.map(singleTextCursorNew));
 
             const rootAnchor = forest.root(forest.rootField);
 
@@ -206,7 +207,7 @@ function testForest(suiteName: string, factory: (schema: StoredSchemaRepository)
                 recordDependency(dependent, forest);
 
                 const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
-                const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
+                const insert: Delta.Insert = { type: Delta.MarkType.Insert, content: content.map(singleTextCursorNew) };
                 // TODO: make type-safe
                 const rootField = detachedFieldAsKey(forest.rootField);
                 const delta: Delta.Root = new Map([[rootField, [insert]]]);

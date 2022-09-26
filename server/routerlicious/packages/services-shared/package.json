@@ -66,15 +66,15 @@
     "nconf": "^0.12.0",
     "notepack.io": "^2.3.0",
     "querystring": "^0.2.0",
-    "socket.io": "^4.1.2",
+    "socket.io": "^4.5.0",
     "socket.io-adapter": "^2.3.1",
     "socket.io-parser": "^4.0.4",
     "uuid": "^8.3.1",
     "winston": "^3.6.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/build-common": "^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/body-parser": "^1.19.2",
     "@types/debug": "^4.1.5",

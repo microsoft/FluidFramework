@@ -49,6 +49,8 @@ import {
  * it is not the focus of this design since such users have strictly less implementation constraints.
  *
  * TODO: could implement more fine grained dependency tracking.
+ *
+ * @sealed
  */
 export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
     extends SimpleDependee implements SchemaData {
