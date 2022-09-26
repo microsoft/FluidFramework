@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import * as Path from "node:path";
+
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
     ApiCallSignature,

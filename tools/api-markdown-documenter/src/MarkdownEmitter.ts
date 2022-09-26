@@ -109,10 +109,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      * @param apiModel - See {@link MarkdownEmitter.apiModel}.
      * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
      */
-    constructor(
-        apiModel: ApiModel,
-        generateFrontMatter?: (contextApiItem: ApiItem) => string,
-    ) {
+    constructor(apiModel: ApiModel, generateFrontMatter?: (contextApiItem: ApiItem) => string) {
         super();
         this.apiModel = apiModel;
         this.generateFrontMatter = generateFrontMatter;
@@ -230,7 +227,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             }
         } else if (result.errorMessage) {
             const elementText = docLinkTag.codeDestination.emitAsTsdoc();
-            logger?.warning(`Unable to resolve reference "${elementText}": ${ result.errorMessage}`);
+            logger?.warning(`Unable to resolve reference "${elementText}": ${result.errorMessage}`);
 
             // Emit item as simple italicized text, so that at least something appears in the generated output
             this.writePlainText(
@@ -319,7 +316,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                 suffix = ` {#${docHeading.id}}`;
             }
 
-            writer.writeLine(`${prefix } ${ this.getEscapedText(docHeading.title) }${suffix}`);
+            writer.writeLine(`${prefix} ${this.getEscapedText(docHeading.title)}${suffix}`);
             writer.writeLine();
         } else {
             // If the heading level is beyond the max, we will simply render the title as bolded text

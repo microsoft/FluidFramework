@@ -472,26 +472,26 @@ export function renderApiSummaryCell(
     const docNodes: DocNode[] = [];
 
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-            docNodes.push(
-                new DocEmphasisSpan(
-                    {
+        docNodes.push(
+            new DocEmphasisSpan(
+                {
+                    configuration: config.tsdocConfiguration,
+                    bold: true,
+                    italic: true,
+                },
+                [
+                    new DocPlainText({
                         configuration: config.tsdocConfiguration,
-                        bold: true,
-                        italic: true,
-                    },
-                    [
-                        new DocPlainText({
-                            configuration: config.tsdocConfiguration,
-                            text: "(BETA) ",
-                        }),
-                    ],
-                ),
-            );
-        }
+                        text: "(BETA) ",
+                    }),
+                ],
+            ),
+        );
+    }
 
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-            docNodes.push(apiItem.tsdocComment.summarySection);
-        }
+        docNodes.push(apiItem.tsdocComment.summarySection);
+    }
 
     return docNodes.length === 0
         ? renderEmptyTableCell(config)

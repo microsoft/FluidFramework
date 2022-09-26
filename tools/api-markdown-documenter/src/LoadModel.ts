@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import * as Path from "node:path";
+
 import {
     ApiDocumentedItem,
     ApiItem,
@@ -78,31 +79,30 @@ export async function loadModel(reportsDirectoryPath: string, logger?: Logger): 
  */
 function applyInheritDoc(apiItem: ApiItem, apiModel: ApiModel, logger?: Logger): void {
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment) {
-            const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment.inheritDocTag;
+        const inheritDocTag: DocInheritDocTag | undefined = apiItem.tsdocComment.inheritDocTag;
 
-            if (inheritDocTag && inheritDocTag.declarationReference) {
-                // Attempt to resolve the declaration reference
-                const result: IResolveDeclarationReferenceResult =
-                    apiModel.resolveDeclarationReference(
-                        inheritDocTag.declarationReference,
-                        apiItem,
+        if (inheritDocTag && inheritDocTag.declarationReference) {
+            // Attempt to resolve the declaration reference
+            const result: IResolveDeclarationReferenceResult = apiModel.resolveDeclarationReference(
+                inheritDocTag.declarationReference,
+                apiItem,
+            );
+
+            if (result.errorMessage) {
+                if (logger !== undefined) {
+                    logger.warning(
+                        `Unresolved @inheritDoc tag for ${apiItem.displayName}: ${result.errorMessage}.`,
                     );
-
-                if (result.errorMessage) {
-                    if (logger !== undefined) {
-                        logger.warning(
-                            `Unresolved @inheritDoc tag for ${apiItem.displayName}: ${result.errorMessage}.`,
-                        );
-                    }
-                } else if (
-                    result.resolvedApiItem instanceof ApiDocumentedItem &&
-                    result.resolvedApiItem.tsdocComment &&
-                    result.resolvedApiItem !== apiItem
-                ) {
-                    copyInheritedDocs(apiItem.tsdocComment, result.resolvedApiItem.tsdocComment);
                 }
+            } else if (
+                result.resolvedApiItem instanceof ApiDocumentedItem &&
+                result.resolvedApiItem.tsdocComment &&
+                result.resolvedApiItem !== apiItem
+            ) {
+                copyInheritedDocs(apiItem.tsdocComment, result.resolvedApiItem.tsdocComment);
             }
         }
+    }
 
     // Recurse members
     if (ApiItemContainerMixin.isBaseClassOf(apiItem)) {

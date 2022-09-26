@@ -289,7 +289,8 @@ export function renderTypeParameters(
                     new DocPlainText({
                         configuration: config.tsdocConfiguration,
                         text: ": ",
-                    }), ...typeParameter.tsdocTypeParamBlock.content.nodes,
+                    }),
+                    ...typeParameter.tsdocTypeParamBlock.content.nodes,
                 );
             }
 
@@ -623,10 +624,7 @@ export function renderExamplesSection(
     const exampleSections: DocSection[] = [];
     for (const [i, exampleBlock] of exampleBlocks.entries()) {
         exampleSections.push(
-            renderExampleSection(
-                { apiItem, content: exampleBlock, exampleNumber: i + 1 },
-                config,
-            ),
+            renderExampleSection({ apiItem, content: exampleBlock, exampleNumber: i + 1 }, config),
         );
     }
 
@@ -745,38 +743,36 @@ export function renderReturnsSection(
         }
     }
 
-    if (ApiReturnTypeMixin.isBaseClassOf(apiItem) &&
+    if (
+        ApiReturnTypeMixin.isBaseClassOf(apiItem) &&
         apiItem.returnTypeExcerpt.text.trim() !== "" &&
         // Special case to detect when the return type is `void`.
         // We will skip declaring the return type in this case.
         apiItem.returnTypeExcerpt.text.trim() !== "void"
     ) {
-            const renderedTypeExcerpt = renderExcerptWithHyperlinks(
-                apiItem.returnTypeExcerpt,
-                config,
-            );
-            if (renderedTypeExcerpt !== undefined) {
-                docSections.push(
-                    new DocSection({ configuration: config.tsdocConfiguration }, [
-                        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                            new DocEmphasisSpan(
-                                {
+        const renderedTypeExcerpt = renderExcerptWithHyperlinks(apiItem.returnTypeExcerpt, config);
+        if (renderedTypeExcerpt !== undefined) {
+            docSections.push(
+                new DocSection({ configuration: config.tsdocConfiguration }, [
+                    new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                        new DocEmphasisSpan(
+                            {
+                                configuration: config.tsdocConfiguration,
+                                bold: true,
+                            },
+                            [
+                                new DocPlainText({
                                     configuration: config.tsdocConfiguration,
-                                    bold: true,
-                                },
-                                [
-                                    new DocPlainText({
-                                        configuration: config.tsdocConfiguration,
-                                        text: "Return type: ",
-                                    }),
-                                ],
-                            ),
-                            ...renderedTypeExcerpt,
-                        ]),
+                                    text: "Return type: ",
+                                }),
+                            ],
+                        ),
+                        ...renderedTypeExcerpt,
                     ]),
-                );
-            }
+                ]),
+            );
         }
+    }
 
     return docSections.length === 0
         ? undefined

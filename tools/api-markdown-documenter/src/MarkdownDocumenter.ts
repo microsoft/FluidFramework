@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import * as Path from "node:path";
+
 import { ApiItem } from "@microsoft/api-extractor-model";
 import { StringBuilder } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
