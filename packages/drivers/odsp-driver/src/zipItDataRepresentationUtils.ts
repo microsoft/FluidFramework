@@ -519,7 +519,8 @@ export class NodeCore {
             // Recovery code
             logger.sendErrorEvent({ eventName: "StringParsingError" });
             for (const el of stringsToResolve) {
-                assert(el.content === Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf-8"), 0x3ea /* test */);
+                assert(el.content === Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf-8"),
+                    0x3ea /* test */);
             }
         }
     }
