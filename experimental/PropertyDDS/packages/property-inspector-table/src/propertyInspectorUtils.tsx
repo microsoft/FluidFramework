@@ -200,11 +200,7 @@ export const toTableRows = (
 
   let sortedKeys = keys;
   if (dataContext === "map" || dataContext === "single") {
-    if (ascending) {
-      sortedKeys = keys.sort(compareName);
-    } else {
-      sortedKeys = keys.sort(compareNameDesc);
-    }
+    sortedKeys = ascending ? keys.sort(compareName) : keys.sort(compareNameDesc);
   }
 
   switch (dataContext) {
@@ -554,11 +550,9 @@ export const getPropertyValue = (parent: ContainerProperty | BaseProxifiedProper
   let determinedValue;
   // If the property is a reference and we don't follow them, we store the reference path string instead.
   if (!followReferences && TypeIdHelper.isReferenceTypeId(typeid)) {
-    if (parentContextIsSingle || isReferenceArrayProperty(parentProperty)) {
-      determinedValue = parentProxy[`${id}*`];
-    } else {
-      determinedValue = (parentProxy as any).get(`${id}*`);
-    }
+    determinedValue = parentContextIsSingle || isReferenceArrayProperty(parentProperty)
+        ? parentProxy[`${id}*`]
+        : (parentProxy as any).get(`${id}*`);
   } else if (contextIsSingle && propertyProxy !== undefined && isPrimitive(typeid)) {
     try {
       if (parentProxy[`${id}^`] !== undefined) {

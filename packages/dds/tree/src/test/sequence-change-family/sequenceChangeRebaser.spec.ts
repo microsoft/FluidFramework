@@ -8,12 +8,12 @@ import {
     Transposed as T,
     sequenceChangeFamily,
     sequenceChangeRebaser,
-    SequenceChangeset,
 } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
+import { asForest } from "./cases";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tomb = "Dummy Changeset Tag";
@@ -27,12 +27,6 @@ const testMarks: [string, T.Mark][] = [
 ];
 deepFreeze(testMarks);
 
-function asForest(markList: T.MarkList): SequenceChangeset {
-    return {
-        marks: { root: markList },
-    };
-}
-
 describe("SequenceChangeFamily", () => {
     /**
      * This test simulates rebasing over an do-undo pair.
@@ -44,12 +38,14 @@ describe("SequenceChangeFamily", () => {
                     it.skip(`${name1} ↷ [${name2}, ${name2}⁻¹] => ${name1}`, () => {
                         /**
                          * These cases are currently disabled because:
+                         *
                          * - Marks that affect existing content are removed instead of muted
-                         *   when rebased over the deletion of that content. This prevents us
-                         *   from then reinstating the mark when rebasing over the revive.
+                         * when rebased over the deletion of that content. This prevents us
+                         * from then reinstating the mark when rebasing over the revive.
+                         *
                          * - Tombs are not added when rebasing an insert over a gap that is
-                         *   immediately left of deleted content. This prevents us from being able to
-                         *   accurately track the position of the insert.
+                         * immediately left of deleted content. This prevents us from being able to
+                         * accurately track the position of the insert.
                          */
                     });
                 } else {

@@ -12,8 +12,8 @@ const bundleDetailsTableHeader = `<table><tr><th>Metric Name</th><th>Baseline Si
 /**
  * Generates the comment message for all Bundle Diffs with the commit hash of the baseline on the footer
  *
- * @param bundleDiff
- * @param baselineCommit Commit hash for the baseline
+ * @param bundleDiff - bundle difference
+ * @param baselineCommit - Commit hash for the baseline
  */
 export function getCommentForBundleDiff(bundleComparison: BundleComparison[], baselineCommit: string) {
   const diffDetails = bundleComparison.map(getBundleDetails).reduce((prev, current) => {
@@ -28,8 +28,8 @@ export function getCommentForBundleDiff(bundleComparison: BundleComparison[], ba
 /**
  * Gets a simple HTML message with the footer for the baseline commit
  *
- * @param message the string to type as a message
- * @param baselineCommit Commit hash for the baseline
+ * @param message - the string to type as a message
+ * @param baselineCommit - Commit hash for the baseline
  */
 export function getSimpleComment(message: string, baselineCommit: string) {
   const baselineFooter = getCommentFooter(baselineCommit);

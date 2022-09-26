@@ -5,7 +5,8 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { JsonCompatible } from "../../util";
+import { LocalFieldKey } from "../../schema-stored";
+import { JsonCompatible, JsonCompatibleObject } from "../../util";
 import {
     ITreeCursor,
     mapCursorField,
@@ -34,11 +35,11 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     //       This design was advantageous in a similar tree visitor, but should
     //       be measured again to see if this still provides an advantage.
 
-    private currentNode: unknown;   // The node currently being visited.
+    private currentNode: JsonCompatible;   // The node currently being visited.
     private currentKey?: FieldKey;  // The parent key used to navigate to this node.
     private currentIndex: number;   // The parent index used to navigate to this node.
 
-    private readonly parentStack: unknown[] = [];  // Ancestors traversed to visit this node.
+    private readonly parentStack: JsonCompatible[] = [];  // Ancestors traversed to visit this node.
 
     // Keys/indices traversed to visit the current node, excluding the most recent,
     // which are maintained in the current key/index fields.
@@ -46,7 +47,7 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     private readonly indexStack: number[] = [];
 
     constructor(root: Jsonable<T>) {
-        this.currentNode = root;
+        this.currentNode = root as JsonCompatible;
         this.currentKey = undefined;
         this.currentIndex = -1;
     }
@@ -66,12 +67,12 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
         }
 
         const newIndex = this.currentIndex + offset;
-        const newChild = (parent as any)[newIndex];
+        const newChild = parent[newIndex];
 
         if (newChild === undefined) {
             // In JSON, arrays must be dense and may not contain 'undefined' values
             // ('undefined' items are implicitly coerced to 'null' by stringify()).
-            assert(0 > newIndex || newIndex >= (parent as unknown as []).length,
+            assert(0 > newIndex || newIndex >= parent.length,
                 0x35f /* JSON arrays must be dense / contain no 'undefined' items. */);
 
             return TreeNavigationResult.NotFound;
@@ -84,12 +85,12 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
 
     public down(key: FieldKey, index: number): SynchronousNavigationResult {
         const parentNode = this.currentNode;
-        let childNode: any;
+        let childNode: JsonCompatible;
 
         if (key === EmptyKey && Array.isArray(parentNode)) {
             childNode = parentNode[index];
         } else if (index === 0) {
-            childNode = (parentNode as any)[key as string];
+            childNode = (parentNode as JsonCompatibleObject)[key as LocalFieldKey];
         } else {
             return TreeNavigationResult.NotFound;
         }
@@ -174,7 +175,7 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
             return node.length;
         }
 
-        return (node as any)[key as string] === undefined
+        return (node as JsonCompatibleObject)[key as LocalFieldKey] === undefined
             ? 0     // A field with an undefined value has 0 length
             : 1;    // All other fields have a length of 1
     }
@@ -208,7 +209,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
             const result: JsonCompatible = {};
             for (const key of reader.keys) {
                 assert(reader.down(key, 0) === TreeNavigationResult.Ok, 0x360 /* expected navigation ok */);
-                result[key as string] = cursorToJsonObject(reader);
+                result[key as LocalFieldKey] = cursorToJsonObject(reader);
                 assert(reader.up() === TreeNavigationResult.Ok, 0x361 /* expected navigation ok */);
             }
             return result;

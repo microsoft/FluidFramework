@@ -181,7 +181,6 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     private updateBranch(branch: Branch<TChangeset>, newRef: SeqNumber) {
         const trunkChanges = this.getCommitsAfterAndUpToInclusive(branch.refSeq, newRef);
         if (trunkChanges.length === 0) {
-            assert(branch.refSeq === newRef, 0x3a3 /* Expected trunk changes */);
             // This early return avoids rebasing the branch changes over an empty sandwich.
             return;
         }
@@ -225,15 +224,13 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
      * ordered in sequencing order.
      */
     private getCommitsAfterAndUpToInclusive(pred: SeqNumber, last: SeqNumber): Commit<TChangeset>[] {
-        // This check is not just a fast-path for the common case where no concurrent edits occurred;
-        // it also serves to handle the case where `last` represents the initial state before any commits.
+        // This check is just a fast-path for the common case where no concurrent edits occurred.
         if (pred === last) {
             return [];
         }
-        // If there is no corresponding commit, we assume `pred` refers to initial state of the DDS.
-        const firstIndex = (this.getCommitIndex(pred) ?? -1) + 1;
-        const lastIndex = this.getCommitIndex(last) ?? fail("Unknown sequence number");
-        return this.trunk.slice(firstIndex, lastIndex + 1);
+        const firstIndex = this.getCommitIndexAfter(pred);
+        const lastIndex = this.getCommitIndexAfter(last);
+        return this.trunk.slice(firstIndex, lastIndex);
     }
 
     /**
@@ -241,14 +238,24 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
      * @returns The trunk commits with sequence numbers greater than `pred`
      */
     private getCommitsAfter(pred: SeqNumber): Commit<TChangeset>[] {
-        // If there is no corresponding commit, we assume `pred` refers to initial state of the DDS.
-        const firstIndex = (this.getCommitIndex(pred) ?? -1) + 1;
+        const firstIndex = this.getCommitIndexAfter(pred);
         return this.trunk.slice(firstIndex);
     }
 
-    private getCommitIndex(seqNumber: SeqNumber): number | undefined {
-        const index = this.trunk.findIndex((commit) => commit.seqNumber === seqNumber);
-        return index === -1 ? undefined : index;
+    /**
+     * @param seqNumber - The sequence number of an operation.
+     * It is acceptable for the trunk not to contain a commit with that sequence number.
+     * @returns The index of the earliest commit with a sequence number greater than `seqNumber`.
+     * Note that such a commit is not guaranteed to exist in the trunk
+     * (i.e. the return value may be equal to the length of the trunk).
+     */
+    private getCommitIndexAfter(seqNumber: SeqNumber): number {
+        for (let index = this.trunk.length - 1; index >= 0; --index) {
+            if (this.trunk[index].seqNumber <= seqNumber) {
+                return index + 1;
+            }
+        }
+        return 0;
     }
 
     private getOrCreateBranch(sessionId: SessionId, refSeq: SeqNumber): Branch<TChangeset> {
