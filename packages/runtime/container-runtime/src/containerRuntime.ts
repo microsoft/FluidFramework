@@ -997,7 +997,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
             getContainerDiagnosticId: () => this.context.id,
             activeConnection: () => this.deltaManager.active,
-            snapshotCacheDisabledForTesting: _storage.policies?.snapshotCacheDisabledForTesting,
+            snapshotCacheDisabledForTesting: _storage?.policies?.snapshotCacheDisabledForTesting,
         });
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
