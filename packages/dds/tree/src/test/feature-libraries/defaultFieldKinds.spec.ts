@@ -37,10 +37,10 @@ const childDecoder1 = (encodedChange: JsonCompatibleReadOnly) => {
 describe("Value field changesets", () => {
     const fieldHandler: FieldChangeHandler<FieldKinds.ValueChangeset> = FieldKinds.value.changeHandler;
 
-    const change1WithChildChange: FieldKinds.ValueChangeset = { value: tree1, childChange: nodeChange1 };
-    const childChange1: FieldKinds.ValueChangeset = { childChange: nodeChange1 };
-    const childChange2: FieldKinds.ValueChangeset = { childChange: nodeChange2 };
-    const childChange3: FieldKinds.ValueChangeset = { childChange: nodeChange3 };
+    const change1WithChildChange: FieldKinds.ValueChangeset = { value: tree1, changes: nodeChange1 };
+    const childChange1: FieldKinds.ValueChangeset = { changes: nodeChange1 };
+    const childChange2: FieldKinds.ValueChangeset = { changes: nodeChange2 };
+    const childChange3: FieldKinds.ValueChangeset = { changes: nodeChange3 };
 
     const change1 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(singleTextCursor(tree1));
     const change2 = (fieldHandler.editor as FieldKinds.ValueFieldEditor).set(singleTextCursor(tree2));
@@ -70,7 +70,7 @@ describe("Value field changesets", () => {
 
         const expected: FieldKinds.ValueChangeset = {
             value: tree1,
-            childChange: nodeChange1,
+            changes: nodeChange1,
         };
 
         assert.deepEqual(change1WithChildChange, expected);
@@ -108,7 +108,7 @@ describe("Value field changesets", () => {
             childInverter,
         );
 
-        assert.deepEqual(inverted.childChange, nodeChange2);
+        assert.deepEqual(inverted.changes, nodeChange2);
     });
 
     it("can be rebased", () => {
