@@ -270,6 +270,9 @@ export enum TelemetryDataTag {
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
+// @public (undocumented)
+export type TelemetryEventTypes = ITelemetryBaseEvent | ITelemetryGenericEvent | ITelemetryErrorEvent | ITelemetryPerformanceEvent;
+
 // @public
 export abstract class TelemetryLogger implements ITelemetryLogger {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
