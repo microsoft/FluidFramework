@@ -31,10 +31,10 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
+    IsoBuffer,
     Trace,
     TypedEventEmitter,
     unreachableCase,
-    IsoBuffer,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -108,7 +108,8 @@ import {
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
-import { compress, decompress } from "lz4js";
+// import { compress, decompress } from "lz4js";
+import { compress } from "lz4js";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
@@ -169,6 +170,7 @@ import {
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
+import { OpDecompressor } from "./opDecompressor";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -536,6 +538,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
+    /*
     if (message.metadata?.compressed) {
         const contents = IsoBuffer.from(message.contents.contents, "base64");
         const decompressedMessage = decompress(contents);
@@ -544,6 +547,7 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         message.contents.contents = asObj;
         message.metadata.compressed = false;
     }
+    */
 
     if (message.type === MessageType.Operation) {
         // legacy op format?
@@ -552,7 +556,9 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         } else {
             // new format
             const innerContents = message.contents as ContainerRuntimeMessage;
-            assert(innerContents.type !== undefined, 0x121 /* "Undefined inner contents type!" */);
+            if (innerContents.type === undefined) {
+                throw new Error(JSON.stringify(innerContents));
+            }
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
@@ -633,7 +639,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = {},
+            compressionOptions = { minimumSize: 1 },
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -1605,6 +1611,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         raiseConnectedEvent(this.mc.logger, this, connected, clientId);
     }
 
+    private readonly opDecompressor = new OpDecompressor();
+
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
@@ -1629,6 +1637,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager.beforeOpProcessing(message);
 
         try {
+            message = this.opDecompressor.processMessage(message);
+
             message = unpackRuntimeMessage(message);
 
             // Chunk processing must come first given that we will transform the message to the unchunked version
@@ -1779,6 +1789,32 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.canSendOps()) {
             if (this.context.submitBatchFn !== undefined) {
                 const batchToSend: IBatchMessage[] = [];
+                if (batch.length > 1) {
+                    this.compressedOpCount++;
+                    console.log(this.compressedOpCount);
+                    const batchedContents: string[] = [];
+
+                    for (const message of batch) {
+                        batchedContents.push(message.contents);
+                    }
+
+                    const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(batchedContents));
+                    const compressedContents = compress(contentsAsBuffer);
+                    const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+
+                    // eslint-disable-next-line max-len
+                    batchToSend.push({ contents: JSON.stringify({ packedContents: compressedContent }), metadata: { ...batch[0].metadata, compressed: true } });
+
+                    for (let i = 1; i < batch.length; i++) {
+                        batchToSend.push({ contents: "", metadata: batch[i].metadata });
+                    }
+                } else {
+                    for (const message of batch) {
+                        batchToSend.push({ contents: message.contents, metadata: message.metadata });
+                    }
+                }
+
+                /*
                 for (const message of batch) {
                     let contents = message.contents;
                     let metadata = message.metadata;
@@ -1813,6 +1849,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                     batchToSend.push({ contents, metadata });
                 }
+                */
                 // returns clientSequenceNumber of last message in a batch
                 clientSequenceNumber = this.context.submitBatchFn(batchToSend);
             } else {
