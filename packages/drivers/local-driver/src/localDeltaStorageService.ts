@@ -32,9 +32,9 @@ export class LocalDeltaStorageService implements api.IDocumentDeltaStorageServic
         query["operation.sequenceNumber"] = {};
         query["operation.sequenceNumber"].$gt = from - 1; // from is inclusive
 
-        if (to !== undefined) {
-            query["operation.sequenceNumber"].$lt = to;
-        }
+        // This looks like a bug. It used to work without setting $lt key. Now it does not
+        // Need follow up
+        query["operation.sequenceNumber"].$lt = to ?? Number.MAX_SAFE_INTEGER;
 
         const allDeltas = await this.databaseManager.getDeltaCollection(this.tenantId, this.id);
         const dbDeltas = await allDeltas.find(query, { "operation.sequenceNumber": 1 });
