@@ -6,7 +6,8 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { IConnectionDetails, IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";

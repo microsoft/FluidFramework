@@ -76,7 +76,7 @@
     "@fluid-internal/test-dds-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.4.4000",
-    "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -96,6 +96,14 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_TaskManager": {"backCompat": false, "forwardCompat": false},
+      "InterfaceDeclaration_ITaskManager": {"backCompat": false, "forwardCompat": false},
+      "RemovedClassDeclaration_OldestClientObserver": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IOldestClientObservable": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IOldestClientObservableEvents":  {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IOldestClientObserver": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IOldestClientObserverEvents": {"backCompat": false, "forwardCompat": false}
+    }
   }
 }

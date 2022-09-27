@@ -76,7 +76,7 @@
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/build-tools": "^0.4.4000",
     "@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -107,6 +107,21 @@
       "RemovedClassDeclaration_SummaryTreeAssembler": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "ClassDeclaration_ThrottlingError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_AuthorizationError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_GenericNetworkError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_DeltaStreamConnectionForbiddenError": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_UsageError": {
+        "forwardCompat": false
       }
     }
   }

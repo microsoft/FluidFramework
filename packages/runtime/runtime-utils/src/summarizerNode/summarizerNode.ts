@@ -357,30 +357,13 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
     }
 
-    public loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree) {
+    public updateBaseSummaryState(snapshot: ISnapshotTree) {
         // Check base summary to see if it has any additional path parts
         // separating child SummarizerNodes. Checks for .channels subtrees.
         const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
         if (childrenPathPart !== undefined && this._latestSummary !== undefined) {
             this._latestSummary.additionalPath = EscapedPath.create(childrenPathPart);
         }
-    }
-
-    public async loadBaseSummary(
-        snapshot: ISnapshotTree,
-        readAndParseBlob: ReadAndParseBlob,
-    ): Promise<ISnapshotTree> {
-        const pathParts: string[] = [];
-        const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
-        if (childrenPathPart !== undefined) {
-            pathParts.push(childrenPathPart);
-        }
-
-        if (pathParts.length > 0 && this._latestSummary !== undefined) {
-            this._latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
-        }
-
-        return snapshot;
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {
