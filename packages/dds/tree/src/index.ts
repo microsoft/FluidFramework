@@ -17,6 +17,7 @@ export {
     CursorLocationType,
     ITreeCursorSynchronous,
     GenericFieldsNode,
+    AnchorLocator
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -116,7 +117,6 @@ export {
     UnwrappedEditableTree,
     EditableTreeOrPrimitive,
     EditableTree,
-    getEditableTree,
     isPrimitiveValue,
     isPrimitive,
     getTypeSymbol,
