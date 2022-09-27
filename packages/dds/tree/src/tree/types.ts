@@ -3,11 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema-stored";
 import { brand, Brand, extractFromOpaque, Opaque } from "../util";
+import { GlobalFieldKeySymbol, symbolFromKey } from "./globalFieldKeySymbol";
 
-export type FieldKey = LocalFieldKey | GlobalFieldKey;
+/**
+ * Either LocalFieldKey or GlobalFieldKey.
+ *
+ * To avoid collisions, we can not abstract over local and global field keys using the same format for each
+ * (that would make telling them apart impossible).
+ * Thus global field keys are using their symbols instead.
+ */
+export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
+
+export function isLocalKey(key: FieldKey): key is LocalFieldKey {
+    return typeof key === "string";
+}
+
 export type TreeType = TreeSchemaIdentifier;
 
 /**
@@ -23,6 +37,14 @@ export type TreeType = TreeSchemaIdentifier;
  * that this intention may be better conveyed by metadata on the TreeViewSchema.
  */
 export const EmptyKey: LocalFieldKey = brand("");
+
+/**
+ * GlobalFieldKey to use for the root of documents.
+ * TODO: if we do want to standardize on a single value for this,
+ * it likely should be namespaced or a UUID to avoid risk of collisions.
+ */
+export const rootFieldKey: GlobalFieldKey = brand("rootFieldKey");
+export const rootFieldKeySymbol: GlobalFieldKeySymbol = symbolFromKey(rootFieldKey);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
@@ -80,7 +102,12 @@ export function detachedFieldAsKey(field: DetachedField): LocalFieldKey {
  * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
-    return brand(extractFromOpaque(key));
+    if (isLocalKey(key)) {
+        assert(key !== rootFieldKey as string, 0x3be /* Root is field key must be a global field key */);
+        return brand(key);
+    }
+    assert(key === rootFieldKeySymbol, 0x3bf /* Root is only allowed global field key as detached field */);
+    return brand(rootFieldKey);
 }
 
 /**
@@ -111,3 +138,21 @@ export interface TreeValue extends Serializable {}
   * Value stored on a node.
   */
 export type Value = undefined | TreeValue;
+
+/**
+ * The fields required by a node in a tree
+ * @public
+ */
+ export interface NodeData {
+    /**
+     * A payload of arbitrary serializable data
+     */
+    value?: TreeValue;
+
+    /**
+     * The meaning of this node.
+     * Provides contexts/semantics for this node and its content.
+     * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+     */
+    readonly type: TreeSchemaIdentifier;
+}

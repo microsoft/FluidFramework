@@ -75,15 +75,9 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     }
 
     if (mongoExpireAfterSeconds > 0) {
-        if (createCosmosDBIndexes) {
-            await scribeDeltas.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds);
-        } else {
-            await scribeDeltas.createTTLIndex(
-                {
-                    mongoTimestamp: 1,
-                },
-                mongoExpireAfterSeconds);
-        }
+        await (createCosmosDBIndexes
+            ? scribeDeltas.createTTLIndex({ _ts: 1 }, mongoExpireAfterSeconds)
+            : scribeDeltas.createTTLIndex({ mongoTimestamp: 1 }, mongoExpireAfterSeconds));
     }
 
     const producer = createProducer(

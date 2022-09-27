@@ -204,7 +204,7 @@ export interface ContainerRuntimeMessage {
 
 export interface ISummaryBaseConfiguration {
     /**
-     *  Delay before first attempt to spawn summarizing container.
+     * Delay before first attempt to spawn summarizing container.
      */
     initialSummarizerDelayMs: number;
 
@@ -540,9 +540,12 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 
 /**
  * Unpacks runtime messages
- * @internal - no promises RE back-compat - this is internal API.
+ *
+ * @remarks This API makes no promises regarding backward-compatability. This is internal API.
  * @param message - message (as it observed in storage / service)
  * @returns unpacked runtime message
+ *
+ * @internal
  */
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
     if (message.type === MessageType.Operation) {
@@ -850,7 +853,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
-    private readonly batchManager = new BatchManager();
+
+    // Provide lower soft limit - we want to have some number of ops to get efficiency in compression & bandwidth usage,
+    // but at the same time we want to send these ops sooner, to reduce overall latency of processing a batch.
+    // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
+    // payloads. That number represents final (compressed) bits (once compression is implemented).
+    private readonly pendingAttachBatch = new BatchManager(64 * 1024);
+    private readonly pendingBatch = new BatchManager();
+
     private readonly garbageCollector: IGarbageCollector;
 
     // Local copy of incomplete received chunks.
@@ -860,6 +870,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /** The last message processed at the time of the last summary. */
     private messageAtLastSummary: ISummaryMetadataMessage | undefined;
+
+    private get emptyBatch() {
+        return this.pendingBatch.empty && this.pendingAttachBatch.empty;
+    }
 
     private get summarizer(): Summarizer {
         assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
@@ -896,11 +910,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
             return true;
         }
-        if (this.summaryConfiguration.state !== "disabled") {
-            return this.summaryConfiguration.summarizerClientElection === true;
-        } else {
-            return false;
-        }
+        return this.summaryConfiguration.state !== "disabled"
+            ? this.summaryConfiguration.summarizerClientElection === true
+            : false;
     }
     private readonly maxOpsSinceLastSummary: number;
     private getMaxOpsSinceLastSummary(): number {
@@ -909,11 +921,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary !== undefined) {
             return this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary;
         }
-        if (this.summaryConfiguration.state !== "disabled") {
-            return this.summaryConfiguration.maxOpsSinceLastSummary;
-        } else {
-            return 0;
-        }
+        return this.summaryConfiguration.state !== "disabled"
+            ? this.summaryConfiguration.maxOpsSinceLastSummary
+            : 0;
     }
 
     private readonly initialSummarizerDelayMs: number;
@@ -923,11 +933,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.initialSummarizerDelayMs !== undefined) {
             return this.runtimeOptions.summaryOptions.initialSummarizerDelayMs;
         }
-        if (this.summaryConfiguration.state !== "disabled") {
-            return this.summaryConfiguration.initialSummarizerDelayMs;
-        } else {
-            return 0;
-        }
+        return this.summaryConfiguration.state !== "disabled"
+            ? this.summaryConfiguration.initialSummarizerDelayMs
+            : 0;
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
@@ -998,6 +1006,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
             getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
+            getContainerDiagnosticId: () => this.context.id,
+            activeConnection: () => this.deltaManager.active,
         });
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1072,6 +1082,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
             this,
+            () => this.clientId,
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
 
@@ -1320,15 +1331,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
                 const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
-                if (blob) {
-                    return {
+                return blob
+                    ? {
                         status: 200,
                         mimeType: "fluid/object",
                         value: blob,
-                    };
-                } else {
-                    return create404Response(request);
-                }
+                    } : create404Response(request);
             } else if (requestParser.pathParts.length > 0) {
                 const dataStore = await this.getDataStoreFromRequest(id, request);
                 const subRequest = requestParser.createSubRequest(1);
@@ -1575,7 +1583,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._perfSignalData.trackingSignalSequenceNumber = undefined;
         } else {
             assert(this.attachState === AttachState.Attached,
-                "Connection is possible only if container exists in storage");
+                0x3cd /* Connection is possible only if container exists in storage */);
         }
 
         // Fail while disconnected
@@ -1603,6 +1611,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.dataStores.setConnectionState(connected, clientId);
+        this.garbageCollector.setConnectionState(connected, clientId);
 
         raiseConnectedEvent(this.mc.logger, this, connected, clientId);
     }
@@ -1670,7 +1679,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.Rejoin:
                     break;
                 default:
-                    assert(!runtimeMessage, "Runtime message of unknown type");
+                    assert(!runtimeMessage, 0x3ce /* Runtime message of unknown type */);
             }
 
             // For back-compat, notify only about runtime messages for now.
@@ -1791,8 +1800,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
-        const batch = this.batchManager.popBatch();
+        this.flushBatch(this.pendingAttachBatch.popBatch());
+        this.flushBatch(this.pendingBatch.popBatch());
 
+        assert(this.emptyBatch, 0x3cf /* reentrancy */);
+    }
+
+    protected flushBatch(batch: BatchMessage[]): void {
         const length = batch.length;
 
         if (length > 1) {
@@ -1838,7 +1852,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
             clientSequenceNumber -= batch.length - 1;
-            assert(clientSequenceNumber >= 0, "clientSequenceNumber can't be negative");
+            assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
         }
 
         // Let the PendingStateManager know that a message was submitted.
@@ -1854,8 +1868,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             );
             clientSequenceNumber++;
         }
-
-        assert(this.batchManager.empty, "reentrancy");
 
         this.pendingStateManager.onFlush();
     }
@@ -1885,7 +1897,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private trackOrderSequentiallyCalls(callback: () => void): void {
         let checkpoint: { rollback: (action: (message: BatchMessage) => void) => void; } | undefined;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
-            checkpoint = this.batchManager.checkpoint();
+            // Note: we are not touching this.pendingAttachBatch here, for two reasons:
+            // 1. It would not help, as we flush attach ops as they become available.
+            // 2. There is no way to undo process of data store creation.
+            checkpoint = this.pendingBatch.checkpoint();
         }
 
         try {
@@ -2267,7 +2282,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /**
      * Runs garbage collection and updates the reference / used state of the nodes in the container.
-     * @returns the statistics of the garbage collection run.
+     * @returns the statistics of the garbage collection run; undefined if GC did not run.
      */
     public async collectGarbage(
         options: {
@@ -2278,7 +2293,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             /** True to generate full GC data */
             fullGC?: boolean;
         },
-    ): Promise<IGCStats> {
+    ): Promise<IGCStats | undefined> {
         return this.garbageCollector.collectGarbage(options);
     }
 
@@ -2313,7 +2328,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
-        assert(this.batchManager.empty, "Can't trigger summary in the middle of a batch");
+        assert(this.emptyBatch, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
         let latestSnapshotVersionId: string | undefined;
         if (refreshLatestAck) {
@@ -2404,7 +2419,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
             try {
                 summarizeResult = await this.summarize({
-                    fullTree: fullTree || forcedFullTree,
+                    fullTree: fullTree ?? forcedFullTree,
                     trackState: true,
                     summaryLogger: summaryNumberLogger,
                     runGC: this.garbageCollector.shouldRunGC,
@@ -2486,11 +2501,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let handle: string;
             try {
-                // Logging removal tracked by task 1884.
-                this.logger.sendTelemetryEvent({ eventName: "uploadSummaryWithContext",
-                    proposalHandle: summaryContext.proposalHandle,
-                    ackHandle: summaryContext.ackHandle,
-                    referenceSequenceNumber: summaryContext.referenceSequenceNumber });
                 handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
             } catch (error) {
                 return { stage: "generate", ...generateSummaryData, error };
@@ -2577,16 +2587,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private hasPendingMessages() {
-        return this.pendingStateManager.hasPendingMessages() || !this.batchManager.empty;
+        return this.pendingStateManager.hasPendingMessages() || !this.emptyBatch;
     }
 
     private updateDocumentDirtyState(dirty: boolean) {
         if (this.attachState !== AttachState.Attached) {
-            assert(dirty, "Non-attached container is dirty");
+            assert(dirty, 0x3d2 /* Non-attached container is dirty */);
         } else {
             // Other way is not true = see this.isContainerMessageDirtyable()
             assert(!dirty || this.hasPendingMessages(),
-                "if doc is dirty, there has to be pending ops");
+                0x3d3 /* if doc is dirty, there has to be pending ops */);
         }
 
         if (this.dirtyContainer === dirty) {
@@ -2643,28 +2653,80 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.logger.sendErrorEvent({ eventName: "SubmitOpInReadonly" });
         }
 
+        const message: BatchMessage = {
+            contents: serializedContent,
+            deserializedContent,
+            metadata,
+            localOpMetadata,
+            referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+        };
+
         try {
-            this.batchManager.push({
-                contents: serializedContent,
-                deserializedContent,
-                metadata,
-                localOpMetadata,
-                referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-            });
+            // If this is attach message for new data store, and we are in a batch, send this op out of order
+            // Is it safe:
+            //    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
+            //    They become visible only when aliased, or handle to some sub-element of newly created datastore
+            //    is stored in some DDS, i.e. only after some other op.
+            // Why:
+            //    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
+            //    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
+            //    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
+            //    these issues.
+            // Cons:
+            //    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
+            //    This change creates new possibility of a lot of newly created data stores never being referenced
+            //    because client died before it had a change to submit the rest of the ops. This will create more
+            //    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
+            //    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
+            //    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
+            //    issue than sending.
+            // Please note that this does not change file format, so it can be disabled in the future if this
+            // optimization no longer makes sense (for example, batch compression may make it less appealing).
+            if (type === ContainerMessageType.Attach &&
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
+                if (!this.pendingAttachBatch.push(message)) {
+                    // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
+                    // when queue is not empty.
+                    // Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
+                    this.flushBatch(this.pendingAttachBatch.popBatch());
+                    if (!this.pendingAttachBatch.push(message)) {
+                        throw new GenericError(
+                            "BatchTooLarge",
+                            /* error */ undefined,
+                            {
+                                opSize: message.contents.length,
+                                count: this.pendingAttachBatch.length,
+                                limit: this.pendingAttachBatch.limit,
+                            });
+                    }
+                }
+            } else {
+                if (!this.pendingBatch.push(message)) {
+                    throw new GenericError(
+                        "BatchTooLarge",
+                        /* error */ undefined,
+                        {
+                            opSize: message.contents.length,
+                            count: this.pendingBatch.length,
+                            limit: this.pendingBatch.limit,
+                        });
+                }
+            }
+
+            if (this._flushMode !== FlushMode.TurnBased) {
+                this.flush();
+            } else if (!this.flushTrigger) {
+                this.flushTrigger = true;
+                // Queue a microtask to detect the end of the turn and force a flush.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flushTrigger = false;
+                    this.flush();
+                });
+            }
         } catch (error) {
             this.closeFn(error as GenericError);
             throw error;
-        }
-        if (this._flushMode !== FlushMode.TurnBased) {
-            this.flush();
-        } else if (!this.flushTrigger) {
-            this.flushTrigger = true;
-            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.resolve().then(() => {
-                this.flushTrigger = false;
-                this.flush();
-            });
         }
 
         if (this.isContainerMessageDirtyable(type, contents)) {
@@ -2677,17 +2739,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
         // System message should not be sent in the middle of the batch.
-        assert(this.batchManager.empty, "System op in the middle of a batch");
+        assert(this.emptyBatch, 0x3d4 /* System op in the middle of a batch */);
 
         // back-compat: ADO #1385: Make this call unconditional in the future
-        if (this.context.submitSummaryFn !== undefined) {
-            return this.context.submitSummaryFn(contents);
-        } else {
-            return this.context.submitFn(
+        return this.context.submitSummaryFn !== undefined
+            ? this.context.submitSummaryFn(contents)
+            : this.context.submitFn(
                 MessageType.Summarize,
                 contents,
-                false); // batch
-        }
+                false);
     }
 
     /**
@@ -2763,25 +2823,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // It should only be done by the summarizerNode, if required.
         const snapshotTreeFetcher = async () => {
             const fetchResult = await this.fetchSnapshotFromStorage(
-             ackHandle,
-             summaryLogger,
-             {
-                 eventName: "RefreshLatestSummaryGetSnapshot",
-                 ackHandle,
-                 summaryRefSeq,
-                 fetchLatest: false,
-             });
-             return fetchResult.snapshotTree;
-         };
-         const result = await this.summarizerNode.refreshLatestSummary(
-             proposalHandle,
-             summaryRefSeq,
-             snapshotTreeFetcher,
-             readAndParseBlob,
-             summaryLogger,
-         );
+                ackHandle,
+                summaryLogger,
+                {
+                    eventName: "RefreshLatestSummaryGetSnapshot",
+                    ackHandle,
+                    summaryRefSeq,
+                    fetchLatest: false,
+                });
+            return fetchResult.snapshotTree;
+        };
+        const result = await this.summarizerNode.refreshLatestSummary(
+            proposalHandle,
+            summaryRefSeq,
+            snapshotTreeFetcher,
+            readAndParseBlob,
+            summaryLogger,
+        );
 
-         // Notify the garbage collector so it can update its latest summary state.
+        // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
     }
 
@@ -2965,7 +3025,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // If it's not the case, we should take it into account when calculating dirty state.
         assert(this.context.attachState === AttachState.Attached,
-            "this function is called for attached containers only");
+            0x3d5 /* this function is called for attached containers only */);
         if (!this.hasPendingMessages()) {
             this.updateDocumentDirtyState(false);
         }

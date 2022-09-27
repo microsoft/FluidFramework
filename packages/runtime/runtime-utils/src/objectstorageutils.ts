@@ -25,21 +25,13 @@ export async function listBlobsAtTreePath(inputTree: ITree | undefined, path: st
     while (tree?.entries !== undefined && pathParts.length > 0) {
         const part = pathParts.shift();
         const treeEntry = tree.entries.find((value) => {
-            if (value.type === "Tree" && value.path === part) {
-                return true;
-            } else {
-                return false;
-            }
+            return value.type === "Tree" && value.path === part ? true : false;
         });
 
         // this check is largely superfluous due to the same check being done
         // immediately above. the type system, however, is not aware of this.
         // so we must redundantly determine that the entry's type is "Tree"
-        if (treeEntry?.type === "Tree") {
-            tree = treeEntry.value;
-        } else {
-            tree = undefined;
-        }
+        tree = treeEntry?.type === "Tree" ? treeEntry.value : undefined;
     }
     if (tree?.entries === undefined || pathParts.length !== 0) {
         throw new Error("path does not exist");

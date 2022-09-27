@@ -72,6 +72,7 @@ async function loadSummarizer(
     };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace FailingSubmitSummaryStage {
     export type Base = 1;
     export type Generate = 2;

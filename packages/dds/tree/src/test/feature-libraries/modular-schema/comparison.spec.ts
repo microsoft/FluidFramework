@@ -13,14 +13,13 @@ import {
 } from "../../../feature-libraries/modular-schema/comparison";
 import {
     FieldSchema,
-    GlobalFieldKey,
     NamedTreeSchema,
     TreeSchema,
     ValueSchema,
     TreeTypeSet,
     emptyMap, emptySet, fieldSchema, StoredSchemaRepository,
 } from "../../../schema-stored";
-import { brand, brandOpaque } from "../../../util";
+import { brand } from "../../../util";
 import { defaultSchemaPolicy, emptyField, FieldKinds, neverField, neverTree } from "../../../feature-libraries";
 
 describe("Schema Comparison", () => {
@@ -122,10 +121,10 @@ describe("Schema Comparison", () => {
             value: ValueSchema.Nothing,
         }));
         assert(isNeverTree(defaultSchemaPolicy, repo, neverTree2));
-        repo.updateFieldSchema(brandOpaque<GlobalFieldKey>("never"), neverField);
+        repo.updateFieldSchema(brand("never"), neverField);
         assert(isNeverTree(defaultSchemaPolicy, repo, {
             localFields: emptyMap,
-            globalFields: new Set([brandOpaque<GlobalFieldKey>("never")]),
+            globalFields: new Set([brand("never")]),
             extraLocalFields: emptyField,
             extraGlobalFields: true,
             value: ValueSchema.Serializable,

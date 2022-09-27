@@ -4,46 +4,72 @@
  */
 
 export enum MessageType {
-    // Empty operation message. Used to send an updated reference sequence number.
-    // Relay service is free to coalesce these messages or fully drop them, if
-    // another op was used to update MSN to a number equal or higher than referenced
-    // sequence number in Noop.
+    /**
+     * Empty operation message. Used to send an updated reference sequence number.
+     * Relay service is free to coalesce these messages or fully drop them, if
+     * another op was used to update MSN to a number equal or higher than referenced
+     * sequence number in Noop.
+     */
     NoOp = "noop",
 
-    // System message sent to indicate a new client has joined the collaboration
+    /**
+     * System message sent to indicate a new client has joined the collaboration.
+     */
     ClientJoin = "join",
 
-    // System message sent to indicate a client has left the collaboration
+    /**
+     * System message sent to indicate a client has left the collaboration.
+     */
     ClientLeave = "leave",
 
-    // Proposes a new consensus value
+    /**
+     * Proposes a new consensus value.
+     */
     Propose = "propose",
 
-    // Message used to reject a pending proposal
+    /**
+     * Message used to reject a pending proposal.
+     */
     Reject = "reject",
 
-    // Summary op
+    /**
+     * Summary operation (op).
+     */
     Summarize = "summarize",
 
-    // Summary op written
+    /**
+     * Summary operation (op) written.
+     */
     SummaryAck = "summaryAck",
 
-    // Summary op write failure
+    /**
+     * Summary operation (op) write failure.
+     */
     SummaryNack = "summaryNack",
 
-    // Channel operation.
+    /**
+     * Channel operation (op).
+     */
     Operation = "op",
 
-    // Message to indicate the need of a remote agent for a document.
+    /**
+     * Message to indicate the need of a remote agent for a document.
+     */
     RemoteHelp = "remoteHelp",
 
-    // Message to indicate that no active clients are present.
+    /**
+     * Message to indicate that no active clients are present.
+     */
     NoClient = "noClient",
 
-    // Message to indicate successful round trip.
+    /**
+     * Message to indicate successful round trip.
+     */
     RoundTrip = "tripComplete",
 
-    // Service specific control messages that are never sequenced.
+    /**
+     * Service specific control messages that are never sequenced.
+     */
     Control = "control",
 }
 
@@ -51,24 +77,36 @@ export enum MessageType {
  * Messages to track latency trace
  */
 export interface ITrace {
-    // Service generating the trace.
+    /**
+     * Service generating the trace.
+     */
     service: string;
 
-    // Denotes receiving/sending.
+    /**
+     * Denotes receiving/sending.
+     */
     action: string;
 
-    // Floating point time in milliseconds with up to nanosecond precision
+    /**
+     * Floating point time in milliseconds with up to nanosecond precision.
+     */
     timestamp: number;
 }
 
 export interface INack {
-    // The operation that was just nacked
+    /**
+     * The operation that was just nacked.
+     */
     operation: IDocumentMessage | undefined;
 
-    // The sequence number the client needs to catch up to before retrying
+    /**
+     * The sequence number the client needs to catch up to before retrying.
+     */
     sequenceNumber: number;
 
-    // Detail info about the nack.
+    /**
+     * Detail info about the nack.
+     */
     content: INackContent;
 }
 
@@ -76,25 +114,45 @@ export interface INack {
  * Document specific message
  */
 export interface IDocumentMessage {
-    // The document's client sequence number
+    /**
+     * The document's client sequence number.
+     */
     clientSequenceNumber: number;
 
-    // The reference sequence number the message was sent relative to
+    /**
+     * The reference sequence number the message was sent relative to.
+     */
     referenceSequenceNumber: number;
 
-    // The type of document message being sent
+    /**
+     * The type of document message being sent.
+     */
     type: string;
 
-    // The contents of the message
+    /**
+     * The contents of the message.
+     */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     contents: any;
 
-    // App provided metadata about the operation
+    /**
+     * App provided metadata about the operation.
+     */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata?: any;
 
-    // Server provided metadata about the operation
+    /**
+     * Server provided metadata about the operation.
+     */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     serverMetadata?: any;
 
-    // Traces related to the packet.
+    /**
+     * Traces related to the packet.
+     */
     traces?: ITrace[];
 }
 
@@ -109,13 +167,19 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
  * Branch origin information
  */
 export interface IBranchOrigin {
-    // Origin branch of the message
+    /**
+     * Origin branch of the message.
+     */
     id: string;
 
-    // Sequence number for the message in branch id
+    /**
+     * Sequence number for the message in branch ID.
+     */
     sequenceNumber: number;
 
-    // Min sequence number for the message in branch id
+    /**
+     * Minimum sequence number for the message in branch ID.
+     */
     minimumSequenceNumber: number;
 }
 
@@ -123,44 +187,77 @@ export interface IBranchOrigin {
  * Sequenced message for a distributed document
  */
 export interface ISequencedDocumentMessage {
-    // The client ID that submitted the delta
+    /**
+     * The client ID that submitted the delta.
+     */
     clientId: string;
 
-    // The sequenced identifier
+    /**
+     * The sequenced identifier.
+     */
     sequenceNumber: number;
 
-    // The term identifier
+    /**
+     * The term identifier.
+     */
     term: number | undefined;
 
-    // The minimum sequence number for all connected clients
+    /**
+     * The minimum sequence number for all connected clients.
+     */
     minimumSequenceNumber: number;
 
-    // The document's client sequence number
+    /**
+     * The document's client sequence number.
+     */
     clientSequenceNumber: number;
 
-    // The reference sequence number the message was sent relative to
+    /**
+     * The reference sequence number the message was sent relative to.
+     */
     referenceSequenceNumber: number;
 
-    // The type of operation
+    /**
+     * The type of operation.
+     */
     type: string;
 
-    // The contents of the message
+    /**
+     * The contents of the message.
+     */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     contents: any;
 
-    // App provided metadata about the operation
+    /**
+     * App provided metadata about the operation.
+     */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata?: any;
 
-    // Server provided metadata about the operation
+    /**
+     * Server provided metadata about the operation.
+     */
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     serverMetadata?: any;
 
-    // Origin branch information for the message. Can be marked undefined if the current
-    // message is also the origin.
+    /**
+     * Origin branch information for the message.
+     *
+     * @remarks Can be marked undefined if the current message is also the origin.
+     */
     origin?: IBranchOrigin;
 
-    // Traces related to the packet.
+    /**
+     * Traces related to the packet.
+     */
     traces?: ITrace[];
 
-    // Timestamp when the server ticketed the message
+    /**
+     * Timestamp when the server ticketed the message.
+     */
     timestamp: number;
 
     /**
@@ -183,6 +280,8 @@ export interface ISignalMessage {
     // eslint-disable-next-line @rushstack/no-new-null
     clientId: string | null;
 
+    // TODO: use `unknown` instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     content: any;
 
     /**

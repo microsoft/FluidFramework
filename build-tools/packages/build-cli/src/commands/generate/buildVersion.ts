@@ -97,7 +97,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
                     this.error(`Tag ${tagName} already exists.`);
                 }
 
-                this.warn(`Tag ${tagName} already exists.`);
+                this.warning(`Tag ${tagName} already exists.`);
             }
         }
 

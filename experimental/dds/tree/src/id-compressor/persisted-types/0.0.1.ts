@@ -177,6 +177,7 @@ export interface IdCreationRange {
 
 export type UnackedLocalId = LocalCompressedId & OpSpaceCompressedId;
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace IdCreationRange {
 	export type Ids =
 		| {

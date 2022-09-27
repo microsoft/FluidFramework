@@ -29,7 +29,7 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import {
     getSnapshotTreeFromSerializedContainer,
 // eslint-disable-next-line import/no-internal-modules
@@ -423,12 +423,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
-        itExpects("Storage in detached container",
-        [
-            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
-            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
-        ],
-        async () => {
+        it("Storage in detached container", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
 
@@ -565,7 +560,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create and reference another dataStore
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
             await provider.ensureSynchronized();
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
@@ -612,7 +606,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create and reference another dataStore
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
             await provider.ensureSynchronized(this.timeout() / 3);
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
