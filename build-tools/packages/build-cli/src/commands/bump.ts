@@ -42,9 +42,13 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 
     static examples = [
         {
+            description: "Bump @fluidframework/build-common to the next minor version.",
+            command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t minor",
+        },
+        {
             description:
-                "Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.",
-            command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t latest",
+                "Bump the server release group to the next major version, forcing the semver version scheme.",
+            command: "<%= config.bin %> <%= command.id %> server -t major --scheme semver",
         },
     ];
 
@@ -60,7 +64,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
         const scheme = flags.scheme;
         const shouldInstall = flags.install && !flags.skipChecks;
         const shouldCommit = flags.commit && !flags.skipChecks;
-        // const packageOrReleaseGroup = args.package_or_release_group;
 
         if (args.package_or_release_group === undefined) {
             this.error("ERROR: No dependency provided.");

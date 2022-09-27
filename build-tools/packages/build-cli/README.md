@@ -4,8 +4,6 @@ flub is a build and release tool for the Fluid Framework GitHub repositories. fl
 fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,
 maintainable CLI using [oclif](https://oclif.io).
 
-flub is not built in CI. You need to build it locally.
-
 <!-- toc -->
 * [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
 * [Commands](#commands)
@@ -14,6 +12,27 @@ flub is not built in CI. You need to build it locally.
 <!-- tocstop -->
 
 # Commands
+
+## bump
+
+The `bump` command is used to bump the version of a release groups or individual packages within the repo. Usually
+this is done as part of the release process (see the [release command](#release)), but it is sometimes useful to bump
+without doing a release.
+
+### Bumping a release group to the next minor version
+
+```shell
+flub bump releasegroup1 --bumpType minor
+```
+
+### Skipping install and commit
+
+By default, the `bump` command will run `npm install` in any affected packages and commit the results to a new branch.
+You can skip these steps using the `--no-commit` and `--no-install` flags.
+
+```shell
+flub bump @scope/package --bumpType minor --no-commit
+```
 
 ## bump deps
 
@@ -111,7 +130,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.6000 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.4.7000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -142,32 +161,36 @@ Bumps the version of a release group or package to the next minor, major, or pat
 
 ```
 USAGE
-  $ flub bump [PACKAGE_OR_RELEASE_GROUP] -t major|minor|patch [-S semver|internal|virtualPatch] [-x |
-    --install | --commit |  |  | ] [-v]
+  $ flub bump [PACKAGE_OR_RELEASE_GROUP] -t major|minor|patch [--scheme semver|internal|virtualPatch] [-x
+    | --install | --commit |  |  | ] [-v]
 
 ARGUMENTS
-  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group. Dependencies on these packages will be bumped.
+  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
 
 FLAGS
-  -S, --scheme=<option>    Override the version scheme used by the release group or package.
-                           <options: semver|internal|virtualPatch>
   -t, --bumpType=<option>  (required) Bump the release group or package to the next version according to this bump type.
                            <options: major|minor|patch>
   -v, --verbose            Verbose logging.
   -x, --skipChecks         Skip all checks.
   --[no-]commit            Commit changes to a new branch.
   --[no-]install           Update lockfiles by running 'npm install' automatically.
+  --scheme=<option>        Override the version scheme used by the release group or package.
+                           <options: semver|internal|virtualPatch>
 
 DESCRIPTION
   Bumps the version of a release group or package to the next minor, major, or patch version.
 
 EXAMPLES
-  Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.
+  Bump @fluidframework/build-common to the next minor version.
 
-    $ flub bump @fluidframework/build-common -t latest
+    $ flub bump @fluidframework/build-common -t minor
+
+  Bump the server release group to the next major version, forcing the semver version scheme.
+
+    $ flub bump server -t major --scheme semver
 ```
 
-_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/bump.ts)_
+_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/bump.ts)_
 
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
 
@@ -179,7 +202,7 @@ USAGE
     [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit |  |  | ] [-v]
 
 ARGUMENTS
-  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group. Dependencies on these packages will be bumped.
+  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
 
 FLAGS
   -g, --releaseGroup=<option>  Only bump dependencies within this release group.
@@ -393,7 +416,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/info.ts)_
 
 ## `flub release`
 
@@ -433,7 +456,7 @@ DESCRIPTION
   released.
 ```
 
-_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/release.ts)_
+_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/release.ts)_
 
 ## `flub release report`
 
@@ -544,7 +567,7 @@ EXAMPLES
     $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/version.ts)_
 
 ## `flub version latest`
 

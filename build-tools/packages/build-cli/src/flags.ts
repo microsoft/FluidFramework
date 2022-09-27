@@ -106,7 +106,6 @@ export const dependencyUpdateTypeFlag = Flags.build({
  * A re-usable CLI flag to parse version schemes used to adjust versions.
  */
 export const versionSchemeFlag = Flags.build({
-    char: "S",
     description: "Version scheme to use.",
     options: ["semver", "internal", "virtualPatch"],
     parse: async (input) => {
