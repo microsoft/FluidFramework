@@ -720,6 +720,9 @@ export class ConnectionManager implements IConnectionManager {
 
         this.connectFirstConnection = false;
 
+        // Synthesize clear & join signals out of initialClients state.
+        // This allows us to have single way to process signals, and makes it simpler to initialize
+        // protocol in Container.
         const clearSignal: ISignalMessage = {
             clientId: null, // system message
             content: JSON.stringify({
@@ -735,8 +738,6 @@ export class ConnectionManager implements IConnectionManager {
                     type: SignalType.ClientJoin,
                     content: priorClient, // ISignalClient
                 }),
-                // clientConnectionNumber?: number;
-                // referenceSequenceNumber?: number;
             };
             this.props.signalHandler(joinSignal);
         }
