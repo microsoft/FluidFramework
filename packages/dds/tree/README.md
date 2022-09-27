@@ -320,3 +320,24 @@ flowchart
     end
     package-->runtime["Fluid runtime"]
 ```
+
+# Open Design Questions
+
+## How should indexes relate to branches?
+Some possible options:
+
+ - Use copy on write in indexes, and keep all needed indexes for all needed revision within edit-manager. Provide all relevant indexes to change rebaser. Maybe allow change rebaser to compute intermediate indexes as needed.
+ - Keep a single index, and adjust it to the needed location in the branch tree as needed using deltas.
+ - Keep multiple indexes, one at each branch head, updated via mutation.
+ - Keep a single reference index (maybe after the latest sequenced edit), and make delta indexes referencing it for the other required branches.
+ - Something else?
+
+## How should specialized sub-tree handling compose?
+
+Applications should have a domain model that can mix editable tree nodes with custom implementations as needed.
+Custom implementations should probably be able to be projections of editable trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
+This is important for performance / scalability, and might be how we do virtualization (maybe subtrees that arn't downloaded are just one custom representation?).
+This might also be the layer at which we hook up schematize.
+Alternatively it might be an explicitly two phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
+
+How all this relates to [dependency-tracking](./src/dependency-tracking/README.md) is to be determined.
