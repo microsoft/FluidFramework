@@ -2662,8 +2662,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
 
         try {
-            // Note: This optimization is currently DISABLED by default
-            //
             // If this is attach message for new data store, and we are in a batch, send this op out of order
             // Is it safe:
             //    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
@@ -2684,8 +2682,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             //    issue than sending.
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
-            if (this._flushMode === FlushMode.TurnBased && type === ContainerMessageType.Attach &&
-                this.mc.config.getBoolean("Fluid.ContainerRuntime.enableAttachOpReorder") === true) {
+            if (type === ContainerMessageType.Attach &&
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
                 if (!this.pendingAttachBatch.push(message)) {
                     // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
                     // when queue is not empty.
@@ -2713,17 +2711,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                             limit: this.pendingBatch.limit,
                         });
                 }
-                if (this._flushMode !== FlushMode.TurnBased) {
+            }
+
+            if (this._flushMode !== FlushMode.TurnBased) {
+                this.flush();
+            } else if (!this.flushTrigger) {
+                this.flushTrigger = true;
+                // Queue a microtask to detect the end of the turn and force a flush.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flushTrigger = false;
                     this.flush();
-                } else if (!this.flushTrigger) {
-                    this.flushTrigger = true;
-                    // Queue a microtask to detect the end of the turn and force a flush.
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flushTrigger = false;
-                        this.flush();
-                    });
-                }
+                });
             }
         } catch (error) {
             this.closeFn(error as GenericError);
