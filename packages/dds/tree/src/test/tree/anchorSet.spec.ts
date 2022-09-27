@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { singleTextCursorNew } from "../../feature-libraries";
 import { Anchor, AnchorSet, clonePath, Delta, FieldKey, JsonableTree, UpPath } from "../../tree";
 import { brand } from "../../util";
 
@@ -29,7 +30,7 @@ describe("AnchorSet", () => {
 
         const insert = {
             type: Delta.MarkType.Insert,
-            content: [node, node],
+            content: [node, node].map(singleTextCursorNew),
         };
 
         anchors.applyDelta(makeDelta(insert, makePath([fieldFoo, 4])));

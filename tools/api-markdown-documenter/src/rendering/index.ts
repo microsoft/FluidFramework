@@ -2,6 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+// Recommended policy is not compatible with API-Extractor
+
+/* eslint-disable unicorn/prefer-export-from */
 
 /**
  * Rendering types and related functionality.
@@ -14,3 +17,5 @@ export { RenderingHelpers };
 
 export * from "./Rendering";
 export * from "./RenderingPolicy";
+
+/* eslint-enable unicorn/prefer-export-from */

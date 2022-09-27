@@ -239,7 +239,7 @@ export class RestGitService {
         return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
     }
 
-    public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
+    public async getSummary(sha: string, _useCache: boolean): Promise<IWholeFlatSummary> {
         const summaryFetch = async () => this.get<IWholeFlatSummary>(
             `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`);
 
@@ -254,14 +254,17 @@ export class RestGitService {
         // the request.
         const summaryCacheKey = this.getSummaryCacheKey("container");
 
-        if (!useCache) {
-            // We set the useCache flag as false when we fetch the initial latest summary for a document.
-            // In that scenario, useCache as false means that we need to get the summary from storage and bypass the
-            // cache, since the cached data might be obsolete due to a cluster change. After fetching the value from
-            // storage, we add it to the cache so it can be up-to-date. As a result, subsequent requests that use
-            // the cache can read the correct value.
-            return this.fetchAndCache(summaryCacheKey, summaryFetch);
-        }
+        // To do: Right now, we enable the cache anytime. We will choose either one of the following options:
+        // 1. Always using the cache but clearing the cache at session end from the server.
+        // 2. The driver fix to disable cache only on session start or cluster change if we can detect it.
+        // if (!useCache) {
+        //     // We set the useCache flag as false when we fetch the initial latest summary for a document.
+        //     // In that scenario, useCache as false means that we need to get the summary from storage and bypass the
+        //     // cache, since the cached data might be obsolete due to a cluster change. After fetching the value from
+        //     // storage, we add it to the cache so it can be up-to-date. As a result, subsequent requests that use
+        //     // the cache can read the correct value.
+        //     return this.fetchAndCache(summaryCacheKey, summaryFetch);
+        // }
 
         // If we get to this point, we want to obtain the latest summary, and we want to try reading it from the cache.
         return this.resolve(summaryCacheKey, summaryFetch, true);

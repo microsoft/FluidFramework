@@ -49,17 +49,17 @@ describe("generateRandomChange", () => {
         const expected = {
             marks: {
                 foo: [
-                    6,
+                    1,
                     {
                         type: "Modify",
                         fields: {
                             foo: [
-                                9,
+                                1,
                                 {
                                     type: "Modify",
                                     fields: {
                                             foo: [
-                                            5,
+                                            1,
                                             {
                                                 type: "Delete",
                                                 count: 5,

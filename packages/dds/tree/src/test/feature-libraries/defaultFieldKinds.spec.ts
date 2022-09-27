@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
-import { FieldChangeHandler, FieldKinds, NodeChangeset, singleTextCursor } from "../../feature-libraries";
+import { strict as assert } from "assert";
+import { FieldChangeHandler, FieldKinds, NodeChangeset, singleTextCursor, singleTextCursorNew } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
@@ -141,9 +141,9 @@ describe("Value field changesets", () => {
     });
 
     it("can be represented as a delta", () => {
-        const expected = [
+        const expected: Delta.MarkList = [
             { type: Delta.MarkType.Delete, count: 1 },
-            { type: Delta.MarkType.Insert, content: [tree3] },
+            { type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree3)] },
         ];
 
         const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1);
@@ -233,7 +233,7 @@ describe("Optional field changesets", () => {
 
     it("can be converted to a delta", () => {
         const expected: Delta.MarkList = [{
-            type: Delta.MarkType.Insert, content: [tree3],
+            type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree3)],
         }];
 
         assert.deepEqual(

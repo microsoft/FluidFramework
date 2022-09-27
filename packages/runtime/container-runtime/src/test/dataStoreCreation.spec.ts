@@ -27,6 +27,7 @@ describe("Data Store Creation Tests", () => {
          * These tests simulate dataStore and subDataStore creation by creating local contexts and realizing them.
          * The dataStore tree for these tests is as follows:
          *
+         * ```
          *                  Default
          *                     |
          *                     |
@@ -34,6 +35,7 @@ describe("Data Store Creation Tests", () => {
          *                   /   \\
          *                  /     \\
          *        DataStore B     DataStore C
+         * ```
          */
 
         let storage: IDocumentStorageService;

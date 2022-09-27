@@ -108,11 +108,13 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (pro
     useEffect(
         () => {
             /**
-             * There's been a change to the SharedString's data.  This means the most recent state of the text
-             * is in the SharedString, and we need to
+             * There's been a change to the SharedString's data.
+             * This means the most recent state of the text is in the SharedString, and we need to...
+             *
              * 1. Store the text state in React
-             * 2. If the change came from a remote source, it may have moved our selection.  Compute it, update
-             *    the textarea, and store it in React
+             *
+             * 2. If the change came from a remote source, it may have moved our selection.
+             * Compute it, update the textarea, and store it in React
              */
             const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs) => {
                 const newText = sharedStringHelper.getText();

@@ -101,10 +101,14 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 
     /**
      * Validates that the data store with the given id is represented correctly in the summary.
+     *
      * For referenced data stores:
-     *   - The unreferenced property in its entry in the summary should be undefined.
+     *
+     * - The unreferenced property in its entry in the summary should be undefined.
+     *
      * For unreferenced data stores:
-     *   - The unreferenced property in its entry in the summary should be true.
+     *
+     * - The unreferenced property in its entry in the summary should be true.
      */
     async function validateDataStoreInSummary(dataStoreId: string, referenced: boolean) {
         await provider.ensureSynchronized();
