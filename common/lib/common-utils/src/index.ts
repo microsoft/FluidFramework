@@ -4,7 +4,7 @@
  */
 
 /**
- * This package contains common utility functions and classes used by the Fluid Framework.
+ * This library contains common utility functions and classes used by the Fluid Framework.
  *
  * @packageDocumentation
  */

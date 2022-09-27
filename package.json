@@ -148,7 +148,6 @@
       "tools": [
         "tools/api-markdown-documenter",
         "tools/benchmark",
-        "tools/bundle-size-tools",
         "tools/getkeys",
         "tools/test-tools",
         "server/tinylicious",

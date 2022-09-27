@@ -141,11 +141,9 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
                 if (_start < 0) {
                     _start = 0;
                 }
-                if (end >= segment.text.length) {
-                    accumText.textSegment.text += segment.text.substring(_start);
-                } else {
-                    accumText.textSegment.text += segment.text.substring(_start, end);
-                }
+                accumText.textSegment.text += end >= segment.text.length
+                    ? segment.text.substring(_start)
+                    : segment.text.substring(_start, end);
             }
         } else {
             if (accumText.placeholder && (accumText.placeholder.length > 0)) {

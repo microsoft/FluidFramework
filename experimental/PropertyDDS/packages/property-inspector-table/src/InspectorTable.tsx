@@ -444,8 +444,7 @@ class InspectorTable<
 
     const getEmptyPanel = (repoIsExpired: boolean = false) => {
       const modalEnabled = !!repositoryUrn && !!currentUrn && !isV1Urn;
-      if (repoIsExpired) {
-        return (
+      return repoIsExpired ? (
           <Empty
             description={
               <div className={classes.expiredNotice}>
@@ -490,9 +489,7 @@ class InspectorTable<
             iconSize={computeIconSize(width)}
             message={"This repository is expired"}
           />
-        );
-      } else {
-        return (
+        ) : (
           <Empty
             description={emptyDescription}
             iconId={"no-data"}
@@ -500,7 +497,6 @@ class InspectorTable<
             message={"There is no data to show"}
           />
         );
-      }
     };
 
     const rowEventHandlers = {

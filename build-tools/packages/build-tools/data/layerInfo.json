@@ -218,7 +218,8 @@
             "Tests": {
                 "dev": true,
                 "dirs": [
-                    "packages/test/"
+                    "packages/test/",
+                    "azure/packages/test/"
                 ]
             },
             "Test-Utils": {

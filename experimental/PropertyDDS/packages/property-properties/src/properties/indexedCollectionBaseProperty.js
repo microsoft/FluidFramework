@@ -6,6 +6,7 @@
 /**
  * @fileoverview Abstract base class for indexed collections (sets and maps)
  */
+
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const { MSG } = require('@fluid-experimental/property-common').constants;
@@ -52,8 +53,8 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Removes the dirtiness flag from this property
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
-     *                                                                       will be removed
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean
+     * If none are supplied, all will be removed.
      * @private
      */
     _cleanDirty(in_flags) {
@@ -80,8 +81,8 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Removes the dirtiness flag from this property and recursively from all of its children
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
-     *                                                                       will be removed
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean.
+     * If none are supplied, all will be removed.
      */
     cleanDirty(in_flags) {
         in_flags = in_flags !== undefined ? in_flags : BaseProperty.MODIFIED_STATE_FLAGS.DIRTY |
@@ -190,11 +191,10 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Removes an entry with the given key
      *
-     * @param {string} in_key -
-     *     key of the entry
-     * @param {boolean} in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
-     *     When batching updates, this can be prevented via this flag.
+     * @param {string} in_key - key of the entry
+     * @param {boolean} in_reportToView - By default, the dirtying will always be reported to the checkout view and
+     * trigger a modified event there.
+     * When batching updates, this can be prevented via this flag.
      */
     _removeByKey(in_key, in_reportToView) {
         this._checkIsNotReadOnly(false);
@@ -235,16 +235,13 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
+     * @param {boolean} in_dirtyOnly - Only include dirty entries in the serialization
+     * @param {boolean} in_includeRootTypeid - Include the typeid of the root of the hierarchy
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] - The type of dirtiness to use
+     * when reporting dirty changes. By default this is `PENDING_CHANGE`.
      * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
+     * function will descend into referenced repositories.
+     * WARNING: if there are loops in the references this can result in an infinite loop.
      *
      * @return {Object} The serialized representation of this property
      * @private
@@ -366,9 +363,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * @inheritdoc
      */
-    // eslint-disable-next-line complexity
-    _deserialize(in_serializedObj, in_reportToView,
-                 in_filteringOptions, in_createChangeSet) {
+    _deserialize(in_serializedObj, in_reportToView, in_filteringOptions, in_createChangeSet) {
         var currentEntries = this._dynamicChildren;
         var allInsertedKeys = {};
 
@@ -481,13 +476,11 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
                 if (this._containsPrimitiveTypes) {
                     changes = modifiedEntries[modifiedKeys[i]];
                     // Determine if value has changed
-                    if (this._typeid === 'Int64' || this._typeid === 'Uint64') {
+                    valueWasChanged = this._typeid === 'Int64' || this._typeid === 'Uint64'
                         // For (u)int64, we will compare (Ui/I)nt64 objects with arrays [low, high]
-                        valueWasChanged = this._dynamicChildren[modifiedKeys[i]].getValueLow() !== changes[0] ||
-                            this._dynamicChildren[modifiedKeys[i]].getValueHigh() !== changes[1];
-                    } else {
-                        valueWasChanged = this._dynamicChildren[modifiedKeys[i]] !== changes;
-                    }
+                        ? this._dynamicChildren[modifiedKeys[i]].getValueLow() !== changes[0]
+                            || this._dynamicChildren[modifiedKeys[i]].getValueHigh() !== changes[1]
+                        : this._dynamicChildren[modifiedKeys[i]] !== changes;
                     modifiedEntriesMap = modifiedEntries;
                     if (valueWasChanged) {
                         this._dynamicChildren[modifiedKeys[i]] = this._deserializeValue(changes);

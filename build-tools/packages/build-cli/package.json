@@ -1,6 +1,6 @@
 {
   "name": "@fluid-tools/build-cli",
-  "version": "0.4.5000",
+  "version": "0.4.7000",
   "description": "Build tools for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -70,9 +70,9 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-tools/version-tools": "^0.4.5000",
-    "@fluidframework/build-tools": "^0.4.5000",
-    "@fluidframework/bundle-size-tools": "^0.0.8505",
+    "@fluid-tools/version-tools": "^0.4.7000",
+    "@fluidframework/build-tools": "^0.4.7000",
+    "@fluidframework/bundle-size-tools": "^0.4.7000",
     "@oclif/core": "~1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
@@ -96,9 +96,10 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@types/chai": "^4",
+    "@types/chai-arrays": "^2.0.0",
     "@types/inquirer": "^8.2.1",
     "@types/mocha": "^9.0.0",
     "@types/node": "^14.18.0",
@@ -108,6 +109,7 @@
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "chai": "^4.2.0",
+    "chai-arrays": "^2.2.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",

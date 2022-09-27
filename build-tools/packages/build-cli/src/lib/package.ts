@@ -260,10 +260,6 @@ export async function getPreReleaseDependencies(
                     throw new Error(`Can't find package in context: ${depName}`);
                 }
 
-                const nameToUse =
-                    depPkg.monoRepo === undefined ? depPkg.name : depPkg.monoRepo.kind;
-                prereleasePackages.set(nameToUse, depVersion);
-
                 if (depPkg.monoRepo === undefined) {
                     prereleasePackages.set(depPkg.name, depVersion);
                 } else {
@@ -362,7 +358,7 @@ export function generateReleaseGitTagName(
 }
 
 /**
- *  Returns an array of all the git tags associated with a release group.
+ * Returns an array of all the git tags associated with a release group.
  *
  * @param context - The {@link Context}.
  * @param releaseGroupOrPackage - The release group or independent package to get tags for.

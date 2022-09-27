@@ -14,12 +14,11 @@ import { generateRandomUInt32Array } from "../platform-dependent";
 const UINT_32HASH_PRIME = 16777619;
 
 /**
- * Fast high quality 32 bit RNG for consistent guid.
+ * Fast high quality 32 bit RNG for consistent GUID.
  *
  * Good "randomness" (distribution); Period is approximately equal to  3.11*10^37
  * Implementation was take from "Numerical recipes. The Art of Scientific Computing.", 3rd edition.
  * Page 357, algorithm name: Ranlim32
- *
  */
 const guidRNG = {
     u: 0,
@@ -30,15 +29,15 @@ const guidRNG = {
 
     /**
      * Initialize RNG.
-     * This function need to be called once, before the first guid gets created.
+     * This function need to be called once, before the first GUID gets created.
      *
-     * @param in_seed - Optional 32-bit seed for guid RNG;
-     *                           If no seed is given, a combination of system's
-     *                           local time and Math.random() is used.
-     * @param in_enforceReInitialization - Optionally enforce re-initialization with another seed
+     * @param in_seed - Optional 32-bit seed for GUID RNG.
+     * If no seed is given, a combination of system's local time and `Math.random()` is used.
+     * @param in_enforceReInitialization - Optionally enforce re-initialization with another seed.
      *
      * @returns The seed used to initialize the RNG;
      * If re-initialization is not enforced, a zero indicates that the RNG was not re-seeded.
+     *
      * @alias property-common.initializeGUIDGenerator
      */
     initialize(in_seed?: number, in_enforceReInitialization: boolean = false): number {
@@ -93,13 +92,13 @@ const guidRNG = {
 };
 
 /**
- * Check if guid is base64 based on the length
- * The length of base16 guid is 36, base64 - 22
+ * Check if GUID is base64 based on the length
+ * The length of base16 GUID is 36, base64 - 22
  *
- * @param guid - Input guid
- * @returns True if guid is base64
+ * @param GUID - Input GUID
+ * @returns True if GUID is base64
  */
-const isBase64 = (guid: string): boolean => guid.length === 22;
+const isBase64 = (GUID: string): boolean => GUID.length === 22;
 
 /**
  * Allows for 32-bit integer multiplication with C-like semantics
@@ -142,12 +141,12 @@ const toPaddedBase64 = function(x: string): string {
 };
 
 /**
- * Helper function to create a guid string from an array with 32Bit values
+ * Helper function to create a GUID string from an array with 32Bit values
  *
  * @param in_guidArray - Array with the 32 bit values
  * @param base64 - Use base64 encoding instead of standart guids
  *
- * @returns The guid
+ * @returns The GUID
  */
 const uint32x4ToGUID = function(in_guidArray: Uint32Array | Int32Array | number[], base64: boolean = false): string {
     if (base64) {
@@ -169,18 +168,18 @@ const uint32x4ToGUID = function(in_guidArray: Uint32Array | Int32Array | number[
 };
 
 /**
- * Convert guid to four 32Bit values.
+ * Convert GUID to four 32Bit values.
  *
- * @param in_guid - The guid to convert
- * @param io_result - An optional array to write the result to;
- *                                If no array is given, a new one gets created
+ * @param in_guid - The GUID to convert
+ * @param io_result - An optional array to write the result to.
+ * If no array is given, a new one gets created.
  * @returns Four 32-bit values
  *
  */
 const guidToUint32x4 = function(in_guid: string, result: Uint32Array = new Uint32Array(4)): Uint32Array {
     if (isBase64(in_guid)) {
-        const guid = toPaddedBase64(in_guid);
-        const bytes = base64js.toByteArray(guid);
+        const GUID = toPaddedBase64(in_guid);
+        const bytes = base64js.toByteArray(GUID);
         const intArray = new Uint32Array(bytes.buffer);
         result.set(intArray);
     } else {
@@ -193,38 +192,38 @@ const guidToUint32x4 = function(in_guid: string, result: Uint32Array = new Uint3
 };
 
 /**
- * Convert base64 guid into base16.
+ * Convert base64 GUID into base16.
  *
- * @param in_guid - Base64 guid to convert
- * @returns Base16 guid
+ * @param in_guid - Base64 GUID to convert
+ * @returns Base16 GUID
  *
  */
 const base64Tobase16 = (in_guid: string) => uint32x4ToGUID(guidToUint32x4(in_guid));
 
 /**
- * Convert base16 into base64 guid.
+ * Convert base16 into base64 GUID.
  *
- * @param in_guid - Base16 guid to convert
- * @returns Base64 guid
+ * @param in_guid - Base16 GUID to convert
+ * @returns Base64 GUID
  *
  */
 const base16ToBase64 = (in_guid: string) => uint32x4ToGUID(guidToUint32x4(in_guid), true);
 
 /**
  * Based on the boolean parameter generate either
- * a 128 bit base16 guid with the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx
- * or url-friendly base64 string guid of length 22
+ * a 128 bit base16 GUID with the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx
+ * or url-friendly base64 string GUID of length 22
  *
  * This function is *not* thread safe!
  *
  * @param base64 - Use base64 encoding instead of standart guids
  *
- * @returns The guid
+ * @returns The GUID
  */
 const generateGUID = function(base64 = false): string {
     const rnds = new Uint32Array(4);
 
-    // Random numbers for guid (4x32 bit)
+    // Random numbers for GUID (4x32 bit)
     rnds[0] = guidRNG.genRandUInt32();
     rnds[1] = guidRNG.genRandUInt32();
     rnds[2] = guidRNG.genRandUInt32();
@@ -240,10 +239,10 @@ const reBase64 = (/^[\w-]{21}[AQgw]$/);
 const reBase16 = (/^[\dA-Fa-f]{8}(?:-[\dA-Fa-f]{4}){3}-[\dA-Fa-f]{12}$/);
 
 /**
- * Routine used to check whether the given string is a valid guid
+ * Routine used to check whether the given string is a valid GUID
  *
- * @param in_guid - The guid to test.
- * @returns True if the parameter is a valid guid, false otherwise.
+ * @param in_guid - The GUID to test.
+ * @returns True if the parameter is a valid GUID, false otherwise.
  */
 const isGUID = (in_guid: string) => reBase16.test(in_guid) || reBase64.test(in_guid);
 
@@ -294,14 +293,15 @@ const hashCombine4xUint32 = function(
 };
 
 /**
- * Takes two guids and generates a new derived guid.
- * Note: You should only use this helper function when you need only one combination.
- *       Otherwise, it is more efficient to work on the uint8 arrays directly.
+ * Takes two guids and generates a new derived GUID.
  *
- * @param in_guid1 - Input guid
- * @param in_guid2 - Input guid
- * @param base64 - Use base64 encoding instead of standart guids
- * @returns Combined guid
+ * @remarks Note: You should only use this helper function when you need only one combination.
+ * Otherwise, it is more efficient to work on the uint8 arrays directly.
+ *
+ * @param in_guid1 - Input GUID
+ * @param in_guid2 - Input GUID
+ * @param base64 - Use base64 encoding instead of standart GUIDs
+ * @returns Combined GUID
  */
 const combineGuids = function(in_guid1: string, in_guid2: string, base64 = false): string {
     const firstArray = guidToUint32x4(in_guid1);

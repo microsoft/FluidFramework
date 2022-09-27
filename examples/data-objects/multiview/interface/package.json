@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-coordinate-interface",
-  "version": "2.0.0-internal.1.2.0",
+  "version": "2.0.0-internal.1.3.0",
   "private": true,
   "description": "Interface for multiview sample",
   "homepage": "https://fluidframework.com",
@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",
     "@types/node": "^14.18.0",

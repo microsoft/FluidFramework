@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeRebaser, verifyChangeRebaser } from "../../rebase";
+import { ChangeRebaser, noFailure, verifyChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 
 const counterRebaser: ChangeRebaser<number> = {
@@ -28,16 +28,7 @@ describe("verifyChangeRebaser", () => {
             new Set([-1, 2, 3, 0, -2, 4]),
             isEquivalent,
         );
-        assert.equal(output.rebaseLeftDistributivity, "Passed");
-        assert.equal(output.composeAssociativity, "Passed");
-        assert.equal(output.rebaseRightDistributivity, "Passed");
-        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "Passed");
-        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
-        assert.equal(output.composeWithInverseIsNoOp, "Passed");
-        assert.equal(output.composeWithEmptyIsNoOp, "Passed");
-        assert.equal(output.rebaseOverEmptyIsNoOp, "Passed");
-        assert.equal(output.rebaseEmptyIsEmpty, "Passed");
-        assert.equal(output.emptyInverseIsEmpty, "Passed");
+        assert.deepEqual(output, noFailure);
     });
 
     it("test counter with unsafe integers", () => {
@@ -46,16 +37,16 @@ describe("verifyChangeRebaser", () => {
             new Set([Number.MAX_SAFE_INTEGER, -10, 2]),
             isEquivalent,
         );
-        assert.equal(output.rebaseLeftDistributivity, "Passed");
-        assert.notEqual(output.composeAssociativity, "Passed");
-        assert.equal(output.rebaseRightDistributivity, "Passed");
-        assert.equal(output.rebaseOverDoUndoPairIsNoOp, "Passed");
-        assert.equal(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
-        assert.equal(output.composeWithInverseIsNoOp, "Passed");
-        assert.equal(output.composeWithEmptyIsNoOp, "Passed");
-        assert.equal(output.rebaseOverEmptyIsNoOp, "Passed");
-        assert.equal(output.rebaseEmptyIsEmpty, "Passed");
-        assert.equal(output.emptyInverseIsEmpty, "Passed");
+        assert.deepEqual(output.rebaseLeftDistributivity, []);
+        assert(output.composeAssociativity.length > 0);
+        assert.deepEqual(output.rebaseRightDistributivity, []);
+        assert.deepEqual(output.rebaseOverDoUndoPairIsNoOp, []);
+        assert.deepEqual(output.rebaseOverUndoRedoPairIsNoOp, []);
+        assert.deepEqual(output.composeWithInverseIsNoOp, []);
+        assert.deepEqual(output.composeWithEmptyIsNoOp, []);
+        assert.deepEqual(output.rebaseOverEmptyIsNoOp, []);
+        assert.deepEqual(output.rebaseEmptyIsEmpty, []);
+        assert.deepEqual(output.emptyInverseIsEmpty, []);
     });
 
     it("test incorrect counter with safe integers", () => {
@@ -64,16 +55,16 @@ describe("verifyChangeRebaser", () => {
             new Set([-1, 2, 3, 0, -2, 4]),
             isEquivalent,
         );
-        assert.notEqual(output.rebaseLeftDistributivity, "Passed");
-        assert.notEqual(output.composeAssociativity, "Passed");
-        assert.notEqual(output.rebaseRightDistributivity, "Passed");
-        assert.notEqual(output.rebaseOverDoUndoPairIsNoOp, "Passed");
-        assert.notEqual(output.rebaseOverUndoRedoPairIsNoOp, "Passed");
-        assert.notEqual(output.composeWithInverseIsNoOp, "Passed");
-        assert.notEqual(output.composeWithEmptyIsNoOp, "Passed");
-        assert.notEqual(output.rebaseOverEmptyIsNoOp, "Passed");
-        assert.notEqual(output.rebaseEmptyIsEmpty, "Passed");
-        assert.notEqual(output.emptyInverseIsEmpty, "Passed");
+        assert(output.rebaseLeftDistributivity.length > 0);
+        assert(output.composeAssociativity.length > 0);
+        assert(output.rebaseRightDistributivity.length > 0);
+        assert(output.rebaseOverDoUndoPairIsNoOp.length > 0);
+        assert(output.rebaseOverUndoRedoPairIsNoOp.length > 0);
+        assert(output.composeWithInverseIsNoOp.length > 0);
+        assert(output.composeWithEmptyIsNoOp.length > 0);
+        assert(output.rebaseOverEmptyIsNoOp.length > 0);
+        assert(output.rebaseEmptyIsEmpty.length > 0);
+        assert(output.emptyInverseIsEmpty.length > 0);
     });
 });
 
