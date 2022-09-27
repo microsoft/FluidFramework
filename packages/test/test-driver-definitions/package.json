@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-driver-definitions",
-  "version": "2.0.0-internal.1.2.0",
+  "version": "2.0.0-internal.1.3.0",
   "description": "A driver abstraction and implementations for testing against server",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -56,8 +56,8 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluidframework/protocol-definitions": "^1.0.0",
     "uuid": "^8.3.1"
   },

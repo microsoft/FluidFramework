@@ -2,15 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     AttachState,
     IContainer,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { Loader } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     ContainerSchema,
@@ -19,9 +17,12 @@ import {
     IFluidContainer,
     RootDataObject,
 } from "@fluidframework/fluid-static";
-
 import { SummaryType } from "@fluidframework/protocol-definitions";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
+import { AzureAudience } from "./AzureAudience";
+import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
     AzureClientProps,
     AzureConnectionConfig,
@@ -30,8 +31,6 @@ import {
     AzureGetVersionsOptions,
 } from "./interfaces";
 import { isAzureRemoteConnectionConfig } from "./utils";
-import { AzureAudience } from "./AzureAudience";
-import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
