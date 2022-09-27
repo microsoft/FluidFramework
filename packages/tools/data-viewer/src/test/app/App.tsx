@@ -34,13 +34,13 @@ function useContainerInfo(): ContainerInfo | undefined {
         // Get the container from the Fluid service.
         let container: IFluidContainer;
         let services: TinyliciousContainerServices;
-        const containerId = window.location.hash.substring(1);
+        let containerId = window.location.hash.substring(1);
         if (containerId.length === 0) {
             const createContainerResult = await client.createContainer(containerSchema);
             container = createContainerResult.container;
             services = createContainerResult.services;
 
-            const containerId = await container.attach();
+            containerId = await container.attach();
             window.location.hash = containerId;
         } else {
             const getContainerResult = await client.getContainer(containerId, containerSchema);
