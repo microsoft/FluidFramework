@@ -151,39 +151,7 @@ describe("obliterate partial lengths", () => {
                 0,
                 "hello ".length,
                 refSeq,
-                remoteClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
-
-            validatePartialLengths(localClientId, client.mergeTree, [
-                { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "world".length },
-            ]);
-            validatePartialLengths(remoteClientId, client.mergeTree, [
-                { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "world".length },
-            ], 0);
-        });
-    });
-
-    describe("overlapping obliterate+obliterate", () => {
-        it("passes for local obliterate and local obliterate", () => {
-            client.obliterateRange(
-                0,
-                "hello ".length,
-                refSeq,
-                localClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
-            client.obliterateRange(
-                0,
-                "hello ".length,
-                refSeq,
-                localClientId,
+                remoteClientId + 1,
                 refSeq + 2,
                 false,
                 undefined as any,
@@ -191,11 +159,23 @@ describe("obliterate partial lengths", () => {
 
             validatePartialLengths(localClientId, client.mergeTree, [
                 { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "world".length },
-                { seq: refSeq + 2, len: "".length },
+                { seq: refSeq + 1, len: "hello world".length },
+                { seq: refSeq + 2, len: "world".length },
+            ]);
+            validatePartialLengths(remoteClientId, client.mergeTree, [
+                { seq: refSeq, len: "hello world".length },
+                { seq: refSeq + 1, len: "hello world".length },
+                { seq: refSeq + 2, len: "world".length },
+            ], 0);
+            validatePartialLengths(remoteClientId + 1, client.mergeTree, [
+                { seq: refSeq, len: "hello world".length },
+                { seq: refSeq + 1, len: "hello world".length },
+                { seq: refSeq + 2, len: "world".length },
             ], 0);
         });
+    });
 
+    describe("overlapping obliterate+obliterate", () => {
         it("passes for local obliterate and remote obliterate", () => {
             client.removeRangeLocal(
                 0,
@@ -247,33 +227,6 @@ describe("obliterate partial lengths", () => {
                 { seq: refSeq + 1, len: "world".length },
                 { seq: refSeq + 2, len: "world".length },
             ], refSeq + 2);
-        });
-
-        it("passes for remote obliterate and remote obliterate", () => {
-            client.obliterateRange(
-                0,
-                "hello ".length,
-                refSeq,
-                remoteClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
-            client.obliterateRange(
-                0,
-                "hello ".length,
-                refSeq,
-                remoteClientId,
-                refSeq + 2,
-                false,
-                undefined as any,
-            );
-
-            validatePartialLengths(localClientId, client.mergeTree, [
-                { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "world".length },
-                { seq: refSeq + 2, len: "".length },
-            ]);
         });
     });
 
@@ -336,7 +289,7 @@ describe("obliterate partial lengths", () => {
             ]);
         });
 
-        it("obliterates when concurrent insert at end of string", () => {
+        it("obliterate does not affect concurrent insert at end of string", () => {
             client.obliterateRange(
                 0,
                 client.getLength(),
