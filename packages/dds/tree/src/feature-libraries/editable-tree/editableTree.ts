@@ -77,7 +77,7 @@ export interface EditableTree {
     /**
      * Anchor to this node.
      * Valid as long as this EditableTree's context is not freed.
-     * Might not point to any node if this node is deleted from he document.
+     * Might not point to any node if this node is deleted from the document.
      *
      * TODO: When a proper editing API is exposed on EditableTree directly,
      * this should become an implementation detail and rbe removed from this API surface.
