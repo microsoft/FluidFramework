@@ -530,12 +530,12 @@ describe("client.applyMsg", () => {
         assert.strictEqual(seg.segment, undefined);
     });
 
-/* eslint-disable max-len */
+    /* eslint-disable max-len */
     /**
      * ```
      * _: Local State
      * -: Deleted
-     *: Unacked Insert and Delete
+     * *: Unacked Insert and Delete
      * 0: msn/offset
      * Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>
      * sequence number represented as offset from msn. L means local.
@@ -586,7 +586,7 @@ describe("client.applyMsg", () => {
      * Client C does not match client A
      * ```
      */
-/* eslint-enable max-len */
+    /* eslint-enable max-len */
     it.skip("Concurrent insert into removed segment across block boundary", () => {
         const clients = createClientsAtInitialState(
             { initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
