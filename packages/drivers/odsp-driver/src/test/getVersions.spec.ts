@@ -9,7 +9,7 @@ import {
     IOdspResolvedUrl,
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
+import { EpochTracker, snapshotCacheExpiryTimeoutMs } from "../epochTracker";
 import {
     IOdspSnapshot,
     HostStoragePolicyInternal,
@@ -213,7 +213,7 @@ describe("Tests for snapshot fetch", () => {
                 type: "snapshot",
                 file: { docId: hashedDocumentId, resolvedUrl },
             };
-            await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
+            await localCache.put(cacheEntry, valueWithExpiredCache(snapshotCacheExpiryTimeoutMs));
 
             const version = await mockFetchSingle(
                 async () => service.getVersions(null, 1),
@@ -232,7 +232,7 @@ describe("Tests for snapshot fetch", () => {
                 type: "snapshot",
                 file: { docId: hashedDocumentId, resolvedUrl },
             };
-            await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
+            await localCache.put(cacheEntry, valueWithExpiredCache(snapshotCacheExpiryTimeoutMs));
 
             await assert.rejects(async () => {
                 await mockFetchSingle(
