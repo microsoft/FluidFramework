@@ -8,17 +8,37 @@ import { Delta, FieldKey, getMapTreeField, MapTree } from "../tree";
 import { fail, OffsetListFactory } from "../util";
 import { mapTreeFromCursor } from "./mapTreeCursor";
 
+/**
+ * Converts a `Delta.FieldMarks` whose tree content is represented with by `TIn` instances
+ * into a `Delta.FieldMarks`whose tree content is represented with by `TOut` instances.
+ *
+ * This function is useful for converting `Delta`s that represent tree content with cursors
+ * into `Delta`s that represent tree content with a deep-comparable representation of the content.
+ * See {@link assertDeltaEqual}.
+ * @param fields - The Map of fields to convert. Not mutated. 
+ * @param func - The functions used to map tree content.
+ */
 export function mapFieldMarks<TIn, TOut>(
-    root: Delta.FieldMarks<TIn>,
+    fields: Delta.FieldMarks<TIn>,
     func: (tree: TIn) => TOut,
 ): Delta.FieldMarks<TOut> {
     const out: Delta.FieldMarks<TOut> = new Map();
-    for (const [k, v] of root) {
+    for (const [k, v] of fields) {
         out.set(k, mapMarkList(v, func));
     }
     return out;
 }
 
+/**
+ * Converts a `Delta.MarkList` whose tree content is represented with by `TIn` instances
+ * into a `Delta.MarkList`whose tree content is represented with by `TOut` instances.
+ *
+ * This function is useful for converting `Delta`s that represent tree content with cursors
+ * into `Delta`s that represent tree content with a deep-comparable representation of the content.
+ * See {@link assertMarkListEqual}.
+ * @param list - The list of marks to convert. Not mutated. 
+ * @param func - The functions used to map tree content.
+ */
 export function mapMarkList<TIn, TOut>(
     list: Delta.MarkList<TIn>,
     func: (tree: TIn) => TOut,
@@ -26,6 +46,16 @@ export function mapMarkList<TIn, TOut>(
     return list.map((mark: Delta.Mark<TIn>) => mapMark(mark, func));
 }
 
+/**
+ * Converts a `Delta.Mark` whose tree content is represented with by `TIn` instances
+ * into a `Delta.Mark`whose tree content is represented with by `TOut` instances.
+ *
+ * This function is useful for converting `Delta`s that represent tree content with cursors
+ * into `Delta`s that represent tree content with a deep-comparable representation of the content.
+ * See {@link assertMarkListEqual}.
+ * @param mark - The mark to convert. Not mutated. 
+ * @param func - The functions used to map tree content.
+ */
 export function mapMark<TIn, TOut>(
     mark: Delta.Mark<TIn>,
     func: (tree: TIn) => TOut,
@@ -134,8 +164,8 @@ export function mapMark<TIn, TOut>(
                     const type = mark.type;
                     switch (type) {
                         case Delta.MarkType.Insert: {
-                            const jsonable: MapTree[] = mark.content.map(mapTreeFromCursor);
-                            outNodes.splice(index, 0, ...jsonable);
+                            const mapTreeContent: MapTree[] = mark.content.map(mapTreeFromCursor);
+                            outNodes.splice(index, 0, ...mapTreeContent);
                             index += mark.content.length;
                             outMarks.pushOffset(mark.content.length);
                             break;
