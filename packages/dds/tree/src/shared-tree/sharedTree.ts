@@ -41,7 +41,7 @@ export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObje
     /**
      * Root field of the tree.
      *
-     * Currently this editable tree fields do not update on edits,
+     * Currently this editable tree's fields do not update on edits,
      * so holding onto this root object across edits will only work if its an unwrapped node.
      * TODO: Fix this issue.
      *
