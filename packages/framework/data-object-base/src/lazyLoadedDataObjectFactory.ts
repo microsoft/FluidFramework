@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IFluidHandle, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -18,7 +18,6 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { createResponseError } from "@fluidframework/runtime-utils";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
@@ -53,11 +52,11 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
     ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt: FluidDataStoreRuntime) => {
-                const router: FluidObject<IFluidRouter> = (await rt.IFluidHandle?.get() as any);
-                if (router.IFluidRouter === undefined) {
-                    return createResponseError(500, "Data store runtime handle is not an IFluidRouter", request);
-                }
-                return router.IFluidRouter.request(request);
+                // This factory knows that the entrypoint on the data stores it creates is a LazyLoadedDataObject
+                // (or child of it) because it passed it in (see the call to new runtimeClass(...) below), so it
+                // can cast safely here.
+                const router = (await rt.IFluidHandle?.get() as LazyLoadedDataObject);
+                return router.request(request);
             });
 
         const runtime = new runtimeClass(

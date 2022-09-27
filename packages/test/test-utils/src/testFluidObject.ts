@@ -4,7 +4,7 @@
  */
 
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import { IRequest, IResponse, IFluidHandle, FluidObject, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, FluidDataStoreRuntime, mixinRequestHandler } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
@@ -13,7 +13,6 @@ import {
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { createResponseError } from "@fluidframework/runtime-utils";
 import { ITestFluidObject } from "./interfaces";
 
 /**
@@ -169,11 +168,12 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt: FluidDataStoreRuntime) => {
-                const router: FluidObject<IFluidRouter> = (await rt.IFluidHandle?.get() as any);
-                if (router?.IFluidRouter === undefined) {
-                    return createResponseError(500, "Data store runtime handle is not an IFluidRouter", request);
-                }
-                return router.IFluidRouter.request(request);
+                // TestFluidObject doesn't actually implement IFluidRouter, it just has a request method,
+                // so we don't try to discover it like FluidObject<IFluidRouter>. This factory knows that
+                // the entrypoint on the data stores it creates is an object of that type because it passed
+                // it in (see the call to new runtimeClass(...) below), so it can cast safely here.
+                const router: TestFluidObject = ((await rt.IFluidHandle?.get()) as TestFluidObject);
+                return router.request(request);
             });
 
         const runtime = new runtimeClass(
