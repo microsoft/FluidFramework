@@ -4,7 +4,6 @@
  */
 
 import type { Machine } from "jssm";
-import { InstructionalPromptWriter } from "../instructionalPromptWriter";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 

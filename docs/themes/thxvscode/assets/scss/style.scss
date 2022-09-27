@@ -3,31 +3,32 @@
 //------------------------------------
 
 // Foundation
-@import 'includes/mixins';
-@import 'includes/reset';
-@import 'includes/colors';
-@import 'includes/grid';
-@import 'includes/typography';
-@import 'includes/defaultstyles';
+@import "includes/mixins";
+@import "includes/reset";
+@import "includes/colors";
+@import "includes/grid";
+@import "includes/typography";
+@import "includes/defaultstyles";
 
 // Components
-@import 'includes/header';
-@import 'includes/search';
-@import 'includes/footer';
+@import "includes/page";
+@import "includes/header";
+@import "includes/search";
+@import "includes/footer";
 // @import 'includes/alt_downloads';
 // @import 'includes/download_btn';
 // @import 'includes/videoList';
 // @import 'includes/error';
 // @import 'includes/socialproof';
 // @import 'includes/code';
-@import 'includes/jumbotron';
-@import 'includes/in_your_face';
+@import "includes/jumbotron";
+@import "includes/in_your_face";
 //------------------------------------
 //             Homepage
 //------------------------------------
 
 // Homepage (load it first for speed)
-@import 'includes/home';
+@import "includes/home";
 // @import 'includes/landing_node';
 // @import 'includes/azure_landing';
 // @import 'includes/learn';
@@ -40,11 +41,11 @@
 // Syntax highlight styles are in docs/assets/css/tango.css
 // @import 'includes/syntaxhilight';
 // @import 'includes/extensions';
-@import 'includes/carousel';
+@import "includes/carousel";
 
 // Other Pages
-@import 'includes/sidebar_connect';
-@import 'includes/docs';
+@import "includes/sidebar_connect";
+@import "includes/docs";
 // @import 'includes/downloadsPage';
 // @import 'includes/insiders';
 // @import 'includes/license';

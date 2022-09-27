@@ -24,8 +24,8 @@
     "build:tsc": "tsc --pretty",
     "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "clean": "rimraf _api-extractor-temp .nyc_output dist *.tsbuildinfo *.build.log",
-    "eslint": "eslint",
-    "eslint:fix": "eslint --fix",
+    "eslint": "eslint src",
+    "eslint:fix": "npm run eslint -- --fix",
     "format": "npm run prettier:fix",
     "format-and-build": "npm run format && npm run build",
     "lint": "npm run prettier && npm run eslint",
@@ -34,7 +34,7 @@
     "prettier:fix": "prettier --write .",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:mocha": "mocha dist/**/*.test.js"
+    "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict"
   },
   "dependencies": {
     "@microsoft/api-documenter": "7.19.2",

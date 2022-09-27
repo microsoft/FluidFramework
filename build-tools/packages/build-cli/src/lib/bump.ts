@@ -16,6 +16,35 @@ import {
 import * as semver from "semver";
 
 /**
+ * A type representing the types of dependency updates that can be done. This type is intended to match the type
+ * npm-check-updates uses for its `target` argument.
+ */
+export type DependencyUpdateType =
+    | "latest"
+    | "newest"
+    | "greatest"
+    | "minor"
+    | "patch"
+    | `@${string}`;
+
+/**
+ * A type guard used to determine if a string is a DependencyUpdateType.
+ *
+ * @internal
+ */
+export function isDependencyUpdateType(str: string | undefined): str is DependencyUpdateType {
+    if (str === undefined) {
+        return false;
+    }
+
+    if (["latest", "newest", "greatest", "minor", "patch"].includes(str)) {
+        return true;
+    }
+
+    return str.startsWith("@");
+}
+
+/**
  * A mapping of {@link Package} to a version range string or a bump type. This interface is used for convenience.
  *
  * @internal
@@ -122,21 +151,25 @@ export async function bumpReleaseGroup(
     const translatedVersion = isVersionBumpType(bumpType)
         ? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
         : bumpType;
+
+    let name: string;
     let cmd: string;
     let workingDir: string;
 
     if (releaseGroupOrPackage instanceof MonoRepo) {
         workingDir = releaseGroupOrPackage.repoPath;
+        name = releaseGroupOrPackage.kind;
         cmd = `npx lerna version ${translatedVersion.version} --no-push --no-git-tag-version -y && npm run build:genver`;
     } else {
         workingDir = releaseGroupOrPackage.directory;
+        name = releaseGroupOrPackage.name;
         cmd = `npm version ${translatedVersion.version}`;
         if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
             cmd += " && npm run build:genver";
         }
     }
 
-    const results = await exec(cmd, workingDir, `Error bumping ${releaseGroupOrPackage}`);
+    const results = await exec(cmd, workingDir, `Error bumping ${name}`);
     context.repo.reload();
 
     // the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,

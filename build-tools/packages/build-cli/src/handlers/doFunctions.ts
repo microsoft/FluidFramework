@@ -11,7 +11,7 @@ import { Machine } from "jssm";
 import { bumpReleaseGroup, difference, getPreReleaseDependencies, npmCheckUpdates } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
-import { isReleaseGroup } from "../releaseGroups";
+import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
 
@@ -44,6 +44,9 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 
     assert(!isEmpty, `No prereleases found in DoBumpReleasedDependencies state.`);
 
+    const preReleaseGroups = new Set(releaseGroups.keys());
+    const preReleasePackages = new Set(packages.keys());
+
     const packagesToBump = new Set(packages.keys());
     for (const rg of releaseGroups.keys()) {
         for (const p of context.packagesInReleaseGroup(rg)) {
@@ -54,41 +57,57 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
     // First, check if any prereleases have released versions on npm
     let { updatedPackages, updatedDependencies } = await npmCheckUpdates(
         context,
-        releaseGroup!,
+        releaseGroup,
         [...packagesToBump],
-        "current",
+        undefined,
+        "latest",
         /* prerelease */ true,
         /* writeChanges */ false,
         log,
     );
 
-    // Divide the updated dependencies into individual packages and release groups
-    const updatedReleaseGroups = new Set<string>();
-    const updatedDeps = new Set<string>();
-    for (const p of updatedDependencies) {
-        if (p.monoRepo === undefined) {
-            updatedDeps.add(p.name);
+    // Divide the updated packages into individual packages and release groups
+    const updatedReleaseGroups = new Set<ReleaseGroup>();
+    const updatedPkgs = new Set<ReleasePackage>();
+
+    for (const pkg of updatedPackages) {
+        if (pkg.monoRepo === undefined) {
+            updatedPkgs.add(pkg.name);
         } else {
-            updatedReleaseGroups.add(p.monoRepo.kind);
+            updatedReleaseGroups.add(pkg.monoRepo.kind);
         }
     }
 
-    const remainingReleaseGroupsToBump = difference(
-        new Set(releaseGroups.keys()),
-        updatedReleaseGroups,
-    );
-    const remainingPackagesToBump = difference(new Set(packages.keys()), updatedDeps);
+    const updatedDeps = new Set<string>();
+    for (const p of Object.keys(updatedDependencies)) {
+        const pkg = context.fullPackageMap.get(p);
+        if (pkg === undefined) {
+            log.verbose(`Package not in context: ${p}`);
+            continue;
+        }
+
+        if (pkg.monoRepo === undefined) {
+            updatedDeps.add(pkg.name);
+        } else {
+            updatedDeps.add(pkg.monoRepo.kind);
+        }
+    }
+
+    const remainingReleaseGroupsToBump = difference(preReleaseGroups, updatedDeps);
+    const remainingPackagesToBump = difference(preReleasePackages, updatedPkgs);
 
     if (remainingReleaseGroupsToBump.size === 0 && remainingPackagesToBump.size === 0) {
-        // This is the same command as run above, but this time we write the changes. THere are more
+        // This is the same command as run above, but this time we write the changes. There are more
         // efficient ways to do this but this is simple.
         ({ updatedPackages, updatedDependencies } = await npmCheckUpdates(
             context,
-            releaseGroup!,
+            releaseGroup,
             [...packagesToBump],
-            "current",
+            undefined,
+            "latest",
             /* prerelease */ true,
             /* writeChanges */ true,
+            /* no logger */
         ));
     }
 
@@ -134,7 +153,7 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
     const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
 
     log.info(
-        `Version ${releaseVersion} of ${releaseGroup} already released, so we can bump to ${newVersion} (${chalk.blue(
+        `Bumping ${releaseGroup} from ${releaseVersion} to ${newVersion} (${chalk.blue(
             bumpType,
         )} bump)!`,
     );

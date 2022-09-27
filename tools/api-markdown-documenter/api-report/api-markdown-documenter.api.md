@@ -161,7 +161,7 @@ export class DocHeading extends DocNode {
 
 // @public
 export class DocList extends DocNodeContainer {
-    constructor(parameters: IDocListParameters, childNodes?: ReadonlyArray<DocNode>);
+    constructor(parameters: IDocListParameters, childNodes?: readonly DocNode[]);
     // @override (undocumented)
     get kind(): string;
     readonly listKind: ListKind;

@@ -8,9 +8,16 @@ export {
     generateBumpDepsBranchName,
     createBumpBranch,
     getDefaultBumpTypeForBranch,
+    getReleaseSourceForReleaseGroup,
     generateReleaseBranchName,
 } from "./branches";
-export { bumpPackageDependencies, bumpReleaseGroup, PackageWithRangeSpec } from "./bump";
+export {
+    bumpPackageDependencies,
+    bumpReleaseGroup,
+    DependencyUpdateType,
+    isDependencyUpdateType,
+    PackageWithRangeSpec,
+} from "./bump";
 export {
     getAllVersions,
     getPreReleaseDependencies,
@@ -19,6 +26,7 @@ export {
     getVersionFromTag,
     isReleased,
     npmCheckUpdates,
+    PackageVersionMap,
     PreReleaseDependencies,
     sortVersions,
     VersionDetails,

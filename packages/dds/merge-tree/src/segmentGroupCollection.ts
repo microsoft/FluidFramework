@@ -39,6 +39,17 @@ export class SegmentGroupCollection {
     }
 
     public copyTo(segment: ISegment) {
-        this.segmentGroups.walk((sg) => segment.segmentGroups.enqueue(sg));
+        this.segmentGroups.walk((sg) => segment.segmentGroups.enqueueOnCopy(sg, this.segment));
+    }
+
+    private enqueueOnCopy(segmentGroup: SegmentGroup, sourceSegment: ISegment) {
+        this.enqueue(segmentGroup);
+        if (segmentGroup.previousProps) {
+            // duplicate the previousProps for this segment
+            const index = segmentGroup.segments.indexOf(sourceSegment);
+            if (index !== -1) {
+                segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
+            }
+        }
     }
 }

@@ -66,7 +66,7 @@ const contentPath = "content";
 /**
  * Events emitted in response to changes to the sequence data.
  *
- *  @remarks
+ * @remarks
  *
  * The following is the list of events emitted.
  *
@@ -422,12 +422,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     /**
-     * @returns an iterable object that enumerates the IntervalCollection labels
-     * Usage:
+     * @returns An iterable object that enumerates the IntervalCollection labels.
+     *
+     * @example
+     * ```typescript
      * const iter = this.getIntervalCollectionKeys();
      * for (key of iter)
      *     const collection = this.getIntervalCollection(key);
      *     ...
+     * ```
     */
     public getIntervalCollectionLabels(): IterableIterator<string> {
         return this.intervalCollections.keys();
