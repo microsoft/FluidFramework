@@ -60,11 +60,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             ...driverPolicies,
         };
         this.blobCache = new InMemoryCache<ArrayBufferLike>();
-        if (this.driverPolicies.enableInternalSummaryCaching) {
-            this.snapshotTreeCache = new InMemoryCache<ISnapshotTreeVersion>();
-        } else {
-            this.snapshotTreeCache = new NullCache<ISnapshotTreeVersion>();
-        }
+        this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
+            ? new InMemoryCache<ISnapshotTreeVersion>()
+            : new NullCache<ISnapshotTreeVersion>();
     }
 
     /**
@@ -221,6 +219,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+        const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || ordererUrl; // backward compatibility
         if (!ordererUrl || !deltaStorageUrl) {
             throw new Error(
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
@@ -230,6 +229,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             fluidResolvedUrl,
             ordererUrl,
             deltaStorageUrl,
+            deltaStreamUrl,
             storageUrl,
             logger2,
             this.tokenProvider,

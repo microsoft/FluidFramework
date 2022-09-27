@@ -70,11 +70,9 @@ const deletionHandler = (rowData: IInspectorRow) => {
 const copyHandler = (rowData: IInspectorRow, ref: React.MutableRefObject<HTMLTextAreaElement>) => {
   const prop = (rowData.parent! as BaseProperty);
   let path = prop.getAbsolutePath();
-  if (prop.getContext() === "single") {
-    path += (!prop.isRoot() ? "." : "") + rowData.propertyId;
-  } else {
-    path += `[${ rowData.propertyId }]`;
-  }
+  path += prop.getContext() === "single"
+    ? (!prop.isRoot() ? "." : "") + rowData.propertyId
+    : `[${ rowData.propertyId }]`;
 
   const el = ref.current;
   el.value = path;

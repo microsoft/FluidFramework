@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/server-services-ordering-rdkafka";
-export const pkgVersion = "0.1037.2000";
+export const pkgVersion = "0.1037.3000";

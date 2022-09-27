@@ -346,14 +346,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              * There's an edge case though. Suppose the following:
              * 1. Server A created a deli for the session, consumes 100 kafka messages, and sequences 100 ops.
              * 2. Within 5 seconds of sequencing those ops,
-             *  Server A's deli saves a checkpoint (it remembers it sequenced those 100 ops)
+             * Server A's deli saves a checkpoint (it remembers it sequenced those 100 ops)
              * 3. Within a second of that checkpoint, the Kafka partition is rebalanced.
              * 4. Server B now creates a deli for that session and it consumes those same 100 kafka messages.
              * 4a. Server B's deli instance is smart enough to detect that those 100 kafka messages were already
-             *  processed (due to the checkpoint created in #2) so it ignores them (the first if statement in handler).
+             * processed (due to the checkpoint created in #2) so it ignores them (the first if statement in handler).
              *
              * The above flow is a problem because the opEvent logic is not going to trigger since
-             *  no messages were sequenced by this deli.
+             * no messages were sequenced by this deli.
              *
              * Deli should be smart and check if it hasn't yet sent an opEvent for messages that
              * were not durably stored.
@@ -412,6 +412,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.logOffset = rawMessage.offset;
 
         let sequencedMessageCount = 0;
+
+        // array of messages that should be produced to the deltas topic after processing
+        const produceToDeltas: ITicketedMessage[] = [];
 
         const boxcar = extractBoxcar(rawMessage);
 
@@ -492,7 +495,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         operation: sequencedMessage,
                     };
 
-                    this.produceMessage(this.deltasProducer, outgoingMessage);
+                    if (this.serviceConfiguration.deli.maintainBatches) {
+                        produceToDeltas.push(outgoingMessage);
+                    } else {
+                        this.produceMessage(this.deltasProducer, outgoingMessage);
+                    }
 
                     sequencedMessageCount++;
 
@@ -531,7 +538,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 }
 
                 case TicketType.Nack: {
-                    this.produceMessage(this.deltasProducer, ticketedMessage.message);
+                    if (this.serviceConfiguration.deli.maintainBatches) {
+                        produceToDeltas.push(ticketedMessage.message);
+                    } else {
+                        this.produceMessage(this.deltasProducer, ticketedMessage.message);
+                    }
                     break;
                 }
 
@@ -546,6 +557,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     // ignore unknown types
                     break;
             }
+        }
+
+        if (produceToDeltas.length > 0) {
+            // processing this boxcar resulted in one or more ticketed messages (sequenced ops or nacks)
+            // produce them in a single boxcar to the deltas topic
+            this.produceMessages(this.deltasProducer, produceToDeltas);
         }
 
         this.checkpointInfo.rawMessagesSinceCheckpoint++;
@@ -627,6 +644,32 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 }
 
                 const errorMsg = "Could not send message to producer";
+                this.context.log?.error(
+                    `${errorMsg}: ${JSON.stringify(error)}`,
+                    {
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
+                    });
+                Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
+                this.context.error(error, {
+                    restart: true,
+                    tenantId: this.tenantId,
+                    documentId: this.documentId,
+                });
+            });
+    }
+
+    private produceMessages(producer: IProducer, messages: ITicketedMessage[]) {
+        this.lastSendP = producer
+            .send(messages, this.tenantId, this.documentId)
+            .catch((error) => {
+                if (this.closed) {
+                    return;
+                }
+
+                const errorMsg = `Could not send ${messages.length} messages to producer`;
                 this.context.log?.error(
                     `${errorMsg}: ${JSON.stringify(error)}`,
                     {
@@ -1127,11 +1170,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     private isInvalidMessage(message: IRawOperationMessage): boolean {
-        if (message.clientId) {
-            return isServiceMessageType(message.operation.type);
-        } else {
-            return false;
-        }
+        return message.clientId ? isServiceMessageType(message.operation.type) : false;
     }
 
     private createOutputMessage(

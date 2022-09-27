@@ -235,15 +235,26 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public submitSignal(content: any) { return this.connectionManager.submitSignal(content); }
 
     public flush() {
-        if (this.messageBuffer.length === 0) {
+        const batch = this.messageBuffer;
+        if (batch.length === 0) {
             return;
         }
 
-        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
-        this.emit("prepareSend", this.messageBuffer);
-
-        this.connectionManager.sendMessages(this.messageBuffer);
         this.messageBuffer = [];
+
+        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
+        this.emit("prepareSend", batch);
+
+        if (batch.length === 1) {
+            assert(batch[0].metadata?.batch === undefined, 0x3c9 /* no batch markup on single message */);
+        } else {
+            assert(batch[0].metadata?.batch === true, 0x3ca /* no start batch markup */);
+            assert(batch[batch.length - 1].metadata?.batch === false, 0x3cb /* no end batch markup */);
+        }
+
+        this.connectionManager.sendMessages(batch);
+
+        assert(this.messageBuffer.length === 0, 0x3cc /* reentrancy */);
     }
 
     public get connectionProps(): ITelemetryProperties {

@@ -6,7 +6,7 @@
 /**
  * Supports distributed data structures which are list-like.
  *
- * This package's main export is {@link SharedString}, a DDS for storing and simultaneously editing a sequence of
+ * This library's main export is {@link SharedString}, a DDS for storing and simultaneously editing a sequence of
  * text.
  *
  * See the package's README for a high-level introduction to `SharedString`'s feature set.

@@ -71,6 +71,6 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskTest: false
+    taskTest: [] # no tests
     namespace: false
     buildNumberInPatch: true

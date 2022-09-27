@@ -4,9 +4,10 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { Brand, Opaque } from "../util";
-import { FieldKey, Value } from "./types";
+import { Brand, fail, OffsetListFactory, Opaque } from "../util";
+import { ITreeCursorSynchronous } from "./cursor";
 import { JsonableTree } from "./treeTextFormat";
+import { FieldKey, Value } from "./types";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
@@ -44,13 +45,9 @@ import { JsonableTree } from "./treeTextFormat";
  * with a minimum amount of backtracking over the contents of the tree.
  * This a boon for both code simplicity and performance.
  *
- * 2. Make it impossible to represent meaningless cases
- * (e.g., content being inserted within a deleted portion of the tree).
- * This both safeguard readers from having to handle such cases, and forces writers to critically examine their logic.
+ * 2. Make the format terse.
  *
- * 3. Make the format terse.
- *
- * 4. Make the format uniform.
+ * 3. Make the format uniform.
  *
  * These goals are reflected in the following design choices (this is very much optional reading for users of this
  * format):
@@ -68,8 +65,7 @@ import { JsonableTree } from "./treeTextFormat";
  * The drawback of this design choice is that it relies heavily on polymorphism:
  * for each mark encountered a reader has to check which kind of mark it is.
  * This is a source of code and time complexity in the reader code and adds a memory overhead to the format since each
- * mark has to carry a tag field to announce what kind of mark it is. Some of the complexity is reduced by design
- * choice #3.
+ * mark has to carry a tag field to announce what kind of mark it is.
  *
  * 2. `MoveIn` marks in inserted portions of the document are inlined in their corresponding `ProtoField`.
  *
@@ -82,16 +78,8 @@ import { JsonableTree } from "./treeTextFormat";
  * - It would lead the consumer of the format first build the inserted subtree, then traverse it again from its root to
  * apply the relevant `MoveIn` marks.
  *
- * 3. Modifications to subtrees that are also being deleted or moved are represented within the marks that describe such
- * deletions or movements.
- * This makes it possible specialize the type of the modifications in order to constrain the kinds of marks that can
- * appear below them.
  *
- * If modify marks were not specialized then it would be possible to represent meaningless cases and consumers of this
- * format would have to either provide implementations for them or detect when they they occur.
- * By specializing the types we move this "detection" to the Typescript compiler.
- *
- * 4. Modifications of deleted and moved-out nodes are represented using modify marks within `Delete` and `MoveOut`
+ * 3. Modifications of deleted and moved-out nodes are represented using modify marks within `Delete` and `MoveOut`
  * marks.
  * This is in opposition to a structure where the fact that a modified node is being deleted or moved-out would
  * be represented a `Modify` mark like so:
@@ -122,7 +110,7 @@ import { JsonableTree } from "./treeTextFormat";
  * - It makes the format more uniform since modifications to moved-in subtrees must be represented with modifications
  * marks within a `MoveIn` mark.
  *
- * 5. `MoveIn` marks are represented in the location where the content being moved resides in the input context that
+ * 4. `MoveIn` marks are represented in the location where the content being moved resides in the input context that
  * the delta is applied to, and `MoveOut` marks are represented in the location where the content being moved should
  * reside after the delta is applied.
  *
@@ -130,7 +118,7 @@ import { JsonableTree } from "./treeTextFormat";
  * transaction that moves content from "foo" to "bar" then moves that same content from "bar" to "baz").
  * This makes the format less terse and harder to reason about.
  *
- * 6. MoveIn marks are not inlined within `ProtoField`s.
+ * 5. MoveIn marks are not inlined within `ProtoField`s.
  *
  * Inlining them would force the consuming code to detect `MoveIn` marks within the `ProtoField` and handle them
  * within the context of the insert.
@@ -142,18 +130,13 @@ import { JsonableTree } from "./treeTextFormat";
 /**
  * Represents the change made to a document.
  */
-export type Root = FieldMarks<OuterMark>;
+export type Root = FieldMarks;
 export const empty: Root = new Map();
 
 /**
  * Represents a change being made to a part of the tree.
  */
-export type Mark = OuterMark | InnerModify;
-
-/**
- * A mark that represents changes to nodes that are otherwise unaffected by changes to their ancestors.
- */
-export type OuterMark =
+export type Mark =
     | Skip
     | Modify
     | Delete
@@ -166,16 +149,11 @@ export type OuterMark =
     | InsertAndModify;
 
 /**
- * A mark that represents changes to nodes that also unaffected by changes to their ancestors.
- */
-export type InnerModify = ModifyDeleted | ModifyInserted | ModifyMovedIn | ModifyMovedOut;
-
-/**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
  * applying any of the changes, is not represented explicitly.
  * It corresponds to the sum of `inputLength(mark)` for all previous marks.
  */
-export type MarkList<TMark = Mark> = TMark[];
+export type MarkList = Mark[];
 
 /**
  * Represents a range of contiguous nodes that is unaffected by changes.
@@ -184,46 +162,12 @@ export type MarkList<TMark = Mark> = TMark[];
 export type Skip = number;
 
 /**
- * Describes modifications made to a subtree that is otherwise untouched (i.e., not being inserted, deleted, or
- * moved).
+ * Describes modifications made to a subtree.
  */
 export interface Modify {
     type: typeof MarkType.Modify;
     setValue?: Value;
-    fields?: FieldMarks<OuterMark>;
-}
-
-/**
- * Describes modifications made to a subtree that is being deleted.
- */
-export interface ModifyDeleted {
-    type: typeof MarkType.Modify;
-    fields: FieldMarks<Skip | ModifyDeleted | ModifyAndMoveOut | MoveOut>;
-}
-
-/**
- * Describes modifications made to a subtree that is being moved out.
- */
-export interface ModifyMovedOut {
-    type: typeof MarkType.Modify;
-    setValue?: Value;
-    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | ModifyAndDelete | ModifyAndMoveOut | MoveOut>;
-}
-
-/**
- * Describes modifications made to a subtree that is being moved in.
- */
-export interface ModifyMovedIn {
-    type: typeof MarkType.Modify;
-    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | MoveInAndModify | Insert | InsertAndModify>;
-}
-
-/**
- * Describes modifications made to a subtree that is being inserted.
- */
-export interface ModifyInserted {
-    type: typeof MarkType.Modify;
-    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+    fields?: FieldMarks;
 }
 
 /**
@@ -240,7 +184,7 @@ export interface Delete {
  */
 export interface ModifyAndDelete {
     type: typeof MarkType.ModifyAndDelete;
-    fields: FieldMarks<Skip | ModifyDeleted | MoveOut>;
+    fields: FieldMarks;
 }
 
 /**
@@ -266,7 +210,7 @@ export interface ModifyAndMoveOut {
      */
     moveId: MoveId;
     setValue?: Value;
-    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | MoveOut>;
+    fields?: FieldMarks;
 }
 
 /**
@@ -290,7 +234,7 @@ export interface MoveInAndModify {
      * The delta should carry exactly one `MoveOut` mark with the same move ID.
      */
     moveId: MoveId;
-    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | Insert>;
+    fields: FieldMarks;
 }
 
 /**
@@ -298,6 +242,7 @@ export interface MoveInAndModify {
  */
 export interface Insert {
     type: typeof MarkType.Insert;
+    // TODO: use a single cursor with multiple nodes instead of array of cursors.
     content: ProtoNode[];
 }
 
@@ -308,16 +253,15 @@ export interface Insert {
 export interface InsertAndModify {
     type: typeof MarkType.InsertAndModify;
     content: ProtoNode;
-    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+    fields: FieldMarks;
 }
 
 /**
- * The contents of a subtree to be created
- * @remarks
- * Delta does not rely on the fact that JsonableTree is serializable.
- * We may use a non-serializable format in the future, but this is the most convenient for now.
+ * The contents of a subtree to be created.
+ *
+ * TODO: eventually we should support "pending" data here via using just `ITreeCursor`.
  */
-export type ProtoNode = JsonableTree;
+export type ProtoNode = ITreeCursorSynchronous;
 
 /**
  * Uniquely identifies a MoveOut/MoveIn pair within a delta.
@@ -327,7 +271,7 @@ export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 export type Offset = number;
 
 export type FieldMap<T> = Map<FieldKey, T>;
-export type FieldMarks<TMark> = FieldMap<MarkList<TMark>>;
+export type FieldMarks = FieldMap<MarkList>;
 
 export const MarkType = {
     Modify: 0,
@@ -365,4 +309,114 @@ export function inputLength(mark: Mark): number {
             return 0;
         default: unreachableCase(type);
     }
+}
+
+/**
+ * Converts inserted content into the format expected in Delta instances.
+ * This involves applying the following changes:
+ *
+ * - Updating node values
+ *
+ * - Inserting new subtrees within the inserted content
+ *
+ * - Deleting parts of the inserted content
+ *
+ * The only kind of change that is not applied by this function is MoveIn.
+ *
+ * @param node - The subtree to apply modifications to. Updated in place.
+ * @param modify - The modifications to either apply or collect.
+ * @returns The remaining modifications that the consumer of the Delta will apply on the given node.
+ * May be empty if all modifications are applied by the function.
+ */
+ export function applyModifyToInsert(
+    node: JsonableTree,
+    modify: Modify,
+): Map<FieldKey, MarkList> {
+    const outFieldsMarks: Map<FieldKey, MarkList> = new Map();
+    if (modify.setValue !== undefined) {
+        node.value = modify.setValue.value;
+    }
+    if (modify.fields !== undefined) {
+        const protoFields = node.fields ?? {};
+        const modifyFields = modify.fields;
+        for (const brandedKey of modifyFields.keys()) {
+            const key = brandedKey as string;
+            const outNodes = protoFields[key] ?? fail("Missing field");
+            const outMarks = new OffsetListFactory<Mark>();
+            let index = 0;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            for (const mark of modifyFields.get(brandedKey)!) {
+                if (isSkipMark(mark)) {
+                    index += mark;
+                    outMarks.pushOffset(mark);
+                } else {
+                    // Inline into `switch(mark.type)` once we upgrade to TS 4.7
+                    const type = mark.type;
+                    switch (type) {
+                        case MarkType.Insert: {
+                            outNodes.splice(index, 0, ...mark.content);
+                            index += mark.content.length;
+                            outMarks.pushOffset(mark.content.length);
+                            break;
+                        }
+                        case MarkType.InsertAndModify: {
+                            if (mark.fields.size > 0) {
+                                outMarks.pushContent({
+                                    type: MarkType.Modify,
+                                    fields: mark.fields,
+                                });
+                            }
+                            outNodes.splice(index, 0, mark.content);
+                            index += 1;
+                            break;
+                        }
+                        case MarkType.MoveIn:
+                        case MarkType.MoveInAndModify:
+                            // TODO: convert into a MoveIn/MoveInAndModify
+                            fail("Not implemented");
+                        case MarkType.Modify: {
+                            const clonedFields = applyModifyToInsert(outNodes[index], mark);
+                            if (clonedFields.size > 0) {
+                                outMarks.pushContent({
+                                    type: MarkType.Modify,
+                                    fields: clonedFields,
+                                });
+                            }
+                            index += 1;
+                            break;
+                        }
+                        case MarkType.Delete: {
+                            outNodes.splice(index, mark.count);
+                            break;
+                        }
+                        case MarkType.ModifyAndDelete: {
+                            // TODO: convert move-out of inserted content into insert at the destination
+                            fail("Not implemented");
+                        }
+                        case MarkType.MoveOut:
+                        case MarkType.ModifyAndMoveOut:
+                            // TODO: convert move-out of inserted content into insert at the destination
+                            fail("Not implemented");
+                        default: unreachableCase(type);
+                    }
+                }
+            }
+            if (outMarks.list.length > 0) {
+                outFieldsMarks.set(brandedKey, outMarks.list);
+            }
+            if (outNodes.length === 0) {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete protoFields[key];
+            }
+        }
+        if (Object.keys(protoFields).length === 0) {
+            delete node.fields;
+        }
+    }
+
+    return outFieldsMarks;
+}
+
+function isSkipMark(mark: Mark): mark is Skip {
+    return typeof mark === "number";
 }

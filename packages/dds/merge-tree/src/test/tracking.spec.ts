@@ -43,6 +43,10 @@ describe("MergeTree.tracking", () => {
             const segmentInfo = testClient.getContainingSegment(0);
 
             assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
+
+           assert(trackingGroup.unlink(segmentInfo.segment), "unlink segment should be true");
+
+           assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 0);
         });
 
     it("Splitting segment should split tracking group",
@@ -147,5 +151,44 @@ describe("MergeTree.tracking", () => {
             assert.equal(trackingGroup.has(ref), false);
             assert.equal(trackingGroup.tracked.includes(ref), false);
             assert.equal(ref.trackingCollection.trackingGroups.size, 0);
+        });
+
+        it("unlink segment from tracking group",
+        () => {
+            const trackingGroup = new TrackingGroup();
+
+            testClient.insertTextLocal(0, "abc");
+
+            const { segment } = testClient.getContainingSegment(0);
+            segment?.trackingCollection.link(trackingGroup);
+
+            assert.equal(segment?.trackingCollection.trackingGroups.size, 1);
+
+           assert(trackingGroup.unlink(segment), "unlink segment should be true");
+
+           assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
+
+           assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
+           assert.equal(segment.trackingCollection.unlink(trackingGroup), false,
+                "repeat unlink trackingGroup should be false");
+        });
+
+        it("unlink tracking group from collection",
+        () => {
+            const trackingGroup = new TrackingGroup();
+
+            testClient.insertTextLocal(0, "abc");
+
+            const { segment } = testClient.getContainingSegment(0);
+            segment?.trackingCollection.link(trackingGroup);
+
+            assert.equal(segment?.trackingCollection.trackingGroups.size, 1);
+
+           assert(segment.trackingCollection.unlink(trackingGroup), "unlink trackingGroup should be true");
+
+           assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
+           assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
+           assert.equal(segment.trackingCollection.unlink(trackingGroup), false,
+                "repeat unlink trackingGroup should be false");
         });
 });

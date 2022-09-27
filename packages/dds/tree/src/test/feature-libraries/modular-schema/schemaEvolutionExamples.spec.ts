@@ -7,13 +7,13 @@ import { strict as assert } from "assert";
 
 import {
     FieldTypeView, FullSchemaPolicy, TreeViewSchema, ViewSchemaCollection, allowsFieldSuperset,
-    allowsTreeSuperset, ViewSchema, allowsRepoSuperset,
+    allowsTreeSuperset, ViewSchema,
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema";
 
 import {
-    treeSchema, fieldSchema, rootFieldKey,
+    treeSchema, fieldSchema,
     FieldSchema,
     GlobalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema, StoredSchemaRepository, SchemaData,
 } from "../../../schema-stored";
@@ -22,6 +22,7 @@ import {
 } from "../../../schema-view";
 import { brand } from "../../../util";
 import { defaultSchemaPolicy, emptyField, FieldKinds } from "../../../feature-libraries";
+import { rootFieldKey } from "../../../tree";
 
 // Allow importing specific example files:
 /* eslint-disable-next-line import/no-internal-modules */

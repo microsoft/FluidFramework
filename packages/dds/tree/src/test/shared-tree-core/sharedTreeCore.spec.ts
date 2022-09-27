@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IChannelAttributes,
     IChannelStorageService,
@@ -15,8 +15,8 @@ import {
     ISummaryTreeWithStats,
     IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats } from "@fluidframework/runtime-utils";
 import { MockFluidDataStoreRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
     Index,
     SharedTreeCore,
@@ -25,7 +25,7 @@ import {
     SummaryElementStringifier,
 } from "../../shared-tree-core";
 import { AnchorSet } from "../../tree";
-import { DefaultChangeFamily, DefaultChangeset, DefaultRebaser } from "../../feature-libraries";
+import { DefaultChangeFamily, DefaultChangeset } from "../../feature-libraries";
 
 describe("SharedTreeCore", () => {
     it("summarizes without indexes", async () => {
@@ -40,12 +40,26 @@ describe("SharedTreeCore", () => {
 
     describe("indexes", () => {
         it("are loaded", async () => {
-            const index = new MockIndex("Index");
+            const index = new MockIndex();
             let loaded = false;
             index.on("loaded", () => loaded = true);
             const tree = createTree([index]);
             await tree.load(new MockSharedObjectServices({}));
             assert(loaded, "Expected index to load");
+        });
+
+        it("load blobs", async () => {
+            const index = new MockIndex();
+            let loadedBlob = false;
+            index.on("loaded", (blobContents) => {
+                if (blobContents === MockIndex.blobContents) {
+                    loadedBlob = true;
+                }
+            });
+            const tree = createTree([index]);
+            const { summary } = await tree.summarize();
+            await tree.load(MockSharedObjectServices.createFromSummary(summary));
+            assert.equal(loadedBlob, true);
         });
 
         it("summarize synchronously", () => {
@@ -65,7 +79,7 @@ describe("SharedTreeCore", () => {
             assert.equal(Object.entries(indexSummaryTree.tree).length, indexes.length,
                 "Expected both indexes to be present in the index subtree of the summary");
 
-            assert.equal(stats.treeNodeCount, 2,
+            assert.equal(stats.treeNodeCount, 4,
                 "Expected summary stats to correctly count tree nodes");
         });
 
@@ -127,18 +141,28 @@ describe("SharedTreeCore", () => {
     }
 
     interface TestIndexEvents extends IEvent {
-        (event: "loaded" | "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): unknown;
+        (event: "loaded", listener: (blobContents?: string) => void): void;
+        (event: "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): void;
     }
 
     class MockIndex extends TypedEventEmitter<TestIndexEvents> implements Index<DefaultChangeset>, SummaryElement {
+        public static readonly blobKey = "MockIndexBlobKey";
+        public static readonly blobContents = "MockIndexBlobContent";
+
         public summaryElement: SummaryElement = this;
 
-        public constructor(public readonly key = "TestIndex") {
+        public constructor(public readonly key = "MockIndex") {
             super();
         }
 
         public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
-            this.emit("loaded");
+            if (await services.contains(MockIndex.blobKey)) {
+                const blob = await services.readBlob(MockIndex.blobKey);
+                const blobContents = parse(IsoBuffer.from(blob).toString());
+                this.emit("loaded", blobContents);
+            } else {
+                this.emit("loaded");
+            }
         }
 
         public getAttachSummary(
@@ -148,7 +172,7 @@ describe("SharedTreeCore", () => {
             telemetryContext?: ITelemetryContext | undefined,
         ): ISummaryTreeWithStats {
             this.emit("summarizeAttached");
-            return this.summarizeCore();
+            return this.summarizeCore(stringify);
         }
 
         public async summarize(
@@ -158,23 +182,12 @@ describe("SharedTreeCore", () => {
             telemetryContext?: ITelemetryContext | undefined,
         ): Promise<ISummaryTreeWithStats> {
             this.emit("summarizeAsync");
-            return this.summarizeCore();
+            return this.summarizeCore(stringify);
         }
 
-        private summarizeCore(): ISummaryTreeWithStats {
+        private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {
             this.emit("summarize");
-            return {
-                stats: mergeStats(),
-                summary: {
-                    type: SummaryType.Tree,
-                    tree: {
-                        key: {
-                            type: SummaryType.Blob,
-                            content: this.key,
-                        },
-                    },
-                },
-            };
+            return createSingleBlobSummary(MockIndex.blobKey, stringify(MockIndex.blobContents));
         }
 
         public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {

@@ -19,8 +19,8 @@ The key feature of the collection pattern is that it facilitates individual retr
 For another example of this pattern, consider the `SharedDirectory` DDS.  The `getWorkingDirectory()` method allows granular access to an `IDirectory` that can be used separately from the remainder of the `SharedDirectory`, despite the data being stored in the same data store.  Although the details differ since it is a DDS rather than a data object, the principle is the same.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
-<!-- The getting started instructions are automatically generated.
-To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 

@@ -205,12 +205,9 @@ function tileShift(
         }
     } else {
         const block = <IHierBlock>node;
-        let marker: Marker;
-        if (searchInfo.tilePrecedesPos) {
-            marker = <Marker>block.rightmostTiles[searchInfo.tileLabel];
-        } else {
-            marker = <Marker>block.leftmostTiles[searchInfo.tileLabel];
-        }
+        const marker = searchInfo.tilePrecedesPos
+            ? <Marker>block.rightmostTiles[searchInfo.tileLabel]
+            : <Marker>block.leftmostTiles[searchInfo.tileLabel];
         if (marker !== undefined) {
             searchInfo.tile = marker;
         }
@@ -375,22 +372,35 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
     }
 }
 
+/**
+ * @deprecated For internal use only. public export will be removed.
+ * @internal
+ */
  export interface ClientSeq {
     refSeq: number;
     clientId: string;
 }
 
+/**
+ * @deprecated For internal use only. public export will be removed.
+ * @internal
+ */
  export const clientSeqComparer: Comparer<ClientSeq> = {
     min: { refSeq: -1, clientId: "" },
     compare: (a, b) => a.refSeq - b.refSeq,
 };
 
+/**
+ * @deprecated For internal use only. public export will be removed.
+ * @internal
+ */
 export interface LRUSegment {
     segment?: ISegment;
     maxSeq: number;
 }
 
 /**
+ * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export class MergeTree {
@@ -469,8 +479,8 @@ export class MergeTree {
      * Compute the net length of this segment from a local perspective.
      * @param segment - Segment whose length to find
      * @param localSeq - localSeq at which to find the length of this segment. If not provided,
-     *     default is to consider the local client's current perspective. Only local sequence
-     *     numbers corresponding to un-acked operations give valid results.
+     * default is to consider the local client's current perspective. Only local sequence
+     * numbers corresponding to un-acked operations give valid results.
      */
     public localNetLength(segment: ISegment, refSeq?: number, localSeq?: number) {
         const removalInfo = toRemovalInfo(segment);
@@ -652,11 +662,7 @@ export class MergeTree {
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
                             } else {
                                 holdNodes.push(segment);
-                                if ((this.localNetLength(segment) ?? 0) > 0) {
-                                    prevSegment = segment;
-                                } else {
-                                    prevSegment = undefined;
-                                }
+                                prevSegment = (this.localNetLength(segment) ?? 0) > 0 ? segment : undefined;
                             }
                         } else {
                             holdNodes.push(segment);
@@ -859,9 +865,10 @@ export class MergeTree {
     }
 
     /**
-     * @internal must only be used by client
-     * @param segment - The segment to slide from
-     * @returns The segment to
+     * @remarks Must only be used by client.
+     * @param segment - The segment to slide from.
+     * @returns The segment to.
+     * @internal
      */
     public _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined {
         if (!segment || !isRemovedAndAcked(segment)) {
@@ -906,9 +913,9 @@ export class MergeTree {
             }
         } else {
             for (const ref of refsToSlide) {
-                ref.callbacks?.beforeSlide?.();
+                ref.callbacks?.beforeSlide?.(ref);
                 segment.localRefs?.removeLocalRef(ref);
-                ref.callbacks?.afterSlide?.();
+                ref.callbacks?.afterSlide?.(ref);
             }
         }
         // TODO is it required to update the path lengths?
@@ -952,11 +959,9 @@ export class MergeTree {
     }
 
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
-        if ((this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)) {
-            return node.partialLengths!.getPartialLength(refSeq, clientId);
-        } else {
-            return node.cachedLength;
-        }
+        return (this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)
+            ? node.partialLengths!.getPartialLength(refSeq, clientId)
+            : node.cachedLength;
     }
 
     private nodeLength(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
@@ -1033,11 +1038,7 @@ export class MergeTree {
                     ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= refSeq)))) {
                     // Segment happened by reference sequence number or segment from requesting client
                     if (removalInfo !== undefined) {
-                        if (removalInfo.removedClientIds.includes(clientId)) {
-                            return 0;
-                        } else {
-                            return segment.cachedLength;
-                        }
+                        return removalInfo.removedClientIds.includes(clientId) ? 0 : segment.cachedLength;
                     } else {
                         return segment.cachedLength;
                     }
@@ -1126,12 +1127,11 @@ export class MergeTree {
     // TODO: filter function
     /**
      * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-
+     *
      * @param startPos - Position at which to start the search
      * @param clientId - clientId dictating the perspective to search from
      * @param tileLabel - Label of the tile to search for
      * @param tilePrecedesPos - Whether the desired tile comes before (true) or after (false) `startPos`
-     * @returns
      */
     public findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos = true) {
         const searchInfo: IReferenceSearchInfo = {
@@ -1895,7 +1895,7 @@ export class MergeTree {
         seq: number,
         overwrite = false,
         opArgs: IMergeTreeDeltaOpArgs,
-    ) {
+    ): void {
         let _overwrite = overwrite;
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
@@ -2077,7 +2077,7 @@ export class MergeTree {
     }
 
     /**
-     *  Walk the segments up to the current segment and calculate its position
+     * Walk the segments up to the current segment and calculate its position
      */
     private findRollbackPosition(segment: ISegment) {
         let segmentPosition = 0;

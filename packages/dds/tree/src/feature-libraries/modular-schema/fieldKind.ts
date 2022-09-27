@@ -20,6 +20,8 @@ import { FieldChangeHandler } from "./fieldChangeHandler";
  * All behavior must be deterministic, and not change across versions of the app/library.
  *
  * These policies include the data encoding, change encoding, change rebase and change application.
+ *
+ * @sealed
  */
 export class FieldKind {
     /**

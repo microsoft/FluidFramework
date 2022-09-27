@@ -301,7 +301,7 @@ export class OdspTestDriver implements ITestDriver {
     /**
      * Returns the url to container which can be used to load the container through loader.
      * @param testId - Filename of the Fluid file. Note: This is not the container id as for odsp
-     *  container id is the hashed id generated using driveId and itemId. Container id is not the filename.
+     * container id is the hashed id generated using driveId and itemId. Container id is not the filename.
      */
     async createContainerUrl(testId: string): Promise<string> {
         if (!this.testIdToUrl.has(testId)) {

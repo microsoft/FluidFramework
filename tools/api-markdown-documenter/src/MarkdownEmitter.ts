@@ -15,13 +15,15 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocLinkTag, DocNode, DocNodeKind, StringBuilder } from "@microsoft/tsdoc";
 
-import { logError, logWarning } from "./LoggingUtilities";
-import { MarkdownDocument } from "./MarkdownDocument";
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
-} from "./MarkdownDocumenterConfiguration";
+} from "./Configuration";
+import { Logger } from "./Logging";
+import { MarkdownDocument } from "./MarkdownDocument";
 import {
+    CustomDocNodeKind,
+    DocAlert,
     DocEmphasisSpan,
     DocHeading,
     DocList,
@@ -30,7 +32,6 @@ import {
     DocTableCell,
     ListKind,
 } from "./doc-nodes";
-import { CustomDocNodeKind } from "./doc-nodes/CustomDocNodeKind";
 import { getLinkUrlForApiItem } from "./utilities";
 
 /**
@@ -47,7 +48,7 @@ export interface EmitterOptions extends BaseEmitterOptions {
     /**
      * The root item of the documentation node tree being emitted.
      */
-    contextApiItem: ApiItem | undefined;
+    contextApiItem: ApiItem;
 
     /**
      * Callback to get the link URL for the specified API item.
@@ -67,6 +68,11 @@ export interface EmitterOptions extends BaseEmitterOptions {
      * @defaultValue 0
      */
     headingLevel?: number;
+
+    /**
+     * An optional logger for reporting system events while emitting Markdown contents.
+     */
+    logger?: Logger;
 }
 
 /**
@@ -86,9 +92,30 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      */
     protected readonly apiModel: ApiModel;
 
-    public constructor(apiModel: ApiModel) {
+    /**
+     * Optional hook for generating front-matter that will be inserted at the top of the emitted Markdown string.
+     *
+     * @param contextApiItem - The API item for which the Markdown document is being generated.
+     *
+     * @returns The string of front-matter contents, or `undefined` if no front-matter is required.
+     *
+     * @defaultValue Does not insert any front-matter.
+     *
+     * @virtual
+     */
+    protected readonly generateFrontMatter?: (contextApiItem: ApiItem) => string;
+
+    /**
+     * @param apiModel - See {@link MarkdownEmitter.apiModel}.
+     * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
+     */
+    public constructor(
+        apiModel: ApiModel,
+        generateFrontMatter?: (contextApiItem: ApiItem) => string,
+    ) {
         super();
         this.apiModel = apiModel;
+        this.generateFrontMatter = generateFrontMatter;
     }
 
     /**
@@ -98,6 +125,14 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
      * @virtual
      */
     public emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string {
+        if (this.generateFrontMatter !== undefined) {
+            const frontMatter = this.generateFrontMatter(options.contextApiItem).trim();
+
+            const writer = new IndentedWriter(stringBuilder);
+            writer.write(frontMatter);
+            writer.ensureSkippedLine();
+        }
+
         return super.emit(stringBuilder, docNode, options).trim();
     }
 
@@ -118,6 +153,10 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                     contextWithIncrementedHeadingLevel(context),
                     docNodeSiblings,
                 );
+                break;
+            }
+            case CustomDocNodeKind.Alert: {
+                this.writeAlert(docNode as DocAlert, context, docNodeSiblings);
                 break;
             }
             case CustomDocNodeKind.Heading: {
@@ -166,6 +205,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         }
 
         const options: EmitterOptions = context.options;
+        const logger = options.logger;
 
         const result: IResolveDeclarationReferenceResult =
             this.apiModel.resolveDeclarationReference(
@@ -182,19 +222,15 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                     // Generate a name such as Namespace1.Namespace2.MyClass.myMethod()
                     rawLinkText = result.resolvedApiItem.getScopedNameWithinPackage();
                 }
-                if (rawLinkText.length > 0) {
-                    this.writeLink(
-                        this.getEscapedText(rawLinkText.replace(/\s+/g, " ")),
-                        linkUrl,
-                        context,
-                    );
-                } else {
-                    logWarning("Unable to determine link text");
-                }
+                this.writeLink(
+                    this.getEscapedText(rawLinkText.replace(/\s+/g, " ")),
+                    linkUrl,
+                    context,
+                );
             }
         } else if (result.errorMessage) {
             const elementText = docLinkTag.codeDestination.emitAsTsdoc();
-            logWarning(`Unable to resolve reference "${elementText}": ` + result.errorMessage);
+            logger?.warning(`Unable to resolve reference "${elementText}": ` + result.errorMessage);
 
             // Emit item as simple italicized text, so that at least something appears in the generated output
             this.writePlainText(
@@ -264,12 +300,13 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         docNodeSiblings: boolean,
     ): void {
         const writer: IndentedWriter = context.writer;
+        const logger = context.options.logger;
 
         writer.ensureSkippedLine();
 
         let headingLevel = docHeading.level ?? context.options.headingLevel ?? 1;
         if (headingLevel <= 0) {
-            logError(
+            logger?.error(
                 `Cannot render a heading level less than 1. Got ${headingLevel}. Will use 1 instead.`,
             );
             headingLevel = 1;
@@ -341,6 +378,45 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         writer.increaseIndent("> ");
 
         this.writeNode(docNoteBox.content, context, docNodeSiblings);
+
+        writer.decreaseIndent();
+
+        writer.ensureSkippedLine();
+    }
+
+    /**
+     * Writes Markdown content for the provided `docAlert`.
+     *
+     * @virtual
+     */
+    protected writeAlert(
+        docAlert: DocAlert,
+        context: EmitterContext,
+        docNodeSiblings: boolean,
+    ): void {
+        const writer: IndentedWriter = context.writer;
+
+        writer.ensureSkippedLine();
+
+        writer.increaseIndent("> ");
+
+        let headerText: string[] = [];
+        if (docAlert.type !== undefined) {
+            headerText.push(`[${docAlert.type}]`);
+        }
+
+        if (docAlert.type !== undefined && docAlert.title !== undefined) {
+            headerText.push(": ");
+        }
+
+        if (docAlert.title !== undefined) {
+            headerText.push(docAlert.title);
+        }
+
+        this.writePlainText(headerText.join(""), { ...context, boldRequested: true });
+        writer.ensureSkippedLine();
+
+        this.writeNode(docAlert.content, context, docNodeSiblings);
 
         writer.decreaseIndent();
 
