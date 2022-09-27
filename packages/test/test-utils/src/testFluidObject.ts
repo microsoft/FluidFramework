@@ -13,8 +13,8 @@ import {
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ITestFluidObject } from "./interfaces";
 import { assert } from "@fluidframework/common-utils";
+import { ITestFluidObject } from "./interfaces";
 
 /**
  * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
