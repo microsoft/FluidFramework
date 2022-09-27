@@ -206,11 +206,7 @@ export function interleave<T, TState>(
         }
 
         generatorIndex += 1;
-        if (generatorIndex % 2 === 1) {
-            return take(numOps1, spiedGenerator1);
-        } else {
-            return take(numOps2, spiedGenerator2);
-        }
+        return generatorIndex % 2 === 1 ? take(numOps1, spiedGenerator1) : take(numOps2, spiedGenerator2);
     });
 }
 
@@ -396,11 +392,9 @@ export function interleaveAsync<T, TState>(
         }
 
         generatorIndex += 1;
-        if (generatorIndex % 2 === 1) {
-            return takeAsync(numOps1, spiedGenerator1);
-        } else {
-            return takeAsync(numOps2, spiedGenerator2);
-        }
+        return generatorIndex % 2 === 1
+            ? takeAsync(numOps1, spiedGenerator1)
+            : takeAsync(numOps2, spiedGenerator2);
     });
 }
 

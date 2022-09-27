@@ -7,9 +7,14 @@ import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
 import { ISnapshotContents } from "./odspPublicUtils";
-import { ReadBuffer } from "./ReadBufferUtils";
 import { TreeBuilderSerializer } from "./WriteBufferUtils";
-import { addBoolProperty, addNumberProperty, addStringProperty, NodeCore } from "./zipItDataRepresentationUtils";
+import {
+    addBoolProperty,
+    addNumberProperty,
+    addStringProperty,
+    addDictionaryStringProperty,
+    NodeCore,
+} from "./zipItDataRepresentationUtils";
 
 /**
  * Writes header section of the snapshot.
@@ -28,16 +33,16 @@ function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number) {
  * @param blobs - blobs that is being serialized
 */
 function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>) {
-    snapshotNode.addString("blobs", true);
+    snapshotNode.addDictionaryString("blobs");
     const blobsNode = snapshotNode.addNode("list");
     for (const [storageBlobId, blob] of blobs) {
         const blobNode = blobsNode.addNode();
-        addStringProperty(blobNode, "id", storageBlobId, true);
-        blobNode.addString("data", true);
+        addDictionaryStringProperty(blobNode, "id", storageBlobId);
+        blobNode.addString("data");
         if (blob instanceof ArrayBuffer) {
-            blobNode.addBlob(new Uint8Array(blob), false);
+            blobNode.addBlob(new Uint8Array(blob));
         } else {
-            blobNode.addBlob(new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf-8")), false);
+            blobNode.addBlob(new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf-8")));
         }
     }
 }
@@ -48,7 +53,7 @@ function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | Ar
  * @param snapshotTree - snapshot tree that is being serialized
 */
 function writeTreeSection(snapshotNode: NodeCore, snapshotTree: ISnapshotTree) {
-    snapshotNode.addString("treeNodes", true);
+    snapshotNode.addDictionaryString("treeNodes");
     const treesNode = snapshotNode.addNode("list");
     writeTreeSectionCore(treesNode, snapshotTree);
 }
@@ -56,13 +61,16 @@ function writeTreeSection(snapshotNode: NodeCore, snapshotTree: ISnapshotTree) {
 function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) {
     for (const [path, value] of Object.entries(snapshotTree.trees)) {
         const treeNode = treesNode.addNode();
-        addStringProperty(treeNode, "name", path);
+        // Many leaf nodes in the tree have same names like "content", "body", "header"
+        // We could be smarter here and not use dictionary where we are sure reuse is unlikely, but
+        // it does not feel like it's worth it.
+        addDictionaryStringProperty(treeNode, "name", path);
         if (snapshotTree.unreferenced) {
             addBoolProperty(treeNode, "unreferenced", snapshotTree.unreferenced);
         }
         // Only write children prop if either blobs or trees are present.
         if (Object.keys(value.blobs).length > 0 || Object.keys(value.trees).length > 0) {
-            treeNode.addString("children", true);
+            treeNode.addDictionaryString("children");
             const childNode = treeNode.addNode("list");
             writeTreeSectionCore(childNode, value);
         }
@@ -71,8 +79,8 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) 
     if (snapshotTree.blobs) {
         for (const [path, id] of Object.entries(snapshotTree.blobs)) {
             const blobNode = treesNode.addNode();
-            addStringProperty(blobNode, "name", path);
-            addStringProperty(blobNode, "value", id, true);
+            addDictionaryStringProperty(blobNode, "name", path);
+            addDictionaryStringProperty(blobNode, "value", id);
         }
     }
 }
@@ -89,7 +97,7 @@ function writeSnapshotSection(
     snapshotTree: ISnapshotTree,
     snapshotSequenceNumber: number,
 ) {
-    rootNode.addString("snapshot", true);
+    rootNode.addDictionaryString("snapshot");
     const snapshotNode = rootNode.addNode();
 
     const snapshotId = snapshotTree.id;
@@ -113,13 +121,13 @@ function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
         firstSequenceNumber = ops[0].sequenceNumber;
     }
     if (firstSequenceNumber !== undefined) {
-        rootNode.addString("deltas", true);
+        rootNode.addDictionaryString("deltas");
         const opsNode = rootNode.addNode();
         addNumberProperty(opsNode, "firstSequenceNumber", firstSequenceNumber);
-        opsNode.addString("deltas", true);
+        opsNode.addDictionaryString("deltas");
         const deltaNode = opsNode.addNode("list");
         ops.forEach((op) => {
-            deltaNode.addString(JSON.stringify(op), false);
+            deltaNode.addString(JSON.stringify(op));
         });
     }
 }
@@ -129,7 +137,7 @@ function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
  * @param snapshotContents - snapshot tree contents to serialize
  * @returns - ReadBuffer - binary representation of the data.
  */
-export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): ReadBuffer {
+export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): Uint8Array {
     const builder = new TreeBuilderSerializer();
     // Create the root node.
     const rootNode = builder.addNode();

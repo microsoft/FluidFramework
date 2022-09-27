@@ -86,18 +86,18 @@ export class MonoRepo {
         if (existsSync(lernaPath)) {
             const lerna = readJsonSync(lernaPath);
             if (lerna.version !== undefined) {
-                    logger.logVerbose(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
+                    logger.verbose(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
                 this.version = lerna.version;
                 versionFromLerna = true;
             }
 
             if (lerna.packages !== undefined) {
-                    logger.logVerbose(`${kind}: Loading packages from ${lernaPath}`);
+                    logger.verbose(`${kind}: Loading packages from ${lernaPath}`);
 
                 for (const dir of lerna.packages as string[]) {
                     // TODO: other glob pattern?
                     const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
-                    this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), MonoRepoKind[kind], ignoredDirs, this));
+                    this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), kind, ignoredDirs, this));
                 }
                 this.workspaceGlobs = lerna.packages;
                 return;
@@ -110,11 +110,11 @@ export class MonoRepo {
         const pkgJson = readJsonSync(packagePath);
         if (pkgJson.version === undefined && !versionFromLerna) {
             this.version = pkgJson.version;
-            logger.logVerbose(`${kind}: Loading version (${pkgJson.version}) from ${packagePath}`);
+            logger.verbose(`${kind}: Loading version (${pkgJson.version}) from ${packagePath}`);
         }
 
         if (pkgJson.workspaces !== undefined) {
-            logger.logVerbose(`${kind}: Loading packages from ${packagePath}`);
+            logger.verbose(`${kind}: Loading packages from ${packagePath}`);
             for (const dir of pkgJson.workspaces as string[]) {
                 this.packages.push(...Packages.loadGlob(dir, kind, ignoredDirs, this));
             }
@@ -133,7 +133,7 @@ export class MonoRepo {
     }
 
     public async install() {
-        this.logger.log(`${this.kind}: Installing - npm i`);
+        this.logger.info(`${this.kind}: Installing - npm i`);
         const installScript = "npm i";
         return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
     }

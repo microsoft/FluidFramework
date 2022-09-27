@@ -37,7 +37,7 @@ interface IAcceptedQuorumValue<T> {
      * - The sequence number of the "accept" op from the final client we expected signoff from
      * - The sequence number of the ClientLeave of the final client we expected signoff from
      * - The sequence number of the "set" op, if there were no expected signoffs (i.e. only the submitting client
-     *   was connected when the op was sequenced)
+     * was connected when the op was sequenced)
      *
      * For values set in detached state, it will be 0.
      */
@@ -247,7 +247,6 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
                     value,
                     0 /* refSeq */,
                     0 /* setSequenceNumber */,
-                    "detachedClient" /* clientId */,
                 );
             });
             return;
@@ -301,7 +300,6 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
         value: T | undefined,
         refSeq: number,
         setSequenceNumber: number,
-        clientId: string,
     ): void => {
         const currentValue = this.values.get(key);
         // We use a consensus-like approach here, so a proposal is valid if the value is unset or if there is no
@@ -317,9 +315,9 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
 
         const accepted = currentValue?.accepted;
 
-        // We expect signoffs from all connected clients at the time the set was sequenced, except for the client
-        // who issued the set (that client implicitly signs off).
-        const expectedSignoffs = this.getSignoffClients().filter((quorumMemberId) => quorumMemberId !== clientId);
+        // We expect signoffs from all connected clients at the time the set was sequenced (including the client who
+        // sent the set).
+        const expectedSignoffs = this.getSignoffClients();
 
         const newQuorumValue: QuorumValue<T> = {
             accepted,
@@ -334,7 +332,8 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
         this.emit("pending", key);
 
         if (expectedSignoffs.length === 0) {
-            // Only the submitting client was connected at the time the set was sequenced.
+            // At least the submitting client should be amongst the expectedSignoffs, but keeping this check around
+            // as extra protection and in case we bring back the "submitting client implicitly accepts" optimization.
             this.values.set(key, {
                 accepted: { value, sequenceNumber: setSequenceNumber },
                 pending: undefined,
@@ -433,11 +432,13 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
     }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.initializeLocalCore}
      * @internal
      */
     protected initializeLocalCore(): void { }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.onDisconnect}
      * @internal
      */
     protected onDisconnect(): void {
@@ -489,7 +490,7 @@ export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements 
 
             switch (op.type) {
                 case "set":
-                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber, message.clientId);
+                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber);
                     break;
 
                 case "accept":

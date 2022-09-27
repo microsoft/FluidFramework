@@ -10,6 +10,8 @@ import {
     IChannelServices,
     IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { ISharedObject } from "@fluidframework/shared-object-base";
+import { ICheckout, TransactionResult } from "../checkout";
 import {
     defaultSchemaPolicy,
     ForestIndex, ObjectForest,
@@ -19,11 +21,19 @@ import {
     SequenceChangeset,
     SequenceEditBuilder,
 } from "../feature-libraries";
-import { IEditableForest, IForestSubscription } from "../forest";
+import { IForestSubscription } from "../forest";
 import { StoredSchemaRepository } from "../schema-stored";
 import { Index, SharedTreeCore } from "../shared-tree-core";
-import { Checkout, runSynchronousTransaction, TransactionResult } from "../transaction";
+import { Checkout as TransactionCheckout, runSynchronousTransaction } from "../transaction";
 import { AnchorSet } from "../tree";
+
+/**
+ * Collaboratively editable tree distributed datastructure,
+ * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
+ *
+ * See [the README](../../README.md) for details.
+ */
+export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject{}
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
@@ -32,9 +42,13 @@ import { AnchorSet } from "../tree";
  * TODO: detail compatibility requirements.
  * TODO: expose or implement Checkout.
  */
-export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
-    implements Checkout<SequenceEditBuilder, SequenceChangeset> {
-    public forest: IEditableForest;
+class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily> implements ISharedTree {
+    public readonly forest: IForestSubscription;
+    /**
+     * Rather than implementing TransactionCheckout, have a member that implements it.
+     * This allows keeping the `IEditableForest` private.
+     */
+    private readonly transactionCheckout: TransactionCheckout<SequenceEditBuilder, SequenceChangeset>;
 
     public constructor(
         id: string,
@@ -54,18 +68,23 @@ export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChange
                 );
 
             this.forest = forest;
+            this.transactionCheckout = {
+                forest,
+                changeFamily: this.changeFamily,
+                submitEdit: (edit) => this.submitEdit(edit),
+            };
     }
 
     public runTransaction(transaction: (
         forest: IForestSubscription,
         editor: SequenceEditBuilder,
     ) => TransactionResult): TransactionResult {
-        return runSynchronousTransaction(this, transaction);
+        return runSynchronousTransaction(this.transactionCheckout, transaction);
     }
 }
 
 /**
- * A channel factory that creates {@link SharedTree}s.
+ * A channel factory that creates {@link ISharedTree}s.
  */
  export class SharedTreeFactory implements IChannelFactory {
     public type: string = "SharedTree";
@@ -87,7 +106,7 @@ export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChange
         return tree;
     }
 
-    public create(runtime: IFluidDataStoreRuntime, id: string): IChannel {
+    public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
         const tree = new SharedTree(id, runtime, this.attributes, "SharedTree");
         tree.initializeLocal();
         return tree;

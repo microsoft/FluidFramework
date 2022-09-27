@@ -4,7 +4,7 @@
  */
 
 /**
- * @deprecated -- in favor build-tools/packages/build-cli/src/genMonoRepoPackageJson.ts
+ * @deprecated In favor `build-tools/packages/build-cli/src/genMonoRepoPackageJson.ts`.
  */
 
 import { FluidRepo } from "../common/fluidRepo";

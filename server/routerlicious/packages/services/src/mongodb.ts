@@ -101,11 +101,9 @@ export class MongoCollection<T> implements core.ICollection<T> {
                 upsert: true,
             });
 
-        if (result.value) {
-            return { value: result.value, existing: true };
-        } else {
-            return { value, existing: false };
-        }
+        return result.value
+            ? { value: result.value, existing: true }
+            : { value, existing: false };
     }
 
     private async updateCore(filter: any, set: any, addToSet: any, upsert: boolean): Promise<void> {

@@ -128,7 +128,7 @@ export class Client {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage): {
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -142,7 +142,7 @@ export class Client {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getOrAddShortClientId(longClientId: string): number;
-    getPosition(segment: ISegment): number;
+    getPosition(segment: ISegment, localSeq?: number): number;
     // (undocumented)
     getPropertiesAtPosition(pos: number): PropertySet | undefined;
     // (undocumented)
@@ -390,7 +390,7 @@ export interface IHierBlock extends IMergeBlock {
 
 // Warning: (ae-internal-missing-underscore) The name "IIntegerRange" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @internal @deprecated (undocumented)
+// @internal @deprecated
 export interface IIntegerRange {
     // (undocumented)
     end: number;
@@ -411,7 +411,7 @@ export interface IInterval {
     // (undocumented)
     compareStart(b: IInterval): number;
     // (undocumented)
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
     // (undocumented)
@@ -1001,8 +1001,7 @@ export class MergeTree {
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // (undocumented)
-    findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
+    findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos?: boolean): {
         tile: ReferencePosition;
         pos: number;
     } | undefined;
@@ -1019,6 +1018,7 @@ export class MergeTree {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number, localSeq?: number): number;
+    // (undocumented)
     _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined;
     // @deprecated (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;

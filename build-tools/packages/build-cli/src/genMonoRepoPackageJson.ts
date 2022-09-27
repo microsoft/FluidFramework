@@ -22,8 +22,8 @@ function format(n: number) {
  * @param repoPackageJson - any
  * @param logger - Logger
  * @returns - lerna doesn't distingish between dependencies vs devDependencies, this function
-    will use the lerna-package-lock.json and patch up the "dev" field in the dependencies and
-    output it to repo-package-lock.json
+ * will use the lerna-package-lock.json and patch up the "dev" field in the dependencies and
+ * output it to repo-package-lock.json
  */
 
 async function generateMonoRepoPackageLockJson(
@@ -88,12 +88,12 @@ async function generateMonoRepoPackageLockJson(
     const markTopLevelNonDev = (dep: string, ref: string, topRef: string) => {
         const item = repoPackageLockJson.dependencies[dep];
         if (item !== undefined) {
-            logger.logError(
+            logger.errorLog(
                 `Missing ${dep} in lock file referenced by ${ref} from ${topRef} in ${monoRepo.kind.toLowerCase()}`,
             );
         }
 
-        logger.logVerbose(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
+        logger.verbose(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
 
         if (item.dev !== undefined) {
             topLevelDevCount--;
@@ -107,10 +107,10 @@ async function generateMonoRepoPackageLockJson(
         markTopLevelNonDev(dep, "<root>", "<root>");
     }
 
-    logger.log(
+    logger.info(
         `${monoRepo.kind}: ${format(totalDevCount)}/${format(totalCount)} locked devDependencies`,
     );
-    logger.log(
+    logger.info(
         `${monoRepo.kind}: ${format(topLevelDevCount)}/${format(
             topLevelTotalCount,
         )} top level locked devDependencies`,
@@ -145,7 +145,7 @@ function processDependencies(
         const existing = repoPackageJson.dependencies[dep];
         if (existing) {
             if (existing !== version) {
-                logger.logError(
+                logger.errorLog(
                     `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
                 );
             }
@@ -176,7 +176,7 @@ function processDevDependencies(
         const existing = repoPackageJson.dependencies[dep] ?? repoPackageJson.devDependencies[dep];
         if (existing) {
             if (existing !== version) {
-                logger.logError(
+                logger.errorLog(
                     `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
                 );
             }
@@ -196,7 +196,7 @@ function processDevDependencies(
  * @param monoRepo - MonoRepo
  * @param logger - Logger
  * @returns - Generate the corresponding package.json for the lerna project by gathering all the
-    dependencies from all the packages, and output it to repo-package.json
+ * dependencies from all the packages, and output it to repo-package.json
  */
 
 export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo, logger: Logger) {
@@ -229,7 +229,7 @@ export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo, log
         path.join(monoRepo.repoPath, "repo-package.json"),
         JSON.stringify(repoPackageJson, undefined, 2),
     );
-    logger.log(
+    logger.info(
         `${monoRepo.kind}: ${format(devDepCount)}/${format(
             depCount + devDepCount,
         )} devDependencies`,
