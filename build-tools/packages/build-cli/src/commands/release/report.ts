@@ -368,7 +368,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 );
             }
 
-            const isNewRelease = this.isRecentRelease(verDetails);
+            const isNewRelease = this.isRecentReleaseByDate(latestDate);
 
             // Expand the release group to its constituent packages.
             if (isReleaseGroup(pkgName)) {
@@ -425,12 +425,8 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         for (const [pkgName, verDetails] of Object.entries(reportData)) {
             const { date: latestDate, version: latestVer } = verDetails.latestReleasedVersion;
 
-            const displayDate =
-                latestDate === undefined
-                    ? "--no date--"
-                    : formatISO9075(latestDate, { representation: "date" });
-
-            const highlight = this.isRecentRelease(verDetails) ? chalk.green : chalk.white;
+            const displayDate = getDisplayDate(latestDate);
+            const highlight = this.isRecentReleaseByDate(latestDate) ? chalk.green : chalk.white;
 
             let displayRelDate: string;
             if (latestDate === undefined) {
@@ -467,10 +463,10 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         return tableData;
     }
 
-    private isRecentRelease(data: RawReleaseData): boolean {
-        const latestDate = data.latestReleasedVersion.date;
-        return this.isRecentReleaseByDate(latestDate);
-    }
+    // private isRecentRelease(data: RawReleaseData): boolean {
+    //     const latestDate = data.latestReleasedVersion.date;
+    //     return this.isRecentReleaseByDate(latestDate);
+    // }
 
     private isRecentReleaseByDate(date?: Date): boolean {
         return date === undefined
@@ -478,6 +474,9 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             : differenceInBusinessDays(Date.now(), date) < this.processedFlags.days;
     }
 
+    /**
+     * Generates table data for all versions of a package/release group.
+     */
     private generateAllReleasesTable(
         pkgOrReleaseGroup: ReleasePackage | ReleaseGroup,
         versions: VersionDetails[],
@@ -490,11 +489,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             const displayPreviousVersion =
                 index >= 1 ? releases[index - 1].version : DEFAULT_MIN_VERSION;
 
-            const displayDate =
-                ver.date === undefined
-                    ? "--no date--"
-                    : formatISO9075(ver.date, { representation: "date" });
-
+            const displayDate = getDisplayDate(ver.date);
             const highlight = this.isRecentReleaseByDate(ver.date) ? chalk.green : chalk.white;
 
             let displayRelDate: string;
@@ -523,20 +518,25 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             index++;
         }
 
-        // tableData.reverse();
         const limit = this.processedFlags.limit;
-
         if (limit !== undefined && tableData.length > limit) {
             this.verbose(
                 `Reached the release limit (${limit}), ignoring the remaining ${
                     tableData.length - limit
                 } releases.`,
             );
+            // The most recent releases are last, so slice from the end.
             return tableData.slice(-limit);
         }
 
         return tableData;
     }
+}
+
+function getDisplayDate(date?: Date): string {
+    return date === undefined
+    ? "--no date--"
+    : formatISO9075(date, { representation: "date" });
 }
 
 interface RawReleaseData {
