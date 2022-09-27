@@ -125,7 +125,7 @@ Partial<{ readonly IFluidHandle: IFluidHandle<FluidObject>; }> {
     /**
      * Fluid handle to the object that acts as entry point for the data store runtime. It'll only be defined if
      * initializeEntrypoint was passed to the constructor when instantiating the runtime. Exposed so we can start
-     * making handles a first-class citizen and the primary way of interacting with some fluid objects; in this case
+     * making handles a first-class citizen and the primary way of interacting with some Fluid objects; in this case
      * accessing the entry point of a data store runtime without having to use the request pattern to gets its root
      * object. Use it if possible, but for now all code paths should first check if it's not undefined, and keep using
      * current approaches (e.g. using the request pattern) if it is.
@@ -209,7 +209,7 @@ Partial<{ readonly IFluidHandle: IFluidHandle<FluidObject>; }> {
      * @param initializeEntrypoint - Function to initialize the entrypoint object for the data store runtime. The
      * handle to this data store runtime will point to the object returned by this function. If this function is not
      * provided, the handle will be left undefined. This is here so we can start making handles a first-class citizen
-     * and the primary way of interacting with some fluid objects, and should be used if possible.
+     * and the primary way of interacting with some Fluid objects, and should be used if possible.
      */
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
