@@ -1018,12 +1018,7 @@ export class MergeTree {
                         }
                     }
 
-                    if (seq <= refSeq || segment.clientId === clientId) {
-                        return segment.cachedLength;
-                    } else {
-                        // Segment invisible to client at reference sequence number/branch id/client id of op
-                        return 0;
-                    }
+                    return seq <= refSeq || segment.clientId === clientId ? segment.cachedLength : 0;
                 }
 
                 if (removalInfo !== undefined

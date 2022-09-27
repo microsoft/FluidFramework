@@ -812,11 +812,7 @@ export class PartialSequenceLengths {
 
     private cliLatest(clientId: number) {
         const cliSeqs = this.clientSeqNumbers[clientId];
-        if (cliSeqs && (cliSeqs.size > 0)) {
-            return cliSeqs.size - 1;
-        } else {
-            return -1;
-        }
+        return cliSeqs && (cliSeqs.size > 0) ? cliSeqs.size - 1 : -1;
     }
 }
 

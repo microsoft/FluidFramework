@@ -65,9 +65,9 @@ export enum IntervalType {
 }
 
 /**
- * @internal
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
+ * @internal
  */
 export interface ISerializedInterval {
     /**
@@ -89,9 +89,9 @@ export interface ISerializedInterval {
 }
 
 /**
- * @internal
  * Represents a change that should be applied to an existing interval.
  * Changes can modify any of start/end/properties, with `undefined` signifying no change should be made.
+ * @internal
  */
 export type SerializedIntervalDelta =
     Omit<ISerializedInterval, "start" | "end" | "properties">
@@ -253,8 +253,8 @@ export class Interval implements ISerializableInterval {
     }
 
     /**
-     * @internal
      * {@inheritDoc ISerializableInterval.serialize}
+     * @internal
      */
     public serialize(): ISerializedInterval {
         const serializedInterval: ISerializedInterval = {
@@ -450,8 +450,8 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     /**
-     * @internal
      * {@inheritDoc ISerializableInterval.serialize}
+     * @internal
      */
     public serialize(): ISerializedInterval {
         const startPosition = this.client.localReferencePositionToPosition(this.start);
