@@ -11,8 +11,8 @@
  */
 
 /**
-  * A typed data container that is persistable, high-performance, and can be used
-  * as a backing store for collaborative property sets.
+ * A typed data container that is persistable, high-performance, and can be used
+ * as a backing store for collaborative property sets.
  */
 class BaseDataArray {
     protected _buffer: any;
@@ -22,8 +22,7 @@ class BaseDataArray {
     constructor(size: number);
 
     /**
-     * @param bufferConstructor - This is the constructor to be used to
-     *    setup the internal buffer of the DataArray.
+     * @param bufferConstructor - This is the constructor to be used to setup the internal buffer of the DataArray.
      * @param size - The initial size with which to allocate the array.
      */
     constructor(bufferConstructor: any, size: number);
@@ -42,8 +41,8 @@ class BaseDataArray {
 
     /**
      * Get the value at an index. If no index is passed, return zeroth item.
-     * @param in_idx -  the specific item in the data array.
-     * @returns the value at that index
+     * @param in_idx -  The specific item in the data array.
+     * @returns The value at that index.
      */
     getValue(in_idx = 0): any {
         if (in_idx >= this.size || in_idx < 0) {
@@ -163,10 +162,9 @@ class BaseDataArray {
     }
 
     /**
-     * Set this array values to be equal to in_array values
-     * @param in_offset - An optional offset in this array to begin start
-     *                  setting this arrays values to in_array values.
-     * @param in_array - the input array
+     * Set this array values to be equal to in_array values.
+     * @param in_offset - An optional offset in this array to begin start setting this arrays values to in_array values.
+     * @param in_array - The input array.
      */
     set(in_offset: number, in_array) {
         if (in_array instanceof ArrayBuffer || in_array instanceof Array || in_array instanceof this.getBufferCtor()) {
@@ -179,8 +177,8 @@ class BaseDataArray {
     }
 
     /**
-     * insert a value at the end of the array, creates a new element at the end and sets the value
-     * @param in_value - the new value
+     * Insert a value at the end of the array, creates a new element at the end and sets the value.
+     * @param in_value - The new value.
      */
     push(in_value) {
         // Adjust the buffer if necessary
@@ -194,25 +192,24 @@ class BaseDataArray {
     }
 
     /**
-     * get direct access to the data (for performance reasons)
-     * this should be uses read only
-     * @returns the (read only) raw data
+     * Get direct access to the data (for performance reasons) this should be uses read only.
+     * @returns The (read only) raw data.
      */
     getBuffer() {
         return this._buffer;
     }
 
     /**
-     * get the constructor of the underlying TypedArray
-     * @returns the constructor for the data buffer
+     * Get the constructor of the underlying `TypedArray`.
+     * @returns The constructor for the data buffer.
      */
     getBufferCtor() {
         return this.bufferConstructor;
     }
 
     /**
-     * apply a given function to all elements of the array
-     * @param in_fn - the function that will be applied to every element
+     * Apply a given function to all elements of the array.
+     * @param in_fn - The function that will be applied to every element.
      */
     iterate(in_fn) {
         const l = this.size;
@@ -222,11 +219,11 @@ class BaseDataArray {
     }
 
     /**
-     * get a resized buffer copy
-     * @param in_bufferCtor - the constructor for the returned buffer
-     * @param in_buffer - the input buffer (won't be modified)
-     * @param in_newSize - the target size
-     * @returns the buffer with the new size
+     * Tet a resized buffer copy.
+     * @param in_bufferCtor - The constructor for the returned buffer.
+     * @param in_buffer - The input buffer (won't be modified).
+     * @param in_newSize - The target size.
+     * @returns The buffer with the new size.
      */
     private resizeBuffer(in_bufferCtor, in_buffer, in_newSize: number) {
         // target buffer with the desired new size
@@ -241,10 +238,10 @@ class BaseDataArray {
     }
 
     /**
-     * allocate memory for the array (for performance reasons, you can allocate more space than the current length,
-     * which makes pushes to the array less expensive later)
-     * @param size - the target allocated space
-     * @returns the DataArray itself
+     * Allocate memory for the array (for performance reasons, you can allocate more space than the current length,
+     * which makes pushes to the array less expensive later).
+     * @param size - The target allocated space.
+     * @returns The DataArray itself.
      */
     protected _alloc(size: number): any {
         this._buffer = this.resizeBuffer(this.bufferConstructor, this._buffer, size);
@@ -338,11 +335,12 @@ class UniversalDataArray extends BaseDataArray {
     }
 
     /**
- * helper function to write array values into another array at a given offset
- * @param array - target array
- * @param values - the values we need to write
- * @param offset - starting index in target array
- */
+     * Helper function to write array values into another array at a given offset.
+     *
+     * @param array - The target array.
+     * @param values - The values we need to write.
+     * @param offset - The starting index in target array.
+     */
     private arraySet(array, values, offset = 0) {
         let index = 0;
         values.forEach(function(value) {
@@ -352,9 +350,9 @@ class UniversalDataArray extends BaseDataArray {
     }
 
     /**
-     * Insert the content of an array into the DataArray
-     * @param in_offset - The target index
-     * @param in_array - The array to be inserted
+     * Insert the content of an array into the DataArray.
+     * @param in_offset - The target index.
+     * @param in_array - The array to be inserted.
      */
     insertRange(in_offset: number, in_array: any[]) {
         this._buffer.splice.call(this._buffer, ...[in_offset, 0].concat(in_array));
@@ -362,9 +360,9 @@ class UniversalDataArray extends BaseDataArray {
     }
 
     /**
-     * remove a range of elements from the array
-     * @param in_offset - start of the range
-     * @param in_deleteCount - number of elements to be removed
+     * Eemove a range of elements from the array.
+     * @param in_offset - The start of the range.
+     * @param in_deleteCount - The number of elements to be removed.
      */
     removeRange(in_offset: number, in_deleteCount: number) {
         if (in_offset + in_deleteCount < (this._buffer.length as number) + 1) {
@@ -376,10 +374,10 @@ class UniversalDataArray extends BaseDataArray {
     }
 
     /**
-     * Set this array values to be equal to in_array values
+     * Set this array values to be equal to in_array values.
      * @param in_offset - An optional offset in this array to begin start
-     *                  setting this arrays values to in_array values.
-     * @param in_array - the input array
+     * setting this arrays values to in_array values.
+     * @param in_array - The input array.
      */
     set(in_offset: number, in_array) {
         if (in_array instanceof ArrayBuffer || in_array instanceof Array || in_array instanceof this.getBufferCtor()) {
@@ -466,10 +464,9 @@ class StringDataArray extends BaseDataArray {
     }
 
     /**
-     * Set this array values to be equal to in_string values
-     * @param in_offset - The offset in this array to begin start
-     *                  setting this arrays values to in_string values.
-     * @param in_string - the input string
+     * Set this array values to be equal to in_string values.
+     * @param in_offset - The offset in this array to begin start setting this arrays values to in_string values.
+     * @param in_string - The input string.
      */
     set(in_offset: number, in_string: string) {
         this._buffer =
@@ -529,10 +526,9 @@ class BoolDataArray extends UniversalDataArray {
     }
 
     /**
-     * Set this array values to be equal to in_array values
-     * @param in_offset - An optional offset in this array to begin start
-     *                  setting this arrays values to in_array values.
-     * @param in_array - the input array
+     * Set this array values to be equal to in_array values.
+     * @param in_offset - An optional offset in this array to begin start setting this arrays values to in_array values.
+     * @param in_array - The input array.
      */
     set(in_offset: number, in_array) {
         if (in_array instanceof ArrayBuffer || in_array instanceof Array || in_array instanceof this.getBufferCtor()) {

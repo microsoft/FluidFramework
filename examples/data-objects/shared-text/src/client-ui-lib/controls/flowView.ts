@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/*
-eslint-disable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-no-bitwise,
-*/
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+/* eslint-disable no-bitwise */
 
 import { performance } from "@fluidframework/common-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -1767,7 +1764,7 @@ export class FlowView extends ui.Component {
             {
                 friendlyName: "Normal",
                 exec: () => {
-                    this.setPGProps({ header: null });
+                    this.setPGProps({ header: undefined });
                 },
             },
             {
@@ -1952,13 +1949,13 @@ export class FlowView extends ui.Component {
     }
 
     /**
-     * Returns the (x, y) coordinate of the given position relative to the FlowView's coordinate system or null
+     * Returns the (x, y) coordinate of the given position relative to the FlowView's coordinate system or `undefined`
      * if the position is not visible.
      */
-    private getPositionLocation(position: number): ui.IPoint | null {
+    private getPositionLocation(position: number): ui.IPoint | undefined {
         const lineDiv = findLineDiv(position, this, true);
         if (!lineDiv) {
-            return null;
+            return undefined;
         }
 
         // Estimate placement location
@@ -2653,7 +2650,7 @@ export class FlowView extends ui.Component {
                     tileInfo.pos, tileInfo.pos + 1,
                     {
                         [MergeTree.reservedTileLabelsKey]: remainingLabels,
-                        series: null,
+                        series: undefined,
                     });
             } else {
                 const augLabels = curLabels.slice();
@@ -2735,7 +2732,7 @@ export class FlowView extends ui.Component {
     }
 
     private toggleBold() {
-        this.toggleWordOrSelection("fontWeight", "bold", null);
+        this.toggleWordOrSelection("fontWeight", "bold", undefined);
     }
 
     private toggleItalic() {
@@ -2743,7 +2740,7 @@ export class FlowView extends ui.Component {
     }
 
     private toggleUnderline() {
-        this.toggleWordOrSelection("textDecoration", "underline", null);
+        this.toggleWordOrSelection("textDecoration", "underline", undefined);
     }
 
     private copyFormat() {
@@ -2782,7 +2779,7 @@ export class FlowView extends ui.Component {
         this.setProps({ color });
     }
 
-    private toggleWordOrSelection(name: string, valueOn: string, valueOff: string | null) {
+    private toggleWordOrSelection(name: string, valueOn: string, valueOff: string | undefined) {
         const sel = this.cursor.getSelection();
         if (sel) {
             this.clearSelection(false);
@@ -2795,7 +2792,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    private toggleRange(name: string, valueOn: string, valueOff: string | null, start: number, end: number) {
+    private toggleRange(name: string, valueOn: string, valueOff: string | undefined, start: number, end: number) {
         let someSet = false;
         const findPropSet = (segment: MergeTree.ISegment) => {
             if (MergeTree.TextSegment.is(segment)) {
@@ -3341,9 +3338,7 @@ export class FlowView extends ui.Component {
     }
 }
 
-/*
-eslint-enable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-*/
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
+/* eslint-enable @typescript-eslint/consistent-type-assertions */
+/* eslint-enable @typescript-eslint/strict-boolean-expressions */
+/* eslint-enable no-bitwise */

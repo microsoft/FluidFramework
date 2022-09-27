@@ -16,14 +16,18 @@ import { NonRetryableError } from ".";
  */
 export interface IProgress {
     /**
-     * Abort signal used to cancel operation
-     * Note that most of the layers do not use this signal yet. We need to change that over time.
+     * Abort signal used to cancel operation.
+     *
+     * @remarks Note that most of the layers do not use this signal yet. We need to change that over time.
      * Please consult with API documentation / implementation.
      * Note that  number of layers may not check this signal while holding this request in a queue,
      * so it may take a while it takes effect. This can be improved in the future.
-     * Layers in question are:
-     *    - driver (RateLimiter)
-     *    - runWithRetry
+     *
+     * The layers in question are:
+     *
+     * - driver (RateLimiter)
+     *
+     * - runWithRetry
      */
     cancel?: AbortSignal;
 

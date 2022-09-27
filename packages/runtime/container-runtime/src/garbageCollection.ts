@@ -34,10 +34,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
-    IConfigProvider,
-    IFluidErrorBase,
     loggerToMonitoringContext,
-    LoggingError,
     MonitoringContext,
     PerformanceEvent,
     TelemetryDataTag,
@@ -45,6 +42,7 @@ import {
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
+import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
     getGCVersion,
     GCVersion,
@@ -77,25 +75,6 @@ export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionEx
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-/**
- * Feature gate key to enable closing the container if SweepReady objects are used.
- * Only known values are accepted, otherwise return undefined.
- *
- * mainContainer: Detect these errors only in the main container
- */
-export const sweepReadyUsageDetectionSetting = {
-    read(config: IConfigProvider) {
-        const sweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
-        const value = config.getString(sweepReadyUsageDetectionKey);
-        if (value === undefined) {
-            return { mainContainer: false, summarizer: false };
-        }
-        return {
-            mainContainer: value.indexOf("mainContainer") >= 0,
-            summarizer: value.indexOf("summarizer") >= 0,
-        };
-    },
-};
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -153,7 +132,7 @@ export interface IGarbageCollectionRuntime {
     /** Returns the type of the GC node. */
     getNodeType(nodePath: string): GCNodeType;
     /** Called when the runtime should close because of an error. */
-    closeFn(error?: ICriticalContainerError): void;
+    closeFn: (error?: ICriticalContainerError) => void;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -206,6 +185,7 @@ export interface IGarbageCollectorCreateParams {
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
     readonly activeConnection: () => boolean;
+    readonly getContainerDiagnosticId: () => string;
     readonly snapshotCacheExpiryMs?: number;
 }
 
@@ -323,25 +303,16 @@ export class UnreferencedStateTracker {
 }
 
 /**
- * Error class raised when a SweepReady object is used, indicating a bug in how
- * references are managed in the container by the application, or a bug in how
- * GC tracks those references.
- *
- * There's a chance for false positives when this error is raised by a Main Container,
- * since only the Summarizer has the latest truth about unreferenced node tracking
- */
-class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
-    /** This errorType will be in temporary use (until Sweep is fully implemented) so don't add to any errorType type */
-    public errorType: string = "unreferencedObjectUsedAfterGarbageCollected";
-}
-
-/**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains
  * its state across summaries.
  *
  * Node - represented as nodeId, it's a node on the GC graph
+ *
  * Outbound Route - a path from one node to another node, think `nodeA` -\> `nodeB`
+ *
  * Graph - all nodes with their respective routes
+ *
+ * ```
  *             GC Graph
  *
  *               Node
@@ -351,6 +322,7 @@ class SweepReadyUsageError extends LoggingError implements IFluidErrorBase {
  *         /                 \\
  *       Node               Node
  *  NodeId = "dds1"     NodeId = "dds2"
+ * ```
  */
 export class GarbageCollector implements IGarbageCollector {
     public static create(createParams: IGarbageCollectorCreateParams): IGarbageCollector {
@@ -359,11 +331,16 @@ export class GarbageCollector implements IGarbageCollector {
 
     /**
      * Tells whether the GC state needs to be reset in the next summary. We need to do this if:
+     *
      * 1. GC was enabled and is now disabled. The GC state needs to be removed and everything becomes referenced.
+     *
      * 2. GC was disabled and is now enabled. The GC state needs to be regenerated and added to summary.
+     *
      * 3. The GC version in the latest summary is different from the current GC version. This can happen if:
-     *    3.1. The summary this client loaded with has data from a different GC version.
-     *    3.2. This client's latest summary was updated from a snapshot that has a different GC version.
+     *
+     * 3.1. The summary this client loaded with has data from a different GC version.
+     *
+     * 3.2. This client's latest summary was updated from a snapshot that has a different GC version.
      */
     public get summaryStateNeedsReset(): boolean {
         return this.initialStateNeedsReset ||
@@ -399,10 +376,12 @@ export class GarbageCollector implements IGarbageCollector {
 
     /**
      * Tells whether the initial GC state needs to be reset. This can happen under 2 conditions:
+     *
      * 1. The base snapshot contains GC state but GC is disabled. This will happen the first time GC is disabled after
-     *    it was enabled before. GC state needs to be removed from summary and all nodes should be marked referenced.
+     * it was enabled before. GC state needs to be removed from summary and all nodes should be marked referenced.
+     *
      * 2. The base snapshot does not have GC state but GC is enabled. This will happen the very first time GC runs on
-     *    a document and the first time GC is enabled after is was disabled before.
+     * a document and the first time GC is enabled after is was disabled before.
      *
      * Note that the state needs reset only for the very first time summary is generated by this client. After that, the
      * state will be up-to-date and this flag will be reset.
@@ -479,6 +458,9 @@ export class GarbageCollector implements IGarbageCollector {
         };
     }
 
+    /** Handler to respond to when a SweepReady object is used */
+    private readonly sweepReadyUsageHandler: SweepReadyUsageDetectionHandler;
+
     protected constructor(createParams: IGarbageCollectorCreateParams) {
         this.runtime = createParams.runtime;
         this.isSummarizerClient = createParams.isSummarizerClient;
@@ -494,6 +476,12 @@ export class GarbageCollector implements IGarbageCollector {
         this.mc = loggerToMonitoringContext(ChildLogger.create(
             createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
         ));
+
+        this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
+            createParams.getContainerDiagnosticId(),
+            this.mc,
+            this.runtime.closeFn,
+        );
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -565,8 +553,11 @@ export class GarbageCollector implements IGarbageCollector {
 
         /**
          * Whether GC should run or not. The following conditions have to be met to run sweep:
+         *
          * 1. GC should be enabled for this container.
+         *
          * 2. GC should not be disabled via disableGC GC option.
+         *
          * These conditions can be overridden via runGCKey feature flag.
          */
         this.shouldRunGC = this.mc.config.getBoolean(runGCKey) ?? (
@@ -578,10 +569,13 @@ export class GarbageCollector implements IGarbageCollector {
 
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
+         *
          * 1. Overall GC or mark phase must be enabled (this.shouldRunGC).
+         *
          * 2. Sweep timeout should be available. Without this, we wouldn't know when an object should be deleted.
+         *
          * 3. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
-         *    feature flag.
+         * feature flag.
          */
         this.shouldRunSweep = false; // disable while TEMPORARY measure hardcoding snapshotCacheExpiryMs is here
             // this.shouldRunGC
@@ -1164,14 +1158,19 @@ export class GarbageCollector implements IGarbageCollector {
          * run, and then add the references since last run.
          *
          * Note on why we need to combine the data from previous run, current run and all references in between -
+         *
          * 1. We need data from last run because some of its references may have been deleted since then. If those
-         *    references added new outbound references before getting deleted, we need to detect them.
+         * references added new outbound references before getting deleted, we need to detect them.
+         *
          * 2. We need new outbound references since last run because some of them may have been deleted later. If those
-         *    references added new outbound references before getting deleted, we need to detect them.
+         * references added new outbound references before getting deleted, we need to detect them.
+         *
          * 3. We need data from the current run because currently we may not detect when DDSes are referenced:
-         *    - We don't require DDSes handles to be stored in a referenced DDS. For this, we need GC at DDS level
-         *      which is tracked by https://github.com/microsoft/FluidFramework/issues/8470.
-         *    - A new data store may have "root" DDSes already created and we don't detect them today.
+         *
+         * - We don't require DDSes handles to be stored in a referenced DDS. For this, we need GC at DDS level
+         * which is tracked by https://github.com/microsoft/FluidFramework/issues/8470.
+         *
+         * - A new data store may have "root" DDSes already created and we don't detect them today.
          */
         const gcDataSuperSet = concatGarbageCollectionData(this.previousGCDataFromLastRun, currentGCData);
         this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
@@ -1414,16 +1413,11 @@ export class GarbageCollector implements IGarbageCollector {
                 });
             }
 
-            // If SweepReady Usage Detection is enabed, close the main container
+            // If SweepReady Usage Detection is enabed, the handler may close the interactive container.
             // Once Sweep is fully implemented, this will be removed since the objects will be gone
             // and errors will arise elsewhere in the runtime
-            if (state === UnreferencedState.SweepReady &&
-                sweepReadyUsageDetectionSetting.read(this.mc.config).mainContainer
-            ) {
-                const error = new SweepReadyUsageError(
-                    "SweepReady object used in Non-Summarizer Client",
-                    { errorDetails: JSON.stringify(propsToLog) });
-                this.runtime.closeFn(error);
+            if (state === UnreferencedState.SweepReady) {
+                this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({ ...propsToLog, usageType });
             }
         }
     }

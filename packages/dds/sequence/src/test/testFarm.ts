@@ -165,8 +165,8 @@ export function TestPack(verbose = true) {
         const stats = client.mergeTree.getStats();
         const packTime = stats.packTime;
         const ordTime = stats.ordTime;
-        const aveOrdTime = ((ordTime || 0) / (client.accumOps)).toFixed(1);
-        const avePackTime = ((packTime || 0) / (client.accumOps)).toFixed(1);
+        const aveOrdTime = ((ordTime ?? 0) / (client.accumOps)).toFixed(1);
+        const avePackTime = ((packTime ?? 0) / (client.accumOps)).toFixed(1);
         const aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
         const aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
         if (client.localOps > 0) {

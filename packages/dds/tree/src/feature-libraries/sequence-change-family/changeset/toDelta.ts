@@ -4,9 +4,9 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { singleTextCursorNew } from "../..";
+import { singleTextCursor } from "../../treeTextCursor";
 import { TreeSchemaIdentifier } from "../../../schema-stored";
-import { FieldKey, Value, Delta } from "../../../tree";
+import { FieldKey, Value, Delta, genericTreeKeys, getGenericTreeField, genericTreeDeleteIfEmpty } from "../../../tree";
 import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
 import { ProtoNode, Transposed as T } from "./format";
 import { isSkipMark } from "./utils";
@@ -36,7 +36,7 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
                         // TODO: can we skip this clone?
-                        content: clone(mark.content).map(singleTextCursorNew),
+                        content: clone(mark.content).map(singleTextCursor),
                     };
                     out.pushContent(insertMark);
                     break;
@@ -119,7 +119,7 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
                         // TODO: Restore the actual node
-                        content: makeArray(mark.count, () => singleTextCursorNew({ type: DUMMY_REVIVED_NODE_TYPE })),
+                        content: makeArray(mark.count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE })),
                     };
                     out.pushContent(insertMark);
                     break;
@@ -128,7 +128,7 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
                     const insertMark: Delta.Insert = {
                         type: Delta.MarkType.Insert,
                         // TODO: Restore the actual node
-                        content: [singleTextCursorNew({ type: DUMMY_REVIVED_NODE_TYPE })],
+                        content: [singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE })],
                     };
                     out.pushContent(insertMark);
                     break;
@@ -162,7 +162,7 @@ function cloneAndModify(insert: T.ModifyInsert): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
     const outNode = clone(insert.content);
     const outModifications = applyOrCollectModifications(outNode, insert);
-    return { content: singleTextCursorNew(outNode), fields: outModifications };
+    return { content: singleTextCursor(outNode), fields: outModifications };
 }
 
 /**
@@ -183,8 +183,11 @@ interface DeltaInsertModification {
 /**
  * Converts inserted content into the format expected in Delta instances.
  * This involves applying the following changes:
+ *
  * - Updating node values
+ *
  * - Inserting new subtrees within the inserted content
+ *
  * - Deleting parts of the inserted content
  *
  * The only kind of change that is not applied by this function is MoveIn.
@@ -192,7 +195,7 @@ interface DeltaInsertModification {
  * @param node - The subtree to apply modifications to. Updated in place.
  * @param modify - The modifications to either apply or collect.
  * @returns The remaining modifications that the consumer of the Delta will apply on the given node. May be empty if
- *   all modifications are applied by the function.
+ * all modifications are applied by the function.
  */
 function applyOrCollectModifications(
     node: ProtoNode,
@@ -202,115 +205,104 @@ function applyOrCollectModifications(
     if (modify.value !== undefined) {
         node.value = modify.value.value;
     }
-    if (modify.fields !== undefined) {
-        const protoFields = node.fields ?? {};
-        const modifyFields = modify.fields;
-        for (const key of Object.keys(modifyFields)) {
-            const brandedKey: FieldKey = brand(key);
-            const outNodes = protoFields[key] ?? fail(ERR_MOD_ON_MISSING_FIELD);
-            const outMarks = new OffsetListFactory<Delta.Mark>();
-            let index = 0;
-            for (const mark of modifyFields[key]) {
-                if (isSkipMark(mark)) {
-                    index += mark;
-                    outMarks.pushOffset(mark);
-                } else {
-                    // Inline into `switch(mark.type)` once we upgrade to TS 4.7
-                    const type = mark.type;
-                    switch (type) {
-                        case "Insert": {
-                            // TODO: can we skip this clone?
-                            const content = clone(mark.content).map(singleTextCursorNew);
-                            outNodes.splice(index, 0, ...content);
-                            index += content.length;
-                            outMarks.pushOffset(content.length);
-                            break;
-                        }
-                        case "MInsert": {
-                            const cloned = cloneAndModify(mark);
-                            if (cloned.fields.size > 0) {
-                                outMarks.pushContent({
-                                    type: Delta.MarkType.Modify,
-                                    fields: cloned.fields,
-                                });
-                            }
-                            outNodes.splice(index, 0, cloned.content);
-                            index += 1;
-                            break;
-                        }
-                        case "MoveIn":
-                        case "MMoveIn":
-                            // TODO: convert into a Delta.MoveIn/MoveInAndModify
-                            fail(ERR_NOT_IMPLEMENTED);
-                        case "Bounce":
-                            fail(ERR_BOUNCE_ON_INSERT);
-                        case "Intake":
-                            fail(ERR_INTAKE_ON_INSERT);
-                        case "Modify": {
-                            if ("tomb" in mark) {
-                                continue;
-                            }
-                            const clonedFields = applyOrCollectModifications(outNodes[index], mark);
-                            if (clonedFields.size > 0) {
-                                outMarks.pushContent({
-                                    type: Delta.MarkType.Modify,
-                                    fields: clonedFields,
-                                });
-                            }
-                            index += 1;
-                            break;
-                        }
-                        case "Delete": {
-                            if ("tomb" in mark) {
-                                continue;
-                            }
-                            outNodes.splice(index, mark.count);
-                            break;
-                        }
-                        case "MDelete": {
-                            if ("tomb" in mark) {
-                                continue;
-                            }
-                            // TODO: convert move-out of inserted content into insert at the destination
-                            fail(ERR_NOT_IMPLEMENTED);
-                        }
-                        case "MoveOut":
-                        case "MMoveOut":
-                            // TODO: convert move-out of inserted content into insert at the destination
-                            fail(ERR_NOT_IMPLEMENTED);
-                        case "Gap":
-                            // Gap marks have no effect on the document state
-                            break;
-                        case "Tomb":
-                            fail(ERR_TOMB_IN_INSERT);
-                        case "Revive":
-                        case "MRevive":
-                            fail(ERR_REVIVE_ON_INSERT);
-                        case "Return":
-                        case "MReturn":
-                            fail(ERR_RETURN_ON_INSERT);
-                        default: unreachableCase(type);
+    for (const key of genericTreeKeys(modify)) {
+        const brandedKey: FieldKey = brand(key);
+        const outNodes = getGenericTreeField(node, key, true);
+        const outMarks = new OffsetListFactory<Delta.Mark>();
+        let index = 0;
+        for (const mark of getGenericTreeField(modify, key, false)) {
+            if (isSkipMark(mark)) {
+                index += mark;
+                outMarks.pushOffset(mark);
+            } else {
+                // Inline into `switch(mark.type)` once we upgrade to TS 4.7
+                const type = mark.type;
+                switch (type) {
+                    case "Insert": {
+                        // TODO: can we skip this clone?
+                        const content = clone(mark.content).map(singleTextCursor);
+                        outNodes.splice(index, 0, ...content);
+                        index += content.length;
+                        outMarks.pushOffset(content.length);
+                        break;
                     }
+                    case "MInsert": {
+                        const cloned = cloneAndModify(mark);
+                        if (cloned.fields.size > 0) {
+                            outMarks.pushContent({
+                                type: Delta.MarkType.Modify,
+                                fields: cloned.fields,
+                            });
+                        }
+                        outNodes.splice(index, 0, cloned.content);
+                        index += 1;
+                        break;
+                    }
+                    case "MoveIn":
+                    case "MMoveIn":
+                        // TODO: convert into a Delta.MoveIn/MoveInAndModify
+                        fail(ERR_NOT_IMPLEMENTED);
+                    case "Bounce":
+                        fail(ERR_BOUNCE_ON_INSERT);
+                    case "Intake":
+                        fail(ERR_INTAKE_ON_INSERT);
+                    case "Modify": {
+                        if ("tomb" in mark) {
+                            continue;
+                        }
+                        const clonedFields = applyOrCollectModifications(outNodes[index], mark);
+                        if (clonedFields.size > 0) {
+                            outMarks.pushContent({
+                                type: Delta.MarkType.Modify,
+                                fields: clonedFields,
+                            });
+                        }
+                        index += 1;
+                        break;
+                    }
+                    case "Delete": {
+                        if ("tomb" in mark) {
+                            continue;
+                        }
+                        outNodes.splice(index, mark.count);
+                        break;
+                    }
+                    case "MDelete": {
+                        if ("tomb" in mark) {
+                            continue;
+                        }
+                        // TODO: convert move-out of inserted content into insert at the destination
+                        fail(ERR_NOT_IMPLEMENTED);
+                    }
+                    case "MoveOut":
+                    case "MMoveOut":
+                        // TODO: convert move-out of inserted content into insert at the destination
+                        fail(ERR_NOT_IMPLEMENTED);
+                    case "Gap":
+                        // Gap marks have no effect on the document state
+                        break;
+                    case "Tomb":
+                        fail(ERR_TOMB_IN_INSERT);
+                    case "Revive":
+                    case "MRevive":
+                        fail(ERR_REVIVE_ON_INSERT);
+                    case "Return":
+                    case "MReturn":
+                        fail(ERR_RETURN_ON_INSERT);
+                    default: unreachableCase(type);
                 }
             }
-            if (outMarks.list.length > 0) {
-                outFieldsMarks.set(brandedKey, outMarks.list);
-            }
-            if (outNodes.length === 0) {
-                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                delete protoFields[key];
-            }
         }
-        if (Object.keys(protoFields).length === 0) {
-            delete node.fields;
+        if (outMarks.list.length > 0) {
+            outFieldsMarks.set(brandedKey, outMarks.list);
         }
+        genericTreeDeleteIfEmpty(node, key, true);
     }
     return outFieldsMarks;
 }
 
 const ERR_NOT_IMPLEMENTED = "Not implemented";
 const ERR_TOMB_IN_INSERT = "Encountered a concurrent deletion in inserted content";
-const ERR_MOD_ON_MISSING_FIELD = "Encountered a modification that targets a non-existent field on an inserted tree";
 const ERR_BOUNCE_ON_INSERT = "Encountered a Bounce mark in an inserted field";
 const ERR_INTAKE_ON_INSERT = "Encountered an Intake mark in an inserted field";
 const ERR_REVIVE_ON_INSERT = "Encountered a Revive mark in an inserted field";

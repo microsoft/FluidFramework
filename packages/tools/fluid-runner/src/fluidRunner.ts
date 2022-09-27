@@ -4,7 +4,7 @@
  */
 
 import * as yargs from "yargs";
-import { exportFile, IExportFileResponse } from "./exportFile";
+import { exportFile } from "./exportFile";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
 
@@ -56,24 +56,20 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                     process.exit(1);
                 }
 
-                let result: IExportFileResponse;
-                if (argv.codeLoader) {
-                    result = await parseBundleAndExportFile(
+                const result = await (argv.codeLoader
+                    ? parseBundleAndExportFile(
                         argv.codeLoader,
                         argv.inputFile,
                         argv.outputFile,
                         argv.telemetryFile,
                         argv.options,
-                    );
-                } else {
-                    result = await exportFile(
+                    ) : exportFile(
                         fluidFileConverter!,
                         argv.inputFile,
                         argv.outputFile,
                         argv.telemetryFile,
                         argv.options,
-                    );
-                }
+                    ));
 
                 if (!result.success) {
                     console.error(`${result.eventName}: ${result.errorMessage}`);
