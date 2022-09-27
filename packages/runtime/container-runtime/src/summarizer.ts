@@ -8,12 +8,11 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { DriverErrorType, DriverHeader } from "@fluidframework/driver-definitions";
+import { DriverHeader } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
     IFluidErrorBase,
-    isFluidError,
     LoggingError,
     wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";

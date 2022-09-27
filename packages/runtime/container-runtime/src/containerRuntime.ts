@@ -61,6 +61,7 @@ import {
     IQuorumClients,
     ISequencedDocumentMessage,
     ISignalMessage,
+    ISnapshotTree,
     ISummaryConfiguration,
     ISummaryContent,
     ISummaryTree,
