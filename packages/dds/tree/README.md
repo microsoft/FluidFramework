@@ -326,7 +326,7 @@ flowchart
 ## How should indexes relate to branches?
 Some possible options:
 
- - Use copy on write in indexes, and keep all needed indexes for all needed revision within edit-manager. Provide all relevant indexes to change rebaser. Maybe allow change rebaser to compute intermediate indexes as needed.
+ - Use copy on write in indexes, and keep all needed indexes for all needed revisions within edit-manager. Provide all relevant indexes to `ChangeRebaser`. Maybe allow `ChangeRebaser` to compute intermediate indexes as needed.
  - Keep a single index, and adjust it to the needed location in the branch tree as needed using deltas.
  - Keep multiple indexes, one at each branch head, updated via mutation.
  - Keep a single reference index (maybe after the latest sequenced edit), and make delta indexes referencing it for the other required branches.
