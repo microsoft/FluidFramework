@@ -114,7 +114,7 @@ $ flub (--version|--ver)
 @fluid-tools/build-cli/0.4.7000
 $ flub --help [COMMAND]
 USAGE
-    $ flub COMMAND
+  $ flub COMMAND
 ...
 ```
 <!-- usagestop -->
@@ -312,7 +312,7 @@ USAGE
   $ flub generate packageJson -g client|server|azure|build-tools [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  (required) Name of release group
+  -g, --releaseGroup=<option>  (required) release group
                                <options: client|server|azure|build-tools>
   -v, --verbose                Verbose logging.
 
@@ -349,7 +349,7 @@ USAGE
   $ flub info [-g client|server|azure|build-tools] [-p] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of release group
+  -g, --releaseGroup=<option>  release group
                                <options: client|server|azure|build-tools>
   -p, --[no-]private           Include private packages (default true).
   -v, --verbose                Verbose logging.
@@ -362,7 +362,7 @@ _See code: [src/commands/info.ts](https://github.com/microsoft/FluidFramework/bl
 
 ## `flub readme`
 
-adds commands to README.md in current directory
+Adds commands to README.md in current directory.
 
 ```
 USAGE
@@ -374,7 +374,7 @@ FLAGS
   --multi         create a different markdown page for each topic
 
 DESCRIPTION
-  adds commands to README.md in current directory
+  Adds commands to README.md in current directory.
 
   The readme must have any of the following tags inside of it for it to be replaced or else it will do nothing:
 
@@ -385,6 +385,10 @@ DESCRIPTION
   # Commands
 
   <!-- commands -->
+
+  # Table of contents
+
+  <!-- toc -->
 
   Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.
 ```
@@ -401,7 +405,7 @@ USAGE
     --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of release group
+  -g, --releaseGroup=<option>  release group
                                <options: client|server|azure|build-tools>
   -p, --package=<value>        Name of package.
   -t, --bumpType=<option>      Version bump type.
@@ -437,24 +441,16 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [--json] [-d <value>] [-s | -r] [-f -o <value>] [-g client|server|azure|build-tools [--all |
-    ]] [-p <value> ] [--limit <value> ] [-v]
+  $ flub release report [--json] [-d <value>] [-s | -r] [-f -o <value>] [-v]
 
 FLAGS
-  -d, --days=<value>           [default: 10] The number of days to look back for releases to report.
-  -f, --full                   Output a full report. A full report includes additional metadata for each package,
-                               including the time of the release, the type of release (patch, minor, major), and whether
-                               the release is new.
-  -g, --releaseGroup=<option>  Name of release group
-                               <options: client|server|azure|build-tools>
-  -o, --output=<value>         Output a JSON report file to this location.
-  -p, --package=<value>        Name of package.
-  -r, --mostRecent             Always pick the most recent version as the latest (ignore semver version sorting).
-  -s, --highest                Always pick the greatest semver version as the latest (ignore dates).
-  -v, --verbose                Verbose logging.
-  --all                        List all releases. Useful when you want to see all the releases done for a release group
-                               or package. The number of results can be limited using the --limit argument.
-  --limit=<value>              Limits the number of displayed releases for each release group.
+  -d, --days=<value>    [default: 10] The number of days to look back for releases to report.
+  -f, --full            Output a full report. A full report includes additional metadata for each package, including the
+                        time of the release, the type of release (patch, minor, major), and whether the release is new.
+  -o, --output=<value>  Output a JSON report file to this location.
+  -r, --mostRecent      Always pick the most recent version as the latest (ignore semver version sorting).
+  -s, --highest         Always pick the greatest semver version as the latest (ignore dates).
+  -v, --verbose         Verbose logging.
 
 GLOBAL FLAGS
   --json  Format output as json.
