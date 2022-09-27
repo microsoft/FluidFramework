@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeDeltaOp } from "../ops";
-import { TestClient } from "./testClient";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
