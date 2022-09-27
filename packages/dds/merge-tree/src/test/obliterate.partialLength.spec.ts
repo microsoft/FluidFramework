@@ -307,7 +307,7 @@ describe("obliterate partial lengths", () => {
             ]);
         });
 
-        it("obliterates when concurrent insert at start of string", () => {
+        it("obliterate does not affect concurrent insert at start of string", () => {
             client.obliterateRange(
                 0,
                 client.getLength(),

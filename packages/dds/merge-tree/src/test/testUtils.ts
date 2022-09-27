@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import {
     IMergeBlock,
+    ISegment,
     Marker,
 } from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
@@ -113,14 +114,24 @@ function getPartialLengths(
 
     let actualLen = 0;
 
+    const isInserted = (segment: ISegment) =>
+        segment.seq === undefined
+        || (segment.seq !== -1 && segment.seq <= seq)
+        || (localSeq !== undefined
+            && segment.seq === -1
+            && segment.localSeq !== undefined
+            && segment.localSeq <= localSeq);
+
+    const isRemoved = (segment: ISegment) =>
+        segment.removedSeq !== undefined
+        && ((localSeq !== undefined
+            && segment.removedSeq === -1
+            && segment.localRemovedSeq !== undefined
+            && segment.localRemovedSeq <= localSeq)
+        || (segment.removedSeq !== -1 && segment.removedSeq <= seq));
+
     mergeTree.walkAllSegments(mergeBlock, (segment) => {
-        // this condition does not account for un-acked changes
-        if (
-            segment.isLeaf()
-            && (segment.removedSeq === undefined || segment.removedSeq > seq)
-            && (segment.localRemovedSeq === undefined || segment.localRemovedSeq > seq)
-            && (segment.seq === undefined || segment.seq <= seq)
-        ) {
+        if (isInserted(segment) && !isRemoved(segment)) {
             actualLen += segment.cachedLength;
         }
         return true;
