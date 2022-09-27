@@ -96,7 +96,6 @@ async function runAndValidateBatch(
                 documentServiceFactory: proxyDsf,
             });
         const container = await loader.resolve({ url: containerUrl });
-        await new Promise<void>((resolve) => container.once("connected", () => resolve()));
         const testObject = await requestFluidObject<TestFluidObject>(container, "default");
         // send batch
         testObject.context.containerRuntime.orderSequentially(() => {
