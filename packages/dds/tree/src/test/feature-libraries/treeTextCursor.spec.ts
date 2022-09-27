@@ -2,17 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { singleTextCursorNew } from "../../feature-libraries";
-import { cursorTestCases, testCursors } from "../cursor.spec";
+import { jsonableTreeFromCursorNew, singleTextCursorNew } from "../../feature-libraries";
+import { cursorTestCases, testCursors, testJsonCompatibleCursor } from "../cursor.spec";
 
 // Tests for TextCursor and jsonableTreeFromCursor.
 // Checks to make sure singleTextCursor and test datasets are working properly,
 // since its used in the below test suite to test other formats.
-// testJsonCompatibleCursor(
-//     "textTreeFormat",
-//     singleTextCursorNew,
-//     jsonableTreeFromCursorNew,
-// );
+testJsonCompatibleCursor(
+    "textTreeFormat",
+    singleTextCursorNew,
+    jsonableTreeFromCursorNew,
+);
 
 // TODO make object forest cursor compatible with new API
 // TODO: put these in a better place / unify with object forest tests.

@@ -5,13 +5,20 @@
 
 import { strict as assert } from "assert";
 
-import { EmptyKey, FieldKey, JsonableTree, ITreeCursorNew as ITreeCursor, mapCursorFields } from "../tree";
+import {
+    EmptyKey,
+    FieldKey,
+    JsonableTree,
+    ITreeCursorNew as ITreeCursor,
+    mapCursorFields,
+    CursorLocationType,
+} from "../tree";
 import { brand } from "../util";
 
 export const cursorTestCases: [string, JsonableTree][] = [
     ["minimal", { type: brand("Foo") }],
     ["true boolean", { type: brand("Foo"), value: true }],
-    ["false boolean", { type: brand("Foo"), value: true }],
+    ["false boolean", { type: brand("Foo"), value: false }],
     ["integer", { type: brand("Foo"), value: Number.MIN_SAFE_INTEGER - 1 }],
     ["string", { type: brand("Foo"), value: "test" }],
     ["string with escaped characters", { type: brand("Foo"), value: "\\\"\b\f\n\r\t" }],
@@ -180,9 +187,10 @@ export function testJsonCompatibleCursor(
                         assert.equal(cursor.firstNode(), true);
                         assert.equal(cursor.value, 0);
                         assert.deepEqual(cursor.seekNodes(1), false);
-                        assert.equal(cursor.value, 0);
+                        assert.equal(cursor.mode, CursorLocationType.Fields, "A failed seek will exit the node");
+                        assert.equal(cursor.firstNode(), true);
                         assert.deepEqual(cursor.seekNodes(-1), false);
-                        assert.equal(cursor.value, 0);
+                        assert.equal(cursor.mode, CursorLocationType.Fields, "A failed seek will exit the node");
                     });
                 });
             });
@@ -206,7 +214,7 @@ export function testJsonCompatibleCursor(
                         fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
                     });
                     cursor.enterField(EmptyKey);
-                    assert.equal(cursor.enterNode(1), true);
+                    cursor.enterNode(1);
                     assert.equal(cursor.value, 1);
                     assert.deepEqual(cursor.seekNodes(-1), true);
                     assert.equal(cursor.value, 0);
@@ -218,10 +226,10 @@ export function testJsonCompatibleCursor(
                         fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
                     });
                     cursor.enterField(EmptyKey);
-                    assert.equal(cursor.enterNode(1), true);
+                    cursor.enterNode(1);
                     assert.equal(cursor.value, 1);
                     assert.deepEqual(cursor.seekNodes(1), false);
-                    assert.equal(cursor.value, 1);
+                    assert.equal(cursor.mode, CursorLocationType.Fields, "A failed seek will exit the node");
                 });
 
                 it(`can not seek before beginning of array`, () => {
@@ -233,7 +241,7 @@ export function testJsonCompatibleCursor(
                     assert.equal(cursor.firstNode(), true);
                     assert.equal(cursor.value, 0);
                     assert.deepEqual(cursor.seekNodes(-1), false);
-                    assert.equal(cursor.value, 0);
+                    assert.equal(cursor.mode, CursorLocationType.Fields, "A failed seek will exit the node");
                 });
             });
         });
@@ -247,37 +255,46 @@ export function testJsonCompatibleCursor(
                 assert(0 <= index && index < cursor.getFieldLength(),
                     `.length() must include index of existing child '${String(key)}[${index}]'.`);
 
-                assert.equal(cursor.enterNode(index), true,
-                    `Must navigate to child '${String(key)}[${index}]'.`);
+                assert.doesNotThrow(
+                    () => cursor.enterNode(index),
+                    `Must navigate to child '${String(key)}[${index}]'.`,
+                );
+
+                cursor.exitNode();
+                cursor.exitField();
             }
 
-            function expectNotFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
+            function expectError(cursor: ITreeCursor, key: FieldKey, index = 0) {
                 cursor.enterField(key);
                 assert(!(index >= 0) || index >= cursor.getFieldLength(),
                     `.length() must exclude index of missing child '${String(key)}[${index}]'.`);
 
-                assert.equal(cursor.enterNode(index), false,
-                    `Must return 'NotFound' for missing child '${String(key)}[${index}]'`);
+                assert.throws(
+                    () => cursor.enterNode(index),
+                    `Must return 'NotFound' for missing child '${String(key)}[${index}]'`,
+                );
+
+                cursor.exitField();
             }
 
-            it("Missing key in map returns NotFound", () => {
+            it("Missing key in map throws", () => {
                 const cursor = factory({
                     type: brand("Foo"),
                     fields: { [foundKey as string]: [{ type: brand("Bar"), value: true }] },
                 });
-                expectNotFound(cursor, notFoundKey);
+                expectError(cursor, notFoundKey);
 
                 // A failed navigation attempt should leave the cursor in a valid state.  Verify
                 // by subsequently moving to an existing key.
                 expectFound(cursor, foundKey);
             });
 
-            it("Out of bounds map index returns NotFound", () => {
+            it("Out of bounds map index throws", () => {
                 const cursor = factory({
                     type: brand("Foo"),
                     fields: { [foundKey as string]: [{ type: brand("Bar"), value: true }] },
                 });
-                expectNotFound(cursor, foundKey, 1);
+                expectError(cursor, foundKey, 1);
 
                 // A failed navigation attempt should leave the cursor in a valid state.  Verify
                 // by subsequently moving to an existing key.
@@ -286,16 +303,16 @@ export function testJsonCompatibleCursor(
 
             it("Empty array must not contain 0th item", () => {
                 const cursor = factory({ type: brand("Foo"), fields: { [EmptyKey]: [] } });
-                expectNotFound(cursor, EmptyKey, 0);
+                expectError(cursor, EmptyKey, 0);
             });
 
-            it("Out of bounds array index returns NotFound", () => {
+            it("Out of bounds array index throws", () => {
                 const cursor = factory({
                     type: brand("Foo"),
                     fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
                 });
-                expectNotFound(cursor, EmptyKey, -1);
-                expectNotFound(cursor, EmptyKey, 2);
+                expectError(cursor, EmptyKey, -1);
+                expectError(cursor, EmptyKey, 2);
 
                 // A failed navigation attempt should leave the cursor in a valid state.  Verify
                 // by subsequently moving to an existing key.
@@ -323,16 +340,14 @@ function traverseNode(cursor: ITreeCursor) {
             break;
         }
 
-        for (let nodeResult = firstNodeResult; nodeResult; cursor.nextNode()) {
+        for (let nodeResult: boolean = firstNodeResult; nodeResult; nodeResult = cursor.nextNode()) {
             actualChildNodesTraversed++;
             traverseNode(cursor);
         }
 
-        cursor.exitNode();
         assert.equal(actualChildNodesTraversed, expectedKeyLength, "Could not traverse expected number of children");
     }
 
-    cursor.exitField();
     assert.equal(cursor.value, originalNodeValue);
 }
 

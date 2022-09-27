@@ -173,7 +173,7 @@ export interface ITreeCursor {
      *
      * Allowed when `mode` is `Nodes` and not `pending`.
      */
-     firstField(): boolean;
+    firstField(): boolean;
 
     /**
      * Navigate to the field with the specified `key` and set the mode to `Fields`.
