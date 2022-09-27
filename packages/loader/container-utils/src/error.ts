@@ -18,12 +18,7 @@ import {
     isExternalError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import {
-    IClientJoin,
-    ISequencedDocumentMessage,
-    ISequencedDocumentSystemMessage,
-    MessageType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
@@ -185,34 +180,11 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     }
 }
 
-export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMessage) => {
-    const baseTelemetry = {
-        messageClientId: message.clientId,
-        messageSequenceNumber: message.sequenceNumber,
-        messageClientSequenceNumber: message.clientSequenceNumber,
-        messageReferenceSequenceNumber: message.referenceSequenceNumber,
-        messageMinimumSequenceNumber: message.minimumSequenceNumber,
-        messageTimestamp: message.timestamp,
-    };
-
-    switch (message.type) {
-        case MessageType.ClientJoin: {
-            const systemJoinMessage = message as ISequencedDocumentSystemMessage;
-            const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
-            return {
-                ...baseTelemetry,
-                joinMessageClientId: join.clientId,
-            };
-        }
-        case MessageType.ClientLeave: {
-            const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
-            return {
-                ...baseTelemetry,
-                leaveMessageClientId: JSON.parse(systemLeaveMessage.data) as string,
-            };
-        }
-        default: {
-            return baseTelemetry;
-        }
-    }
-};
+export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMessage) => ({
+    messageClientId: message.clientId,
+    messageSequenceNumber: message.sequenceNumber,
+    messageClientSequenceNumber: message.clientSequenceNumber,
+    messageReferenceSequenceNumber: message.referenceSequenceNumber,
+    messageMinimumSequenceNumber: message.minimumSequenceNumber,
+    messageTimestamp: message.timestamp,
+});
