@@ -107,7 +107,10 @@
       "RemovedClassDeclaration_SummaryTreeAssembler": {
         "forwardCompat": false,
         "backCompat": false
-      }
+      },
+      "ClassDeclaration_AuthorizationError": {"backCompat": false},
+      "ClassDeclaration_GenericNetworkError": {"backCompat": false},
+      "ClassDeclaration_ThrottlingError": {"backCompat": false}
     }
   }
 }
