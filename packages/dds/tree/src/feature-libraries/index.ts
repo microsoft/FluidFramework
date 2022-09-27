@@ -51,3 +51,5 @@ export {
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
+
+export * from "./deltaUtils";
