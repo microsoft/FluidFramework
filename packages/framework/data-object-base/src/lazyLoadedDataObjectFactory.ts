@@ -56,6 +56,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
                 // (or child of it) because it passed it in (see the call to new runtimeClass(...) below), so it
                 // can cast safely here.
                 const router = (await rt.IFluidHandle?.get() as LazyLoadedDataObject);
+                assert(router !== undefined, "Entrypoint should have been initialized by now");
                 return router.request(request);
             });
 

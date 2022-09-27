@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ITestFluidObject } from "./interfaces";
+import { assert } from "@fluidframework/common-utils";
 
 /**
  * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
@@ -173,6 +174,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
                 // the entrypoint on the data stores it creates is an object of that type because it passed
                 // it in (see the call to new runtimeClass(...) below), so it can cast safely here.
                 const router: TestFluidObject = ((await rt.IFluidHandle?.get()) as TestFluidObject);
+                assert(router !== undefined, "Entrypoint should have initialized by now");
                 return router.request(request);
             });
 
