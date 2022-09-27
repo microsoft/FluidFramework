@@ -91,6 +91,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
         traces: message.traces,
         type: message.type,
         compression: message.compression,
+    // back-compat ADO #1932: Remove cast when protocol change propagates
     } as any;
 
     return sanitizedMessage;
