@@ -97,7 +97,7 @@
       "merge": {
         "tsc": {
           "@fluid-experimental/property-inspector-table": [
-            "webpack:svgs"
+            "build:webpack"
           ]
         }
       }
