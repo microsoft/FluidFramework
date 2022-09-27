@@ -8,6 +8,7 @@ import { FieldChangeHandler, FieldKinds, NodeChangeset, singleTextCursor, single
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { Delta } from "../../tree";
 import { brand, JsonCompatibleReadOnly } from "../../util";
+import { assertMarkListEqual } from "../utils";
 
 const nodeType: TreeSchemaIdentifier = brand("Node");
 const tree1 = { type: nodeType, value: "value1" };
@@ -19,7 +20,7 @@ const nodeChange3: NodeChangeset = { valueChange: { value: "value5" } };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
     assert.deepEqual(child, nodeChange1);
-    return { type: Delta.MarkType.Modify, setValue: { value: "value3" } };
+    return { type: Delta.MarkType.Modify, setValue: "value3" };
 };
 
 const encodedChild = "encoded child";
@@ -147,7 +148,7 @@ describe("Value field changesets", () => {
         ];
 
         const delta = fieldHandler.intoDelta(change1WithChildChange, deltaFromChild1);
-        assert.deepEqual(delta, expected);
+        assertMarkListEqual(delta, expected);
     });
 
     it("can be encoded in JSON", () => {
@@ -236,7 +237,7 @@ describe("Optional field changesets", () => {
             type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree3)],
         }];
 
-        assert.deepEqual(
+        assertMarkListEqual(
             fieldHandler.intoDelta(change1, deltaFromChild1),
             expected,
         );

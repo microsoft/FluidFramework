@@ -29,9 +29,6 @@ export class AnchorSet {
 }
 
 // @public
-function applyModifyToInsert(node: JsonableTree, modify: Modify): Map<FieldKey, MarkList>;
-
-// @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @public
@@ -140,9 +137,10 @@ interface Delete {
 declare namespace Delta {
     export {
         inputLength,
-        applyModifyToInsert,
+        isSkipMark,
         Root,
         empty,
+        ProtoNode_2 as ProtoNode,
         Mark,
         MarkList,
         Skip_2 as Skip,
@@ -155,7 +153,6 @@ declare namespace Delta {
         MoveInAndModify,
         Insert,
         InsertAndModify,
-        ProtoNode_2 as ProtoNode,
         MoveId,
         Offset,
         FieldMap,
@@ -210,7 +207,7 @@ export enum Effects {
 }
 
 // @public (undocumented)
-const empty: Root;
+const empty: Root<any>;
 
 // @public
 export const emptyField: FieldSchema;
@@ -338,7 +335,7 @@ export interface FieldMapObject<TChild> {
 }
 
 // @public (undocumented)
-type FieldMarks = FieldMap<MarkList>;
+type FieldMarks<TTree = ProtoNode_2> = FieldMap<MarkList<TTree>>;
 
 // @public (undocumented)
 export interface FieldSchema {
@@ -422,22 +419,22 @@ export interface IForestSubscription extends Dependee {
 }
 
 // @public
-function inputLength(mark: Mark): number;
+function inputLength(mark: Mark<unknown>): number;
 
 // @public
-interface Insert {
+interface Insert<TTree = ProtoNode_2> {
     // (undocumented)
-    content: ProtoNode_2[];
+    content: TTree[];
     // (undocumented)
     type: typeof MarkType.Insert;
 }
 
 // @public
-interface InsertAndModify {
+interface InsertAndModify<TTree = ProtoNode_2> {
     // (undocumented)
-    content: ProtoNode_2;
+    content: TTree;
     // (undocumented)
-    fields: FieldMarks;
+    fields: FieldMarks<TTree>;
     // (undocumented)
     type: typeof MarkType.InsertAndModify;
 }
@@ -472,6 +469,9 @@ export function isPrimitive(schema: TreeSchema): boolean;
 
 // @public (undocumented)
 export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
+
+// @public (undocumented)
+function isSkipMark(mark: Mark<unknown>): mark is Skip_2;
 
 // @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {
@@ -617,10 +617,10 @@ export interface MakeNominal {
 }
 
 // @public
-type Mark = Skip_2 | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
+type Mark<TTree = ProtoNode_2> = Skip_2 | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | MoveInAndModify<TTree> | InsertAndModify<TTree>;
 
 // @public
-type MarkList = Mark[];
+type MarkList<TTree = ProtoNode_2> = Mark<TTree>[];
 
 // @public (undocumented)
 const MarkType: {
@@ -636,9 +636,9 @@ const MarkType: {
 };
 
 // @public
-interface Modify {
+interface Modify<TTree = ProtoNode_2> {
     // (undocumented)
-    fields?: FieldMarks;
+    fields?: FieldMarks<TTree>;
     // (undocumented)
     setValue?: Value;
     // (undocumented)
@@ -646,17 +646,17 @@ interface Modify {
 }
 
 // @public
-interface ModifyAndDelete {
+interface ModifyAndDelete<TTree = ProtoNode_2> {
     // (undocumented)
-    fields: FieldMarks;
+    fields: FieldMarks<TTree>;
     // (undocumented)
     type: typeof MarkType.ModifyAndDelete;
 }
 
 // @public
-interface ModifyAndMoveOut {
+interface ModifyAndMoveOut<TTree = ProtoNode_2> {
     // (undocumented)
-    fields?: FieldMarks;
+    fields?: FieldMarks<TTree>;
     moveId: MoveId;
     // (undocumented)
     setValue?: Value;
@@ -707,9 +707,9 @@ interface MoveIn {
 }
 
 // @public
-interface MoveInAndModify {
+interface MoveInAndModify<TTree = ProtoNode_2> {
     // (undocumented)
-    fields: FieldMarks;
+    fields: FieldMarks<TTree>;
     moveId: MoveId;
     // (undocumented)
     type: typeof MarkType.MoveInAndModify;
@@ -889,7 +889,7 @@ function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>>;
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public
-type Root = FieldMarks;
+type Root<TTree = ProtoNode_2> = FieldMarks<TTree>;
 
 // @public
 export interface RootField {

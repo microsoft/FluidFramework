@@ -8,7 +8,7 @@ import { ChangeEncoder } from "../change-family";
 import { ITreeCursor } from "../forest";
 import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, Delta, JsonableTree } from "../tree";
-import { brand, clone, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { singleTextCursor } from "./treeTextCursor";
 import {
     FieldKind,
@@ -27,6 +27,8 @@ import {
     FieldEditor,
 } from "./modular-schema";
 import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
+import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
+import { applyModifyToTree } from "./deltaUtils";
 
 /**
  * Encoder for changesets which carry no information.
@@ -316,11 +318,12 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
                 mark = { type: Delta.MarkType.Insert, content: [singleTextCursor(change.value)] };
             } else {
                 const modify = deltaFromChild(change.changes);
-                const content = clone(change.value);
-                const fields = Delta.applyModifyToInsert(content, modify);
+                const cursor = singleTextCursor(change.value);
+                const mutableTree = mapTreeFromCursor(cursor);
+                const fields = applyModifyToTree(mutableTree, modify);
                 mark = fields.size === 0
-                    ? { type: Delta.MarkType.Insert, content: [singleTextCursor(content)] }
-                    : { type: Delta.MarkType.InsertAndModify, content: singleTextCursor(content), fields };
+                    ? { type: Delta.MarkType.Insert, content: [singleMapTreeCursor(mutableTree)] }
+                    : { type: Delta.MarkType.InsertAndModify, content: singleMapTreeCursor(mutableTree), fields };
             }
 
             return [
@@ -513,15 +516,19 @@ function deltaFromInsertAndChange(
     deltaFromNode: ToDelta,
 ): Delta.Mark[] {
     if (insertedContent !== undefined) {
-        const content = singleTextCursor(clone(insertedContent));
+        const content = mapTreeFromCursor(singleTextCursor(insertedContent));
         if (nodeChange !== undefined) {
             const nodeDelta = deltaFromNode(nodeChange);
-            const fields = Delta.applyModifyToInsert(content, nodeDelta);
+            const fields = applyModifyToTree(content, nodeDelta);
             if (fields.size > 0) {
-                return [{ type: Delta.MarkType.InsertAndModify, content, fields }];
+                return [{
+                    type: Delta.MarkType.InsertAndModify,
+                    content: singleMapTreeCursor(content),
+                    fields,
+                }];
             }
         }
-        return [{ type: Delta.MarkType.Insert, content: [content] }];
+        return [{ type: Delta.MarkType.Insert, content: [singleMapTreeCursor(content)] }];
     }
 
     if (nodeChange !== undefined) {
