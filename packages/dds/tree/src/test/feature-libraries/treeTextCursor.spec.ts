@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 import { jsonableTreeFromCursorNew, singleTextCursorNew } from "../../feature-libraries";
-import { cursorTestCases, testCursors, testJsonCompatibleCursor } from "../cursor.spec";
+import { cursorTestCases, testCursors, testJsonableTreeCursor } from "../cursor.spec";
 
 // Tests for TextCursor and jsonableTreeFromCursor.
 // Checks to make sure singleTextCursor and test datasets are working properly,
 // since its used in the below test suite to test other formats.
-testJsonCompatibleCursor(
+testJsonableTreeCursor(
     "textTreeFormat",
     singleTextCursorNew,
     jsonableTreeFromCursorNew,
