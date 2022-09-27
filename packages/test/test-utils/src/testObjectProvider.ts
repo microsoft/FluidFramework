@@ -190,10 +190,10 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
     }
 
     private excludeAllowedErrors(errors: ITelemetryBaseEvent[]) {
-        return errors.filter((event) => !(event.eventName in [
+        return errors.filter((event) => ![
              // This log was removed in current version as unnecessary, but still present in previous versions
-            "fluid:telemetry:Container:NoRealStorageInDetachedContainer",
-        ]));
+            "NoRealStorageInDetachedContainer",
+        ].includes(event.eventName));
     }
 }
 
