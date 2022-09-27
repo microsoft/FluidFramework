@@ -44,6 +44,7 @@
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/async": "^3.2.9",
     "@types/cors": "^2.8.4",
     "@types/debug": "^4.1.5",

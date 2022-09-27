@@ -73,6 +73,7 @@
   },
   "devDependencies": {
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "clean-webpack-plugin": "^4.0.0",
     "concurrently": "^6.2.0",
     "css-loader": "^1.0.0",

@@ -89,6 +89,7 @@
     "@fluidframework/server-local-server": "^0.1038.2000",
     "@fluidframework/server-test-utils": "^0.1038.2000",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/bytes": "^3.0.0",
     "@types/compression": "0.0.33",
     "@types/cookie-parser": "^1.4.1",

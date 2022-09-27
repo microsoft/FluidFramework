@@ -88,6 +88,7 @@
     "@fluidframework/test-utils-previous": "npm:@fluidframework/test-utils@^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",

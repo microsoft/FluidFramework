@@ -36,6 +36,7 @@
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/server-test-utils": "^0.1038.2000",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/debug": "^4.1.5",
     "@types/lru-cache": "^5.1.0",
     "@types/mocha": "^9.1.1",

@@ -77,6 +77,7 @@
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/server-test-utils": "^0.1038.2000",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/async": "^3.2.9",
     "@types/json-stringify-safe": "^5.0.0",
     "@types/lodash": "^4.14.118",

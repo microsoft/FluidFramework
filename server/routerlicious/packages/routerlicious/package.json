@@ -69,6 +69,7 @@
     "@fluidframework/server-local-server": "^0.1038.2000",
     "@fluidframework/server-test-utils": "^0.1038.2000",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/ioredis": "^4.22.0",
     "@types/nconf": "^0.10.2",
     "@types/node": "^14.18.0",

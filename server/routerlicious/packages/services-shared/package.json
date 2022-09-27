@@ -76,6 +76,7 @@
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/body-parser": "^1.19.2",
     "@types/debug": "^4.1.5",
     "@types/ioredis": "^4.22.0",

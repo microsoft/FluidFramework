@@ -42,6 +42,7 @@
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
     "rimraf": "^2.6.2",

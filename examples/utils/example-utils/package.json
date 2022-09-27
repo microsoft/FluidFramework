@@ -45,6 +45,7 @@
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",

@@ -44,6 +44,7 @@
     "@fluidframework/mocha-test-setup": "^0.41.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/benchmark": "^2.1.0",
     "@types/easy-table": "^0.0.32",
     "@types/mocha": "^9.1.1",

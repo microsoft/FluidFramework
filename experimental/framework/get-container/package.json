@@ -48,6 +48,7 @@
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
     "concurrently": "^6.2.0",

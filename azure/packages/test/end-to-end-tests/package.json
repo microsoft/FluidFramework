@@ -82,6 +82,7 @@
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/mocha": "^9.1.1",
     "@types/nock": "^9.3.0",
     "@types/node": "^14.18.0",

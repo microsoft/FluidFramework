@@ -66,6 +66,7 @@
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
