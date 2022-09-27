@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
 import { bumpVersionScheme, ReleaseVersion } from "@fluid-tools/version-tools";
-import { Flags } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import type { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
@@ -14,24 +13,9 @@ import inquirer from "inquirer";
 import stripAnsi from "strip-ansi";
 import { packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
-import {
-    bumpTypeExtendedFlag,
-    bumpTypeFlag,
-    checkFlags,
-    dependencyUpdateTypeFlag,
-    releaseGroupFlag,
-    skipCheckFlag,
-    versionSchemeFlag,
-} from "../flags";
-import {
-    bumpReleaseGroup,
-    generateBumpDepsBranchName,
-    generateBumpVersionBranchName,
-    indentString,
-    isDependencyUpdateType,
-    npmCheckUpdates,
-} from "../lib";
-import { isReleaseGroup, ReleaseGroup } from "../releaseGroups";
+import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
+import { bumpReleaseGroup, generateBumpVersionBranchName } from "../lib";
+import { isReleaseGroup } from "../releaseGroups";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
     static description =
