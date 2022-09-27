@@ -323,6 +323,9 @@ flowchart
 
 # Open Design Questions
 
+The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
+Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
+
 ## How should indexes relate to branches?
 Some possible options:
 
