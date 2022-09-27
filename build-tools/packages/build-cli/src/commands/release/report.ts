@@ -393,15 +393,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         return report;
     }
 
-    private generateMinimalReport(reportData: PackageReleaseData): MinimalReleaseReport {
-        const newObj: MinimalReleaseReport = {};
-        for (const [pkg, data] of Object.entries(reportData)) {
-            newObj[pkg] = data.latestReleasedVersion;
-        }
-
-        return newObj;
-    }
-
     private async generatePackageList(reportData: PackageReleaseData): Promise<PackageVersionList> {
         const context = await this.getContext();
         const newObj: PackageVersionList = {};
@@ -427,14 +418,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
 
             const displayDate = getDisplayDate(latestDate);
             const highlight = this.isRecentReleaseByDate(latestDate) ? chalk.green : chalk.white;
-
-            let displayRelDate: string;
-            if (latestDate === undefined) {
-                displayRelDate = "";
-            } else {
-                const relDate = `${formatDistanceToNow(latestDate)} ago`;
-                displayRelDate = highlight(relDate);
-            }
+            const displayRelDate = highlight(getDisplayDateRelative(latestDate));
 
             const displayPreviousVersion =
                 verDetails.previousReleasedVersion?.version === undefined
@@ -463,11 +447,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         return tableData;
     }
 
-    // private isRecentRelease(data: RawReleaseData): boolean {
-    //     const latestDate = data.latestReleasedVersion.date;
-    //     return this.isRecentReleaseByDate(latestDate);
-    // }
-
     private isRecentReleaseByDate(date?: Date): boolean {
         return date === undefined
             ? false
@@ -491,14 +470,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
 
             const displayDate = getDisplayDate(ver.date);
             const highlight = this.isRecentReleaseByDate(ver.date) ? chalk.green : chalk.white;
-
-            let displayRelDate: string;
-            if (ver.date === undefined) {
-                displayRelDate = "";
-            } else {
-                const relDate = `${formatDistanceToNow(ver.date)} ago`;
-                displayRelDate = highlight(relDate);
-            }
+            const displayRelDate = highlight(getDisplayDateRelative(ver.date));
 
             const bumpType = detectBumpType(displayPreviousVersion, ver.version);
             const displayBumpType = highlight(`${bumpType}`);
@@ -521,8 +493,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         const limit = this.processedFlags.limit;
         if (limit !== undefined && tableData.length > limit) {
             this.verbose(
-                `Reached the release limit (${limit}), ignoring the remaining ${
-                    tableData.length - limit
+                `Reached the release limit (${limit}), ignoring the remaining ${tableData.length - limit
                 } releases.`,
             );
             // The most recent releases are last, so slice from the end.
@@ -533,10 +504,18 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
     }
 }
 
+/**
+ * Formats a date for display in the terminal.
+ */
 function getDisplayDate(date?: Date): string {
-    return date === undefined
-    ? "--no date--"
-    : formatISO9075(date, { representation: "date" });
+    return date === undefined ? "--no date--" : formatISO9075(date, { representation: "date" });
+}
+
+/**
+ * Formats a date relative to the current time for display in the terminal.
+ */
+function getDisplayDateRelative(date?: Date): string {
+    return date === undefined ? "" : `${formatDistanceToNow(date)} ago`;
 }
 
 interface RawReleaseData {
@@ -560,10 +539,6 @@ interface PackageReleaseData {
 
 interface ReleaseReport {
     [packageName: string]: ReleaseDetails;
-}
-
-interface MinimalReleaseReport {
-    [packageName: string]: VersionDetails;
 }
 
 interface PackageVersionList {
