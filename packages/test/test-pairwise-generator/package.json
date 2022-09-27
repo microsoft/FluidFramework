@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/test-pairwise-generator-previous": "npm:@fluidframework/test-pairwise-generator@^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
