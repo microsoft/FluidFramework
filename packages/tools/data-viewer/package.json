@@ -18,8 +18,8 @@
     "build:compile": "npm run build:tsc && npm run build:copy-test-resources",
     "build:copy-test-resources": "copyfiles \"src/test/test-data/**\" dist --up 1",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
-    "build:full": "npm run build",
-    "build:full:compile": "npm run build:compile",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "build:genver": "gen-version",
     "build:tsc": "tsc --pretty",
     "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
@@ -32,17 +32,20 @@
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
-    "test": "npm run test:mocha",
-    "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict"
+    "start:test-app": "concurrently npm:start:test-app:server npm:start:test-app:client",
+    "start:test-app:client": "webpack serve --config webpack.config.js",
+    "start:test-app:server": "tinylicious",
+    "test": "npm run test:jest",
+    "test:jest": "jest",
+    "webpack": "webpack --env production",
+    "webpack:dev": "webpack --env development"
   },
   "dependencies": {
     "@fluidframework/core-interfaces": "^1.0.1",
     "@fluidframework/fluid-static": "^1.0.1",
     "@fluidframework/tinylicious-client": "1.0.1",
     "fluid-framework": "^1.0.1",
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
@@ -50,6 +53,7 @@
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/mocha-test-setup": "^1.2.5",
     "@fluidframework/test-utils": "^1.2.5",
+    "@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/chai": "^4",
@@ -59,10 +63,31 @@
     "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
     "eslint-config-prettier": "~8.5.0",
-    "mocha": "^10.0.0",
-    "nyc": "^15.0.0",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^26.6.3",
+    "jest-junit": "^10.0.0",
+    "jest-puppeteer": "^4.3.0",
+    "puppeteer": "^1.20.0",
     "prettier": "^2.3.1",
+    "react-dom": "^16.10.2",
     "rimraf": "^2.6.2",
-    "typescript": "~4.5.5"
+    "tinylicious": "^0.4.89251",
+    "ts-jest": "^26.4.4",
+    "ts-loader": "^9.3.0",
+    "typescript": "~4.5.5",
+    "webpack": "^5.72.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "~4.6.0",
+    "webpack-merge": "^5.8.0"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   }
 }

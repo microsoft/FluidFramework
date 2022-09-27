@@ -84,7 +84,7 @@ function App() {
             </div>
         );
     } else {
-        return <div />;
+        return <div>Loading Fluid container...</div>;
     }
 }
 
