@@ -6,11 +6,10 @@ NodeJs-based test to simulate many clients and a high rate of op generation.
 
 ## Goal
 
-The goal of these tests is to validate that garbage collection (GC) works correctly and there are no unexpected errors. The most
-core aspects of these tests are:
+The goal of these tests is to validate that garbage collection (GC) works correctly and there are no unexpected errors. The core aspects of these tests are:
 * Reference data stores and have them send ops, i.e., use them.
 * Unreference data stores and have them stop sending ops, i.e., stop using them.
-* Re-reference previously unreferenced data stores safely. Basically don't use data stores after they are GC'd.
+* Re-reference previously unreferenced data stores safely. Basically reuse data stores until they are GC'd.
 * Collaborate with other clients that are connected to the document. Basically, mimic typical user scenarios where users
 work on same or different parts of a document simultaneously.
 
