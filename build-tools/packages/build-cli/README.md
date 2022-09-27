@@ -110,7 +110,7 @@ For more detailed usage information see the [release command reference](#flub-re
 $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
-$ flub (--version|--ver)
+$ flub (--version|-V)
 @fluid-tools/build-cli/0.4.7000
 $ flub --help [COMMAND]
 USAGE

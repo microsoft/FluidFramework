@@ -142,7 +142,7 @@
       "-h"
     ],
     "additionalVersionFlags": [
-      "--ver"
+      "-V"
     ],
     "plugins": [
       "@oclif/plugin-commands",
