@@ -185,8 +185,14 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
         const unexpectedErrors = this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
         return {
             expectedNotFound,
-            unexpectedErrors,
+            unexpectedErrors: this.excludeAllowedErrors(unexpectedErrors),
         };
+    }
+
+    private excludeAllowedErrors(errors: ITelemetryBaseEvent[]) {
+        return errors.filter((event) => !(event.eventName in [
+            "NoRealStorageInDetachedContainer", // Removed in current version, but still present in previous versions
+        ]));
     }
 }
 

@@ -176,7 +176,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
             // some browsers may not populate stack unless exception is thrown
             throw new Error("BlobOnlyStorage not implemented method used");
         } catch (err) {
-            this.logger.sendErrorEvent({ eventName: "BlobOnlyStorageWrongCall" }, err);
+            this.logger.sendTelemetryEvent({ eventName: "BlobOnlyStorageWrongCall" }, err);
             throw err;
         }
     }
