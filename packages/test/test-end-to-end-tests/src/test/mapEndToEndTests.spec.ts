@@ -381,9 +381,13 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
             clearEventCount++;
         });
     });
+
     describe("Concurrent op processing", () => {
+        let container1: Container;
         let container2: Container;
+        let dataObject1: ITestFluidObject;
         let dataObject2: ITestFluidObject;
+        let sharedMap1: SharedMap;
         let sharedMap2: SharedMap;
 
         beforeEach(async () => {
@@ -399,13 +403,13 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
                 ...containerConfig,
                 loaderProps: { configProvider: configProvider(featureGates) },
             };
-            const container1 = await provider.makeTestContainer(configWithFeatureGates) as Container;
+            container1 = await provider.makeTestContainer(configWithFeatureGates) as Container;
             container2 = await provider.loadTestContainer(configWithFeatureGates) as Container;
 
-            dataObject = await requestFluidObject<ITestFluidObject>(container1, "default");
+            dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
             dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
-            sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+            sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
             sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
             await provider.ensureSynchronized();
@@ -414,25 +418,29 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         // ADO #1834 tracks fixing it!
         // This test case does not work correctly - it used to work before batching changes for the wrong reason.
         // Please see above ticket for more info
-        itExpects.skip("Should close container when sending an op while processing another op",
+        itExpects.only("Should close container when sending an op while processing another op",
             [{
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Making changes to data model is disallowed while processing ops.",
             }], async () => {
-                await setupContainers(testContainerConfig, { "Fluid.Container.ConcurrentOpSend": true });
+                await setupContainers(testContainerConfig);
 
-                sharedMap.on("valueChanged", (changed, local) => {
-                    if (!local) {
-                        assert.equal(changed.key, "key2", "Incorrect value for key1 in container 1");
-                    }
-                    // Avoid re-entrancy by setting a new key
+                sharedMap2.on("valueChanged", (changed) => {
                     if (changed.key !== "key2") {
-                        sharedMap2.set("key2", "v2");
+                        sharedMap2.set("key2", `${sharedMap1.get("key1")} updated`);
                     }
                 });
-                // Set 1st key to trigger above valueChanged
-                sharedMap.set("key1", "v1");
+
+                sharedMap1.set("key2", "1");
+                sharedMap1.set("key1", "1");
+
                 await provider.ensureSynchronized();
+
+                assert.equal(sharedMap2.get("key1"), "1");
+                assert.equal(sharedMap2.get("key2"), "1 updated", "Not updated for container 2");
+
+                assert.equal(sharedMap1.get("key1"), "1");
+                assert.equal(sharedMap1.get("key2"), "1 updated", "Not updated for container 1");
             });
 
         it("Negative test with unset concurrentOpSend feature gate", async () => {
