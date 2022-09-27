@@ -8,7 +8,7 @@ import { ChangeEncoder } from "../change-family";
 import { ITreeCursor } from "../forest";
 import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, Delta, JsonableTree } from "../tree";
-import { brand, clone, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { singleTextCursor } from "./treeTextCursor";
 import {
     FieldKind,
@@ -27,6 +27,8 @@ import {
     FieldEditor,
 } from "./modular-schema";
 import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
+import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
+import { applyModifyToTree } from "./deltaUtils";
 
 /**
  * Encoder for changesets which carry no information.
@@ -316,11 +318,12 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
                 mark = { type: Delta.MarkType.Insert, content: [singleTextCursor(change.value)] };
             } else {
                 const modify = deltaFromChild(change.changes);
-                const content = clone(change.value);
-                const fields = Delta.applyModifyToInsert(content, modify);
+                const cursor = singleTextCursor(change.value);
+                const mutableTree = mapTreeFromCursor(cursor);
+                const fields = applyModifyToTree(mutableTree, modify);
                 mark = fields.size === 0
-                    ? { type: Delta.MarkType.Insert, content: [singleTextCursor(content)] }
-                    : { type: Delta.MarkType.InsertAndModify, content: singleTextCursor(content), fields };
+                    ? { type: Delta.MarkType.Insert, content: [singleMapTreeCursor(mutableTree)] }
+                    : { type: Delta.MarkType.InsertAndModify, content: singleMapTreeCursor(mutableTree), fields };
             }
 
             return [
