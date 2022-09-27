@@ -35,8 +35,9 @@ import { IRequest } from "@fluidframework/core-interfaces";
 class ContainerRuntimeFactoryWithGC extends ContainerRuntimeFactoryWithDefaultDataStore {
     public async instantiateRuntime(
         context: IContainerContext,
+        existing: boolean,
     ): Promise<IRuntime> {
-        const runtime = await super.instantiateRuntime(context, true);
+        const runtime = await super.instantiateRuntime(context, existing);
         // A hack to update the currentGCVersion.
         (runtime as any).garbageCollector.currentGCVersion += 1;
         return runtime;
