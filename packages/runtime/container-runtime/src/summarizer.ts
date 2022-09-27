@@ -10,7 +10,12 @@ import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger, IFluidErrorBase, LoggingError, wrapErrorAndLog } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    IFluidErrorBase,
+    LoggingError,
+    wrapErrorAndLog,
+} from "@fluidframework/telemetry-utils";
 import {
     FluidObject,
     IFluidHandleContext,
@@ -23,7 +28,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
-import { SummaryCollection } from "./summaryCollection";
+import { IAckedSummary, SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
@@ -374,22 +379,33 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private async handleSummaryAcks() {
         let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;
+        let ack: IAckedSummary | undefined;
         while (this.runningSummarizer) {
             const summaryLogger = this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
             try {
-                const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
+                // Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
+                // we record undefined, not previous handles.
+                ack = undefined;
+                ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
-
-                await this.internalsProvider.refreshLatestSummaryAck(
-                    ack.summaryOp.contents.handle,
-                    ack.summaryAck.contents.handle,
-                    refSequenceNumber,
-                    summaryLogger,
-                );
+                const summaryOpHandle = ack.summaryOp.contents.handle;
+                const summaryAckHandle = ack.summaryAck.contents.handle;
+                // Make sure we block any summarizer from being executed/enqueued while
+                // executing the refreshLatestSummaryAck.
+                // https://dev.azure.com/fluidframework/internal/_workitems/edit/779
+                await this.runningSummarizer.lockedRefreshSummaryAckAction(async () =>
+                    this.internalsProvider.refreshLatestSummaryAck(
+                        summaryOpHandle,
+                        summaryAckHandle,
+                        refSequenceNumber,
+                        summaryLogger,
+                    ));
             } catch (error) {
                 summaryLogger.sendErrorEvent({
                     eventName: "HandleSummaryAckError",
                     referenceSequenceNumber: refSequenceNumber,
+                    handle: ack?.summaryOp?.contents?.handle,
+                    ackHandle: ack?.summaryAck?.contents?.handle,
                 }, error);
             }
             refSequenceNumber++;
