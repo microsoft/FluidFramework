@@ -336,8 +336,8 @@ Some possible options:
 
 Applications should have a domain model that can mix editable tree nodes with custom implementations as needed.
 Custom implementations should probably be able to be projections of editable trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
-This is important for performance / scalability, and might be how we do virtualization (maybe subtrees that arn't downloaded are just one custom representation?).
+This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
 This might also be the layer at which we hook up schematize.
-Alternatively it might be an explicitly two phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
+Alternatively, it might be an explicitly two-phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
 
 How all this relates to [dependency-tracking](./src/dependency-tracking/README.md) is to be determined.
