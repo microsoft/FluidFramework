@@ -26,5 +26,5 @@ export function DataObjectView(props: DataObjectViewProps): React.ReactElement {
     // TODO: actually render data about the objects
 
     // TODO: styling
-    return <div>{name}</div>;
+    return <div>Object: {name}</div>;
 }
