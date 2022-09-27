@@ -59,8 +59,6 @@ export function sequenceFieldToDelta<TNodeChange>(
                     out.pushContent(moveMark);
                     break;
                 }
-                case "MMoveIn":
-                    fail(ERR_NOT_IMPLEMENTED);
                 case "Modify": {
                     if (mark.tomb === undefined) {
                         const modify = deltaFromChild(mark.changes);
@@ -106,6 +104,7 @@ export function sequenceFieldToDelta<TNodeChange>(
                     out.pushContent(moveMark);
                     break;
                 }
+                case "MMoveIn":
                 case "MMoveOut":
                 case "Revive":
                 case "MRevive":

@@ -38,12 +38,12 @@ function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 }
 
 describe("SequenceField - toDelta", () => {
-    it("Empty mark list", () => {
+    it("empty mark list", () => {
         const actual = toDeltaShallow([]);
         assert.deepEqual(actual, []);
     });
 
-    it("Child change", () => {
+    it("child change", () => {
         const actual = toDelta([{ type: "Modify", changes: TestChange.mint([0], 1) }]);
         const expected: Delta.MarkList = [
             {
@@ -54,7 +54,27 @@ describe("SequenceField - toDelta", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("Empty child change", () => {
+    it("muted child change", () => {
+        const actual = toDelta([{
+            type: "Modify",
+            tomb: "DummyTag",
+            changes: TestChange.mint([0], 1),
+        }]);
+        const expected: Delta.MarkList = [];
+        assert.deepEqual(actual, expected);
+    });
+
+    it("tomb", () => {
+        const actual = toDelta([{
+            type: "Tomb",
+            change: "DummyTag",
+            count: 3,
+        }]);
+        const expected: Delta.MarkList = [];
+        assert.deepEqual(actual, expected);
+    });
+
+    it("empty child change", () => {
         const actual = toDelta([{ type: "Modify", changes: TestChange.emptyChange }]);
         const expected: Delta.MarkList = [];
         assert.deepEqual(actual, expected);
@@ -117,7 +137,7 @@ describe("SequenceField - toDelta", () => {
         assert.deepStrictEqual(actual, expected);
     });
 
-    it("the lot", () => {
+    it("multiple changes", () => {
         const changeset: TestChangeset = [
             {
                 type: "Delete",
@@ -134,6 +154,12 @@ describe("SequenceField - toDelta", () => {
             {
                 type: "Modify",
                 changes: TestChange.mint([0], 1),
+            },
+            2,
+            {
+                type: "Tomb",
+                change: "DummyTag",
+                count: 3,
             },
         ];
         const del: Delta.Delete = {
@@ -153,7 +179,7 @@ describe("SequenceField - toDelta", () => {
         assert.deepStrictEqual(actual, expected);
     });
 
-    it("Insert and modify => insert", () => {
+    it("insert and modify => insert", () => {
         const changeset: TestChangeset = [
             {
                 type: "MInsert",
@@ -168,6 +194,23 @@ describe("SequenceField - toDelta", () => {
                 type,
                 value: "1",
             })],
+        };
+        const expected: Delta.MarkList = [mark];
+        const actual = toDelta(changeset);
+        assertMarkListEqual(actual, expected);
+    });
+
+    it("modify and delete => delete", () => {
+        const changeset: TestChangeset = [
+            {
+                type: "MDelete",
+                id: opId,
+                changes: TestChange.mint([0], 1),
+            },
+        ];
+        const mark: Delta.Delete = {
+            type: Delta.MarkType.Delete,
+            count: 1,
         };
         const expected: Delta.MarkList = [mark];
         const actual = toDelta(changeset);

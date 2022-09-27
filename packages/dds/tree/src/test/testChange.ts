@@ -7,7 +7,7 @@ import { fail, strict as assert } from "assert";
 import { ChangeEncoder, ChangeFamily } from "../change-family";
 import { ChangeRebaser } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
-import { JsonCompatible, RecursiveReadonly } from "../util";
+import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -226,7 +226,7 @@ export class TestChangeEncoder extends ChangeEncoder<TestChange> {
     public encodeForJson(formatVersion: number, change: TestChange): JsonCompatible {
         return change as unknown as JsonCompatible;
     }
-    public decodeJson(formatVersion: number, change: JsonCompatible): TestChange {
+    public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TestChange {
         return change as unknown as TestChange;
     }
 }
