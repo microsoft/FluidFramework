@@ -24,7 +24,7 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "npm run test:mocha-not-in-ci -- -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test": "npm run test:mocha-not-in-ci:verbose -- -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:build": "npm run build && npm run test:mocha-not-in-ci",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha-not-in-ci": "mocha --ignore 'dist/test/types/*' --recursive dist/test --exit",
