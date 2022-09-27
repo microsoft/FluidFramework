@@ -25,28 +25,19 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
     const { audience } = props;
 
     // TODO: can we guarantee this is present somehow?
-    const [myself] = useState<IMember | undefined>(audience.getMyself());
-    const [otherMembers, updateOtherMembers] = useState<Map<string, IMember>>(
-        audience.getMembers(),
-    );
+    const [myself, updateMyself] = useState<IMember | undefined>(audience.getMyself());
+    const [allMembers, updateAllMembers] = useState<Map<string, IMember>>(audience.getMembers());
 
     useEffect(() => {
-        function onMemberAdded(clientId: string, newMember: IMember): void {
-            otherMembers.set(newMember.userId, newMember);
-            updateOtherMembers(otherMembers);
+        function onUpdateMembers(): void {
+            updateMyself(audience.getMyself());
+            updateAllMembers(audience.getMembers());
         }
 
-        function onMemberRemoved(clientId: string, removedMember: IMember): void {
-            otherMembers.delete(removedMember.userId);
-            updateOtherMembers(otherMembers);
-        }
+        audience.on("membersChanged", onUpdateMembers);
 
-        audience.on("memberAdded", onMemberAdded);
-        audience.on("memberRemoved", onMemberRemoved);
-
-        return () => {
-            audience.off("memberAdded", onMemberAdded);
-            audience.off("memberRemoved", onMemberRemoved);
+        return (): void => {
+            audience.off("membersChanged", onUpdateMembers);
         };
     }, [audience]);
 
@@ -55,17 +46,19 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
         myself === undefined ? <div>Cannot find myself!</div> : <MyselfView myself={myself} />;
 
     const renderedOthers: React.ReactElement[] = [];
-    for (const member of otherMembers.values()) {
-        renderedOthers.push(
-            <li key={member.userId}>
-                <OtherMemberView member={member} />
-            </li>,
-        );
+    for (const member of allMembers.values()) {
+        if (member.userId !== myself?.userId) {
+            renderedOthers.push(
+                <li key={member.userId}>
+                    <OtherMemberView member={member} />
+                </li>,
+            );
+        }
     }
 
     return (
         <div>
-            <AudienceCount audienceCount={otherMembers.size + 1} />
+            <AudienceCount audienceCount={allMembers.size + 1} />
             <hr />
             {renderedMyself}
             <hr />
@@ -89,7 +82,11 @@ interface OtherMemberViewProps {
 
 function OtherMemberView(props: OtherMemberViewProps): React.ReactElement {
     const { member } = props;
-    return <div>{member.userId}</div>;
+
+    const connectionsPostfix =
+        member.connections.length !== 1 ? ` (connections: ${member.connections.length})` : "";
+
+    return <div>{`${member.userId}${connectionsPostfix}`}</div>;
 }
 
 interface AudienceCountProps {
