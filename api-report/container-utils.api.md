@@ -49,22 +49,6 @@ export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessa
     messageReferenceSequenceNumber: number;
     messageMinimumSequenceNumber: number;
     messageTimestamp: number;
-} | {
-    joinMessageClientId: string;
-    messageClientId: string;
-    messageSequenceNumber: number;
-    messageClientSequenceNumber: number;
-    messageReferenceSequenceNumber: number;
-    messageMinimumSequenceNumber: number;
-    messageTimestamp: number;
-} | {
-    leaveMessageClientId: string;
-    messageClientId: string;
-    messageSequenceNumber: number;
-    messageClientSequenceNumber: number;
-    messageReferenceSequenceNumber: number;
-    messageMinimumSequenceNumber: number;
-    messageTimestamp: number;
 };
 
 // @public
