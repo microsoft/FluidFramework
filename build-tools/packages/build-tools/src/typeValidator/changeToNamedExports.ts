@@ -7,6 +7,8 @@ import program from "commander";
 import { generateTests } from "./testGeneration";
 import { findPackagesUnderPath, getAndUpdatePackageDetails } from "./packageJson";
 
+import { Project } from "ts-morph";
+
 /**
  * argument parsing
  */
@@ -23,6 +25,13 @@ function writeOutLine(output: string) {
         console.log(output);
     }
 }
+
+// export async function getAndChangePackageExportsToNameExports(packageDir: string): Promise<boolean> {
+//     const project = new Project({
+
+//     })
+//     return true
+// }
 
 async function run(): Promise<boolean>{
 
