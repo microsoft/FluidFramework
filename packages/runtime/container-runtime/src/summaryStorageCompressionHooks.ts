@@ -24,6 +24,9 @@ const algorithmKey = "ALG";
  * to the blob payload.
  */
 export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
+    public get algorithm() {
+        return this._algorithm;
+    }
     private readonly blobReplacer = (input: any, context: any) => {
         if (input.type === SummaryType.Blob) {
             const summaryBlob: ISummaryBlob = input;
@@ -49,11 +52,9 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
     };
     constructor(private readonly _algorithm: SummaryCompressionAlgorithms | undefined) { }
     public onPreCreateBlob(file: ArrayBufferLike): ArrayBufferLike {
-        console.log("Using Summary Compression : CreateBlob ");
         return this.encodeBlob(file);
     }
     public onPostReadBlob(file: ArrayBufferLike): ArrayBufferLike {
-        console.log("Using Summary Compression : ReadBlob ");
         return this.decodeBlob(file);
     }
 

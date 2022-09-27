@@ -13,6 +13,14 @@ import { ICreateBlobResponse, ISnapshotTree, ISummaryBlob, ISummaryHandle,
  * and plugable preprocessing of summary data structures received from Fluid Server.
  */
 class SummaryStorageAdapter implements IDocumentStorageService {
+    public get hooks() {
+        return this._hooks;
+    }
+    public get delegate() {
+        return this._delegate;
+    }
+
+    public readonly hasHooks = true;
     constructor(private readonly _delegate: IDocumentStorageService, private readonly _hooks: SummaryStorageHooks) { }
     public get repositoryUrl(): string {
         return this._delegate.repositoryUrl;
@@ -65,6 +73,9 @@ export interface SummaryStorageHooks {
  * executed in the order of stored hooks and the receiving hooks are executed in the reverse order.
  */
 class SummaryStorageMultipleHooks implements SummaryStorageHooks {
+    public get hooks() {
+        return this._hooks;
+    }
     constructor(private readonly _hooks: SummaryStorageHooks[]) { }
 
     public onPreCreateBlob(file: ArrayBufferLike): ArrayBufferLike {
