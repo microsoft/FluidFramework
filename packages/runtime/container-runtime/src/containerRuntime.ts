@@ -108,7 +108,6 @@ import {
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
-// import { compress, decompress } from "lz4js";
 import { compress } from "lz4js";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -560,17 +559,6 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
  * @internal
  */
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-    /*
-    if (message.metadata?.compressed) {
-        const contents = IsoBuffer.from(message.contents.contents, "base64");
-        const decompressedMessage = decompress(contents);
-        const intoString = new TextDecoder().decode(decompressedMessage);
-        const asObj = JSON.parse(intoString);
-        message.contents.contents = asObj;
-        message.metadata.compressed = false;
-    }
-    */
-
     if (message.type === MessageType.Operation) {
         // legacy op format?
         if (message.contents.address !== undefined && message.contents.type === undefined) {
@@ -578,9 +566,6 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         } else {
             // new format
             const innerContents = message.contents as ContainerRuntimeMessage;
-            if (innerContents.type === undefined) {
-                throw new Error(JSON.stringify(innerContents));
-            }
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
@@ -1646,6 +1631,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message.contents = JSON.parse(message.contents);
         }
 
+        message = this.opDecompressor.processMessage(message);
+
         // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
         // This format was not shipped to production workflows.
         const runtimeMessage = unpackRuntimeMessage(message);
@@ -1660,8 +1647,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager.beforeOpProcessing(message);
 
         try {
-            message = this.opDecompressor.processMessage(message);
-
             // Chunk processing must come first given that we will transform the message to the unchunked version
             // once all pieces are available
             message = this.processRemoteChunkedMessage(message);
@@ -1829,7 +1814,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.canSendOps()) {
             if (this.context.submitBatchFn !== undefined) {
                 const batchToSend: IBatchMessage[] = [];
-                if (batch.length > 1) {
+                const batchContentsLength = batch.reduce((partialSum, currMessage) =>
+                    partialSum + currMessage.contents.length, 0);
+                if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined
+                    && batchContentsLength > this.runtimeOptions.compressionOptions.minimumSize) {
                     this.compressedOpCount++;
                     console.log(this.compressedOpCount);
                     const batchedContents: string[] = [];
@@ -1842,8 +1830,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     const compressedContents = compress(contentsAsBuffer);
                     const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 
-                    // eslint-disable-next-line max-len
-                    batchToSend.push({ contents: JSON.stringify({ packedContents: compressedContent }), metadata: { ...batch[0].metadata, compressed: true } });
+                    batchToSend.push({ contents: JSON.stringify({ packedContents: compressedContent }),
+                                                 metadata: { ...batch[0].metadata, compressed: true } });
 
                     for (let i = 1; i < batch.length; i++) {
                         batchToSend.push({ contents: "", metadata: batch[i].metadata });
@@ -1854,42 +1842,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     }
                 }
 
-                /*
-                for (const message of batch) {
-                    let contents = message.contents;
-                    let metadata = message.metadata;
-                    if (this.runtimeOptions.compressionOptions.minimumSize &&
-                        this.runtimeOptions.compressionOptions.minimumSize < message.contents.length) {
-                        this.compressedOpCount++;
-                        const copiedMessage = { ...message.deserializedContent };
-
-                        const compressionStart = Date.now();
-                        const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(copiedMessage.contents));
-                        const compressedContents = compress(contentsAsBuffer);
-                        const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
-                        const duration = Date.now() - compressionStart;
-
-                        if (this.compressedOpCount % 100) {
-                            this.mc.logger.sendPerformanceEvent({
-                                eventName: "compressedOp",
-                                duration,
-                                sizeBeforeCompression: message.contents.length,
-                                sizeAfterCompression: compressedContent.length,
-                            });
-                        }
-
-                        copiedMessage.contents = compressedContent;
-                        const stringifiedContents = JSON.stringify(copiedMessage);
-
-                        if (stringifiedContents.length < message.contents.length) {
-                            contents = JSON.stringify(copiedMessage);
-                            metadata = { ...message.metadata, compressed: true };
-                        }
-                    }
-
-                    batchToSend.push({ contents, metadata });
-                }
-                */
                 // returns clientSequenceNumber of last message in a batch
                 clientSequenceNumber = this.context.submitBatchFn(batchToSend);
             } else {
