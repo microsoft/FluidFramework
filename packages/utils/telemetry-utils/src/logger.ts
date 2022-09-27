@@ -147,7 +147,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      protected sendTelemetryEventCore(
         event: ITelemetryGenericEvent & { category: TelemetryEventCategory; },
         error?: any) {
-        const newEvent = convertToBaseEvent(event);
+        const newEvent = { ...event };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -156,7 +156,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (typeof newEvent.duration === "number") {
             newEvent.duration = TelemetryLogger.formatTick(newEvent.duration);
         }
-
+        convertToBaseEvent(newEvent);
         this.send(newEvent);
     }
 
@@ -598,16 +598,13 @@ export class TelemetryNullLogger implements ITelemetryLogger {
  * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
  * @param event - Event with fields you want to stringify.
  */
- function convertToBaseEvent(event: TelemetryEventTypes): ITelemetryBaseEvent {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const newEvent = {} as ITelemetryBaseEvent;
+function convertToBaseEvent(event: TelemetryEventTypes): void {
     for (const key of Object.keys(event)) {
         const filteredEventVal = convertToBasePropertyType(event[key]);
         if (filteredEventVal !== null) {
-            newEvent[key] = filteredEventVal;
+            event[key] = filteredEventVal;
         }
     }
-    return newEvent;
 }
 
 /**
@@ -624,11 +621,11 @@ function convertToBasePropertyType(x: any): TelemetryEventPropertyType | null {
             return x;
         default:
             if (!Array.isArray(x)) {
-                return undefined;
+                return null;
             }
             if (x.every((val) => typeof val === "boolean" || typeof val === "string" || typeof val === "number")) {
                 return JSON.stringify(x);
             }
-            return undefined;
+            return null;
     }
 }
