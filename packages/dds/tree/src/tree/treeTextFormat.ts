@@ -147,10 +147,24 @@ export function setGenericTreeField<T>(node: GenericFieldsNode<T>, key: FieldKey
  * @returns keys for fields of `tree`.
  */
 export function genericTreeKeys<T>(tree: GenericFieldsNode<T>): readonly FieldKey[] {
+    const local = tree[FieldScope.local];
+    const global = tree[FieldScope.global];
+    // This function is used when iterating through a tree.
+    // This means that this is often called on nodes with no keys
+    // (most trees are a large portion leaf nodes).
+    // Therefore this function special cases empty fields objects as an optimization.
+    if (local === undefined) {
+        if (global === undefined) {
+            return [];
+        }
+        return (Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey);
+    }
+    if (global === undefined) {
+        return Object.getOwnPropertyNames(local) as LocalFieldKey[];
+    }
     return [
-        ...Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, FieldScope.local, false)) as LocalFieldKey[],
-        ...(Object.getOwnPropertyNames(getGenericTreeFieldMap(tree, FieldScope.global, false)) as GlobalFieldKey[])
-        .map(symbolFromKey),
+        ...Object.getOwnPropertyNames(local) as LocalFieldKey[],
+        ...(Object.getOwnPropertyNames(global) as GlobalFieldKey[]).map(symbolFromKey),
     ];
 }
 
