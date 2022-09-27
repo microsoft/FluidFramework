@@ -30,6 +30,13 @@ module.exports = (env) => {
                         test: /\.tsx?$/,
                         loader: require.resolve("ts-loader"),
                     },
+                    {
+                        test: /\.css$/,
+                        use: [
+                            require.resolve("css-loader"), // translates CSS into CommonJS
+                            require.resolve("style-loader"), // creates style nodes from JS strings
+                        ],
+                    },
                 ],
             },
             output: {

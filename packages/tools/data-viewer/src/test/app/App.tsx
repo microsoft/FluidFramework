@@ -13,12 +13,17 @@ import {
 } from "@fluidframework/tinylicious-client";
 
 import { SessionDataView } from "../../components";
+// eslint-disable-next-line import/no-unassigned-import
 import "./App.css";
 
 interface ContainerInfo {
     containerId: string;
     container: IFluidContainer;
     audience: ITinyliciousAudience;
+}
+
+function getContainerIdFromLocation(location: Location): string {
+    return location.hash.slice(1);
 }
 
 function useContainerInfo(): ContainerInfo | undefined {
@@ -34,14 +39,12 @@ function useContainerInfo(): ContainerInfo | undefined {
         // Get the container from the Fluid service.
         let container: IFluidContainer;
         let services: TinyliciousContainerServices;
-        let containerId = window.location.hash.substring(1);
+        let containerId = getContainerIdFromLocation(window.location);
         if (containerId.length === 0) {
             const createContainerResult = await client.createContainer(containerSchema);
             container = createContainerResult.container;
             services = createContainerResult.services;
-
             containerId = await container.attach();
-            window.location.hash = containerId;
         } else {
             const getContainerResult = await client.getContainer(containerId, containerSchema);
             container = getContainerResult.container;
@@ -61,13 +64,23 @@ function useContainerInfo(): ContainerInfo | undefined {
 
     // Get the Fluid Data data on app startup and store in the state
     React.useEffect(() => {
-        getFluidData().then((data) => setContainerInfo(data));
+        getFluidData().then(
+            (data) => {
+                setContainerInfo(data);
+                if (getContainerIdFromLocation(window.location) !== data.containerId) {
+                    window.location.hash = data.containerId;
+                }
+            },
+            (error) => {
+                throw error;
+            },
+        );
     });
 
     return containerInfo;
 }
 
-function App() {
+export function App(): React.ReactElement {
     // Load the collaborative SharedString object
     const containerAndAudience = useContainerInfo();
 
@@ -87,5 +100,3 @@ function App() {
         return <div>Loading Fluid container...</div>;
     }
 }
-
-export default App;

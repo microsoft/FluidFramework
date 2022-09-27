@@ -6,6 +6,9 @@ import React from "react";
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
+// eslint-disable-next-line import/no-unassigned-import
+import "./DataObjectView.css";
+
 /**
  * {@link DataObjectView} input props.
  */
@@ -25,6 +28,5 @@ export function DataObjectView(props: DataObjectViewProps): React.ReactElement {
 
     // TODO: actually render data about the objects
 
-    // TODO: styling
-    return <div>Object: {name}</div>;
+    return <div className="data-object-view">Object: {name}</div>;
 }

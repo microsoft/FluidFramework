@@ -15,8 +15,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "npm run build:tsc && npm run build:copy-test-resources",
-    "build:copy-test-resources": "copyfiles \"src/test/test-data/**\" dist --up 1",
+    "build:compile": "npm run build:tsc && npm run build:copy-resources",
+    "build:copy-resources": "copyfiles \"src/**/*.css\" dist --up 1",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
@@ -41,9 +41,11 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
+    "@fluentui/react": "^8.96.1",
     "@fluidframework/core-interfaces": "^1.0.1",
     "@fluidframework/fluid-static": "^1.0.1",
     "@fluidframework/tinylicious-client": "1.0.1",
+    "css-loader": "^1.0.0",
     "fluid-framework": "^1.0.1",
     "react": "^16.10.2"
   },
@@ -71,6 +73,7 @@
     "puppeteer": "^1.20.0",
     "react-dom": "^16.10.2",
     "rimraf": "^2.6.2",
+    "style-loader": "^1.0.0",
     "tinylicious": "^0.4.89251",
     "ts-jest": "^26.4.4",
     "ts-loader": "^9.3.0",

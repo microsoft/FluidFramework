@@ -6,6 +6,8 @@ import React from "react";
 
 import { AudienceView, AudienceViewProps } from "./AudienceView";
 import { ContainerDataView, ContainerDataViewProps } from "./ContainerDataView";
+// eslint-disable-next-line import/no-unassigned-import
+import "./SessionDataView.css";
 
 /**
  * {@link SessionDataView} input props.
@@ -20,9 +22,8 @@ export type SessionDataViewProps = AudienceViewProps & ContainerDataViewProps;
 export function SessionDataView(props: SessionDataViewProps): React.ReactElement {
     const { containerId, container, audience } = props;
 
-    // TODO: styling
     return (
-        <div>
+        <div className="session-data-view">
             <ContainerDataView containerId={containerId} container={container} />
             <AudienceView audience={audience} />
         </div>

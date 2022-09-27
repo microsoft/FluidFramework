@@ -6,6 +6,8 @@ import React, { useEffect, useState } from "react";
 
 import { AttachState, ConnectionState, IFluidContainer } from "fluid-framework";
 
+// eslint-disable-next-line import/no-unassigned-import
+import "./ContainerDataView.css";
 import { DataObjectView } from "./DataObjectView";
 
 /**
@@ -37,8 +39,7 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
     const [connectionState, updateConnectionState] = useState(container.connectionState);
 
     // TODO: readonly toggle control
-
-    let readOnlyDataViews =
+    const readOnlyDataViews =
         // If we have not yet attached to the container, do not allow editing of underlying data.
         attachState !== AttachState.Attached ||
         // If we do not have an active connection, do not allow editing of underlying data.
@@ -49,25 +50,25 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
         isDisposed;
 
     useEffect(() => {
-        function onConnected() {
+        function onConnected(): void {
             updateConnectionState(container.connectionState); // Should be connected
             updateAttachState(container.attachState);
         }
 
-        function onDisconnected() {
+        function onDisconnected(): void {
             updateConnectionState(container.connectionState); // Should be disconnected
             updateAttachState(container.attachState);
         }
 
-        function onDirty() {
+        function onDirty(): void {
             updateIsDirty(true);
         }
 
-        function onSaved() {
+        function onSaved(): void {
             updateIsDirty(false);
         }
 
-        function onDispose() {
+        function onDispose(): void {
             updateIsDisposed(true);
         }
 
@@ -77,7 +78,7 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
         container.on("saved", onSaved);
         container.on("dispose", onDispose);
 
-        return () => {
+        return (): void => {
             container.off("connected", onConnected);
             container.off("disconnected", onDisconnected);
             container.off("dirty", onDirty);
@@ -123,7 +124,7 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
 
     // TODO: styling
     return (
-        <div>
+        <div className="container-data-view">
             <div>
                 <b>Container ID: </b>
                 {containerId}

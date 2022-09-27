@@ -6,6 +6,9 @@ import React, { useEffect, useState } from "react";
 
 import { IMember, IServiceAudience } from "fluid-framework";
 
+// eslint-disable-next-line import/no-unassigned-import
+import "./AudienceView.css";
+
 /**
  * {@link AudienceView} input props.
  */
@@ -57,7 +60,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
     }
 
     return (
-        <div>
+        <div className="audience-view">
             <AudienceCount audienceCount={allMembers.size + 1} />
             <hr />
             {renderedMyself}
@@ -95,5 +98,9 @@ interface AudienceCountProps {
 
 function AudienceCount(props: AudienceCountProps): React.ReactElement {
     const { audienceCount } = props;
-    return <div>Audience Members: {audienceCount}</div>;
+    return (
+        <div>
+            <b>Audience Members:</b> {audienceCount}
+        </div>
+    );
 }
