@@ -210,7 +210,7 @@ class StackCursor<TNode extends NodeData> extends SynchronousCursor implements I
     }
 
     public nextNode(): boolean {
-        // assert(this.mode === CursorLocationType.Nodes, "can only nextNode when in Nodes");
+        assert(this.mode === CursorLocationType.Nodes, "can only nextNode when in Nodes");
         this.index++;
         if (this.index < (this.siblings as []).length) {
             return true;

@@ -73,7 +73,7 @@ export function testJsonCompatibleCursor(
     factory: (data: JsonableTree) => ITreeCursor,
     dataFromCursor: (cursor: ITreeCursor) => JsonableTree,
 ): void {
-    describe.only(`${suiteName} cursor implementation`, () => {
+    describe(`${suiteName} cursor implementation`, () => {
         describe("extract roundtrip", () => {
             for (const [name, data] of cursorTestCases) {
                 it(`${name}: ${JSON.stringify(data)}`, () => {
@@ -321,7 +321,7 @@ function traverseNode(cursor: ITreeCursor) {
 export function testCursors(
     suiteName: string,
     cursors: { cursorName: string; cursor: ITreeCursor; }[]) {
-    describe.only(`${suiteName} cursor functionality`, () => {
+    describe(`${suiteName} cursor functionality`, () => {
         for (const { cursorName, cursor } of cursors) {
             describe(`${cursorName}`, () => {
                 it("tree can be traversed", () => {

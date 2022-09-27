@@ -219,6 +219,33 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
 }
 
 /**
+ * @param cursor - tree whose fields will be visited.
+ * @param f - builds output from field, which will be selected in cursor when cursor is provided.
+ * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ * @returns array resulting from applying `f` to each field of the current node on `cursor`.
+ * Returns an empty array if the node is empty or not present (which are considered the same).
+ * Note that order is not specified for field iteration.
+ */
+ export function mapCursorFields<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) => T): T[] {
+    const output: T[] = [];
+    forEachField(cursor, (c) => { output.push(f(c)); });
+    return output;
+}
+
+/**
+ * @param cursor - cursor at a node whose fields will be visited.
+ * @param f - For on each field.
+ * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ */
+ export function forEachField(
+    cursor: ITreeCursor, f: (cursor: ITreeCursor) => void): void {
+    assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes");
+    for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
+        f(cursor);
+    }
+}
+
+/**
  * @param cursor - tree whose field will be visited.
  * @param f - builds output from field member, which will be selected in cursor when cursor is provided.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
