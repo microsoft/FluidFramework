@@ -557,6 +557,12 @@ export enum ScopeType {
     SummaryWrite = "summary:write"
 }
 
+// @public (undocumented)
+export enum SignalType {
+    ClientJoin = "join",
+    ClientLeave = "leave"
+}
+
 // @public
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
