@@ -62,7 +62,7 @@
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/server-test-utils": "^0.1038.2000",
-    "@rushstack/eslint-config": "^2.5.1",
+    "@rushstack/eslint-plugin": "~0.8.5",
     "@types/async": "^3.2.9",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^9.1.1",

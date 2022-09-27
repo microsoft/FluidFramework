@@ -45,7 +45,7 @@
     "@babel/preset-env": "^7.2.0",
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@rushstack/eslint-config": "^2.5.1",
+    "@rushstack/eslint-plugin": "~0.8.5",
     "babel-loader": "^8.0.5",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",

@@ -47,7 +47,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^1.0.0",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
-    "@rushstack/eslint-config": "^2.5.1",
+    "@rushstack/eslint-plugin": "~0.8.5",
     "@types/react": "^16.9.15",
     "@types/semver": "^7.3.6",
     "concurrently": "^6.2.0",

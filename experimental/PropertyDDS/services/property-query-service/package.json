@@ -76,7 +76,7 @@
     "@fluidframework/runtime-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluidframework/server-local-server": "^0.1038.1000",
     "@fluidframework/test-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
-    "@rushstack/eslint-config": "^2.5.1",
+    "@rushstack/eslint-plugin": "~0.8.5",
     "aws-sdk": "2.547.0",
     "chai": "^4.2.0",
     "chai-as-promised": "7.1.1",

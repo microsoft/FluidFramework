@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@rushstack/eslint-config": "^2.5.1",
+    "@rushstack/eslint-plugin": "~0.8.5",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",
     "@types/debug": "^4.1.5",
