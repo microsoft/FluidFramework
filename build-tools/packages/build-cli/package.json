@@ -11,21 +11,21 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "bin": {
     "flub": "./bin/run"
   },
   "files": [
     "/bin",
-    "/dist",
+    "/lib",
     "/oclif.manifest.json"
   ],
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
+    "build:clean": "npm run clean",
     "build:compile": "npm run build:clean && npm run tsc && npm run build:copy",
-    "build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
+    "build:copy": "copyfiles -u 1 \"src/**/*.fsl\" lib",
     "build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:docs": "api-extractor run --local",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme && npm run build:diagrams",
@@ -33,7 +33,7 @@
     "build:genver": "gen-version",
     "build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:manifest": "oclif manifest",
-    "build:readme": "oclif readme",
+    "build:readme": "./bin/dev readme",
     "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log oclif.manifest.json",
     "eslint": "eslint --format stylish src",
@@ -54,12 +54,12 @@
     "cache-dir": "nyc/.cache",
     "exclude": [
       "src/test/**/*.ts",
-      "dist/test/**/*.js"
+      "lib/test/**/*.js"
     ],
     "exclude-after-remap": false,
     "include": [
       "src/**/*.ts",
-      "dist/**/*.js"
+      "lib/**/*.js"
     ],
     "report-dir": "nyc/report",
     "reporter": [
@@ -88,6 +88,7 @@
     "jssm": "^5.79.18",
     "jssm-viz-cli": "^5.83.0",
     "npm-check-updates": "^16.0.0",
+    "oclif": "^3",
     "semver": "^7.3.7",
     "semver-utils": "^1.1.4",
     "sort-json": "^2.0.1",
@@ -123,7 +124,6 @@
     "globby": "^11",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
-    "oclif": "^3",
     "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "ts-node": "^10.2.1",
@@ -137,16 +137,19 @@
     "bin": "flub",
     "dirname": "flub",
     "flexibleTaxonomy": true,
-    "commands": "./dist/commands",
+    "commands": "./lib/commands",
     "additionalHelpFlags": [
       "-h"
+    ],
+    "additionalVersionFlags": [
+      "--ver"
     ],
     "plugins": [
       "@oclif/plugin-commands",
       "@oclif/plugin-help",
-      "@oclif/plugin-not-found",
-      "@fluid-tools/version-tools"
+      "@oclif/plugin-not-found"
     ],
+    "repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/build-cli/<%- commandPath %>",
     "topicSeparator": " ",
     "topics": {}
   }
