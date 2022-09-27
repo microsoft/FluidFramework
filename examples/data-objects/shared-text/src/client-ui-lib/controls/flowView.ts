@@ -2455,6 +2455,7 @@ export class FlowView extends ui.Component {
             e.returnValue = false;
         };
 
+        /* eslint-disable unicorn/prefer-switch */
         // The logic below is complex enough that using switches makes the code far less readable.
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
@@ -2584,6 +2585,7 @@ export class FlowView extends ui.Component {
                 }
             }
         };
+        /* eslint-enable unicorn/prefer-switch */
 
         const keypressHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {

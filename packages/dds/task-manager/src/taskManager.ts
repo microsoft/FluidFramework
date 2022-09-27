@@ -572,16 +572,16 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected initializeLocalCore() { }
 
     /**
-     * @internal
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+     * @internal
      */
     protected onDisconnect() {
         this.connectionWatcher.emit("disconnect");
     }
 
     /**
-     * @internal
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
+     * @internal
      */
     protected onConnect() {
         this.connectionWatcher.emit("connect");
