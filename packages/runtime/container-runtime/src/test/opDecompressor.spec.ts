@@ -7,21 +7,16 @@ import { strict as assert } from "assert";
 import { compress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { IBatchMessage } from "@fluidframework/container-definitions";
 import { OpDecompressor } from "../opDecompressor";
+import { ContainerMessageType, ContainerRuntimeMessage } from "..";
 
 function generateCompressedBatchMessage(length: number): ISequencedDocumentMessage {
-    const batch: IBatchMessage[] = [];
-    const batchedContents: string[] = [];
+    const batch: ContainerRuntimeMessage[] = [];
     for (let i = 0; i < length; i++) {
-        batch.push({ contents: "{ \"contents\": \"value\" }", metadata: { something: "value" } });
+        batch.push({ contents: "value", type: ContainerMessageType.FluidDataStoreOp });
     }
 
-    for (const message of batch) {
-        batchedContents.push(message.contents);
-    }
-
-    const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(batchedContents));
+    const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(batch));
     const compressedContents = compress(contentsAsBuffer);
     const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
 
