@@ -15,7 +15,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
-## Upcoming breaking changes (2.0.0-internal-2.0.0 and beyond)
+## Upcoming breaking changes
 - [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
 - [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
