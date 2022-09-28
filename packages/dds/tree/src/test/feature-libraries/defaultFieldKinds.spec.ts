@@ -35,6 +35,12 @@ const childDecoder1 = (encodedChange: JsonCompatibleReadOnly) => {
     return nodeChange1;
 };
 
+const childComposer1_2 = (changes: NodeChangeset[]): NodeChangeset => {
+    assert(changes.length === 2);
+    assert.deepEqual(changes, [nodeChange1, nodeChange2]);
+    return nodeChange3;
+};
+
 describe("Value field changesets", () => {
     const fieldHandler: FieldChangeHandler<FieldKinds.ValueChangeset> = FieldKinds.value.changeHandler;
 
@@ -83,16 +89,10 @@ describe("Value field changesets", () => {
             change1,
         );
 
-        const childComposer = (changes: NodeChangeset[]): NodeChangeset => {
-            assert(changes.length === 2);
-            assert.deepEqual(changes, [nodeChange1, nodeChange2]);
-            return nodeChange3;
-        };
-
         assert.deepEqual(
             fieldHandler.rebaser.compose(
                 [childChange1, childChange2],
-                childComposer,
+                childComposer1_2,
             ),
             childChange3,
         );
@@ -169,24 +169,33 @@ describe("Value field changesets", () => {
 
 describe("Optional field changesets", () => {
     const fieldHandler: FieldChangeHandler<FieldKinds.OptionalChangeset> = FieldKinds.optional.changeHandler;
+    const editor: FieldKinds.OptionalFieldEditor = fieldHandler.editor as FieldKinds.OptionalFieldEditor;
 
     const change1: FieldKinds.OptionalChangeset = {
         fieldChange: { newContent: tree1, wasEmpty: true },
         childChange: nodeChange1,
     };
 
-    const change2: FieldKinds.OptionalChangeset = {
-        fieldChange: { wasEmpty: false },
-    };
-
-    const change3: FieldKinds.OptionalChangeset = {
-        fieldChange: { wasEmpty: true },
-    };
+    const change2: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), false);
+    const change3: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), true);
 
     it("can be composed", () => {
         const childComposer = (_: NodeChangeset[]) => assert.fail("Should not be called");
         const composed = fieldHandler.rebaser.compose([change1, change2], childComposer);
         assert.deepEqual(composed, change3);
+    });
+
+    it("can compose child changes", () => {
+        const childChange: FieldKinds.OptionalChangeset = editor.buildChildChange(0, nodeChange2);
+        const expected: FieldKinds.OptionalChangeset = {
+            fieldChange: change1.fieldChange,
+            childChange: nodeChange3,
+        };
+
+        assert.deepEqual(
+            fieldHandler.rebaser.compose([change1, childChange], childComposer1_2),
+            expected,
+        )
     });
 
     it("can be inverted", () => {
@@ -232,13 +241,25 @@ describe("Optional field changesets", () => {
         );
     });
 
-    it("can be converted to a delta", () => {
+    it("can be converted to a delta when field was empty", () => {
         const expected: Delta.MarkList = [{
             type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree3)],
         }];
 
         assertMarkListEqual(
             fieldHandler.intoDelta(change1, deltaFromChild1),
+            expected,
+        );
+    });
+
+    it("can be converted to a delta when replacing content", () => {
+        const expected: Delta.MarkList = [
+            { type: Delta.MarkType.Delete, count: 1 },
+            { type: Delta.MarkType.Insert, content: [singleTextCursorNew(tree2)] },
+        ];
+
+        assertMarkListEqual(
+            fieldHandler.intoDelta(change2, deltaFromChild1),
             expected,
         );
     });
