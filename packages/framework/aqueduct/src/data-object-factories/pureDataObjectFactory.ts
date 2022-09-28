@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import { IRequest, IFluidRouter, FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
     FluidDataStoreRuntime,
     ISharedObjectRegistry,
@@ -61,9 +61,10 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
     // request mixin in
     runtimeClass = mixinRequestHandler(
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
-            const router = (await runtimeArg.IFluidHandle?.get() as FluidObject<IFluidRouter>).IFluidRouter;
-            assert(router !== undefined, "Data store runtime entrypoint is not an IFluidRouter");
-            return router.request(request);
+            const maybeRouter: FluidObject<IFluidRouter> & IFluidLoadable | undefined =
+                (await runtimeArg.IFluidHandle?.get());
+            assert(maybeRouter?.IFluidRouter !== undefined, "Data store runtime entrypoint is not an IFluidRouter");
+            return maybeRouter?.IFluidRouter.request(request);
         },
         runtimeClass);
 
@@ -75,7 +76,7 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
         existing,
         async (rt: IFluidDataStoreRuntime) => {
             assert(instance !== undefined, "Entrypoint is undefined");
-            // Calling finishInitialization here like PureDataObject.getDataObject does to keep the same behavior,
+            // Calling finishInitialization here like PureDataObject.getDataObject did, to keep the same behavior,
             // since accessing the runtime's entrypoint is how we want the data object to be retrieved going forward.
             // Without this I ran into issues with the load-existing flow not working correctly.
             await instance.finishInitialization(true);

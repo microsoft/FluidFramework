@@ -159,7 +159,7 @@ class DataStore implements IDataStore, Partial<IProvideFluidHandle> {
         // TODO: IFluidHandle is currently only exposed in the FluidDataStoreRuntime class, not the
         // IFluidDataStoreChannel interface, thus the discovery with FluidObject. Once entrypoints are exposed more
         // directly this should be simplified.
-        const maybeHandle = this.fluidDataStoreChannel as FluidObject<IFluidHandle>;
+        const maybeHandle: IFluidDataStoreChannel & FluidObject<IFluidHandle> = this.fluidDataStoreChannel;
         return maybeHandle.IFluidHandle;
     }
 

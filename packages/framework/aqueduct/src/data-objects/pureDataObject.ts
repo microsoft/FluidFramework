@@ -82,11 +82,10 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
         // TODO: IFluidHandle is currently only exposed in the FluidDataStoreRuntime class, not the
         // IFluidDataStoreRuntime interface, thus the discovery with FluidObject. Once entrypoints are exposed more
         // directly this should be simplified.
-        const maybeIFluidHandle = runtime as FluidObject<IFluidHandle>;
-        const obj = await maybeIFluidHandle?.IFluidHandle?.get() as PureDataObject;
-        assert(obj !== undefined, 0x0bc /* "The runtime's handle is not a DataObject!" */);
-        await obj.finishInitialization(true);
-        return obj;
+        const maybeIFluidHandle: FluidObject<IFluidHandle> & IFluidDataStoreRuntime = runtime;
+        const obj = await maybeIFluidHandle?.IFluidHandle?.get();
+        assert(obj !== undefined, 0x0bc /* "The runtime's handle is not initialized yet!" */);
+        return obj as PureDataObject;
     }
 
     public constructor(props: IDataObjectProps<I>) {

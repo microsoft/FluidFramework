@@ -7,6 +7,7 @@ import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     FluidObject,
     IFluidHandle,
+    IFluidLoadable,
     IRequest,
 } from "@fluidframework/core-interfaces";
 import {
@@ -19,6 +20,7 @@ import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
+    IDataStore,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
@@ -429,12 +431,13 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
         // TODO: IFluidHandle is currently only exposed in the DataStore class, not the IDataStore interface,
         // thus the discovery with FluidObject. Once entrypoints are exposed more directly this should be
         // simplified.
-        const entrypoint = await (dataStore as FluidObject<IFluidHandle>).IFluidHandle?.get();
+        const maybeIFluidHandle: IDataStore & FluidObject<IFluidHandle> = dataStore;
+        const entrypoint: (FluidObject<IAgentScheduler> & IFluidLoadable) | undefined =
+            await maybeIFluidHandle.IFluidHandle?.get();
 
         // AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entrypoint, but double-check
         // while we plumb entrypoints correctly everywhere, so we can be sure the cast below is fine.
-        assert((entrypoint as FluidObject<IAgentScheduler>).IAgentScheduler !== undefined,
-            "The data store's entrypoint is not an AgentScheduler!");
+        assert(entrypoint?.IAgentScheduler !== undefined, "The data store's entrypoint is not an AgentScheduler!");
         return entrypoint as unknown as AgentScheduler;
     }
 

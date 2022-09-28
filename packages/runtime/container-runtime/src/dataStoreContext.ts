@@ -381,7 +381,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!existing) {
             // Load the handle to initialize the object. The only implementation of IFluidDataStoreChannel is
             // FluidDataStoreRuntime, which exposes its handle.
-            const channelAsFluidObject: FluidObject<IFluidHandle> = (channel as any);
+            const channelAsFluidObject: IFluidDataStoreChannel & FluidObject<IFluidHandle> = channel;
             await channelAsFluidObject.IFluidHandle?.get();
         }
     }
@@ -1042,7 +1042,7 @@ export class LocalDetachedFluidDataStoreContext
 
         // Load the handle to initialize the object. The only implementation of IFluidDataStoreChannel is
         // FluidDataStoreRuntime, which exposes its handle.
-        const maybeIFluidHandle = dataStoreChannel as FluidObject<IFluidHandle>;
+        const maybeIFluidHandle: IFluidDataStoreChannel & FluidObject<IFluidHandle> = dataStoreChannel;
         await maybeIFluidHandle.IFluidHandle?.get();
 
         if (await this.isRoot()) {
