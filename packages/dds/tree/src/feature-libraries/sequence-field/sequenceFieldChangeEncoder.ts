@@ -14,8 +14,8 @@ export const sequenceFieldChangeEncoder: FieldChangeEncoder<Changeset> = {
     decodeJson,
 };
 
-type NodeChangeEncoder<TNodeChange> = (change: TNodeChange) => JsonCompatibleReadOnly;
-type NodeChangeDecoder<TNodeChange> = (change: JsonCompatibleReadOnly) => TNodeChange;
+export type NodeChangeEncoder<TNodeChange> = (change: TNodeChange) => JsonCompatibleReadOnly;
+export type NodeChangeDecoder<TNodeChange> = (change: JsonCompatibleReadOnly) => TNodeChange;
 
 export function encodeForJson<TNodeChange>(
     formatVersion: number,
