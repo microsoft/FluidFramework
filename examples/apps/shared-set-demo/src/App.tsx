@@ -32,11 +32,18 @@ const getMyMap = async () => {
 function App() {
     const [fluidMap, setFluidMap] = useState<SharedSet>();
     const [value, setValue] = useState("");
+    const [view, setView] = useState<Set<any>>();
 
     useEffect(() => {
         if (fluidMap !== undefined) {
             // sync Fluid data into view state
-            console.log(fluidMap.get());
+            const syncView = () => setView(fluidMap.get());
+            // ensure sync runs at least once
+            syncView();
+            // update state each time our map changes
+            fluidMap.on("valueChanged", syncView);
+            // turn off listener when component is unmounted
+            return () => { fluidMap.off("valueChanged", syncView) }
         } else {
             getMyMap().then((mySet: SharedSet) => setFluidMap(mySet));
         }
@@ -79,6 +86,7 @@ function App() {
                 <button onClick={clear}> clear </button>
             </div>
             {"\n"}
+            {view}
         </>
     );
 }
