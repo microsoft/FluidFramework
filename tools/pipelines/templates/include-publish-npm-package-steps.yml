@@ -131,5 +131,14 @@ steps:
           rm publish_log
         fi
       done
+      k="./***-experimental-property-inspector-0.0.0-95974-test.tgz"
+      echo "***********************************"
+      echo $k
+      echo "***********************************"
+      if [[ "$(npm list -g $f)" =~ "empty" ]]; then
+          echo "Not Installed"
+      else
+          echo "Already Installed"
+      fi
       rm ~/.npmrc
       exit $t1
