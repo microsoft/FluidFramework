@@ -8,6 +8,7 @@ import {
     FluidObject,
     IFluidHandle,
     IFluidHandleContext,
+    IProvideFluidHandle,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -101,7 +102,7 @@ export interface ISharedObjectRegistry {
 export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
 IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext,
-Partial<{ readonly IFluidHandle: IFluidHandle<FluidObject>; }> {
+Partial<IProvideFluidHandle> {
     /**
      * @deprecated - Instantiate the class using its constructor instead.
      *
@@ -134,7 +135,7 @@ Partial<{ readonly IFluidHandle: IFluidHandle<FluidObject>; }> {
         return this.handle;
     }
 
-    private readonly handle?: IFluidHandle<FluidObject>;
+    private readonly handle?: IFluidHandle;
 
     public get IFluidRouter() { return this; }
 

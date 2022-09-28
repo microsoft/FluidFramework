@@ -18,9 +18,11 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
+import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -40,9 +42,7 @@ export enum DataStoreMessageType {
 }
 
 // @public
-export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext, Partial<{
-    readonly IFluidHandle: IFluidHandle<FluidObject>;
-}> {
+export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext, Partial<IProvideFluidHandle> {
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntrypoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
@@ -83,7 +83,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
-    get IFluidHandle(): IFluidHandle<FluidObject<unknown>> | undefined;
+    get IFluidHandle(): IFluidHandle<FluidObject<unknown> & IFluidLoadable> | undefined;
     // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)
