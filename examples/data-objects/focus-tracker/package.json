@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/focus-tracker",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "private": true,
   "description": "Example Data Object that tracks page focus for Audience members using signals.",
   "homepage": "https://fluidframework.com",
@@ -37,11 +37,11 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-experimental/data-objects": "^0.59.4003",
+    "@fluid-experimental/data-objects": "^0.59.4004",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/tinylicious-client": "^0.59.4003",
-    "fluid-framework": "^0.59.4003"
+    "@fluidframework/tinylicious-client": "^0.59.4004",
+    "fluid-framework": "^0.59.4004"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

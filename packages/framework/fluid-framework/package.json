@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,9 +36,9 @@
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^0.48.2000",
-    "@fluidframework/fluid-static": "^0.59.4003",
-    "@fluidframework/map": "^0.59.4003",
-    "@fluidframework/sequence": "^0.59.4003"
+    "@fluidframework/fluid-static": "^0.59.4004",
+    "@fluidframework/map": "^0.59.4004",
+    "@fluidframework/sequence": "^0.59.4004"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -70,7 +70,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4003",
+    "version": "0.59.4004",
     "broken": {
       "InterfaceDeclaration_ISequenceDeltaRange": {
         "forwardCompat": false,

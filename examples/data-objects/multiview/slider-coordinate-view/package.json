@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-slider-coordinate-view",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "private": true,
   "description": "View for multiview sample",
   "homepage": "https://fluidframework.com",
@@ -42,11 +42,11 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/multiview-coordinate-interface": "^0.59.4003",
+    "@fluid-example/multiview-coordinate-interface": "^0.59.4004",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.59.4003",
+    "@fluid-tools/webpack-fluid-loader": "^0.59.4004",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-tools": "^0.2.3074",

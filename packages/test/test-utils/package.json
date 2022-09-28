@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-utils",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "Utilities for Fluid tests",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -55,28 +55,28 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.59.4003",
+    "@fluidframework/aqueduct": "^0.59.4004",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.48.2000",
-    "@fluidframework/container-loader": "^0.59.4003",
-    "@fluidframework/container-runtime": "^0.59.4003",
-    "@fluidframework/container-runtime-definitions": "^0.59.4003",
+    "@fluidframework/container-loader": "^0.59.4004",
+    "@fluidframework/container-runtime": "^0.59.4004",
+    "@fluidframework/container-runtime-definitions": "^0.59.4004",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore": "^0.59.4003",
-    "@fluidframework/datastore-definitions": "^0.59.4003",
+    "@fluidframework/datastore": "^0.59.4004",
+    "@fluidframework/datastore-definitions": "^0.59.4004",
     "@fluidframework/driver-definitions": "^0.46.2000",
-    "@fluidframework/driver-utils": "^0.59.4003",
-    "@fluidframework/local-driver": "^0.59.4003",
-    "@fluidframework/map": "^0.59.4003",
+    "@fluidframework/driver-utils": "^0.59.4004",
+    "@fluidframework/local-driver": "^0.59.4004",
+    "@fluidframework/map": "^0.59.4004",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/request-handler": "^0.59.4003",
-    "@fluidframework/routerlicious-driver": "^0.59.4003",
-    "@fluidframework/runtime-definitions": "^0.59.4003",
-    "@fluidframework/runtime-utils": "^0.59.4003",
-    "@fluidframework/telemetry-utils": "^0.59.4003",
-    "@fluidframework/test-driver-definitions": "^0.59.4003",
-    "@fluidframework/test-runtime-utils": "^0.59.4003",
+    "@fluidframework/request-handler": "^0.59.4004",
+    "@fluidframework/routerlicious-driver": "^0.59.4004",
+    "@fluidframework/runtime-definitions": "^0.59.4004",
+    "@fluidframework/runtime-utils": "^0.59.4004",
+    "@fluidframework/telemetry-utils": "^0.59.4004",
+    "@fluidframework/test-driver-definitions": "^0.59.4004",
+    "@fluidframework/test-runtime-utils": "^0.59.4004",
     "debug": "^4.1.1",
     "uuid": "^8.3.1"
   },
@@ -116,7 +116,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4003",
+    "version": "0.59.4004",
     "broken": {}
   }
 }

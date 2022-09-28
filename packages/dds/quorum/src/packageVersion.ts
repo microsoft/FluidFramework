@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-internal/quorum";
-export const pkgVersion = "0.59.4003";
+export const pkgVersion = "0.59.4004";

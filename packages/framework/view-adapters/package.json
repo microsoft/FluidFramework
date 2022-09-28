@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-adapters",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "View adapters for rendering views of alternate or unknown UI frameworks",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/view-interfaces": "^0.59.4003",
+    "@fluidframework/view-interfaces": "^0.59.4004",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
@@ -65,7 +65,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4003",
+    "version": "0.59.4004",
     "broken": {}
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-proxy",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "Proxify PropertyTree to interact with them in a JavaScript like manner",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,8 +36,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": "^0.59.4003",
-    "@fluid-experimental/property-properties": "^0.59.4003"
+    "@fluid-experimental/property-changeset": "^0.59.4004",
+    "@fluid-experimental/property-properties": "^0.59.4004"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

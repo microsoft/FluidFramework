@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/example-utils",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "private": true,
   "description": "Shared utilities used by examples.",
   "homepage": "https://fluidframework.com",
@@ -33,12 +33,12 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.59.4003",
-    "@fluidframework/container-runtime-definitions": "^0.59.4003",
-    "@fluidframework/request-handler": "^0.59.4003",
-    "@fluidframework/runtime-definitions": "^0.59.4003",
-    "@fluidframework/runtime-utils": "^0.59.4003",
-    "@fluidframework/view-adapters": "^0.59.4003"
+    "@fluidframework/aqueduct": "^0.59.4004",
+    "@fluidframework/container-runtime-definitions": "^0.59.4004",
+    "@fluidframework/request-handler": "^0.59.4004",
+    "@fluidframework/runtime-definitions": "^0.59.4004",
+    "@fluidframework/runtime-utils": "^0.59.4004",
+    "@fluidframework/view-adapters": "^0.59.4004"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

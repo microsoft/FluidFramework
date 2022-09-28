@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/request-handler",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "A simple request handling library for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -61,18 +61,18 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-runtime-definitions": "^0.59.4003",
+    "@fluidframework/container-runtime-definitions": "^0.59.4004",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/runtime-definitions": "^0.59.4003",
-    "@fluidframework/runtime-utils": "^0.59.4003"
+    "@fluidframework/runtime-definitions": "^0.59.4004",
+    "@fluidframework/runtime-utils": "^0.59.4004"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.70857",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.4003",
+    "@fluidframework/mocha-test-setup": "^0.59.4004",
     "@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@0.59.4002",
-    "@fluidframework/test-runtime-utils": "^0.59.4003",
+    "@fluidframework/test-runtime-utils": "^0.59.4004",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
@@ -104,7 +104,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4003",
+    "version": "0.59.4004",
     "broken": {}
   }
 }

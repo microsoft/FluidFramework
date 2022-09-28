@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/synthesize",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "A library for synthesizing scope objects.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -66,9 +66,9 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.70857",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore": "^0.59.4003",
+    "@fluidframework/datastore": "^0.59.4004",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.4003",
+    "@fluidframework/mocha-test-setup": "^0.59.4004",
     "@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@0.59.4002",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -98,7 +98,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4003",
+    "version": "0.59.4004",
     "broken": {}
   }
 }
