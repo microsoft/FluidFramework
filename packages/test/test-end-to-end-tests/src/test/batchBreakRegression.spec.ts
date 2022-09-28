@@ -11,7 +11,11 @@ import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidfram
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ISequencedDocumentSystemMessage } from "@fluidframework/protocol-definitions";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
+} from "@fluidframework/protocol-definitions";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -141,11 +145,38 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             });
         await runAndValidateBatch(provider, proxyDsf, this.timeout());
     });
-    it("working batch",
-    async function() {
+
+    it("working batch", async function() {
         const provider = getTestObjectProvider({ resetAfterEach: true });
         await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
     });
+
+    it("contains batch metadata", async function() {
+        const provider = getTestObjectProvider({ resetAfterEach: true });
+        let batchesSent = 0;
+        let sentMessages: IDocumentMessage[] = [];
+
+        const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+            provider.documentServiceFactory,
+            {
+                createDocumentService: {
+                    connectToDeltaStream: {
+                        submit: (ds) => (messages) => {
+                            sentMessages = [...messages];
+                            batchesSent++;
+                            ds.submit(messages);
+                        },
+                    },
+                },
+            });
+
+        await runAndValidateBatch(provider, proxyDsf, this.timeout());
+        assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
+        assert.strictEqual(sentMessages.length, 11, "expected 11 messages");
+        assert.strictEqual(sentMessages[0].metadata?.batch, true, "first message should contain batch metadata");
+        assert.strictEqual(sentMessages[10].metadata?.batch, false, "last message should contain batch metadata");
+    });
+
     describe("client sends invalid batches ", () => {
         itExpects("Batch end without start",
         [
