@@ -430,7 +430,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
         // thus the discovery with FluidObject. Once entrypoints are exposed more directly this should be
         // simplified.
         const scheduler = await (dataStore as FluidObject<IFluidHandle>).IFluidHandle?.get();
-        assert(scheduler instanceof AgentScheduler, "The data store's handle is not an AgentScheduler!");
+        assert(scheduler instanceof AgentScheduler, "The data store's entrypoint is not an AgentScheduler!");
         return scheduler;
     }
 
