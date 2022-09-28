@@ -19,7 +19,7 @@ import { pkgVersion } from "./packageVersion";
 import { SharedNumberSequence } from "./sharedNumberSequence";
 import { SharedObjectSequence } from "./sharedObjectSequence";
 import { IJSONRunSegment, SubSequence } from "./sharedSequence";
-import { SharedString, SharedStringSegment, TestSharedString } from "./sharedString";
+import { SharedString, SharedStringSegment } from "./sharedString";
 
 export class SharedStringFactory implements IChannelFactory {
     // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
@@ -68,52 +68,52 @@ export class SharedStringFactory implements IChannelFactory {
     }
 }
 
-export class TestSharedStringFactory implements IChannelFactory {
-    // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
-    // load code
-    public static Type = "https://graph.microsoft.com/types/mergeTree";
+// export class TestSharedStringFactory implements IChannelFactory {
+//     // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
+//     // load code
+//     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
-    public static readonly Attributes: IChannelAttributes = {
-        type: TestSharedStringFactory.Type,
-        snapshotFormatVersion: "0.1",
-        packageVersion: pkgVersion,
-    };
+//     public static readonly Attributes: IChannelAttributes = {
+//         type: TestSharedStringFactory.Type,
+//         snapshotFormatVersion: "0.1",
+//         packageVersion: pkgVersion,
+//     };
 
-    public static segmentFromSpec(spec: any): SharedStringSegment {
-        const maybeText = TextSegment.fromJSONObject(spec);
-        if (maybeText) { return maybeText; }
+//     public static segmentFromSpec(spec: any): SharedStringSegment {
+//         const maybeText = TextSegment.fromJSONObject(spec);
+//         if (maybeText) { return maybeText; }
 
-        const maybeMarker = Marker.fromJSONObject(spec);
-        if (maybeMarker) { return maybeMarker; }
-    }
+//         const maybeMarker = Marker.fromJSONObject(spec);
+//         if (maybeMarker) { return maybeMarker; }
+//     }
 
-    public get type() {
-        return TestSharedStringFactory.Type;
-    }
+//     public get type() {
+//         return TestSharedStringFactory.Type;
+//     }
 
-    public get attributes() {
-        return TestSharedStringFactory.Attributes;
-    }
+//     public get attributes() {
+//         return TestSharedStringFactory.Attributes;
+//     }
 
-    /**
-     * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-     */
-    public async load(
-        runtime: IFluidDataStoreRuntime,
-        id: string,
-        services: IChannelServices,
-        attributes: IChannelAttributes): Promise<TestSharedString> {
-        const sharedString = new TestSharedString(runtime, id, attributes);
-        await sharedString.load(services);
-        return sharedString;
-    }
+//     /**
+//      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+//      */
+//     public async load(
+//         runtime: IFluidDataStoreRuntime,
+//         id: string,
+//         services: IChannelServices,
+//         attributes: IChannelAttributes): Promise<TestSharedString> {
+//         const sharedString = new TestSharedString(runtime, id, attributes);
+//         await sharedString.load(services);
+//         return sharedString;
+//     }
 
-    public create(document: IFluidDataStoreRuntime, id: string): TestSharedString {
-        const sharedString = new TestSharedString(document, id, this.attributes);
-        sharedString.initializeLocal();
-        return sharedString;
-    }
-}
+//     public create(document: IFluidDataStoreRuntime, id: string): TestSharedString {
+//         const sharedString = new TestSharedString(document, id, this.attributes);
+//         sharedString.initializeLocal();
+//         return sharedString;
+//     }
+// }
 
 /**
  * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.

@@ -10,13 +10,17 @@ import {
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { SharedString, TestSharedString } from "../sharedString";
-import { SharedStringFactory, TestSharedStringFactory } from "../sequenceFactory";
+import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
 import {
     IntervalCollection,
     intervalLocatorFromEndpoint,
     IntervalType, SequenceInterval,
 } from "../intervalCollection";
+import {
+    SharedStringWithV1IntervalCollection,
+    V1IntervalCollectionSharedStringFactory,
+} from "./v1IntervalCollectionHelpers";
 
 const assertIntervals = (
     sharedString: SharedString,
@@ -63,7 +67,7 @@ async function testLoadSharedString(
     containerRuntimeFactory: MockContainerRuntimeFactory,
     id: string,
     summary: ISummaryTree,
-): Promise<TestSharedString> {
+): Promise<SharedStringWithV1IntervalCollection> {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
     dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
@@ -71,7 +75,11 @@ async function testLoadSharedString(
         deltaConnection: containerRuntime.createDeltaConnection(),
         objectStorage: MockStorage.createFromSummary(summary),
     };
-    const sharedString = new TestSharedString(dataStoreRuntime, id, TestSharedStringFactory.Attributes);
+    const sharedString = new SharedStringWithV1IntervalCollection(
+        dataStoreRuntime,
+        id,
+        V1IntervalCollectionSharedStringFactory.Attributes,
+    );
     await sharedString.load(services);
     await sharedString.loaded;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

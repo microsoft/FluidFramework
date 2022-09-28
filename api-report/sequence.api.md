@@ -188,24 +188,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 }
 
 // @public (undocumented)
-export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
-    // (undocumented)
-    client: Client | undefined;
-    // @internal (undocumented)
-    readonly emitter: IValueOpEmitter;
-    // (undocumented)
-    getNextLocalSeq(): number;
-    // (undocumented)
-    readonly helpers: IIntervalHelpers<TInterval>;
-    // (undocumented)
-    localCollection: LocalIntervalCollection<TInterval>;
-    // (undocumented)
-    readonly requiresClient: boolean;
-    // (undocumented)
-    savedSerializedIntervals?: ISerializedInterval[];
-}
-
-// @public (undocumented)
 export class IntervalCollectionIterator<TInterval extends ISerializableInterval> {
     constructor(collection: IntervalCollection<TInterval>, iteratesForward?: boolean, start?: number, end?: number);
     // (undocumented)
@@ -843,52 +825,6 @@ export class SubSequence<T> extends BaseSegment {
     readonly type: string;
     // (undocumented)
     static readonly typeString: string;
-}
-
-// @public (undocumented)
-export class TestIntervalCollection<TInterval extends ISerializableInterval> extends IntervalCollection<SequenceInterval> {
-    // (undocumented)
-    [Symbol.iterator](): IntervalCollectionIterator<SequenceInterval>;
-    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): SequenceInterval;
-    // (undocumented)
-    get attached(): boolean;
-    // (undocumented)
-    attachGraph(client: Client, label: string): void;
-    // (undocumented)
-    casted: IntervalCollectionInternals<SequenceInterval>;
-    // (undocumented)
-    findOverlappingIntervals(startPosition: number, endPosition: number): SequenceInterval[];
-    // (undocumented)
-    gatherIterationResults(results: SequenceInterval[], iteratesForward: boolean, start?: number, end?: number): void;
-    // @internal (undocumented)
-    serializeInternal(): ISerializedIntervalCollectionV2;
-}
-
-// @public (undocumented)
-export class TestSharedString extends SharedString {
-    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    static create(runtime: IFluidDataStoreRuntime, id?: string): TestSharedString;
-    static getFactory(): TestSharedStringFactory;
-    // (undocumented)
-    id: string;
-}
-
-// @public (undocumented)
-export class TestSharedStringFactory implements IChannelFactory {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): TestSharedString;
-    // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<TestSharedString>;
-    // (undocumented)
-    static segmentFromSpec(spec: any): SharedStringSegment;
-    // (undocumented)
-    static Type: string;
-    // (undocumented)
-    get type(): string;
 }
 
 ```

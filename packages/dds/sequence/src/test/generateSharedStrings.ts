@@ -6,9 +6,13 @@
 import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree";
 import Random from "random-js";
 import * as mocks from "@fluidframework/test-runtime-utils";
-import { SharedString, TestSharedString } from "../sharedString";
-import { SharedStringFactory, TestSharedStringFactory } from "../sequenceFactory";
+import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalType } from "../intervalCollection";
+import {
+    SharedStringWithV1IntervalCollection,
+    V1IntervalCollectionSharedStringFactory,
+} from "./v1IntervalCollectionHelpers";
 
 export const LocationBase: string = "src/test/snapshots/";
 export const TestLocationBase: string = "src/test/snapshots/OLD/";
@@ -119,12 +123,16 @@ export function* generateStrings(): Generator<[string, SharedString]> {
 // Adding a flag to determine if we should run a test on the document in snapshotVersion.spec.ts.
 // We only want to test the wiithIntervals.json documents, since these are
 // the only ones with format changes.
-export function* generateTestStrings(): Generator<[string, TestSharedString, boolean]> {
+export function* generateTestStrings(): Generator<[string, SharedStringWithV1IntervalCollection, boolean]> {
     for (const [version, options] of supportedVersions) {
         const documentId = "fakeId";
         const dataStoreRuntime: mocks.MockFluidDataStoreRuntime = new mocks.MockFluidDataStoreRuntime();
-        const createNewSharedString = (): TestSharedString => {
-            const string = new TestSharedString(dataStoreRuntime, documentId, TestSharedStringFactory.Attributes);
+        const createNewSharedString = (): SharedStringWithV1IntervalCollection => {
+            const string = new SharedStringWithV1IntervalCollection(
+                dataStoreRuntime,
+                documentId,
+                V1IntervalCollectionSharedStringFactory.Attributes,
+            );
             string.initializeLocal();
             return string;
         };

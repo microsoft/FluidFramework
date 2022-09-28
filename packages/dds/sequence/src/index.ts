@@ -21,7 +21,6 @@ export {
     IIntervalHelpers,
     Interval,
     IntervalCollection,
-    IntervalCollectionInternals,
     IntervalCollectionIterator,
     IntervalLocator,
     intervalLocatorFromEndpoint,
@@ -30,7 +29,6 @@ export {
     ISerializedInterval,
     LocalIntervalCollection,
     SequenceInterval,
-    TestIntervalCollection,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,
 } from "./intervalCollection";

@@ -222,6 +222,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                     break;
             }
         });
+
         this.intervalCollections = new DefaultMap(
             this.serializer,
             this.handle,
@@ -715,7 +716,3 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 }
-
-// interface SharedStringInternals extends SharedSegmentSequence<T extends ISegment> {
-//     readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>
-// }

@@ -18,9 +18,7 @@ import {
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
 import { SharedSegmentSequence } from "./sequence";
-import { SharedStringFactory, TestSharedStringFactory } from "./sequenceFactory";
-import { DefaultMap } from "./defaultMap";
-import { IntervalCollection, OldSequenceIntervalCollectionValueType, SequenceInterval } from "./intervalCollection";
+import { SharedStringFactory } from "./sequenceFactory";
 
 /**
  * Fluid object interface describing access methods on a SharedString
@@ -302,37 +300,37 @@ export function getTextAndMarkers(sharedString: SharedString, label: string): {
     return sharedString.getTextAndMarkers(label);
 }
 
-interface SharedStringInternals {
-    intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
-}
+// interface SharedStringInternals {
+//     intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
+// }
 
-export class TestSharedString
-    extends SharedString {
-    /**
-     * Create a new shared string.
-     * @param runtime - data store runtime the new shared string belongs to
-     * @param id - optional name of the shared string
-     * @returns newly create shared string (but not attached yet)
-     */
-     public static create(runtime: IFluidDataStoreRuntime, id?: string) {
-        return runtime.createChannel(id, TestSharedStringFactory.Type) as TestSharedString;
-    }
+// export class TestSharedString
+//     extends SharedString {
+//     /**
+//      * Create a new shared string.
+//      * @param runtime - data store runtime the new shared string belongs to
+//      * @param id - optional name of the shared string
+//      * @returns newly create shared string (but not attached yet)
+//      */
+//      public static create(runtime: IFluidDataStoreRuntime, id?: string) {
+//         return runtime.createChannel(id, TestSharedStringFactory.Type) as TestSharedString;
+//     }
 
-    /**
-     * Get a factory for SharedString to register with the data store.
-     * @returns a factory that creates and load SharedString
-     */
-    public static getFactory() {
-        return new TestSharedStringFactory();
-    }
+//     /**
+//      * Get a factory for SharedString to register with the data store.
+//      * @returns a factory that creates and load SharedString
+//      */
+//     public static getFactory() {
+//         return new TestSharedStringFactory();
+//     }
 
-    constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
-        super(document, id, attributes);
-        (this as unknown as SharedStringInternals).intervalCollections = new DefaultMap(
-            this.serializer,
-            this.handle,
-            (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-            new OldSequenceIntervalCollectionValueType(),
-        );
-    }
-}
+//     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
+//         super(document, id, attributes);
+//         (this as unknown as SharedStringInternals).intervalCollections = new DefaultMap(
+//             this.serializer,
+//             this.handle,
+//             (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+//             new OldSequenceIntervalCollectionValueType(),
+//         );
+//     }
+// }
