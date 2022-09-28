@@ -362,8 +362,8 @@ class ConnectionStateHandler implements IConnectionStateHandler {
                 category: error ? "error" : "generic",
                 details: JSON.stringify({
                     source,
-                    clientId: this.pendingClientId,
-                    oldClientId: this.clientId,
+                    pendingClientId: this.pendingClientId,
+                    clientId: this.clientId,
                     waitingForLeaveOp: this.waitingForLeaveOp,
                     clientJoined: this.hasMember(this.pendingClientId),
                 }),
