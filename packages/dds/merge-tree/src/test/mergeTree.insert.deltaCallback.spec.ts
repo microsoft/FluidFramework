@@ -127,15 +127,16 @@ describe("MergeTree", () => {
         it("Insert marker", () => {
             const count = countOperations(mergeTree);
 
-            insertMarker(
+            insertMarker({
                 mergeTree,
-                4,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                ReferenceType.Simple,
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } });
+                pos: 4,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                behaviors: ReferenceType.Simple,
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.INSERT]: 1,

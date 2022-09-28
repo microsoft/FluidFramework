@@ -26,14 +26,27 @@ export function loadTextFromFileWithMarkers(filename: string, mergeTree: MergeTr
     return loadText(content, mergeTree, segLimit, true);
 }
 
-export function insertMarker(
-    mergeTree: MergeTree,
-    pos: number,
-    refSeq: number,
-    clientId: number,
-    seq: number,
-    behaviors: ReferenceType, props: PropertySet | undefined, opArgs: IMergeTreeDeltaOpArgs,
-) {
+interface InsertMarkerArgs {
+    mergeTree: MergeTree;
+    pos: number;
+    refSeq: number;
+    clientId: number;
+    seq: number;
+    behaviors: ReferenceType;
+    props: PropertySet | undefined;
+    opArgs: IMergeTreeDeltaOpArgs;
+}
+
+export function insertMarker({
+    mergeTree,
+    pos,
+    refSeq,
+    clientId,
+    seq,
+    behaviors,
+    props,
+    opArgs,
+}: InsertMarkerArgs) {
     mergeTree.insertSegments(pos, [Marker.make(behaviors, props)], refSeq, clientId, seq, opArgs);
 }
 
