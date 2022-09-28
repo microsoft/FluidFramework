@@ -643,13 +643,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
+                    const mode = this.connectionMode;
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
                     this._deltaManager.logConnectionIssue({
                         eventName,
+                        mode,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
                         ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
+
+                    // If this is "write" connection, it took too long to receive join op. But in most cases that's due
+                    // to very slow op fetches and we will eventually get there.
+                    // For "read" connections, we get here due to self join signal not arriving on time. We will need to
+                    // better understand when and why it may happen.
+                    // For now, attempt to recover by reconnecting. In future, maybe we can query relay service for
+                    // current state of audience.
+                    // Other possible recovery path - move to connected state (i.e. ConnectionStateHandler.joinOpTimer
+                    // to call this.applyForConnectedState("addMemberEvent") for "read" connections)
+                    if (mode === "read") {
+                        this.disconnect();
+                        this.connect();
+                    }
                 },
             },
             this.deltaManager,
@@ -1507,8 +1522,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.inboundSignal.pause();
 
         deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+            assert(this.connectionMode === details.mode, "mismatch");
             this.connectionStateHandler.receivedConnectEvent(
-                this.connectionMode,
                 details,
             );
         });

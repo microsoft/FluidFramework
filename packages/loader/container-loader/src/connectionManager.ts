@@ -81,10 +81,19 @@ function getNackReconnectInfo(nackContent: INackContent) {
  * Implementation of IDocumentDeltaConnection that does not support submitting
  * or receiving ops. Used in storage-only mode.
  */
+const clientNoDeltaStream: IClient = {
+    mode: "read",
+    details: { capabilities: { interactive: true } },
+    permission: [],
+    user: { id: "unknown" }, // we need some "fake" ID here.
+    scopes: [],
+};
+const clientIdNoDeltaStream: string = "storage-only client";
+
 class NoDeltaStream
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
     implements IDocumentDeltaConnection, IDisposable {
-    clientId: string = "storage-only client";
+    clientId = clientIdNoDeltaStream;
     claims: ITokenClaims = {
         scopes: [ScopeType.DocRead],
     } as any;
@@ -94,7 +103,7 @@ class NoDeltaStream
     version: string = "";
     initialMessages: ISequencedDocumentMessage[] = [];
     initialSignals: ISignalMessage[] = [];
-    initialClients: ISignalClient[] = [];
+    initialClients: ISignalClient[] = [{ client: clientNoDeltaStream, clientId: clientIdNoDeltaStream }];
     serviceConfiguration: IClientConfiguration = {
         maxMessageSize: 0,
         blockSize: 0,
