@@ -2590,12 +2590,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.pendingStateManager.hasPendingMessages() || !this.emptyBatch;
     }
 
-    private updateDocumentDirtyState(dirty: boolean) {
+    private updateDocumentDirtyState(dirty: boolean, uploadingBlob: boolean = false) {
         if (this.attachState !== AttachState.Attached) {
             assert(dirty, 0x3d2 /* Non-attached container is dirty */);
         } else {
             // Other way is not true = see this.isContainerMessageDirtyable()
-            assert(!dirty || this.hasPendingMessages(),
+            assert(!dirty || this.hasPendingMessages() || uploadingBlob,
                 0x3d3 /* if doc is dirty, there has to be pending ops */);
         }
 
@@ -2633,9 +2633,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         this.verifyNotClosed();
         const previousDirtyState = this.isDirty;
-        this.updateDocumentDirtyState(true);
+        this.updateDocumentDirtyState(true, true);
         const handle = await this.blobManager.createBlob(blob);
-        this.updateDocumentDirtyState(previousDirtyState);
+        this.updateDocumentDirtyState(previousDirtyState, true);
         return handle;
     }
 
