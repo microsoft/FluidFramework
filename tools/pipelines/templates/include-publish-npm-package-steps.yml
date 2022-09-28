@@ -90,7 +90,8 @@ steps:
         sorted=false
       fi
       echo "------------------------------"
-      echo "NPM List : " npm lit -g
+      echo "NPM List : " npm list -g
+      echo "NPM List : " $(npm list -g)
       echo "------------------------------"
       for packageName in $packages
       do
