@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Stack } from "office-ui-fabric-react";
 import React, { useEffect, useState } from "react";
 
 import { AttachState, ConnectionState, IFluidContainer } from "fluid-framework";
 
-import { DataObjectView } from "./DataObjectView";
+import { DataObjectsView } from "./DataObjectsView";
 
 /**
  * {@link ContainerDataView} input props.
@@ -85,26 +86,17 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
         };
     }, [container]);
 
-    let innerContents: React.ReactElement;
+    let innerView: React.ReactElement;
     if (isDisposed) {
-        innerContents = (
+        innerView = (
             <div>
                 <b>Disposed</b>
             </div>
         );
     } else {
         const initialObjects = container.initialObjects;
-        const objectViews = Object.entries(initialObjects).map(([key, value]) => {
-            return (
-                <React.Fragment key={key}>
-                    <DataObjectView name={key} dataObject={value} />
-                </React.Fragment>
-            );
-        });
-
-        // TODO: styling
-        innerContents = (
-            <div>
+        innerView = (
+            <Stack>
                 <div>
                     <b>Connection state: </b>
                     {connectionStateToString(connectionState)}
@@ -114,27 +106,29 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
                     {attachState}
                 </div>
                 <div>
+                    <b>Mode: </b>
+                    {readOnlyDataViews ? "Readonly" : "Read/Write"}
+                </div>
+                <div>
                     <b>Local edit state: </b>
                     {isDirty ? "Pending local edits" : "No pending local edits"}
                 </div>
-                <hr />
-                <div>
-                    <h2>Contained Objects</h2>
-                    {objectViews}
-                </div>
-            </div>
+                <DataObjectsView initialObjects={initialObjects} />
+            </Stack>
         );
     }
 
     // TODO: styling
     return (
-        <div>
-            <div>
-                <b>Container ID: </b>
-                {containerId}
-            </div>
-            {innerContents}
-            {readOnlyDataViews ? "readonly :)" : "not readonly :O"}
+        <div className="container-data-view">
+            <h2>Container</h2>
+            <Stack>
+                <div>
+                    <b>Container ID: </b>
+                    {containerId}
+                </div>
+                {innerView}
+            </Stack>
         </div>
     );
 }
