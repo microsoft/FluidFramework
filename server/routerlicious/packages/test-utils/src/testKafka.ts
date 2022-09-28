@@ -5,10 +5,15 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import * as core from "@fluidframework/server-services-core";
+import {
+    IConsumer,
+    IProducer,
+    IQueuedMessage,
+    ISequencedOperationMessage,
+} from "@fluidframework/server-services-core";
 import { TestContext } from "./testContext";
 
-export class TestConsumer implements core.IConsumer {
+export class TestConsumer implements IConsumer {
     private readonly emitter = new EventEmitter();
     private pausedQueue: string[] = null;
     private failOnCommit = false;
@@ -34,7 +39,7 @@ export class TestConsumer implements core.IConsumer {
         return undefined;
     }
 
-    public async commitCheckpoint(partitionId: number, queuedMessage: core.IQueuedMessage): Promise<void> {
+    public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
         // For now we assume a single partition for the test consumer
         assert(partitionId === 0);
 
@@ -106,7 +111,7 @@ export class TestConsumer implements core.IConsumer {
     }
 }
 
-export class TestProducer implements core.IProducer {
+export class TestProducer implements IProducer {
     constructor(private readonly kafka: TestKafka) {
     }
 
@@ -136,7 +141,7 @@ export class TestProducer implements core.IProducer {
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
  */
 export class TestKafka {
-    public static createdQueuedMessage(offset: number, metadata?: any): core.IQueuedMessage {
+    public static createdQueuedMessage(offset: number, metadata?: any): IQueuedMessage {
         return {
             topic: "topic",
             partition: 0,
@@ -145,7 +150,7 @@ export class TestKafka {
         };
     }
 
-    private readonly messages: core.IQueuedMessage[] = [];
+    private readonly messages: IQueuedMessage[] = [];
     private offset = 0;
     private readonly consumers: TestConsumer[] = [];
 
@@ -160,7 +165,7 @@ export class TestKafka {
         return consumer;
     }
 
-    public getRawMessages(): core.IQueuedMessage[] {
+    public getRawMessages(): IQueuedMessage[] {
         return this.messages;
     }
 
@@ -178,11 +183,11 @@ export class TestKafka {
         }
     }
 
-    public getLastMessage(): core.ISequencedOperationMessage {
+    public getLastMessage(): ISequencedOperationMessage {
         return this.getMessage(this.messages.length - 1);
     }
 
-    public getMessage(index: number): core.ISequencedOperationMessage {
-        return this.messages[index].value as core.ISequencedOperationMessage;
+    public getMessage(index: number): ISequencedOperationMessage {
+        return this.messages[index].value as ISequencedOperationMessage;
     }
 }
