@@ -1791,13 +1791,7 @@ export interface IntervalCollectionInternals<TInterval extends ISerializableInte
 }
 
 export class TestIntervalCollection<TInterval extends ISerializableInterval>
- extends IntervalCollection<SequenceInterval> /* implements IntervalCollectionInternals<SequenceInterval> */ {
-    // readonly savedSerializedIntervals: ISerializedInterval[];
-    // readonly localCollection: LocalIntervalCollection<SequenceInterval>;
-    // readonly client: Client | undefined;
-    // readonly helpers: IIntervalHelpers<SequenceInterval>;
-    // readonly requiresClient: boolean;
-    // readonly emitter: IValueOpEmitter;
+ extends IntervalCollection<SequenceInterval> {
     casted = (this as unknown as IntervalCollectionInternals<SequenceInterval>);
 
     public get attached(): boolean {
