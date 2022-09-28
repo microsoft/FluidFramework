@@ -76,7 +76,6 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
     /**
      * Removes a reference for the given key
      * Once the ref count hits 0, the socket is disconnected and removed
-     * @param key - socket reference key
      */
     public removeSocketIoReference() {
         assert(this.references > 0, 0x09f /* "No more socketIO refs to remove!" */);
