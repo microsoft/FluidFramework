@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { strict as assert } from "assert";
 import { compress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -71,7 +76,7 @@ const endBatchEmptyMessage: ISequencedDocumentMessage = {
     timestamp: 1,
 };
 
-describe.only("OpDecompressor", () => {
+describe("OpDecompressor", () => {
     let decompressor: OpDecompressor;
     beforeEach(() => {
         decompressor = new OpDecompressor();
