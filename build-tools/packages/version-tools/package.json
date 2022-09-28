@@ -31,7 +31,7 @@
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
-    "build:readme": "../build-cli/bin/dev readme",
+    "build:readme": "../build-cli/bin/dev generate readme",
     "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist oclif.manifest.json lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",

@@ -33,7 +33,7 @@
     "build:genver": "gen-version",
     "build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:manifest": "oclif manifest",
-    "build:readme": "./bin/dev readme",
+    "build:readme": "./bin/dev generate readme",
     "ci:build:docs": "api-extractor run",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log oclif.manifest.json",
     "eslint": "eslint --format stylish src",
@@ -151,6 +151,19 @@
     ],
     "repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/build-cli/<%- commandPath %>",
     "topicSeparator": " ",
-    "topics": {}
+    "topics": {
+      "bump": {
+        "description": "Bump the version of packages, release groups, and their dependencies."
+      },
+      "check": {
+        "description": "Check commands are used to verify repo state, apply policy, etc."
+      },
+      "generate": {
+        "description": "Generate commands are used to create/update code, docs, readmes, etc."
+      },
+      "release": {
+        "description": "Release commands are used to manage the Fluid release process."
+      }
+    }
   }
 }
