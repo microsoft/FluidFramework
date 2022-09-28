@@ -20,6 +20,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 3.0.0
 
 ## 3.0.0 Upcoming changes
+- [Update 'existing' flag in runtime ](#Update-existing-flag-in-runtime)
 - [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
 - [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
 - [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
@@ -27,6 +28,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
+
+### Update `existing` field in runtime
+The existing flag was updated to be required in runtime. The existing field in IContainerContext has also been removed and isn't used to check for an existing snapshot.
 
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
