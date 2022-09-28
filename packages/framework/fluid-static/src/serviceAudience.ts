@@ -36,8 +36,8 @@ export abstract class ServiceAudience<M extends IMember = IMember>
    * in a map keyed on the `userId` and not `clientId`.
    *
    * This map will always be up-to-date in a `removeMember` event because it is set once at construction and in
-   * every `addMember` event. It is mapped `clientId` to `M` to be better work with what the {@link IAudience} event
-   * provides.
+   * every `addMember` event. It is mapped `clientId` to `M` to be better work with what the {@link IServiceAudience}
+   * events provide.
    */
   protected lastMembers: Map<string, M> = new Map();
 
