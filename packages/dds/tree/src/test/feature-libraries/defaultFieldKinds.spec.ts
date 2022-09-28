@@ -23,6 +23,11 @@ const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
     return { type: Delta.MarkType.Modify, setValue: "value3" };
 };
 
+const deltaFromChild2 = (child: NodeChangeset): Delta.Modify => {
+    assert.deepEqual(child, nodeChange2);
+    return { type: Delta.MarkType.Modify, setValue: "value4" };
+};
+
 const encodedChild = "encoded child";
 
 const childEncoder1 = (change: NodeChangeset) => {
@@ -178,6 +183,7 @@ describe("Optional field changesets", () => {
 
     const change2: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), false);
     const change3: FieldKinds.OptionalChangeset = editor.set(singleTextCursor(tree2), true);
+    const change4: FieldKinds.OptionalChangeset = editor.buildChildChange(0, nodeChange2);
 
     it("can be composed", () => {
         const childComposer = (_: NodeChangeset[]) => assert.fail("Should not be called");
@@ -186,14 +192,13 @@ describe("Optional field changesets", () => {
     });
 
     it("can compose child changes", () => {
-        const childChange: FieldKinds.OptionalChangeset = editor.buildChildChange(0, nodeChange2);
         const expected: FieldKinds.OptionalChangeset = {
             fieldChange: change1.fieldChange,
             childChange: nodeChange3,
         };
 
         assert.deepEqual(
-            fieldHandler.rebaser.compose([change1, childChange], childComposer1_2),
+            fieldHandler.rebaser.compose([change1, change4], childComposer1_2),
             expected,
         )
     });
@@ -260,6 +265,17 @@ describe("Optional field changesets", () => {
 
         assertMarkListEqual(
             fieldHandler.intoDelta(change2, deltaFromChild1),
+            expected,
+        );
+    });
+
+    it("can be converted to a delta with only child changes", () => {
+        const expected: Delta.MarkList = [
+            { type: Delta.MarkType.Modify, setValue: "value4" },
+        ];
+
+        assertMarkListEqual(
+            fieldHandler.intoDelta(change4, deltaFromChild2),
             expected,
         );
     });
