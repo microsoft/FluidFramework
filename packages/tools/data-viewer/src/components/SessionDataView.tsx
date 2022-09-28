@@ -22,7 +22,7 @@ export function SessionDataView(props: SessionDataViewProps): React.ReactElement
     const { containerId, container, audience } = props;
 
     return (
-        <Stack horizontal tokens={{childrenGap: 25}}>
+        <Stack tokens={{ childrenGap: 25 }}>
             <ContainerDataView containerId={containerId} container={container} />
             <AudienceView audience={audience} />
         </Stack>
