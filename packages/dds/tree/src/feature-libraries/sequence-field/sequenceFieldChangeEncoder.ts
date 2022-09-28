@@ -67,7 +67,7 @@ export function decodeJson<TNodeChange>(
     for (const mark of array) {
         if (isSkipMark(mark)) {
             marks.push(mark);
-        } else if (typeof mark === "object" && "type" in mark) {
+        } else {
             const type = mark.type;
             switch (type) {
                 case "Modify":
