@@ -11,6 +11,7 @@ import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
@@ -82,8 +83,10 @@ export interface BlockUpdateActions {
     child: (block: IMergeBlock, index: number) => void;
 }
 
+// Warning: (ae-incompatible-release-tags) The symbol "Client" is marked as @public, but its signature references "IClientEvents" which is marked as @internal
+//
 // @public (undocumented)
-export class Client {
+export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLogger, options?: PropertySet);
     // (undocumented)
     accumOps: number;
@@ -301,6 +304,11 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
+
+// Warning: (ae-internal-missing-underscore) The name "IClientEvents" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type IClientEvents = (event: "normalize", listener: () => void) => void;
 
 // @public (undocumented)
 export interface ICombiningOp {

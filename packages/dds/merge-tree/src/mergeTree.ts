@@ -2263,7 +2263,7 @@ export class MergeTree {
      * Rather than incur extra work tie-breaking these scenarios for all clients, when client 1 rebases its operation,
      * it can fix up its local state to align with what would be expected of the op it resubmits.
      */
-    public normalizeSegmentsOnRebase(rebaseTo: number): void {
+    public normalizeSegmentsOnRebase(): void {
         let currentRangeToNormalize = new List<ISegment>();
         let rangeContainsLocalSegs = false;
         let rangeContainsRemoteRemovedSegs = false;

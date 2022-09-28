@@ -960,7 +960,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         const rebaseTo = this.getCollabWindow().currentSeq;
         if (rebaseTo !== this.lastNormalizationRefSeq) {
             this.emit("normalize");
-            this._mergeTree.normalizeSegmentsOnRebase(rebaseTo);
+            this._mergeTree.normalizeSegmentsOnRebase();
             this.lastNormalizationRefSeq = rebaseTo;
         }
 

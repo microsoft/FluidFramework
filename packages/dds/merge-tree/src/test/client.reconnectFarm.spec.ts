@@ -4,8 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import random from "random-js";
-import { describeFuzz } from "@fluid-internal/stochastic-test-utils";
+import { IRandom, makeRandom, describeFuzz } from "@fluid-internal/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeOp } from "../ops";
 import { SegmentGroup } from "../mergeTreeNodes";
@@ -27,15 +26,20 @@ function applyMessagesWithReconnect(
     messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
     clients: readonly TestClient[],
     logger: TestClientLogger,
+    random: IRandom,
 ) {
     let seq = startingSeq;
-    const reconnectClientMsgs: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
+    const reconnectingClientIds = clients.length > 2 && random.bool()
+        ? [clients[1].longClientId!, clients[2].longClientId!]
+        : [clients[1].longClientId!];
+    const reconnectClientMsgs: Map<string, [IMergeTreeOp, SegmentGroup | SegmentGroup[]][]>
+        = new Map(reconnectingClientIds.map((id) => [id, []]));
     let minSeq = 0;
     // log and apply all the ops created in the round
     while (messageDatas.length > 0) {
         const [message, sg] = messageDatas.shift()!;
-        if (message.clientId === clients[1].longClientId) {
-            reconnectClientMsgs.push([message.contents as IMergeTreeOp, sg]);
+        if (reconnectingClientIds.includes(message.clientId)) {
+            reconnectClientMsgs.get(message.clientId)!.push([message.contents as IMergeTreeOp, sg]);
         } else {
             message.sequenceNumber = ++seq;
             clients.forEach((c) => c.applyMsg(message));
@@ -44,15 +48,19 @@ function applyMessagesWithReconnect(
     }
 
     const reconnectMsgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
-    reconnectClientMsgs.forEach((opData) => {
-        const newMsg = clients[1].makeOpMessage(
-            clients[1].regeneratePendingOp(
-                opData[0],
-                opData[1],
-            ));
-        newMsg.minimumSequenceNumber = minSeq;
-        // apply message doesn't use the segment group, so just pass undefined
-        reconnectMsgs.push([newMsg, undefined as any]);
+    reconnectClientMsgs.forEach(
+        (messageData, clientId) => {
+            const client = clients.find(({ longClientId }) => longClientId === clientId)!;
+            messageData.forEach(([op, segmentGroup]) => {
+                const newMsg = client.makeOpMessage(
+                    client.regeneratePendingOp(
+                        op,
+                        segmentGroup,
+                    ));
+                newMsg.minimumSequenceNumber = minSeq;
+                // apply message doesn't use the segment group, so just pass undefined
+                reconnectMsgs.push([newMsg, undefined as any]);
+        });
     });
 
     return applyMessages(seq, reconnectMsgs, clients, logger);
@@ -77,17 +85,15 @@ const clientNames = generateClientNames();
 
 function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): void {
     doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
-        it(`ReconnectFarm_${clientCount}`, async () => {
-            const mt = random.engines.mt19937();
-            const seedArray = [0xDEADBEEF, 0XFEEDBED, clientCount];
+        it(`ReconnectFarm_${clientCount}_${extraSeed}`, async () => {
+            const random = makeRandom(0xDEADBEEF, 0xFEEDBED, clientCount, extraSeed ?? 0);
+            const testOpts = { ...opts };
             if (extraSeed) {
-                opts.resultsFilePostfix ??= "";
-                opts.resultsFilePostfix += extraSeed;
-                seedArray.push(extraSeed);
+                testOpts.resultsFilePostfix ??= "";
+                testOpts.resultsFilePostfix += extraSeed;
             }
-            mt.seedWithArray(seedArray);
 
-            const clients: TestClient[] = [new TestClient()];
+            const clients: TestClient[] = [new TestClient({ mergeTreeUseNewLengthCalculations: true })];
             clients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 
@@ -102,18 +108,18 @@ function runReconnectFarmTests(opts: IReconnectFarmConfig, extraSeed?: number): 
             }
 
             seq = runMergeTreeOperationRunner(
-                mt,
+                random,
                 seq,
                 clients,
-                opts.minLength,
-                opts,
+                testOpts.minLength,
+                testOpts,
                 applyMessagesWithReconnect);
         })
             .timeout(30 * 1000);
     });
 }
 
-describeFuzz("MergeTree.Client", ({ testCount }) => {
+describeFuzz.only("MergeTree.Client", ({ testCount }) => {
     const opts = defaultOptions;
 
     if (testCount > 1) {

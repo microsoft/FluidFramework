@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import random from "random-js";
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
@@ -17,7 +17,7 @@ import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
 export type TestOperation =
-    (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => (IMergeTreeOp | undefined);
+    (client: TestClient, opStart: number, opEnd: number, random: IRandom) => (IMergeTreeOp | undefined);
 
 export const removeRange: TestOperation =
     (client: TestClient, opStart: number, opEnd: number) => client.removeRangeLocal(opStart, opEnd);
@@ -27,7 +27,7 @@ export const annotateRange: TestOperation =
         client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId }, undefined);
 
 export const insertAtRefPos: TestOperation =
-    (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => {
+    (client: TestClient, opStart: number, opEnd: number, random: IRandom) => {
         const segs: ISegment[] = [];
         // gather all the segments at the pos, including removed segments
         walkAllChildSegments(client.mergeTree.root, (seg) => {
@@ -42,14 +42,14 @@ export const insertAtRefPos: TestOperation =
             return true;
         });
         if (segs.length > 0) {
-            const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
-            const seg = random.pick(mt, segs);
+            const text = client.longClientId!.repeat(random.integer(1, 3));
+            const seg = random.pick(segs);
             const lref = client.createLocalReferencePosition(
                 seg,
-                toRemovalInfo(seg) ? 0 : random.integer(0, seg.cachedLength - 1)(mt),
+                toRemovalInfo(seg) ? 0 : random.integer(0, seg.cachedLength - 1),
                 toRemovalInfo(seg)
                     ? ReferenceType.SlideOnRemove
-                    : random.pick(mt, [ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]),
+                    : random.pick([ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]),
                 undefined);
 
             return client.insertAtReferencePositionLocal(lref, TextSegment.make(text));
@@ -98,12 +98,12 @@ export interface ReplayGroup{
 export const replayResultsPath = `${__dirname}/../../src/test/results`;
 
 export function runMergeTreeOperationRunner(
-    mt: random.Engine,
+    random: IRandom,
     startingSeq: number,
     clients: readonly TestClient[],
     minLength: number,
     config: IMergeTreeOperationRunnerConfig,
-    apply = applyMessages) {
+    apply: ApplyMessagesFn = applyMessages) {
     let seq = startingSeq;
     const results: ReplayGroup[] = [];
 
@@ -117,7 +117,7 @@ export function runMergeTreeOperationRunner(
                 clients,
                 `Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round}`);
             const messageData = generateOperationMessagesForClients(
-                mt,
+                random,
                 seq,
                 clients,
                 logger,
@@ -126,7 +126,7 @@ export function runMergeTreeOperationRunner(
                 config.operations,
             );
             const msgs = messageData.map((md) => md[0]);
-            seq = apply(seq, messageData, clients, logger);
+            seq = apply(seq, messageData, clients, logger, random);
             const resultText = logger.validate();
             results.push({
                 initialText,
@@ -147,7 +147,7 @@ export function runMergeTreeOperationRunner(
 }
 
 export function generateOperationMessagesForClients(
-    mt: random.Engine,
+    random: IRandom,
     startingSeq: number,
     clients: readonly TestClient[],
     logger: TestClientLogger,
@@ -161,22 +161,22 @@ export function generateOperationMessagesForClients(
     for (let i = 0; i < opsPerRound; i++) {
         // pick a client greater than 0, client 0 only applies remote ops
         // and is our baseline
-        const client = clients[random.integer(1, clients.length - 1)(mt)];
+        const client = clients[random.integer(1, clients.length - 1)];
         const len = client.getLength();
         const sg = client.peekPendingSegmentGroups();
         let op: IMergeTreeOp | undefined;
-        if (len === 0 || len < minLength) {
-            const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
+        if (len === 0 || len < minLength || (len < minLength * 3 && random.bool(1 / 3))) {
+            const text = client.longClientId!.repeat(random.integer(1, 3));
             op = client.insertTextLocal(
-                random.integer(0, len)(mt),
+                random.integer(0, len),
                 text);
         } else {
-            let opIndex = random.integer(0, operations.length - 1)(mt);
-            const start = random.integer(0, len - 1)(mt);
-            const end = random.integer(start + 1, len)(mt);
+            let opIndex = random.integer(0, operations.length - 1);
+            const start = random.integer(0, len - 1);
+            const end = random.integer(start + 1, len);
 
             for (let y = 0; y < operations.length && op === undefined; y++) {
-                op = operations[opIndex](client, start, end, mt);
+                op = operations[opIndex](client, start, end, random);
                 opIndex++;
                 opIndex %= operations.length;
             }
@@ -213,6 +213,14 @@ export function generateClientNames(): string[] {
 
     return clientNames;
 }
+
+type ApplyMessagesFn = (
+    startingSeq: number,
+    messageData: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
+    clients: readonly TestClient[],
+    logger: TestClientLogger,
+    random: IRandom
+) => number;
 
 export function applyMessages(
     startingSeq: number,

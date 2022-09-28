@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import random from "random-js";
-import { describeFuzz } from "@fluid-internal/stochastic-test-utils";
+import { describeFuzz, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeOp } from "../ops";
 import { SegmentGroup } from "../mergeTreeNodes";
@@ -143,14 +142,12 @@ const clientNames = generateClientNames();
 function runApplyStashedOpFarmTests(opts: IApplyStashedOpFarmConfig, extraSeed?: number): void {
     doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
         it(`applyStashedOpFarm_${clientCount}`, async () => {
-            const mt = random.engines.mt19937();
-            const seedArray = [0xDEADBEEF, 0XFEEDBED, clientCount];
+            const random = makeRandom(0xDEADBEEF, 0xFEEDBED, clientCount, extraSeed ?? 0);
+            const testOpts = { ...opts };
             if (extraSeed) {
-                opts.resultsFilePostfix ??= "";
-                opts.resultsFilePostfix += extraSeed;
-                seedArray.push(extraSeed);
+                testOpts.resultsFilePostfix ??= "";
+                testOpts.resultsFilePostfix += extraSeed;
             }
-            mt.seedWithArray(seedArray);
 
             const clients: TestClient[] = [new TestClient()];
             // This test is based on reconnectFarm, but we keep a second set of clients. For
@@ -180,7 +177,7 @@ function runApplyStashedOpFarmTests(opts: IApplyStashedOpFarmConfig, extraSeed?:
             }
 
             seq = runMergeTreeOperationRunner(
-                mt,
+                random,
                 seq,
                 clients,
                 opts.minLength,
