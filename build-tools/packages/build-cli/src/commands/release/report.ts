@@ -373,12 +373,20 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
 
             const isNewRelease = this.isRecentReleaseByDate(latestDate);
             const scheme = detectVersionScheme(latestVer);
-            const ranges: ReleaseRanges | undefined = scheme === "internal" ? {
-                patch: getVersionRange(latestVer, "patch"),
-                minor: getVersionRange(latestVer, "minor"),
-                tilde: getVersionRange(latestVer, "~"),
-                caret: getVersionRange(latestVer, "^"),
-            } : undefined;
+            const ranges: ReleaseRanges | undefined =
+                scheme === "internal"
+                    ? {
+                          patch: getVersionRange(latestVer, "patch"),
+                          minor: getVersionRange(latestVer, "minor"),
+                          tilde: getVersionRange(latestVer, "~"),
+                          caret: getVersionRange(latestVer, "^"),
+                      }
+                    : {
+                          patch: `~${latestVer}`,
+                          minor: `^${latestVer}`,
+                          tilde: `~${latestVer}`,
+                          caret: `^${latestVer}`,
+                      };
 
             // Expand the release group to its constituent packages.
             if (isReleaseGroup(pkgName)) {
@@ -507,7 +515,8 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         const limit = this.processedFlags.limit;
         if (limit !== undefined && tableData.length > limit) {
             this.verbose(
-                `Reached the release limit (${limit}), ignoring the remaining ${tableData.length - limit
+                `Reached the release limit (${limit}), ignoring the remaining ${
+                    tableData.length - limit
                 } releases.`,
             );
             // The most recent releases are last, so slice from the end.
@@ -546,7 +555,7 @@ interface ReleaseDetails {
     releaseType: VersionBumpType;
     isNewRelease: boolean;
     releaseGroup?: ReleaseGroup;
-    ranges?: ReleaseRanges;
+    ranges: ReleaseRanges;
 }
 
 interface ReleaseRanges {
