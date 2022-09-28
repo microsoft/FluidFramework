@@ -6,8 +6,6 @@ import React, { useEffect, useState } from "react";
 
 import { AttachState, ConnectionState, IFluidContainer } from "fluid-framework";
 
-// eslint-disable-next-line import/no-unassigned-import
-import "./ContainerDataView.css";
 import { DataObjectView } from "./DataObjectView";
 
 /**
@@ -115,16 +113,19 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
                     <b>Attach state: </b>
                     {attachState}
                 </div>
-                <div>{isDirty ? "Pending local edits" : "No pending local edits"}</div>
+                <div><b>Local edit state: </b>{isDirty ? "Pending local edits" : "No pending local edits"}</div>
                 <hr />
-                <div>{objectViews}</div>
+                <div>
+                    <h2>Contained Objects</h2>
+                    {objectViews}
+                </div>
             </div>
         );
     }
 
     // TODO: styling
     return (
-        <div className="container-data-view">
+        <div>
             <div>
                 <b>Container ID: </b>
                 {containerId}

@@ -13,8 +13,6 @@ import {
 } from "@fluidframework/tinylicious-client";
 
 import { SessionDataView } from "../../components";
-// eslint-disable-next-line import/no-unassigned-import
-import "./App.css";
 
 interface ContainerInfo {
     containerId: string;

@@ -6,9 +6,6 @@ import React from "react";
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
-// eslint-disable-next-line import/no-unassigned-import
-import "./DataObjectView.css";
-
 /**
  * {@link DataObjectView} input props.
  */

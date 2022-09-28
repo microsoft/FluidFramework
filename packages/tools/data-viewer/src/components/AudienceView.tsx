@@ -6,9 +6,6 @@ import React, { useEffect, useState } from "react";
 
 import { IMember, IServiceAudience } from "fluid-framework";
 
-// eslint-disable-next-line import/no-unassigned-import
-import "./AudienceView.css";
-
 /**
  * {@link AudienceView} input props.
  */
@@ -27,7 +24,6 @@ export interface AudienceViewProps {
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
     const { audience } = props;
 
-    // TODO: can we guarantee this is present somehow?
     const [myself, updateMyself] = useState<IMember | undefined>(audience.getMyself());
     const [allMembers, updateAllMembers] = useState<Map<string, IMember>>(audience.getMembers());
 
