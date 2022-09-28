@@ -429,6 +429,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
                 });
 
                 sharedMap1.set("key1", "1");
+                // Force a flush
                 await new Promise((resolve) => setImmediate(resolve));
                 sharedMap2.set("key3", "3");
                 sharedMap2.set("key3", "4");
