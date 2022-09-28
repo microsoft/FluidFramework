@@ -156,9 +156,10 @@ class DataStore implements IDataStore, Partial<IProvideFluidHandle> {
      * requesting the root object through the request pattern if the handle is not defined.
      */
     public get IFluidHandle(): IFluidHandle | undefined {
-        // Currently treating the data store channel as a FluidObject<IFluidHandle>. If we later
-        // make changes so that it exposes the handle explicitly, we can simplify this code.
-        const maybeHandle = this.fluidDataStoreChannel as FluidObject<IFluidHandle<FluidObject>>;
+        // TODO: IFluidHandle is currently only exposed in the FluidDataStoreRuntime class, not the
+        // IFluidDataStoreChannel interface, thus the discovery with FluidObject. Once entrypoints are exposed more
+        // directly this should be simplified.
+        const maybeHandle = this.fluidDataStoreChannel as FluidObject<IFluidHandle>;
         return maybeHandle.IFluidHandle;
     }
 

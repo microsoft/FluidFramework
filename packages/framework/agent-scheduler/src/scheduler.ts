@@ -426,6 +426,9 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     public static async createChildInstance(parentContext: IFluidDataStoreContext): Promise<AgentScheduler> {
         const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
         const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
+        // TODO: IFluidHandle is currently only exposed in the DataStore class, not the IDataStore interface,
+        // thus the discovery with FluidObject. Once entrypoints are exposed more directly this should be
+        // simplified.
         const scheduler = await (dataStore as FluidObject<IFluidHandle>).IFluidHandle?.get();
         assert(scheduler instanceof AgentScheduler, "The data store's handle is not an AgentScheduler!");
         return scheduler;

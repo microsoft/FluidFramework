@@ -75,9 +75,13 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     /**
      * @deprecated - Going forward the data object will be accessible as the entrypoint of the data store runtime.
      * To access it use "(runtime as FluidObject<IFluidHandle>).IFluidHandle?.get() as PureDataObject" instead of this
-     * method. That code is a temporary workaround until we expose entrypoints more directly.
+     * method. That code is a temporary workaround with discovery of properties through FluidObject until we expose
+     * entrypoints (IFluidHandle) more directly.
      */
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
+        // TODO: IFluidHandle is currently only exposed in the FluidDataStoreRuntime class, not the
+        // IFluidDataStoreRuntime interface, thus the discovery with FluidObject. Once entrypoints are exposed more
+        // directly this should be simplified.
         const maybeIFluidHandle = runtime as FluidObject<IFluidHandle>;
         const obj = await maybeIFluidHandle?.IFluidHandle?.get() as PureDataObject;
         assert(obj !== undefined, 0x0bc /* "The runtime's handle is not a DataObject!" */);
