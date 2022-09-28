@@ -45,8 +45,8 @@ export class OpCompressor {
         }
 
         batchToSend.push({ contents: JSON.stringify({ packedContents: compressedContent }),
-                                        metadata: { ...batch[0].metadata, compressed: true },
-                                        compression: CompressionAlgorithms.lz4 });
+                           metadata: { ...batch[0].metadata, compressed: true },
+                           compression: CompressionAlgorithms.lz4 });
 
         for (let i = 1; i < batch.length; i++) {
             batchToSend.push({ contents: "", metadata: batch[i].metadata });
