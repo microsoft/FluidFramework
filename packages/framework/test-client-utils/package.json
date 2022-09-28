@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-client-utils",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "Fluid client development and test utilities",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/test-runtime-utils": "^0.59.4003",
+    "@fluidframework/test-runtime-utils": "^0.59.4004",
     "sillyname": "^0.1.0"
   },
   "devDependencies": {
@@ -69,7 +69,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4003",
+    "version": "0.59.4004",
     "broken": {}
   }
 }

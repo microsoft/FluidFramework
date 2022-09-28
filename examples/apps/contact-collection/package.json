@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/contact-collection",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "private": true,
   "description": "Example of using a Fluid Object as a collection of items",
   "homepage": "https://fluidframework.com",
@@ -38,12 +38,12 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-experimental/get-container": "^0.59.4003",
-    "@fluidframework/aqueduct": "^0.59.4003",
+    "@fluid-experimental/get-container": "^0.59.4004",
+    "@fluidframework/aqueduct": "^0.59.4004",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-runtime-definitions": "^0.59.4003",
+    "@fluidframework/container-runtime-definitions": "^0.59.4004",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/runtime-utils": "^0.59.4003",
+    "@fluidframework/runtime-utils": "^0.59.4004",
     "css-loader": "^1.0.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",

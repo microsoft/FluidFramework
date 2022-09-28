@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/aqueduct",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "A set of implementations for Fluid Framework interfaces.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -66,18 +66,18 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.48.2000",
-    "@fluidframework/container-loader": "^0.59.4003",
-    "@fluidframework/container-runtime": "^0.59.4003",
-    "@fluidframework/container-runtime-definitions": "^0.59.4003",
+    "@fluidframework/container-loader": "^0.59.4004",
+    "@fluidframework/container-runtime": "^0.59.4004",
+    "@fluidframework/container-runtime-definitions": "^0.59.4004",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore": "^0.59.4003",
-    "@fluidframework/datastore-definitions": "^0.59.4003",
-    "@fluidframework/map": "^0.59.4003",
-    "@fluidframework/request-handler": "^0.59.4003",
-    "@fluidframework/runtime-definitions": "^0.59.4003",
-    "@fluidframework/runtime-utils": "^0.59.4003",
-    "@fluidframework/synthesize": "^0.59.4003",
-    "@fluidframework/view-interfaces": "^0.59.4003",
+    "@fluidframework/datastore": "^0.59.4004",
+    "@fluidframework/datastore-definitions": "^0.59.4004",
+    "@fluidframework/map": "^0.59.4004",
+    "@fluidframework/request-handler": "^0.59.4004",
+    "@fluidframework/runtime-definitions": "^0.59.4004",
+    "@fluidframework/runtime-utils": "^0.59.4004",
+    "@fluidframework/synthesize": "^0.59.4004",
+    "@fluidframework/view-interfaces": "^0.59.4004",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
@@ -85,7 +85,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.70857",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.4003",
+    "@fluidframework/mocha-test-setup": "^0.59.4004",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -115,7 +115,7 @@
   },
   "module:es5": "es5/index.js",
   "typeValidation": {
-    "version": "0.59.4003",
+    "version": "0.59.4004",
     "broken": {}
   }
 }

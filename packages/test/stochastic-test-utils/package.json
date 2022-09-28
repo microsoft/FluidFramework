@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/stochastic-test-utils",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "private": true,
   "description": "Utilities for stochastic tests",
   "homepage": "https://fluidframework.com",
@@ -63,7 +63,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.4003",
+    "@fluidframework/mocha-test-setup": "^0.59.4004",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",

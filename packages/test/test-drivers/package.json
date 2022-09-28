@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-drivers",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "A driver abstraction and implementations for testing against server",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -59,20 +59,20 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/driver-definitions": "^0.46.2000",
-    "@fluidframework/driver-utils": "^0.59.4003",
-    "@fluidframework/local-driver": "^0.59.4003",
-    "@fluidframework/odsp-doclib-utils": "^0.59.4003",
-    "@fluidframework/odsp-driver": "^0.59.4003",
-    "@fluidframework/odsp-driver-definitions": "^0.59.4003",
-    "@fluidframework/odsp-urlresolver": "^0.59.4003",
+    "@fluidframework/driver-utils": "^0.59.4004",
+    "@fluidframework/local-driver": "^0.59.4004",
+    "@fluidframework/odsp-doclib-utils": "^0.59.4004",
+    "@fluidframework/odsp-driver": "^0.59.4004",
+    "@fluidframework/odsp-driver-definitions": "^0.59.4004",
+    "@fluidframework/odsp-urlresolver": "^0.59.4004",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/routerlicious-driver": "^0.59.4003",
+    "@fluidframework/routerlicious-driver": "^0.59.4004",
     "@fluidframework/server-local-server": "^0.1036.4000",
-    "@fluidframework/test-driver-definitions": "^0.59.4003",
-    "@fluidframework/test-pairwise-generator": "^0.59.4003",
-    "@fluidframework/test-runtime-utils": "^0.59.4003",
-    "@fluidframework/tinylicious-driver": "^0.59.4003",
-    "@fluidframework/tool-utils": "^0.59.4003",
+    "@fluidframework/test-driver-definitions": "^0.59.4004",
+    "@fluidframework/test-pairwise-generator": "^0.59.4004",
+    "@fluidframework/test-runtime-utils": "^0.59.4004",
+    "@fluidframework/tinylicious-driver": "^0.59.4004",
+    "@fluidframework/tool-utils": "^0.59.4004",
     "axios": "^0.26.0",
     "semver": "^7.3.4",
     "uuid": "^8.3.1"
@@ -109,7 +109,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4003",
+    "version": "0.59.4004",
     "broken": {}
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/data-objects",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "A collection of ready to use Fluid Data Objects",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -31,12 +31,12 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.59.4003",
+    "@fluidframework/aqueduct": "^0.59.4004",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/datastore-definitions": "^0.59.4003",
-    "@fluidframework/map": "^0.59.4003",
-    "@fluidframework/runtime-definitions": "^0.59.4003"
+    "@fluidframework/datastore-definitions": "^0.59.4004",
+    "@fluidframework/map": "^0.59.4004",
+    "@fluidframework/runtime-definitions": "^0.59.4004"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

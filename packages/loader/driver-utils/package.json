@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-utils",
-  "version": "0.59.4003",
+  "version": "0.59.4004",
   "description": "Collection of utility functions for Fluid drivers",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -67,7 +67,7 @@
     "@fluidframework/gitresources": "^0.1036.4000",
     "@fluidframework/protocol-base": "^0.1036.4000",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/telemetry-utils": "^0.59.4003",
+    "@fluidframework/telemetry-utils": "^0.59.4004",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },
@@ -76,8 +76,8 @@
     "@fluidframework/build-tools": "^0.2.70857",
     "@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@0.59.4002",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.4003",
-    "@fluidframework/runtime-utils": "^0.59.4003",
+    "@fluidframework/mocha-test-setup": "^0.59.4004",
+    "@fluidframework/runtime-utils": "^0.59.4004",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -106,7 +106,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4003",
+    "version": "0.59.4004",
     "broken": {}
   }
 }
