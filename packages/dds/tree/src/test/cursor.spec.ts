@@ -94,13 +94,11 @@ export function testJsonableTreeCursor(
             }
         });
 
-        // TODO is this even necessary now?
         it("up from root", () => {
             const cursor = factory({ type: brand("Foo") });
             assert.throws(() => cursor.exitNode());
         });
 
-        // TODO why was keys removed?
         describe("keys", () => {
             const getFieldKey = (cursor: ITreeCursor) => cursor.getFieldKey();
             const getKeysAsSet = (cursor: ITreeCursor) => new Set(mapCursorFields(cursor, getFieldKey));
