@@ -39,7 +39,6 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     // (undocumented)
     get disposed(): boolean;
     protected _disposed: boolean;
-    // (undocumented)
     protected disposeSocket(error: IAnyDriverError): void;
     // (undocumented)
     documentId: string;

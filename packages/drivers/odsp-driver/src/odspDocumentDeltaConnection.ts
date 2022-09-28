@@ -581,8 +581,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     protected disposeSocket(error: IAnyDriverError) {
         const socket = this.socketReference;
         assert(socket !== undefined, "reentrancy not supported in close socket");
-        socket.closeSocket();
         this.disposeCore(error);
+        socket.closeSocket();
     }
 
     /**
