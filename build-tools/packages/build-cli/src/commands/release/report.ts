@@ -133,10 +133,10 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         const filter = flags.releaseGroup ?? flags.package;
         const shouldOutputFiles = flags.output !== undefined;
         const outputPath = flags.output ?? process.cwd();
+        const promises: Promise<RawReleaseData | undefined>[] = [];
 
         if (filter === undefined || isReleaseGroup(filter)) {
             this.log(`Collecting version data for release groups...`);
-            const promises: Promise<RawReleaseData | undefined>[] = [];
 
             for (const rg of context.repo.releaseGroups.keys()) {
                 if (filter !== undefined && filter !== rg) {
@@ -151,16 +151,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                     this.collectReleaseData(context, name, repoVersion, flags.days, mode),
                 );
             }
-
-            const rawReleaseData = await Promise.all(promises);
-
-            for (const releaseData of rawReleaseData) {
-                if (releaseData === undefined) {
-                    continue;
-                }
-
-                versionData[releaseData.releaseGroupOrPackage] = releaseData;
-            }
         }
 
         if (isReleaseGroup(filter)) {
@@ -169,7 +159,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             );
         } else {
             this.log(`Collecting version data for independent packages...`);
-            const promises: Promise<RawReleaseData | undefined>[] = [];
 
             for (const pkg of context.independentPackages) {
                 if (filter !== undefined && filter !== pkg.name) {
@@ -184,16 +173,16 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                     this.collectReleaseData(context, name, repoVersion, flags.days, mode),
                 );
             }
+        }
 
-            const rawReleaseData = await Promise.all(promises);
+        const rawReleaseData = await Promise.all(promises);
 
-            for (const releaseData of rawReleaseData) {
-                if (releaseData === undefined) {
-                    continue;
-                }
-
-                versionData[releaseData.releaseGroupOrPackage] = releaseData;
+        for (const releaseData of rawReleaseData) {
+            if (releaseData === undefined) {
+                continue;
             }
+
+            versionData[releaseData.releaseGroupOrPackage] = releaseData;
         }
 
         if (flags.all === true) {
