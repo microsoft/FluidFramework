@@ -46,6 +46,9 @@ export function isVersionBumpTypeExtended(type: VersionChangeType | string): typ
 // @public
 export function isVersionScheme(scheme: string): scheme is VersionScheme;
 
+// @public
+export type ReleaseVersion = string;
+
 // @public (undocumented)
 export function sortVersions(versionList: string[], allowPrereleases?: boolean): string[];
 

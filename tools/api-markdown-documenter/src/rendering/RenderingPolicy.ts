@@ -28,7 +28,8 @@ import { MarkdownDocumenterConfiguration } from "../Configuration";
 import * as DefaultRenderingPolicies from "./default-policies";
 
 /**
- * This module contains rendering-policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
+ * This module contains rendering-policy-related types that are consumed via the
+ * {@link MarkdownDocumenterConfiguration}.
  */
 
 /**

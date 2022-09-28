@@ -20,6 +20,21 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 const NeverAnchor: Anchor = brand(0);
 
 /**
+ * Maps anchors (which must be ones this locator knows about) to paths.
+ */
+export interface AnchorLocator {
+    /**
+     * Get the current location of an Anchor.
+     * The returned value should not be used after an edit has occurred.
+     *
+     * TODO: support extra/custom return types for specific/custom anchor types:
+     * for now caller must rely on data in anchor + returned node location
+     * (not ideal for anchors for places or ranges instead of nodes).
+     */
+    locate(anchor: Anchor): UpPath | undefined;
+}
+
+/**
  * Collection of Anchors at a specific revision.
  *
  * See {@link Rebaser} for how to update across revisions.
@@ -58,14 +73,6 @@ export class AnchorSet {
         return this.root.children.size === 0;
     }
 
-    /**
-     * Get the current location of an Anchor.
-     * The returned value should not be used after an edit has occurred.
-     *
-     * TODO: support extra/custom return types for specific/custom anchor types:
-     * for now caller must rely on data in anchor + returned node location
-     * (not ideal for anchors for places or ranges instead of nodes).
-     */
     public locate(anchor: Anchor): UpPath | undefined {
         if (anchor === NeverAnchor) {
             return undefined;
@@ -329,10 +336,14 @@ export class AnchorSet {
  * prefix-tree style.
  *
  * These anchors are used instead of just holding onto the node objects in forests for several reasons:
+ *
  * - Update policy might be more complex than just tracking a node object in the forest.
+ *
  * - Not all forests will have node objects: some may use compressed binary formats with no objects to reference.
- * - Anchors are need even when not using forests,
- *      and for nodes that are outside the currently loaded part of the forest.
+ *
+ * - Anchors are need even when not using forests, and for nodes that are outside the currently loaded part of the
+ * forest.
+ *
  * - Forest in general do not need to sport up pointers, but they are needed for anchors.
  *
  * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors,

@@ -174,6 +174,12 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
     }
 }
 
+class UnrebasableTestChangeRebaser extends TestChangeRebaser {
+    public rebase(change: TestChangeset, over: TestChangeset): TestChangeset {
+        assert.fail("Unexpected call to rebase");
+    }
+}
+
 class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
     public encodeForJson(formatVersion: number, change: TestChangeset): JsonCompatible {
         throw new Error("Method not implemented.");
@@ -201,10 +207,9 @@ function asDelta(intentions: number[]): Delta.Root {
     return intentions.length === 0 ? Delta.empty : new Map([[rootKey, intentions]]);
 }
 
-function changeFamilyFactory(): ChangeFamily<unknown, TestChangeset> {
-    const rebaser = new TestChangeRebaser();
+function changeFamilyFactory(rebaser?: ChangeRebaser<TestChangeset>): ChangeFamily<unknown, TestChangeset> {
     const family = {
-        rebaser,
+        rebaser: rebaser ?? new TestChangeRebaser(),
         encoder: new TestChangeEncoder(),
         buildEditor: () => assert.fail("Unexpected call to buildEditor"),
         intoDelta: (change: TestChangeset): Delta.Root => asDelta(change.intentions),
@@ -212,11 +217,11 @@ function changeFamilyFactory(): ChangeFamily<unknown, TestChangeset> {
     return family;
 }
 
-function editManagerFactory(): {
+function editManagerFactory(rebaser?: ChangeRebaser<TestChangeset>): {
     manager: TestEditManager;
     anchors: AnchorRebaseData;
 } {
-    const family = changeFamilyFactory();
+    const family = changeFamilyFactory(rebaser);
     const anchors = new TestAnchorSet();
     const manager = new EditManager<TestChangeset, ChangeFamily<unknown, TestChangeset>>(
         family,
@@ -347,6 +352,13 @@ describe("EditManager", () => {
             { seq: 6, type: "Pull", ref: 0, from: peer2 },
         ]);
 
+        runUnitTestScenario("Can rebase peer changes over a local change", [
+            { seq: 1, type: "Push" },
+            { seq: 1, type: "Ack" },
+            { seq: 2, type: "Pull", ref: 0, from: peer1 },
+            { seq: 3, type: "Pull", ref: 0, from: peer1 },
+        ]);
+
         runUnitTestScenario("Can rebase multiple local changes", [
             { seq: 3, type: "Push" },
             { seq: 4, type: "Push" },
@@ -373,14 +385,41 @@ describe("EditManager", () => {
             { seq: 8, type: "Ack" },
             { seq: 9, type: "Pull", ref: 0, from: peer2, expectedDelta: [9] },
         ]);
+
+        runUnitTestScenario("Can handle ref numbers to operations that are not commits", [
+            { seq: 2, type: "Pull", ref: 0, from: peer1 },
+            { seq: 4, type: "Pull", ref: 1, from: peer2 },
+            { seq: 6, type: "Pull", ref: 3, from: peer1 },
+            { seq: 8, type: "Pull", ref: 3, from: peer1 },
+            { seq: 10, type: "Pull", ref: 0, from: peer2 },
+            { seq: 12, type: "Pull", ref: 1, from: peer2 },
+        ]);
+    });
+
+    describe("Avoids unnecessary rebases", () => {
+        runUnitTestScenario(
+            "Sequenced changes that are based on the trunk should not be rebased",
+            [
+                { seq: 1, type: "Pull", ref: 0, from: peer1 },
+                { seq: 2, type: "Pull", ref: 0, from: peer1 },
+                { seq: 3, type: "Pull", ref: 0, from: peer1 },
+                { seq: 4, type: "Pull", ref: 3, from: peer2 },
+                { seq: 5, type: "Pull", ref: 4, from: peer2 },
+                { seq: 6, type: "Pull", ref: 5, from: peer1 },
+                { seq: 7, type: "Pull", ref: 5, from: peer1 },
+            ],
+            new UnrebasableTestChangeRebaser(),
+        );
     });
 
     /**
      * This test case effectively tests most of the scenarios covered by the other test cases.
      * Despite that, it's good to keep the other tests cases for the following reasons:
+     *
      * - They are easier to read and debug.
+     *
      * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
-     *   but this one doesn't, then there might be something wrong with this test).
+     * but this one doesn't, then there might be something wrong with this test).
      */
     it("Combinatorial test", () => {
         const meta = {
@@ -470,9 +509,13 @@ function* buildScenario(
     }
 }
 
-function runUnitTestScenario(title: string | undefined, steps: readonly UnitTestScenarioStep[]): void {
+function runUnitTestScenario(
+    title: string | undefined,
+    steps: readonly UnitTestScenarioStep[],
+    rebaser?: ChangeRebaser<TestChangeset>,
+): void {
     const run = () => {
-        const { manager, anchors } = editManagerFactory();
+        const { manager, anchors } = editManagerFactory(rebaser);
         /**
          * Ordered list of local commits that have not yet been sequenced (i.e., `pushed - acked`)
          */
@@ -507,12 +550,10 @@ function runUnitTestScenario(title: string | undefined, steps: readonly UnitTest
                 case "Push": {
                     let seq = step.seq;
                     if (seq === undefined) {
-                        if (iNextAck < acks.length) {
-                            seq = acks[iNextAck].seq;
-                        } else {
+                        seq = iNextAck < acks.length
+                            ? acks[iNextAck].seq
                             // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-                            seq = finalSequencedEdit + 1 + iNextAck - acks.length;
-                        }
+                            : finalSequencedEdit + 1 + iNextAck - acks.length;
                     }
                     iNextAck += 1;
                     const changeset = TestChangeRebaser.mintChangeset(knownToLocal, seq);

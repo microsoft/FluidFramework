@@ -177,8 +177,8 @@ export function getNumberOfHandlesFromEditLogSummary(summary: EditLogSummary<unk
 /**
  * The number of blobs to be loaded in memory at any time.
  * TODO:#49901: Change cache size once the virtualized history summary format is being written.
- * 		 This is so the summarizer doesn't have to reload every edit to generate summaries.
- * */
+ * This is so the summarizer doesn't have to reload every edit to generate summaries.
+ */
 const loadedChunkCacheSize = Number.POSITIVE_INFINITY;
 
 /**
