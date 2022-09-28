@@ -199,7 +199,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
-    public submit(type: MessageType, contents?: string, batch = false, metadata?: any) {
+    public submit(type: MessageType, contents?: string, batch = false, metadata?: any, compression?: string) {
         if (this.currentlyProcessingOps && this.preventConcurrentOpSend) {
             this.close(new UsageError("Making changes to data model is disallowed while processing ops."));
         }
@@ -208,7 +208,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
             type,
-        };
+            compression,
+        } as any;
 
         if (!batch) {
             this.flush();

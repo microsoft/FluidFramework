@@ -1715,7 +1715,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 MessageType.Operation,
                 message.contents,
                 true, // batch
-                message.metadata);
+                message.metadata,
+                message.compression);
         }
         this._deltaManager.flush();
         return clientSequenceNumber;
@@ -1734,7 +1735,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.submitMessage(MessageType.Summarize, JSON.stringify(summary), false /* batch */);
     }
 
-    private submitMessage(type: MessageType, contents?: string, batch?: boolean, metadata?: any): number {
+    private submitMessage(type: MessageType,
+                          contents?: string,
+                          batch?: boolean,
+                          metadata?: any,
+                          compression?: string): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
@@ -1742,7 +1747,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.messageCountAfterDisconnection += 1;
         this.collabWindowTracker?.stopSequenceNumberUpdate();
-        return this._deltaManager.submit(type, contents, batch, metadata);
+        return this._deltaManager.submit(type, contents, batch, metadata, compression);
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage) {

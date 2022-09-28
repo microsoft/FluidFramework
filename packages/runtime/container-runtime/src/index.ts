@@ -24,6 +24,7 @@ export {
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
     ICompressionRuntimeOptions,
+    CompressionAlgorithms,
 } from "./containerRuntime";
 export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";

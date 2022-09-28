@@ -14,11 +14,12 @@ import {
     ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 
 const testContainerConfig: ITestContainerConfig = {
     registry: [["mapKey", SharedMap.getFactory()]],
     runtimeOptions: {
-        compressionOptions: { minimumSize: 1 },
+        compressionOptions: { minimumSize: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
     },
     fluidDataObjectType: DataObjectFactoryType.Test,
 };

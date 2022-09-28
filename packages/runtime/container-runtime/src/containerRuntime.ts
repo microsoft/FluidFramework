@@ -31,7 +31,6 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
     assert,
-    IsoBuffer,
     Trace,
     TypedEventEmitter,
     unreachableCase,
@@ -108,7 +107,6 @@ import {
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
-import { compress } from "lz4js";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
@@ -170,6 +168,7 @@ import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
 import { OpDecompressor } from "./opDecompressor";
+import { OpCompressor } from "./opCompressor";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -425,6 +424,11 @@ export interface ICompressionRuntimeOptions {
      * Compression is disabled if undefined.
      */
     readonly minimumSize?: number;
+
+    /**
+     * The compression algorithm that will be used to compress the op.
+     */
+    readonly compressionAlgorithm?: CompressionAlgorithms;
 }
 
 /**
@@ -481,6 +485,13 @@ export enum RuntimeHeaders {
     externalRequest = "externalRequest",
     /** True if the request is coming from an IFluidHandle. */
     viaHandle = "viaHandle",
+}
+
+/**
+ * Available compression algorithms for op compression.
+ */
+export enum CompressionAlgorithms {
+    lz4 = "lz4",
 }
 
 /**
@@ -801,6 +812,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly mc: MonitoringContext;
+
+    private readonly opDecompressor: OpDecompressor = new OpDecompressor();
+    private readonly opCompressor: OpCompressor;
+
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
      * summaryManager will only be created if this client is permitted to spawn a summarizing client
@@ -825,7 +840,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private baseSnapshotBlobs?: ISerializedBaseSnapshotBlobs;
 
     private consecutiveReconnects = 0;
-    private compressedBatchCount = 0;
 
     /**
      * Used to delay transition to "connected" state while we upload
@@ -978,6 +992,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
+
+        this.opCompressor = new OpCompressor(this.mc.logger);
 
         if (this.summaryConfiguration.state === "enabled") {
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
@@ -1613,8 +1629,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         raiseConnectedEvent(this.mc.logger, this, connected, clientId);
     }
 
-    private readonly opDecompressor = new OpDecompressor();
-
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
@@ -1821,35 +1835,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
 
                 if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined
+                    && this.runtimeOptions.compressionOptions.compressionAlgorithm !== undefined
                     && batchContentsLength > this.runtimeOptions.compressionOptions.minimumSize) {
-                    this.compressedBatchCount++;
-                    const batchedContents: ContainerRuntimeMessage[] = [];
-
-                    for (const message of batch) {
-                        batchedContents.push(message.deserializedContent);
-                    }
-
-                    const compressionStart = Date.now();
-                    const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(batchedContents));
-                    const compressedContents = compress(contentsAsBuffer);
-                    const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
-                    const duration = Date.now() - compressionStart;
-
-                    if (this.compressedBatchCount % 100) {
-                        this.mc.logger.sendPerformanceEvent({
-                            eventName: "CompressedBatch",
-                            duration,
-                            sizeBeforeCompression: batchContentsLength,
-                            sizeAfterCompression: compressedContent.length,
-                        });
-                    }
-
-                    batchToSend.push({ contents: JSON.stringify({ packedContents: compressedContent }),
-                                                 metadata: { ...batch[0].metadata, compressed: true } });
-
-                    for (let i = 1; i < batch.length; i++) {
-                        batchToSend.push({ contents: "", metadata: batch[i].metadata });
-                    }
+                        batchToSend.push(...this.opCompressor.compressBatch(batch, batchContentsLength));
                 } else {
                     for (const message of batch) {
                         batchToSend.push({ contents: message.contents, metadata: message.metadata });

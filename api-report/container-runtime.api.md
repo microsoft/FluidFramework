@@ -58,6 +58,12 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export const agentSchedulerId = "_scheduler";
 
+// @public
+export enum CompressionAlgorithms {
+    // (undocumented)
+    lz4 = "lz4"
+}
+
 // @public (undocumented)
 export enum ContainerMessageType {
     // (undocumented)
@@ -311,6 +317,7 @@ export interface IClientSummaryWatcher extends IDisposable {
 
 // @public
 export interface ICompressionRuntimeOptions {
+    readonly compressionAlgorithm?: CompressionAlgorithms;
     readonly minimumSize?: number;
 }
 
