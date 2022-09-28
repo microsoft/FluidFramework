@@ -620,15 +620,20 @@ function createPositionReferenceFromSegoff(
     client: Client,
     segoff: { segment: ISegment | undefined; offset: number | undefined; },
     refType: ReferenceType,
-    op?: ISequencedDocumentMessage): LocalReferencePosition {
+    op?: ISequencedDocumentMessage,
+    localSeq?: number): LocalReferencePosition {
     if (segoff.segment) {
         const ref = client.createLocalReferencePosition(segoff.segment, segoff.offset, refType, undefined);
         return ref;
     }
 
-    if (!op && !refTypeIncludesFlag(refType, ReferenceType.Transient)) {
-        // reference to segment that dne locally
-        throw new UsageError("Non-transient references need segment");
+    // Creating references on detached segments is allowed for:
+    // - Transient segments
+    // - References coming from a remote client (location may have been concurrently removed)
+    // - References being rebased to a new sequence number
+    //   (segment they originally referred to may have been removed with no suitable replacement)
+    if (!op && !localSeq && !refTypeIncludesFlag(refType, ReferenceType.Transient)) {
+       throw new UsageError("Non-transient references need segment");
     }
 
     return createDetachedLocalReferencePosition(refType);
@@ -652,7 +657,7 @@ function createPositionReference(
             0x2f6 /* SlideOnRemove references must be op created */);
         segoff = client.getContainingSegment(pos, undefined, localSeq);
     }
-    return createPositionReferenceFromSegoff(client, segoff, refType, op);
+    return createPositionReferenceFromSegoff(client, segoff, refType, op, localSeq);
 }
 
 function createSequenceInterval(
@@ -1182,14 +1187,14 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
         [[
             "add",
             {
-                process: (collection, params, local, op) => {
+                process: (collection, params, local, op, localOpMetadata) => {
                     // if params is undefined, the interval was deleted during
                     // rebasing
                     if (!params) {
                         return;
                     }
                     assert(op !== undefined, "op should exist here");
-                    collection.ackAdd(params, local, op);
+                    collection.ackAdd(params, local, op, localOpMetadata);
                 },
                 rebase,
             },
@@ -1210,14 +1215,14 @@ function makeOpsMap<T extends ISerializableInterval>(): Map<string, IValueOperat
         [
             "change",
             {
-                process: (collection, params, local, op) => {
+                process: (collection, params, local, op, localOpMetadata) => {
                     // if params is undefined, the interval was deleted during
                     // rebasing
                     if (!params) {
                         return;
                     }
                     assert(op !== undefined, "op should exist here");
-                    collection.ackChange(params, local, op);
+                    collection.ackChange(params, local, op, localOpMetadata);
                 },
                 rebase,
             },
@@ -1318,6 +1323,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private localCollection: LocalIntervalCollection<TInterval> | undefined;
     private onDeserialize: DeserializeCallback | undefined;
     private client: Client | undefined;
+    private readonly localSeqToSerializedInterval = new Map<number, ISerializedInterval | SerializedIntervalDelta>();
+    private readonly localSeqToRebasedInterval = new Map<number, ISerializedInterval | SerializedIntervalDelta>();
     private readonly pendingChangesStart: Map<string, ISerializedInterval[]> = new Map<string, ISerializedInterval[]>();
     private readonly pendingChangesEnd: Map<string, ISerializedInterval[]> = new Map<string, ISerializedInterval[]>();
 
@@ -1342,6 +1349,21 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
+    private computeRebasedPositions(localSeq: number): ISerializedInterval | SerializedIntervalDelta {
+        assert(this.client !== undefined, "Client should be defined when computing rebased position");
+        const original = this.localSeqToSerializedInterval.get(localSeq);
+        assert(original !== undefined, "Failed to store pending serialized interval info for this localSeq.");
+        const rebased = { ...original };
+        const { start, end, sequenceNumber } = original;
+        if (start !== undefined) {
+            rebased.start = this.client.rebasePosition(start, sequenceNumber, localSeq);
+        }
+        if (end !== undefined) {
+            rebased.end = this.client.rebasePosition(end, sequenceNumber, localSeq);
+        }
+        return rebased;
+    }
+
     /** @internal */
     public attachGraph(client: Client, label: string) {
         if (this.attached) {
@@ -1354,6 +1376,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
         // Instantiate the local interval collection based on the saved intervals
         this.client = client;
+        if (client) {
+            client.on("normalize", () => {
+                for (const localSeq of this.localSeqToSerializedInterval.keys()) {
+                    this.localSeqToRebasedInterval.set(localSeq, this.computeRebasedPositions(localSeq));
+                }
+            });
+        }
+
         this.localCollection = new LocalIntervalCollection<TInterval>(
             client,
             label,
@@ -1459,8 +1489,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 sequenceNumber: this.client?.getCurrentSeq() ?? 0,
                 start,
             };
+            const localSeq = this.getNextLocalSeq();
+            this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
             // Local ops get submitted to the server. Remote ops have the deserializer run.
-            this.emitter.emit("add", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
+            this.emitter.emit("add", undefined, serializedInterval, { localSeq });
         }
 
         this.emit("addInterval", interval, true, undefined);
@@ -1540,7 +1572,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
             serializedInterval.properties = props;
             serializedInterval.properties[reservedIntervalIdKey] = interval.getIntervalId();
-            this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
+            const localSeq = this.getNextLocalSeq();
+            this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+            this.emitter.emit("change", undefined, serializedInterval, { localSeq });
             this.emit("propertyChanged", interval, deltaProps, true, undefined);
         }
     }
@@ -1576,7 +1610,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             {
                 [reservedIntervalIdKey]: interval.getIntervalId(),
             };
-            this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
+            const localSeq = this.getNextLocalSeq();
+            this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+            this.emitter.emit("change", undefined, serializedInterval, { localSeq });
             this.addPendingChange(id, serializedInterval);
             this.emitChange(newInterval, interval, true);
             return newInterval;
@@ -1647,12 +1683,19 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     /** @internal */
-    public ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
+    public ackChange(
+        serializedInterval: ISerializedInterval,
+        local: boolean,
+        op: ISequencedDocumentMessage,
+        localOpMetadata: IMapMessageLocalMetadata | undefined,
+    ) {
         if (!this.localCollection) {
             throw new LoggingError("Attach must be called before accessing intervals");
         }
 
         if (local) {
+            assert(localOpMetadata !== undefined, "op metadata should be defined for local op");
+            this.localSeqToSerializedInterval.delete(localOpMetadata?.localSeq);
             // This is an ack from the server. Remove the pending change.
             this.removePendingChange(serializedInterval);
         }
@@ -1754,11 +1797,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new LoggingError("attachSequence must be called");
         }
 
-        const { start, end, intervalType, properties, sequenceNumber } = serializedInterval;
-        const startRebased = start === undefined ? undefined :
-            this.client.rebasePosition(start, sequenceNumber, localSeq);
-        const endRebased = end === undefined ? undefined :
-            this.client.rebasePosition(end, sequenceNumber, localSeq);
+        const { intervalType, properties } = serializedInterval;
+
+        const { start: startRebased, end: endRebased } = this.localSeqToRebasedInterval.get(localSeq)
+            ?? this.computeRebasedPositions(localSeq);
 
         const intervalId = properties?.[reservedIntervalIdKey];
         const localInterval = this.localCollection?.getIntervalById(intervalId);
@@ -1776,8 +1818,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             this.addPendingChange(intervalId, rebased);
         }
 
-        // if the interval slid off the string, rebase the op to be a noop and
-        // delete the interval
+        // if the interval slid off the string, rebase the op to be a noop and delete the interval.
         if (startRebased === DetachedReferencePosition || endRebased === DetachedReferencePosition) {
             if (localInterval) {
                 this.localCollection?.removeExistingInterval(localInterval);
@@ -1785,33 +1826,21 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             return undefined;
         }
 
-        if (!localInterval) {
-            return rebased;
-        }
-
-        // we know we must be using `SequenceInterval` because `this.client` exists
-        assert(
-            localInterval instanceof SequenceInterval,
-            0x3a0 /* localInterval must be `SequenceInterval` when used with client */,
-        );
-
-        const startSegment = this.getSlideToSegment(localInterval.start);
-        const endSegment = this.getSlideToSegment(localInterval.end);
-
-        // we need to slide because the reference has been removed
-        if (startSegment || endSegment) {
-            const newStart =
-                startSegment && this.client.getPosition(startSegment.segment, localSeq) + (startSegment.offset ?? 0);
-            const newEnd =
-                endSegment && this.client.getPosition(endSegment.segment, localSeq) + (endSegment.offset ?? 0);
-
-            this.localCollection?.changeInterval(localInterval, newStart, newEnd, undefined, localSeq);
+        if (localInterval !== undefined) {
+            // we know we must be using `SequenceInterval` because `this.client` exists
+            assert(
+                localInterval instanceof SequenceInterval,
+                0x3a0 /* localInterval must be `SequenceInterval` when used with client */,
+            );
+            // The rebased op may place this interval's endpoints on different segments. Calling `changeInterval` here
+            // updates the local client's state to be consistent with the emitted op.
+            this.localCollection?.changeInterval(localInterval, startRebased, endRebased, undefined, localSeq);
         }
 
         return rebased;
     }
 
-    private getSlideToSegment(lref: LocalReferencePosition) {
+    private getSlideToSegment(lref: LocalReferencePosition, localSeq?: number) {
         if (!this.client) {
             throw new LoggingError("client does not exist");
         }
@@ -1819,7 +1848,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (segoff.segment?.localRefs?.has(lref) !== true) {
             return undefined;
         }
-        const newSegoff = this.client.getSlideToSegment(segoff);
+        const newSegoff = this.client.getSlideToSegment(segoff, localSeq);
         const value: { segment: ISegment | undefined; offset: number | undefined; } | undefined
             = (segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset) ? undefined : newSegoff;
         return value;
@@ -1914,8 +1943,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     public ackAdd(
         serializedInterval: ISerializedInterval,
         local: boolean,
-        op: ISequencedDocumentMessage) {
+        op: ISequencedDocumentMessage,
+        localOpMetadata: IMapMessageLocalMetadata | undefined,
+    ) {
         if (local) {
+            assert(localOpMetadata !== undefined, "op metadata should be defined for local op");
+            this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
             const id: string = serializedInterval.properties?.[reservedIntervalIdKey];
             const localInterval = this.getIntervalById(id);
             if (localInterval) {

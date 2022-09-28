@@ -204,7 +204,8 @@
       "TypeAliasDeclaration_RangeStackMap": {"backCompat": false},
       "InterfaceDeclaration_ReferencePosition": {"backCompat": false},
       "InterfaceDeclaration_SegmentGroup": {"forwardCompat": false},
-      "ClassDeclaration_TrackingGroup": {"forwardCompat": false}
+      "ClassDeclaration_TrackingGroup": {"forwardCompat": false},
+      "ClassDeclaration_Client": {"forwardCompat": false, "backCompat": false}
     }
   }
 }

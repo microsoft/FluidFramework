@@ -11,7 +11,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
+import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
@@ -67,7 +67,15 @@ function elapsedMicroseconds(trace: Trace) {
     return trace.trace().duration * 1000;
 }
 
-export class Client {
+/**
+     * @internal
+     * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
+     * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
+     * they need for rebasing their ops on reconnection.
+     */
+export type IClientEvents = (event: "normalize", listener: () => void) => void;
+
+export class Client extends TypedEventEmitter<IClientEvents> {
     public measureOps = false;
     public accumTime = 0;
     public localTime = 0;
@@ -103,6 +111,7 @@ export class Client {
         public readonly logger: ITelemetryLogger,
         options?: PropertySet,
     ) {
+        super();
         this._mergeTree = new MergeTree(options);
     }
 
@@ -937,6 +946,7 @@ export class Client {
             shortRemoteClientId);
     }
 
+    private lastNormalizationRefSeq = 0;
     /**
      *  Given an pending operation and segment group, regenerate the op, so it
      *  can be resubmitted
@@ -947,7 +957,13 @@ export class Client {
         resetOp: IMergeTreeOp,
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): IMergeTreeOp {
-        this._mergeTree.normalizeSegmentsOnRebase(this.getCollabWindow().currentSeq);
+        const rebaseTo = this.getCollabWindow().currentSeq;
+        if (rebaseTo !== this.lastNormalizationRefSeq) {
+            this.emit("normalize");
+            this._mergeTree.normalizeSegmentsOnRebase(rebaseTo);
+            this.lastNormalizationRefSeq = rebaseTo;
+        }
+
         const opList: IMergeTreeDeltaOp[] = [];
         if (resetOp.type === MergeTreeDeltaType.GROUP) {
             if (Array.isArray(segmentGroup)) {

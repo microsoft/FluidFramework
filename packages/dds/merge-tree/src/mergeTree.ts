@@ -94,6 +94,7 @@ import {
     NodeAction,
     walkAllChildSegments,
 } from "./mergeTreeNodeWalk";
+import type { TrackingGroup } from "./mergeTreeTracking";
 
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
@@ -2145,8 +2146,6 @@ export class MergeTree {
 
     // Segments should either be removed remotely, removed locally, or inserted locally
     private normalizeAdjacentSegments(affectedSegments: List<ISegment>): void {
-        // TODO: Wipe/restore tracking groups here. Add test for it.
-
         const currentOrderTest = Array.from(affectedSegments.map(({ data }) => data));
         // Eagerly demand this since we're about to shift elements in the list around
         const currentOrder = currentOrderTest.map((seg) => ({
@@ -2166,7 +2165,8 @@ export class MergeTree {
         }
 
         for (
-            let segmentToSlide: ListNode<ISegment> | undefined = lastLocalSegment, nearerSegment = lastLocalSegment?.prev;
+            let segmentToSlide: ListNode<ISegment> | undefined = lastLocalSegment,
+            nearerSegment = lastLocalSegment?.prev;
             segmentToSlide !== undefined;
             segmentToSlide = nearerSegment, nearerSegment = nearerSegment?.prev
         ) {
@@ -2176,7 +2176,8 @@ export class MergeTree {
                 affectedSegments.remove(segmentToSlide);
                 affectedSegments.insertAfter(lastLocalSegment, segmentToSlide.data);
             } else if (isRemoved(segmentToSlide.data)) {
-                assert(segmentToSlide.data.localRemovedSeq !== undefined, 'Removed segment that hasnt had its removal acked should be locally removed');
+                assert(segmentToSlide.data.localRemovedSeq !== undefined,
+                    "Removed segment that hasnt had its removal acked should be locally removed");
                 // Slide each locally removed item past all segments that have localSeq > lremoveItem.localSeq
                 // but not past remotely removed segments;
                 let cur = segmentToSlide;
@@ -2184,7 +2185,7 @@ export class MergeTree {
                 while (scan !== undefined &&
                     !isRemovedAndAcked(scan.data) &&
                     scan.data.localSeq !== undefined &&
-                    scan.data.localSeq! > segmentToSlide.data.localRemovedSeq
+                    scan.data.localSeq > segmentToSlide.data.localRemovedSeq
                 ) {
                     cur = scan;
                     scan = scan.next;
@@ -2194,15 +2195,31 @@ export class MergeTree {
                     affectedSegments.insertAfter(cur, segmentToSlide.data);
                 }
             }
-        };
+        }
 
         const newOrder = Array.from(affectedSegments.map(({ data }) => data));
         newOrder.forEach((seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)));
+        const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();
+        for (const segment of newOrder) {
+            const { trackingCollection } = segment;
+            const trackingGroups = Array.from(trackingCollection.trackingGroups);
+            perSegmentTrackingGroups.set(segment, trackingGroups);
+            for (const group of trackingCollection.trackingGroups) {
+                trackingCollection.unlink(group);
+            }
+        }
+
         for (let i = 0; i < newOrder.length; i++) {
             const seg = newOrder[i];
             const { parent, index, ordinal } = currentOrder[i];
             parent?.assignChild(seg, index, false);
             seg.ordinal = ordinal;
+        }
+
+        for (const [segment, groups] of perSegmentTrackingGroups.entries()) {
+            for (const group of groups) {
+                segment.trackingCollection.link(group);
+            }
         }
 
         // Finally, update internal node bookkeeping on ancestors of the swapped nodes.
@@ -2224,10 +2241,8 @@ export class MergeTree {
             }
         }
         newOrder.forEach((seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)));
-
     }
 
-    private lastNormalizationRefSeq = 0;
     /**
      * Normalizes the segments nearby `segmentGroup` to be ordered as they would if the op submitting `segmentGroup`
      * is rebased to the current sequence number.
@@ -2249,9 +2264,6 @@ export class MergeTree {
      * it can fix up its local state to align with what would be expected of the op it resubmits.
      */
     public normalizeSegmentsOnRebase(rebaseTo: number): void {
-        if (rebaseTo === this.lastNormalizationRefSeq) {
-            return;
-        }
         let currentRangeToNormalize = new List<ISegment>();
         let rangeContainsLocalSegs = false;
         let rangeContainsRemoteRemovedSegs = false;
@@ -2259,7 +2271,7 @@ export class MergeTree {
             if (rangeContainsLocalSegs && rangeContainsRemoteRemovedSegs && currentRangeToNormalize.length > 1) {
                 this.normalizeAdjacentSegments(currentRangeToNormalize);
             }
-        }
+        };
         walkAllChildSegments(this.root, (seg) => {
             if (isRemoved(seg) || seg.seq === UnassignedSequenceNumber) {
                 if (isRemovedAndAcked(seg)) {
@@ -2280,8 +2292,6 @@ export class MergeTree {
         });
 
         normalize();
-        this.lastNormalizationRefSeq = rebaseTo;
-
     }
 
     private blockUpdate(block: IMergeBlock) {

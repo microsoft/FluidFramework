@@ -8,9 +8,11 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UnassignedSequenceNumber } from "../constants";
-import { SegmentGroup } from "../mergeTreeNodes";
-import { MergeTreeDeltaType } from "../ops";
+import { ISegment, SegmentGroup } from "../mergeTreeNodes";
+import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
+import { TrackingGroup } from "../mergeTreeTracking";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { TestClient } from "./testClient";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
 
@@ -537,41 +539,41 @@ describe("client.applyMsg", () => {
      * but since client C rebased the op which inserted "c", its segments were in a meaningfully different order
      * from other clients. This issue was fixed by making client C adjust the ordering of its segments at rebase
      * (i.e. reconnection) time so that they align with the resubmitted op.
-Condensed view of this mismatch:
-```
-_: Local State
--: Deleted
-*: Unacked Insert and Delete
-0: msn/offset
-Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>
-sequence number represented as offset from msn. L means local.
-op types: 0) insert 1) remove 2) annotate
-op types: 0) insert 1) remove 2) annotate
-op         | client A      | op         | client C
-           |               | L:0:C0@0   | _
-           |               |            | C
-1:0:D0@0   | DD            | 1:0:D0@0   | _DD
-           |               |            | C
-2:0:C0@0   | CDD           | 2:0:C0@0   | CDD
-3:2:D0@0   | DDDCDD        | 3:2:D0@0   | DDDCDD
-4:2:D0@0   | DDDDCDD       | 4:2:D0@0   | DDDDCDD
-5:4:D0@0   | DDDDDDDCDD    |            | DDDDCDD
-6:4:D1@6,9 | DDDDDD---D    |            | DDDDCDD
-           | DDDDDD---D    | L:4:C0@5   | DDDDC_DD
-           |               |            |      c
-           | DDDDDD---D    | 5:4:D0@0   | DDDDDDDC_DD
-           |               |            |         c
-           | DDDDDD---D    | 6:4:D1@6,9 | DDDDDD- -_-D
-           |               |            |          c
-7:6:B0@6   | DDDDDDb ---D  | 7:6:B0@6   | DDDDDDb- -_-D
-           |               |            |           c
-8:6:C0@6   | DDDDDDcb ---D | 8:6:C0@6   | DDDDDDb- -c-D
-Client C does not match client A
-```
+     * Condensed view of this mismatch:
+     * ```
+     * _: Local State
+     * -: Deleted
+     * *: Unacked Insert and Delete
+     * 0: msn/offset
+     * Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>
+     * sequence number represented as offset from msn. L means local.
+     * op types: 0) insert 1) remove 2) annotate
+     * op types: 0) insert 1) remove 2) annotate
+     * op         | client A      | op         | client C
+     *            |               | L:0:C0@0   | _
+     *            |               |            | C
+     * 1:0:D0@0   | DD            | 1:0:D0@0   | _DD
+     *            |               |            | C
+     * 2:0:C0@0   | CDD           | 2:0:C0@0   | CDD
+     * 3:2:D0@0   | DDDCDD        | 3:2:D0@0   | DDDCDD
+     * 4:2:D0@0   | DDDDCDD       | 4:2:D0@0   | DDDDCDD
+     * 5:4:D0@0   | DDDDDDDCDD    |            | DDDDCDD
+     * 6:4:D1@6,9 | DDDDDD---D    |            | DDDDCDD
+     *            | DDDDDD---D    | L:4:C0@5   | DDDDC_DD
+     *            |               |            |      c
+     *            | DDDDDD---D    | 5:4:D0@0   | DDDDDDDC_DD
+     *            |               |            |         c
+     *            | DDDDDD---D    | 6:4:D1@6,9 | DDDDDD- -_-D
+     *            |               |            |          c
+     * 7:6:B0@6   | DDDDDDb ---D  | 7:6:B0@6   | DDDDDDb- -_-D
+     *            |               |            |           c
+     * 8:6:C0@6   | DDDDDDcb ---D | 8:6:C0@6   | DDDDDDb- -c-D
+     * Client C does not match client A
+     * ```
      */
     it("Concurrent insert into removed segment across block boundary", () => {
         const clients = createClientsAtInitialState(
-            { initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
+            { initialState: "", options: { mergeTreeUseNewLengthCalculations: false } },
              "A", "B", "C", "D");
 
         const logger = new TestClientLogger([clients.A, clients.C]);
@@ -605,14 +607,47 @@ Client C does not match client A
         const bOp = { op: clients.B.insertTextLocal(1, "b")!, sg: clients.B.peekPendingSegmentGroups()! };
         const cOp = { op: clients.C.insertTextLocal(5, "c")!, sg: clients.C.peekPendingSegmentGroups()! };
 
+        // TODO: tracking group
+        const { segment, offset } = clients.C.getContainingSegment(5);
+        assert(segment !== undefined, "expected segment");
+        const ref = clients.C.createLocalReferencePosition(segment, offset, ReferenceType.Simple, undefined);
+
+        let beforeSlides = 0;
+        let afterSlides = 0;
+        ref.callbacks = {
+            beforeSlide: (lref) => {
+                assert(lref === ref, "wrong ref slid");
+                beforeSlides++;
+            },
+            afterSlide: (lref) => {
+                assert(lref === ref, "wrong ref slid");
+                afterSlides++;
+            },
+        };
+
         // catch up disconnected clients
         perClientOps.forEach(
             (clientOps, i) => clientOps.splice(0).forEach((op) => clients.all[i].applyMsg(op)));
 
         // rebase and resubmit disconnected client ops
         ops.push(clients.B.makeOpMessage(clients.B.regeneratePendingOp(bOp.op, bOp.sg), ++seq));
-        ops.push(clients.C.makeOpMessage(clients.C.regeneratePendingOp(cOp.op, cOp.sg), ++seq));
 
+        const trackingGroup = new TrackingGroup();
+        const trackedSegs: ISegment[] = [];
+        walkAllChildSegments(clients.C.mergeTree.root, (seg) => {
+            trackedSegs.push(seg);
+            trackingGroup.link(seg);
+        });
+
+        assert.equal(beforeSlides, 0, "should be no slides");
+        assert.equal(afterSlides, 0, "should be no slides");
+        ops.push(clients.C.makeOpMessage(clients.C.regeneratePendingOp(cOp.op, cOp.sg), ++seq));
+        assert.equal(beforeSlides, 1, "should be 1 slide");
+        assert.equal(afterSlides, 1, "should be 1 slide");
+
+        trackedSegs.forEach((seg) => {
+            assert(trackingGroup.has(seg), "Tracking group should still have segment.");
+        });
         // process the resubmitted ops
         ops.splice(0).forEach((op) => clients.all.forEach((c) => {
             c.applyMsg(op);

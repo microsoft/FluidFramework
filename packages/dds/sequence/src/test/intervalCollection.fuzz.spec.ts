@@ -285,6 +285,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     const clientBaseOperationGenerator = createWeightedGenerator<Operation, ClientOpState>([
         [addText, 2, isShorterThanMaxLength],
         [removeRange, 1, hasNonzeroLength],
+        // [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
         [addInterval, 2, all(hasNotTooManyIntervals, hasNonzeroLength)],
         [deleteInterval, 2, hasAnInterval],
         [changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
@@ -412,9 +413,10 @@ function getPath(seed: number): string {
     return path.join(directory, `${seed}.json`);
 }
 
-const describeFuzz = createFuzzDescribe({ defaultTestCount: 10 });
+// const describeFuzz = createFuzzDescribe({ defaultTestCount: 1000 });
+const describeFuzz = createFuzzDescribe({ defaultTestCount: 100 });
 
-describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
+describeFuzz.only("IntervalCollection fuzz testing", ({ testCount }) => {
     before(() => {
         if (!existsSync(directory)) {
             mkdirSync(directory);
@@ -453,17 +455,22 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
             runIntervalCollectionFuzz(
                 generator,
                 initialState,
+                // undefined,
                 { saveOnFailure: true, filepath: getPath(seed) },
                 loggingInfo,
             );
         });
     }
 
-    function replayTestFromFailureFile(seed: number, loggingInfo?: LoggingInfo) {
+    function replayTestFromFailureFile(seed: number, intervalId?: string, loggingInfo?: LoggingInfo) {
         const filepath = getPath(seed);
         let operations: Operation[];
         try {
             operations = JSON.parse(readFileSync(filepath).toString());
+            if (intervalId) {
+                operations = operations.filter((entry) => [undefined, intervalId].includes((entry as any).id));
+                operations = operations.filter((entry) => entry.type !== "addText" || entry.content.length > 0);
+            }
         } catch (err: any) {
             // Mocha executes skipped suite creation blocks, but whoever's running this suite only cares if
             // the containing block isn't skipped. Report the original error to them from inside a test.
@@ -488,9 +495,11 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
     // Change this seed and unskip the block to replay the actions from JSON on disk.
     // This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
     describe.skip("replay specific seed", () => {
-        const seedToReplay = 0;
+        // const seedToReplay = 8; // 870, 991,
+        const seedToReplay = 38;
         replayTestFromFailureFile(
             seedToReplay,
+            // "1fd4dbfc-79b1-4b84-aa92-147923d11754",
             // The following line can be uncommented for useful logging output which tracks the provided
             // intervalId over time.
             // { intervalId: "", clientIds: ["A", "B", "C"] },
