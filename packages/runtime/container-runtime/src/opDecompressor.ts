@@ -8,7 +8,12 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 
 /**
- * State machine that "unrolls" contents of compressed batches of ops after decompressing them
+ * State machine that "unrolls" contents of compressed batches of ops after decompressing them.
+ * This class relies on some implicit contracts defined below:
+ * 1. A compressed batch will have its first message with batch metadata set to true and compressed set to true
+ * 2. Messages in the middle of a compressed batch will have neither batch metadata nor the compression property set
+ * 3. The final message of a batch will have batch metadata set to false
+ * 4. An individually compressed op will have undefined batch metadata and compression set to true
  */
 export class OpDecompressor {
     private activeBatch = false;
@@ -33,14 +38,14 @@ export class OpDecompressor {
             const asObj = JSON.parse(intoString);
             this.rootMessage.contents = asObj;
 
-            return { ...message, contents: JSON.parse(this.rootMessage.contents[this.processedCount++]) };
+            return { ...message, contents: this.rootMessage.contents[this.processedCount++] };
         } else if (this.rootMessage !== undefined && message.metadata === undefined && this.activeBatch) {
             // Continuation of compressed batch
-            return { ...message, contents: JSON.parse(this.rootMessage.contents[this.processedCount++]) };
+            return { ...message, contents: this.rootMessage.contents[this.processedCount++] };
         } else if (this.rootMessage !== undefined && message.metadata?.batch === false) {
             // End of compressed batch
             const returnMessage = { ...message,
-                                    contents: JSON.parse(this.rootMessage.contents[this.processedCount++]) };
+                                    contents: this.rootMessage.contents[this.processedCount++] };
 
             this.activeBatch = false;
             this.rootMessage = undefined;
@@ -56,7 +61,7 @@ export class OpDecompressor {
             const intoString = new TextDecoder().decode(decompressedMessage);
             const asObj = JSON.parse(intoString);
 
-            return { ...message, contents: JSON.parse(asObj) };
+            return { ...message, contents: asObj[0] };
         }
 
         return message;

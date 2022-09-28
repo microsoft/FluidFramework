@@ -825,7 +825,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private baseSnapshotBlobs?: ISerializedBaseSnapshotBlobs;
 
     private consecutiveReconnects = 0;
-    private compressedOpCount = 0;
+    private compressedBatchCount = 0;
 
     /**
      * Used to delay transition to "connected" state while we upload
@@ -1814,21 +1814,35 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.canSendOps()) {
             if (this.context.submitBatchFn !== undefined) {
                 const batchToSend: IBatchMessage[] = [];
-                const batchContentsLength = batch.reduce((partialSum, currMessage) =>
-                    partialSum + currMessage.contents.length, 0);
+
+                let batchContentsLength = 0;
+                for (const message of batch) {
+                    batchContentsLength += message.contents.length;
+                }
+
                 if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined
                     && batchContentsLength > this.runtimeOptions.compressionOptions.minimumSize) {
-                    this.compressedOpCount++;
-                    console.log(this.compressedOpCount);
-                    const batchedContents: string[] = [];
+                    this.compressedBatchCount++;
+                    const batchedContents: ContainerRuntimeMessage[] = [];
 
                     for (const message of batch) {
-                        batchedContents.push(message.contents);
+                        batchedContents.push(message.deserializedContent);
                     }
 
+                    const compressionStart = Date.now();
                     const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(batchedContents));
                     const compressedContents = compress(contentsAsBuffer);
                     const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+                    const duration = Date.now() - compressionStart;
+
+                    if (this.compressedBatchCount % 100) {
+                        this.mc.logger.sendPerformanceEvent({
+                            eventName: "CompressedBatch",
+                            duration,
+                            sizeBeforeCompression: batchContentsLength,
+                            sizeAfterCompression: compressedContent.length,
+                        });
+                    }
 
                     batchToSend.push({ contents: JSON.stringify({ packedContents: compressedContent }),
                                                  metadata: { ...batch[0].metadata, compressed: true } });
