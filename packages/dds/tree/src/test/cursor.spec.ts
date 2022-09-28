@@ -34,9 +34,9 @@ export const cursorTestCases: [string, JsonableTree][] = [
     ["double nested", {
         type: brand("Foo"),
         fields: {
-            b: [{
+            a: [{
                 type: brand("Bar"),
-                fields: { c: [{ type: brand("Baz") }] },
+                fields: { b: [{ type: brand("Baz") }] },
             }],
         },
     }],
@@ -79,7 +79,7 @@ export function testJsonableTreeCursor(
     factory: (data: JsonableTree) => ITreeCursor,
     dataFromCursor: (cursor: ITreeCursor) => JsonableTree,
 ): void {
-    describe.only(`${suiteName} cursor implementation`, () => {
+    describe(`${suiteName} cursor implementation`, () => {
         describe("extract roundtrip", () => {
             for (const [name, data] of cursorTestCases) {
                 it(`${name}: ${JSON.stringify(data)}`, () => {
@@ -95,10 +95,10 @@ export function testJsonableTreeCursor(
         });
 
         // TODO is this even necessary now?
-        // it("up from root", () => {
-        //     const cursor = factory({ type: brand("Foo") });
-        //     assert.equal(cursor.exitNode(), false);
-        // });
+        it("up from root", () => {
+            const cursor = factory({ type: brand("Foo") });
+            assert.throws(() => cursor.exitNode());
+        });
 
         // TODO why was keys removed?
         describe("keys", () => {
@@ -246,7 +246,7 @@ export function testJsonableTreeCursor(
             });
         });
 
-        describe("enterNode result", () => {
+        describe("enterNode", () => {
             const notFoundKey: FieldKey = brand("notFound");
             const foundKey: FieldKey = brand("found");
 
@@ -319,6 +319,61 @@ export function testJsonableTreeCursor(
                 expectFound(cursor, EmptyKey, 1);
             });
         });
+
+        describe("getPath() returns correct path for", () => {
+            it(`first node in a root trait`, () => {
+                const cursor = factory({
+                    type: brand("Foo"),
+                    fields: { key: [{ type: brand("Bar"), value: 0 }] },
+                });
+                cursor.enterField(brand("key"));
+                cursor.firstNode();
+                assert.deepEqual(cursor.getPath(), {
+                    parent: undefined,
+                    parentField: brand<FieldKey>("key"),
+                    parentIndex: 0,
+                });
+            });
+
+            it(`node in a root trait`, () => {
+                const cursor = factory({
+                    type: brand("Foo"),
+                    fields: { key: [{ type: brand("Bar"), value: 0 }, { type: brand("Bar"), value: 1 }] },
+                });
+                cursor.enterField(brand("key"));
+                cursor.enterNode(1);
+                assert.deepEqual(cursor.getPath(), {
+                    parent: undefined,
+                    parentField: brand<FieldKey>("key"),
+                    parentIndex: 1,
+                });
+            });
+
+            it(`first node in a nested trait`, () => {
+                const cursor = factory({
+                    type: brand("Foo"),
+                    fields: {
+                        a: [{
+                            type: brand("Bar"),
+                            fields: { [EmptyKey]: [{ type: brand("Baz") }] },
+                        }],
+                    },
+                });
+                cursor.enterField(brand("a"));
+                assert.equal(cursor.firstNode(), true);
+                cursor.enterField(EmptyKey);
+                assert.equal(cursor.firstNode(), true);
+                assert.deepEqual(cursor.getPath(), {
+                    parent: {
+                        parent: undefined,
+                        parentField: brand<FieldKey>("a"),
+                        parentIndex: 0,
+                    },
+                    parentField: EmptyKey,
+                    parentIndex: 0,
+                });
+            });
+        });
     });
 }
 
@@ -354,7 +409,7 @@ function traverseNode(cursor: ITreeCursor) {
 export function testCursors(
     suiteName: string,
     cursors: { cursorName: string; cursor: ITreeCursor; }[]) {
-    describe.only(`${suiteName} cursor functionality`, () => {
+    describe(`${suiteName} cursor functionality`, () => {
         for (const { cursorName, cursor } of cursors) {
             describe(`${cursorName}`, () => {
                 it("tree can be traversed", () => {

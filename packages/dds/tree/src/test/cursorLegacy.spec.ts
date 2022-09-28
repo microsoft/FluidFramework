@@ -68,7 +68,7 @@ export const cursorTestCases: [string, JsonableTree][] = [
  * @param factory - Creates the cursor to be tested with or without provided data.
  * @param dataFromCursor - Gets a JsonableTree from the provided cursor.
  */
-export function testJsonCompatibleCursor(
+export function testJsonableTreeCursor(
     suiteName: string,
     factory: (data: JsonableTree) => ITreeCursor,
     dataFromCursor: (cursor: ITreeCursor) => JsonableTree,
