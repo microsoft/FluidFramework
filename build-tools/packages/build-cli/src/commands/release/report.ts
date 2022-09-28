@@ -7,9 +7,12 @@ import { strict as assert } from "assert";
 import { Context, writeFileAsync } from "@fluidframework/build-tools";
 import {
     detectBumpType,
+    detectVersionScheme,
+    getVersionRange,
     isVersionBumpType,
     ReleaseVersion,
     VersionBumpType,
+    VersionScheme,
 } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
@@ -369,23 +372,34 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             }
 
             const isNewRelease = this.isRecentReleaseByDate(latestDate);
+            const scheme = detectVersionScheme(latestVer);
+            const ranges: ReleaseRanges | undefined = scheme === "internal" ? {
+                patch: getVersionRange(latestVer, "patch"),
+                minor: getVersionRange(latestVer, "minor"),
+                tilde: getVersionRange(latestVer, "~"),
+                caret: getVersionRange(latestVer, "^"),
+            } : undefined;
 
             // Expand the release group to its constituent packages.
             if (isReleaseGroup(pkgName)) {
                 for (const pkg of context.packagesInReleaseGroup(pkgName)) {
                     report[pkg.name] = {
                         version: latestVer,
+                        versionScheme: scheme,
                         date: latestDate,
                         releaseType: bumpType,
                         isNewRelease,
+                        ranges,
                     };
                 }
             } else {
                 report[pkgName] = {
                     version: latestVer,
+                    versionScheme: scheme,
                     date: latestDate,
                     releaseType: bumpType,
                     isNewRelease,
+                    ranges,
                 };
             }
         }
@@ -527,10 +541,19 @@ interface RawReleaseData {
 
 interface ReleaseDetails {
     version: string;
+    versionScheme: VersionScheme;
     date?: Date;
     releaseType: VersionBumpType;
     isNewRelease: boolean;
     releaseGroup?: ReleaseGroup;
+    ranges?: ReleaseRanges;
+}
+
+interface ReleaseRanges {
+    minor: string;
+    patch: string;
+    caret: string;
+    tilde: string;
 }
 
 interface PackageReleaseData {
