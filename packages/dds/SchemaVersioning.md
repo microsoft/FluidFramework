@@ -8,7 +8,7 @@ This document currently focuses on expressing the requirements in this area: onc
 
 # Assumptions
 
-These data formats are used to persist data in fluid documents:
+These data formats are used to persist data in Fluid documents:
 
 -   the snapshot format (both runtime parts and DDS specific parts).
 -   op format (for trailing ops: both the runtime and DDS specific parts).
