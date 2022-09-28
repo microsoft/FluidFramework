@@ -4,9 +4,14 @@
  */
 
 import program from "commander";
-import { generateTests } from "./testGeneration";
-import { findPackagesUnderPath, getAndUpdatePackageDetails } from "./packageJson";
+// import { generateTests } from "./testGeneration";
+import {
+    findPackagesUnderPath,
+    // getAndUpdatePackageDetails
+ } from "./packageJson";
 
+// import { validateRepo } from "./repoValidator";
+// import { enableLogging } from "./validatorUtils";
 import { Project } from "ts-morph";
 
 /**
@@ -26,13 +31,6 @@ function writeOutLine(output: string) {
     }
 }
 
-// export async function getAndChangePackageExportsToNameExports(packageDir: string): Promise<boolean> {
-//     const project = new Project({
-
-//     })
-//     return true
-// }
-
 async function run(): Promise<boolean>{
 
     const packageDirs: string[] = [];
@@ -50,33 +48,64 @@ async function run(): Promise<boolean>{
     writeOutLine(`preinstallOnly: ${program.preinstallOnly}`)
     writeOutLine(`generateOnly: ${program.generateOnly}`)
 
-    const concurrency = 25;
+    const project = new Project({});
+    // const sourceFiles = project.getSourceFiles();
+    const sourceFiles = project.addSourceFilesAtPaths([`${program.packageDir}/src/**.ts`])
+    console.log(sourceFiles.length)
+    sourceFiles.forEach(async(sourceFile) => {
+        console.log(sourceFile.getBaseName());
+        const exportDeclarations = sourceFile.getExportDeclarations();
+        exportDeclarations.forEach(async(exportDeclaration) => {
+            console.log(exportDeclaration.isNamespaceExport())
+            if(exportDeclaration.isNamespaceExport()){
+                for (const [name, _] of sourceFile.getExportedDeclarations()) {
+                    console.log(`${name}`);
+                    exportDeclaration.addNamedExport(`${name}`);
+                    await sourceFile.save();
+                    sourceFile.saveSync();
+                }
+            }
+            // exportDeclaration.remove();
+        });
+    });
+    project.save()
+
+    // const concurrency = 25;
     const runningGenerates: Promise<boolean>[]=[];
+
+    // const includeOnly: Set<string> | undefined = program.packages ? new Set(program.packages) : undefined;
+    // if (program.verbose !== undefined) {
+    //     enableLogging(true);
+    // }
     // this loop incrementally builds up the runningGenerates promise list
     // each dir with an index greater than concurrency looks back the concurrency value
     // to determine when to run
     packageDirs.forEach(( packageDir,i)=> runningGenerates.push((async ()=> {
-        if(i >= concurrency){
-            await runningGenerates[i - concurrency];
-        }
+
+        // Get validation results for the repo
+        // const validationResults = await validateRepo({ includeOnly });
+
+        // if(i >= concurrency){
+        //     await runningGenerates[i - concurrency];
+        // }
         const packageName = packageDir.substring(packageDir.lastIndexOf("/") + 1)
         const output = [`${(i+1).toString()}/${packageDirs.length}`,`${packageName}`];
         try{
-            const start = Date.now();
-            const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
-                program.generateOnly ? undefined : {cwd: program.monoRepoDir};
-            const packageData = await getAndUpdatePackageDetails(packageDir, updateOptions)
-                .finally(()=>output.push(`Loaded(${Date.now() - start}ms)`));
-            if(packageData.skipReason !== undefined){
-                output.push(packageData.skipReason)
-            }
-            else if(packageData.oldVersions.length > 0
-                && program.preinstallOnly === undefined){
-                const start = Date.now();
-                await generateTests(packageData)
-                    .then((s)=>output.push(`dirs(${s.dirs}) files(${s.files}) tests(${s.tests})`))
-                    .finally(()=> output.push(`Generated(${Date.now() - start}ms)`));
-            }
+        //     const start = Date.now();
+        //     const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
+        //         program.generateOnly ? undefined : {cwd: program.monoRepoDir};
+        //     const packageData = await getAndUpdatePackageDetails(packageDir, updateOptions)
+        //         .finally(()=>output.push(`Loaded(${Date.now() - start}ms)`));
+        //     if(packageData.skipReason !== undefined){
+        //         output.push(packageData.skipReason)
+        //     }
+        //     else if(packageData.oldVersions.length > 0
+        //         && program.preinstallOnly === undefined){
+        //         const start = Date.now();
+        //         await generateTests(packageData)
+        //             .then((s)=>output.push(`dirs(${s.dirs}) files(${s.files}) tests(${s.tests})`))
+        //             .finally(()=> output.push(`Generated(${Date.now() - start}ms)`));
+        //     }
             output.push("Done");
         }catch(error){
             output.push("Error");
