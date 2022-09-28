@@ -293,16 +293,14 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
                 dataObject1map1.set("key1", "value1");
                 dataObject1map2.set("key2", "value2");
 
-                // Yield a turn so that the ops are flushed.
-                await yieldJSTurn();
+                // wait for ops to be flushed.
                 await provider.ensureSynchronized();
 
                 // Send the second set of ops that are to be batched together.
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
 
-                // Yield a turn so that the ops are flushed.
-                await yieldJSTurn();
+                // wait for ops to be flushed.
                 await provider.ensureSynchronized();
 
                 // Send a third set of ops that are to be batched together.
