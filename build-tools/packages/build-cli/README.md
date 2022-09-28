@@ -439,6 +439,8 @@ DESCRIPTION
   The command will prompt you to select versions for a package or release group in the event that multiple versions have
   recently been released.
 
+  Using the --all flag, you can list all the releases for a given release group or package.
+
 EXAMPLES
   Generate a minimal release report and display it in the terminal.
 
@@ -455,6 +457,14 @@ EXAMPLES
   Output a full release report to 'report.json'.
 
     $ flub release report -f -o report.json
+
+  List all the releases of the azure release group.
+
+    $ flub release report --all -g azure
+
+  List the 10 most recent client releases.
+
+    $ flub release report --all -g client --limit 10
 ```
 
 ## `flub run bundleStats`

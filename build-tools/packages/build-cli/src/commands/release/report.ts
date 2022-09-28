@@ -44,7 +44,9 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
     static summary = "Generates a report of Fluid Framework releases.";
     static description = `The release report command is used to produce a report of all the packages that were released and their current version. After a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the most recent version.
 
-    The command will prompt you to select versions for a package or release group in the event that multiple versions have recently been released.`;
+    The command will prompt you to select versions for a package or release group in the event that multiple versions have recently been released.
+
+    Using the --all flag, you can list all the releases for a given release group or package.`;
 
     static examples = [
         {
@@ -62,6 +64,14 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         {
             description: "Output a full release report to 'report.json'.",
             command: "<%= config.bin %> <%= command.id %> -f -o report.json",
+        },
+        {
+            description: "List all the releases of the azure release group.",
+            command: "<%= config.bin %> <%= command.id %> --all -g azure",
+        },
+        {
+            description: "List the 10 most recent client releases.",
+            command: "<%= config.bin %> <%= command.id %> --all -g client --limit 10",
         },
     ];
 
@@ -174,11 +184,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         if (flags.all === true) {
             for (const [pkgOrReleaseGroup, data] of Object.entries(versionData)) {
                 const versions = sortVersions([...data.versions], "version");
-                // const recentReleases = filterVersionsOlderThan(versions, flags.days);
-                // if(recentReleases.length === 0) {
-                //     recentReleases.push(versions[0]);
-                // }
-
                 const t = this.generateAllReleasesTable(pkgOrReleaseGroup, versions);
 
                 this.log(
@@ -514,7 +519,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
 
         const limit = this.processedFlags.limit;
         if (limit !== undefined && tableData.length > limit) {
-            this.verbose(
+            this.info(
                 `Reached the release limit (${limit}), ignoring the remaining ${
                     tableData.length - limit
                 } releases.`,
