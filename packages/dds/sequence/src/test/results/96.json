@@ -1,0 +1,485 @@
+[
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "",
+        "stringId": "B"
+    },
+    {
+        "type": "changeConnectionState",
+        "stringId": "B",
+        "connected": false
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "cH14",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 3,
+        "content": "zaTyNyTg",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "NH1JVi5YtG",
+        "stringId": "C"
+    },
+    {
+        "type": "addInterval",
+        "start": 10,
+        "end": 11,
+        "collectionName": "comments",
+        "stringId": "B",
+        "id": "29882cc0-73b7-4d23-8f75-b25599676a3c"
+    },
+    {
+        "type": "changeConnectionState",
+        "stringId": "A",
+        "connected": false
+    },
+    {
+        "type": "addText",
+        "index": 10,
+        "content": "RU",
+        "stringId": "C"
+    },
+    {
+        "type": "changeConnectionState",
+        "stringId": "B",
+        "connected": true
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "addInterval",
+        "start": 9,
+        "end": 23,
+        "collectionName": "comments",
+        "stringId": "B",
+        "id": "9b97daee-c5b4-455a-8b9c-cb73848bdc46"
+    },
+    {
+        "type": "addText",
+        "index": 0,
+        "content": "prM6uo",
+        "stringId": "A"
+    },
+    {
+        "type": "addInterval",
+        "start": 5,
+        "end": 5,
+        "collectionName": "comments",
+        "stringId": "A",
+        "id": "891c4932-cbec-4d1d-8cc5-819d8f1466ea"
+    },
+    {
+        "type": "changeInterval",
+        "start": 22,
+        "end": 22,
+        "id": "9b97daee-c5b4-455a-8b9c-cb73848bdc46",
+        "collectionName": "comments",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 24,
+        "content": "rEmwW3L",
+        "stringId": "B"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "29882cc0-73b7-4d23-8f75-b25599676a3c",
+        "collectionName": "comments",
+        "stringId": "C"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "29882cc0-73b7-4d23-8f75-b25599676a3c",
+        "collectionName": "comments",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 29,
+        "content": "pyNuFH",
+        "stringId": "B"
+    },
+    {
+        "type": "changeConnectionState",
+        "stringId": "A",
+        "connected": true
+    },
+    {
+        "type": "changeProperties",
+        "id": "29882cc0-73b7-4d23-8f75-b25599676a3c",
+        "collectionName": "comments",
+        "properties": {
+            "prop2": "WmPGx",
+            "prop3": "qJqDa"
+        },
+        "stringId": "A"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "addText",
+        "index": 23,
+        "content": "Qr",
+        "stringId": "C"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "891c4932-cbec-4d1d-8cc5-819d8f1466ea",
+        "collectionName": "comments",
+        "stringId": "A"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "891c4932-cbec-4d1d-8cc5-819d8f1466ea",
+        "collectionName": "comments",
+        "stringId": "C"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "9b97daee-c5b4-455a-8b9c-cb73848bdc46",
+        "collectionName": "comments",
+        "stringId": "A"
+    },
+    {
+        "type": "addInterval",
+        "start": 28,
+        "end": 38,
+        "collectionName": "comments",
+        "stringId": "C",
+        "id": "b97da26a-f9cc-474f-b7e2-00d460f5cded"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "9b97daee-c5b4-455a-8b9c-cb73848bdc46",
+        "collectionName": "comments",
+        "stringId": "C"
+    },
+    {
+        "type": "changeInterval",
+        "end": 38,
+        "id": "891c4932-cbec-4d1d-8cc5-819d8f1466ea",
+        "collectionName": "comments",
+        "stringId": "B"
+    },
+    {
+        "type": "addInterval",
+        "start": 5,
+        "end": 39,
+        "collectionName": "comments",
+        "stringId": "B",
+        "id": "bb48ed66-63ed-47db-a6a9-27a830e0856b"
+    },
+    {
+        "type": "addInterval",
+        "start": 37,
+        "end": 38,
+        "collectionName": "comments",
+        "stringId": "B",
+        "id": "a259e674-6d41-4e72-a551-ae52e08bf18a"
+    },
+    {
+        "type": "changeConnectionState",
+        "stringId": "A",
+        "connected": false
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "a259e674-6d41-4e72-a551-ae52e08bf18a",
+        "collectionName": "comments",
+        "stringId": "C"
+    },
+    {
+        "type": "addInterval",
+        "start": 43,
+        "end": 43,
+        "collectionName": "comments",
+        "stringId": "C",
+        "id": "801e61f5-1795-4c32-938f-10be92f1cd34"
+    },
+    {
+        "type": "addText",
+        "index": 20,
+        "content": "8nL",
+        "stringId": "C"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "801e61f5-1795-4c32-938f-10be92f1cd34",
+        "collectionName": "comments",
+        "stringId": "C"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "bb48ed66-63ed-47db-a6a9-27a830e0856b",
+        "collectionName": "comments",
+        "stringId": "C"
+    },
+    {
+        "type": "changeConnectionState",
+        "stringId": "B",
+        "connected": false
+    },
+    {
+        "type": "addInterval",
+        "start": 4,
+        "end": 20,
+        "collectionName": "comments",
+        "stringId": "B",
+        "id": "161b9862-fcd9-4293-8258-e5875894fc43"
+    },
+    {
+        "type": "addText",
+        "index": 25,
+        "content": "uk",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 45,
+        "content": "kx",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 43,
+        "content": "TjHcS",
+        "stringId": "A"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "b97da26a-f9cc-474f-b7e2-00d460f5cded",
+        "collectionName": "comments",
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 19,
+        "end": 30,
+        "stringId": "A"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "a259e674-6d41-4e72-a551-ae52e08bf18a",
+        "collectionName": "comments",
+        "stringId": "B"
+    },
+    {
+        "type": "addInterval",
+        "start": 33,
+        "end": 35,
+        "collectionName": "comments",
+        "stringId": "A",
+        "id": "6ed8ad4f-6e9b-4b4d-a876-5f45a8c576dd"
+    },
+    {
+        "type": "removeRange",
+        "start": 22,
+        "end": 33,
+        "stringId": "C"
+    },
+    {
+        "type": "changeInterval",
+        "start": 25,
+        "end": 33,
+        "id": "b97da26a-f9cc-474f-b7e2-00d460f5cded",
+        "collectionName": "comments",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 5,
+        "content": "czXGv545r",
+        "stringId": "C"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "6ed8ad4f-6e9b-4b4d-a876-5f45a8c576dd",
+        "collectionName": "comments",
+        "stringId": "A"
+    },
+    {
+        "type": "removeRange",
+        "start": 17,
+        "end": 34,
+        "stringId": "A"
+    },
+    {
+        "type": "addText",
+        "index": 33,
+        "content": "NLQ",
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "addText",
+        "index": 49,
+        "content": "",
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 15,
+        "content": "1ghdr",
+        "stringId": "A"
+    },
+    {
+        "type": "addInterval",
+        "start": 41,
+        "end": 42,
+        "collectionName": "comments",
+        "stringId": "C",
+        "id": "ed6ae379-2128-4103-8179-98e231bece63"
+    },
+    {
+        "type": "addInterval",
+        "start": 13,
+        "end": 22,
+        "collectionName": "comments",
+        "stringId": "A",
+        "id": "b42d1799-3aa5-42f6-aae5-9f3a24f966d7"
+    },
+    {
+        "type": "addInterval",
+        "start": 24,
+        "end": 24,
+        "collectionName": "comments",
+        "stringId": "A",
+        "id": "407bd54d-3b21-4c31-90ef-65d4eccf7c0c"
+    },
+    {
+        "type": "changeProperties",
+        "id": "ed6ae379-2128-4103-8179-98e231bece63",
+        "collectionName": "comments",
+        "properties": {
+            "prop3": "VWxRU",
+            "prop2": "ooHSq"
+        },
+        "stringId": "C"
+    },
+    {
+        "type": "addText",
+        "index": 38,
+        "content": "p",
+        "stringId": "B"
+    },
+    {
+        "type": "addText",
+        "index": 29,
+        "content": "ybc5NPC",
+        "stringId": "B"
+    },
+    {
+        "type": "removeRange",
+        "start": 7,
+        "end": 34,
+        "stringId": "C"
+    },
+    {
+        "type": "removeRange",
+        "start": 20,
+        "end": 22,
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "changeProperties",
+        "id": "bb48ed66-63ed-47db-a6a9-27a830e0856b",
+        "collectionName": "comments",
+        "properties": {
+            "prop3": "LdKMT"
+        },
+        "stringId": "B"
+    },
+    {
+        "type": "changeInterval",
+        "end": 18,
+        "id": "b42d1799-3aa5-42f6-aae5-9f3a24f966d7",
+        "collectionName": "comments",
+        "stringId": "A"
+    },
+    {
+        "type": "changeInterval",
+        "end": 23,
+        "id": "b42d1799-3aa5-42f6-aae5-9f3a24f966d7",
+        "collectionName": "comments",
+        "stringId": "A"
+    },
+    {
+        "type": "changeInterval",
+        "start": 11,
+        "id": "bb48ed66-63ed-47db-a6a9-27a830e0856b",
+        "collectionName": "comments",
+        "stringId": "B"
+    },
+    {
+        "type": "deleteInterval",
+        "id": "161b9862-fcd9-4293-8258-e5875894fc43",
+        "collectionName": "comments",
+        "stringId": "B"
+    },
+    {
+        "type": "changeInterval",
+        "start": 17,
+        "end": 17,
+        "id": "ed6ae379-2128-4103-8179-98e231bece63",
+        "collectionName": "comments",
+        "stringId": "C"
+    },
+    {
+        "type": "changeConnectionState",
+        "stringId": "A",
+        "connected": true
+    },
+    {
+        "type": "changeProperties",
+        "id": "b97da26a-f9cc-474f-b7e2-00d460f5cded",
+        "collectionName": "comments",
+        "properties": {
+            "prop1": "gFT9A",
+            "prop3": "Q5EF3",
+            "prop2": "2KfsP"
+        },
+        "stringId": "B"
+    },
+    {
+        "type": "changeConnectionState",
+        "stringId": "B",
+        "connected": true
+    },
+    {
+        "type": "deleteInterval",
+        "id": "ed6ae379-2128-4103-8179-98e231bece63",
+        "collectionName": "comments",
+        "stringId": "C"
+    },
+    {
+        "type": "synchronize"
+    }
+]
