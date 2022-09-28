@@ -50,7 +50,7 @@ describe("fileLogger", () => {
         });
 
         it("Adds default props", async () => {
-            const logger = new JSONFileLogger(telemetryFile, 50, { extraProp1: "value1", extraProp2: "value2" });
+            const logger = new JSONFileLogger(telemetryFile, 50, { extraProp1: "value1", extraProp2: 10.5 });
             sendTelemetry(logger);
 
             await logger.close();

@@ -39,7 +39,7 @@ describe("logger utils", () => {
     describe("telemetry options validation", () => {
         it("empty arguments", () => {
             {
-                const result = validateAndParseTelemetryOptions("", "");
+                const result = validateAndParseTelemetryOptions("", []);
                 if (!result.success) {
                     assert.fail(`unexpected error [${result.error}]`);
                 }
@@ -62,55 +62,49 @@ describe("logger utils", () => {
         });
 
         it("valid", () => {
+            const props = ["prop1", "value1", "prop2", 10.5];
             {
-                const result = validateAndParseTelemetryOptions("CSV", "prop1=value1,prop2=value2");
+                const result = validateAndParseTelemetryOptions("CSV", props);
                 if (!result.success) {
                     assert.fail(`unexpected error [${result.error}]`);
                 }
                 const telemetryOptions = result.telemetryOptions;
                 assert.strictEqual(telemetryOptions.outputFormat, OutputFormat.CSV, "expected CSV format");
-                assert.deepStrictEqual(telemetryOptions.defaultProps, { prop1: "value1", prop2: "value2" });
+                assert.deepStrictEqual(telemetryOptions.defaultProps, { prop1: "value1", prop2: 10.5 });
             }
             {
-                const result = validateAndParseTelemetryOptions("JSON", "prop1=value1,prop2=value2");
+                const result = validateAndParseTelemetryOptions("JSON", props);
                 if (!result.success) {
                     assert.fail(`unexpected error [${result.error}]`);
                 }
                 const telemetryOptions = result.telemetryOptions;
                 assert.strictEqual(telemetryOptions.outputFormat, OutputFormat.JSON, "expected JSON format");
-                assert.deepStrictEqual(telemetryOptions.defaultProps, { prop1: "value1", prop2: "value2" });
+                assert.deepStrictEqual(telemetryOptions.defaultProps, { prop1: "value1", prop2: 10.5 });
             }
         });
 
         describe("default props", () => {
-            it("missing =", () => {
-                const result = validateAndParseTelemetryOptions(undefined, "prop1:value1 prop2:value2");
+            it("property name cannot be number", () => {
+                const result = validateAndParseTelemetryOptions(undefined, [10.1, "value1", "prop2", 10.5]);
                 assert(!result.success, `expected invalid properties`);
                 assert(result.error.toLowerCase().includes("property"),
                     `error message does not contain "property" [${result.error}]`);
             });
 
-            it("missing value of property", () => {
-                const result = validateAndParseTelemetryOptions(undefined, "prop1=,prop2=value2");
+            it("odd number of array values", () => {
+                const result = validateAndParseTelemetryOptions(undefined, ["prop1", "value1", "prop2"]);
                 assert(!result.success, `expected invalid properties`);
-                assert(result.error.toLowerCase().includes("property"),
-                    `error message does not contain "property" [${result.error}]`);
-            });
-
-            it("property value contains =", () => {
-                const result = validateAndParseTelemetryOptions(undefined, "prop1==");
-                assert(!result.success, `expected invalid properties`);
-                assert(result.error.toLowerCase().includes("property"),
-                    `error message does not contain "property" [${result.error}]`);
+                assert(result.error.toLowerCase().includes("properties"),
+                    `error message does not contain "properties" [${result.error}]`);
             });
 
             it("multiple whitespace", () => {
-                const result = validateAndParseTelemetryOptions(undefined, "    prop1=value1  ,  prop2=value2 ");
+                const result = validateAndParseTelemetryOptions(undefined, ["    prop1", "value1  "]);
                 if (!result.success) {
                     assert.fail(`unexpected error [${result.error}]`);
                 }
                 assert.deepStrictEqual(result.telemetryOptions.defaultProps,
-                    { "    prop1": "value1  ", "  prop2": "value2 " });
+                    { "    prop1": "value1  " });
             });
         });
     });

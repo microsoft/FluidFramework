@@ -25,7 +25,7 @@ export abstract class BaseFileLogger implements IFileLogger {
      public constructor(
         protected readonly filePath: string,
         protected readonly eventsPerFlush: number = 50,
-        protected readonly defaultProps?: Record<string, string>,
+        protected readonly defaultProps?: Record<string, string | number>,
     ) { }
 
     public send(event: ITelemetryBaseEvent): void {

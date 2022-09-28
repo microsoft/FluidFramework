@@ -58,8 +58,8 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         default: "JSON",
                     })
                     .option("telemetryProps", {
-                        describe: "Properties to add to every telemetry entry. Formatted like \"prop1=value1 prop2=value\".",
-                        type: "string",
+                        describe: "Properties to add to every telemetry entry. Formatted like \"--telemetryProps prop1 value1 --telemetryProps prop2 \\\"value 2\\\"\".",
+                        type: "array",
                         demandOption: false,
                     }),
             // eslint-disable-next-line @typescript-eslint/no-misused-promises

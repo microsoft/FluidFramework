@@ -14,7 +14,7 @@ export class JSONFileLogger extends BaseFileLogger {
     constructor(
         filePath: string,
         eventsPerFlush: number = 50,
-        defaultProps?: Record<string, string>,
+        defaultProps?: Record<string, string | number>,
     ) {
         super(filePath, eventsPerFlush, defaultProps);
         fs.appendFileSync(this.filePath, "[");

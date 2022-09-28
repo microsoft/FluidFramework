@@ -53,10 +53,10 @@ export function getTelemetryFileValidationError(telemetryFile: string): string |
  */
 export function validateAndParseTelemetryOptions(
     format?: string,
-    props?: string,
+    props?: (string | number)[],
 ): { success: false; error: string; } | { success: true; telemetryOptions: ITelemetryOptions; } {
     let outputFormat: OutputFormat | undefined;
-    const defaultProps: Record<string, string> = {};
+    const defaultProps: Record<string, string | number> = {};
 
     if (format) {
         outputFormat = OutputFormat[format];
@@ -65,15 +65,15 @@ export function validateAndParseTelemetryOptions(
         }
     }
 
-    if (props) {
-        let index = 0;
-        for (const kvp of props.split(",")) {
-            const kvpSplit = kvp.split("=").filter(Boolean); // Filter out empty entries
-            if (kvpSplit.length !== 2) {
-                return { success: false, error: `Invalid property at index [${index}] -> [${kvp}]` };
+    if (props && props.length > 0) {
+        if (props.length % 2 !== 0) {
+            return { success: false, error: `Invalid number of telemetry properties to add [${props.length}]` };
+        }
+        for (let i = 0; i < props.length; i += 2) {
+            if (typeof props[i] === "number") {
+                return { success: false, error: `Property name cannot be number at index [${i}] -> [${props[i]}]` };
             }
-            defaultProps[kvpSplit[0]] = kvpSplit[1];
-            index++;
+            defaultProps[props[i]] = props[i + 1];
         }
     }
 

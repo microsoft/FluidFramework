@@ -36,25 +36,25 @@ There is an optional command line option `telemetryFormat` that allows you to sp
 The default format is currently `JSON`
 
 ### Additional telemetry properties
-There is an optional command line option `telemetryProps` that allows you to specify additional properties that will be added to every telemetry entry. The format of this option is strict and must match the following:
-- every key is separated from the value by the `=` symbol
-- every key-value-pair is separated by the `,` character
+There is an optional command line option `telemetryProps` that allows you to specify additional properties that will be added to every telemetry entry. The format follows these rules:
+- every key must be a string
+- values may be either a string or a number
 - a value may not be empty
 
 Example of valid usages:
 ```
---telemetryProps="prop1=value1,prop2=value2"
---telemetryProps="    prop1=value1  ,  prop2=value2     "
+--telemetryProps prop1 value1 --telemetryProps prop2 10.5
+--telemetryProps "  prop1 " "   value1 " prop2 value2
+--telemetryProps=prop1 value1 --telemetryProps prop2 value2
+--telemetryProps
 ```
 
 Example of invalid usages:
 ```
---telemetryProps="prop1=="
---telemetryProps="prop1="
---telemetryProps="prop1"
+--telemetryProps "10" value1
+--telemetryProps prop1
+--telemetryProps=             // this will be treated as ['']
 ```
-
-> **Note**: Every value will be treated as a `string`
 
 ### Consumption
 The code around `exportFile` can be consumed in multiple different layers. It is not necessary to run all this code fully as is, and the following are some interesting code bits involved in this workflow:
