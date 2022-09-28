@@ -292,6 +292,10 @@ export class SharedSet<T = any>
                 this.delete(this.decode(content.value));
                 break;
 
+            case "clear":
+                    this.clear();
+                    break;
+
             default:
                 throw new Error("Unknown operation");
         }
