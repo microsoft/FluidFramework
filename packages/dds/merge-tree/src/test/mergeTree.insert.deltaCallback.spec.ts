@@ -44,15 +44,16 @@ describe("MergeTree", () => {
                     eventCalled++;
                 };
 
-            insertText(
+            insertText({
                 mergeTree,
-                0,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } });
+                pos: 0,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
 
             assert.equal(eventCalled, 1);
         });
@@ -66,15 +67,16 @@ describe("MergeTree", () => {
                     eventCalled++;
                 };
 
-            insertText(
+            insertText({
                 mergeTree,
-                textLength,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } });
+                pos: textLength,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
 
             assert.equal(eventCalled, 1);
         });
@@ -82,15 +84,16 @@ describe("MergeTree", () => {
         it("Insert middle text", () => {
             const count = countOperations(mergeTree);
 
-            insertText(
+            insertText({
                 mergeTree,
-                4,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } });
+                pos: 4,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.INSERT]: 1,
@@ -104,15 +107,16 @@ describe("MergeTree", () => {
 
             const count = countOperations(mergeTree);
 
-            insertText(
+            insertText({
                 mergeTree,
-                0,
-                currentSequenceNumber,
-                remoteClientId,
-                ++remoteSequenceNumber,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } });
+                pos: 0,
+                refSeq: currentSequenceNumber,
+                clientId: remoteClientId,
+                seq: ++remoteSequenceNumber,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.INSERT]: 1,

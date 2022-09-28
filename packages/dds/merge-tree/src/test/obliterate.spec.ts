@@ -52,29 +52,29 @@ describe.skip("obliterate", () => {
                 false,
                 undefined as any,
             );
-            insertText(
-                client.mergeTree,
-                0,
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 0,
                 refSeq,
-                remoteClientId + 1,
-                refSeq + 2,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId + 1,
+                seq: refSeq + 2,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "");
         });
         it("removes text for insert then obliterate", () => {
-            insertText(
-                client.mergeTree,
-                0,
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 0,
                 refSeq,
-                remoteClientId + 1,
-                refSeq + 1,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId + 1,
+                seq: refSeq + 1,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             client.obliterateRange(
                 0,
                 "hello world".length,
@@ -99,16 +99,16 @@ describe.skip("obliterate", () => {
                 false,
                 undefined as any,
             );
-            insertText(
-                client.mergeTree,
-                5,
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 5,
                 refSeq,
-                remoteClientId + 1,
-                refSeq + 2,
-                " world",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId + 1,
+                seq: refSeq + 2,
+                text: " world",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "hello world");
         });
         it("does not expand to include text inserted at end", () => {
@@ -121,16 +121,16 @@ describe.skip("obliterate", () => {
                 false,
                 undefined as any,
             );
-            insertText(
-                client.mergeTree,
-                5,
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 5,
                 refSeq,
-                remoteClientId + 1,
-                refSeq + 2,
-                "hello",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId + 1,
+                seq: refSeq + 2,
+                text: "hello",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "hello world");
         });
     });
@@ -146,16 +146,16 @@ describe.skip("obliterate", () => {
                 false,
                 undefined as any,
             );
-            insertText(
-                client.mergeTree,
-                0,
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 0,
                 refSeq,
-                remoteClientId,
-                refSeq + 2,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId,
+                seq: refSeq + 2,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "");
         });
     });

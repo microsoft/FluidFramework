@@ -74,15 +74,16 @@ describe("MergeTree", () => {
         });
 
         it("Annotate over local insertion", () => {
-            insertText(
+            insertText({
                 mergeTree,
-                4,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                "a",
-                undefined,
-                undefined);
+                pos: 4,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                text: "a",
+                props: undefined,
+                opArgs: undefined,
+            });
 
             const count = countOperations(mergeTree);
 
@@ -108,15 +109,16 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            insertText(
+            insertText({
                 mergeTree,
-                4,
-                remoteSequenceNumber,
-                remoteClientId,
-                ++remoteSequenceNumber,
-                "a",
-                undefined,
-                undefined);
+                pos: 4,
+                refSeq: remoteSequenceNumber,
+                clientId: remoteClientId,
+                seq: ++remoteSequenceNumber,
+                text: "a",
+                props: undefined,
+                opArgs: undefined,
+            });
 
             const count = countOperations(mergeTree);
 

@@ -37,16 +37,27 @@ export function insertMarker(
     mergeTree.insertSegments(pos, [Marker.make(behaviors, props)], refSeq, clientId, seq, opArgs);
 }
 
-export function insertText(
-    mergeTree: MergeTree,
-    pos: number,
-    refSeq: number,
-    clientId: number,
-    seq: number,
-    text: string,
-    props?: PropertySet,
-    opArgs?: IMergeTreeDeltaOpArgs,
-) {
+interface InsertTextArgs {
+    mergeTree: MergeTree;
+    pos: number;
+    refSeq: number;
+    clientId: number;
+    seq: number;
+    text: string;
+    props?: PropertySet;
+    opArgs?: IMergeTreeDeltaOpArgs;
+}
+
+export function insertText({
+    mergeTree,
+    pos,
+    refSeq,
+    clientId,
+    seq,
+    text,
+    props,
+    opArgs,
+}: InsertTextArgs) {
     mergeTree.insertSegments(pos, [TextSegment.make(text, props)], refSeq, clientId, seq, opArgs);
 }
 

@@ -97,58 +97,58 @@ describe("partial lengths", () => {
 
     describe("a single inserted element", () => {
         it("includes length of local insert for local view", () => {
-            insertText(
+            insertText({
                 mergeTree,
-                0,
-                0,
-                localClientId,
-                1,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                pos: 0,
+                refSeq: 0,
+                clientId: localClientId,
+                seq: 1,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
 
             validatePartialLengths(localClientId, [{ seq: 1, len: 17 }]);
         });
         it("includes length of local insert for remote view", () => {
-            insertText(
+            insertText({
                 mergeTree,
-                0,
-                0,
-                localClientId,
-                1,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                pos: 0,
+                refSeq: 0,
+                clientId: localClientId,
+                seq: 1,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
 
             validatePartialLengths(remoteClientId, [{ seq: 1, len: 17 }]);
         });
         it("includes length of remote insert for local view", () => {
-            insertText(
+            insertText({
                 mergeTree,
-                0,
-                0,
-                remoteClientId,
-                1,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                pos: 0,
+                refSeq: 0,
+                clientId: remoteClientId,
+                seq: 1,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
 
             validatePartialLengths(localClientId, [{ seq: 1, len: 17 }]);
         });
         it("includes length of remote insert for remote view", () => {
-            insertText(
+            insertText({
                 mergeTree,
-                0,
-                0,
-                remoteClientId,
-                1,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                pos: 0,
+                refSeq: 0,
+                clientId: remoteClientId,
+                seq: 1,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
 
             validatePartialLengths(remoteClientId, [{ seq: 1, len: 17 }]);
         });
@@ -246,16 +246,16 @@ describe("partial lengths", () => {
 
         it("is correct for different heights", () => {
             for (let i = 0; i < 100; i++) {
-                insertText(
+                insertText({
                     mergeTree,
-                    0,
-                    i,
-                    localClientId,
-                    i + 1,
-                    "a",
-                    undefined,
-                    { op: { type: MergeTreeDeltaType.INSERT } },
-                );
+                    pos: 0,
+                    refSeq: i,
+                    clientId: localClientId,
+                    seq: i + 1,
+                    text: "a",
+                    props: undefined,
+                    opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+                });
 
                 validatePartialLengths(localClientId, [{ seq: i + 1, len: i + 13 }]);
                 validatePartialLengths(remoteClientId, [{ seq: i + 1, len: i + 13 }]);
