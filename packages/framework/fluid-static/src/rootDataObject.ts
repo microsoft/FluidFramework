@@ -122,10 +122,9 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
         const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
-        const maybeHandle: FluidObject<IFluidHandle> = (dataStore as any);
-        const handle = await maybeHandle.IFluidHandle?.get();
-        assert(handle instanceof DataObject, "The data store's handle is not of the correct type!");
-        return handle as unknown as T;
+        const entrypoint = (dataStore as FluidObject<IFluidHandle>).IFluidHandle?.get();
+        assert(entrypoint instanceof DataObject, "The data store's handle is not of the correct type!");
+        return entrypoint as unknown as T;
     }
 
     private createSharedObject<T extends IFluidLoadable>(

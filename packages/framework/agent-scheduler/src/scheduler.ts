@@ -429,9 +429,13 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
         // TODO: IFluidHandle is currently only exposed in the DataStore class, not the IDataStore interface,
         // thus the discovery with FluidObject. Once entrypoints are exposed more directly this should be
         // simplified.
-        const scheduler = await (dataStore as FluidObject<IFluidHandle>).IFluidHandle?.get();
-        assert(scheduler instanceof AgentScheduler, "The data store's entrypoint is not an AgentScheduler!");
-        return scheduler;
+        const entrypoint = await (dataStore as FluidObject<IFluidHandle>).IFluidHandle?.get();
+
+        // AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entrypoint, but double-check
+        // while we plumb entrypoints correctly everywhere, so we can be sure the cast below is fine.
+        assert((entrypoint as FluidObject<IAgentScheduler>).IAgentScheduler !== undefined,
+            "The data store's entrypoint is not an AgentScheduler!");
+        return entrypoint as unknown as AgentScheduler;
     }
 
     public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {

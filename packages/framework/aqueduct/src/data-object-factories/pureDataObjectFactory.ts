@@ -62,7 +62,7 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
     runtimeClass = mixinRequestHandler(
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
             const router = (await runtimeArg.IFluidHandle?.get() as FluidObject<IFluidRouter>).IFluidRouter;
-            assert(router !== undefined, "Data store runtime handle is not an IFluidRouter");
+            assert(router !== undefined, "Data store runtime entrypoint is not an IFluidRouter");
             return router.request(request);
         },
         runtimeClass);
