@@ -36,6 +36,7 @@
             ],
         },
         {
+            // Runs the `flub release report --all` command with a debugger attached.
             "name": "flub release report",
             "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
             "cwd": "${workspaceFolder}",

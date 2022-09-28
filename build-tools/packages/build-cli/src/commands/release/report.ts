@@ -95,21 +95,10 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 "Always pick the most recent version as the latest (ignore semver version sorting).",
             exclusive: ["highest"],
         }),
-        // outputDir: Flags.directory({
-        //     char: "d",
-        //     description: "Output all report files to this directory.",
-        //     exclusive: ["output"],
-        // }),
         output: Flags.directory({
             char: "o",
             description: "Output JSON report files to this location.",
         }),
-        // full: Flags.boolean({
-        //     char: "f",
-        //     description:
-        //         "Output a full report. A full report includes additional metadata for each package, including the time of the release, the type of release (patch, minor, major), and whether the release is new.",
-        //     dependsOn: ["output"],
-        // }),
         all: Flags.boolean({
             description:
                 "List all releases. Useful when you want to see all the releases done for a release group or package. The number of results can be limited using the --limit argument.",
@@ -606,6 +595,17 @@ interface ReleaseReport {
 
 /**
  * A type representing the different kinds of report formats we output.
+ *
+ * "full" corresponds to the {@link ReleaseReport} interface. It contains a lot of package metadata indexed by package
+ * name.
+ *
+ * "simple" corresponds to the {@link PackageVersionList} interface. It contains a map of package names to versions.
+ *
+ * "caret" corresponds to the {@link PackageCaretRange} interface. It contains a map of package names to
+ * caret-equivalent version range strings.
+ *
+ * "tilde" corresponds to the {@link PackageTildeRange} interface. It contains a map of package names to
+ * tilde-equivalent version range strings.
  */
 type ReportKind = "full" | "caret" | "tilde" | "simple";
 
