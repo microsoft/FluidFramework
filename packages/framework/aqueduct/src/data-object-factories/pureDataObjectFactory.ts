@@ -74,35 +74,37 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
         sharedObjectRegistry,
         existing,
         async (rt: IFluidDataStoreRuntime) => {
-            // Create the data object as part of initializing the handle for the data store runtime. This allows it
-            // to register various callbacks with the runtime before the runtime becomes globally available. However,
-            // this is not full initialization - the constructor can't access DDSes or other services of runtime as
-            // objects are not fully initialized. In order to use object, we need to go through full initialization
-            // by calling finishInitialization().
-            const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
-            const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
-            const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
-            const instance = new ctor({ runtime: rt, context, providers, initProps });
-
-            // If it's a newly created object we need to wait for it to finish initialization (as that results in
-            // creation of DDSes) before it gets attached, providing atomic guarantee of creation.
-            // WARNING: we can't do the same (yet) for already existing PureDataObject!
-            // This will result in deadlock, as it tries to resolve internal handles, but any
-            // handle resolution goes through root (container runtime), which can't route it back
-            // to this data store, as it's still not initialized and not known to container runtime yet.
-            // In the future, we should address it by using relative paths for handles and be able to resolve
-            // local DDSes while data store is not fully initialized.
-            if (!existing) {
-                await instance.finishInitialization(existing);
-            }
-
+            assert(instance !== undefined, "Entrypoint is undefined");
+            // Calling finishInitialization here like PureDataObject.getDataObject does to keep the same behavior,
+            // since accessing the runtime's entrypoint is how we want the data object to be retrieved going forward.
+            // Without this I ran into issues with the load-existing flow not working correctly.
+            await instance.finishInitialization(true);
             return instance;
         },
     );
 
-    // Trigger initialization of the runtime's handle (using the code provided above when instantiating it) so the
-    // data object gets constructed immediately.
-    await runtime.IFluidHandle?.get();
+    // Create object right away.
+    // This allows object to register various callbacks with runtime before runtime
+    // becomes globally available. But it's not full initialization - constructor can't
+    // access DDSes or other services of runtime as objects are not fully initialized.
+    // In order to use object, we need to go through full initialization by calling finishInitialization().
+    const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
+    const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
+    const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
+    const instance = new ctor({ runtime, context, providers, initProps });
+
+    // if it's a newly created object, we need to wait for it to finish initialization
+    // as that results in creation of DDSes, before it gets attached, providing atomic
+    // guarantee of creation.
+    // WARNING: we can't do the same (yet) for already existing PureDataObject!
+    // This will result in deadlock, as it tries to resolve internal handles, but any
+    // handle resolution goes through root (container runtime), which can't route it back
+    // to this data store, as it's still not initialized and not known to container runtime yet.
+    // In the future, we should address it by using relative paths for handles and be able to resolve
+    // local DDSes while data store is not fully initialized.
+    if (!existing) {
+        await instance.finishInitialization(existing);
+    }
 
     return runtime;
 }

@@ -63,6 +63,7 @@ This is not breaking change yet. But if clients do not add handling for this err
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
 - [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [`PureDataObject.getDataObject()` is now deprecated](#PureDataObjectgetDataObject-is-now-deprecated)
 
 ### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
 
@@ -112,6 +113,13 @@ to be `string | undefined`.
 `SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
 To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
 The corresponding method on `IMergeTreeTexHelper` will also be removed.
+
+### `PureDataObject.getDataObject()` is now deprecated
+
+The static `getDataObject()` method on `PureDataObject` to obtain the data object stored in a data store runtime is now deprecated.
+That object is now stored as the entrypoint of the data store runtime, so you should use
+`(runtime as FluidObject<IFluidHandle>)?.IFluidHandle?.get() as PureDataObject` to get it.
+Entrypoints will eventually be exposed more directly and that access pattern will be simplified.
 
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
