@@ -407,23 +407,20 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [--json] [-d <value>] [-s | -r] [-f -o <value>] [-g client|server|azure|build-tools [--all |
-    ]] [-p <value> ] [--limit <value> ] [-v]
+  $ flub release report [--json] [--days <value>] [-s | -r] [-g client|server|azure|build-tools [--all | -o
+    <value>]] [-p <value> ] [--limit <value> ] [-v]
 
 FLAGS
-  -d, --days=<value>           [default: 10] The number of days to look back for releases to report.
-  -f, --full                   Output a full report. A full report includes additional metadata for each package,
-                               including the time of the release, the type of release (patch, minor, major), and whether
-                               the release is new.
   -g, --releaseGroup=<option>  Name of release group
                                <options: client|server|azure|build-tools>
-  -o, --output=<value>         Output a JSON report file to this location.
+  -o, --output=<value>         Output JSON report files to this location.
   -p, --package=<value>        Name of package.
   -r, --mostRecent             Always pick the most recent version as the latest (ignore semver version sorting).
   -s, --highest                Always pick the greatest semver version as the latest (ignore dates).
   -v, --verbose                Verbose logging.
   --all                        List all releases. Useful when you want to see all the releases done for a release group
                                or package. The number of results can be limited using the --limit argument.
+  --days=<value>               [default: 10] The number of days to look back for releases to report.
   --limit=<value>              Limits the number of displayed releases for each release group.
 
 GLOBAL FLAGS
