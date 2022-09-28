@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { FluidObject, IFluidHandle, IProvideFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -51,7 +51,7 @@ enum AliasState {
     None = "None",
 }
 
-class DataStore implements IDataStore, Partial<IProvideFluidHandle> {
+class DataStore implements IDataStore, Partial<IFluidLoadable> {
     private aliasState: AliasState = AliasState.None;
     private alias: string | undefined;
     private readonly pendingAliases: Map<string, Promise<AliasResult>>;
@@ -155,12 +155,16 @@ class DataStore implements IDataStore, Partial<IProvideFluidHandle> {
      * Handle to the data store. Use this as the primary way of interacting with it, and only fall back to
      * requesting the root object through the request pattern if the handle is not defined.
      */
-    public get IFluidHandle(): IFluidHandle | undefined {
+    public get handle(): IFluidHandle | undefined {
         // TODO: IFluidHandle is currently only exposed in the FluidDataStoreRuntime class, not the
         // IFluidDataStoreChannel interface, thus the discovery with FluidObject. Once entrypoints are exposed more
         // directly this should be simplified.
         const maybeHandle: IFluidDataStoreChannel & FluidObject<IFluidHandle> = this.fluidDataStoreChannel;
         return maybeHandle.IFluidHandle;
+    }
+
+    public set handle(newValue) {
+        throw new Error("Handle cannot be set");
     }
 
     constructor(

@@ -404,7 +404,7 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
         const response = await super.request(request);
         if (response.status === 404) {
             if (request.url === "" || request.url === "/") {
-                const agentScheduler = await this.IFluidHandle?.get();
+                const agentScheduler = await this.handle?.get();
                 assert(agentScheduler !== undefined,
                     "Entrypoint for AgentSchedulerRuntime should have been initialized by now");
 
@@ -431,9 +431,9 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
         // TODO: IFluidHandle is currently only exposed in the DataStore class, not the IDataStore interface,
         // thus the discovery with FluidObject. Once entrypoints are exposed more directly this should be
         // simplified.
-        const maybeIFluidHandle: IDataStore & FluidObject<IFluidHandle> = dataStore;
+        const maybeIFluidLoadable: IDataStore & FluidObject<IFluidLoadable> = dataStore;
         const entrypoint: (FluidObject<IAgentScheduler> & IFluidLoadable) | undefined =
-            await maybeIFluidHandle.IFluidHandle?.get();
+            await maybeIFluidLoadable?.IFluidLoadable?.handle?.get();
 
         // AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entrypoint, but double-check
         // while we plumb entrypoints correctly everywhere, so we can be sure the cast below is fine.

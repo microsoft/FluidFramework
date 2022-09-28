@@ -8,7 +8,7 @@ import {
     FluidObject,
     IFluidHandle,
     IFluidHandleContext,
-    IProvideFluidHandle,
+    IFluidLoadable,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -102,7 +102,7 @@ export interface ISharedObjectRegistry {
 export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
 IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext,
-Partial<IProvideFluidHandle> {
+Partial<IFluidLoadable> {
     /**
      * @deprecated - Instantiate the class using its constructor instead.
      *
@@ -131,11 +131,7 @@ Partial<IProvideFluidHandle> {
      * object. Use it if possible, but for now all code paths should first check if it's not undefined, and keep using
      * current approaches (e.g. using the request pattern) if it is.
      */
-    public get IFluidHandle() {
-        return this.handle;
-    }
-
-    private readonly handle?: IFluidHandle;
+    public handle?: IFluidHandle;
 
     public get IFluidRouter() { return this; }
 
