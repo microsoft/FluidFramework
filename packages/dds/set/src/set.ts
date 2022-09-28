@@ -175,7 +175,10 @@ export class SharedSet<T = any>
      */
     public add(value: T) {
         // Serialize the value if required.
-        const operationValue: ISetValue = this.serializer.encode(value, this.handle);
+        const operationValue: ISetValue = this.serializer.encode(
+            value,
+            this.handle,
+        );
 
         // Set the value locally.
         this.data.add(value);
@@ -203,7 +206,10 @@ export class SharedSet<T = any>
         }
 
         // Serialize the value if required.
-        const operationValue: ISetValue = this.serializer.encode(value, this.handle);
+        const operationValue: ISetValue = this.serializer.encode(
+            value,
+            this.handle,
+        );
 
         this.emit("delete");
 
@@ -293,8 +299,8 @@ export class SharedSet<T = any>
                 break;
 
             case "clear":
-                    this.clear();
-                    break;
+                this.clear();
+                break;
 
             default:
                 throw new Error("Unknown operation");
