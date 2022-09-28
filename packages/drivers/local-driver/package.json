@@ -68,6 +68,7 @@
     "@fluidframework/server-services-client": "^0.1036.5000",
     "@fluidframework/server-services-core": "^0.1036.5000",
     "@fluidframework/server-test-utils": "^0.1036.5000",
+    "events": "^3.1.0",
     "jsrsasign": "^10.5.25",
     "uuid": "^8.3.1"
   },
