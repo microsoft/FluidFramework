@@ -370,7 +370,7 @@ export class DocumentDeltaConnection
                 reject(err);
             };
 
-            const fail = (err: IAnyDriverError) => {
+            const failConnection = (err: IAnyDriverError) => {
                 this.disposeCore(err);
                 reject(err);
             };
@@ -435,7 +435,7 @@ export class DocumentDeltaConnection
                     // The only time we expect a mismatch in requested/actual is if we lack write permissions
                     // In this case we will get "read", even if we requested "write"
                     if (actualMode !== requestedMode) {
-                        fail(this.createErrorObject(
+                        failConnection(this.createErrorObject(
                             "connect_document_success",
                             "Connected in a different mode than was requested",
                             false,
@@ -444,7 +444,7 @@ export class DocumentDeltaConnection
                     }
                 } else {
                     if (actualMode === "write") {
-                        fail(this.createErrorObject(
+                        failConnection(this.createErrorObject(
                             "connect_document_success",
                             "Connected in write mode without write permissions",
                             false,
@@ -487,14 +487,14 @@ export class DocumentDeltaConnection
 
                 // This is not an socket.io error - it's Fluid protocol error.
                 // In this case fail connection and indicate that we were unable to create connection
-                fail(this.createErrorObject("connect_document_error", error));
+                failConnection(this.createErrorObject("connect_document_error", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
             this.socketConnectionTimeout = setTimeout(() => {
-                fail(this.createErrorObject("orderingServiceHandshakeTimeout"));
+                failConnection(this.createErrorObject("orderingServiceHandshakeTimeout"));
             }, timeout + 2000);
         });
 
