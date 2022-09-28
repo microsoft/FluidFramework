@@ -1,232 +1,103 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# detect-flaky-tests pipeline
+# test-coverage pipeline (for the purpose of detecting flaky tests)
 
 name: $(Build.BuildId)
 
-parameters:
-- name: releaseBuildOverride
-  displayName: Release Build (default = not released)
-  type: string
-  default: none
-  values:
-    - none
-    - prerelease
-    - release
-- name: publishOverride
-  displayName: Publish Override (default = based on branch)
-  type: string
-  default: default
-  values:
-    - default
-    - skip
-    - force
-- name: buildToolsVersionToInstall
-  displayName: Fluid build tools version (default = installs version in repo)
-  type: string
-  default: repo
-- name: nonScopedPackages
-  displayName: Non-scoped packages to publish
-  type: object
-  default:
-  - fluid-framework
+trigger: none
+pr: none
 
-schedules:
-  - cron: "0 0 * * *"
-    displayName: Daily midnight build
-    branches:
-      include:
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+      - release/*
       - main
       - next
-      - lts
-      - release/*
 
-jobs:
-  - job: JobA
-    steps:
-    - template: templates/build-npm-package.yml
+variables:
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+
+stages:
+  - stage:
+    displayName: Run 1
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
       parameters:
-        publishOverride: ${{ parameters.publishOverride }}
-        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-        nonScopedPackages: ${{ parameters.nonScopedPackages }}
-        buildDirectory: .
-        tagName: client
-        poolBuild: Large
-        cgSubDirectory: packages
-        checkoutSubmodules: true
-        taskBundleAnalysis: true
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-        preCG:
-        - task: UseNode@1
-          displayName: Use Node 14.x
-          inputs:
-            version: 14.x
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            customCommand: 'ci --ignore-scripts'
-            customRegistry: 'useNpmrc'
-        - task: Bash@3
-          displayName: 'Generate Mono repo package json'
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Generate the package/package lock for the lerna project so we would scan it.
-              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
-              cp repo-package.json packages/package.json
-              cp repo-package-lock.json packages/package-lock.json
-
-
-  - job: JobB
-    steps:
-    - template: templates/build-npm-package.yml
+  - stage:
+    displayName: Run 2
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
       parameters:
-        publishOverride: ${{ parameters.publishOverride }}
-        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-        nonScopedPackages: ${{ parameters.nonScopedPackages }}
-        buildDirectory: .
-        tagName: client
-        poolBuild: Large
-        cgSubDirectory: packages
-        checkoutSubmodules: true
-        taskBundleAnalysis: true
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-        preCG:
-        - task: UseNode@1
-          displayName: Use Node 14.x
-          inputs:
-            version: 14.x
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            customCommand: 'ci --ignore-scripts'
-            customRegistry: 'useNpmrc'
-        - task: Bash@3
-          displayName: 'Generate Mono repo package json'
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Generate the package/package lock for the lerna project so we would scan it.
-              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
-              cp repo-package.json packages/package.json
-              cp repo-package-lock.json packages/package-lock.json
-
-  - job: JobC
-    steps:
-    - template: templates/build-npm-package.yml
+  - stage:
+    displayName: Run 3
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
       parameters:
-        publishOverride: ${{ parameters.publishOverride }}
-        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-        nonScopedPackages: ${{ parameters.nonScopedPackages }}
-        buildDirectory: .
-        tagName: client
-        poolBuild: Large
-        cgSubDirectory: packages
-        checkoutSubmodules: true
-        taskBundleAnalysis: true
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-        preCG:
-        - task: UseNode@1
-          displayName: Use Node 14.x
-          inputs:
-            version: 14.x
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            customCommand: 'ci --ignore-scripts'
-            customRegistry: 'useNpmrc'
-        - task: Bash@3
-          displayName: 'Generate Mono repo package json'
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Generate the package/package lock for the lerna project so we would scan it.
-              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
-              cp repo-package.json packages/package.json
-              cp repo-package-lock.json packages/package-lock.json
-
-  - job: JobD
-    steps:
-    - template: templates/build-npm-package.yml
+  - stage:
+    displayName: Run 4
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
       parameters:
-        publishOverride: ${{ parameters.publishOverride }}
-        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-        nonScopedPackages: ${{ parameters.nonScopedPackages }}
-        buildDirectory: .
-        tagName: client
-        poolBuild: Large
-        cgSubDirectory: packages
-        checkoutSubmodules: true
-        taskBundleAnalysis: true
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-        preCG:
-        - task: UseNode@1
-          displayName: Use Node 14.x
-          inputs:
-            version: 14.x
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            customCommand: 'ci --ignore-scripts'
-            customRegistry: 'useNpmrc'
-        - task: Bash@3
-          displayName: 'Generate Mono repo package json'
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Generate the package/package lock for the lerna project so we would scan it.
-              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
-              cp repo-package.json packages/package.json
-              cp repo-package-lock.json packages/package-lock.json
-
-  - job: JobE
-    steps:
-    - template: templates/build-npm-package.yml
+  - stage:
+    displayName: Run 5
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
       parameters:
-        publishOverride: ${{ parameters.publishOverride }}
-        releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-        nonScopedPackages: ${{ parameters.nonScopedPackages }}
-        buildDirectory: .
-        tagName: client
-        poolBuild: Large
-        cgSubDirectory: packages
-        checkoutSubmodules: true
-        taskBundleAnalysis: true
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-        preCG:
-        - task: UseNode@1
-          displayName: Use Node 14.x
-          inputs:
-            version: 14.x
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            customCommand: 'ci --ignore-scripts'
-            customRegistry: 'useNpmrc'
-        - task: Bash@3
-          displayName: 'Generate Mono repo package json'
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Generate the package/package lock for the lerna project so we would scan it.
-              node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
-              cp repo-package.json packages/package.json
-              cp repo-package-lock.json packages/package-lock.json
+#schedules:
+#  - cron: "0 0 * * *"
+#    displayName: Daily midnight build
+#    branches:
+#      include:
+#      - main
+#      - next
+#      - lts
+#      - release/*
 
-  - job: Final
-    dependsOn:
-    - jobA
-    - jobB
-    - jobC
-    - jobD
-    - jobE
-    steps:
-    - script: echo Hello from final job
 
 
