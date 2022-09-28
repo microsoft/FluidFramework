@@ -6,6 +6,7 @@
 import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { CompressionAlgorithms } from ".";
 
 /**
  * State machine that "unrolls" contents of compressed batches of ops after decompressing them.
@@ -26,7 +27,8 @@ export class OpDecompressor {
 
     public processMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
         // Beginning of a compressed batch
-        if (message.metadata?.batch === true && message.metadata?.compressed) {
+        if (message.metadata?.batch === true
+            && (message.metadata?.compressed || (message as any).compression === CompressionAlgorithms.lz4)) {
             assert(this.activeBatch === false, "shouldn't have multiple active batches");
 
             this.activeBatch = true;
@@ -52,7 +54,8 @@ export class OpDecompressor {
             this.processedCount = 0;
 
             return returnMessage;
-        } else if (message.metadata?.batch === undefined && message.metadata?.compressed) {
+        } else if (message.metadata?.batch === undefined &&
+            (message.metadata?.compressed || (message as any).compression === CompressionAlgorithms.lz4)) {
             assert(this.activeBatch === false, "shouldn't receive compressed message in middle of a batch");
 
             // Single compressed message
