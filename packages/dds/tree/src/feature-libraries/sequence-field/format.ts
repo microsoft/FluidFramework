@@ -37,13 +37,6 @@ export interface Tomb {
 	count: number;
 }
 
-export interface SetValue extends HasOpId {
-	/**
-	 * Can be left unset to represent the value being cleared.
-	 */
-	value?: Value;
-}
-
 export interface Modify<TNodeChange = NodeChangeType> {
 	type: "Modify";
 	tomb?: ChangesetTag;
@@ -209,7 +202,6 @@ export type NodeCount = number;
 export type GapCount = number;
 export type Skip = number;
 export type ChangesetTag = number | string;
-export type Value = number | string | boolean;
 export type ClientId = number;
 export enum Tiebreak { Left, Right }
 export enum Effects {
