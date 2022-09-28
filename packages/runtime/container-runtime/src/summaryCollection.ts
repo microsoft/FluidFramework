@@ -325,11 +325,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
                 } else {
                     this.parseContent(op);
                 }
-                if (op.type === MessageType.SummaryAck) {
-                    return this.handleSummaryAck(op as ISummaryAckMessage);
-                } else {
-                    return this.handleSummaryNack(op as ISummaryNackMessage);
-                }
+                return op.type === MessageType.SummaryAck
+                    ? this.handleSummaryAck(op as ISummaryAckMessage)
+                    : this.handleSummaryNack(op as ISummaryNackMessage);
             default: {
                 // If the difference between timestamp of current op and last summary op is greater than
                 // the maxAckWaitTime, then we need to inform summarizer to not wait and summarize

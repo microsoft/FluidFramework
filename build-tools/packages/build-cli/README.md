@@ -111,7 +111,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.4.5000 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.4.6000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -359,7 +359,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/info.ts)_
 
 ## `flub release`
 
@@ -399,7 +399,7 @@ DESCRIPTION
   released.
 ```
 
-_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/release.ts)_
+_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/release.ts)_
 
 ## `flub release report`
 
@@ -510,7 +510,7 @@ EXAMPLES
     $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.5000/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/version.ts)_
 
 ## `flub version latest`
 

@@ -133,6 +133,10 @@ export class TestClient extends Client {
         this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
     }
 
+    public obliterateRangeLocal(start: number, end: number) {
+        return this.removeRangeLocal(start, end);
+    }
+
     public getText(start?: number, end?: number): string {
         return this.textHelper.getText(this.getCurrentSeq(), this.getClientId(), "", start, end);
     }
@@ -341,7 +345,7 @@ export class TestClient extends Client {
             && segoff.offset !== undefined
             && this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
 
-        assert.equal(fastPathSegment, segoff.segment || undefined, "Unequal rebasePosition computed segments");
+        assert.equal(fastPathSegment, segoff.segment ?? undefined, "Unequal rebasePosition computed segments");
         assert.equal(fastPathResult, slowPathResult, "Unequal rebasePosition results");
         return fastPathResult;
     }

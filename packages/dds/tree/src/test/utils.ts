@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -20,6 +20,8 @@ import {
 } from "@fluidframework/test-utils";
 import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
 import { ISharedTree, SharedTreeFactory } from "../shared-tree";
+import { Delta } from "../tree";
+import { mapFieldMarks, mapMarkList, mapTreeFromCursor } from "../feature-libraries";
 
 // Testing utilities
 
@@ -173,4 +175,22 @@ export function spyOnMethod(methodClass: Function, methodName: string, spy: () =
     return () => {
         prototype[methodName] = method;
     };
+}
+
+/**
+ * Assert two MarkList are equal, handling cursors.
+ */
+export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
+    const aTree = mapMarkList(a, mapTreeFromCursor);
+    const bTree = mapMarkList(b, mapTreeFromCursor);
+    assert.deepStrictEqual(aTree, bTree);
+}
+
+/**
+ * Assert two Delta are equal, handling cursors.
+ */
+export function assertDeltaEqual(a: Delta.FieldMarks, b: Delta.FieldMarks): void {
+    const aTree = mapFieldMarks(a, mapTreeFromCursor);
+    const bTree = mapFieldMarks(b, mapTreeFromCursor);
+    assert.deepStrictEqual(aTree, bTree);
 }

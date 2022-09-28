@@ -73,6 +73,18 @@ export enum MessageType {
     Control = "control",
 }
 
+export enum SignalType {
+    /**
+     * System signal sent to indicate a new client has joined the collaboration.
+     */
+    ClientJoin = "join",
+
+    /**
+     * System signal sent to indicate a client has left the collaboration.
+     */
+    ClientLeave = "leave",
+}
+
 /**
  * Messages to track latency trace
  */
@@ -154,6 +166,12 @@ export interface IDocumentMessage {
      * Traces related to the packet.
      */
     traces?: ITrace[];
+
+    /**
+     * The compression algorithm that was used to compress contents of this op.
+     * @experimental Not ready for use
+     */
+    compression?: string;
 }
 
 /**
@@ -265,6 +283,12 @@ export interface ISequencedDocumentMessage {
      * @alpha
      */
     expHash1?: string;
+
+    /**
+     * The compression algorithm that was used to compress contents of this op.
+     * @experimental Not ready for use.
+     */
+    compression?: string;
 }
 
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {

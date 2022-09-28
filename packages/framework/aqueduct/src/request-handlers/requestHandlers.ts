@@ -68,15 +68,17 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
 
 /**
  * Default request handler for a Fluid object that returns the object itself if:
- *  1. the request url is empty
- *  2. the request url is "/"
- *  3. the request url starts with "/" and is followed by a query param, such as /?key=value
+ *
+ * 1. the request url is empty
+ *
+ * 2. the request url is "/"
+ *
+ * 3. the request url starts with "/" and is followed by a query param, such as /?key=value
+ *
  * Returns a 404 error for any other url.
  */
 export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, request: IRequest): IResponse {
-    if (request.url === "" || request.url === "/" || request.url.startsWith("/?")) {
-        return { mimeType: "fluid/object", status: 200, value: fluidObject };
-    } else {
-        return create404Response(request);
-    }
+    return request.url === "" || request.url === "/" || request.url.startsWith("/?")
+        ? { mimeType: "fluid/object", status: 200, value: fluidObject }
+        : create404Response(request);
 }
