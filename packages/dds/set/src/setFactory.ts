@@ -40,7 +40,8 @@ export class SetFactory implements IChannelFactory {
         runtime: IFluidDataStoreRuntime,
         id: string,
         services: IChannelServices,
-        attributes: IChannelAttributes): Promise<ISharedSet> {
+        attributes: IChannelAttributes,
+    ): Promise<ISharedSet> {
         const set = new SharedSet(id, runtime, attributes);
         await set.load(services);
         return set;
