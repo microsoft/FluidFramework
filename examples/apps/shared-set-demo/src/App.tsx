@@ -42,7 +42,6 @@ function App() {
         }
     }, [fluidMap]);
 
-    // business logic could be passed into the view via context
     const add = () => {
         if (fluidMap === undefined) return console.log("undefined fluidMap");
         fluidMap.add(value);
@@ -56,13 +55,18 @@ function App() {
         console.log(fluidMap.has(value));
     };
 
+    const clear = () => {
+        if (fluidMap === undefined) return console.log("undefined fluidMap");
+        fluidMap.clear();
+    };
+
     return (
         <>
             <div>
                 <input
                     type="text"
                     name="value"
-                    onChange={(event) => setValue(event.target.value)}
+                    onChange={({ target: { value } }) => setValue(value)}
                     value={value}
                 />
                 {"\n"}
@@ -71,6 +75,8 @@ function App() {
                 <button onClick={remove}> delete </button>
                 {"\n"}
                 <button onClick={has}> has </button>
+                {"\n"}
+                <button onClick={clear}> clear </button>
             </div>
             {"\n"}
         </>
