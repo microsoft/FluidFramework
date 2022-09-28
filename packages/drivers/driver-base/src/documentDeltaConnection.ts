@@ -309,12 +309,17 @@ export class DocumentDeltaConnection
         this.submitCore("submitSignal", [message]);
     }
 
+    /**
+     * Disconnect from the websocket and close the websocket too.
+     */
     protected disposeSocket(error: IAnyDriverError) {
         this.disposeCore(error);
     }
 
     /**
-     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
+     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection and close the socket.
+     * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
+     * multiplexing here, so we need to close the socket here.
      */
     public dispose() {
         this.disposeCore(createGenericNetworkError(
