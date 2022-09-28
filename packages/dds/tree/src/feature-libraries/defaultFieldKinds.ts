@@ -29,6 +29,7 @@ import {
 import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { applyModifyToTree } from "./deltaUtils";
+import { sequenceFieldChangeHandler } from "./sequence-field";
 
 /**
  * Encoder for changesets which carry no information.
@@ -373,18 +374,12 @@ export const optional: FieldKind = new FieldKind(
 export const sequence: FieldKind = new FieldKind(
     brand("Sequence"),
     Multiplicity.Sequence,
-    {
-        rebaser: replaceRebaser<JsonableTree[]>(),
-        encoder: new ValueEncoder<(JsonableTree[]) & JsonCompatibleReadOnly>(),
-        editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-        intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
-    },
-    // TODO: is order correct?
+    sequenceFieldChangeHandler,
     (types, other) =>
         (other.kind === sequence.identifier)
         && allowsTreeSchemaIdentifierSuperset(types, other.types),
     // TODO: add normalizer/importers for handling ops from other kinds.
-    new Set([value.identifier, optional.identifier]),
+    new Set([]),
 );
 
 /**
