@@ -120,7 +120,7 @@ export class SharedSet<T = any>
     /**
      * The data held by this set.
      */
-    private readonly data: Set<T> = new Set<T>();
+    private readonly set: Set<T> = new Set<T>();
 
     /**
      * The deleted data is held in this set.
@@ -158,7 +158,7 @@ export class SharedSet<T = any>
      * {@inheritDoc ISharedSet.get}
      */
     public get(): Set<T> {
-        return this.data;
+        return this.set;
     }
 
     /**
@@ -167,7 +167,7 @@ export class SharedSet<T = any>
      * @returns True if the key exists, false otherwise
      */
     public has(value: T): boolean {
-        return this.data.has(value) && !this.tombStoneSet.has(value);
+        return this.set.has(value) && !this.tombStoneSet.has(value);
     }
 
     /**
@@ -181,7 +181,7 @@ export class SharedSet<T = any>
         );
 
         // Set the value locally.
-        this.data.add(value);
+        this.set.add(value);
         this.emit("valueChanged", value);
 
         // If we are not attached, don't submit the op.
@@ -229,14 +229,14 @@ export class SharedSet<T = any>
      * {@inheritDoc ISharedSet.empty}
      */
     public empty() {
-        return this.data.size === 0;
+        return this.set.size === 0;
     }
 
     /**
      * {@inheritDoc ISharedSet.clear}
      */
     public clear() {
-        this.data.clear();
+        this.set.clear();
 
         this.emit("clear");
 
@@ -259,7 +259,7 @@ export class SharedSet<T = any>
     protected summarizeCore(
         serializer: IFluidSerializer,
     ): ISummaryTreeWithStats {
-        const content = [...this.data.entries()];
+        const content = [...this.set.entries()];
 
         return createSingleBlobSummary(
             snapshotFileName,
@@ -273,9 +273,9 @@ export class SharedSet<T = any>
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<any[]>(storage, snapshotFileName);
 
-        this.data.clear();
+        this.set.clear();
         content.forEach((element) => {
-            this.data.add(element);
+            this.set.add(element);
         });
     }
 
