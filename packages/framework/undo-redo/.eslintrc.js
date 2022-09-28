@@ -12,6 +12,9 @@ module.exports = {
     },
     "rules": {
         "@typescript-eslint/no-use-before-define": "off",
-        "no-case-declarations": "off"
+        "no-case-declarations": "off",
+
+        // This library is used in the browser, so we don't want dependencies on most node libraries.
+        "import/no-nodejs-modules": ["error", {"allow": ["events"]}],
     }
 }
