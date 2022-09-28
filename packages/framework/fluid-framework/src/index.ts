@@ -4,15 +4,15 @@
  */
 
 /**
- * The **fluid-framework** package bundles a collection of Fluid Framework client packages for easy use when paired with
- * a corresponding service client package (for example, `\@fluidframework/azure-client` or
- * `\@fluidframework/tinylicious-client`).
+ * The **fluid-framework** package bundles a collection of Fluid Framework client libraries for easy use
+ * when paired with a corresponding service client library (for example,
+ * `\@fluidframework/azure-client` or `\@fluidframework/tinylicious-client`).
  *
  * @packageDocumentation
  */
 
-export * from "./containerDefinitions";
-export * from "./containerLoader";
-export * from "./fluidStatic";
-export * from "./map";
-export * from "./sequence";
+export { AttachState } from "@fluidframework/container-definitions";
+export { ConnectionState } from "@fluidframework/container-loader";
+export * from "@fluidframework/fluid-static";
+export * from "@fluidframework/map";
+export * from "@fluidframework/sequence";

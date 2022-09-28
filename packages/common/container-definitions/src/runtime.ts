@@ -20,6 +20,7 @@ import {
     IVersion,
     IDocumentMessage,
     IQuorumClients,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
@@ -104,6 +105,14 @@ export interface IRuntime extends IDisposable {
 }
 
 /**
+ * Payload type for IContainerContext.submitBatchFn()
+ */
+export interface IBatchMessage {
+    contents: string;
+    metadata: Record<string, unknown> | undefined;
+}
+
+/**
  * The ContainerContext is a proxy standing between the Container and the Container's IRuntime.
  * This allows the Container to terminate the connection to the IRuntime.
  *
@@ -119,7 +128,11 @@ export interface IContainerContext extends IDisposable {
     readonly storage: IDocumentStorageService;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
+    /** @deprecated Please use submitBatchFn & submitSummaryFn */
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+    /** @returns clientSequenceNumber of last message in a batch */
+    readonly submitBatchFn: (batch: IBatchMessage[]) => number;
+    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

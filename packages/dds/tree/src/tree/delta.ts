@@ -5,8 +5,8 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { Brand, Opaque } from "../util";
+import { ITreeCursorSynchronous } from "./cursor";
 import { FieldKey, Value } from "./types";
-import { JsonableTree } from "./treeTextFormat";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
@@ -44,13 +44,9 @@ import { JsonableTree } from "./treeTextFormat";
  * with a minimum amount of backtracking over the contents of the tree.
  * This a boon for both code simplicity and performance.
  *
- * 2. Make it impossible to represent meaningless cases
- * (e.g., content being inserted within a deleted portion of the tree).
- * This both safeguard readers from having to handle such cases, and forces writers to critically examine their logic.
+ * 2. Make the format terse.
  *
- * 3. Make the format terse.
- *
- * 4. Make the format uniform.
+ * 3. Make the format uniform.
  *
  * These goals are reflected in the following design choices (this is very much optional reading for users of this
  * format):
@@ -68,8 +64,7 @@ import { JsonableTree } from "./treeTextFormat";
  * The drawback of this design choice is that it relies heavily on polymorphism:
  * for each mark encountered a reader has to check which kind of mark it is.
  * This is a source of code and time complexity in the reader code and adds a memory overhead to the format since each
- * mark has to carry a tag field to announce what kind of mark it is. Some of the complexity is reduced by design
- * choice #3.
+ * mark has to carry a tag field to announce what kind of mark it is.
  *
  * 2. `MoveIn` marks in inserted portions of the document are inlined in their corresponding `ProtoField`.
  *
@@ -82,16 +77,8 @@ import { JsonableTree } from "./treeTextFormat";
  * - It would lead the consumer of the format first build the inserted subtree, then traverse it again from its root to
  * apply the relevant `MoveIn` marks.
  *
- * 3. Modifications to subtrees that are also being deleted or moved are represented within the marks that describe such
- * deletions or movements.
- * This makes it possible specialize the type of the modifications in order to constrain the kinds of marks that can
- * appear below them.
  *
- * If modify marks were not specialized then it would be possible to represent meaningless cases and consumers of this
- * format would have to either provide implementations for them or detect when they they occur.
- * By specializing the types we move this "detection" to the Typescript compiler.
- *
- * 4. Modifications of deleted and moved-out nodes are represented using modify marks within `Delete` and `MoveOut`
+ * 3. Modifications of deleted and moved-out nodes are represented using modify marks within `Delete` and `MoveOut`
  * marks.
  * This is in opposition to a structure where the fact that a modified node is being deleted or moved-out would
  * be represented a `Modify` mark like so:
@@ -122,7 +109,7 @@ import { JsonableTree } from "./treeTextFormat";
  * - It makes the format more uniform since modifications to moved-in subtrees must be represented with modifications
  * marks within a `MoveIn` mark.
  *
- * 5. `MoveIn` marks are represented in the location where the content being moved resides in the input context that
+ * 4. `MoveIn` marks are represented in the location where the content being moved resides in the input context that
  * the delta is applied to, and `MoveOut` marks are represented in the location where the content being moved should
  * reside after the delta is applied.
  *
@@ -130,7 +117,7 @@ import { JsonableTree } from "./treeTextFormat";
  * transaction that moves content from "foo" to "bar" then moves that same content from "bar" to "baz").
  * This makes the format less terse and harder to reason about.
  *
- * 6. MoveIn marks are not inlined within `ProtoField`s.
+ * 5. MoveIn marks are not inlined within `ProtoField`s.
  *
  * Inlining them would force the consuming code to detect `MoveIn` marks within the `ProtoField` and handle them
  * within the context of the insert.
@@ -142,40 +129,35 @@ import { JsonableTree } from "./treeTextFormat";
 /**
  * Represents the change made to a document.
  */
-export type Root = FieldMarks<OuterMark>;
-export const empty: Root = new Map();
+export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
+export const empty: Root<any> = new Map();
+
+/**
+ * The default representation for inserted content.
+ */
+export type ProtoNode = ITreeCursorSynchronous;
 
 /**
  * Represents a change being made to a part of the tree.
  */
-export type Mark = OuterMark | InnerModify;
-
-/**
- * A mark that represents changes to nodes that are otherwise unaffected by changes to their ancestors.
- */
-export type OuterMark =
+export type Mark<TTree = ProtoNode> =
     | Skip
-    | Modify
+    | Modify<TTree>
     | Delete
     | MoveOut
     | MoveIn
-    | Insert
-    | ModifyAndDelete
-    | ModifyAndMoveOut
-    | MoveInAndModify
-    | InsertAndModify;
-
-/**
- * A mark that represents changes to nodes that also unaffected by changes to their ancestors.
- */
-export type InnerModify = ModifyDeleted | ModifyInserted | ModifyMovedIn | ModifyMovedOut;
+    | Insert<TTree>
+    | ModifyAndDelete<TTree>
+    | ModifyAndMoveOut<TTree>
+    | MoveInAndModify<TTree>
+    | InsertAndModify<TTree>;
 
 /**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
  * applying any of the changes, is not represented explicitly.
  * It corresponds to the sum of `inputLength(mark)` for all previous marks.
  */
-export type MarkList<TMark = Mark> = TMark[];
+export type MarkList<TTree = ProtoNode> = Mark<TTree>[];
 
 /**
  * Represents a range of contiguous nodes that is unaffected by changes.
@@ -184,46 +166,12 @@ export type MarkList<TMark = Mark> = TMark[];
 export type Skip = number;
 
 /**
- * Describes modifications made to a subtree that is otherwise untouched (i.e., not being inserted, deleted, or
- * moved).
+ * Describes modifications made to a subtree.
  */
-export interface Modify {
+export interface Modify<TTree = ProtoNode> {
     type: typeof MarkType.Modify;
     setValue?: Value;
-    fields?: FieldMarks<OuterMark>;
-}
-
-/**
- * Describes modifications made to a subtree that is being deleted.
- */
-export interface ModifyDeleted {
-    type: typeof MarkType.Modify;
-    fields: FieldMarks<Skip | ModifyDeleted | ModifyAndMoveOut | MoveOut>;
-}
-
-/**
- * Describes modifications made to a subtree that is being moved out.
- */
-export interface ModifyMovedOut {
-    type: typeof MarkType.Modify;
-    setValue?: Value;
-    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | ModifyAndDelete | ModifyAndMoveOut | MoveOut>;
-}
-
-/**
- * Describes modifications made to a subtree that is being moved in.
- */
-export interface ModifyMovedIn {
-    type: typeof MarkType.Modify;
-    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | MoveInAndModify | Insert | InsertAndModify>;
-}
-
-/**
- * Describes modifications made to a subtree that is being inserted.
- */
-export interface ModifyInserted {
-    type: typeof MarkType.Modify;
-    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+    fields?: FieldMarks<TTree>;
 }
 
 /**
@@ -238,9 +186,9 @@ export interface Delete {
  * Describes the deletion of a single node.
  * Includes descriptions of the modifications the node.
  */
-export interface ModifyAndDelete {
+export interface ModifyAndDelete<TTree = ProtoNode> {
     type: typeof MarkType.ModifyAndDelete;
-    fields: FieldMarks<Skip | ModifyDeleted | MoveOut>;
+    fields: FieldMarks<TTree>;
 }
 
 /**
@@ -259,14 +207,14 @@ export interface MoveOut {
  * Describes the moving out of a single node.
  * Includes descriptions of the modifications made to the node.
  */
-export interface ModifyAndMoveOut {
+export interface ModifyAndMoveOut<TTree = ProtoNode> {
     type: typeof MarkType.ModifyAndMoveOut;
     /**
      * The delta should carry exactly one `MoveIn` mark with the same move ID.
      */
     moveId: MoveId;
     setValue?: Value;
-    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | MoveOut>;
+    fields?: FieldMarks<TTree>;
 }
 
 /**
@@ -284,40 +232,33 @@ export interface MoveIn {
  * Describes the moving in of a single node.
  * Includes descriptions of the modifications made to the node.
  */
-export interface MoveInAndModify {
+export interface MoveInAndModify<TTree = ProtoNode> {
     type: typeof MarkType.MoveInAndModify;
     /**
      * The delta should carry exactly one `MoveOut` mark with the same move ID.
      */
     moveId: MoveId;
-    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | Insert>;
+    fields: FieldMarks<TTree>;
 }
 
 /**
  * Describes the insertion of a contiguous range of node.
  */
-export interface Insert {
+export interface Insert<TTree = ProtoNode> {
     type: typeof MarkType.Insert;
-    content: ProtoNode[];
+    // TODO: use a single cursor with multiple nodes instead of array of cursors.
+    content: TTree[];
 }
 
 /**
  * Describes the insertion of a single node.
  * Includes descriptions of the modifications made to the nodes.
  */
-export interface InsertAndModify {
+export interface InsertAndModify<TTree = ProtoNode> {
     type: typeof MarkType.InsertAndModify;
-    content: ProtoNode;
-    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+    content: TTree;
+    fields: FieldMarks<TTree>;
 }
-
-/**
- * The contents of a subtree to be created
- * @remarks
- * Delta does not rely on the fact that JsonableTree is serializable.
- * We may use a non-serializable format in the future, but this is the most convenient for now.
- */
-export type ProtoNode = JsonableTree;
 
 /**
  * Uniquely identifies a MoveOut/MoveIn pair within a delta.
@@ -327,7 +268,7 @@ export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 export type Offset = number;
 
 export type FieldMap<T> = Map<FieldKey, T>;
-export type FieldMarks<TMark> = FieldMap<MarkList<TMark>>;
+export type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 export const MarkType = {
     Modify: 0,
@@ -344,8 +285,8 @@ export const MarkType = {
 /**
  * Returns the number of nodes in the input tree that the mark affects or skips.
  */
-export function inputLength(mark: Mark): number {
-    if (typeof mark === "number") {
+export function inputLength(mark: Mark<unknown>): number {
+    if (isSkipMark(mark)) {
         return mark;
     }
     // Inline into `switch(mark.type)` once we upgrade to TS 4.7
@@ -365,4 +306,8 @@ export function inputLength(mark: Mark): number {
             return 0;
         default: unreachableCase(type);
     }
+}
+
+export function isSkipMark(mark: Mark<unknown>): mark is Skip {
+    return typeof mark === "number";
 }

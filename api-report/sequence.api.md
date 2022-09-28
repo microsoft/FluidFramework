@@ -179,8 +179,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     nextInterval(pos: number): TInterval;
     // (undocumented)
     previousInterval(pos: number): TInterval;
-    // @internal (undocumented)
-    rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
+    // @internal
+    rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval | undefined;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
     // @internal (undocumented)
@@ -324,7 +324,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     // (undocumented)
     addInterval(start: number, end: number, intervalType: IntervalType, props?: PropertySet, op?: ISequencedDocumentMessage): TInterval;
     // (undocumented)
-    changeInterval(interval: TInterval, start: number, end: number, op?: ISequencedDocumentMessage): TInterval;
+    changeInterval(interval: TInterval, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): TInterval;
     // (undocumented)
     createInterval(start: number, end: number, intervalType: IntervalType, op?: ISequencedDocumentMessage): TInterval;
     // (undocumented)
@@ -483,7 +483,7 @@ export class SequenceInterval implements ISerializableInterval {
     // (undocumented)
     intervalType: IntervalType;
     // (undocumented)
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): SequenceInterval;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)

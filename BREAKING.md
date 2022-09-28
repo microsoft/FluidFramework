@@ -23,6 +23,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
 - [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
 - [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
+- [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
+- [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
+-
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
@@ -36,12 +39,20 @@ This field has been deprecated and will be removed in a future breaking change. 
         fileName: string,
 -       createShareLinkType?: ShareLinkTypes,
 +       createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
-    ): 
+    ):
 ```
 
 
 ### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
+### Add assertion that prevents sending op while processing another op
+`preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
+
+### Add fluidInvalidSchema errorType to DriverErrorType enum
+Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
+was mistook as a Fluid file, and is unable to be opened. The innerMostErrorCode will also be "fluidInvalidSchema".
+This is not breaking change yet. But if clients do not add handling for this error, their existing version of applications may start receiving this error in the future, and may not handle it correctly.
+
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
@@ -112,7 +123,7 @@ The corresponding method on `IMergeTreeTexHelper` will also be removed.
 - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
 - [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
-- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
+- [REVERTED: ~~Remove IFluidDataStoreChannel.bindToContext and related types~~](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
 - [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
 - [Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
 
@@ -144,8 +155,10 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 `ISummaryAuthor` and`ISummaryCommitter` have been removed in this release. See [#10456](https://github.com/microsoft/FluidFramework/issues/10456) for details.
 
 ### Remove IFluidDataStoreChannel.bindToContext and related types
-`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
-See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
+**THIS BREAKING CHANGE IS REVERTED AS OF 2.0.0-internal.1.1.3**
+
+~~`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
+See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.~~
 
 ### Remove `aliasing` return value from `AliasResult`
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.

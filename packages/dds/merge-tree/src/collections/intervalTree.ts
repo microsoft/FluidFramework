@@ -32,7 +32,13 @@ export interface IInterval {
     compare(b: IInterval): number;
     compareStart(b: IInterval): number;
     compareEnd(b: IInterval): number;
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
+    modify(
+        label: string,
+        start: number,
+        end: number,
+        op?: ISequencedDocumentMessage,
+        localSeq?: number
+    ): IInterval | undefined;
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
 }

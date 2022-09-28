@@ -61,6 +61,21 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     }
 }
 
+/**
+ * FluidInvalidSchema error class.
+ */
+ export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    readonly errorType = DriverErrorType.fluidInvalidSchema;
+    readonly canRetry = false;
+
+    constructor(
+        message: string,
+        props: DriverErrorTelemetryProps,
+    ) {
+        super(message, props);
+    }
+}
+
 // Todo GH #6214: Remove after next drive def bump. This is necessary as there is no
 // compatible way to augment an enum, as it can't be optional. So for now
 // we need to duplicate the value here. We likely need to rethink our
@@ -102,7 +117,8 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
         readonly redirectUrl: IResolvedUrl,
         props: DriverErrorTelemetryProps,
     ) {
-        super(message, props);
+        // do not log redirectURL
+        super(message, props, new Set(["redirectUrl"]));
     }
 }
 

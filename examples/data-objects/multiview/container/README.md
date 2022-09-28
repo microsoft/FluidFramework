@@ -3,8 +3,8 @@
 The container package is an example of how a container author might pick and choose multiple views and models and combine them in various ways.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
-<!-- The getting started instructions are automatically generated.
-To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
+<!-- This section is automatically generated.
+To update it, edit docs/md-magic.config.js  then run 'npm run build:md-magic' in the docs folder. -->
 
 ## Getting Started
 

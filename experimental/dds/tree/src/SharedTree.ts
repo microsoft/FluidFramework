@@ -1070,14 +1070,19 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Equality means that the histories as captured by the EditLogs are equivalent.
 	 *
 	 * Equality does not include:
-	 *   - if an edit is open
-	 *   - the shared tree's id
-	 *   - local vs sequenced status of edits
-	 *   - registered event listeners
-	 *   - state of caches
+	 *
+	 * - if an edit is open
+	 *
+	 * - the shared tree's id
+	 *
+	 * - local vs sequenced status of edits
+	 *
+	 * - registered event listeners
+	 *
+	 * - state of caches
 	 *
 	 * @internal
-	 * */
+	 */
 	public equals(sharedTree: SharedTree): boolean {
 		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
 			return false;

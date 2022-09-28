@@ -20,6 +20,11 @@ export interface IMousePosition {
     y: number;
 }
 
+export interface IMouseSignalPayload {
+    userId: string;
+    pos: IMousePosition;
+}
+
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     private static readonly mouseSignalType = "positionChanged";
 
@@ -32,7 +37,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
      */
     private readonly posMap = new Map<string, Map<string, IMousePosition>>();
 
-    private readonly onMouseSignalFn = (clientId: string, payload: any) => {
+    private readonly onMouseSignalFn = (clientId: string, payload: IMouseSignalPayload) => {
         const userId: string = payload.userId;
         const position: IMousePosition = payload.pos;
 
@@ -45,7 +50,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
         this.emit("mousePositionChanged");
     };
 
-    public constructor(
+    constructor(
         public readonly audience: IServiceAudience<IMember>,
         private readonly signaler: Signaler,
     ) {
@@ -65,7 +70,9 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
         this.signaler.on("error", (error) => {
             this.emit("error", error);
         });
-        this.signaler.onSignal(MouseTracker.mouseSignalType, (clientId, local, payload) => {
+        this.signaler.onSignal(MouseTracker.mouseSignalType, (clientId: string,
+            local: boolean,
+            payload: IMouseSignalPayload) => {
             this.onMouseSignalFn(clientId, payload);
         });
         window.addEventListener("mousemove", (e) => {

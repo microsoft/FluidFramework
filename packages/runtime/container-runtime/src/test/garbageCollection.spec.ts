@@ -43,9 +43,13 @@ import {
     runSweepKey,
     defaultInactiveTimeoutMs,
     gcTestModeKey,
+    disableSweepLogKey,
 } from "../garbageCollection";
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
+
+/** @see - sweepReadyUsageDetectionSetting */
+const SweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
 
 type GcWithPrivates = IGarbageCollector & {
     readonly gcEnabled: boolean;
@@ -86,6 +90,7 @@ describe("Garbage Collection Tests", () => {
         createParams: Partial<IGarbageCollectorCreateParams> = {},
         gcBlobsMap: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase> = new Map(),
         closeFn: (error?: ICriticalContainerError) => void = () => {},
+        isSummarizerClient: boolean = true,
     ) {
         const getNodeType = (nodePath: string) => {
             if (nodePath.split("/").length !== 2) {
@@ -113,10 +118,12 @@ describe("Garbage Collection Tests", () => {
             baseLogger: mockLogger,
             existing: createParams.metadata !== undefined /* existing */,
             metadata: createParams.metadata,
-            isSummarizerClient: true /* summarizerClient */,
+            isSummarizerClient,
             readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
             getNodePackagePath: async (nodeId: string) => testPkgPath,
             getLastSummaryTimestampMs: () => Date.now(),
+            activeConnection: () => true,
+            getContainerDiagnosticId: () => "someDocId",
         });
     }
     let gc: GcWithPrivates | undefined;
@@ -468,6 +475,10 @@ describe("Garbage Collection Tests", () => {
 
         beforeEach(async () => {
             // Set up the reference graph such that all nodes are referenced. Add in a couple of cycles in the graph.
+            // Here's a diagram showing the references:
+            // 0 - 1 - 2 - 3
+            // |  /       /
+            // |-/-------/
             defaultGCData.gcNodes["/"] = [nodes[0]];
             defaultGCData.gcNodes[nodes[0]] = [nodes[1]];
             defaultGCData.gcNodes[nodes[1]] = [nodes[0], nodes[2]];
@@ -475,34 +486,34 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodes[3]] = [nodes[0]];
         });
 
-        const tests = (
+        // Returns a dummy snapshot tree to be built upon.
+        const getDummySnapshotTree = (): ISnapshotTree => {
+            return {
+                blobs: {},
+                trees: {},
+            };
+        };
+
+        const summarizerContainerTests = (
             timeout: number,
             revivedEventName: string,
             changedEventName: string,
             loadedEventName: string,
             snapshotCacheExpiryMs?: number,
-            deleteEventName?: string,
+            expectDeleteLogs?: boolean,
         ) => {
+            const deleteEventName = "GarbageCollector:GCObjectDeleted";
             // Validates that no unexpected event has been fired.
             function validateNoUnexpectedEvents() {
-                assert(
-                    !mockLogger.matchAnyEvent([
+                mockLogger.assertMatchNone([
                         { eventName: revivedEventName },
                         { eventName: changedEventName },
                         { eventName: loadedEventName },
                         { eventName: deleteEventName },
-                    ]),
+                    ],
                     "unexpected events logged",
                 );
             }
-
-            // Returns a dummy snapshot tree to be built upon.
-            const getDummySnapshotTree = (): ISnapshotTree => {
-                return {
-                    blobs: {},
-                    trees: {},
-                };
-            };
 
             const createGCOverride = (
                 baseSnapshot?: ISnapshotTree,
@@ -530,7 +541,7 @@ describe("Garbage Collection Tests", () => {
                 validateNoUnexpectedEvents();
             });
 
-            it("generates events when nodes that are used after time out", async () => {
+            it("generates events for nodes that are used after time out", async () => {
                 const garbageCollector = createGCOverride();
 
                 // Remove node 2's reference from node 1. This should make node 2 and node 3 unreferenced.
@@ -547,11 +558,14 @@ describe("Garbage Collection Tests", () => {
                 clock.tick(1);
                 await updateAllNodesAndRunGC(garbageCollector);
                 const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
-                if (deleteEventName) {
+
+                if (expectDeleteLogs) {
                     expectedEvents.push(
                         { eventName: deleteEventName, timeout, id: nodes[2] },
                         { eventName: deleteEventName, timeout, id: nodes[3] },
                     );
+                } else {
+                    assert(!mockLogger.events.some((event) => event.eventName === deleteEventName), "Should not have any delete events logged");
                 }
                 expectedEvents.push(
                     { eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
@@ -617,8 +631,10 @@ describe("Garbage Collection Tests", () => {
                 clock.tick(1);
                 await updateAllNodesAndRunGC(garbageCollector);
                 const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
-                if (deleteEventName) {
+                if (expectDeleteLogs) {
                     expectedEvents.push({ eventName: deleteEventName, timeout, id: nodes[3] });
+                } else {
+                    assert(!mockLogger.events.some((event) => event.eventName === deleteEventName), "Should not have any delete events logged");
                 }
                 expectedEvents.push(
                     { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
@@ -662,17 +678,19 @@ describe("Garbage Collection Tests", () => {
                 const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
                 const garbageCollector = createGCOverride(baseSnapshot, gcBlobMap);
 
-                // Remove node 3's reference from node 2 so that it is still unreferenced. The GC details from the base
-                // summary is not loaded until the first time GC is run, so run GC.
+                // Remove node 3's reference from node 2 so that it is still unreferenced.
                 defaultGCData.gcNodes[nodes[2]] = [];
 
+                // Run GC to trigger loading the GC details from the base summary. Will also generate Delete logs
                 await garbageCollector.collectGarbage({});
                 // Validate that the sweep ready event is logged when GC runs after load.
-                if (deleteEventName) {
+                if (expectDeleteLogs) {
                     mockLogger.assertMatch(
                         [{ eventName: deleteEventName, timeout, id: nodes[3] }],
                         "sweep ready event not generated as expected",
                     );
+                } else {
+                    mockLogger.assertMatchNone([{ eventName: deleteEventName }], "Should not have any delete events logged");
                 }
 
                 // Validate that all events are logged as expected.
@@ -730,11 +748,13 @@ describe("Garbage Collection Tests", () => {
                 await garbageCollector.collectGarbage({});
 
                 // Validate that the sweep ready event is logged when GC runs after load.
-                if (deleteEventName) {
+                if (expectDeleteLogs) {
                     mockLogger.assertMatch(
                         [{ eventName: deleteEventName, timeout, id: nodes[3] }],
                         "sweep ready event not generated as expected",
                     );
+                } else {
+                    mockLogger.assertMatchNone([{ eventName: deleteEventName }], "Should not have any delete events logged");
                 }
 
                 // Validate that all events are logged as expected.
@@ -802,7 +822,7 @@ describe("Garbage Collection Tests", () => {
 
                 await garbageCollector.collectGarbage({});
                  // Validate that the sweep ready event is logged when GC runs after load.
-                 if (deleteEventName) {
+                 if (expectDeleteLogs) {
                     mockLogger.assertMatch(
                         [
                             { eventName: deleteEventName, timeout, id: nodes[1] },
@@ -811,6 +831,8 @@ describe("Garbage Collection Tests", () => {
                         ],
                         "sweep ready event not generated as expected",
                     );
+                } else {
+                    mockLogger.assertMatchNone([{ eventName: deleteEventName }], "Should not have any delete events logged");
                 }
 
                 // Validate that all events are logged as expected.
@@ -829,14 +851,14 @@ describe("Garbage Collection Tests", () => {
             });
         };
 
-        describe("Inactive events", () => {
+        describe("Inactive events (summarizer container)", () => {
             const inactiveTimeoutMs = 500;
 
             beforeEach(() => {
                 injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = inactiveTimeoutMs;
             });
 
-            tests(
+            summarizerContainerTests(
                 inactiveTimeoutMs,
                 "GarbageCollector:InactiveObject_Revived",
                 "GarbageCollector:InactiveObject_Changed",
@@ -844,22 +866,145 @@ describe("Garbage Collection Tests", () => {
             );
         });
 
-        describe("Sweep ready events", () => {
+        describe("SweepReady events (summarizer container)", () => {
             const snapshotCacheExpiryMs = 500;
             const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
 
             beforeEach(() => {
-                injectedSettings[runSessionExpiryKey] = "true";
+                injectedSettings[runSessionExpiryKey] = true;
             });
 
-            tests(
+            summarizerContainerTests(
                 sweepTimeoutMs,
                 "GarbageCollector:SweepReadyObject_Revived",
                 "GarbageCollector:SweepReadyObject_Changed",
                 "GarbageCollector:SweepReadyObject_Loaded",
                 snapshotCacheExpiryMs,
-                "GarbageCollector:GCObjectDeleted",
+                true, // expectDeleteLogs
             );
+        });
+
+        describe("SweepReady events - Delete log disabled (summarizer container)", () => {
+            const snapshotCacheExpiryMs = 500;
+            const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
+
+            beforeEach(() => {
+                injectedSettings[runSessionExpiryKey] = true;
+                injectedSettings[disableSweepLogKey] = true;
+            });
+
+            summarizerContainerTests(
+                sweepTimeoutMs,
+                "GarbageCollector:SweepReadyObject_Revived",
+                "GarbageCollector:SweepReadyObject_Changed",
+                "GarbageCollector:SweepReadyObject_Loaded",
+                snapshotCacheExpiryMs,
+                false, // expectDeleteLogs
+            );
+        });
+
+        describe("Interactive Client Behavior", () => {
+            function updateAllNodes(garbageCollector) {
+                nodes.forEach((nodeId) => {
+                    garbageCollector.nodeUpdated(nodeId, "Changed", Date.now(), testPkgPath);
+                    garbageCollector.nodeUpdated(nodeId, "Loaded", Date.now(), testPkgPath);
+                });
+            }
+
+            async function interactiveClientTestCode(
+                timeout: number,
+                loadedEventName: string,
+                sweepReadyUsageErrorExpected: boolean,
+                snapshotCacheExpiryMs?: number,
+            ) {
+                let lastCloseErrorType: string = "N/A";
+
+                // Create GC state where node 3's unreferenced time was > timeout ms ago.
+                // This is important since we shouldn't run GC on the interactive container,
+                // but rather load from a snapshot in which SweepReady state is already reached.
+
+                // Create a snapshot tree to be used as the GC snapshot tree.
+                const gcSnapshotTree = getDummySnapshotTree();
+                const gcBlobId = "root";
+                // Add a GC blob with key that start with `gcBlobPrefix` to the GC snapshot tree. The blob Id for this
+                // is generated by server in real scenarios but we use a static id here for testing.
+                gcSnapshotTree.blobs[`${gcBlobPrefix}_${gcBlobId}`] = gcBlobId;
+
+                // Create a base snapshot that contains the GC snapshot tree.
+                const baseSnapshot = getDummySnapshotTree();
+                baseSnapshot.trees[gcTreeKey] = gcSnapshotTree;
+
+                // Create GC state with node 3 expired. This will be returned when the garbage collector asks
+                // for the GC blob with `gcBlobId`.
+                const gcState: IGarbageCollectionState = { gcNodes: {} };
+                const unrefTime = Date.now() - (timeout + 100);
+                const node3Data: IGarbageCollectionNodeData = {
+                    outboundRoutes: [],
+                    unreferencedTimestampMs: unrefTime,
+                };
+                gcState.gcNodes[nodes[3]] = node3Data;
+
+                const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
+                const garbageCollector = createGarbageCollector(
+                    { baseSnapshot, snapshotCacheExpiryMs },
+                    gcBlobMap,
+                    (error) => { lastCloseErrorType = error?.errorType ?? "NONE"; },
+                    false /* isSummarizerClient */,
+                );
+
+                // Trigger loading GC data from base snapshot - but don't call GC since that's not what happens in real flow
+                await (garbageCollector as any).initializeBaseStateP;
+
+                // Update nodes and validate that all events for node 3 are logged.
+                updateAllNodes(garbageCollector);
+                assert(!mockLogger.events.some((event) => event.eventName !== loadedEventName && event.unrefTime === unrefTime), "shouldn't see any unreference events besides Loaded");
+                mockLogger.assertMatch([{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg, unrefTime }], "all events not generated as expected");
+
+                const expectedErrorType = sweepReadyUsageErrorExpected ? "unreferencedObjectUsedAfterGarbageCollected" : "N/A";
+                assert.equal(lastCloseErrorType, expectedErrorType, "Incorrect lastCloseReason after using unreferenced nodes");
+            }
+
+            beforeEach(() => {
+                injectedSettings[runSessionExpiryKey] = true;
+            });
+
+            it("Inactive object used - generates events but does not close container (SweepReadyUsageDetection enabled)", async () => {
+                const inactiveTimeoutMs = 400;
+                injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = inactiveTimeoutMs;
+                injectedSettings[SweepReadyUsageDetectionKey] = "interactiveClient";
+
+                await interactiveClientTestCode(
+                    inactiveTimeoutMs,
+                    "GarbageCollector:InactiveObject_Loaded",
+                    false,
+                );
+            });
+
+            it("SweepReady object used - generates events and closes container (SweepReadyUsageDetection enabled)", async () => {
+                const snapshotCacheExpiryMs = 500;
+                const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
+                injectedSettings[SweepReadyUsageDetectionKey] = "interactiveClient";
+
+                await interactiveClientTestCode(
+                    sweepTimeoutMs,
+                    "GarbageCollector:SweepReadyObject_Loaded",
+                    true,
+                    snapshotCacheExpiryMs,
+                );
+            });
+
+            it("SweepReady object used - generates events but does not close container (SweepReadyUsageDetection disabled)", async () => {
+                const snapshotCacheExpiryMs = 500;
+                const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
+                injectedSettings[SweepReadyUsageDetectionKey] = "something else";
+
+                await interactiveClientTestCode(
+                    sweepTimeoutMs,
+                    "GarbageCollector:SweepReadyObject_Loaded",
+                    false,
+                    snapshotCacheExpiryMs,
+                );
+            });
         });
 
         it("generates both inactive and sweep ready events when nodes are used after time out", async () => {
