@@ -27,22 +27,18 @@ import { ISharedSet, ISharedSetEvents } from "./interfaces";
 /**
  * Description of a set delta operation
  */
-type ISetOperation = ISetSetOperation | IDeleteSetOperation;
-// type isDeleted = boolean;
-
-interface ISetSetOperation {
-    type: "setSet";
+type ISetOperation = IAddOperation | IDeleteOperation;
+interface IAddOperation {
+    type: "add";
     value: ISetValue;
 }
 
-interface IDeleteSetOperation {
-    type: "deleteSet";
+interface IDeleteOperation {
+    type: "delete";
+    value: ISetValue;
 }
-
-interface ISetValue {
-    // The actual value contained in the set which needs to be wrapped to handle undefined
-    value: any;
-}
+// The actual value contained in the set which needs to be wrapped to handle undefined
+type ISetValue = any;
 
 const snapshotFileName = "header";
 
@@ -118,12 +114,12 @@ export class SharedSet<T = any>
     /**
      * The data held by this set.
      */
-    private data: Set<T> = new Set<T>();
+    private readonly data: Set<T> = new Set<T>();
 
     /**
      * The tombstone held by this set.
      */
-    private readonly tombstoneSet: Set<T> = new Set<T>();
+    private readonly tombStoneSet: Set<T> = new Set<T>();
 
     /**
      * This is used to assign a unique id to outgoing messages. It is used to track messages until
@@ -165,7 +161,7 @@ export class SharedSet<T = any>
      * @returns True if the key exists, false otherwise
      */
     public has(value: T): boolean {
-        return this.data.has(value) && !this.tombstoneSet.has(value);
+        return this.data.has(value) && !this.tombStoneSet.has(value);
     }
 
     /**
@@ -173,9 +169,7 @@ export class SharedSet<T = any>
      */
     public add(value: T) {
         // Serialize the value if required.
-        const operationValue: ISetValue = {
-            value: this.serializer.encode(value, this.handle),
-        };
+        const operationValue: ISetValue = this.serializer.encode(value, this.handle);
 
         // Set the value locally.
         this.data.add(value);
@@ -187,8 +181,8 @@ export class SharedSet<T = any>
             return;
         }
 
-        const op: ISetSetOperation = {
-            type: "setSet",
+        const op: IAddOperation = {
+            type: "add",
             value: operationValue,
         };
         this.submitLocalMessage(op, ++this.messageId);
@@ -198,20 +192,25 @@ export class SharedSet<T = any>
      * {@inheritDoc ISharedSet.delete}
      */
     public delete(value: T) {
-        // Delete the value locally.
+        // Delete the value locally. which means adding it to the tombStoneSet
         if (this.has(value)) {
-            this.tombstoneSet.add(value);
+            this.tombStoneSet.add(value);
         }
+
+        // Serialize the value if required.
+        const operationValue: ISetValue = this.serializer.encode(value, this.handle);
+
         this.emit("delete");
-        console.log("tombstoneSet", this.tombstoneSet);
+        console.log("tombStoneSet", this.tombStoneSet);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
             return;
         }
 
-        const op: IDeleteSetOperation = {
-            type: "deleteSet",
+        const op: IDeleteOperation = {
+            type: "delete",
+            value: operationValue,
         };
         this.submitLocalMessage(op, ++this.messageId);
     }
@@ -224,6 +223,13 @@ export class SharedSet<T = any>
     }
 
     /**
+     * {@inheritDoc ISharedSet.clear}
+     */
+    public clear() {
+        return this.data.clear();
+    }
+
+    /**
      * Create a summary for the set
      *
      * @returns the summary of the current state of the set
@@ -231,7 +237,8 @@ export class SharedSet<T = any>
     protected summarizeCore(
         serializer: IFluidSerializer,
     ): ISummaryTreeWithStats {
-        const content: ISetValue = { value: this.data };
+        const content = Array.from(this.data.entries());
+
         return createSingleBlobSummary(
             snapshotFileName,
             serializer.stringify(content, this.handle),
@@ -242,19 +249,12 @@ export class SharedSet<T = any>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<ISetValue>(
-            storage,
-            snapshotFileName,
-        );
+        const content = await readAndParse<any[]>(storage, snapshotFileName);
 
-        this.data = this.decode(content);
-    }
-
-    /**
-     * Initialize a local instance of set
-     */
-    protected initializeLocalCore() {
-        this.data = new Set();
+        this.data.clear();
+        content.forEach((element) => {
+            this.data.add(element);
+        });
     }
 
     /**
@@ -268,12 +268,12 @@ export class SharedSet<T = any>
      */
     private applyInnerOp(content: ISetOperation) {
         switch (content.type) {
-            case "setSet":
-                // this.setCore(this.decode(content.value));
+            case "add":
+                this.add(this.decode(content.value));
                 break;
 
-            case "deleteSet":
-                // this.deleteCore();
+            case "delete":
+                this.delete(this.decode(content.value));
                 break;
 
             default:
@@ -316,22 +316,7 @@ export class SharedSet<T = any>
         }
     }
 
-    // private setCore(key: string, isDeleted: boolean = false) {
-    //     // this.data.add();
-    //     this.data[key] = isDeleted;
-    //     this.emit("valueChanged", key);
-    // }
-
-    // private deleteCore(value: T) {
-    //     this.data = new Set();
-    //     // if (this.has(value)) {
-    //     //     this.tombstoneSet.add(value);
-    //     // }
-    //     this.emit("delete");
-    // }
-
-    private decode(setValue: ISetValue) {
-        const value = setValue.value;
+    private decode(value: ISetValue) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.serializer.decode(value);
     }

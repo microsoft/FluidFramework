@@ -6,7 +6,7 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export interface ISharedSetEvents<T> extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (value: Set<T>) => void);
+    (event: "valueChanged", listener: (value: T) => void);
     (event: "delete", listener: () => void);
 }
 
@@ -30,6 +30,13 @@ export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> 
     add(value: T): void;
 
     /**
+     * Check if a value exists in the set.
+     * @param value - The value to check
+     * @returns True if the value exists, false otherwise
+     */
+    has(value: T): boolean;
+
+    /**
      * Checks whether set is empty or not.
      *
      * @returns - `true` if the value of set is `undefined`, `false` otherwise
@@ -38,6 +45,7 @@ export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> 
 
     /**
      * Delete the value from the set.
+     * @param value - The value to be deleted
      */
     delete(value: T): void;
 }

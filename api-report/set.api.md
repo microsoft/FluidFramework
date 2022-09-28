@@ -21,12 +21,13 @@ export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> 
     delete(value: T): void;
     empty(): boolean;
     get(): Set<T>;
+    has(value: T): boolean;
 }
 
 // @public (undocumented)
 export interface ISharedSetEvents<T> extends ISharedObjectEvents {
     // (undocumented)
-    (event: "valueChanged", listener: (value: Set<T>) => void): any;
+    (event: "valueChanged", listener: (value: T) => void): any;
     // (undocumented)
     (event: "delete", listener: () => void): any;
 }
@@ -37,13 +38,16 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>> implem
     add(value: T): void;
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "clear"
+    //
+    // (undocumented)
+    clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedSet<any>;
     delete(value: T): void;
     empty(): boolean;
     get(): Set<T>;
     static getFactory(): IChannelFactory;
     has(value: T): boolean;
-    protected initializeLocalCore(): void;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
