@@ -433,11 +433,9 @@ export class LocalReferenceCollection {
                 assertLocalReferences(lref);
                 if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                     lref.callbacks?.beforeSlide?.(lref);
-                    if (precedingRef === undefined) {
-                        precedingRef = beforeRefs.unshift(lref)?.first;
-                    } else {
-                        precedingRef = beforeRefs.insertAfter(precedingRef, lref)?.first;
-                    }
+                    precedingRef = precedingRef === undefined
+                        ? beforeRefs.unshift(lref)?.first
+                        : beforeRefs.insertAfter(precedingRef, lref)?.first;
                     lref.link(this.segment, 0, precedingRef);
                     if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount++;
