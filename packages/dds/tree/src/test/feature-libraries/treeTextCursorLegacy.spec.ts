@@ -12,7 +12,8 @@ import { defaultSchemaPolicy, ObjectForest, singleTextCursorNew } from "../../fe
 import { jsonableTreeFromCursor, singleTextCursor } from "../../feature-libraries/treeTextCursorLegacy";
 import { initializeForest, ITreeCursor, TreeNavigationResult } from "../../forest";
 import { SchemaData, StoredSchemaRepository } from "../../schema-stored";
-import { cursorTestCases, testCursors, testJsonableTreeCursor } from "../cursorLegacy.spec";
+import { cursorTestCases } from "../cursor.spec";
+import { testCursors, testJsonableTreeCursor } from "../cursorLegacy.spec";
 
 // Tests for TextCursor and jsonableTreeFromCursor.
 // Checks to make sure singleTextCursor and test datasets are working properly,

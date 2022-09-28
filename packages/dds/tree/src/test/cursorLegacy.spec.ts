@@ -8,59 +8,7 @@ import { strict as assert } from "assert";
 import { ITreeCursor, TreeNavigationResult } from "../forest";
 import { EmptyKey, FieldKey, JsonableTree } from "../tree";
 import { brand } from "../util";
-
-export const cursorTestCases: [string, JsonableTree][] = [
-    ["minimal", { type: brand("Foo") }],
-    ["true boolean", { type: brand("Foo"), value: true }],
-    ["false boolean", { type: brand("Foo"), value: true }],
-    ["integer", { type: brand("Foo"), value: Number.MIN_SAFE_INTEGER - 1 }],
-    ["string", { type: brand("Foo"), value: "test" }],
-    ["string with escaped characters", { type: brand("Foo"), value: "\\\"\b\f\n\r\t" }],
-    ["string with emoticon", { type: brand("Foo"), value: "😀" }],
-    ["nested", { type: brand("Foo"), fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] } }],
-    ["multiple fields", {
-        type: brand("Foo"),
-        fields: {
-            a: [{ type: brand("Bar") }],
-            b: [{ type: brand("Baz") }],
-        },
-    }],
-    ["double nested", {
-        type: brand("Foo"),
-        fields: {
-            b: [{
-                type: brand("Bar"),
-                fields: { c: [{ type: brand("Baz") }] },
-            }],
-        },
-    }],
-    ["complex", {
-        type: brand("Foo"),
-        fields: {
-            a: [{ type: brand("Bar") }],
-            b: [{
-                type: brand("Bar"),
-                fields: {
-                    c: [{ type: brand("Bar"), value: 6 }],
-                },
-            }],
-        },
-    }],
-    ["siblings restored on up", {
-        type: brand("Foo"),
-        fields: {
-            X: [
-                {
-                    type: brand("a"),
-                    // Inner node so that when navigating up from it,
-                    // The cursor's siblings value needs to be restored.
-                    fields: { q: [{ type: brand("b") }] },
-                },
-                { type: brand("c") },
-            ],
-        },
-    }],
-];
+import { cursorTestCases } from "./cursor.spec";
 
 /**
  * Tests the provided cursor factory with JsonableTree data. The cursor must be JSON compatible.
