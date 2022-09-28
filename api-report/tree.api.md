@@ -17,12 +17,18 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 // @public
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
+// @public
+export interface AnchorLocator {
+    locate(anchor: Anchor): UpPath | undefined;
+}
+
 // @public @sealed
 export class AnchorSet {
     applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
     isEmpty(): boolean;
+    // (undocumented)
     locate(anchor: Anchor): UpPath | undefined;
     moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
     track(path: UpPath | null): Anchor;
@@ -179,6 +185,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 
 // @public
 export interface EditableTree {
+    readonly [anchorSymbol]: Anchor;
     readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
     readonly [valueSymbol]: Value;
@@ -189,6 +196,7 @@ export interface EditableTree {
 export interface EditableTreeContext {
     free(): void;
     prepareForEdit(): void;
+    readonly root: UnwrappedEditableField;
 }
 
 // @public
@@ -376,9 +384,6 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 }
 
 // @public
-export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField];
-
-// @public
 export const getTypeSymbol: unique symbol;
 
 // @public
@@ -455,7 +460,9 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
-export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject {
+export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject, AnchorLocator {
+    readonly context: EditableTreeContext;
+    readonly root: UnwrappedEditableField;
 }
 
 // @public (undocumented)

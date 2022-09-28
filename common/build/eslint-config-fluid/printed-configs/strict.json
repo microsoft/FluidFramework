@@ -574,7 +574,12 @@
             "error"
         ],
         "jsdoc/require-description": [
-            "error"
+            "error",
+            {
+                "checkConstructors": false,
+                "checkGetters": true,
+                "checkSetters": true
+            }
         ],
         "jsdoc/require-hyphen-before-param-description": [
             "error"

@@ -4,7 +4,6 @@
         "outDir": "./dist",
         "rootDir": "./src",
         "composite": true,
-        "noImplicitAny": false,
         "noImplicitThis": true,
         "noUnusedLocals": false,
         "strictBindCallApply": true,

@@ -4,7 +4,7 @@
  */
 
 export {
-    getEditableTree,
+    getEditableTreeContext,
     EditableTree,
     EditableField,
     EditableTreeOrPrimitive,
@@ -12,8 +12,11 @@ export {
     UnwrappedEditableField,
     getTypeSymbol,
     valueSymbol,
+    anchorSymbol,
     proxyTargetSymbol,
     EditableTreeContext,
+    isArrayField,
+    isUnwrappedNode,
 } from "./editableTree";
 export {
     PrimitiveValue,

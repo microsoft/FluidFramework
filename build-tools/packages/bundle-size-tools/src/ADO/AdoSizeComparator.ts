@@ -93,7 +93,7 @@ export class ADOSizeComparator {
       maxBuildsPerDefinition: this.adoConstants.buildsToSearch ?? ADOSizeComparator.defaultBuildsToSearch,
     });
     while (baselineCommit !== undefined) {
-      let baselineBuild = recentBuilds.find((build) => build.sourceVersion === baselineCommit);
+      const baselineBuild = recentBuilds.find((build) => build.sourceVersion === baselineCommit);
 
       if (baselineBuild === undefined) {
         baselineCommit = fallbackGen?.next().value;
