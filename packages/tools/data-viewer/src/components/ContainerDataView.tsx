@@ -113,7 +113,10 @@ export function ContainerDataView(props: ContainerDataViewProps): React.ReactEle
                     <b>Attach state: </b>
                     {attachState}
                 </div>
-                <div><b>Local edit state: </b>{isDirty ? "Pending local edits" : "No pending local edits"}</div>
+                <div>
+                    <b>Local edit state: </b>
+                    {isDirty ? "Pending local edits" : "No pending local edits"}
+                </div>
                 <hr />
                 <div>
                     <h2>Contained Objects</h2>
