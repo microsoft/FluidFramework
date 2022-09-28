@@ -58,32 +58,24 @@ describe("obliterate partial lengths", () => {
         ]);
     });
 
+    it("correctly applies local remove after local obliterate", () => {
+        client.obliterateRangeLocal(
+            0,
+            "hello ".length,
+        );
+        client.removeRangeLocal(
+            0,
+            "hello".length,
+        );
+
+        validatePartialLengths(localClientId, client.mergeTree, [
+            { seq: refSeq, len: "hello world".length },
+            { seq: refSeq + 1, len: "world".length, localSeq: refSeq + 1 },
+            { seq: refSeq + 2, len: "".length, localSeq: refSeq + 2 },
+        ]);
+    });
+
     describe("overlapping remove+obliterate", () => {
-        it("passes for local remove and local obliterate", () => {
-            client.removeRangeLocal(
-                0,
-                "hello ".length,
-            );
-            client.obliterateRange(
-                0,
-                "hello ".length,
-                refSeq,
-                localClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
-
-            validatePartialLengths(localClientId, client.mergeTree, [
-                { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "world".length },
-            ], refSeq);
-            validatePartialLengths(remoteClientId, client.mergeTree, [
-                { seq: refSeq, len: "hello world".length },
-                { seq: refSeq + 1, len: "world".length },
-            ]);
-        });
-
         it("passes for local remove and remote obliterate", () => {
             client.removeRangeLocal(
                 0,

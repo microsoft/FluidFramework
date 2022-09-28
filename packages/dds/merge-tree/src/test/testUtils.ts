@@ -146,7 +146,7 @@ function getPartialLengths(
 export function validatePartialLengths(
     clientId: number,
     mergeTree: MergeTree,
-    expectedValues?: { seq: number; len: number; }[],
+    expectedValues?: { seq: number; len: number; localSeq?: number; }[],
     localSeq?: number,
     mergeBlock = mergeTree.root,
 ): void {
@@ -163,9 +163,9 @@ export function validatePartialLengths(
         return;
     }
 
-    for (const { seq, len } of expectedValues) {
+    for (const { seq, len, localSeq: expectedLocalSeq } of expectedValues) {
         const { partialLen, actualLen } = getPartialLengths(
-            clientId, seq, mergeTree, localSeq, mergeBlock,
+            clientId, seq, mergeTree, expectedLocalSeq ?? localSeq, mergeBlock,
         );
 
         assert.equal(partialLen, len);
