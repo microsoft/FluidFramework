@@ -64,10 +64,7 @@ export class TestConsumer implements core.IConsumer {
         return this;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public close(): Promise<void> {
-        return Promise.resolve();
-    }
+    public async close(): Promise<void> { }
 
     public async pause() {
         if (!this.pausedQueue) {
@@ -117,18 +114,14 @@ export class TestProducer implements core.IProducer {
         return true;
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/promise-function-async
-    public send(messages: object[], key: string): Promise<any> {
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    public async send(messages: object[], key: string): Promise<any> {
         for (const message of messages) {
             this.kafka.addMessage(message, key);
         }
-        return Promise.resolve();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public close(): Promise<void> {
-        return Promise.resolve();
-    }
+    public async close(): Promise<void> { }
 
     public on(event: string, listener: (...args: any[]) => void): this {
         return this;

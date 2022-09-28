@@ -59,8 +59,7 @@ export class TestHistorian implements IHistorian {
         };
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getFullTree(sha: string): Promise<any> {
+    public async getFullTree(sha: string): Promise<any> {
         throw new Error("Not Supported");
     }
 
@@ -159,8 +158,7 @@ export class TestHistorian implements IHistorian {
         throw new Error("Not Supported");
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getRefs(): Promise<git.IRef[]> {
+    public async getRefs(): Promise<git.IRef[]> {
         throw new Error("Not Supported");
     }
 
@@ -198,13 +196,11 @@ export class TestHistorian implements IHistorian {
         throw new Error("Not Supported");
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
+    public async createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
         throw new Error("Not Supported");
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getTag(tag: string): Promise<git.ITag> {
+    public async getTag(tag: string): Promise<git.ITag> {
         throw new Error("Not Supported");
     }
 
