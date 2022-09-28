@@ -1821,7 +1821,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // If we send ops in response to processing multiple ops, then we for sure hit this assert!
             // Tracked via ADO #1834
             assert(batch[0].referenceSequenceNumber === batch[length - 1].referenceSequenceNumber,
-               "Batch should be generated synchronously, without processing ops in the middle!");
+                "Batch should be generated synchronously, without processing ops in the middle!");
         }
 
         let clientSequenceNumber: number = -1;

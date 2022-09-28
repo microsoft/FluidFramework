@@ -419,21 +419,21 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         // This test case does not work correctly - it used to work before batching changes for the wrong reason.
         // Please see above ticket for more info
         itExpects.only("Should close container when sending an op while processing another op",
-            [{
-                eventName: "fluid:telemetry:Container:ContainerClose",
-                error: "Making changes to data model is disallowed while processing ops.",
-            }], async () => {
+            [], async () => {
                 await setupContainers(testContainerConfig);
 
-                sharedMap2.on("valueChanged", (changed) => {
+                sharedMap1.on("valueChanged", (changed) => {
                     if (changed.key !== "key2") {
-                        sharedMap2.set("key2", `${sharedMap1.get("key1")} updated`);
+                        sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
                     }
                 });
 
-                sharedMap1.set("key2", "1");
                 sharedMap1.set("key1", "1");
-
+                await new Promise((resolve) => setImmediate(resolve));
+                sharedMap2.set("key3", "3");
+                sharedMap2.set("key3", "4");
+                sharedMap2.set("key3", "5");
+                sharedMap2.set("key3", "6");
                 await provider.ensureSynchronized();
 
                 assert.equal(sharedMap2.get("key1"), "1");
@@ -441,6 +441,15 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
 
                 assert.equal(sharedMap1.get("key1"), "1");
                 assert.equal(sharedMap1.get("key2"), "1 updated", "Not updated for container 1");
+
+                sharedMap1.set("key1", "2");
+                await provider.ensureSynchronized();
+
+                assert.equal(sharedMap2.get("key1"), "2");
+                assert.equal(sharedMap2.get("key2"), "2 updated", "Not updated for container 2");
+
+                assert.equal(sharedMap1.get("key1"), "2");
+                assert.equal(sharedMap1.get("key2"), "2 updated", "Not updated for container 1");
             });
 
         it("Negative test with unset concurrentOpSend feature gate", async () => {
