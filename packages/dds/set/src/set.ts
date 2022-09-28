@@ -27,7 +27,7 @@ import { ISharedSet, ISharedSetEvents } from "./interfaces";
 /**
  * Description of a set delta operation
  */
-type ISetOperation = IAddOperation | IDeleteOperation;
+type ISetOperation = IAddOperation | IDeleteOperation | IClearOperation;
 interface IAddOperation {
     type: "add";
     value: ISetValue;
@@ -37,13 +37,17 @@ interface IDeleteOperation {
     type: "delete";
     value: ISetValue;
 }
+
+interface IClearOperation {
+    type: "clear";
+}
 // The actual value contained in the set which needs to be wrapped to handle undefined
 type ISetValue = any;
 
 const snapshotFileName = "header";
 
 /**
- * The SharedSet distributed data structure can be used to store a single serializable value.
+ * The SharedSet distributed data structure can be used to store a Set.
  *
  * @remarks
  * ### Creation
@@ -59,8 +63,9 @@ const snapshotFileName = "header";
  * The value stored in the set can be set with the `.set()` method and retrieved with the `.get()` method:
  *
  * ```typescript
- * mySet.set(3);
- * console.log(mySet.get()); // 3
+ * console.log(mySet.has(3)); // false
+ * mySet.add(3);
+ * console.log(mySet.has(3)); // true
  * ```
  *
  * The value must only be plain JS objects or `SharedObject` handles (e.g. to another DDS or Fluid object).
@@ -69,11 +74,12 @@ const snapshotFileName = "header";
  * The `.delete()` method will delete the stored value from the set:
  *
  * ```typescript
- * mySet.delete();
- * console.log(mySet.get()); // undefined
+ * console.log(mySet.has(3)); // true
+ * mySet.delete(3);
+ * console.log(mySet.get(3)); // false
  * ```
  *
- * The `.empty()` method will check if the value is undefined.
+ * The `.empty()` method will check if the Set has no elements inside of it.
  *
  * ```typescript
  * if (mySet.empty()) {
@@ -87,7 +93,7 @@ const snapshotFileName = "header";
  *
  * `SharedSet` is an `EventEmitter`, and will emit events when other clients make modifications. You should
  * register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted
- * in response to a `set`, and `delete` will be emitted in response to a `delete`.
+ * in response to a `add`, and `delete` will be emitted in response to a `delete`.
  */
 export class SharedSet<T = any>
     extends SharedObject<ISharedSetEvents<T>>
@@ -117,7 +123,7 @@ export class SharedSet<T = any>
     private readonly data: Set<T> = new Set<T>();
 
     /**
-     * The tombstone held by this set.
+     * The deleted data is held in this set.
      */
     private readonly tombStoneSet: Set<T> = new Set<T>();
 
@@ -173,7 +179,6 @@ export class SharedSet<T = any>
 
         // Set the value locally.
         this.data.add(value);
-        console.log(this.data);
         this.emit("valueChanged", value);
 
         // If we are not attached, don't submit the op.
@@ -201,7 +206,6 @@ export class SharedSet<T = any>
         const operationValue: ISetValue = this.serializer.encode(value, this.handle);
 
         this.emit("delete");
-        console.log("tombStoneSet", this.tombStoneSet);
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
@@ -219,14 +223,26 @@ export class SharedSet<T = any>
      * {@inheritDoc ISharedSet.empty}
      */
     public empty() {
-        return this.data === undefined;
+        return this.data.size === 0;
     }
 
     /**
      * {@inheritDoc ISharedSet.clear}
      */
     public clear() {
-        return this.data.clear();
+        this.data.clear();
+
+        this.emit("clear");
+
+        // If we are not attached, don't submit the op.
+        if (!this.isAttached()) {
+            return;
+        }
+
+        const op: IClearOperation = {
+            type: "clear",
+        };
+        this.submitLocalMessage(op, ++this.messageId);
     }
 
     /**
@@ -237,7 +253,7 @@ export class SharedSet<T = any>
     protected summarizeCore(
         serializer: IFluidSerializer,
     ): ISummaryTreeWithStats {
-        const content = Array.from(this.data.entries());
+        const content = [...this.data.entries()];
 
         return createSingleBlobSummary(
             snapshotFileName,

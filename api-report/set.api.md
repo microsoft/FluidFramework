@@ -18,6 +18,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 // @public
 export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> {
     add(value: T): void;
+    clear(): void;
     delete(value: T): void;
     empty(): boolean;
     get(): Set<T>;
@@ -27,9 +28,9 @@ export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> 
 // @public (undocumented)
 export interface ISharedSetEvents<T> extends ISharedObjectEvents {
     // (undocumented)
-    (event: "valueChanged", listener: (value: T) => void): any;
+    (event: "valueChanged" | "delete", listener: (value: T) => void): any;
     // (undocumented)
-    (event: "delete", listener: () => void): any;
+    (event: "clear", listener: () => void): any;
 }
 
 // @public
@@ -38,9 +39,6 @@ export class SharedSet<T = any> extends SharedObject<ISharedSetEvents<T>> implem
     add(value: T): void;
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "clear"
-    //
-    // (undocumented)
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedSet<any>;
     delete(value: T): void;

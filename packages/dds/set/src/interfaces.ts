@@ -6,8 +6,8 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export interface ISharedSetEvents<T> extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (value: T) => void);
-    (event: "delete", listener: () => void);
+    (event: "valueChanged" | "delete", listener: (value: T) => void);
+    (event: "clear", listener: () => void);
 }
 
 /**
@@ -48,4 +48,9 @@ export interface ISharedSet<T = any> extends ISharedObject<ISharedSetEvents<T>> 
      * @param value - The value to be deleted
      */
     delete(value: T): void;
+
+    /**
+     * Removes all elements from the set.
+     */
+    clear(): void;
 }
