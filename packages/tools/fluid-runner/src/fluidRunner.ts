@@ -57,8 +57,8 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                         demandOption: false,
                         default: "JSON",
                     })
-                    .option("telemetryProps", {
-                        describe: "Properties to add to every telemetry entry. Formatted like \"--telemetryProps prop1 value1 --telemetryProps prop2 \\\"value 2\\\"\".",
+                    .option("telemetryProp", {
+                        describe: "Property to add to every telemetry entry. Formatted like \"--telemetryProp prop1 value1 --telemetryProp prop2 \\\"value 2\\\"\".",
                         type: "array",
                         demandOption: false,
                     }),
@@ -69,7 +69,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
                     console.error(argsError);
                     process.exit(1);
                 }
-                const telemetryOptionsResult = validateAndParseTelemetryOptions(argv.telemetryFormat, argv.telemetryProps);
+                const telemetryOptionsResult = validateAndParseTelemetryOptions(argv.telemetryFormat, argv.telemetryProp);
                 if (!telemetryOptionsResult.success) {
                     console.error(telemetryOptionsResult.error);
                     process.exit(1);

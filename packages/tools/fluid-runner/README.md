@@ -36,24 +36,24 @@ There is an optional command line option `telemetryFormat` that allows you to sp
 The default format is currently `JSON`
 
 ### Additional telemetry properties
-There is an optional command line option `telemetryProps` that allows you to specify additional properties that will be added to every telemetry entry. The format follows these rules:
+There is an optional command line option `telemetryProp` that allows you to specify additional properties that will be added to every telemetry entry. The format follows these rules:
 - every key must be a string
 - values may be either a string or a number
 - a value may not be empty
 
 Example of valid usages:
 ```
---telemetryProps prop1 value1 --telemetryProps prop2 10.5
---telemetryProps "  prop1 " "   value1 " prop2 value2
---telemetryProps=prop1 value1 --telemetryProps prop2 value2
---telemetryProps
+--telemetryProp prop1 value1 --telemetryProp prop2 10.5
+--telemetryProp "  prop1 " "   value1 " prop2 value2
+--telemetryProp=prop1 value1 --telemetryProp prop2 value2
+--telemetryProp
 ```
 
 Example of invalid usages:
 ```
---telemetryProps "10" value1
---telemetryProps prop1
---telemetryProps=             // this will be treated as ['']
+--telemetryProp "10" value1
+--telemetryProp prop1
+--telemetryProp=             // this will be treated as ['']
 ```
 
 ### Consumption
