@@ -182,6 +182,7 @@ export class SharedSet<T = any>
 
         // Set the value locally.
         this.set.add(value);
+
         this.emit("valueChanged", value);
 
         // If we are not attached, don't submit the op.
@@ -205,13 +206,13 @@ export class SharedSet<T = any>
             this.tombStoneSet.add(value);
         }
 
+        this.emit("delete");
+
         // Serialize the value if required.
         const operationValue: ISetValue = this.serializer.encode(
             value,
             this.handle,
         );
-
-        this.emit("delete");
 
         // If we are not attached, don't submit the op.
         if (!this.isAttached()) {
