@@ -122,7 +122,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
     releaseGroup: ReleaseGroup | ReleasePackage | undefined;
     releaseVersion: ReleaseVersion | undefined;
 
-    // eslint-disable-next-line complexity
     public async run(): Promise<ReleaseReport | PackageVersionList> {
         const context = await this.getContext();
         const flags = this.processedFlags;
@@ -133,11 +132,10 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         const filter = flags.releaseGroup ?? flags.package;
         const shouldOutputFiles = flags.output !== undefined;
         const outputPath = flags.output ?? process.cwd();
-        const promises: Promise<RawReleaseData | undefined>[] = [];
 
         if (filter === undefined || isReleaseGroup(filter)) {
             this.log(`Collecting version data for release groups...`);
-
+            /* eslint-disable no-await-in-loop */
             for (const rg of context.repo.releaseGroups.keys()) {
                 if (filter !== undefined && filter !== rg) {
                     this.verbose(`Skipping '${rg} because it's excluded.`);
@@ -147,9 +145,16 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 const name = rg;
                 const repoVersion = context.getVersion(rg);
 
-                promises.push(
-                    this.collectReleaseData(context, name, repoVersion, flags.days, mode),
+                const data = await this.collectReleaseData(
+                    context,
+                    name,
+                    repoVersion,
+                    flags.days,
+                    mode,
                 );
+                if (data !== undefined) {
+                    versionData[name] = data;
+                }
             }
         }
 
@@ -159,7 +164,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             );
         } else {
             this.log(`Collecting version data for independent packages...`);
-
             for (const pkg of context.independentPackages) {
                 if (filter !== undefined && filter !== pkg.name) {
                     this.verbose(`Skipping '${pkg.name} because it's excluded.`);
@@ -169,20 +173,18 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 const name = pkg.name;
                 const repoVersion = pkg.version;
 
-                promises.push(
-                    this.collectReleaseData(context, name, repoVersion, flags.days, mode),
+                const data = await this.collectReleaseData(
+                    context,
+                    name,
+                    repoVersion,
+                    flags.days,
+                    mode,
                 );
+                if (data !== undefined) {
+                    versionData[name] = data;
+                }
             }
-        }
-
-        const rawReleaseData = await Promise.all(promises);
-
-        for (const releaseData of rawReleaseData) {
-            if (releaseData === undefined) {
-                continue;
-            }
-
-            versionData[releaseData.releaseGroupOrPackage] = releaseData;
+            /* eslint-enable no-await-in-loop */
         }
 
         if (flags.all === true) {
@@ -341,7 +343,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 : { version: DEFAULT_MIN_VERSION };
 
         return {
-            releaseGroupOrPackage,
             repoVersion: {
                 version: repoVersion,
             },
@@ -538,7 +539,6 @@ function getDisplayDateRelative(date?: Date): string {
 }
 
 interface RawReleaseData {
-    releaseGroupOrPackage: ReleaseGroup | ReleasePackage;
     repoVersion: VersionDetails;
     latestReleasedVersion: VersionDetails;
     previousReleasedVersion?: VersionDetails;
