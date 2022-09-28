@@ -1,0 +1,100 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-coverage pipeline (for the purpose of detecting flaky tests)
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+
+variables:
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+
+stages:
+  - stage:
+    displayName: Run 1
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  - stage:
+    displayName: Run 2
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  - stage:
+    displayName: Run 3
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  - stage:
+    displayName: Run 4
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  - stage:
+    displayName: Run 5
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+#schedules:
+#  - cron: "0 0 * * *"
+#    displayName: Daily midnight build
+#    branches:
+#      include:
+#      - main
+#      - next
+#      - lts
+#      - release/*
