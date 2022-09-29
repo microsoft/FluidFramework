@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IsoBuffer, stringToBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { compress } from "lz4js";
 import { BatchMessage } from "./batchManager";
@@ -30,7 +30,7 @@ export class OpCompressor {
         }
 
         const compressionStart = Date.now();
-        const contentsAsBuffer = stringToBuffer(JSON.stringify(batchedContents), "utf8");
+        const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(batchedContents));
         const compressedContents = compress(contentsAsBuffer);
         const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
         const duration = Date.now() - compressionStart;
