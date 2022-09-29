@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import {
     IMergeBlock,
+    ISegment,
     Marker,
 } from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
@@ -72,6 +73,28 @@ export function insertText({
     opArgs,
 }: InsertTextArgs) {
     mergeTree.insertSegments(pos, [TextSegment.make(text, props)], refSeq, clientId, seq, opArgs);
+}
+
+interface InsertSegmentsArgs {
+    mergeTree: MergeTree;
+    pos: number;
+    segments: ISegment[];
+    refSeq: number;
+    clientId: number;
+    seq: number;
+    opArgs: IMergeTreeDeltaOpArgs | undefined;
+}
+
+export function insertSegments({
+    mergeTree,
+    pos,
+    segments,
+    refSeq,
+    clientId,
+    seq,
+    opArgs,
+}: InsertSegmentsArgs): void {
+    mergeTree.insertSegments(pos, segments, refSeq, clientId, seq, opArgs);
 }
 
 export function nodeOrdinalsHaveIntegrity(block: IMergeBlock): boolean {

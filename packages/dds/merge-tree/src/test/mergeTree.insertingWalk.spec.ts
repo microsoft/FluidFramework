@@ -16,7 +16,7 @@ import {
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";
+import { insertSegments, insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 interface ITestTreeFactory {
     readonly create: () => ITestData;
@@ -37,13 +37,15 @@ const treeFactories: ITestTreeFactory[] = [
         create: () => {
             const initialText = "hello world";
             const mergeTree = new MergeTree();
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make(initialText)],
-                UniversalSequenceNumber,
-                LocalClientId,
-                UniversalSequenceNumber,
-                undefined);
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make(initialText)],
+                refSeq: UniversalSequenceNumber,
+                clientId: LocalClientId,
+                seq: UniversalSequenceNumber,
+                opArgs: undefined,
+            });
             mergeTree.startCollaboration(
                 localClientId,
                 /* minSeq: */ UniversalSequenceNumber,
@@ -62,13 +64,15 @@ const treeFactories: ITestTreeFactory[] = [
         create: () => {
             let initialText = "0";
             const mergeTree = new MergeTree();
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make(initialText)],
-                UniversalSequenceNumber,
-                LocalClientId,
-                UniversalSequenceNumber,
-                undefined);
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make(initialText)],
+                refSeq: UniversalSequenceNumber,
+                clientId: LocalClientId,
+                seq: UniversalSequenceNumber,
+                opArgs: undefined,
+            });
             for (let i = 1; i < MaxNodesInBlock - 1; i++) {
                 const text = i.toString();
                 insertText({
@@ -118,13 +122,15 @@ const treeFactories: ITestTreeFactory[] = [
         create: () => {
             let initialText = "0";
             const mergeTree = new MergeTree();
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make(initialText)],
-                UniversalSequenceNumber,
-                LocalClientId,
-                UniversalSequenceNumber,
-                undefined);
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make(initialText)],
+                refSeq: UniversalSequenceNumber,
+                clientId: LocalClientId,
+                seq: UniversalSequenceNumber,
+                opArgs: undefined,
+            });
             for (let i = 1; i < MaxNodesInBlock * 4; i++) {
                 const text = i.toString();
                 insertText({
@@ -271,13 +277,15 @@ describe("MergeTree.insertingWalk", () => {
         let seq = 0;
         const mergeTree = new MergeTree();
         mergeTree.startCollaboration(localClientId, 0, seq);
-        mergeTree.insertSegments(
-            0,
-            [TextSegment.make(initialText)],
-            UniversalSequenceNumber,
-            localClientId,
-            UniversalSequenceNumber,
-            undefined);
+        insertSegments({
+            mergeTree,
+            pos: 0,
+            segments: [TextSegment.make(initialText)],
+            refSeq: UniversalSequenceNumber,
+            clientId: localClientId,
+            seq: UniversalSequenceNumber,
+            opArgs: undefined,
+        });
         for (let i = 1; i < MaxNodesInBlock; i++) {
             const text = String.fromCharCode(i + 64);
             insertText({

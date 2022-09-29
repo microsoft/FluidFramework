@@ -9,7 +9,7 @@ import { MergeTree } from "../mergeTree";
 import { MergeTreeDeltaType } from "../ops";
 import { PartialSequenceLengths } from "../partialLengths";
 import { TextSegment } from "../textSegment";
-import { insertText } from "./testUtils";
+import { insertSegments, insertText } from "./testUtils";
 
 describe("partial lengths", () => {
     let mergeTree: MergeTree;
@@ -73,13 +73,15 @@ describe("partial lengths", () => {
     beforeEach(() => {
         PartialSequenceLengths.options.verify = true;
         mergeTree = new MergeTree();
-        mergeTree.insertSegments(
-            0,
-            [TextSegment.make("hello world!")],
-            0,
-            localClientId,
-            0,
-            undefined);
+        insertSegments({
+            mergeTree,
+            pos: 0,
+            segments: [TextSegment.make("hello world!")],
+            refSeq: 0,
+            clientId: localClientId,
+            seq: 0,
+            opArgs: undefined,
+        });
 
         mergeTree.startCollaboration(
             localClientId,
@@ -207,38 +209,42 @@ describe("partial lengths", () => {
 
     describe("aggregation", () => {
         it("includes lengths from multiple permutations in single tree", () => {
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make("1")],
-                0,
-                localClientId,
-                1,
-                undefined,
-            );
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make("2")],
-                1,
-                remoteClientId,
-                2,
-                undefined,
-            );
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make("3")],
-                2,
-                localClientId,
-                3,
-                undefined,
-            );
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make("4")],
-                3,
-                remoteClientId,
-                4,
-                undefined,
-            );
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make("1")],
+                refSeq: 0,
+                clientId: localClientId,
+                seq: 1,
+                opArgs: undefined,
+            });
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make("2")],
+                refSeq: 1,
+                clientId: remoteClientId,
+                seq: 2,
+                opArgs: undefined,
+            });
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make("3")],
+                refSeq: 2,
+                clientId: localClientId,
+                seq: 3,
+                opArgs: undefined,
+            });
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make("4")],
+                refSeq: 3,
+                clientId: remoteClientId,
+                seq: 4,
+                opArgs: undefined,
+            });
 
             validatePartialLengths(localClientId, [{ seq: 4, len: 16 }]);
             validatePartialLengths(remoteClientId, [{ seq: 4, len: 16 }]);

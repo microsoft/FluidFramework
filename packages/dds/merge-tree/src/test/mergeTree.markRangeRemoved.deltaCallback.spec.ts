@@ -10,7 +10,7 @@ import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { MergeTreeDeltaType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { MergeTree } from "../mergeTree";
-import { countOperations } from "./testUtils";
+import { countOperations, insertSegments } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -18,13 +18,15 @@ describe("MergeTree", () => {
     let currentSequenceNumber: number;
     beforeEach(() => {
         mergeTree = new MergeTree();
-        mergeTree.insertSegments(
-            0,
-            [TextSegment.make("hello world!")],
-            UniversalSequenceNumber,
-            LocalClientId,
-            UniversalSequenceNumber,
-            undefined);
+        insertSegments({
+            mergeTree,
+            pos: 0,
+            segments: [TextSegment.make("hello world!")],
+            refSeq: UniversalSequenceNumber,
+            clientId: LocalClientId,
+            seq: UniversalSequenceNumber,
+            opArgs: undefined,
+        });
         currentSequenceNumber = 0;
         mergeTree.startCollaboration(
             localClientId,
