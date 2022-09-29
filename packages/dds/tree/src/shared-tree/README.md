@@ -7,4 +7,4 @@ and ensuring this feature selection / configuration maintains compatibility with
 
 # Status
 
-Implementation is really just some notes/ideas, and nothing close to usable.
+Implementation is working, but the API layers to provide a nice experience (like a schema language, nice editing experience etc.) are very much a work in progress or outright missing in some cases.

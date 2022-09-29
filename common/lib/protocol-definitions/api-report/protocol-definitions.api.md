@@ -159,6 +159,7 @@ export interface IDocumentAttributes {
 // @public
 export interface IDocumentMessage {
     clientSequenceNumber: number;
+    compression?: string;
     contents: any;
     metadata?: any;
     referenceSequenceNumber: number;
@@ -293,6 +294,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 export interface ISequencedDocumentMessage {
     clientId: string;
     clientSequenceNumber: number;
+    compression?: string;
     contents: any;
     // @alpha
     expHash1?: string;
@@ -555,6 +557,12 @@ export enum ScopeType {
     DocRead = "doc:read",
     DocWrite = "doc:write",
     SummaryWrite = "summary:write"
+}
+
+// @public (undocumented)
+export enum SignalType {
+    ClientJoin = "join",
+    ClientLeave = "leave"
 }
 
 // @public

@@ -4,9 +4,8 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { Brand, fail, OffsetListFactory, Opaque } from "../util";
+import { Brand, Opaque } from "../util";
 import { ITreeCursorSynchronous } from "./cursor";
-import { JsonableTree } from "./treeTextFormat";
 import { FieldKey, Value } from "./types";
 
 /**
@@ -130,30 +129,35 @@ import { FieldKey, Value } from "./types";
 /**
  * Represents the change made to a document.
  */
-export type Root = FieldMarks;
-export const empty: Root = new Map();
+export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
+export const empty: Root<any> = new Map();
+
+/**
+ * The default representation for inserted content.
+ */
+export type ProtoNode = ITreeCursorSynchronous;
 
 /**
  * Represents a change being made to a part of the tree.
  */
-export type Mark =
+export type Mark<TTree = ProtoNode> =
     | Skip
-    | Modify
+    | Modify<TTree>
     | Delete
     | MoveOut
     | MoveIn
-    | Insert
-    | ModifyAndDelete
-    | ModifyAndMoveOut
-    | MoveInAndModify
-    | InsertAndModify;
+    | Insert<TTree>
+    | ModifyAndDelete<TTree>
+    | ModifyAndMoveOut<TTree>
+    | MoveInAndModify<TTree>
+    | InsertAndModify<TTree>;
 
 /**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
  * applying any of the changes, is not represented explicitly.
  * It corresponds to the sum of `inputLength(mark)` for all previous marks.
  */
-export type MarkList = Mark[];
+export type MarkList<TTree = ProtoNode> = Mark<TTree>[];
 
 /**
  * Represents a range of contiguous nodes that is unaffected by changes.
@@ -164,10 +168,10 @@ export type Skip = number;
 /**
  * Describes modifications made to a subtree.
  */
-export interface Modify {
+export interface Modify<TTree = ProtoNode> {
     type: typeof MarkType.Modify;
     setValue?: Value;
-    fields?: FieldMarks;
+    fields?: FieldMarks<TTree>;
 }
 
 /**
@@ -182,9 +186,9 @@ export interface Delete {
  * Describes the deletion of a single node.
  * Includes descriptions of the modifications the node.
  */
-export interface ModifyAndDelete {
+export interface ModifyAndDelete<TTree = ProtoNode> {
     type: typeof MarkType.ModifyAndDelete;
-    fields: FieldMarks;
+    fields: FieldMarks<TTree>;
 }
 
 /**
@@ -203,14 +207,14 @@ export interface MoveOut {
  * Describes the moving out of a single node.
  * Includes descriptions of the modifications made to the node.
  */
-export interface ModifyAndMoveOut {
+export interface ModifyAndMoveOut<TTree = ProtoNode> {
     type: typeof MarkType.ModifyAndMoveOut;
     /**
      * The delta should carry exactly one `MoveIn` mark with the same move ID.
      */
     moveId: MoveId;
     setValue?: Value;
-    fields?: FieldMarks;
+    fields?: FieldMarks<TTree>;
 }
 
 /**
@@ -228,40 +232,33 @@ export interface MoveIn {
  * Describes the moving in of a single node.
  * Includes descriptions of the modifications made to the node.
  */
-export interface MoveInAndModify {
+export interface MoveInAndModify<TTree = ProtoNode> {
     type: typeof MarkType.MoveInAndModify;
     /**
      * The delta should carry exactly one `MoveOut` mark with the same move ID.
      */
     moveId: MoveId;
-    fields: FieldMarks;
+    fields: FieldMarks<TTree>;
 }
 
 /**
  * Describes the insertion of a contiguous range of node.
  */
-export interface Insert {
+export interface Insert<TTree = ProtoNode> {
     type: typeof MarkType.Insert;
     // TODO: use a single cursor with multiple nodes instead of array of cursors.
-    content: ProtoNode[];
+    content: TTree[];
 }
 
 /**
  * Describes the insertion of a single node.
  * Includes descriptions of the modifications made to the nodes.
  */
-export interface InsertAndModify {
+export interface InsertAndModify<TTree = ProtoNode> {
     type: typeof MarkType.InsertAndModify;
-    content: ProtoNode;
-    fields: FieldMarks;
+    content: TTree;
+    fields: FieldMarks<TTree>;
 }
-
-/**
- * The contents of a subtree to be created.
- *
- * TODO: eventually we should support "pending" data here via using just `ITreeCursor`.
- */
-export type ProtoNode = ITreeCursorSynchronous;
 
 /**
  * Uniquely identifies a MoveOut/MoveIn pair within a delta.
@@ -271,7 +268,7 @@ export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 export type Offset = number;
 
 export type FieldMap<T> = Map<FieldKey, T>;
-export type FieldMarks = FieldMap<MarkList>;
+export type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 export const MarkType = {
     Modify: 0,
@@ -288,8 +285,8 @@ export const MarkType = {
 /**
  * Returns the number of nodes in the input tree that the mark affects or skips.
  */
-export function inputLength(mark: Mark): number {
-    if (typeof mark === "number") {
+export function inputLength(mark: Mark<unknown>): number {
+    if (isSkipMark(mark)) {
         return mark;
     }
     // Inline into `switch(mark.type)` once we upgrade to TS 4.7
@@ -311,113 +308,6 @@ export function inputLength(mark: Mark): number {
     }
 }
 
-/**
- * Converts inserted content into the format expected in Delta instances.
- * This involves applying the following changes:
- *
- * - Updating node values
- *
- * - Inserting new subtrees within the inserted content
- *
- * - Deleting parts of the inserted content
- *
- * The only kind of change that is not applied by this function is MoveIn.
- *
- * @param node - The subtree to apply modifications to. Updated in place.
- * @param modify - The modifications to either apply or collect.
- * @returns The remaining modifications that the consumer of the Delta will apply on the given node.
- * May be empty if all modifications are applied by the function.
- */
- export function applyModifyToInsert(
-    node: JsonableTree,
-    modify: Modify,
-): Map<FieldKey, MarkList> {
-    const outFieldsMarks: Map<FieldKey, MarkList> = new Map();
-    // Use `hasOwnProperty` to detect when setValue is set to `undefined`.
-    if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
-        node.value = modify.setValue;
-    }
-    if (modify.fields !== undefined) {
-        const protoFields = node.fields ?? {};
-        const modifyFields = modify.fields;
-        for (const brandedKey of modifyFields.keys()) {
-            const key = brandedKey as string;
-            const outNodes = protoFields[key] ?? fail("Missing field");
-            const outMarks = new OffsetListFactory<Mark>();
-            let index = 0;
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            for (const mark of modifyFields.get(brandedKey)!) {
-                if (isSkipMark(mark)) {
-                    index += mark;
-                    outMarks.pushOffset(mark);
-                } else {
-                    // Inline into `switch(mark.type)` once we upgrade to TS 4.7
-                    const type = mark.type;
-                    switch (type) {
-                        case MarkType.Insert: {
-                            outNodes.splice(index, 0, ...mark.content);
-                            index += mark.content.length;
-                            outMarks.pushOffset(mark.content.length);
-                            break;
-                        }
-                        case MarkType.InsertAndModify: {
-                            if (mark.fields.size > 0) {
-                                outMarks.pushContent({
-                                    type: MarkType.Modify,
-                                    fields: mark.fields,
-                                });
-                            }
-                            outNodes.splice(index, 0, mark.content);
-                            index += 1;
-                            break;
-                        }
-                        case MarkType.MoveIn:
-                        case MarkType.MoveInAndModify:
-                            // TODO: convert into a MoveIn/MoveInAndModify
-                            fail("Not implemented");
-                        case MarkType.Modify: {
-                            const clonedFields = applyModifyToInsert(outNodes[index], mark);
-                            if (clonedFields.size > 0) {
-                                outMarks.pushContent({
-                                    type: MarkType.Modify,
-                                    fields: clonedFields,
-                                });
-                            }
-                            index += 1;
-                            break;
-                        }
-                        case MarkType.Delete: {
-                            outNodes.splice(index, mark.count);
-                            break;
-                        }
-                        case MarkType.ModifyAndDelete: {
-                            // TODO: convert move-out of inserted content into insert at the destination
-                            fail("Not implemented");
-                        }
-                        case MarkType.MoveOut:
-                        case MarkType.ModifyAndMoveOut:
-                            // TODO: convert move-out of inserted content into insert at the destination
-                            fail("Not implemented");
-                        default: unreachableCase(type);
-                    }
-                }
-            }
-            if (outMarks.list.length > 0) {
-                outFieldsMarks.set(brandedKey, outMarks.list);
-            }
-            if (outNodes.length === 0) {
-                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                delete protoFields[key];
-            }
-        }
-        if (Object.keys(protoFields).length === 0) {
-            delete node.fields;
-        }
-    }
-
-    return outFieldsMarks;
-}
-
-function isSkipMark(mark: Mark): mark is Skip {
+export function isSkipMark(mark: Mark<unknown>): mark is Skip {
     return typeof mark === "number";
 }
