@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { FieldKinds, singleTextCursor } from "../../feature-libraries";
+import { FieldKinds, isUnwrappedNode, singleTextCursor, valueSymbol } from "../../feature-libraries";
 import { brand } from "../../util";
 import { detachedFieldAsKey, rootFieldKey, TreeValue } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
@@ -145,6 +145,43 @@ describe("SharedTree", () => {
                 readCursor.free();
                 tree2.forest.forgetAnchor(destination);
             }
+        });
+
+        it("can edit using editable-tree", async () => {
+            const provider = await TestTreeProvider.create(1);
+            const [sharedTree] = provider.trees;
+
+            // Currently EditableTree does not have a way to hold onto fields/sequences across edits, only nodes, so insert a node to get started.
+
+            // Insert node
+            initializeTestTreeWithValue(sharedTree, 1);
+
+            // Locate node to edit using EditableTree API
+            const editable = sharedTree.root;
+            assert(isUnwrappedNode(editable));
+
+            // Check value we will edit is what we initialized it to.
+            assert.equal(editable[valueSymbol], 1);
+
+            // Perform an edit
+            sharedTree.runTransaction((forest, editor) => {
+                // Perform an edit
+                sharedTree.context.prepareForEdit()
+                editor.setValue({
+                    parent: undefined,
+                    parentField: detachedFieldAsKey(forest.rootField),
+                    parentIndex: 0,
+                }, 2);
+
+                // Check that the edit is reflected in the EditableTree
+                assert.equal(editable[valueSymbol], 2);
+
+                sharedTree.context.prepareForEdit()
+                return TransactionResult.Apply;
+            });
+
+            // Check that the edit is reflected in the EditableTree after the transaction.
+            assert.equal(editable[valueSymbol], 2);
         });
     });
 });

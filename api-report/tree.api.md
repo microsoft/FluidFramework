@@ -191,7 +191,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 
 // @public
 export interface EditableTree extends FieldlessEditableTree {
-    readonly [key: string]: UnwrappedEditableField;
+    [key: string]: UnwrappedEditableField;
 }
 
 // @public
