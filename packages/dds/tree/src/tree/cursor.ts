@@ -226,7 +226,8 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
  * Returns an empty array if the node is empty or not present (which are considered the same).
  * Note that order is not specified for field iteration.
  */
- export function mapCursorFields<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) => T): T[] {
+ export function mapCursorFields<T, TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor, f: (cursor: TCursor) => T): T[] {
     const output: T[] = [];
     forEachField(cursor, (c) => { output.push(f(c)); });
     return output;
@@ -237,8 +238,8 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
  * @param f - For on each field.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
  */
- export function forEachField(
-    cursor: ITreeCursor, f: (cursor: ITreeCursor) => void): void {
+ export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor, f: (cursor: TCursor) => void): void {
     assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes");
     for (let inField = cursor.firstField(); inField; inField = cursor.nextField()) {
         f(cursor);
@@ -252,7 +253,8 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
  * @returns array resulting from applying `f` to each item of the current field on `cursor`.
  * Returns an empty array if the field is empty or not present (which are considered the same).
  */
-export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) => T): T[] {
+ export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor, f: (cursor: TCursor) => T): T[] {
     const output: T[] = [];
     forEachNode(cursor, (c) => { output.push(f(c)); });
     return output;
@@ -263,8 +265,8 @@ export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) 
  * @param f - For on each node.
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
  */
-export function forEachNode(
-    cursor: ITreeCursor, f: (cursor: ITreeCursor) => void): void {
+export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
+    cursor: TCursor, f: (cursor: TCursor) => void): void {
     assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
     for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
         f(cursor);
