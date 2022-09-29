@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ThemeProvider } from "@fluentui/react";
-import { createTheme } from "office-ui-fabric-react";
+import { createTheme, Spinner } from "office-ui-fabric-react";
 import React from "react";
 
 import { ConnectionState, ContainerSchema, IFluidContainer, SharedString } from "fluid-framework";
@@ -164,6 +164,6 @@ export function App(): React.ReactElement {
             </div>
         );
     } else {
-        return <div>Loading Fluid container...</div>;
+        return <div><Spinner /> Loading Fluid container...</div>;
     }
 }
