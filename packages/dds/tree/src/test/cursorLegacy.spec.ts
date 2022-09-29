@@ -12,16 +12,16 @@ import { cursorTestCases } from "./cursor.spec";
 
 /**
  * Tests the provided cursor factory with JsonableTree data. The cursor must be JSON compatible.
- * @param suiteName - The name of the test suite to create.
+ * @param cursorName - The name of the cursor used as part of the test suite name.
  * @param factory - Creates the cursor to be tested with or without provided data.
  * @param dataFromCursor - Gets a JsonableTree from the provided cursor.
  */
 export function testJsonableTreeCursor(
-    suiteName: string,
+    cursorName: string,
     factory: (data: JsonableTree) => ITreeCursor,
     dataFromCursor: (cursor: ITreeCursor) => JsonableTree,
 ): void {
-    describe(`${suiteName} cursor implementation`, () => {
+    describe(`${cursorName} cursor implementation`, () => {
         describe("extract roundtrip", () => {
             for (const [name, data] of cursorTestCases) {
                 it(`${name}: ${JSON.stringify(data)}`, () => {
