@@ -46,7 +46,7 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
         totalDevCount--;
         delete item.dev;
         refStack.push(item);
-        // Checking item.dependencies !== null is not sufficient here.
+        // Checking item.dependencies !== undefined is not sufficient here.
         if (item.dependencies) {
             // mark unhoisted dependencies recursively
             for (const dep in item.dependencies) {
