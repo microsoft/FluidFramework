@@ -173,7 +173,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
                 // so we don't try to discover it like FluidObject<IFluidRouter>. This factory knows that
                 // the entrypoint on the data stores it creates is an object of that type because it passed
                 // it in (see the call to new runtimeClass(...) below), so it can cast safely here.
-                const router: TestFluidObject = ((await rt.handle?.get()) as TestFluidObject);
+                const router: TestFluidObject = ((await rt.IFluidLoadable?.handle?.get()) as TestFluidObject);
                 assert(router !== undefined, "Entrypoint should have initialized by now");
                 return router.request(request);
             });

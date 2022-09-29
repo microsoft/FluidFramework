@@ -81,7 +81,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getQuorum(): IQuorumClients;
-    handle?: IFluidHandle;
     // (undocumented)
     readonly id: string;
     // (undocumented)
