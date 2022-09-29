@@ -29,7 +29,7 @@ export const rootPathFlag = Flags.build({
  */
 export const releaseGroupFlag = Flags.build({
     char: "g",
-    description: "release group",
+    description: "Name of the release group",
     options: [...supportedMonoRepoValues()],
     parse: async (str: string) => {
         const group = str.toLowerCase();

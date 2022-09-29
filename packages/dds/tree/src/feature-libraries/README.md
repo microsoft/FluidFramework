@@ -1,6 +1,6 @@
 # Feature Libraries
 
-Concrete implementations of abstractions used to parameterize `SharedTreeCore`, or any other entry points into `tree`.
+Concrete implementations of abstractions used to parameterize `SharedTreeCore`, or any other entry points to the `tree` package.
 `SharedTreeCore` should be usable with alternative versions of anything withing this library.
 
 This directory will end up containing a wide variety of implementations, including:
@@ -10,4 +10,3 @@ This directory will end up containing a wide variety of implementations, includi
 - Families of changes/edits which can be applies for various field kinds
 - `ChangeRebaser` implementations for these change families
 - Implementations of Forest
-

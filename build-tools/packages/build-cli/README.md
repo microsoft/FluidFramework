@@ -370,7 +370,7 @@ USAGE
   $ flub generate packageJson -g client|server|azure|build-tools [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  (required) release group
+  -g, --releaseGroup=<option>  (required) Name of release group
                                <options: client|server|azure|build-tools>
   -v, --verbose                Verbose logging.
 
@@ -407,7 +407,7 @@ USAGE
   $ flub info [-g client|server|azure|build-tools] [-p] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  release group
+  -g, --releaseGroup=<option>  Name of release group
                                <options: client|server|azure|build-tools>
   -p, --[no-]private           Include private packages (default true).
   -v, --verbose                Verbose logging.
@@ -428,7 +428,7 @@ USAGE
     --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  release group
+  -g, --releaseGroup=<option>  Name of release group
                                <options: client|server|azure|build-tools>
   -p, --package=<value>        Name of package.
   -t, --bumpType=<option>      Version bump type.
@@ -464,16 +464,21 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [--json] [-d <value>] [-s | -r] [-f -o <value>] [-v]
+  $ flub release report [--json] [--days <value>] [-s | -r] [-g client|server|azure|build-tools [--all | -o
+    <value>]] [-p <value> ] [--limit <value> ] [-v]
 
 FLAGS
-  -d, --days=<value>    [default: 10] The number of days to look back for releases to report.
-  -f, --full            Output a full report. A full report includes additional metadata for each package, including the
-                        time of the release, the type of release (patch, minor, major), and whether the release is new.
-  -o, --output=<value>  Output a JSON report file to this location.
-  -r, --mostRecent      Always pick the most recent version as the latest (ignore semver version sorting).
-  -s, --highest         Always pick the greatest semver version as the latest (ignore dates).
-  -v, --verbose         Verbose logging.
+  -g, --releaseGroup=<option>  Name of release group
+                               <options: client|server|azure|build-tools>
+  -o, --output=<value>         Output JSON report files to this location.
+  -p, --package=<value>        Name of package.
+  -r, --mostRecent             Always pick the most recent version as the latest (ignore semver version sorting).
+  -s, --highest                Always pick the greatest semver version as the latest (ignore dates).
+  -v, --verbose                Verbose logging.
+  --all                        List all releases. Useful when you want to see all the releases done for a release group
+                               or package. The number of results can be limited using the --limit argument.
+  --days=<value>               [default: 10] The number of days to look back for releases to report.
+  --limit=<value>              Limits the number of displayed releases for each release group.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -487,6 +492,8 @@ DESCRIPTION
 
   The command will prompt you to select versions for a package or release group in the event that multiple versions have
   recently been released.
+
+  Using the --all flag, you can list all the releases for a given release group or package.
 
 EXAMPLES
   Generate a minimal release report and display it in the terminal.
@@ -504,6 +511,14 @@ EXAMPLES
   Output a full release report to 'report.json'.
 
     $ flub release report -f -o report.json
+
+  List all the releases of the azure release group.
+
+    $ flub release report --all -g azure
+
+  List the 10 most recent client releases.
+
+    $ flub release report --all -g client --limit 10
 ```
 
 ## `flub run bundleStats`
