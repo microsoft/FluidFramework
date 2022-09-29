@@ -77,11 +77,6 @@ async function main() {
 
     const testUsers = await getTestUsers(credFile);
 
-    setTimeout(() => {
-        console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ At least I have chicken $$$$$$$$$$$$$$$$$$$$$$$$$");
-        process.exit(1337);
-    }, 5 * 60 * 1000);
-
     await orchestratorProcess(
         driver,
         endpoint,
