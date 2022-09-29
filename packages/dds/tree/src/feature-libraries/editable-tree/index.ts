@@ -4,20 +4,36 @@
  */
 
 export {
-    getEditableTreeContext,
     EditableTree,
     EditableField,
     EditableTreeOrPrimitive,
     UnwrappedEditableTree,
     UnwrappedEditableField,
+    FieldlessEditableTree,
+    EmptyEditableTree,
     getTypeSymbol,
     valueSymbol,
-    anchorSymbol,
     proxyTargetSymbol,
-    EditableTreeContext,
-    isArrayField,
+    insertNodeSymbol,
+    insertRootSymbol,
+    setValueSymbol,
+    deleteNodeSymbol,
+    isEmptyTree,
+    isEditableFieldSequence,
     isUnwrappedNode,
 } from "./editableTree";
+
+export {
+    UnwrappedEditableSequence,
+    appendNodeSymbol,
+} from "./editableTreeSequence";
+
+export {
+    EditableTreeContext,
+    getEditableTreeContext,
+    EditableTreeContextHandler,
+} from "./editableTreeContext";
+
 export {
     PrimitiveValue,
     isPrimitiveValue,

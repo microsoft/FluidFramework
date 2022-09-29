@@ -35,6 +35,9 @@ export class AnchorSet {
 }
 
 // @public
+export const appendNodeSymbol: unique symbol;
+
+// @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @public
@@ -140,6 +143,9 @@ interface Delete {
     type: typeof MarkType.Delete;
 }
 
+// @public (undocumented)
+export const deleteNodeSymbol: unique symbol;
+
 declare namespace Delta {
     export {
         inputLength,
@@ -184,11 +190,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @public
-export interface EditableTree {
-    readonly [anchorSymbol]: Anchor;
-    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
-    readonly [proxyTargetSymbol]: object;
-    readonly [valueSymbol]: Value;
+export interface EditableTree extends FieldlessEditableTree {
     readonly [key: string]: UnwrappedEditableField;
 }
 
@@ -196,8 +198,12 @@ export interface EditableTree {
 export interface EditableTreeContext {
     free(): void;
     prepareForEdit(): void;
+    registerAfterHandler(afterHandler: EditableTreeContextHandler): void;
     readonly root: UnwrappedEditableField;
 }
+
+// @public (undocumented)
+export type EditableTreeContextHandler = (this: EditableTreeContext) => void;
 
 // @public
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
@@ -216,6 +222,12 @@ export enum Effects {
 
 // @public (undocumented)
 const empty: Root<any>;
+
+// @public (undocumented)
+export interface EmptyEditableTree {
+    // (undocumented)
+    readonly [insertRootSymbol]: (root: ITreeCursor) => UnwrappedEditableTree;
+}
 
 // @public
 export const emptyField: FieldSchema;
@@ -324,6 +336,18 @@ export { FieldKinds }
 
 // @public
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
+
+// @public
+export interface FieldlessEditableTree {
+    // (undocumented)
+    readonly [deleteNodeSymbol]: (key: string) => boolean;
+    readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
+    readonly [insertNodeSymbol]: (key: string, value: ITreeCursor) => boolean;
+    readonly [proxyTargetSymbol]: object;
+    // (undocumented)
+    readonly [setValueSymbol]: (key: string, value: unknown, typeName: TreeSchemaIdentifier) => boolean;
+    readonly [valueSymbol]: Value;
+}
 
 // @public
 export interface FieldLocation {
@@ -444,6 +468,12 @@ interface InsertAndModify<TTree = ProtoNode_2> {
     type: typeof MarkType.InsertAndModify;
 }
 
+// @public (undocumented)
+export const insertNodeSymbol: unique symbol;
+
+// @public (undocumented)
+export const insertRootSymbol: unique symbol;
+
 // @public
 export class InvalidationToken {
     constructor(description: string, isSecondaryInvalidation?: boolean);
@@ -461,6 +491,12 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
+
+// @public
+export function isEditableFieldSequence(field: UnwrappedEditableField): field is UnwrappedEditableSequence;
+
+// @public
+export function isEmptyTree(field: UnwrappedEditableField): field is EmptyEditableTree;
 
 // @public
 export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject, AnchorLocator {
@@ -759,6 +795,9 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 
 // @public
+export const NeverAnchor: Anchor;
+
+// @public
 export const neverTree: TreeSchema;
 
 // @public
@@ -947,6 +986,9 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
     // (undocumented)
     setValue(node: NodePath, value: Value): void;
 }
+
+// @public (undocumented)
+export const setValueSymbol: unique symbol;
 
 // @public
 export class SharedTreeFactory implements IChannelFactory {
@@ -1343,10 +1385,15 @@ class UnitEncoder extends ChangeEncoder<0> {
 }
 
 // @public
-export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EmptyEditableTree | UnwrappedEditableSequence;
 
 // @public
-export type UnwrappedEditableTree = EditableTreeOrPrimitive | readonly UnwrappedEditableTree[];
+export type UnwrappedEditableSequence = FieldlessEditableTree & readonly UnwrappedEditableTree[] & {
+    readonly [appendNodeSymbol]: (node: ITreeCursor) => void;
+};
+
+// @public
+export type UnwrappedEditableTree = EmptyEditableTree | EditableTreeOrPrimitive | UnwrappedEditableSequence;
 
 // @public
 export interface UpPath {

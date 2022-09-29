@@ -1,0 +1,205 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { assert } from "@fluidframework/common-utils";
+import { TransactionResult } from "../../checkout";
+import { Dependent, SimpleObservingDependent, InvalidationToken } from "../../dependency-tracking";
+import { IEditableForest, ITreeSubscriptionCursor, ITreeCursor, IForestSubscription, TreeNavigationResult } from "../../forest";
+import { ISharedTree } from "../../shared-tree";
+import { Delta, keyFromSymbol, rootFieldKey, UpPath } from "../../tree";
+import { Multiplicity } from "../modular-schema";
+import { NodePath, SequenceEditBuilder } from "../sequence-change-family";
+import { RootedTextCursor } from "../treeTextCursorLegacy";
+import { proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
+import { ProxyTargetSequence } from "./editableTreeSequence";
+import { getFieldKind } from "./utilities";
+
+/**
+ * A common context of a "forest" of EditableTrees.
+ * It handles group operations like transforming cursors into anchors for edits.
+ * TODO: add test coverage.
+ */
+export interface EditableTreeContext {
+    /**
+     * Gets a Javascript Proxy providing a JavaScript object like API for interacting with the tree.
+     *
+     * Use built-in JS functions to get more information about the data stored e.g.
+     * ```
+     * for (const key of Object.keys(context.root)) { ... }
+     * // OR
+     * if ("foo" in data) { ... }
+     * context.free();
+     * ```
+     *
+     * Not (yet) supported: create properties, set values and delete properties.
+     */
+    readonly root: UnwrappedEditableField;
+
+    /**
+     * Call before editing.
+     *
+     * Note that after performing edits, EditableTrees for nodes that no longer exist are invalid to use.
+     * TODO: maybe add an API to check if a specific EditableTree still exists,
+     * and only make use other than that invalid.
+     */
+    prepareForEdit(): void;
+
+    /**
+     * Call to free resources.
+     * EditableTrees created in this context are invalid to use after this.
+     */
+    free(): void;
+
+    /**
+     * Register a handler function to be called after changes applied to the forest.
+     */
+    registerAfterHandler(afterHandler: EditableTreeContextHandler): void;
+}
+
+export type EditableTreeContextHandler = (this: EditableTreeContext) => void;
+
+function stringifyPath(path: UpPath): string {
+    const fieldName = typeof path.parentField === "string" ? path.parentField : keyFromSymbol(path.parentField);
+    return `${fieldName}[${path.parentIndex}]`;
+}
+
+export class ProxyContext implements EditableTreeContext {
+    public readonly withCursors: Set<ProxyTarget | ProxyTargetSequence> = new Set();
+    public readonly withAnchors: Set<ProxyTarget | ProxyTargetSequence> = new Set();
+    private readonly observers: Dependent[] = [];
+    private readonly afterHandlers: Set<EditableTreeContextHandler> = new Set();
+    private readonly nodes: Map<string, ProxyTarget | ProxyTargetSequence> = new Map();
+    private emptyNode?: ProxyTarget;
+
+    constructor(
+        public readonly forest: IEditableForest,
+        public readonly tree?: ISharedTree,
+    ) {
+        const observer = new SimpleObservingDependent((token?: InvalidationToken, delta?: Delta.Root): void => {
+            if (token?.isSecondaryInvalidation) {
+                this.handleAfterChange();
+            } else {
+                this.prepareForEdit();
+            }
+        });
+        this.observers.push(observer);
+        forest.registerDependent(observer);
+    }
+
+    public prepareForEdit(): void {
+        for (const target of this.withCursors) {
+            target.prepareAnchorForEdit();
+        }
+        assert(this.withCursors.size === 0, 0x3c0 /* prepareForEdit should remove all cursors */);
+    }
+
+    public free(): void {
+        for (const target of this.withCursors) {
+            target.free();
+        }
+        for (const target of this.withAnchors) {
+            target.free();
+        }
+        for (const observer of this.observers) {
+            this.forest.removeDependent(observer);
+        }
+        assert(this.withCursors.size === 0, 0x3c1 /* free should remove all cursors */);
+        assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
+    }
+
+    public get root(): UnwrappedEditableField {
+        const cursor = this.forest.allocateCursor();
+        const destination = this.forest.root(this.forest.rootField);
+        const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
+        const targets: ProxyTarget[] = [];
+        if (cursorResult === TreeNavigationResult.Ok) {
+            do {
+                targets.push(new ProxyTarget(this, cursor));
+            } while (cursor.seek(1) === TreeNavigationResult.Ok);
+        }
+        cursor.free();
+        this.forest.anchors.forget(destination);
+        const rootSchema = this.forest.schema.lookupGlobalFieldSchema(rootFieldKey);
+        const fieldKind = getFieldKind(rootSchema);
+        if (targets.length === 0 && fieldKind.multiplicity !== Multiplicity.Sequence) {
+            targets.push(this.createEmptyTarget());
+        }
+        return proxifyField(this, getFieldKind(rootSchema), targets);
+    }
+
+    public createEmptyTarget(): ProxyTarget {
+        if (!this.emptyNode) {
+            const emptyCursor = this.forest.allocateCursor();
+            this.emptyNode = new ProxyTarget(this, emptyCursor);
+            emptyCursor.free();
+        }
+        return this.emptyNode;
+    }
+
+    public createTarget(cursor: ITreeSubscriptionCursor): ProxyTarget {
+        const rootedCursor = cursor as unknown as RootedTextCursor;
+        let current = rootedCursor.getPath();
+        const upPath: string[] = [stringifyPath(current)];
+        while (current.parent !== undefined) {
+            current = current.parent;
+            upPath.unshift(stringifyPath(current));
+        }
+        const nodePath = upPath.join("/");
+        if (!this.nodes.has(nodePath)) {
+            this.nodes.set(nodePath, new ProxyTarget(this, cursor));
+        }
+        return this.nodes.get(nodePath)! as ProxyTarget;
+    }
+
+    private handleAfterChange(): void {
+        for (const [nodePath, target] of this.nodes) {
+            const path = this.tree?.locate(target.getAnchor())
+            if (path === undefined) {
+                target.free();
+                this.nodes.delete(nodePath);
+            }
+        }
+        for (const afterHandler of this.afterHandlers) {
+            afterHandler.call(this);
+        }
+    }
+
+    public registerAfterHandler(afterHandler: EditableTreeContextHandler): void {
+        this.afterHandlers.add(afterHandler);
+    }
+
+    public setNodeValue(path: NodePath, value: unknown): boolean {
+        return this.runTransaction((editor) => editor.setValue(path, value));
+    }
+
+    public insertNode(path: NodePath, nodeCursor: ITreeCursor): boolean {
+        return this.runTransaction((editor) => editor.insert(path, nodeCursor));
+    }
+
+    public deleteNode(path: NodePath, count: number): boolean {
+        return this.runTransaction((editor) => editor.delete(path, count));
+    }
+
+    private runTransaction(f: (editor: SequenceEditBuilder) => void): boolean {
+        assert(this.tree !== undefined, "Transaction-based editing requires `SharedTree` instance");
+        // this.prepareForEdit();
+        const result = this.tree?.runTransaction((forest: IForestSubscription, editor: SequenceEditBuilder) => {
+            f(editor);
+            return TransactionResult.Apply;
+        });
+        return result === TransactionResult.Apply;
+    }
+}
+
+/**
+ * A simple API for a Forest to interact with the tree.
+ *
+ * @returns {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
+ * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
+ */
+ export function getEditableTreeContext(forest: IEditableForest, tree?: ISharedTree): EditableTreeContext {
+    return new ProxyContext(forest, tree);
+}

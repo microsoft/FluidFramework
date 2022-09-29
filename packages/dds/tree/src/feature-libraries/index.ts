@@ -4,7 +4,6 @@
  */
 
 export * from "./object-forest";
-export * from "./editable-tree";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
 export { SchemaIndex } from "./schemaIndex";
@@ -52,3 +51,4 @@ import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
 export * from "./deltaUtils";
+export * from "./editable-tree";

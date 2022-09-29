@@ -99,7 +99,7 @@ class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
                 submitEdit: (edit) => this.submitEdit(edit),
             };
 
-            this.context = getEditableTreeContext(forest);
+            this.context = getEditableTreeContext(forest, this);
     }
 
     public locate(anchor: Anchor): UpPath | undefined {
