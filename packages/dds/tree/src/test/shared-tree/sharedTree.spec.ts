@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { singleTextCursor } from "../../feature-libraries";
+import { fail, strict as assert } from "assert";
+import { FieldKinds, singleTextCursor, anchorSymbol, isUnwrappedNode, valueSymbol } from "../../feature-libraries";
 import { brand } from "../../util";
-import { detachedFieldAsKey, TreeValue } from "../../tree";
+import { detachedFieldAsKey, rootFieldKey, TreeValue } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
+import { fieldSchema, namedTreeSchema } from "../../schema-stored";
 
 describe("SharedTree", () => {
     it("reads only one node", async () => {
@@ -45,7 +46,7 @@ describe("SharedTree", () => {
         const value = "42";
 
         // Apply an edit to the first tree which inserts a node with a value
-        setTestValue(provider.trees[0], value);
+        initializeTestTreeWithValue(provider.trees[0], value);
 
         // Ensure that the first tree has the state we expect
         assert.equal(getTestValue(provider.trees[0]), value);
@@ -62,7 +63,7 @@ describe("SharedTree", () => {
         const [summarizingTree] = provider.trees;
         const summarize = await provider.enableManualSummarization();
         const value = 42;
-        setTestValue(summarizingTree, value);
+        initializeTestTreeWithValue(summarizingTree, value);
         await summarize();
         await provider.ensureSynchronized();
         const loadingTree = await provider.createTree();
@@ -76,7 +77,7 @@ describe("SharedTree", () => {
             const [tree1, tree2] = provider.trees;
 
             // Insert node
-            setTestValue(tree1, value);
+            initializeTestTreeWithValue(tree1, value);
 
             await provider.ensureSynchronized();
 
@@ -146,13 +147,58 @@ describe("SharedTree", () => {
             }
         });
     });
+
+    it("can edit using editable-tree", async () => {
+        const provider = await TestTreeProvider.create(1);
+        const [sharedTree] = provider.trees;
+
+        // Currently EditableTree does not have a way to hold onto fields/sequences across edits, only nodes, so insert a node to get started.
+
+        // Insert node
+        initializeTestTreeWithValue(sharedTree, 1);
+
+        // Locate node to edit using EditableTree API
+        const editable = sharedTree.root;
+        assert(isUnwrappedNode(editable));
+        const anchor = editable[anchorSymbol];
+
+        // Check value we will edit is what we initialized it to.
+        assert.equal(editable[valueSymbol], 1);
+
+        // Perform an edit
+        sharedTree.runTransaction((forest, editor) => {
+            // Perform an edit
+            const path = sharedTree.locate(anchor)??fail("anchor should exist");
+            sharedTree.context.prepareForEdit()
+            editor.setValue(path, 2);
+
+            // Check that the edit is reflected in the EditableTree
+            assert.equal(editable[valueSymbol], 2);
+
+            sharedTree.context.prepareForEdit()
+            return TransactionResult.Apply;
+        });
+
+        // Check that the edit is reflected in the EditableTree after the transaction.
+        assert.equal(editable[valueSymbol], 2);
+    });
 });
 
 /**
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link getTestValue} to read the value.
  */
-function setTestValue(tree: ISharedTree, value: TreeValue): void {
+function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
+    const rootFieldSchema = fieldSchema(FieldKinds.value);
+    const rootNodeSchema = namedTreeSchema({
+        name: brand("TestValue"),
+        extraLocalFields: fieldSchema(FieldKinds.sequence)
+    })
+
+    // TODO: schema should be added via Fluid operations so all clients receive them.
+    tree.forest.schema.updateTreeSchema(rootNodeSchema.name, rootNodeSchema);
+    tree.forest.schema.updateFieldSchema(rootFieldKey, rootFieldSchema);
+
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
@@ -167,7 +213,7 @@ function setTestValue(tree: ISharedTree, value: TreeValue): void {
 }
 
 /**
- * Reads a value in a tree set by {@link setTestValue} if it exists
+ * Reads a value in a tree set by {@link initializeTestTreeWithValue} if it exists.
  */
 function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
     const readCursor = forest.allocateCursor();

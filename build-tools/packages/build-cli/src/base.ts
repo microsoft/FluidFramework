@@ -91,7 +91,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         if (this._logger === undefined) {
             this._logger = {
                 info: (msg: string | Error) => {
-                    this.log(msg.toString());
+                    this.info(msg.toString());
                 },
                 warning: this.warning.bind(this),
                 errorLog: (msg: string | Error) => {

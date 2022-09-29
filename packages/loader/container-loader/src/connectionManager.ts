@@ -59,6 +59,7 @@ import {
     IConnectionManagerFactoryArgs,
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
+import { SignalType } from "./protocol";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -713,17 +714,43 @@ export class ConnectionManager implements IConnectionManager {
             initialMessages,
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
-        if (connection.initialSignals !== undefined) {
-            for (const signal of connection.initialSignals) {
-                this.props.signalHandler(signal);
-            }
-        }
-
         const details = ConnectionManager.detailsFromConnection(connection);
         details.checkpointSequenceNumber = checkpointSequenceNumber;
         this.props.connectHandler(details);
 
         this.connectFirstConnection = false;
+
+        // Synthesize clear & join signals out of initialClients state.
+        // This allows us to have single way to process signals, and makes it simpler to initialize
+        // protocol in Container.
+        const clearSignal: ISignalMessage = {
+            clientId: null, // system message
+            content: JSON.stringify({
+                type: SignalType.Clear,
+            }),
+        };
+        this.props.signalHandler(clearSignal);
+
+        for (const priorClient of connection.initialClients ?? []) {
+            const joinSignal: ISignalMessage = {
+                clientId: null, // system signal
+                content: JSON.stringify({
+                    type: SignalType.ClientJoin,
+                    content: priorClient, // ISignalClient
+                }),
+            };
+            this.props.signalHandler(joinSignal);
+        }
+
+        // Unfortunately, there is no defined order between initialSignals (including join & leave signals)
+        // and connection.initialClients. In practice, connection.initialSignals quite often contains join signal
+        // for "self" and connection.initialClients does not contain "self", so we have to process them after
+        // "clear" signal above.
+        if (connection.initialSignals !== undefined) {
+            for (const signal of connection.initialSignals) {
+                this.props.signalHandler(signal);
+            }
+        }
     }
 
     /**

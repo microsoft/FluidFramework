@@ -1,10 +1,8 @@
 # Adding breaking and upcoming change notes
 
-Notes on breaking, upcoming, and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
+Notes on breaking, upcoming, and otherwise interesting changes go here. They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
 
-Upcoming changes include anything expected to become a breaking change in the future.  It can include deprecations, optional to required transitions, etc.  They should be added to the section for the version in which they are being announced.
-
-Breaking changes include anything that a consumer upgrading to the specified version must account for as part of the upgrade process.  It can include expected compile time breaks, runtime compatibility breaks, etc.  They should typically be announced as an upcoming change in an earlier version before becoming a breaking change.
+For more information on best practices around communicating breaking please see our docs [here](https://github.com/microsoft/FluidFramework/wiki/Communicating-breaking-changes)
 
 ## Writing a change note
 
@@ -17,18 +15,33 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
-# 3.0.0
+# 2.0.0-internal-1.3.0
 
-## 3.0.0 Upcoming changes
-- [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
-- [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
-- [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
+## 2.0.0-internal-1.3.0 Upcoming changes
+- [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
+
+### Add fluidInvalidSchema errorType to DriverErrorType enum
+Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
+was mistook as a Fluid file, and is unable to be opened. The innerMostErrorCode will also be "fluidInvalidSchema".
+This is not breaking change yet. But if clients do not add handling for this error, their existing version of applications may start receiving this error in the future, and may not handle it correctly.
+
+# 2.0.0-internal-1.1.0
+
+## 2.0.0-internal-1.1.0 Upcoming changes
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
-- 
-### Remove `type` field from `ShareLinkInfoType`
+- [Remove type field from ShareLinkInfoType](#Remove-type-field-from-ShareLinkInfoType)
+- [Remove ShareLinkTypes interface](#Remove-ShareLinkTypes-interface)
+- [Remove enableShareLinkWithCreate from HostStoragePolicy](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
+- [Various return types in @fluidframework/sequence have been widened to include undefined](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
+
+
+### Add assertion that prevents sending op while processing another op
+`preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
+
+### Remove type field from ShareLinkInfoType
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
-### Remove `ShareLinkTypes` interface
+### Remove ShareLinkTypes interface
 `ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Singnature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
 ```diff
     function createOdspCreateContainerRequest(
@@ -38,26 +51,49 @@ This field has been deprecated and will be removed in a future breaking change. 
         fileName: string,
 -       createShareLinkType?: ShareLinkTypes,
 +       createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
-    ): 
+    ):
 ```
-
-
-### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
+### Remove enableShareLinkWithCreate from HostStoragePolicy
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
-### Add assertion that prevents sending op while processing another op
-`preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
-# 2.0.0
 
-## 2.0.0 Upcoming changes
-- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
-- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
-- [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
-- [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
+# 2.0.0-internal-1.0.0
+
+## 2.0.0-internal-1.0.0 Upcoming changes
+- [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
+- [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
+- [IContainerRuntime.flush is deprecated](#icontainerruntimeflush-is-deprecated)
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
-- [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
-- [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [Remove documentId field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+- [getTextAndMarkers changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
 
-### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
+### Deprecate ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please migrate all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
+### Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels
+`ISummaryRuntimeOptions.disableIsolatedChannels` has been deprecated and will be removed in a future release.
+There will be no replacement for this property.
+
+### IContainerRuntime.flush is deprecated
+`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
+### MergeTree class is deprecated
+The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
+
+### Remove documentId field from MockFluidDataStoreContext
+This field has been deprecated and will be removed in a future breaking change.
+
+### Remove ConnectionState.Connecting
+`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
+
+### getTextAndMarkers changed to be a free function
+
+`SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
+To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
+The corresponding method on `IMergeTreeTexHelper` will also be removed.
+
+### Various return types in @fluidframework/sequence have been widened to include undefined
 
 Strict null checks have been enabled in `@fluidframework/sequence`. As part of this, the return types of several functions have been modified to include `| undefined`. This does not represent a behavioral change.
 
@@ -84,49 +120,17 @@ The functions affected are:
  - `SubSequence.createSplitSegmentAt`
  - `SubSequence.fromJSONObject`
 
-### Remove `documentId` field from `MockFluidDataStoreContext`
-This field has been deprecated and will be removed in a future breaking change.
 
-### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
-`clientId` can only ever be of type `string`, so it is superfluous for the type
-to be `string | undefined`.
-
-### Remove `ConnectionState.Connecting`
-`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
-
-### `IContainerRuntime.flush` is deprecated
-`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
-
-### MergeTree class is deprecated
-    The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
-
-### `getTextAndMarkers` changed to be a free function
-
-`SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
-To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
-The corresponding method on `IMergeTreeTexHelper` will also be removed.
-
-## 2.0.0 Breaking changes
-- [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
+## 2.0.0-internal-1.0.0 Breaking changes
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
 - [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
 - [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
-- [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
-- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
-- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
-- [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+- [Narrow type of clientId field on MockFluidDataStoreRuntime](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
-- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
-- [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
-- [Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
+- [REVERTED: ~~Remove IFluidDataStoreChannel.bindToContext and related types~~](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
+- [Remove aliasing return value from AliasResult](#remove-aliasing-return-value-from-aliasresult)
+- [Creating root datastores using IContainerRuntime.CreateRootDataStore and IContainerRuntimeBase._createDataStoreWithProps is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
 
-### Deprecate ISummaryConfigurationHeuristics.idleTime
-`ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
-Please migrate all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
-
-### Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels
-`ISummaryRuntimeOptions.disableIsolatedChannels` has been deprecated and will be removed in a future release.
-There will be no replacement for this property.
 
 ### LocalReference class and method deprecations removed
 In 0.59.0 the [LocalReference class and it's related methods were deprecated](#LocalReference-class-and-method-deprecations)
@@ -144,17 +148,26 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 ### Remove ConnectionState.Connecting
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
 
+### Remove ICodeLoader from @fluidframework/container-definitions
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
+
 ### Remove ISummaryAuthor and ISummaryCommitter
 `ISummaryAuthor` and`ISummaryCommitter` have been removed in this release. See [#10456](https://github.com/microsoft/FluidFramework/issues/10456) for details.
 
-### Remove IFluidDataStoreChannel.bindToContext and related types
-`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
-See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
+### Narrow type of clientId field on MockFluidDataStoreRuntime
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
 
-### Remove `aliasing` return value from `AliasResult`
+### Remove IFluidDataStoreChannel.bindToContext and related types
+**THIS BREAKING CHANGE IS REVERTED AS OF 2.0.0-internal.1.1.3**
+
+~~`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
+See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.~~
+
+### Remove aliasing return value from AliasResult
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
 
-### Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported
+### Creating root datastores using IContainerRuntime.CreateRootDataStore and IContainerRuntimeBase._createDataStoreWithProps is no longer supported
 The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use aliasing instead. See [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated). The `isRoot` parameter from `IContainerRuntimeBase._createDataStoreWithProps` has also been removed. Additionally, the feature gate which would switch to using aliasing behind the aforementioned deleted APIs, `Fluid.ContainerRuntime.UseDataStoreAliasing` will no longer be observed by the runtime. As aliasing is the default behavior for creating such datastores, the `useDataStoreAliasing` property from `IContainerRuntimeOptions` has been removed.
 
 # 1.2.0
@@ -332,8 +345,6 @@ Additionally, please note that the `Connecting` state is being renamed to `Catch
 `ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
 `ConnectionState.Connecting` will be removed in the following major release.
 
-### Remove ICodeLoader from `@fluidframework/container-definitions`
-`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 # 0.59
 

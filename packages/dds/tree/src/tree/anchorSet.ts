@@ -20,6 +20,21 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 const NeverAnchor: Anchor = brand(0);
 
 /**
+ * Maps anchors (which must be ones this locator knows about) to paths.
+ */
+export interface AnchorLocator {
+    /**
+     * Get the current location of an Anchor.
+     * The returned value should not be used after an edit has occurred.
+     *
+     * TODO: support extra/custom return types for specific/custom anchor types:
+     * for now caller must rely on data in anchor + returned node location
+     * (not ideal for anchors for places or ranges instead of nodes).
+     */
+    locate(anchor: Anchor): UpPath | undefined;
+}
+
+/**
  * Collection of Anchors at a specific revision.
  *
  * See {@link Rebaser} for how to update across revisions.
@@ -58,14 +73,6 @@ export class AnchorSet {
         return this.root.children.size === 0;
     }
 
-    /**
-     * Get the current location of an Anchor.
-     * The returned value should not be used after an edit has occurred.
-     *
-     * TODO: support extra/custom return types for specific/custom anchor types:
-     * for now caller must rely on data in anchor + returned node location
-     * (not ideal for anchors for places or ranges instead of nodes).
-     */
     public locate(anchor: Anchor): UpPath | undefined {
         if (anchor === NeverAnchor) {
             return undefined;
