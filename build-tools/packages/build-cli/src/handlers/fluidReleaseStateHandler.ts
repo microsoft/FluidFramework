@@ -138,7 +138,6 @@ export interface FluidReleaseStateHandlerData {
  * this class; it only acts as a "router" to route to the correct function based on the current state.
  */
 export class FluidReleaseStateHandler extends InitFailedStateHandler {
-    // eslint-disable-next-line complexity
     async handleState(
         state: MachineState,
         machine: Machine<unknown>,

@@ -6,12 +6,10 @@
 module.exports = {
     plugins: ["@typescript-eslint"],
     extends: [
-        // "eslint:recommended",
-        // "plugin:@typescript-eslint/recommended",
+        "oclif",
+        "oclif-typescript",
         // eslint-disable-next-line node/no-extraneous-require
         require.resolve("@fluidframework/eslint-config-fluid"),
-        // "oclif",
-        // "oclif-typescript",
         "prettier",
     ],
     rules: {
@@ -42,7 +40,7 @@ module.exports = {
         // Causes issues with some versions of node
         "unicorn/prefer-node-protocol": "off",
 
-        // Too strict for this package
-        // "valid-jsdoc": "off",
+        // Deprecated in 2018: https://eslint.org/blog/2018/11/jsdoc-end-of-life/
+        "valid-jsdoc": "off",
     },
 };

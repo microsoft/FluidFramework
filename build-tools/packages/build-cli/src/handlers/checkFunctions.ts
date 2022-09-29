@@ -769,7 +769,7 @@ export const checkValidReleaseGroup: StateHandlerFunction = async (
 
     if (isReleaseGroup(releaseGroup)) {
         BaseStateHandler.signalSuccess(machine, state);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, no-negated-condition
     } else if (context.fullPackageMap.get(releaseGroup!) !== undefined) {
         BaseStateHandler.signalSuccess(machine, state);
     } else {

@@ -306,7 +306,7 @@ export async function isReleased(
 
     const tagName = generateReleaseGitTagName(releaseGroupOrPackage, version);
     if (typeof releaseGroupOrPackage === "string" && isReleaseGroup(releaseGroupOrPackage)) {
-        // eslint-disable-next-line no-param-reassign
+        // eslint-disable-next-line no-param-reassign, @typescript-eslint/no-non-null-assertion
         releaseGroupOrPackage = context.repo.releaseGroups.get(releaseGroupOrPackage)!;
     }
 

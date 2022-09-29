@@ -46,14 +46,14 @@ async function generateMonoRepoPackageLockJson(
             return;
         }
 
-        // eslint-disable-next-line guard-for-in
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const dep in item.dependencies) {
             setDev(item.dependencies[dep]);
         }
     };
 
     // Assume all of them are dev dependencies
-    // eslint-disable-next-line guard-for-in
+    // eslint-disable-next-line guard-for-in, no-restricted-syntax
     for (const dep in repoPackageLockJson.dependencies) {
         topLevelDevCount++;
         setDev(repoPackageLockJson.dependencies[dep]);
@@ -69,13 +69,14 @@ async function generateMonoRepoPackageLockJson(
 
         if (item.dependencies !== undefined) {
             // mark unhoisted dependencies recursively
-            // eslint-disable-next-line guard-for-in
+            // eslint-disable-next-line guard-for-in, no-restricted-syntax
             for (const dep in item.dependencies) {
                 markNonDev(dep, topRef, item.dependencies[dep], refStack);
             }
         }
 
         // Mark the hoisted dependencies
+        // eslint-disable-next-line no-restricted-syntax
         for (const req in item.requires) {
             if (!refStack.some((scope) => scope.dependencies?.[req] !== undefined)) {
                 markTopLevelNonDev(req, name, topRef);
@@ -102,7 +103,7 @@ async function generateMonoRepoPackageLockJson(
     };
 
     // Go thru the non-dev dependencies in the package.json file and recursively mark the dependency tree as non-dev
-    // eslint-disable-next-line guard-for-in
+    // eslint-disable-next-line guard-for-in, no-restricted-syntax
     for (const dep in repoPackageJson.dependencies) {
         markTopLevelNonDev(dep, "<root>", "<root>");
     }
@@ -136,6 +137,7 @@ function processDependencies(
     logger: Logger,
 ) {
     let depCount = 0;
+    // eslint-disable-next-line no-restricted-syntax
     for (const dep in packageJson.dependencies) {
         if (packageMap.has(dep)) {
             continue;
@@ -167,6 +169,7 @@ function processDevDependencies(
     logger: Logger,
 ) {
     let devDepCount = 0;
+    // eslint-disable-next-line no-restricted-syntax
     for (const dep in packageJson.devDependencies) {
         if (packageMap.has(dep)) {
             continue;
