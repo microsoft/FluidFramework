@@ -532,7 +532,6 @@ describe("client.applyMsg", () => {
         assert.strictEqual(seg.segment, undefined);
     });
 
-    /* eslint-disable max-len */
     /**
      * Regression test for an issue whereby reconnected clients could have segment orders that yielded
      * different tiebreaking results for inserted segments. Specifically, client C's "c" segment
