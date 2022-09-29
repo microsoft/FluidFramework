@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { URL } from "url";
 import child_process from "child_process";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { configurableUrlResolver } from "@fluidframework/driver-utils";

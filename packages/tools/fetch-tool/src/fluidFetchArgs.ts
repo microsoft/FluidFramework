@@ -4,7 +4,6 @@
  */
 
 import fs from "fs";
-import { URL } from "url";
 
 export let dumpMessages = false;
 export let dumpMessageStats = false;
