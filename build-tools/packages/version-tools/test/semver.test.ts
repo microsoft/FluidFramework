@@ -132,6 +132,26 @@ describe("semver", () => {
         it("invalid semver v2 throws", () => {
             assert.throws(() => detectBumpType("0.0.1", "bad semver"));
         });
+
+        it("v1 is semver, v2 is internal with smaller internal version", () => {
+            assert.equal(detectBumpType("1.2.6", "2.0.0-internal.1.0.0"), "major");
+        });
+
+        it("v1 is virtualPatch, v2 is internal", () => {
+            assert.equal(detectBumpType("0.4.2000", "2.0.0-internal.1.0.0"), "major");
+        });
+
+        it("v1 is semver, v2 is internal with larger internal version", () => {
+            assert.equal(detectBumpType("1.4.1", "2.0.0-internal.3.0.0"), "major");
+        });
+
+        it("v1 is semver, v2 is internal with smaller internal version", () => {
+            assert.equal(detectBumpType("1.4.1", "2.0.0-internal.1.1.0"), "major");
+        });
+
+        it("v1 is semver, v2 is internal but smaller than v1", () => {
+            assert.throws(() => detectBumpType("2.1.0", "2.0.0-internal.3.0.0"));
+        });
     });
 
     describe("internal version scheme ranges", () => {
