@@ -39,18 +39,12 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     // The first change in this list is based on the last change in the trunk.
     // Every other change in this list is based on the change preceding it.
     private localChanges: TChangeset[] = [];
-    private localSessionId: SessionId | undefined;
 
     public constructor(
+        private readonly localSessionId: SessionId,
         public readonly changeFamily: TChangeFamily,
         public readonly anchors?: AnchorSet,
     ) { }
-
-    public setLocalSessionId(id: SessionId) {
-        assert(this.localSessionId === undefined || this.localSessionId === id,
-            0x3a1 /* Local session ID cannot be changed */);
-        this.localSessionId = id;
-    }
 
     public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
         return this.trunk;
