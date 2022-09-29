@@ -107,6 +107,9 @@ export class BlobCacheStorageService extends DocumentStorageServiceProxy {
 // @public
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
 
+// @public (undocumented)
+export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+
 // @public
 export const canRetryOnError: (error: any) => boolean;
 
@@ -184,6 +187,15 @@ export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl;
 
 // @public
+export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    constructor(message: string, props: DriverErrorTelemetryProps);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.fluidInvalidSchema;
+}
+
+// @public
 export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string, canRetry: boolean, props: DriverErrorTelemetryProps);
     // (undocumented)
@@ -227,7 +239,7 @@ export interface IProgress {
     onRetry?(delayInMs: number, error: any): void;
 }
 
-// @public (undocumented)
+// @public
 export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
 // @public (undocumented)
@@ -236,15 +248,17 @@ export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolve
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
 
-// @public (undocumented)
-export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
+// @public
+export function isRuntimeMessage(message: {
+    type: string;
+}): boolean;
 
 // @public
 export interface ISummaryTreeAssemblerProps {
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @public @deprecated
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)
@@ -260,6 +274,12 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
+
+// @public (undocumented)
+export enum MessageType2 {
+    // (undocumented)
+    Accept = "accept"
+}
 
 // @public (undocumented)
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {

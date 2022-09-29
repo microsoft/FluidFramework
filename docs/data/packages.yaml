@@ -1,5 +1,6 @@
 libraries:
 - "fluid-framework"
+- "@fluidframework/counter"
 serviceClients:
 - "@fluidframework/azure-client"
 - "@fluidframework/tinylicious-client"

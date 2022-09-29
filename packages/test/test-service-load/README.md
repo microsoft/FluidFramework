@@ -73,6 +73,12 @@ If present, launch in Test Runner mode with the given runId (to distinguish from
 
 Launches each test runner with `--inspect-brk` and a unique Node debugging port. (Not compatible with `--runId`)
 
+#### --createTestId	
+
+If the `testId` argument is specified, the `createTestId` flag determines whether to load an exisiting
+document corresponding to the `testId` specified, or create a new one. When `createTestId` is set to true,
+a new document is created, and when `createTestId` is false, we try to load an existing document.
+
 #### --log, -l
 
 Overrides DEBUG environment variable for telemetry logging to console.

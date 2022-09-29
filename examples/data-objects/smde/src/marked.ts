@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedString } from "@fluidframework/sequence";
+import { getTextAndMarkers, SharedString } from "@fluidframework/sequence";
 import marked from "marked";
 
 export class Viewer {
@@ -18,7 +18,7 @@ export class Viewer {
     }
 
     private getText(): string {
-        const { parallelText } = this.text.getTextAndMarkers("pg");
+        const { parallelText } = getTextAndMarkers(this.text, "pg");
         return parallelText.join("\n");
     }
 }

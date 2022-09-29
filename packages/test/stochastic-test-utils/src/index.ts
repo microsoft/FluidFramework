@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+export * from "./describeFuzz";
 export * from "./generators";
 export * from "./types";
 export * from "./performActions";
-export * from "./random";
+export { makeRandom } from "./random";
 export { XSadd } from "./xsadd";
+export { PerformanceWordMarkovChain, SpaceEfficientWordMarkovChain } from "./markovChain";

@@ -92,7 +92,8 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(TodoFactory.type, todoId);
+        const dataStore = await runtime.createDataStore(TodoFactory.type);
+        await dataStore.trySetAlias(todoId);
     }
 }
 

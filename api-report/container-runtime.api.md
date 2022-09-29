@@ -13,6 +13,7 @@ import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IBatchMessage } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
@@ -41,7 +42,6 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -89,24 +89,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger?: ITelemetryLogger;
         runSweep?: boolean;
         fullGC?: boolean;
-    }): Promise<IGCStats>;
+    }): Promise<IGCStats | undefined>;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IDataStore>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
-    // @deprecated (undocumented)
-    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly disableIsolatedChannels: boolean;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
@@ -115,6 +112,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // (undocumented)
     flush(): void;
+    // Warning: (ae-forgotten-export) The symbol "BatchMessage" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    protected flushBatch(batch: BatchMessage[]): void;
     // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)
@@ -127,7 +128,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(): IPendingRuntimeState;
+    getPendingLocalState(): unknown;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
@@ -335,7 +336,6 @@ export interface IContainerRuntimeOptions {
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
-    readonly useDataStoreAliasing?: boolean;
 }
 
 // @public
@@ -346,7 +346,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 
 // @public
 export interface IGarbageCollectionRuntime {
-    closeFn(error?: ICriticalContainerError): void;
+    closeFn: (error?: ICriticalContainerError) => void;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
@@ -448,15 +448,6 @@ export interface IPendingMessage {
     type: "message";
 }
 
-// @public
-export interface IPendingRuntimeState {
-    baseSnapshot: ISnapshotTree;
-    pending?: IPendingLocalState;
-    savedOps: ISequencedDocumentMessage[];
-    // Warning: (ae-forgotten-export) The symbol "ISerializedBaseSnapshotBlobs" needs to be exported by the entry point index.d.ts
-    snapshotBlobs: ISerializedBaseSnapshotBlobs;
-}
-
 // @public (undocumented)
 export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 
@@ -471,7 +462,7 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
     gcStats?: IGCStats;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public
@@ -633,19 +624,17 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
-    // @deprecated (undocumented)
-    disableIsolatedChannels?: boolean;
-    // @deprecated (undocumented)
+    // @deprecated
     disableSummaries?: boolean;
-    // @deprecated (undocumented)
+    // @deprecated
     initialSummarizerDelayMs?: number;
     // @deprecated (undocumented)
     maxOpsSinceLastSummary?: number;
-    // @deprecated (undocumented)
+    // @deprecated
     summarizerClientElection?: boolean;
     // Warning: (ae-forgotten-export) The symbol "ISummarizerOptions" needs to be exported by the entry point index.d.ts
     //
-    // @deprecated (undocumented)
+    // @deprecated
     summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
     summaryConfigOverrides?: ISummaryConfiguration;
 }
@@ -674,7 +663,7 @@ export enum RuntimeHeaders {
     wait = "wait"
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export enum RuntimeMessage {
     // (undocumented)
     Alias = "alias",
@@ -694,11 +683,13 @@ export enum RuntimeMessage {
 
 // @public
 export class ScheduleManager {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, getClientId: () => string | undefined, logger: ITelemetryLogger);
     // (undocumented)
     afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage): void;
     // (undocumented)
     beforeOpProcessing(message: ISequencedDocumentMessage): void;
+    // (undocumented)
+    readonly getClientId: () => string | undefined;
 }
 
 // @public
@@ -783,8 +774,10 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
-// @public (undocumented)
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage;
+// Warning: (ae-internal-missing-underscore) The name "unpackRuntimeMessage" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // (No @packageDocumentation comment for this package)
 

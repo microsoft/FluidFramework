@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { delay, performance } from "@fluidframework/common-utils";
-import { canRetryOnError } from "@fluidframework/driver-utils";
+import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { Odsp409Error } from "./epochTracker";
 
@@ -43,8 +43,10 @@ export async function runWithRetry<T>(
 
             const coherencyError = error?.[Odsp409Error] === true;
             const serviceReadonlyError = error?.errorType === OdspErrorType.serviceReadOnly;
-            // Retry for retriable 409 coherency errors or serviceReadOnly errors.
-            if (!(coherencyError || serviceReadonlyError || canRetry)) {
+            // Retry for retriable 409 coherency errors or serviceReadOnly errors. These errors are always retriable
+            // unless someone specifically set canRetry = false on the error like in fetchSnapshot() flow. So in
+            // that case don't retry.
+            if (!((coherencyError || serviceReadonlyError) && canRetry)) {
                 throw error;
             }
 
@@ -54,8 +56,8 @@ export async function runWithRetry<T>(
             if (attempts === 5) {
                 logger.sendErrorEvent(
                     {
-                        eventName: coherencyError ?
-                            "CoherencyErrorTooManyRetries" : "ServiceReadonlyErrorTooManyRetries",
+                        eventName: coherencyError ? "CoherencyErrorTooManyRetries" :
+                            "ServiceReadonlyErrorTooManyRetries",
                         callName,
                         attempts,
                         duration: performance.now() - start, // record total wait time.
@@ -66,6 +68,7 @@ export async function runWithRetry<T>(
                 throw error;
             }
 
+            retryAfter = getRetryDelayFromError(error) ?? retryAfter;
             await delay(Math.floor(retryAfter));
             retryAfter += retryAfter / 4 * (1 + Math.random());
             lastError = error;

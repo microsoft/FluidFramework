@@ -18,6 +18,8 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions"
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
@@ -203,7 +205,9 @@ async function runnerProcess(
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
             if (enableOpsMetrics) {
-                metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs);
+                const testRuntime = await test.getRuntime();
+                metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs,
+                                                       testRuntime);
             }
 
             // Control fault injection period through config.
@@ -226,7 +230,7 @@ async function runnerProcess(
 
             try {
                 printStatus(runConfig, `running`);
-                done = await test.run(runConfig, reset);
+                done = await test.run(runConfig, reset, logger);
                 reset = false;
                 printStatus(runConfig, done ? `finished` : "closed");
             } catch (error) {
@@ -351,7 +355,8 @@ function scheduleContainerClose(
     });
 }
 
-async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number) {
+async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number,
+    testRuntime: IFluidDataStoreRuntime) {
     // Use map to cache userName instead of recomputing.
     const clientIdUserNameMap: { [clientId: string]: string; } = {};
 
@@ -386,6 +391,16 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
         }
     });
 
+    let submittedSignals = 0;
+    let receivedSignals = 0;
+    testRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        if (message.type === "generic-signal" && local === true) {
+            submittedSignals += 1;
+        } else if (message.type === "generic-signal" && local === false) {
+            receivedSignals += 1;
+        }
+    });
+
     let t: NodeJS.Timeout | undefined;
     const sendMetrics = () => {
         if (submitedOps > 0) {
@@ -409,8 +424,31 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
             });
         }
 
+        if (submittedSignals > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Signals Submitted",
+                testHarnessEvent: true,
+                value: submittedSignals,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+        if (receivedSignals > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Signals Received",
+                testHarnessEvent: true,
+                value: receivedSignals,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+
         submitedOps = 0;
         receivedOps = 0;
+        submittedSignals = 0;
+        receivedSignals = 0;
 
         t = setTimeout(sendMetrics, progressIntervalMs);
     };

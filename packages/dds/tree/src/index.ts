@@ -11,8 +11,13 @@ export {
 export {
     EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
     UpPath, Anchor, RootField, ChildCollection,
-    ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
-    Delta,
+    ChildLocation, FieldMapObject, NodeData, GenericTreeNode, JsonableTree,
+    Delta, rootFieldKey, FieldScope, GlobalFieldKeySymbol, symbolFromKey, keyFromSymbol,
+    ITreeCursorNew,
+    CursorLocationType,
+    ITreeCursorSynchronous,
+    GenericFieldsNode,
+    AnchorLocator
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -21,18 +26,16 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     FieldLocation,
     ForestLocation,
     ITreeSubscriptionCursor,
-    ForestAnchor,
     ITreeSubscriptionCursorState,
     SynchronousNavigationResult,
 } from "./forest";
 
 export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
-    FieldSchema, ValueSchema, TreeSchema, FieldKind,
-    emptyField, neverTree,
-    SchemaRepository, StoredSchemaRepository,
-    rootFieldKey,
-} from "./schema";
+    FieldSchema, ValueSchema, TreeSchema,
+    StoredSchemaRepository, FieldKindIdentifier,
+    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+} from "./schema-stored";
 
 export {
     Brand,
@@ -45,16 +48,32 @@ export {
     Covariant,
     ExtractFromOpaque,
     isAny,
+    brand,
+    brandOpaque,
+    ValueFromBranded,
+    NameFromBranded,
+    JsonCompatibleReadOnly,
+    JsonCompatible,
+    JsonCompatibleObject,
 } from "./util";
+
+export {
+    ChangeEncoder,
+    ChangeFamily,
+    ProgressiveEditBuilder,
+} from "./change-family";
 
 export {
     Rebaser,
     ChangeRebaser,
     RevisionTag,
-    ChangeFromChangeRebaser,
-    FinalFromChangeRebaser,
-    ChangeSetFromChangeRebaser,
+    ChangesetFromChangeRebaser,
 } from "./rebase";
+
+export {
+    ICheckout,
+    TransactionResult,
+} from "./checkout";
 
 export {
     cursorToJsonObject,
@@ -67,4 +86,65 @@ export {
     buildForest,
     TextCursor,
     jsonableTreeFromCursor,
+    singleTextCursor,
+    emptyField,
+    neverTree,
+    FieldKinds,
+    ModularChangeFamily,
+    ModularEditBuilder,
+    FieldChangeHandler,
+    FieldEditor,
+    FieldChangeRebaser,
+    FieldChangeEncoder,
+    NodeChangeset,
+    ValueChange,
+    FieldChangeMap,
+    FieldChangeset,
+    FieldChange,
+    ToDelta,
+    UpPathWithFieldKinds,
+    NodeChangeComposer,
+    NodeChangeInverter,
+    NodeChangeRebaser,
+    NodeChangeEncoder,
+    NodeChangeDecoder,
+    FieldKind,
+    Multiplicity,
+    isNeverField,
+    FullSchemaPolicy,
+    UnwrappedEditableField,
+    EditableTreeContext,
+    UnwrappedEditableTree,
+    EditableTreeOrPrimitive,
+    EditableTree,
+    isPrimitiveValue,
+    isPrimitive,
+    getTypeSymbol,
+    valueSymbol,
+    proxyTargetSymbol,
+    defaultSchemaPolicy,
+    singleTextCursorNew,
+    jsonableTreeFromCursorNew,
+    PrimitiveValue,
+    SequenceEditBuilder,
+    SequenceChangeset,
+    NodePath,
+    PlacePath,
+    Transposed,
+    TreeForestPath,
+    TreeRootPath,
+    OpId,
+    Skip,
+    ChangesetTag,
+    Effects,
+    Tiebreak,
+    ProtoNode,
+    GapCount,
+    HasOpId,
+    NodeCount,
 } from "./feature-libraries";
+
+export {
+    ISharedTree,
+    SharedTreeFactory,
+} from "./shared-tree";

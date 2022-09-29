@@ -31,7 +31,6 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 
 describe(`Container Serialization Backwards Compatibility`, () => {
     const loaderContainerTracker = new LoaderContainerTracker();
-    let disableIsolatedChannels: boolean;
     let filename: string;
     const contentFolder = "content/serializedContainerTestContent";
 
@@ -45,16 +44,12 @@ describe(`Container Serialization Backwards Compatibility`, () => {
     }
 
     for (filename of recurseFiles(contentFolder)) {
-        disableIsolatedChannels = false;
-        tests();
-        disableIsolatedChannels = true;
         tests();
     }
 
     function tests(): void {
         const filenameShort = filename.slice(contentFolder.length + 1);
-        it(`Rehydrate container from ${filenameShort} and check contents before attach${
-            disableIsolatedChannels ? " (disable isolated channels)" : ""}`, async () => {
+        it(`Rehydrate container from ${filenameShort} and check contents before attach`, async () => {
             const snapshotTree = fs.readFileSync(filename, "utf8");
 
             const loader = createTestLoader();
@@ -89,8 +84,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
-        it(`Rehydrate container from ${filenameShort} round trip serialize/deserialize${
-            disableIsolatedChannels ? " (disable isolated channels)" : ""}`, async () => {
+        it(`Rehydrate container from ${filenameShort} round trip serialize/deserialize`, async () => {
             const snapshotTree = fs.readFileSync(filename, "utf8");
 
             const loader = createTestLoader();
@@ -162,7 +156,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
             ]);
             const codeLoader = new LocalCodeLoader(
                 [[codeDetails, factory]],
-                { summaryOptions: { disableIsolatedChannels } });
+                { });
             const testLoader = new Loader({
                 urlResolver,
                 documentServiceFactory,

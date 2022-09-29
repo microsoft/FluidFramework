@@ -22,18 +22,22 @@ parameters:
     - default
     - skip
     - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
 
 trigger:
   branches:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
     - common/lib/common-utils
     - tools/pipelines/build-common-utils.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -47,12 +51,12 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
     - common/lib/common-utils
     - tools/pipelines/build-common-utils.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -62,5 +66,6 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/common-utils
     tagName: common-utils

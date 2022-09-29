@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/*
-eslint-disable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-*/
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
 import * as MergeTree from "@fluidframework/merge-tree";
 import { refGetRangeLabels, refHasRangeLabel, refHasRangeLabels, refHasTileLabel } from "@fluidframework/merge-tree";
@@ -48,8 +45,7 @@ function createRelativeMarkerOp(
     tileLabels?: string[], props?: MergeTree.PropertySet) {
     let _props = props;
     if (!_props) {
-        _props = <MergeTree.MapLike<any>>{
-        };
+        _props = {} as MergeTree.MapLike<any>;
     }
 
     if (id.length > 0) {
@@ -62,11 +58,11 @@ function createRelativeMarkerOp(
     if (tileLabels) {
         _props[MergeTree.reservedTileLabelsKey] = tileLabels;
     }
-    return <MergeTree.IMergeTreeInsertMsg>{
+    return {
         seg: { marker: { refType }, props: _props },
         relativePos1,
         type: MergeTree.MergeTreeDeltaType.INSERT,
-    };
+    } as MergeTree.IMergeTreeInsertMsg;
 }
 
 export function createMarkerOp(
@@ -75,8 +71,7 @@ export function createMarkerOp(
     props?: MergeTree.PropertySet) {
     let _props = props;
     if (!_props) {
-        _props = <MergeTree.MapLike<any>>{
-        };
+        _props = {} as MergeTree.MapLike<any>;
     }
     if (id.length > 0) {
         _props[MergeTree.reservedMarkerIdKey] = id;
@@ -87,11 +82,11 @@ export function createMarkerOp(
     if (tileLabels) {
         _props[MergeTree.reservedTileLabelsKey] = tileLabels;
     }
-    return <MergeTree.IMergeTreeInsertMsg>{
+    return {
         seg: { marker: { refType }, props: _props },
         pos1,
         type: MergeTree.MergeTreeDeltaType.INSERT,
-    };
+    } as MergeTree.IMergeTreeInsertMsg;
 }
 
 const endPrefix = "end-";
@@ -211,8 +206,8 @@ export function insertColumn(
     if (traceOps) {
         console.log(`insert col prev ${prevCell.marker.toString()} id: ${columnId}`);
     }
-    const opList = <MergeTree.IMergeTreeOp[]>[];
-    const insertColMarkerOp = <MergeTree.IMergeTreeInsertMsg>{
+    const opList: MergeTree.IMergeTreeOp[] = [];
+    const insertColMarkerOp = {
         seg: {
             marker: <MergeTree.IMarkerDef>{
                 refType: MergeTree.ReferenceType.Simple,
@@ -221,15 +216,15 @@ export function insertColumn(
         },
         relativePos1: { id: prevColumnId },
         type: MergeTree.MergeTreeDeltaType.INSERT,
-    };
+    } as MergeTree.IMergeTreeInsertMsg;
     opList.push(insertColMarkerOp);
     for (const currRow of table.rows) {
         insertColumnCellForRow(idBase, opList, currRow, prevColumnId!, columnId);
     }
-    const groupOp = <MergeTree.IMergeTreeGroupMsg>{
+    const groupOp = {
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
-    };
+    } as MergeTree.IMergeTreeGroupMsg;
     sharedString.groupOperation(groupOp);
 
     // Flush cache
@@ -268,17 +263,17 @@ export function deleteColumn(
             }
         }
     }
-    const opList = <MergeTree.IMergeTreeOp[]>[];
-    const removeColMarkerOp = <MergeTree.IMergeTreeRemoveMsg>{
+    const opList: MergeTree.IMergeTreeOp[] = [];
+    const removeColMarkerOp = {
         relativePos1: { id: columnId, before: true },
         relativePos2: { id: columnId },
         type: MergeTree.MergeTreeDeltaType.REMOVE,
-    };
+    } as MergeTree.IMergeTreeRemoveMsg;
     opList.push(removeColMarkerOp);
-    const groupOp = <MergeTree.IMergeTreeGroupMsg>{
+    const groupOp = {
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
-    };
+    } as MergeTree.IMergeTreeGroupMsg;
     sharedString.groupOperation(groupOp);
     table.tableMarker.table = undefined;
 }
@@ -289,17 +284,17 @@ export function deleteCellShiftLeft(
     cell: Cell,
     table: Table) {
     const cellPos = getPosition(sharedString, cell.marker);
-    const annotOp = <MergeTree.IMergeTreeAnnotateMsg>{
+    const annotOp = {
         pos1: cellPos,
         pos2: cellPos + cell.marker.cachedLength,
         props: { moribund: true },
         type: MergeTree.MergeTreeDeltaType.ANNOTATE,
-    };
+    } as MergeTree.IMergeTreeAnnotateMsg;
     const opList = [annotOp];
-    const groupOp = <MergeTree.IMergeTreeGroupMsg>{
+    const groupOp = {
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
-    };
+    } as MergeTree.IMergeTreeGroupMsg;
     sharedString.groupOperation(groupOp);
     table.tableMarker.table = undefined;
 }
@@ -310,17 +305,17 @@ export function deleteRow(sharedString: SharedString, row: Row, table: Table) {
         console.log(`delete row ${row.rowMarker.getId()}`);
     }
     const rowPos = getPosition(sharedString, row.rowMarker);
-    const annotOp = <MergeTree.IMergeTreeAnnotateMsg>{
+    const annotOp = {
         pos1: rowPos,
         pos2: rowPos + row.rowMarker.cachedLength,
         props: { moribund: true },
         type: MergeTree.MergeTreeDeltaType.ANNOTATE,
-    };
+    } as MergeTree.IMergeTreeAnnotateMsg;
     const opList = [annotOp];
-    const groupOp = <MergeTree.IMergeTreeGroupMsg>{
+    const groupOp = {
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
-    };
+    } as MergeTree.IMergeTreeGroupMsg;
     sharedString.groupOperation(groupOp);
     table.tableMarker.table = undefined;
 }
@@ -330,16 +325,16 @@ export function insertRow(sharedString: SharedString, idBase: string, prevRow: R
     if (traceOps) {
         console.log(`insert row id: ${rowId} prev: ${prevRow.rowMarker.getId()}`);
     }
-    const opList = <MergeTree.IMergeTreeOp[]>[];
+    const opList: MergeTree.IMergeTreeOp[] = [];
     createEmptyRowAfter(opList, sharedString, prevRow, rowId);
     const endRowId = endPrefix + rowId;
     for (let i = 0, len = prevRow.cells.length; i < len; i++) {
         insertRowCellForColumn(sharedString, opList, prevRow.cells[i], idBase, endRowId);
     }
-    const groupOp = <MergeTree.IMergeTreeGroupMsg>{
+    const groupOp = {
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
-    };
+    } as MergeTree.IMergeTreeGroupMsg;
     sharedString.groupOperation(groupOp);
 
     // Flush cache
@@ -358,16 +353,16 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
         }
     }
     const tableId = `T${tableIdSuffix++}`;
-    const opList = <MergeTree.IMergeTreeInsertMsg[]>[];
+    const opList: MergeTree.IMergeTreeInsertMsg[] = [];
     const endTableId = endPrefix + tableId;
     opList.push(createMarkerOp(pos, endTableId,
         // eslint-disable-next-line no-bitwise
         MergeTree.ReferenceType.NestEnd |
         MergeTree.ReferenceType.Tile, ["table"], ["pg"]));
-    const endTablePos = <MergeTree.IRelativePosition>{
+    const endTablePos = {
         before: true,
         id: endTableId,
-    };
+    } as MergeTree.IRelativePosition;
     if (pgAtStart) {
         // TODO: copy pg properties from pg marker after pos
         const pgOp = createRelativeMarkerOp(endTablePos, "",
@@ -393,7 +388,7 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
     }
     for (let i = columnIds.length - 1; i >= 0; i--) {
         const columnId = columnIds[i];
-        const insertColMarkerOp = <MergeTree.IMergeTreeInsertMsg>{
+        const insertColMarkerOp = {
             seg: {
                 marker: <MergeTree.IMarkerDef>{
                     refType: MergeTree.ReferenceType.Simple,
@@ -402,13 +397,13 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
             },
             relativePos1: { id: tableId },
             type: MergeTree.MergeTreeDeltaType.INSERT,
-        };
+        } as MergeTree.IMergeTreeInsertMsg;
         opList.push(insertColMarkerOp);
     }
-    const groupOp = <MergeTree.IMergeTreeGroupMsg>{
+    const groupOp = {
         ops: opList,
         type: MergeTree.MergeTreeDeltaType.GROUP,
-    };
+    } as MergeTree.IMergeTreeGroupMsg;
     sharedString.groupOperation(groupOp);
 }
 
@@ -419,9 +414,9 @@ export class Table {
     public minContentWidth = 0;
     public indentPct = 0.0;
     public contentPct = 1.0;
-    public rows = <Row[]>[];
-    public logicalColumns = <Column[]>[];
-    public gridColumns = <IColumnMarker[]>[];
+    public rows: Row[] = [];
+    public logicalColumns: Column[] = [];
+    public gridColumns: IColumnMarker[] = [];
     public idToColumn = new Map<string, IColumnMarker>();
     constructor(public tableMarker: ITableMarker, public endTableMarker: ITableMarker) {
     }
@@ -868,9 +863,6 @@ export const rowIsMoribund = (rowMarker: IRowMarker) => rowMarker.properties && 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const cellIsMoribund = (cellMarker: ICellMarker) => cellMarker.properties && cellMarker.properties.moribund;
 
-/*
-eslint-enable
-@typescript-eslint/no-non-null-assertion,
-@typescript-eslint/consistent-type-assertions,
-@typescript-eslint/strict-boolean-expressions,
-*/
+/* eslint-enable @typescript-eslint/no-non-null-assertion */
+/* eslint-enable @typescript-eslint/consistent-type-assertions */
+/* eslint-enable @typescript-eslint/strict-boolean-expressions */

@@ -5,7 +5,7 @@
 
 import { ChildLogger, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent, ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
-import { assert, fail } from './Common';
+import { assert, fail, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditId } from './Identifiers';
 import { CachingLogViewer } from './LogViewer';
 import { TreeView } from './TreeView';
@@ -238,9 +238,12 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Must be called during an ongoing edit (see `openEdit()`/`closeEdit()`).
 	 * `changes` must be well-formed and valid: it is an error if they do not apply cleanly.
 	 */
-	public applyChanges(...changes: Change[]): void {
+	public applyChanges(changes: readonly Change[]): void;
+	public applyChanges(...changes: readonly Change[]): void;
+	public applyChanges(...changes: RestOrArray<Change>): void {
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
-		const { status } = this.currentEdit.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
+		const changeArray = unwrapRestOrArray(changes);
+		const { status } = this.currentEdit.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
 		assert(status === EditStatus.Applied, 'Locally constructed edits must be well-formed and valid.');
 		this.emitChange();
 	}
@@ -250,9 +253,12 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Must be called during an ongoing edit (see `openEdit()`/`closeEdit()`).
 	 * `changes` must be well-formed and valid: it is an error if they do not apply cleanly.
 	 */
-	protected tryApplyChangesInternal(...changes: ChangeInternal[]): EditStatus {
+	protected tryApplyChangesInternal(changes: readonly ChangeInternal[]): EditStatus;
+	protected tryApplyChangesInternal(...changes: readonly ChangeInternal[]): EditStatus;
+	protected tryApplyChangesInternal(...changes: RestOrArray<ChangeInternal>): EditStatus {
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
-		const { status } = this.currentEdit.applyChanges(changes);
+		const changeArray = unwrapRestOrArray(changes);
+		const { status } = this.currentEdit.applyChanges(changeArray);
 		if (status === EditStatus.Applied) {
 			this.emitChange();
 		}
@@ -263,9 +269,12 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Convenience helper for applying an edit containing the given changes.
 	 * Opens an edit, applies the given changes, and closes the edit. See (`openEdit()`/`applyChanges()`/`closeEdit()`).
 	 */
-	public applyEdit(...changes: Change[]): EditId {
+	public applyEdit(changes: readonly Change[]): EditId;
+	public applyEdit(...changes: readonly Change[]): EditId;
+	public applyEdit(...changes: RestOrArray<Change>): EditId {
 		this.openEdit();
-		this.applyChanges(...changes);
+		const changeArray = unwrapRestOrArray(changes);
+		this.applyChanges(changeArray);
 		return this.closeEdit();
 	}
 
@@ -274,11 +283,14 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * If the edit applied, its changes will be immediately visible on this checkout, though it still may end up invalid once sequenced due to concurrent edits.
 	 * @returns The EditId if the edit was valid and thus applied, and undefined if it was invalid and thus not applied.
 	 */
-	public tryApplyEdit(...changes: Change[]): EditId | undefined {
+	public tryApplyEdit(changes: readonly Change[]): EditId | undefined;
+	public tryApplyEdit(...changes: readonly Change[]): EditId | undefined;
+	public tryApplyEdit(...changes: RestOrArray<Change>): EditId | undefined {
 		this.openEdit();
 
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
-		const { status } = this.currentEdit.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
+		const changeArray = unwrapRestOrArray(changes);
+		const { status } = this.currentEdit.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
 		if (status === EditStatus.Applied) {
 			this.emitChange();
 			return this.closeEdit();
@@ -357,7 +369,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		const before = this.tree.logViewer.getRevisionViewInSession(index);
 		const changes = this.tree.revertChanges(edit.changes, before);
 		if (changes !== undefined) {
-			this.tryApplyChangesInternal(...changes);
+			this.tryApplyChangesInternal(changes);
 		}
 	}
 

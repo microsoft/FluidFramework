@@ -1,4 +1,4 @@
-# Shared Tree Core
+# shared-tree-core
 
 Provides a SharedObject for a tree which handles the collaboration window, and keeping indexes up to date.
 
@@ -16,4 +16,4 @@ it just provides an index contract / interface which can be used for that purpos
 
 # Status
 
-Implementation is really just some notes/ideas, and nothing close to usable.
+Implementation is working, but how indexes relate to branches needs more thought. More detail on this in the [package readme](../../README.md).

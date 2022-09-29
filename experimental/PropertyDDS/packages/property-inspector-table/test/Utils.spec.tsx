@@ -8,10 +8,11 @@ import { BaseProperty, PropertyFactory } from '@fluid-experimental/property-prop
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import { defaultInspectorTableChildGetter, defaultInspectorTableNameGetter } from '../src/InspectorTable';
 import { IColumns, IInspectorRow, IInspectorSearchMatch } from '../src/InspectorTableTypes';
-import { dummyChild, expandAll, fillExpanded,
-  sanitizePath, search, showNextResult, toTableRows } from '../src/utils';
+import { search, showNextResult } from '../src/utils';
 
-import { findRow, getExpandedMap, getHash, initializeWorkspace, uniqueIdentifier, getAllMatchesFromRows } from './testUtils';
+import { findRow, getExpandedMap, getHash, initializeWorkspace, getAllMatchesFromRows } from './testUtils';
+import { toTableRows, dummyChild, fillExpanded, expandAll, sanitizePath } from '../src/propertyInspectorUtils';
+import { uniqueIdentifier } from './common';
 
 describe('InspectorTable', () => {
   let workspace;
@@ -417,8 +418,8 @@ describe('InspectorTable', () => {
   describe('expandAll', () => {
     let expanded;
     beforeAll(async () => {
-      ({ workspace } = await initializeWorkspace());
-      expanded = Object.keys(expandAll(workspace));
+      ({rootProxy } = await initializeWorkspace());
+      expanded = Object.keys(expandAll(rootProxy));
     });
 
     it('should expand nonprimitives', () => {

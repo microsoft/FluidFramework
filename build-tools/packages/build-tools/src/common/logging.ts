@@ -6,13 +6,29 @@
 import chalk from "chalk";
 import { commonOptions } from "./commonOptions";
 
-export function logVerbose(msg: string) {
+export type LoggingFunction = (msg: string | Error, ...args: unknown[]) => void;
+
+export interface Logger {
+    info: LoggingFunction,
+    warning: LoggingFunction,
+    errorLog: LoggingFunction,
+    verbose: LoggingFunction,
+}
+
+export const defaultLogger: Logger = {
+    info,
+    warning,
+    errorLog,
+    verbose
+}
+
+function verbose(msg: string | Error) {
     if (commonOptions.verbose) {
-        logStatus(msg);
+        info(msg);
     }
 }
 
-function log(msg: string, logFunc: (msg: string) => void) {
+function log(msg: string | Error, logFunc: LoggingFunction) {
     if (!commonOptions.logtime) {
         logFunc(msg);
         return;
@@ -27,10 +43,14 @@ function log(msg: string, logFunc: (msg: string) => void) {
     logFunc(chalk.yellow(`[${hours}:${mins}:${secs}] `) + msg);
 }
 
-export function logStatus(msg: string) {
+function info(msg: string | Error) {
     log(msg, console.log);
 }
 
-export function logError(msg: string) {
-    log(`ERROR: ${msg}`, console.error);
+function warning(msg: string | Error) {
+    log(`${chalk.yellow(`WARNING`)}: ${msg}`, console.log);
+}
+
+function errorLog(msg: string | Error) {
+    log(`${chalk.red(`ERROR`)}: ${msg}`, console.error);
 }

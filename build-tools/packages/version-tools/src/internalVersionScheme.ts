@@ -7,7 +7,23 @@ import { strict as assert } from "assert";
 import * as semver from "semver";
 import { VersionBumpTypeExtended } from "./bumpTypes";
 
-export const DEFAULT_PUBLIC_VERSION = "2.0.0";
+/**
+ * The lowest/default public version of valid Fluid internal versions. The public version of Fluid internal versions
+ * should NEVER be lower than this value.
+ */
+export const MINIMUM_PUBLIC_VERSION = "2.0.0";
+
+/** The semver major version of the {@link MINIMUM_PUBLIC_VERSION}. */
+const MINIMUM_PUBLIC_MAJOR = semver.major(MINIMUM_PUBLIC_VERSION);
+
+/** The minimum number of prerelease sections a version should have to be considered a Fluid internal version. */
+const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
+
+/**
+ * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions, the
+ * value must always match this constant.
+ */
+const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
 
 /**
  * Translates a version using the Fluid internal version scheme into two parts: the public version, and the internal
@@ -30,17 +46,24 @@ export const DEFAULT_PUBLIC_VERSION = "2.0.0";
  *
  * a.b.c-internal.x.y.z
  *
- * @param internalVersion - a version in the Fluid internal version scheme.
+ * @param internalVersion - A version in the Fluid internal version scheme.
+ * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @returns A tuple of [publicVersion, internalVersion]
  */
 export function fromInternalScheme(
     internalVersion: semver.SemVer | string,
+    allowPrereleases = false,
 ): [publicVersion: semver.SemVer, internalVersion: semver.SemVer] {
     const parsedVersion = semver.parse(internalVersion);
-    validateVersionScheme(parsedVersion);
+    validateVersionScheme(parsedVersion, allowPrereleases);
 
     assert(parsedVersion !== null);
-    const newSemVerString = parsedVersion.prerelease.slice(1).join(".");
+    const prereleaseSections = parsedVersion.prerelease;
+
+    const newSemVerString =
+        prereleaseSections.length > 4
+            ? `${prereleaseSections.slice(1, 4).join(".")}-${prereleaseSections.slice(4).join(".")}`
+            : prereleaseSections.slice(1).join(".");
     const newSemVer = semver.parse(newSemVerString);
     if (newSemVer === null) {
         throw new Error(`Couldn't convert ${internalVersion} to a standard semver.`);
@@ -74,33 +97,39 @@ export function fromInternalScheme(
  * @example
  *
  * a.b.c-internal.x.y.z
-
+ *
  * @param publicVersion - The public version.
  * @param version - The internal version.
+ * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @returns A version in the Fluid internal version scheme.
  */
 export function toInternalScheme(
     publicVersion: semver.SemVer | string,
     version: semver.SemVer | string,
+    allowPrereleases = false,
 ): semver.SemVer {
     const parsedVersion = semver.parse(version);
     if (parsedVersion === null) {
         throw new Error(`Couldn't parse ${version} as a semver.`);
     }
 
-    if (parsedVersion.prerelease.length !== 0) {
+    if (!allowPrereleases && parsedVersion.prerelease.length !== 0) {
         throw new Error(
             `Input version already has a pre-release component (${parsedVersion.prerelease}), which is not expected.`,
         );
     }
 
-    const newSemVerString = `${publicVersion}-internal.${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}`;
+    const prereleaseSections = parsedVersion.prerelease;
+    const newPrerelease = prereleaseSections.length > 0 ? `.${prereleaseSections.join(".")}` : "";
+    const newSemVerString = `${publicVersion}-internal.${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}${newPrerelease}`;
     const newSemVer = semver.parse(newSemVerString);
     if (newSemVer === null) {
-        throw new Error(`Couldn't convert ${version} to the internal version scheme.`);
+        throw new Error(
+            `Couldn't convert ${version} to the internal version scheme. Tried parsing: '${newSemVerString}'`,
+        );
     }
 
-    if (!isInternalVersionScheme(newSemVer)) {
+    if (!isInternalVersionScheme(newSemVer, allowPrereleases)) {
         throw new Error(`Converted version is not a valid Fluid internal version: ${newSemVer}`);
     }
 
@@ -108,43 +137,64 @@ export function toInternalScheme(
 }
 
 /**
- * Validates that the version follows the Fluid internal version scheme. Throws if not.
+ * Validates that the version follows the Fluid internal version scheme.
+ *
+ * @param version - The version to check.
+ * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
+ * @returns True if the version matches the Fluid internal version scheme. Throws if not.
+ *
+ * @remarks
+ *
+ * This function is not typically used. {@link isInternalVersionScheme} is more useful since it does not throw.
  */
 // eslint-disable-next-line @rushstack/no-new-null
-function validateVersionScheme(version: semver.SemVer | string | null) {
+function validateVersionScheme(version: semver.SemVer | string | null, allowPrereleases = false) {
     const parsedVersion = semver.parse(version);
     if (parsedVersion === null) {
         throw new Error(`Couldn't parse ${version} as a semver.`);
     }
 
-    if (parsedVersion.prerelease.length !== 4) {
+    // extract what semver calls the "prerelease identifier," which is the first section of the prerelease field.
+    const prereleaseId = parsedVersion.prerelease[0];
+    if (prereleaseId !== REQUIRED_PRERELEASE_IDENTIFIER) {
         throw new Error(
-            `Prerelease value doesn't contain 4 components; found ${parsedVersion.prerelease.length}`,
+            `First prerelease component should be '${REQUIRED_PRERELEASE_IDENTIFIER}'; found ${prereleaseId}`,
         );
     }
 
-    if (parsedVersion.prerelease[0] !== "internal") {
+    if (parsedVersion.major < MINIMUM_PUBLIC_MAJOR) {
         throw new Error(
-            `First prerelease component should be internal; found ${parsedVersion.prerelease[0]}`,
+            `The public major version must be >= ${MINIMUM_PUBLIC_MAJOR}; found ${parsedVersion.major}`,
         );
     }
 
-    if (parsedVersion.major < 2) {
-        throw new Error(`The public major version must by >= 2; found ${parsedVersion.major}`);
+    if (parsedVersion.prerelease.length > MINIMUM_SEMVER_PRERELEASE_SECTIONS) {
+        if (allowPrereleases) {
+            return true;
+        }
+        throw new Error(
+            `Prerelease value contains ${parsedVersion.prerelease.length} components; expected ${MINIMUM_SEMVER_PRERELEASE_SECTIONS}.`,
+        );
     }
+
     return true;
 }
 
 /**
- * Checks if a version matches the Fluid internal version scheme.
+ * Checks if a version matches the Fluid internal version scheme. By default, prerelease Fluid internal versions are
+ * excluded.
  *
  * @param version - The version to check.
+ * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @returns True if the version matches the Fluid internal version scheme.
  */
-export function isInternalVersionScheme(version: semver.SemVer | string): boolean {
+export function isInternalVersionScheme(
+    version: semver.SemVer | string,
+    allowPrereleases = false,
+): boolean {
     const parsedVersion = semver.parse(version);
     try {
-        validateVersionScheme(parsedVersion);
+        validateVersionScheme(parsedVersion, allowPrereleases);
     } catch (error) {
         return false;
     }

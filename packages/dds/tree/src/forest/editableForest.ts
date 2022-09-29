@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { StoredSchemaRepository } from "../schema";
-import { AnchorSet, FieldKey, DetachedField, Delta, JsonableTree, detachedFieldAsKey } from "../tree";
-import { IForestSubscription, ITreeSubscriptionCursor, ForestAnchor } from "./forest";
+import { AnchorSet, FieldKey, DetachedField, Delta, detachedFieldAsKey, Anchor, ITreeCursorSynchronous } from "../tree";
+import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
 /**
  * Editing APIs.
  */
 export interface IEditableForest extends IForestSubscription {
-    // Overrides field from IForestSubscription adding editing support.
-    readonly schema: StoredSchemaRepository;
-
     /**
      * Set of anchors this forest is tracking.
      *
@@ -31,7 +27,7 @@ export interface IEditableForest extends IForestSubscription {
     applyDelta(delta: Delta.Root): void;
 }
 
-export function initializeForest(forest: IEditableForest, content: JsonableTree[]): void {
+export function initializeForest(forest: IEditableForest, content: ITreeCursorSynchronous[]): void {
     // TODO: maybe assert forest is empty?
     const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
     const rootField = detachedFieldAsKey(forest.rootField);
@@ -43,7 +39,7 @@ export function initializeForest(forest: IEditableForest, content: JsonableTree[
 /**
  * Ways to refer to a node in an IEditableForest.
  */
- export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
+ export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 export interface TreeLocation {
     readonly range: FieldLocation | DetachedField;

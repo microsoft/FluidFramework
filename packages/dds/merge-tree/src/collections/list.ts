@@ -74,6 +74,11 @@ export class List<T> {
         return this.add(data);
     }
 
+    public pop?(): T | undefined {
+        const removedEntry = ListRemoveEntry(this.prev);
+        return removedEntry ? removedEntry.data : undefined;
+    }
+
     public walk(fn: (data: T, l: List<T>) => void): void {
         for (let entry = this.next; !(entry.isHead); entry = entry.next) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

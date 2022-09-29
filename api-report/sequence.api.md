@@ -58,6 +58,12 @@ export type CompressedSerializedInterval = [number, number, number, IntervalType
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
+// @public
+export function getTextAndMarkers(sharedString: SharedString, label: string): {
+    parallelText: string[];
+    parallelMarkers: Marker[];
+};
+
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     (event: "changeInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
@@ -173,8 +179,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     nextInterval(pos: number): TInterval;
     // (undocumented)
     previousInterval(pos: number): TInterval;
-    // @internal (undocumented)
-    rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
+    // @internal
+    rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval | undefined;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
     // @internal (undocumented)
@@ -190,6 +196,15 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
         done: boolean;
     };
 }
+
+// @public
+export interface IntervalLocator {
+    interval: SequenceInterval;
+    label: string;
+}
+
+// @public
+export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
 
 // @public (undocumented)
 export enum IntervalType {
@@ -407,7 +422,7 @@ export class SequenceInterval implements ISerializableInterval {
     // (undocumented)
     intervalType: IntervalType;
     // (undocumented)
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): SequenceInterval;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
@@ -644,16 +659,16 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     // (undocumented)
     getMarkerFromId(id: string): ISegment;
     getText(start?: number, end?: number): string;
-    // (undocumented)
+    // @deprecated (undocumented)
     getTextAndMarkers(label: string): {
         parallelText: string[];
         parallelMarkers: Marker[];
     };
     // (undocumented)
     getTextRangeWithMarkers(start: number, end: number): string;
-    // (undocumented)
+    // @deprecated (undocumented)
     getTextRangeWithPlaceholders(start: number, end: number): string;
-    getTextWithPlaceholders(): string;
+    getTextWithPlaceholders(start?: number, end?: number): string;
     // (undocumented)
     id: string;
     insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;

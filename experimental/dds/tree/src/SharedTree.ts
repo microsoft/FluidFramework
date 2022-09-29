@@ -25,7 +25,15 @@ import {
 import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { assert, assertNotUndefined, fail, copyPropertyIfDefined, noop } from './Common';
+import {
+	assert,
+	assertNotUndefined,
+	fail,
+	copyPropertyIfDefined,
+	noop,
+	RestOrArray,
+	unwrapRestOrArray,
+} from './Common';
 import { EditHandle, EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditSet } from './EditLog';
 import {
 	EditId,
@@ -196,8 +204,6 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * @param options - Configuration options for this tree
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
-	constructor(...args: SharedTreeArgs<WriteFormat.v0_0_2>);
-	constructor(...args: SharedTreeArgs<WriteFormat.v0_1_1>);
 	constructor(...args: SharedTreeArgs) {
 		this.args = args;
 	}
@@ -384,20 +390,19 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	public static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
 
-	public static getFactory(...args: SharedTreeArgs): SharedTreeFactory {
-		const [writeFormat] = args;
+	/**
+	 * Get a factory for SharedTree to register with the data store, using the latest write version and default options.
+	 */
+	public static getFactory(): SharedTreeFactory;
+
+	public static getFactory(...args: SharedTreeArgs | []): SharedTreeFactory {
+		const [formatArg, options] = args;
+		const writeFormat = formatArg ?? WriteFormat.v0_1_1;
 		// 	On 0.1.1 documents, due to current code limitations, all clients MUST agree on the value of `summarizeHistory`.
 		//  Note that this means staged rollout changing this value should not be attempted.
 		//  It is possible to update shared-tree to correctly handle such a staged rollout, but that hasn't been implemented.
 		//  See the skipped test in SharedTreeFuzzTests.ts for more details on this issue.
-		switch (writeFormat) {
-			case WriteFormat.v0_0_2:
-				return new SharedTreeFactory(...(args as SharedTreeArgs<WriteFormat.v0_0_2>));
-			case WriteFormat.v0_1_1:
-				return new SharedTreeFactory(...(args as SharedTreeArgs<WriteFormat.v0_1_1>));
-			default:
-				fail('Unknown write format');
-		}
+		return new SharedTreeFactory(writeFormat, options);
 	}
 
 	/**
@@ -1065,14 +1070,19 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Equality means that the histories as captured by the EditLogs are equivalent.
 	 *
 	 * Equality does not include:
-	 *   - if an edit is open
-	 *   - the shared tree's id
-	 *   - local vs sequenced status of edits
-	 *   - registered event listeners
-	 *   - state of caches
+	 *
+	 * - if an edit is open
+	 *
+	 * - the shared tree's id
+	 *
+	 * - local vs sequenced status of edits
+	 *
+	 * - registered event listeners
+	 *
+	 * - state of caches
 	 *
 	 * @internal
-	 * */
+	 */
 	public equals(sharedTree: SharedTree): boolean {
 		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
 			return false;
@@ -1334,10 +1344,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * should be used instead.
 	 * @public
 	 */
-	public applyEdit(...changes: Change[]): Edit<InternalizedChange>;
-	public applyEdit(changes: Change[]): Edit<InternalizedChange>;
-	public applyEdit(headOrChanges: Change | Change[], ...tail: Change[]): Edit<InternalizedChange> {
-		const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
+	public applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
+	public applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
+	public applyEdit(...changesOrArray: RestOrArray<Change>): Edit<InternalizedChange> {
+		const changes = unwrapRestOrArray(changesOrArray);
 		const id = newEditId();
 		const internalEdit: Edit<ChangeInternal> = {
 			id,
@@ -1509,7 +1519,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @internal
 	 */
 	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
-		return revert(changes as unknown as readonly ChangeInternal[], before);
+		return revert(changes as unknown as readonly ChangeInternal[], before, this.logger);
 	}
 
 	/**

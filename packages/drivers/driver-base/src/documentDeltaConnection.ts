@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, extractLogSafeErrorProperties } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -24,6 +24,7 @@ import {
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     ChildLogger,
+    extractLogSafeErrorProperties,
     getCircularReplacer,
     loggerToMonitoringContext,
     MonitoringContext,
@@ -57,6 +58,7 @@ export class DocumentDeltaConnection
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
     protected readonly queuedSignals: ISignalMessage[] = [];
+
     /**
      * A flag to indicate whether we have our handler attached.  If it's attached, we're queueing incoming ops
      * to later be retrieved via initialMessages.
@@ -80,14 +82,16 @@ export class DocumentDeltaConnection
         assert(this._disposed || this.socket.connected, 0x244 /* "Socket is closed, but connection is not!" */);
         return this._disposed;
     }
+
     /**
      * Flag to indicate whether the DocumentDeltaConnection is expected to still be capable of sending messages.
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
     private readonly mc: MonitoringContext;
+
     /**
-     * @deprecated - Implementors should manage their own logger or monitoring context
+     * @deprecated Implementors should manage their own logger or monitoring context
      */
     protected get logger(): ITelemetryLogger {
         return this.mc.logger;
@@ -338,7 +342,7 @@ export class DocumentDeltaConnection
     /**
      * Disconnect from the websocket.
      * @param socketProtocolError - true if error happened on socket / socket.io protocol level
-     *  (not on Fluid protocol level)
+     * (not on Fluid protocol level)
      * @param reason - reason for disconnect
      */
     protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
@@ -568,7 +572,7 @@ export class DocumentDeltaConnection
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
             message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
         } else {
-            message = extractLogSafeErrorProperties(error).message;
+            message = extractLogSafeErrorProperties(error, true).message;
         }
 
         const errorObj = createGenericNetworkError(

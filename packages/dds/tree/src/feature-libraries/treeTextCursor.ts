@@ -3,25 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
-    ITreeCursor,
-    TreeNavigationResult,
-    mapCursorField,
-    SynchronousNavigationResult,
-} from "../forest";
-import {
-    FieldKey,
-    FieldMap,
+    genericTreeKeys,
     getGenericTreeField,
-    getGenericTreeFieldMap,
     JsonableTree,
-    TreeType,
-    Value,
+    ITreeCursorNew as ITreeCursor,
+    CursorLocationType,
+    mapCursorFieldNew as mapCursorField,
+    ITreeCursorSynchronous,
+    setGenericTreeField,
 } from "../tree";
-import { fail } from "../util";
+import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
 /**
- * This modules provides support for reading and writing a human readable (and editable) tree format.
+ * This module provides support for reading and writing a human readable (and editable) tree format.
  *
  * This implementation can handle all trees (so it does not need a fallback for any special cases),
  * and is not optimized.
@@ -44,103 +40,32 @@ import { fail } from "../util";
  */
 
 /**
- * An ITreeCursor implementation for JsonableTree.
- *
- * TODO: object-forest's cursor is mostly a superset of this functionality.
- * Maybe do a refactoring to deduplicate this.
+ * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonableTree}.
  */
-export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
-    // Indices traversed to visit this node: does not include current level (which is stored in `index`).
-    private readonly indexStack: number[] = [];
-    // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
-    private readonly siblingStack: JsonableTree[][] = [];
-
-    private siblings: JsonableTree[];
-    private index: number;
-
-    public constructor(root: JsonableTree) {
-        this.index = 0;
-        this.siblings = [root];
-    }
-
-    private getNode(): JsonableTree {
-        return this.siblings[this.index];
-    }
-
-    get value(): Value {
-        return this.getNode().value;
-    }
-
-    get type(): TreeType {
-        return this.getNode().type;
-    }
-
-    get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(getGenericTreeFieldMap(this.getNode(), false)) as Iterable<FieldKey>;
-    }
-
-    down(key: FieldKey, index: number): SynchronousNavigationResult {
-        const siblings = getGenericTreeField(this.getNode(), key, false);
-        const child = siblings[index];
-        if (child !== undefined) {
-            this.indexStack.push(this.index);
-            this.siblingStack.push(this.siblings);
-            this.siblings = siblings;
-            this.index = index;
-            return TreeNavigationResult.Ok;
-        }
-        return TreeNavigationResult.NotFound;
-    }
-
-    seek(offset: number): SynchronousNavigationResult {
-        const index = offset + this.index;
-        const child = this.siblings[index];
-        if (child !== undefined) {
-            this.index = index;
-            return TreeNavigationResult.Ok;
-        }
-        return TreeNavigationResult.NotFound;
-    }
-
-    up(): SynchronousNavigationResult {
-        const index = this.indexStack.pop();
-        if (index === undefined) {
-            // At root already (and made no changes to current location)
-            return TreeNavigationResult.NotFound;
-        }
-
-        this.index = index;
-        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-        return TreeNavigationResult.Ok;
-    }
-
-    length(key: FieldKey): number {
-        return getGenericTreeField(this.getNode(), key, false).length;
-    }
+export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous {
+    return singleStackTreeCursor(root, adapter);
 }
+
+const adapter: CursorAdapter<JsonableTree> = {
+    keysFromNode: genericTreeKeys,
+    getFieldFromNode: (node, key): readonly JsonableTree[] => getGenericTreeField(node, key, false),
+};
 
 /**
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
-    let fields: FieldMap<JsonableTree> | undefined;
-    for (const key of cursor.keys) {
-        fields ??= {};
-        const field: JsonableTree[] = mapCursorField(cursor, key, jsonableTreeFromCursor);
-        fields[key as string] = field;
-    }
-
+    assert(cursor.mode === CursorLocationType.Nodes, 0x3ba /* must start at node */);
     const node: JsonableTree = {
         type: cursor.type,
-        value: cursor.value,
-        fields,
     };
     // Normalize object by only including fields that are required.
-    if (fields === undefined) {
-        delete node.fields;
+    if (cursor.value !== undefined) {
+        node.value = cursor.value;
     }
-    if (node.value === undefined) {
-        delete node.value;
+    for (let inFields = cursor.firstField(); inFields; inFields = cursor.nextField()) {
+        const field: JsonableTree[] = mapCursorField(cursor, jsonableTreeFromCursor);
+        setGenericTreeField(node, cursor.getFieldKey(), field);
     }
     return node;
 }

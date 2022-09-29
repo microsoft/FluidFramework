@@ -5,7 +5,11 @@
 
 import { IEditableForest, IForestSubscription } from "../forest";
 import { ChangeFamily, ProgressiveEditBuilder } from "../change-family";
+import { TransactionResult } from "../checkout";
 
+/**
+ * The interface a checkout has to implement for a transaction to be able to be applied to it.
+ */
 export interface Checkout<TEditor, TChange> {
     readonly forest: IEditableForest;
     readonly changeFamily: ChangeFamily<TEditor, TChange>;
@@ -30,13 +34,16 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     command: (
         forest: IForestSubscription,
         editor: TEditor
-    ) => CommandResult,
-): CommandResult {
+    ) => TransactionResult,
+): TransactionResult {
     const t = new Transaction(checkout.forest, checkout.changeFamily);
     const result = command(checkout.forest, t.editor);
     const changes = t.editor.getChanges();
-    const edit = checkout.changeFamily.rebaser.compose(...changes);
-    if (result === CommandResult.Abort) {
+    const edit = checkout.changeFamily.rebaser.compose(changes);
+
+    // TODO: in the non-abort case, optimize this to not rollback the edit,
+    // then reapply it (when the local edit is added) when possible.
+    {
         // Roll back changes
         const inverse = checkout.changeFamily.rebaser.invert(edit);
 
@@ -44,16 +51,11 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
         // TODO: update schema in addition to anchors and tree data (in both places).
         checkout.changeFamily.rebaser.rebaseAnchors(checkout.forest.anchors, inverse);
         checkout.forest.applyDelta(checkout.changeFamily.intoDelta(inverse));
-
-        return result;
     }
 
-    checkout.submitEdit(edit);
+    if (result === TransactionResult.Apply) {
+        checkout.submitEdit(edit);
+    }
 
     return result;
-}
-
-enum CommandResult {
-    Abort,
-    Apply,
 }
