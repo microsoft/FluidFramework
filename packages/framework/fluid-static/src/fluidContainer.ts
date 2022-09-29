@@ -17,7 +17,6 @@ export interface IFluidContainerEvents extends IEvent {
     /**
      * Emitted when the {@link IFluidContainer} completes connecting to the Fluid service.
      *
-     *
      * @eventProperty
      */
     (event: "connected", listener: () => void): void;
@@ -37,7 +36,7 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "disconnected", listener: () => void): void;
 
     /**
-     * Emitted when the {@link IFluidContainer} has local changes acknowledged by the service.
+     * Emitted when all of the {@link IFluidContainer}'s local changes have been acknowledged by the service.
      *
      * @eventProperty
      */

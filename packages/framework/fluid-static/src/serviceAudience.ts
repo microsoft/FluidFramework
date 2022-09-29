@@ -27,7 +27,9 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   /**
    * Retain the most recent member list.
    *
-   * @remarks This is so we have more information about a member leaving the audience in the `removeMember` event.
+   * @remarks
+   *
+   * This is so we have more information about a member leaving the audience in the `removeMember` event.
    *
    * It allows us to match the behavior of the `addMember` event where it only fires on a change to the members this
    * class exposes (and would actually produce a change in what `getMembers` returns).

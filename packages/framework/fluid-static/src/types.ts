@@ -54,7 +54,9 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) =
 /**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
  *
- * @remarks It includes both the instances of objects that are initially available upon `Container` creation, as well
+ * @remarks 
+ *
+ * It includes both the instances of objects that are initially available upon `Container` creation, as well
  * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
  */
 export interface ContainerSchema {
@@ -101,7 +103,9 @@ export type MemberChangeListener<M extends IMember> = (clientId: string, member:
 /**
  * Events that trigger when the roster of members in the Fluid session change.
  *
- * @remarks Only changes that would be reflected in the returned map of {@link IServiceAudience}'s
+ * @remarks
+ *
+ * Only changes that would be reflected in the returned map of {@link IServiceAudience}'s
  * {@link IServiceAudience.getMembers} method will emit events.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.

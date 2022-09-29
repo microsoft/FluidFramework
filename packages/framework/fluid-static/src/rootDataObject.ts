@@ -143,7 +143,9 @@ const rootDataStoreId = "rootDOId";
 /**
  * Container code that provides a single {@link RootDataObject}.
  *
- * @remarks This data object is dynamically customized (registry and initial objects) based on the schema provided
+ * @remarks
+ * 
+ * This data object is dynamically customized (registry and initial objects) based on the schema provided.
  * to the container runtime factory.
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
