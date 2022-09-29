@@ -2633,6 +2633,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         this.verifyNotClosed();
         const previousDirtyState = this.isDirty;
+        this.emitDirtyDocumentEvent = true;
         this.updateDocumentDirtyState(true, true);
         const handle = await this.blobManager.createBlob(blob);
         this.updateDocumentDirtyState(previousDirtyState, true);
