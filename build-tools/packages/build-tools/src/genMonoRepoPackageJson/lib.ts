@@ -14,6 +14,10 @@ function format(n: number) {
     return n.toString().padStart(4);
 }
 
+/**
+ * Because lerna doesn't distinguish between dependencies and devDependencies, this function will use the
+ * lerna-package-lock.json and patch up the "dev" field in the dependencies and output it to repo-package-lock.json.
+ */
 async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJson: any, log?: Logger) {
     // Patching the package-lock file
     const repoPackageLockJson = await readJsonAsync(path.join(monoRepo.repoPath, "lerna-package-lock.json"));
@@ -42,6 +46,7 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
         totalDevCount--;
         delete item.dev;
         refStack.push(item);
+        // Checking item.dependencies !== null is not sufficient here.
         if (item.dependencies) {
             // mark unhoisted dependencies recursively
             for (const dep in item.dependencies) {
@@ -126,6 +131,10 @@ function processDevDependencies(repoPackageJson: PackageJson, packageJson: Packa
     return devDepCount++;
 }
 
+/**
+ * Generates the corresponding package.json for the lerna project by gathering all the
+ * dependencies from all the packages, and outputs it to repo-package.json.
+ */
 export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo, log?: Logger) {
     const packageMap = new Map<string, Package>(monoRepo.packages.map(pkg => [pkg.name, pkg]));
     const repoPackageJson: PackageJson = {
