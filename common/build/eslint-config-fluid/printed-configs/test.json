@@ -337,7 +337,7 @@
             }
         ],
         "@typescript-eslint/unified-signatures": [
-            "error"
+            "off"
         ],
         "array-bracket-spacing": [
             "error"
