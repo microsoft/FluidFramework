@@ -63,7 +63,7 @@ describe("obliterate partial lengths", () => {
         );
         const localRemoveOp = client.removeRangeLocal(
             0,
-            "hello".length,
+            "world".length,
         );
 
         validatePartialLengths(localClientId, client.mergeTree, [
