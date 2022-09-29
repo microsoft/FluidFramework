@@ -8,8 +8,10 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
 import { createContainerAndExecute, IExportFileResponse } from "./exportFile";
 import { getArgsValidationError } from "./getArgsValidationError";
-// eslint-disable-next-line import/no-internal-modules
-import { createLogger, FileLogger, getTelemetryFileValidationError } from "./logger/FileLogger";
+/* eslint-disable import/no-internal-modules */
+import { ITelemetryOptions } from "./logger/fileLogger";
+import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
+/* eslint-enable import/no-internal-modules */
 import { getSnapshotFileContent } from "./utils";
 
 const clientArgsValidationError = "Client_ArgsValidationError";
@@ -24,14 +26,14 @@ export async function parseBundleAndExportFile(
     outputFile: string,
     telemetryFile: string,
     options?: string,
+    telemetryOptions?: ITelemetryOptions,
 ): Promise<IExportFileResponse> {
     const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
     if (telemetryArgError) {
         const eventName = clientArgsValidationError;
         return { success: false, eventName, errorMessage: telemetryArgError };
     }
-    const fileLogger = new FileLogger(telemetryFile);
-    const logger = createLogger(fileLogger);
+    const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
 
     try {
         return await PerformanceEvent.timedExecAsync(logger, { eventName: "ParseBundleAndExportFile" }, async () => {
@@ -73,6 +75,6 @@ export async function parseBundleAndExportFile(
         logger.sendErrorEvent({ eventName }, error);
         return { success: false, eventName, errorMessage: "Unexpected error", error };
     } finally {
-        await fileLogger.flush();
+        await fileLogger.close();
     }
 }
