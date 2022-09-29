@@ -83,7 +83,8 @@ export interface IBlobManagerLoadInfo {
 // Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime =
-    Pick<IContainerRuntime, "attachState" | "connected" | "logger"> & TypedEventEmitter<IContainerRuntimeEvents>;
+    Pick<IContainerRuntime, "attachState" | "connected" | "logger" | "isDirty">
+    & TypedEventEmitter<IContainerRuntimeEvents>;
 
 // Note that while offline we "submit" an op before uploading the blob, but we always
 // expect blobs to be uploaded before we actually see the op round-trip
@@ -287,6 +288,7 @@ export class BlobManager {
     }
 
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+        assert(this.runtime.isDirty, "runtime should be dirty while creting blob");
         if (this.runtime.attachState === AttachState.Detached) {
             return this.createBlobDetached(blob);
         }
