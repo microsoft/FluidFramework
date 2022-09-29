@@ -64,7 +64,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
         [{
             eventName: "fluid:telemetry:Container:ContainerClose",
             error: "Submission of an out of order message",
-        },], async () => {
+        }], async () => {
             await setupContainers(testContainerConfig);
 
             sharedMap1.on("valueChanged", (changed) => {

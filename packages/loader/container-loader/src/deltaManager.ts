@@ -89,6 +89,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private pending: ISequencedDocumentMessage[] = [];
     private fetchReason: string | undefined;
 
+    // A boolean used to assert that ops are not being sent while processing another op.
+    private currentlyProcessingOps: boolean = false;
+
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
 
@@ -774,6 +777,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
+        assert(!this.currentlyProcessingOps, 0x3af /* Already processing ops. */);
+        this.currentlyProcessingOps = true;
         this.lastProcessedMessage = message;
 
         // All non-system messages are coming from some client, and should have clientId
@@ -829,6 +834,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
         this.handler.process(message);
         const endTime = Date.now();
+        this.currentlyProcessingOps = false;
 
         // Should be last, after changing this.lastProcessedSequenceNumber above, as many callers
         // test this.lastProcessedSequenceNumber instead of using op.sequenceNumber itself.
