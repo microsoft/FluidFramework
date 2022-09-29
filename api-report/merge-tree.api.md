@@ -350,7 +350,9 @@ export interface IHierBlock extends IMergeBlock {
     rightmostTiles: MapLike<ReferencePosition>;
 }
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "IIntegerRange" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal @deprecated
 export interface IIntegerRange {
     // (undocumented)
     end: number;

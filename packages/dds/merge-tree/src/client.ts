@@ -179,11 +179,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         const annotateOp =
             createAnnotateMarkerOp(marker, props, combiningOp)!;
 
-        if (this.applyAnnotateRangeOp({ op: annotateOp })) {
-            return annotateOp;
-        } else {
-            return undefined;
-        }
+        return this.applyAnnotateRangeOp({ op: annotateOp }) ? annotateOp : undefined;
     }
     /**
      * Annotates the range with the provided properties
@@ -320,9 +316,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
      * serializer which keeps track of all serialized handles.
      */
     public serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void {
+        let localInserts = 0;
+        let localRemoves = 0;
         walkAllChildSegments(
             this._mergeTree.root,
             (seg) => {
+                if (seg.seq === UnassignedSequenceNumber) {
+                    localInserts++;
+                }
+                if (seg.removedSeq === UnassignedSequenceNumber) {
+                    localRemoves++;
+                }
                 // Only serialize segments that have not been removed.
                 if (seg.removedSeq === undefined) {
                     handleCollectingSerializer.stringify(
@@ -332,6 +336,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
                 return true;
             },
         );
+
+        if (localInserts > 0 || localRemoves > 0) {
+            this.logger.sendErrorEvent({ eventName: "LocalEditsInProcessGCData", localInserts, localRemoves });
+        }
     }
 
     public getCollabWindow(): CollaborationWindow {
@@ -691,11 +699,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
         return this.clientNameToIds.get(longClientId)!.data;
     }
     getLongClientId(shortClientId: number) {
-        if (shortClientId >= 0) {
-            return this.shortClientIdMap[shortClientId];
-        } else {
-            return "original";
-        }
+        return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
     }
     addLongClientId(longClientId: string) {
         this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
@@ -948,8 +952,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
     private lastNormalizationRefSeq = 0;
     /**
-     *  Given an pending operation and segment group, regenerate the op, so it
-     *  can be resubmitted
+     * Given an pending operation and segment group, regenerate the op, so it
+     * can be resubmitted
      * @param resetOp - The op to reset
      * @param segmentGroup - The segment group associated with the op
      */
@@ -1048,11 +1052,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
     private getLocalSequenceNumber() {
         const segWindow = this.getCollabWindow();
-        if (segWindow.collaborating) {
-            return UnassignedSequenceNumber;
-        } else {
-            return UniversalSequenceNumber;
-        }
+        return segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
     }
     localTransaction(groupOp: IMergeTreeGroupMsg) {
         for (const op of groupOp.ops) {

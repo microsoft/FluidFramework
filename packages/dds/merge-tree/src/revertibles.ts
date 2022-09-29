@@ -23,9 +23,11 @@ import { matchProperties, PropertySet } from "./properties";
 import { DetachedReferencePosition } from "./referencePositions";
 
 /**
- * @alpha Revertibles are new and require the option
- *  mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- *  in order to function correctly.
+ * Revertibles are new and require the option
+ * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
+ * in order to function correctly.
+ *
+ * @alpha
  */
 export type MergeTreeDeltaRevertible =
     {
@@ -55,9 +57,11 @@ interface RemoveSegmentRefProperties{
 }
 
 /**
- * @alpha Revertibles are new and require the option
- *  mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- *  in order to function correctly.
+ * Revertibles are new and require the option
+ * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
+ * in order to function correctly.
+ *
+ * @alpha
  */
 export interface MergeTreeRevertibleDriver{
     insertFromSpec(pos: number, spec: IJSONSegment);
@@ -173,9 +177,10 @@ function appendLocalAnnotateToRevertibles(
 }
 
 /**
- * @alpha Revertibles are new and require the option
- *  mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- *  in order to function correctly.
+ * Revertibles are new and require the option
+ * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
+ * in order to function correctly.
+ * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
     driver: MergeTreeRevertibleDriver,
@@ -208,9 +213,10 @@ export function appendToMergeTreeDeltaRevertibles(
 }
 
 /**
- * @alpha Revertibles are new and require the option
- *  mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- *  in order to function correctly.
+ * Revertibles are new and require the option
+ * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
+ * in order to function correctly.
+ * @alpha
  */
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
     revertibles.forEach((r) => {
@@ -359,9 +365,10 @@ function revertLocalAnnotate(
 }
 
 /**
- * @alpha Revertibles are new and require the option
- *  mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- *  in order to function correctly.
+ * Revertibles are new and require the option
+ * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
+ * in order to function correctly.
+ * @alpha
  */
 export function revertMergeTreeDeltaRevertibles(
     driver: MergeTreeRevertibleDriver,

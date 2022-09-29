@@ -22,6 +22,7 @@ import { SnapshotLegacy } from "../snapshotlegacy";
 import { TextSegment } from "../textSegment";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { LocalReferencePosition } from "../localReference";
 import { InternalRevertDriver } from "../revertibles";
@@ -123,6 +124,21 @@ export class TestClient extends Client {
                 }
             });
         };
+    }
+
+    /**
+     * @internal
+     */
+    public obliterateRange(
+        start: number,
+        end: number,
+        refSeq: number,
+        clientId: number,
+        seq: number,
+        overwrite = false,
+        opArgs: IMergeTreeDeltaOpArgs,
+    ): void {
+        this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
     }
 
     public getText(start?: number, end?: number): string {
@@ -333,7 +349,7 @@ export class TestClient extends Client {
             && segoff.offset !== undefined
             && this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
 
-        assert.equal(fastPathSegment, segoff.segment || undefined, "Unequal rebasePosition computed segments");
+        assert.equal(fastPathSegment, segoff.segment ?? undefined, "Unequal rebasePosition computed segments");
         assert.equal(fastPathResult, slowPathResult, "Unequal rebasePosition results");
         return fastPathResult;
     }

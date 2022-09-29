@@ -532,6 +532,7 @@ describe("client.applyMsg", () => {
         assert.strictEqual(seg.segment, undefined);
     });
 
+    /* eslint-disable max-len */
     /**
      * Regression test for an issue whereby reconnected clients could have segment orders that yielded
      * different tiebreaking results for inserted segments. Specifically, client C's "c" segment
@@ -573,7 +574,7 @@ describe("client.applyMsg", () => {
      */
     it("Concurrent insert into removed segment across block boundary", () => {
         const clients = createClientsAtInitialState(
-            { initialState: "", options: { mergeTreeUseNewLengthCalculations: false } },
+            { initialState: "", options: { mergeTreeUseNewLengthCalculations: true } },
              "A", "B", "C", "D");
 
         const logger = new TestClientLogger([clients.A, clients.C]);

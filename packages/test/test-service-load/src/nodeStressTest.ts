@@ -105,15 +105,13 @@ async function orchestratorProcess(
         undefined,
         args.browserAuth);
 
-    let url;
-    if (args.testId !== undefined && args.createTestId === false) {
+    const url = await (args.testId !== undefined && args.createTestId === false
         // If testId is provided and createTestId is false, then load the file;
-        url = await testDriver.createContainerUrl(args.testId);
-    } else {
-        // If no testId is provided, (or) if testId is provided but createTestId is not false, then create a file;
+        ? testDriver.createContainerUrl(args.testId)
+        // If no testId is provided, (or) if testId is provided but createTestId is not false, then
+        // create a file;
         // In case testId is provided, name of the file to be created is taken as the testId provided
-        url = await initialize(testDriver, seed, profile, args.verbose === true, args.testId);
-    }
+        : initialize(testDriver, seed, profile, args.verbose === true, args.testId));
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
