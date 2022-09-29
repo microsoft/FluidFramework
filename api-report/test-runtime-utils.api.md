@@ -31,6 +31,7 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionSummaryDetails } from '@fluidframework/runtime-definitions';
@@ -400,10 +401,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
-    get IFluidLoadable(): {
-        handle: MockHandle<null>;
-        readonly IFluidLoadable: any;
-    };
+    get IFluidLoadable(): IFluidLoadable;
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)

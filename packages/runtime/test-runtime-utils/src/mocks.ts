@@ -12,6 +12,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
+    IFluidLoadable,
     IProvideFluidLoadable,
     IRequest,
     IResponse,
@@ -381,7 +382,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         this.clientId = overrides?.clientId ?? uuid();
     }
 
-    public get IFluidLoadable() {
+    public get IFluidLoadable(): IFluidLoadable {
         const handle = this.handle;
         return {
             handle,
