@@ -8,7 +8,7 @@ import { ChangeEncoder } from "../change-family";
 import { ITreeCursor } from "../forest";
 import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, Delta, JsonableTree } from "../tree";
-import { brand, clone, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { singleTextCursor } from "./treeTextCursor";
 import {
     FieldKind,
@@ -27,6 +27,9 @@ import {
     FieldEditor,
 } from "./modular-schema";
 import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
+import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
+import { applyModifyToTree } from "./deltaUtils";
+import { sequenceFieldChangeHandler } from "./sequence-field";
 
 /**
  * Encoder for changesets which carry no information.
@@ -316,11 +319,12 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
                 mark = { type: Delta.MarkType.Insert, content: [singleTextCursor(change.value)] };
             } else {
                 const modify = deltaFromChild(change.changes);
-                const content = clone(change.value);
-                const fields = Delta.applyModifyToInsert(content, modify);
+                const cursor = singleTextCursor(change.value);
+                const mutableTree = mapTreeFromCursor(cursor);
+                const fields = applyModifyToTree(mutableTree, modify);
                 mark = fields.size === 0
-                    ? { type: Delta.MarkType.Insert, content: [singleTextCursor(content)] }
-                    : { type: Delta.MarkType.InsertAndModify, content: singleTextCursor(content), fields };
+                    ? { type: Delta.MarkType.Insert, content: [singleMapTreeCursor(mutableTree)] }
+                    : { type: Delta.MarkType.InsertAndModify, content: singleMapTreeCursor(mutableTree), fields };
             }
 
             return [
@@ -346,6 +350,195 @@ export const value: FieldKind = new FieldKind(
     new Set(),
 );
 
+export interface OptionalFieldChange {
+    /**
+     * The new content for the trait. If undefined, the trait will be cleared.
+     */
+    newContent?: JsonableTree;
+
+    /**
+     * Whether the field was empty in the state this change is based on.
+     */
+    wasEmpty: boolean;
+}
+
+export interface OptionalChangeset {
+    /**
+     * If defined, specifies the new content for the field.
+     */
+    fieldChange?: OptionalFieldChange;
+
+    /**
+     * Changes to the node which will be in the field after this changeset is applied.
+     */
+    childChange?: NodeChangeset;
+}
+
+const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
+    compose: (changes: OptionalChangeset[], composeChild: NodeChangeComposer): OptionalChangeset => {
+        let fieldChange: OptionalFieldChange | undefined;
+        const childChanges: NodeChangeset[] = [];
+        for (const change of changes) {
+            if (change.fieldChange !== undefined) {
+                if (fieldChange === undefined) {
+                    fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+                }
+
+                if (change.fieldChange.newContent !== undefined) {
+                    fieldChange.newContent = change.fieldChange.newContent;
+                } else {
+                    delete fieldChange.newContent;
+                }
+
+                // The previous changes applied to a different value, so we discard them.
+                // TODO: Represent muted changes
+                childChanges.length = 0;
+            }
+            if (change.childChange !== undefined) {
+                childChanges.push(change.childChange);
+            }
+        }
+
+        const composed: OptionalChangeset = {};
+        if (fieldChange !== undefined) {
+            composed.fieldChange = fieldChange;
+        }
+
+        if (childChanges.length > 0) {
+            composed.childChange = composeChild(childChanges);
+        }
+
+        return composed;
+    },
+
+    invert: (change: OptionalChangeset, invertChild: NodeChangeInverter): OptionalChangeset => {
+        const inverse: OptionalChangeset = {};
+
+        if (change.fieldChange !== undefined) {
+            // TODO: Invert the content in the fieldChange
+            inverse.fieldChange = { wasEmpty: change.fieldChange.newContent === undefined };
+        }
+
+        if (change.childChange !== undefined) {
+            inverse.childChange = invertChild(change.childChange);
+        }
+
+        return inverse;
+    },
+
+    rebase: (change: OptionalChangeset, over: OptionalChangeset, rebaseChild: NodeChangeRebaser): OptionalChangeset => {
+        if (change.fieldChange !== undefined) {
+            if (over.fieldChange !== undefined) {
+                const wasEmpty = over.fieldChange.newContent === undefined;
+
+                // We don't have to rebase the child changes, since the other child changes don't apply to the same node
+                return {
+                    ...change,
+                    fieldChange: { ...change.fieldChange, wasEmpty },
+                };
+            }
+
+            return change;
+        }
+
+        if (change.childChange !== undefined) {
+            if (over.fieldChange !== undefined) {
+                // The node the child changes applied to no longer exists so we drop the changes.
+                // TODO: Represent muted changes
+                return {};
+            }
+
+            if (over.childChange !== undefined) {
+                return { childChange: rebaseChild(change.childChange, over.childChange) };
+            }
+        }
+
+        return change;
+    },
+};
+
+export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
+    /**
+     * Creates a change which replaces the field with `newContent`
+     * @param newContent - the new content for the field
+     * @param wasEmpty - whether the field is empty when creating this change
+     */
+    set(newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset;
+}
+
+const optionalFieldEditor: OptionalFieldEditor = {
+    set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset => ({
+        fieldChange: { newContent, wasEmpty },
+    }),
+
+    buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
+        assert(index === 0, "Optional fields only support a single child node");
+        return { childChange };
+    },
+};
+
+interface EncodedOptionalChangeset {
+    fieldChange?: OptionalFieldChange;
+    childChange?: JsonCompatibleReadOnly;
+}
+
+const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
+    encodeForJson: (formatVersion: number, change: OptionalChangeset, encodeChild: NodeChangeEncoder) => {
+        const encoded: EncodedOptionalChangeset & JsonCompatibleReadOnly = {};
+        if (change.fieldChange !== undefined) {
+            encoded.fieldChange = change.fieldChange;
+        }
+
+        if (change.childChange !== undefined) {
+            encoded.childChange = encodeChild(change.childChange);
+        }
+
+        return encoded;
+    },
+
+    decodeJson: (formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder) => {
+        const encoded = change as EncodedOptionalChangeset;
+        const decoded: OptionalChangeset = {};
+        if (encoded.fieldChange !== undefined) {
+            decoded.fieldChange = encoded.fieldChange;
+        }
+
+        if (encoded.childChange !== undefined) {
+            decoded.childChange = decodeChild(encoded.childChange);
+        }
+
+        return decoded;
+    },
+};
+
+function deltaFromInsertAndChange(
+    insertedContent: JsonableTree | undefined,
+    nodeChange: NodeChangeset | undefined,
+    deltaFromNode: ToDelta,
+): Delta.Mark[] {
+    if (insertedContent !== undefined) {
+        const content = mapTreeFromCursor(singleTextCursor(insertedContent));
+        if (nodeChange !== undefined) {
+            const nodeDelta = deltaFromNode(nodeChange);
+            const fields = applyModifyToTree(content, nodeDelta);
+            if (fields.size > 0) {
+                return [{
+                    type: Delta.MarkType.InsertAndModify,
+                    content: singleMapTreeCursor(content),
+                    fields,
+                }];
+            }
+        }
+        return [{ type: Delta.MarkType.Insert, content: [singleMapTreeCursor(content)] }];
+    }
+
+    if (nodeChange !== undefined) {
+        return [deltaFromNode(nodeChange)];
+    }
+
+    return [];
+}
+
 /**
 * 0 or 1 items.
 */
@@ -353,10 +546,26 @@ export const optional: FieldKind = new FieldKind(
     brand("Optional"),
     Multiplicity.Optional,
     {
-        rebaser: replaceRebaser<JsonableTree | 0>(),
-        encoder: new ValueEncoder<(JsonableTree | 0) & JsonCompatibleReadOnly>(),
-        editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-        intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
+        rebaser: optionalChangeRebaser,
+        encoder: optionalFieldEncoder,
+        editor: optionalFieldEditor,
+
+        intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
+            const insertDelta = deltaFromInsertAndChange(
+                change.fieldChange?.newContent,
+                change.childChange,
+                deltaFromChild,
+            );
+
+            if (change.fieldChange !== undefined && !change.fieldChange.wasEmpty) {
+                return [
+                    { type: Delta.MarkType.Delete, count: 1 },
+                    ...insertDelta,
+                ];
+            }
+
+            return insertDelta;
+        },
     },
     (types, other) =>
         (other.kind === sequence.identifier || other.kind === optional.identifier)
@@ -370,18 +579,12 @@ export const optional: FieldKind = new FieldKind(
 export const sequence: FieldKind = new FieldKind(
     brand("Sequence"),
     Multiplicity.Sequence,
-    {
-        rebaser: replaceRebaser<JsonableTree[]>(),
-        encoder: new ValueEncoder<(JsonableTree[]) & JsonCompatibleReadOnly>(),
-        editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-        intoDelta: (change: JsonableTree, deltaFromChild: ToDelta) => { throw new Error("Not implemented"); },
-    },
-    // TODO: is order correct?
+    sequenceFieldChangeHandler,
     (types, other) =>
         (other.kind === sequence.identifier)
         && allowsTreeSchemaIdentifierSuperset(types, other.types),
     // TODO: add normalizer/importers for handling ops from other kinds.
-    new Set([value.identifier, optional.identifier]),
+    new Set([]),
 );
 
 /**
