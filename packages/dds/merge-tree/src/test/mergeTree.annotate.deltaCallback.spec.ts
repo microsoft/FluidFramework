@@ -9,7 +9,7 @@ import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { TextSegment } from "../textSegment";
 import { MergeTree } from "../mergeTree";
-import { countOperations, insertSegments, insertText } from "./testUtils";
+import { countOperations, insertSegments, insertText, markRangeRemoved } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -146,14 +146,16 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            mergeTree.markRangeRemoved(
-                4,
-                6,
-                remoteSequenceNumber,
-                remoteClientId,
-                ++remoteSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 4,
+                end: 6,
+                refSeq: remoteSequenceNumber,
+                clientId: remoteClientId,
+                seq: ++remoteSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             const count = countOperations(mergeTree);
 
@@ -179,14 +181,16 @@ describe("MergeTree", () => {
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            mergeTree.markRangeRemoved(
-                3,
-                8,
-                currentSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 3,
+                end: 8,
+                refSeq: currentSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             const count = countOperations(mergeTree);
 

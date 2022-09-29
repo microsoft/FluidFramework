@@ -16,7 +16,7 @@ import {
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { insertSegments, insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";
+import { insertSegments, insertText, markRangeRemoved, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 interface ITestTreeFactory {
     readonly create: () => ITestData;
@@ -148,25 +148,29 @@ const treeFactories: ITestTreeFactory[] = [
 
             const remove = Math.round(initialText.length / 4);
             // remove from start
-            mergeTree.markRangeRemoved(
-                0,
-                remove,
-                UniversalSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 0,
+                end: remove,
+                refSeq: UniversalSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
             initialText = initialText.substring(remove);
 
             // remove from end
-            mergeTree.markRangeRemoved(
-                initialText.length - remove,
-                initialText.length,
-                UniversalSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: initialText.length - remove,
+                end: initialText.length,
+                refSeq: UniversalSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
             initialText = initialText.substring(0, initialText.length - remove);
 
             mergeTree.startCollaboration(
@@ -306,15 +310,16 @@ describe("MergeTree.insertingWalk", () => {
         assert.equal(mergeTree.root.childCount, 2);
         assert.equal(textHelper.getText(0, localClientId), "GFEDCBA0");
         // Remove "DCBA"
-        mergeTree.markRangeRemoved(
-            3,
-            7,
-            UniversalSequenceNumber,
-            localClientId,
-            UnassignedSequenceNumber,
-            false,
-            undefined as any,
-        );
+        markRangeRemoved({
+            mergeTree,
+            start: 3,
+            end: 7,
+            refSeq: UniversalSequenceNumber,
+            clientId: localClientId,
+            seq: UnassignedSequenceNumber,
+            overwrite: false,
+            opArgs: undefined as any,
+        });
         assert.equal(textHelper.getText(0, localClientId), "GFE0");
         // Simulate another client inserting concurrently with the above operations. Because
         // all segments but the 0 are unacked, this insert should place the segment directly

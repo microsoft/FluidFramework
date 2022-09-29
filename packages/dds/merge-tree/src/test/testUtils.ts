@@ -97,6 +97,30 @@ export function insertSegments({
     mergeTree.insertSegments(pos, segments, refSeq, clientId, seq, opArgs);
 }
 
+interface MarkRangeRemovedArgs {
+    mergeTree: MergeTree;
+    start: number;
+    end: number;
+    refSeq: number;
+    clientId: number;
+    seq: number;
+    overwrite: boolean;
+    opArgs: IMergeTreeDeltaOpArgs;
+}
+
+export function markRangeRemoved({
+    mergeTree,
+    start,
+    end,
+    refSeq,
+    clientId,
+    seq,
+    overwrite = false,
+    opArgs,
+}: MarkRangeRemovedArgs): void {
+    mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
+}
+
 export function nodeOrdinalsHaveIntegrity(block: IMergeBlock): boolean {
     const olen = block.ordinal.length;
     for (let i = 0; i < block.childCount; i++) {
