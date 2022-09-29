@@ -174,11 +174,12 @@ export interface IContainerRuntimeBase extends
      * get attached to storage) will result in this store being attached to storage.
      *
      * @remarks
-     * The returned object might also have an IFluidHandle property of that same type. If you need access to the data
-     * store's handle, first try treating it as a FluidObject<IFluidHandle> and using the value of the IFluidHandle
-     * property; if it is undefined (which means the implementation hasn't been updated to provide access to the handle
-     * in this way), fall back to the existing approach of treating the data store as an
-     * {@link @fluidframework/core-interfaces#IFluidRouter} and requesting its root object.
+     * The returned object might also implement the IProvideFluidLoadable interface. If you need access to the handle
+     * of the data store's entrypoint, first try treating it as a FluidObject<IProvideFluidLoadable> and using the
+     * value of the 'IFluidLoadable.handle' property; if anything in that chain is undefined (which means the
+     * implementation hasn't been updated to provide access to the handle in this way), fall back to the existing
+     * approach of treating the data store as an {@link @fluidframework/core-interfaces#IFluidRouter} and requesting
+     * its root object.
      */
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
 

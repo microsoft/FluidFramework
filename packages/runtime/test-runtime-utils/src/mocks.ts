@@ -12,7 +12,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandle,
     IFluidHandleContext,
-    IProvideFluidHandle,
+    IProvideFluidLoadable,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -375,14 +375,20 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
-    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext, IProvideFluidHandle {
+    implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext, IProvideFluidLoadable {
     constructor(overrides?: { clientId?: string; }) {
         super();
         this.clientId = overrides?.clientId ?? uuid();
     }
 
-    public get IFluidHandle(): IFluidHandle {
-        return this.handle;
+    public get IFluidLoadable() {
+        const handle = this.handle;
+        return {
+            handle,
+            get IFluidLoadable() {
+                return this;
+            },
+        };
     }
     private readonly handle = new MockHandle(null, "", "");
 
