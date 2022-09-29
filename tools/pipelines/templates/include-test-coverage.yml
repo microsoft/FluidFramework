@@ -23,12 +23,6 @@ parameters:
   type: object
   default:
 
-- name: splitTestVariants
-  type: object
-  default:
-  - name: ""
-    flags: ""
-
 - name: testCommand
   type: string
   default: test:report
