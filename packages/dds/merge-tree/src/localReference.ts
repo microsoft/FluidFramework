@@ -431,7 +431,9 @@ export class LocalReferenceCollection {
         for (const iterable of refs) {
             for (const lref of iterable) {
                 assertLocalReferences(lref);
-                if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
+                    continue;
+                } else if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                     lref.callbacks?.beforeSlide?.(lref);
                     precedingRef = precedingRef === undefined
                         ? beforeRefs.unshift(lref)?.first
@@ -464,7 +466,9 @@ export class LocalReferenceCollection {
         for (const iterable of refs) {
             for (const lref of iterable) {
                 assertLocalReferences(lref);
-                if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
+                    continue;
+                } else if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
                     lref.callbacks?.beforeSlide?.(lref);
                     afterRefs.push(lref);
                     lref.link(this.segment, lastOffset, afterRefs.last);
