@@ -1839,7 +1839,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return rebased;
     }
 
-    private getSlideToSegment(lref: LocalReferencePosition, localSeq?: number) {
+    private getSlideToSegment(lref: LocalReferencePosition) {
         if (!this.client) {
             throw new LoggingError("client does not exist");
         }
@@ -1847,7 +1847,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (segoff.segment?.localRefs?.has(lref) !== true) {
             return undefined;
         }
-        const newSegoff = this.client.getSlideToSegment(segoff, localSeq);
+        const newSegoff = this.client.getSlideToSegment(segoff);
         const value: { segment: ISegment | undefined; offset: number | undefined; } | undefined
             = (segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset) ? undefined : newSegoff;
         return value;
