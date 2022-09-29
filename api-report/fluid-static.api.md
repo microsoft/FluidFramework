@@ -103,9 +103,9 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     // @eventProperty
     (event: "membersChanged", listener: () => void): void;
     // @eventProperty
-    (event: "memberAdded", listener: MemberChangeListener<M>): void;
+    (event: "memberAdded", listener: MemberChangedListener<M>): void;
     // @eventProperty
-    (event: "memberRemoved", listener: MemberChangeListener<M>): void;
+    (event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
 
 // @public
@@ -121,7 +121,7 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 // @public
-export type MemberChangeListener<M extends IMember> = (clientId: string, member: M) => void;
+export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
 // @public
 export class RootDataObject extends DataObject<{

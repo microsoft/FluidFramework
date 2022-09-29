@@ -54,7 +54,7 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) =
 /**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
  *
- * @remarks 
+ * @remarks
  *
  * It includes both the instances of objects that are initially available upon `Container` creation, as well
  * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
@@ -66,6 +66,7 @@ export interface ContainerSchema {
      * @remarks It uses the key as the id and the value as the loadable object to create.
      *
      * @example
+     *
      * In the example below two objects will be created when the `Container` is first
      * created. One with id "map1" that will return a `SharedMap` and the other with
      * id "pair1" that will return a `KeyValueDataObject`.
@@ -82,7 +83,9 @@ export interface ContainerSchema {
     /**
      * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
      *
-     * @remarks Types defined in `initialObjects` will always be available and are not required to be provided here.
+     * @remarks
+     *
+     * Types defined in `initialObjects` will always be available and are not required to be provided here.
      *
      * For best practice it's recommended to define all the dynamic types you create even if they are
      * included via initialObjects.
@@ -98,7 +101,7 @@ export interface ContainerSchema {
  *
  * @see See {@link IServiceAudienceEvents} for usage details.
  */
-export type MemberChangeListener<M extends IMember> = (clientId: string, member: M) => void;
+export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
 /**
  * Events that trigger when the roster of members in the Fluid session change.
@@ -124,21 +127,23 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
      *
      * @eventProperty
      */
-    (event: "memberAdded", listener: MemberChangeListener<M>): void;
+    (event: "memberAdded", listener: MemberChangedListener<M>): void;
 
     /**
      * Eitted when a {@link IMember | member} leaves the audience.
      *
      * @eventProperty
      */
-    (event: "memberRemoved", listener: MemberChangeListener<M>): void;
+    (event: "memberRemoved", listener: MemberChangedListener<M>): void;
     /* eslint-enable @typescript-eslint/unified-signatures */
 }
 
 /**
  * Base interface to be implemented to fetch each service's audience.
  *
- * @remarks The type parameter `M` allows consumers to further extend the client object with service-specific
+ * @remarks
+ *
+ * The type parameter `M` allows consumers to further extend the client object with service-specific
  * details about the connecting client, such as device information, environment, or a username.
  *
  * @typeParam M - A service-specific {@link IMember} type.

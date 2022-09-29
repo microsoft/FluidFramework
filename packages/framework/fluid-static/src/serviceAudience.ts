@@ -11,7 +11,9 @@ import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 /**
  * Base class for providing audience information for sessions interacting with {@link IFluidContainer}
  *
- * @remarks This can be extended by different service-specific client packages to additional parameters to
+ * @remarks
+ *
+ * This can be extended by different service-specific client packages to additional parameters to
  * the user and client details returned in {@link IMember}.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.

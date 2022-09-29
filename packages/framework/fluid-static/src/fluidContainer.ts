@@ -85,7 +85,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly isDirty: boolean;
 
     /**
-     * Whether the container is disposed, which permanently disables it.
+     * Whether or not the container is disposed, which permanently disables it.
      */
     readonly disposed: boolean;
 
@@ -99,7 +99,9 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * The current attachment state of the container.
      *
-     * @remarks Once a container has been attached, it remains attached.
+     * @remarks
+     *
+     * Once a container has been attached, it remains attached.
      * When loading an existing container, it will already be attached.
      */
     readonly attachState: AttachState;
@@ -108,7 +110,9 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      * A newly created container starts detached from the collaborative service.
      * Calling `attach()` uploads the new container to the service and connects to the collaborative service.
      *
-     * @remarks This should only be called when the container is in the
+     * @remarks
+     *
+     * This should only be called when the container is in the
      * {@link @fluidframework/container-definitions#AttachState.Detatched} state.
      *
      * This can be determined by observing {@link IFluidContainer.attachState}.
@@ -121,7 +125,9 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      * Attempts to connect the container to the delta stream and process operations.
      * Will throw an error if unsuccessful.
      *
-     * @remarks This should only be called when the container is in the
+     * @remarks
+     *
+     * This should only be called when the container is in the
      * {@link @fluidframework/container-definitions#ConnectionState.Disconnected} state.
      *
      * This can be determined by observing {@link IFluidContainer.connectionState}.
@@ -131,7 +137,9 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * Disconnects the container from the delta stream and stops processing operations.
      *
-     * @remarks This should only be called when the container is in the
+     * @remarks
+     *
+     * This should only be called when the container is in the
      * {@link @fluidframework/container-definitions#ConnectionState.Connected} state.
      *
      * This can be determined by observing {@link IFluidContainer.connectionState}.
@@ -141,7 +149,9 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * Create a new data object or Distributed Data Store (DDS) of the specified type.
      *
-     * @remarks In order to share the data object or DDS with other
+     * @remarks
+     *
+     * In order to share the data object or DDS with other
      * collaborators and retrieve it later, store its handle in a collection like a SharedDirectory from your
      * initialObjects.
      *
@@ -160,7 +170,9 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 /**
  * Base {@link IFluidContainer} implementation.
  *
- * @remarks Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
+ * @remarks
+ *
+ * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
@@ -220,7 +232,9 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * Incomplete base implementation of {@link IFluidContainer.attach}.
      *
-     * @remarks Note: this implementation will unconditionally throw.
+     * @remarks
+     *
+     * Note: this implementation will unconditionally throw.
      * Consumers who rely on this will need to utilize or provide a service specific implementation of this base type
      * that provides an implementation of this method.
      *
