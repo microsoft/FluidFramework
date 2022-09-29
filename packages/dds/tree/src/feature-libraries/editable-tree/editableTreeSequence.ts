@@ -13,14 +13,14 @@ import { LocalFieldKey, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier } from
 import { Anchor } from "../../tree";
 import { brand } from "../../util";
 import {
-	FieldlessEditableTree, getTypeSymbol, inProxyOrUnwrap, ProxyTarget, proxyTargetSymbol,
-	UnwrappedEditableTree, valueSymbol,
+    FieldlessEditableTree, getTypeSymbol, inProxyOrUnwrap, ProxyTarget, proxyTargetSymbol,
+    UnwrappedEditableTree, valueSymbol,
 } from "./editableTree";
 import { ProxyContext } from "./editableTreeContext";
 import { AdaptingProxyHandler, getFieldSchema, isPrimitive, isPrimitiveValue } from "./utilities";
 
 /**
- * A symbol to append a node to the sequence field.
+ * A symbol to append a node to the sequence field in contexts where string keys are already in use for fields.
  */
 export const appendNodeSymbol: unique symbol = Symbol("editable-tree:appendNode()");
 
@@ -40,7 +40,8 @@ export type UnwrappedEditableSequence = FieldlessEditableTree & readonly Unwrapp
 };
 
 /**
- * A class, which together with a {@link sequenceHandler} implements a field sequence using JS Proxy.
+ * A Proxy target, which together with a {@link sequenceHandler} implements a basic read/write access to
+ * the sequence fields by means of the cursors.
  */
 export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence> {
     private readonly target: ProxyTarget;
@@ -253,6 +254,10 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
     }
 }
 
+/**
+ * A Proxy handler, which together with a {@link ProxyTargetSequence} implements a basic read/write access to
+ * the sequence fields by means of the cursors.
+ */
 export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, UnwrappedEditableSequence> = {
     get: (target: ProxyTargetSequence, key: string | symbol, receiver: object): unknown => {
         if (typeof key === "string") {

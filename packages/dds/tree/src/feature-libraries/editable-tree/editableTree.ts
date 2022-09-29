@@ -40,12 +40,24 @@ export const getTypeSymbol: unique symbol = Symbol("editable-tree:getType()");
  */
 export const valueSymbol: unique symbol = Symbol("editable-tree:value");
 
+/**
+ * A symbol to insert a node in contexts where string keys are already in use for fields.
+ */
 export const insertNodeSymbol: unique symbol = Symbol("editable-tree:insertNode()");
 
+/**
+ * A symbol to set the value of a node in contexts where string keys are already in use for fields.
+ */
 export const setValueSymbol: unique symbol = Symbol("editable-tree:setValue()");
 
+/**
+ * A symbol to delete a node in contexts where string keys are already in use for fields.
+ */
 export const deleteNodeSymbol: unique symbol = Symbol("editable-tree:deleteNode()");
 
+/**
+ * A symbol to initialize a root node in contexts where string keys are already in use for fields.
+ */
 export const insertRootSymbol: unique symbol = Symbol("editable-tree:insertRoot()");
 
 /**
@@ -74,15 +86,25 @@ export interface FieldlessEditableTree {
     readonly [proxyTargetSymbol]: object;
 
     /**
-     * Creates a node
+     * Creates a child of this node.
      */
     readonly [insertNodeSymbol]: (key: string, value: ITreeCursor) => boolean;
 
+    /**
+     * Sets value of a child of this node.
+     */
     readonly [setValueSymbol]: (key: string, value: unknown, typeName: TreeSchemaIdentifier) => boolean;
 
+    /**
+     * Deletes a child of this node.
+     */
     readonly [deleteNodeSymbol]: (key: string) => boolean;
 }
 
+/**
+ * A tree where the forest has no data neither an initialized root node.
+ * By calling a function associated with `insertRootSymbol` is converted into EditableTree.
+ */
 export interface EmptyEditableTree {
     readonly [insertRootSymbol]: (root: ITreeCursor) => UnwrappedEditableTree;
 }
@@ -112,7 +134,7 @@ export interface EditableTree extends FieldlessEditableTree {
      * A mechanism for disambiguating this should be added,
      * likely involving an alternative mechanism for looking up global fields via symbols.
      */
-    readonly [key: string]: UnwrappedEditableField;
+    [key: string]: UnwrappedEditableField;
 }
 
 /**
@@ -147,6 +169,10 @@ export type EditableField = readonly [FieldSchema, readonly EditableTree[]];
  */
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EmptyEditableTree | UnwrappedEditableSequence;
 
+/**
+ * A Proxy target, which together with a {@link handler} implements a basic read/write access to the Forest
+ * by means of the cursors.
+ */
 export class ProxyTarget {
     public readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
@@ -170,13 +196,6 @@ export class ProxyTarget {
             this.context.withAnchors.add(this);
         }
         return this.anchor;
-    }
-
-    public setAnchor(anchor: Anchor) {
-        if (this.anchor !== undefined) {
-            assert(this.anchor === NeverAnchor, "Anchor cannot be changed");
-        }
-        this.anchor = anchor;
     }
 
     public free(): void {
