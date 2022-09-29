@@ -30,7 +30,6 @@ stages:
     jobs:
     - template: templates/include-test-coverage.yml
       parameters:
-        poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:report
@@ -43,7 +42,6 @@ stages:
     jobs:
     - template: templates/include-test-coverage.yml
       parameters:
-        poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:report
@@ -56,7 +54,6 @@ stages:
     jobs:
     - template: templates/include-test-coverage.yml
       parameters:
-        poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:report
@@ -69,7 +66,6 @@ stages:
     jobs:
     - template: templates/include-test-coverage.yml
       parameters:
-        poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:report
@@ -82,7 +78,6 @@ stages:
     jobs:
     - template: templates/include-test-coverage.yml
       parameters:
-        poolBuild: Small
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:report
