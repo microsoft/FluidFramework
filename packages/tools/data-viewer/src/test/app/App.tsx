@@ -30,6 +30,14 @@ function useContainerInfo(): ContainerInfo | undefined {
     const [containerInfo, setContainerInfo] = React.useState<ContainerInfo>();
 
     async function getFluidData(): Promise<ContainerInfo> {
+        /**
+         * Type returned from when creating / loading the Container.
+         */
+        interface ContainerLoadResult {
+            container: IFluidContainer;
+            services: TinyliciousContainerServices;
+        }
+
         // Configure the container.
         const client: TinyliciousClient = new TinyliciousClient();
         const containerSchema: ContainerSchema = {
@@ -42,18 +50,36 @@ function useContainerInfo(): ContainerInfo | undefined {
         let containerId = getContainerIdFromLocation(window.location);
         if (containerId.length === 0) {
             console.log("Creating new container...");
-            const createContainerResult = await client.createContainer(containerSchema);
+            let createContainerResult: ContainerLoadResult;
+            try {
+                createContainerResult = await client.createContainer(containerSchema);
+            } catch (error) {
+                console.error(`Encountered error creating Fluid container:\n${error}`);
+                throw error;
+            }
             console.log("Container created!");
 
             container = createContainerResult.container;
             services = createContainerResult.services;
 
             console.log("Awaiting container attach...");
-            containerId = await container.attach();
+            try {
+                containerId = await container.attach();
+            } catch (error) {
+                console.error(`Encountered error attaching Fluid container:\n${error}`);
+                throw error;
+            }
+
             console.log("Attached!");
         } else {
             console.log("Loading existing container...");
-            const getContainerResult = await client.getContainer(containerId, containerSchema);
+            let getContainerResult: ContainerLoadResult;
+            try {
+                getContainerResult = await client.getContainer(containerId, containerSchema);
+            } catch (error) {
+                console.error(`Encountered error loading Fluid container:\n${error}`);
+                throw error;
+            }
             console.log("Container loaded!");
 
             container = getContainerResult.container;
