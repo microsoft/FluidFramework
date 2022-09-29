@@ -27,6 +27,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 - [Minor event naming correction on IFluidContainerEvents](#IFluidContainerEvents-event-naming-correction)
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
+- [IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 2 days if defined](#idocumentstorageservicepoliciesmaximumcachedurationms-policy-must-be-exactly-2-days-if-defined)
 
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
@@ -49,6 +50,10 @@ This field has been deprecated and will be removed in a future breaking change. 
 
 ### Add assertion that prevents sending op while processing another op
 `preventConcurrentOpSend` has been added and enabled by default. This will run an assertion that closes the container if attempting to send an op while processing another op. This is meant to prevent non-deterministic outcomes due to concurrent op processing.
+
+### IDocumentStorageServicePolicies.maximumCacheDurationMs policy must be exactly 2 days if defined
+Due to the dependency the Garbage Collection feature in the Runtime layer has on this policy, it must remain constant over time.
+So this has been codified in the type, switching from `number | undefined` to `TwoDaysMs | undefined` (with `type TwoDaysMs = 172800000`)
 
 # 2.0.0
 
