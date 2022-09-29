@@ -71,11 +71,11 @@
     "@fluidframework/test-runtime-utils": "^1.0.1",
     "@fluidframework/test-utils": "^1.0.1",
     "cross-env": "^7.0.2",
-    "fluid-framework": "^1.0.1",
+    "fluid-framework": "^1.2.7",
     "mocha": "^10.0.0",
     "sinon": "^7.4.2",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.89251",
+    "tinylicious": "^0.4.94771",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
