@@ -75,6 +75,9 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 }
 
 // @public (undocumented)
+export type FiveDaysMs = 432000000;
+
+// @public (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
     readonly claims?: string;
@@ -180,7 +183,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
-    readonly maximumCacheDurationMs?: number;
+    readonly maximumCacheDurationMs?: FiveDaysMs;
     readonly minBlobSize?: number;
 }
 
