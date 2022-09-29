@@ -66,6 +66,7 @@ steps:
     workingFile: $(Pipeline.Workspace)/pack//${{ parameters.artifactPath }}/.npmrc
     customEndPoint: ${{ parameters.customEndPoint }}
 - task: Bash@3
+  retryCountOnTaskFailure: 3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
   inputs:
     targetType: 'inline'
