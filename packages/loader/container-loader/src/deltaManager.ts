@@ -55,7 +55,7 @@ import { DeltaQueue } from "./deltaQueue";
 import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
- } from "./contracts";
+} from "./contracts";
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
@@ -91,15 +91,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private pending: ISequencedDocumentMessage[] = [];
     private fetchReason: string | undefined;
-
-    private readonly mc: MonitoringContext;
-
-    // A boolean used to assert that ops are not being sent while processing another op.
-    private currentlyProcessingOps: boolean = false;
-
-    // Feature gate that closes a container when sending an op if the container is
-    // concurrently processing another op
-    private readonly preventConcurrentOpSend: boolean = true;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -185,7 +176,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
      * Tells if  current connection has checkpoint information.
      * I.e. we know how far behind the client was at the time of establishing connection
      */
-     public get hasCheckpointSequenceNumber() {
+    public get hasCheckpointSequenceNumber() {
         // Valid to be called only if we have active connection.
         assert(this.connectionManager.connected, 0x0df /* "Missing active connection" */);
         return this._checkpointSequenceNumber !== undefined;
@@ -200,9 +191,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents?: string, batch = false, metadata?: any) {
-        if (this.currentlyProcessingOps && this.preventConcurrentOpSend) {
-            this.close(new UsageError("Making changes to data model is disallowed while processing ops."));
-        }
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents,
             metadata,
@@ -321,8 +309,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         };
 
         this.connectionManager = createConnectionManager(props);
-        this.mc = loggerToMonitoringContext(logger);
-        this.preventConcurrentOpSend = this.mc.config.getBoolean("Fluid.Container.ConcurrentOpSend") === true;
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
@@ -390,7 +376,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             if (checkpointSequenceNumber > this.lastQueuedSequenceNumber) {
                 this.fetchMissingDeltas("AfterConnection");
             }
-        // we do not know the gap, and we will not learn about it if socket is quite - have to ask.
+            // we do not know the gap, and we will not learn about it if socket is quite - have to ask.
         } else if (connection.mode === "read") {
             this.fetchMissingDeltas("AfterReadConnection");
         }
@@ -708,9 +694,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // Report if we found some issues
             if (duplicate !== 0 || gap !== 0 && !allowGaps || initialGap > 0 && this.fetchReason === undefined) {
                 eventName = "enqueueMessages";
-            // Also report if we are fetching ops, and same range comes in, thus making this fetch obsolete.
+                // Also report if we are fetching ops, and same range comes in, thus making this fetch obsolete.
             } else if (this.fetchReason !== undefined && this.fetchReason !== reason &&
-                    (from <= this.lastQueuedSequenceNumber + 1 && last > this.lastQueuedSequenceNumber)) {
+                (from <= this.lastQueuedSequenceNumber + 1 && last > this.lastQueuedSequenceNumber)) {
                 eventName = "enqueueMessagesExtraFetch";
             }
 
@@ -791,8 +777,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
-        assert(!this.currentlyProcessingOps, 0x3af /* Already processing ops. */);
-        this.currentlyProcessingOps = true;
         this.lastProcessedMessage = message;
 
         // All non-system messages are coming from some client, and should have clientId
@@ -847,7 +831,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             throw new Error("Attempted to process an inbound message without a handler attached");
         }
         this.handler.process(message);
-        this.currentlyProcessingOps = false;
         const endTime = Date.now();
 
         // Should be last, after changing this.lastProcessedSequenceNumber above, as many callers
@@ -858,15 +841,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-     private fetchMissingDeltas(reasonArg: string, to?: number) {
-         this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, to).catch((error) => {
-             this.logger.sendErrorEvent({ eventName: "fetchMissingDeltasException" }, error);
-         });
-     }
+    private fetchMissingDeltas(reasonArg: string, to?: number) {
+        this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, to).catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "fetchMissingDeltasException" }, error);
+        });
+    }
 
-     /**
-     * Retrieves the missing deltas between the given sequence numbers
-     */
+    /**
+    * Retrieves the missing deltas between the given sequence numbers
+    */
     private async fetchMissingDeltasCore(
         reason: string,
         cacheOnly: boolean,

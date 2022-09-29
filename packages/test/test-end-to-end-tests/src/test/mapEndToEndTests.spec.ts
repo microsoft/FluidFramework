@@ -411,15 +411,12 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
             await provider.ensureSynchronized();
         };
 
-        // ADO #1834 tracks fixing it!
-        // This test case does not work correctly - it used to work before batching changes for the wrong reason.
-        // Please see above ticket for more info
-        itExpects.skip("Should close container when sending an op while processing another op",
+        itExpects("Should close container when sending an op while processing another op",
             [{
                 eventName: "fluid:telemetry:Container:ContainerClose",
                 error: "Making changes to data model is disallowed while processing ops.",
             }], async () => {
-                await setupContainers(testContainerConfig, { "Fluid.Container.ConcurrentOpSend": true });
+                await setupContainers(testContainerConfig);
 
                 sharedMap.on("valueChanged", (changed, local) => {
                     if (!local) {
@@ -436,7 +433,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
             });
 
         it("Negative test with unset concurrentOpSend feature gate", async () => {
-            await setupContainers(testContainerConfig, { "Fluid.Container.ConcurrentOpSend": false });
+            await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.DisableBatchBaselineCheck": true });
             sharedMap.on("valueChanged", (changed, local) => {
                 // Avoid re-entrancy by setting a new key
                 if (changed.key !== "key2") {

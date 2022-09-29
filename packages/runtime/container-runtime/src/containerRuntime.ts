@@ -54,6 +54,7 @@ import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
     DataProcessingError,
+    extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
 } from "@fluidframework/container-utils";
@@ -512,6 +513,7 @@ interface IPendingRuntimeState {
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
+const disableBatchBaselineCheckKey = "Fluid.ContainerRuntime.DisableBatchBaselineCheck";
 
 const defaultFlushMode = FlushMode.TurnBased;
 
@@ -1812,16 +1814,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (length > 1) {
             batch[0].metadata = { ...batch[0].metadata, batch: true };
             batch[length - 1].metadata = { ...batch[length - 1].metadata, batch: false };
-
-            // This assert fires for the following reason (there might be more cases like that):
-            // AgentScheduler will send ops in response to ConsensusRegisterCollection's "atomicChanged" event handler,
-            // i.e. in the middle of op processing!
-            // Sending ops while processing ops is not good idea - it's not defined when
-            // referenceSequenceNumber changes in op processing sequence (at the beginning or end of op processing),
-            // If we send ops in response to processing multiple ops, then we for sure hit this assert!
-            // Tracked via ADO #1834
-            // assert(batch[0].referenceSequenceNumber === batch[length - 1].referenceSequenceNumber,
-            //    "Batch should be generated synchronously, without processing ops in the middle!");
         }
 
         let clientSequenceNumber: number = -1;
@@ -2684,12 +2676,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (type === ContainerMessageType.Attach &&
                 this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
-                if (!this.pendingAttachBatch.push(message)) {
+                if (!this.submitToBatch(this.pendingAttachBatch, message)) {
                     // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
                     // when queue is not empty.
                     // Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
                     this.flushBatch(this.pendingAttachBatch.popBatch());
-                    if (!this.pendingAttachBatch.push(message)) {
+                    if (!this.submitToBatch(this.pendingAttachBatch, message)) {
                         throw new GenericError(
                             "BatchTooLarge",
                             /* error */ undefined,
@@ -2701,7 +2693,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     }
                 }
             } else {
-                if (!this.pendingBatch.push(message)) {
+                if (!this.submitToBatch(this.pendingBatch, message)) {
                     throw new GenericError(
                         "BatchTooLarge",
                         /* error */ undefined,
@@ -2732,6 +2724,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.isContainerMessageDirtyable(type, contents)) {
             this.updateDocumentDirtyState(true);
         }
+    }
+
+    private submitToBatch(batchManager: BatchManager, message: BatchMessage) {
+        const baseLine = batchManager.pendingBatchBaseline;
+        if (this.mc.config.getBoolean(disableBatchBaselineCheckKey) !== true
+            && baseLine !== undefined
+            && baseLine !== message.referenceSequenceNumber) {
+            throw new GenericError(
+                "Submission of an out of order message",
+                /* error */ undefined,
+                {
+                    ...extractSafePropertiesFromMessage(message),
+                    referenceSequenceNumber: baseLine,
+                });
+        }
+
+        return batchManager.push(message);
     }
 
     private submitSummaryMessage(contents: ISummaryContent) {
