@@ -25,7 +25,7 @@ The `TaskManager` object provides a number of methods to manage the execution of
 
 
 - `volunteerForTask(taskId)` -- Adds the client to the task queue **once**. It returns a promise that resolves `true` if the client is assigned the task and `false` if the task was completed by another client. It will throw an error if the client disconnects while in queue.
-- `subscribeToTask(taskId)` -- Will continuously add the client to the task queue. Does not return a value, and will therefore require lisnening to [events](#events) to determine if the task is assigned, lost, or completed.
+- `subscribeToTask(taskId)` -- Will continuously add the client to the task queue. Does not return a value, and will therefore require listening to [events](#events) to determine if the task is assigned, lost, or completed.
 - `subscribed(taskId)` -- Returns a boolean to indicate if the client is subscribed to the task.
 - `complete(taskId)` -- Will release all clients from the task queue, including the currently assigned client.
 - `abandon(taskId)` -- Exits the queue and releasing the task if currently assigned. Will also unsubscribe from the task (if subscribed).
@@ -37,7 +37,7 @@ The `TaskManager` object provides a number of methods to manage the execution of
 
 Although both APIs are ultimately used to join the task queue, they have two key differences which impacts which should be used in any given scenario. The first key difference is that `volunteerForTask()` returns a `Promise`, while `subscribeToTask()` is synchronous and will rely on events. Second, `volunteerForTask()` will only enter the client into the task queue **once**, while `subscribeToTask()` will re-enter the client into the task queue if the client disconnects and later reconnects.
 
-Due to these differences, `volunteerForTask()` is better suited for one-time tasks such as data imports or migrations. For an example, see [the schema upgrade demo](#external-examples). On the other hand, `subscribeToTask()` is prefered for ongoing tasks that have no defintive end. For an example, see [the task selection demo](#external-examples).
+Due to these differences, `volunteerForTask()` is better suited for one-time tasks such as data imports or migrations. For an example, see [the schema upgrade demo](#external-examples). On the other hand, `subscribeToTask()` is prefered for ongoing tasks that have no definitive end. For an example, see [the task selection demo](#external-examples).
 
 ### Events
 
