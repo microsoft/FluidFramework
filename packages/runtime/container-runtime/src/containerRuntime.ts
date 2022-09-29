@@ -415,20 +415,19 @@ export interface ISummaryRuntimeOptions {
 }
 
 /**
- * Options for op compression.
+ * Options for op compression. Compression is disabled when undefined.
  * @experimental - Not ready for use
  */
 export interface ICompressionRuntimeOptions {
     /**
      * The minimum size the batch's payload must exceed before the batch's contents will be compressed.
-     * Compression is disabled if undefined.
      */
-    readonly minimumBatchSize?: number;
+    readonly minimumBatchSize: number;
 
     /**
      * The compression algorithm that will be used to compress the op.
      */
-    readonly compressionAlgorithm?: CompressionAlgorithms;
+    readonly compressionAlgorithm: CompressionAlgorithms;
 }
 
 /**
@@ -658,7 +657,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = {},
+            compressionOptions = { minimumBatchSize: Number.POSITIVE_INFINITY,
+                                   compressionAlgorithm: CompressionAlgorithms.lz4 },
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -1834,8 +1834,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     batchContentsLength += message.contents.length;
                 }
 
-                if (this.runtimeOptions.compressionOptions?.minimumBatchSize !== undefined
-                    && this.runtimeOptions.compressionOptions.compressionAlgorithm !== undefined
+                if (this.runtimeOptions.compressionOptions !== undefined
                     && batchContentsLength > this.runtimeOptions.compressionOptions.minimumBatchSize) {
                         batchToSend.push(...this.opCompressor.compressBatch(batch, batchContentsLength));
                 } else {
