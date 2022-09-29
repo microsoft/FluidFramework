@@ -84,6 +84,12 @@
       },
       "InterfaceDeclaration_ILocationRedirectionError": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_IDocumentStorageService": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IDocumentStorageServicePolicies": {
+        "forwardCompat": false
       }
     }
   }

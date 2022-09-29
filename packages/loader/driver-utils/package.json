@@ -122,6 +122,18 @@
       },
       "ClassDeclaration_UsageError": {
         "forwardCompat": false
+      },
+      "ClassDeclaration_BlobAggregationStorage": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_BlobCacheStorageService": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_DocumentStorageServiceProxy": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_PrefetchDocumentStorageService": {
+        "forwardCompat": false
       }
     }
   }
