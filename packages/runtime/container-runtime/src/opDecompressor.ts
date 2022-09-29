@@ -5,7 +5,7 @@
 
 import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { CompressionAlgorithms } from ".";
 
 /**
@@ -36,7 +36,7 @@ export class OpDecompressor {
 
             const contents = IsoBuffer.from(this.rootMessage.contents.packedContents, "base64");
             const decompressedMessage = decompress(contents);
-            const intoString = new TextDecoder().decode(decompressedMessage);
+            const intoString = Uint8ArrayToString(decompressedMessage);
             const asObj = JSON.parse(intoString);
             this.rootMessage.contents = asObj;
 

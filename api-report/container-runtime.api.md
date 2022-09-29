@@ -318,7 +318,7 @@ export interface IClientSummaryWatcher extends IDisposable {
 // @public
 export interface ICompressionRuntimeOptions {
     readonly compressionAlgorithm?: CompressionAlgorithms;
-    readonly minimumSize?: number;
+    readonly minimumBatchSize?: number;
 }
 
 // @public (undocumented)

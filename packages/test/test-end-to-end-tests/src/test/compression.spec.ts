@@ -19,7 +19,7 @@ import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 const testContainerConfig: ITestContainerConfig = {
     registry: [["mapKey", SharedMap.getFactory()]],
     runtimeOptions: {
-        compressionOptions: { minimumSize: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
+        compressionOptions: { minimumBatchSize: 1, compressionAlgorithm: CompressionAlgorithms.lz4 },
     },
     fluidDataObjectType: DataObjectFactoryType.Test,
 };
