@@ -19,6 +19,7 @@ export {
     PackageWithRangeSpec,
 } from "./bump";
 export {
+    filterVersionsOlderThan,
     getAllVersions,
     getPreReleaseDependencies,
     generateReleaseGitTagName,

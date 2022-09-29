@@ -7,7 +7,7 @@ import path from "path";
 import { Context, readJsonAsync, Logger, Package, MonoRepo } from "@fluidframework/build-tools";
 import { isPrereleaseVersion, ReleaseVersion } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
-import { compareDesc } from "date-fns";
+import { compareDesc, differenceInBusinessDays } from "date-fns";
 import ncu from "npm-check-updates";
 // eslint-disable-next-line import/no-internal-modules
 import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
@@ -462,10 +462,10 @@ export async function getAllVersions(
  *
  * @internal
  */
-export async function sortVersions(
+export function sortVersions(
     versions: VersionDetails[],
     sortKey: "version" | "date",
-): Promise<VersionDetails[]> {
+): VersionDetails[] {
     const sortedVersions: VersionDetails[] = [];
 
     // Clone the array
@@ -482,4 +482,21 @@ export async function sortVersions(
     }
 
     return sortedVersions;
+}
+
+/**
+ * Filters an array of {@link VersionDetails}, removing versions older than a specified number of business days.
+ *
+ * @param versions - The array of versions to filter.
+ * @param numBusinessDays - The number of business days to consider recent.
+ * @returns An array of versions that are more recent than numBusinessDays.
+ */
+export function filterVersionsOlderThan(
+    versions: VersionDetails[],
+    numBusinessDays: number,
+): VersionDetails[] {
+    return versions.filter((v) => {
+        const diff = v.date === undefined ? 0 : differenceInBusinessDays(Date.now(), v.date);
+        return diff <= numBusinessDays;
+    });
 }
