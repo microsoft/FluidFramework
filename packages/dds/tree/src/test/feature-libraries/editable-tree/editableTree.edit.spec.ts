@@ -1,7 +1,8 @@
 /*!
-* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { fail, strict as assert } from "assert";
 import {
     NamedTreeSchema, namedTreeSchema, ValueSchema, fieldSchema, SchemaData, TreeSchemaIdentifier,
@@ -215,7 +216,7 @@ async function createSharedTrees(schema: SchemaData, data: JsonableTree, nofTree
     return provider.trees.slice(1);
 }
 
-describe.only("editing with editable-tree", () => {
+describe("editing with editable-tree", () => {
     describe("Non-sequence fields", () => {
         it("update property", async () => {
             const trees = await createSharedTrees(fullSchemaData, personData, 2);

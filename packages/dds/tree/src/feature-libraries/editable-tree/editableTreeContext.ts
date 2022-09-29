@@ -200,6 +200,6 @@ export class ProxyContext implements EditableTreeContext {
  * @returns {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
- export function getEditableTreeContext(forest: IEditableForest, tree?: ISharedTree): EditableTreeContext {
+export function getEditableTreeContext(forest: IEditableForest, tree?: ISharedTree): EditableTreeContext {
     return new ProxyContext(forest, tree);
 }
