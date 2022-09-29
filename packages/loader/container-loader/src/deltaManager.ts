@@ -25,8 +25,6 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
-    MonitoringContext,
-    loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -49,7 +47,6 @@ import {
     DataCorruptionError,
     extractSafePropertiesFromMessage,
     DataProcessingError,
-    UsageError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {

@@ -54,7 +54,6 @@ import { readAndParse } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
     DataProcessingError,
-    extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
 } from "@fluidframework/container-utils";
@@ -2731,13 +2730,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.mc.config.getBoolean(disableBatchBaselineCheckKey) !== true
             && baseLine !== undefined
             && baseLine !== message.referenceSequenceNumber) {
-            throw new GenericError(
+            const error = new GenericError(
                 "Submission of an out of order message",
                 /* error */ undefined,
                 {
-                    ...extractSafePropertiesFromMessage(message),
                     referenceSequenceNumber: baseLine,
+                    messageReferenceSequenceNumber: message.referenceSequenceNumber,
                 });
+            this.closeFn(error);
+            throw error;
         }
 
         return batchManager.push(message);
