@@ -10,7 +10,6 @@ import {
     OutputFlags,
     ParserOutput,
     PrettyPrintableError,
-    // eslint-disable-next-line import/no-internal-modules
 } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import { rootPathFlag } from "./flags";
@@ -48,19 +47,25 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
 
     protected parsedOutput?: ParserOutput<any, any>;
 
-    /** The processed arguments that were passed to the CLI. */
+    /**
+     * The processed arguments that were passed to the CLI.
+     */
     get processedArgs(): { [name: string]: any } {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.parsedOutput?.args ?? {};
     }
 
-    /** The processed flags that were passed to the CLI. */
+    /**
+     * The processed flags that were passed to the CLI.
+     */
     get processedFlags(): InferredFlagsType<T> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.parsedOutput?.flags ?? {};
     }
 
-    /** The flags defined on the base class. */
+    /**
+     * The flags defined on the base class.
+     */
     private get baseFlags() {
         return this.processedFlags as Partial<OutputFlags<typeof BaseCommand.flags>>;
     }
@@ -238,7 +243,9 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
         return super.error(input as Error, options as any);
     }
 
-    /** Logs a verbose log statement. */
+    /**
+     * Logs a verbose log statement.
+     */
     public verbose(message: string | Error): string | Error {
         if (this.baseFlags.verbose === true) {
             if (typeof message === "string") {

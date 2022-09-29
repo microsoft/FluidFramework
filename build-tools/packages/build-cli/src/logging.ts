@@ -9,7 +9,9 @@ import { Logger } from "@fluidframework/build-tools";
  * An extension of the {@link Logger} interface that adds logging capabilities useful when writing terminal CLIs.
  */
 export interface CommandLogger extends Logger {
-    /** Logs a horizontal rule -- a visual line break. */
+    /**
+     * Logs a horizontal rule -- a visual line break.
+     */
     logHr(): void;
 
     /**

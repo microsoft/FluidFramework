@@ -6,12 +6,12 @@
 module.exports = {
     plugins: ["@typescript-eslint"],
     extends: [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
+        // "eslint:recommended",
+        // "plugin:@typescript-eslint/recommended",
         // eslint-disable-next-line node/no-extraneous-require
         require.resolve("@fluidframework/eslint-config-fluid"),
-        "oclif",
-        "oclif-typescript",
+        // "oclif",
+        // "oclif-typescript",
         "prettier",
     ],
     rules: {
@@ -20,8 +20,29 @@ module.exports = {
 
         // oclif uses default exports for commands
         "import/no-default-export": "off",
-        "max-params": ["error", 5],
+
+        //This package uses interfaces and types that are not exposed directly by oclif and npm-check-updates.
+        "import/no-internal-modules": [
+            "error",
+            {
+                allow: ["@oclif/core/lib/interfaces", "npm-check-updates/build/src/types/**"],
+            },
+        ],
+
+        "jsdoc/multiline-blocks": [
+            "error",
+            {
+                noSingleLineBlocks: true,
+            },
+        ],
+
+        // The default for this rule is 4, but 5 is better
+        "max-params": ["warn", 5],
+
+        // Causes issues with some versions of node
         "unicorn/prefer-node-protocol": "off",
-        "valid-jsdoc": "off",
+
+        // Too strict for this package
+        // "valid-jsdoc": "off",
     },
 };

@@ -356,6 +356,7 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
             }
 
             case "PromptToRunTypeTests": {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 result = await promptToRunTypeTests(state, machine, testMode, log, data);
                 break;
             }

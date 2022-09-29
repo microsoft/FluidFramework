@@ -9,9 +9,7 @@ import { isPrereleaseVersion, ReleaseVersion } from "@fluid-tools/version-tools"
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import ncu from "npm-check-updates";
-// eslint-disable-next-line import/no-internal-modules
 import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
-// eslint-disable-next-line import/no-internal-modules
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
 import * as semver from "semver";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
@@ -62,7 +60,9 @@ export async function npmCheckUpdates(
 }> {
     const updatedPackages: Package[] = [];
 
-    /** A set of all the packageName, versionString pairs of updated dependencies. */
+    /**
+     * A set of all the packageName, versionString pairs of updated dependencies.
+     */
     const updatedDependencies: PackageVersionMap = {};
 
     // There can be a lot of duplicate log lines from npm-check-updates, so collect and dedupe before logging.
@@ -195,11 +195,17 @@ export async function npmCheckUpdates(
  * @internal
  */
 export interface PreReleaseDependencies {
-    /** A map of release groups to a version string. */
+    /**
+     * A map of release groups to a version string.
+     */
     releaseGroups: Map<ReleaseGroup, string>;
-    /** A map of release packages to a version string. Only includes independent packages. */
+    /**
+     * A map of release packages to a version string. Only includes independent packages.
+     */
     packages: Map<ReleasePackage, string>;
-    /** True if there are no pre-release dependencies. False otherwise. */
+    /**
+     * True if there are no pre-release dependencies. False otherwise.
+     */
     isEmpty: boolean;
 }
 
@@ -275,25 +281,6 @@ export async function getPreReleaseDependencies(
         packages: prereleasePackages,
         isEmpty,
     };
-}
-
-/** Convenience function to hydrate an array of {@link Package} objects from {@link ReleasePackage}s. */
-function getPackagesFromReleasePackages(
-    context: Context,
-    relPackages: ReleasePackage[],
-): Package[] {
-    const packages: Package[] = [];
-
-    for (const rp of relPackages) {
-        const pkg = context.fullPackageMap.get(rp);
-        if (pkg === undefined) {
-            throw new Error(`Can't find package in context: ${rp}`);
-        }
-
-        packages.push(pkg);
-    }
-
-    return packages;
 }
 
 /**
@@ -409,9 +396,14 @@ export function getVersionFromTag(tag: string): string | undefined {
  * @internal
  */
 export interface VersionDetails {
-    /** The version. */
+    /**
+     * The version.
+     */
     version: string;
-    /** The date the version was released, if applicable. */
+
+    /**
+     * The date the version was released, if applicable.
+     */
     date?: Date;
 }
 
