@@ -6,7 +6,7 @@
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { StoredSchemaRepository } from "../schema-stored";
 import { Anchor, DetachedField } from "../tree";
-import { ITreeCursor, TreeNavigationResult } from "./cursor";
+import { ITreeCursor, TreeNavigationResult } from "./cursorLegacy";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
@@ -46,8 +46,14 @@ export interface IForestSubscription extends Dependee {
 
     /**
      * Anchor at the beginning of a root field.
+     * Will incur cost to maintain across edits until freed.
      */
     root(range: DetachedField): Anchor;
+
+    /**
+     * Frees an Anchor, stopping tracking its position across edits.
+     */
+    forgetAnchor(anchor: Anchor): void;
 
     /**
      * If observer is provided, it will be invalidated if the value returned from this changes

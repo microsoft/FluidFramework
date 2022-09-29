@@ -23,6 +23,7 @@ import { SnapshotLegacy } from "../snapshotlegacy";
 import { TextSegment } from "../textSegment";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -115,6 +116,25 @@ export class TestClient extends Client {
                 }
             });
         };
+    }
+
+    /**
+     * @internal
+     */
+    public obliterateRange({ start, end, refSeq, clientId, seq, overwrite = false, opArgs }: {
+        start: number;
+        end: number;
+        refSeq: number;
+        clientId: number;
+        seq: number;
+        overwrite?: boolean;
+        opArgs: IMergeTreeDeltaOpArgs;
+    }): void {
+        this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
+    }
+
+    public obliterateRangeLocal(start: number, end: number) {
+        return this.removeRangeLocal(start, end);
     }
 
     public getText(start?: number, end?: number): string {
@@ -316,19 +336,16 @@ export class TestClient extends Client {
             return posAccumulated <= pos;
         });
 
-        const { currentSeq: seqNumberTo } = this.getCollabWindow();
         assert(segment !== undefined, "No segment found");
-        if ((segment.removedSeq !== undefined &&
-             segment.removedSeq !== UnassignedSequenceNumber &&
-             segment.removedSeq <= seqNumberTo)
-            || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
-            // Segment that the position was in has been removed: null out offset.
-            offset = 0;
-        }
 
-        const slowPathResult = this.findReconnectionPosition(segment, localSeq) + offset;
+        const segoff = this.getSlideToSegment({ segment, offset }) ?? segment;
 
-        assert.equal(fastPathSegment, segment, "Unequal rebasePosition computed segments");
+        const slowPathResult =
+            segoff.segment !== undefined
+            && segoff.offset !== undefined
+            && this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+
+        assert.equal(fastPathSegment, segoff.segment ?? undefined, "Unequal rebasePosition computed segments");
         assert.equal(fastPathResult, slowPathResult, "Unequal rebasePosition results");
         return fastPathResult;
     }

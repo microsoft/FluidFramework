@@ -4,7 +4,8 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 /**
  * Logger that writes events into a defined file
@@ -41,4 +42,26 @@ export class FileLogger implements ITelemetryBaseLogger {
             this.flush();
         }
     }
+}
+
+/**
+ * Create a ITelemetryLogger wrapped around provided FileLogger
+ */
+export function createLogger(fileLogger: FileLogger): ITelemetryLogger {
+    return ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp",
+        { all: { Event_Time: () => Date.now() } });
+}
+
+/**
+ * Validate the telemetryFile command line argument
+ * @param telemetryFile - path where telemetry will be written
+ */
+export function getTelemetryFileValidationError(telemetryFile: string): string | undefined {
+    if (!telemetryFile) {
+        return "Telemetry file argument is missing.";
+    } else if (fs.existsSync(telemetryFile)) {
+        return `Telemetry file already exists [${telemetryFile}].`;
+    }
+
+    return undefined;
 }

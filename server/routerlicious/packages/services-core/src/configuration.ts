@@ -19,6 +19,12 @@ export interface IDeliServerConfiguration {
     // Enables creating join/leave signals for write clients
     enableWriteClientSignals: boolean;
 
+    // Enables deli to maintain batches as it produces them to the next lambdas
+    maintainBatches: boolean;
+
+    // Enables deli to check for idle clients when it starts
+    checkForIdleClientsOnStartup: boolean;
+
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
@@ -163,6 +169,8 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         enableNackMessages: true,
         enableOpHashing: true,
         enableAutoDSNUpdate: false,
+        checkForIdleClientsOnStartup: false,
+        maintainBatches: false,
         enableWriteClientSignals: false,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,

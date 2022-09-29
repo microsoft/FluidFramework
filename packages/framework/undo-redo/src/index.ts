@@ -4,7 +4,7 @@
  */
 
 /**
-* This package provides an implementation of an in-memory undo redo stack, as
+* This library provides an implementation of an in-memory undo redo stack, as
 * well as handlers for the SharedMap, and SharedSegmentSequence distributed
 * datastructures.
 *
@@ -78,8 +78,9 @@
 * manifests in a few ways:
 *
 * - Removed segments in a TrackingGroup will not be garbage collected from the
-*   backing tree structure.
-* - Segments can only be merged if they have all the same TrackingGroups.
+* backing tree structure.
+*
+ * - Segments can only be merged if they have all the same TrackingGroups.
 *
 * This object minimizes the number of TrackingGroups created, so this overhead
 * is very low. This undo redo infrastructure is entirely in-memory so it does

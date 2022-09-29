@@ -22,9 +22,12 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
  * Validates the state of the given node in the GC summary tree:
+ *
  * - If referenced = true, it should exist in the summary and should not have unreferenced timestamp.
+ *
  * - If referenced = false and deletedFromGCState = false, it should exist in the summary and should have
- *   unreferenced timestamp.
+ * unreferenced timestamp.
+ *
  * - If referenced = false and deletedFromGCState = true, it should not exist in the summary.
  */
 async function validateNodeStateInGCSummaryTree(
@@ -98,8 +101,10 @@ function validateChildReferenceStates(summary: ISummaryTree, referenced: boolean
  * Validates that the request to load the data store with the given id succeeds / fail as expected.
  * For referenced data stores, we should always be able to load them.
  * For unreferenced data store:
- *   - If deleteContent is true, the load should fail with 404 because the data store is deleted.
- *   - Otherwise, the load should pass because the data store exists.
+ *
+ * - If deleteContent is true, the load should fail with 404 because the data store is deleted.
+ *
+ * - Otherwise, the load should pass because the data store exists.
  */
 async function validateDataStoreLoad(
     containerRuntime: ContainerRuntime,
@@ -195,6 +200,10 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             const container = await provider.makeTestContainer(testContainerConfig);
             mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
             containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+
+            // Send an op before GC runs. GC needs current timestamp to work with which is retrieved from ops. Without
+            // any op, GC will not run.
+            mainDataStore._root.set("key", "value");
             await waitForContainerConnection(container);
         });
 

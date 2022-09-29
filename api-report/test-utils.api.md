@@ -51,6 +51,7 @@ import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
+import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
@@ -67,10 +68,10 @@ export const createDocumentId: () => string;
 export function createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, documentServiceFactory: IDocumentServiceFactory, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger, options?: ILoaderOptions): IHostLoader;
 
 // @public (undocumented)
-export function createSummarizer(provider: ITestObjectProvider, container: IContainer, summaryVersion?: string, gcOptions?: IGCRuntimeOptions): Promise<ISummarizer>;
+export function createSummarizer(provider: ITestObjectProvider, container: IContainer, summaryVersion?: string, gcOptions?: IGCRuntimeOptions, configProvider?: IConfigProviderBase): Promise<ISummarizer>;
 
 // @public (undocumented)
-export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore): Promise<ISummarizer>;
+export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries): Promise<ISummarizer>;
 
 // @public
 export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof ContainerRuntime) => {
@@ -182,7 +183,7 @@ export interface ITestObjectProvider {
     // (undocumented)
     driver: ITestDriver;
     // (undocumented)
-    ensureSynchronized(): Promise<void>;
+    ensureSynchronized(timeoutDuration?: number): Promise<void>;
     // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
@@ -207,6 +208,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
     ensureSynchronized(...containers: IContainer[]): Promise<void>;
+    ensureSynchronizedWithTimeout?(timeoutDuration: number | undefined, ...containers: IContainer[]): Promise<void>;
     pauseProcessing(...containers: IContainer[]): Promise<void>;
     processIncoming(...containers: IContainer[]): Promise<void>;
     processOutgoing(...containers: IContainer[]): Promise<void>;
@@ -302,7 +304,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     // (undocumented)
     readonly driver: ITestDriver;
     // (undocumented)
-    ensureSynchronized(): Promise<void>;
+    ensureSynchronized(timeoutDuration?: number): Promise<void>;
     // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)

@@ -10,6 +10,7 @@ import { Marker, reservedMarkerIdKey, SegmentGroup } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
+import { insertSegments } from "./testUtils";
 
 describe("client.rollback", () => {
     const localUserLongId = "localUser";
@@ -17,13 +18,15 @@ describe("client.rollback", () => {
 
     beforeEach(() => {
         client = new TestClient();
-        client.mergeTree.insertSegments(
-            0,
-            [TextSegment.make("")],
-            UniversalSequenceNumber,
-            client.getClientId(),
-            UniversalSequenceNumber,
-            undefined);
+        insertSegments({
+            mergeTree: client.mergeTree,
+            pos: 0,
+            segments: [TextSegment.make("")],
+            refSeq: UniversalSequenceNumber,
+            clientId: client.getClientId(),
+            seq: UniversalSequenceNumber,
+            opArgs: undefined,
+        });
         client.startOrUpdateCollaboration(localUserLongId);
     });
 
@@ -178,6 +181,59 @@ describe("client.rollback", () => {
 
         for (let i = 0; i < 7; i++) {
             const props = client.getPropertiesAtPosition(i);
+            assert(props === undefined || props.foo === undefined);
+        }
+    });
+    it("Should rollback annotate that later gets split", () => {
+        client.insertTextLocal(0, "abfg");
+        client.annotateRangeLocal(0, 4, { foo: "bar" }, undefined);
+        client.insertTextLocal(1, "cde");
+        client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+        client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
+
+        assert.equal(client.getText(), "abfg");
+        for (let i = 0; i < 4; i++) {
+            const props = client.getPropertiesAtPosition(i);
+            assert(props === undefined || props.foo === undefined);
+        }
+    });
+    it("Should rollback annotates with multiple previous property sets", () => {
+        client.insertTextLocal(0, "acde");
+        client.annotateRangeLocal(0, 3, { foo: "one" }, undefined);
+        client.annotateRangeLocal(2, 4, { foo: "two" }, undefined);
+        client.annotateRangeLocal(0, 3, { foo: "three" }, undefined);
+        client.insertTextLocal(1, "b");
+
+        client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+        let props = client.getPropertiesAtPosition(3);
+        assert(props !== undefined && props.foo === "two");
+        for (let i = 0; i < 3; i++) {
+            props = client.getPropertiesAtPosition(i);
+            assert(props !== undefined && props.foo === "three");
+        }
+
+        client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
+        for (let i = 0; i < 2; i++) {
+            props = client.getPropertiesAtPosition(i);
+            assert(props !== undefined && props.foo === "one");
+        }
+        for (let i = 2; i < 4; i++) {
+            props = client.getPropertiesAtPosition(i);
+            assert(props !== undefined && props.foo === "two");
+        }
+
+        client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
+        props = client.getPropertiesAtPosition(3);
+        assert(props === undefined || props.foo === undefined);
+        for (let i = 0; i < 3; i++) {
+            props = client.getPropertiesAtPosition(i);
+            assert(props !== undefined && props.foo === "one");
+        }
+
+        client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
+        assert.equal(client.getText(), "acde");
+        for (let i = 0; i < 4; i++) {
+            props = client.getPropertiesAtPosition(i);
             assert(props === undefined || props.foo === undefined);
         }
     });

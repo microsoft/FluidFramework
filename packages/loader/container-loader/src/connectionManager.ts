@@ -31,7 +31,7 @@ import {
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
     logNetworkFailure,
-    // isRuntimeMessage,
+    isRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -59,6 +59,7 @@ import {
     IConnectionManagerFactoryArgs,
 } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
+import { SignalType } from "./protocol";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -168,7 +169,7 @@ export class ConnectionManager implements IConnectionManager {
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
     /** Counts the number of noops sent by the client which may not be acked. */
-    private trailingNoopCount = 0;
+    private localOpsToIgnore = 0;
 
     /** track clientId used last time when we sent any ops */
     private lastSubmittedClientId: string | undefined;
@@ -234,20 +235,18 @@ export class ConnectionManager implements IConnectionManager {
      * about current or last connection (if there is no connection at the moment)
     */
     public get connectionProps(): ITelemetryProperties {
-        if (this.connection !== undefined) {
-            return this._connectionProps;
-        } else {
-            return {
+        return this.connection !== undefined
+            ? this._connectionProps
+            : {
                 ...this._connectionProps,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
-        }
     }
 
     public shouldJoinWrite(): boolean {
         // We don't have to wait for ack for topmost NoOps. So subtract those.
-        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);
+        return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.localOpsToIgnore);
     }
 
     /**
@@ -715,17 +714,43 @@ export class ConnectionManager implements IConnectionManager {
             initialMessages,
             this.connectFirstConnection ? "InitialOps" : "ReconnectOps");
 
-        if (connection.initialSignals !== undefined) {
-            for (const signal of connection.initialSignals) {
-                this.props.signalHandler(signal);
-            }
-        }
-
         const details = ConnectionManager.detailsFromConnection(connection);
         details.checkpointSequenceNumber = checkpointSequenceNumber;
         this.props.connectHandler(details);
 
         this.connectFirstConnection = false;
+
+        // Synthesize clear & join signals out of initialClients state.
+        // This allows us to have single way to process signals, and makes it simpler to initialize
+        // protocol in Container.
+        const clearSignal: ISignalMessage = {
+            clientId: null, // system message
+            content: JSON.stringify({
+                type: SignalType.Clear,
+            }),
+        };
+        this.props.signalHandler(clearSignal);
+
+        for (const priorClient of connection.initialClients ?? []) {
+            const joinSignal: ISignalMessage = {
+                clientId: null, // system signal
+                content: JSON.stringify({
+                    type: SignalType.ClientJoin,
+                    content: priorClient, // ISignalClient
+                }),
+            };
+            this.props.signalHandler(joinSignal);
+        }
+
+        // Unfortunately, there is no defined order between initialSignals (including join & leave signals)
+        // and connection.initialClients. In practice, connection.initialSignals quite often contains join signal
+        // for "self" and connection.initialClients does not contain "self", so we have to process them after
+        // "clear" signal above.
+        if (connection.initialSignals !== undefined) {
+            for (const signal of connection.initialSignals) {
+                this.props.signalHandler(signal);
+            }
+        }
     }
 
     /**
@@ -819,10 +844,10 @@ export class ConnectionManager implements IConnectionManager {
             this.clientSequenceNumberObserved = 0;
         }
 
-        if (message.type === MessageType.NoOp) {
-            this.trailingNoopCount++;
+        if (!isRuntimeMessage(message)) {
+            this.localOpsToIgnore++;
         } else {
-            this.trailingNoopCount = 0;
+            this.localOpsToIgnore = 0;
         }
 
         return {

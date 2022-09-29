@@ -16,7 +16,7 @@ import {
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";
+import { insertSegments, insertText, markRangeRemoved, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 interface ITestTreeFactory {
     readonly create: () => ITestData;
@@ -37,13 +37,15 @@ const treeFactories: ITestTreeFactory[] = [
         create: () => {
             const initialText = "hello world";
             const mergeTree = new MergeTree();
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make(initialText)],
-                UniversalSequenceNumber,
-                LocalClientId,
-                UniversalSequenceNumber,
-                undefined);
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make(initialText)],
+                refSeq: UniversalSequenceNumber,
+                clientId: LocalClientId,
+                seq: UniversalSequenceNumber,
+                opArgs: undefined,
+            });
             mergeTree.startCollaboration(
                 localClientId,
                 /* minSeq: */ UniversalSequenceNumber,
@@ -62,24 +64,27 @@ const treeFactories: ITestTreeFactory[] = [
         create: () => {
             let initialText = "0";
             const mergeTree = new MergeTree();
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make(initialText)],
-                UniversalSequenceNumber,
-                LocalClientId,
-                UniversalSequenceNumber,
-                undefined);
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make(initialText)],
+                refSeq: UniversalSequenceNumber,
+                clientId: LocalClientId,
+                seq: UniversalSequenceNumber,
+                opArgs: undefined,
+            });
             for (let i = 1; i < MaxNodesInBlock - 1; i++) {
                 const text = i.toString();
-                insertText(
+                insertText({
                     mergeTree,
-                    mergeTree.getLength(UniversalSequenceNumber, localClientId),
-                    UniversalSequenceNumber,
-                    localClientId,
-                    UniversalSequenceNumber,
+                    pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
+                    refSeq: UniversalSequenceNumber,
+                    clientId: localClientId,
+                    seq: UniversalSequenceNumber,
                     text,
-                    undefined,
-                    undefined);
+                    props: undefined,
+                    opArgs: undefined,
+                });
                 initialText += text;
             }
 
@@ -117,48 +122,55 @@ const treeFactories: ITestTreeFactory[] = [
         create: () => {
             let initialText = "0";
             const mergeTree = new MergeTree();
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make(initialText)],
-                UniversalSequenceNumber,
-                LocalClientId,
-                UniversalSequenceNumber,
-                undefined);
+            insertSegments({
+                mergeTree,
+                pos: 0,
+                segments: [TextSegment.make(initialText)],
+                refSeq: UniversalSequenceNumber,
+                clientId: LocalClientId,
+                seq: UniversalSequenceNumber,
+                opArgs: undefined,
+            });
             for (let i = 1; i < MaxNodesInBlock * 4; i++) {
                 const text = i.toString();
-                insertText(
+                insertText({
                     mergeTree,
-                    mergeTree.getLength(UniversalSequenceNumber, localClientId),
-                    UniversalSequenceNumber,
-                    localClientId,
-                    UniversalSequenceNumber,
+                    pos: mergeTree.getLength(UniversalSequenceNumber, localClientId),
+                    refSeq: UniversalSequenceNumber,
+                    clientId: localClientId,
+                    seq: UniversalSequenceNumber,
                     text,
-                    undefined,
-                    undefined);
+                    props: undefined,
+                    opArgs: undefined,
+                });
                 initialText += text;
             }
 
             const remove = Math.round(initialText.length / 4);
             // remove from start
-            mergeTree.markRangeRemoved(
-                0,
-                remove,
-                UniversalSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: 0,
+                end: remove,
+                refSeq: UniversalSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
             initialText = initialText.substring(remove);
 
             // remove from end
-            mergeTree.markRangeRemoved(
-                initialText.length - remove,
-                initialText.length,
-                UniversalSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                false,
-                undefined as any);
+            markRangeRemoved({
+                mergeTree,
+                start: initialText.length - remove,
+                end: initialText.length,
+                refSeq: UniversalSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
             initialText = initialText.substring(0, initialText.length - remove);
 
             mergeTree.startCollaboration(
@@ -192,15 +204,16 @@ describe("MergeTree.insertingWalk", () => {
             });
             describe("insertText", () => {
                 it("at beginning", () => {
-                    insertText(
-                        testData.mergeTree,
-                        0,
-                        testData.refSeq,
-                        localClientId,
-                        UnassignedSequenceNumber,
-                        "a",
-                        undefined,
-                        undefined);
+                    insertText({
+                        mergeTree: testData.mergeTree,
+                        pos: 0,
+                        refSeq: testData.refSeq,
+                        clientId: localClientId,
+                        seq: UnassignedSequenceNumber,
+                        text: "a",
+                        props: undefined,
+                        opArgs: undefined,
+                    });
 
                     assert.equal(
                         testData.mergeTree.getLength(testData.refSeq, localClientId),
@@ -213,15 +226,16 @@ describe("MergeTree.insertingWalk", () => {
                 });
 
                 it("at end", () => {
-                    insertText(
-                        testData.mergeTree,
-                        testData.initialText.length,
-                        testData.refSeq,
-                        localClientId,
-                        UnassignedSequenceNumber,
-                        "a",
-                        undefined,
-                        undefined);
+                    insertText({
+                        mergeTree: testData.mergeTree,
+                        pos: testData.initialText.length,
+                        refSeq: testData.refSeq,
+                        clientId: localClientId,
+                        seq: UnassignedSequenceNumber,
+                        text: "a",
+                        props: undefined,
+                        opArgs: undefined,
+                    });
 
                     assert.equal(
                         testData.mergeTree.getLength(testData.refSeq, localClientId),
@@ -234,15 +248,16 @@ describe("MergeTree.insertingWalk", () => {
                 });
 
                 it("in middle", () => {
-                    insertText(
-                        testData.mergeTree,
-                        testData.middle,
-                        testData.refSeq,
-                        localClientId,
-                        UnassignedSequenceNumber,
-                        "a",
-                        undefined,
-                        undefined);
+                    insertText({
+                        mergeTree: testData.mergeTree,
+                        pos: testData.middle,
+                        refSeq: testData.refSeq,
+                        clientId: localClientId,
+                        seq: UnassignedSequenceNumber,
+                        text: "a",
+                        props: undefined,
+                        opArgs: undefined,
+                    });
 
                     assert.equal(
                         testData.mergeTree.getLength(testData.refSeq, localClientId),
@@ -266,24 +281,27 @@ describe("MergeTree.insertingWalk", () => {
         let seq = 0;
         const mergeTree = new MergeTree();
         mergeTree.startCollaboration(localClientId, 0, seq);
-        mergeTree.insertSegments(
-            0,
-            [TextSegment.make(initialText)],
-            UniversalSequenceNumber,
-            localClientId,
-            UniversalSequenceNumber,
-            undefined);
+        insertSegments({
+            mergeTree,
+            pos: 0,
+            segments: [TextSegment.make(initialText)],
+            refSeq: UniversalSequenceNumber,
+            clientId: localClientId,
+            seq: UniversalSequenceNumber,
+            opArgs: undefined,
+        });
         for (let i = 1; i < MaxNodesInBlock; i++) {
             const text = String.fromCharCode(i + 64);
-            insertText(
+            insertText({
                 mergeTree,
-                0,
-                UniversalSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
+                pos: 0,
+                refSeq: UniversalSequenceNumber,
+                clientId: localClientId,
+                seq: UnassignedSequenceNumber,
                 text,
-                undefined,
-                undefined);
+                props: undefined,
+                opArgs: undefined,
+            });
             initialText += text;
         }
 
@@ -292,28 +310,29 @@ describe("MergeTree.insertingWalk", () => {
         assert.equal(mergeTree.root.childCount, 2);
         assert.equal(textHelper.getText(0, localClientId), "GFEDCBA0");
         // Remove "DCBA"
-        mergeTree.markRangeRemoved(
-            3,
-            7,
-            UniversalSequenceNumber,
-            localClientId,
-            UnassignedSequenceNumber,
-            false,
-            undefined as any,
-        );
+        markRangeRemoved({
+            mergeTree,
+            start: 3,
+            end: 7,
+            refSeq: UniversalSequenceNumber,
+            clientId: localClientId,
+            seq: UnassignedSequenceNumber,
+            overwrite: false,
+            opArgs: undefined as any,
+        });
         assert.equal(textHelper.getText(0, localClientId), "GFE0");
         // Simulate another client inserting concurrently with the above operations. Because
         // all segments but the 0 are unacked, this insert should place the segment directly
         // before the 0. Prior to this regression test, an issue with `rightExcursion` in the
         // merge conflict logic instead caused the segment to be placed before the removed segments.
-        insertText(
+        insertText({
             mergeTree,
-            0,
-            UniversalSequenceNumber,
-            localClientId + 1,
-            ++seq,
-            "x",
-        );
+            pos: 0,
+            refSeq: UniversalSequenceNumber,
+            clientId: localClientId + 1,
+            seq: ++seq,
+            text: "x",
+        });
 
         const segments: string[] = [];
         mergeTree.walkAllSegments(mergeTree.root, (seg) => {
