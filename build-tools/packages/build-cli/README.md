@@ -312,7 +312,7 @@ USAGE
   $ flub generate packageJson -g client|server|azure|build-tools [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  (required) Name of release group
+  -g, --releaseGroup=<option>  (required) Name of the release group
                                <options: client|server|azure|build-tools>
   -v, --verbose                Verbose logging.
 
@@ -382,7 +382,7 @@ USAGE
   $ flub info [-g client|server|azure|build-tools] [-p] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of release group
+  -g, --releaseGroup=<option>  Name of the release group
                                <options: client|server|azure|build-tools>
   -p, --[no-]private           Include private packages (default true).
   -v, --verbose                Verbose logging.
@@ -403,7 +403,7 @@ USAGE
     --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of release group
+  -g, --releaseGroup=<option>  Name of the release group
                                <options: client|server|azure|build-tools>
   -p, --package=<value>        Name of package.
   -t, --bumpType=<option>      Version bump type.
@@ -443,7 +443,7 @@ USAGE
     <value>]] [-p <value> ] [--limit <value> ] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of release group
+  -g, --releaseGroup=<option>  Name of the release group
                                <options: client|server|azure|build-tools>
   -o, --output=<value>         Output JSON report files to this location.
   -p, --package=<value>        Name of package.
