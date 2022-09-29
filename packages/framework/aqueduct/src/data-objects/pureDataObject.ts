@@ -13,6 +13,7 @@ import {
     IRequest,
     IResponse,
     FluidObject,
+    IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -73,17 +74,17 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     /**
-     * @deprecated - Going forward the data object will be accessible as the entrypoint of the data store runtime.
-     * To access it use "(runtime as FluidObject<IFluidHandle>).IFluidHandle?.get() as PureDataObject" instead of this
-     * method. That code is a temporary workaround with discovery of properties through FluidObject until we expose
-     * entrypoints (IFluidHandle) more directly.
+     * @deprecated - Going forward the data object will be accessible as the entrypoint of the data store runtime. To
+     * access it use "(runtime as FluidObject<IProvideFluidLoadable>).IFluidLoadable?.handle?.get() as PureDataObject"
+     * instead of this method. That code is a temporary workaround with discovery of properties through FluidObject
+     * until we expose entrypoints (IFluidHandle) more directly.
      */
     public static async getDataObject(runtime: IFluidDataStoreRuntime) {
-        // TODO: IFluidHandle is currently only exposed in the FluidDataStoreRuntime class, not the
+        // TODO: IFluidLoadable is currently only exposed in the FluidDataStoreRuntime class, not the
         // IFluidDataStoreRuntime interface, thus the discovery with FluidObject. Once entrypoints are exposed more
         // directly this should be simplified.
-        const maybeIFluidHandle: FluidObject<IFluidHandle> & IFluidDataStoreRuntime = runtime;
-        const obj = await maybeIFluidHandle?.IFluidHandle?.get();
+        const maybeIFluidLoadable: FluidObject<IProvideFluidLoadable> & IFluidDataStoreRuntime = runtime;
+        const obj = await maybeIFluidLoadable?.IFluidLoadable?.handle?.get();
         assert(obj !== undefined, 0x0bc /* "The runtime's handle is not initialized yet!" */);
         return obj as PureDataObject;
     }

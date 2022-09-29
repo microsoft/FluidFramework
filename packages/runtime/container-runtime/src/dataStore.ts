@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { FluidObject, IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { FluidObject, IProvideFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -51,7 +51,7 @@ enum AliasState {
     None = "None",
 }
 
-class DataStore implements IDataStore, Partial<IFluidLoadable> {
+class DataStore implements IDataStore, Partial<IProvideFluidLoadable> {
     private aliasState: AliasState = AliasState.None;
     private alias: string | undefined;
     private readonly pendingAliases: Map<string, Promise<AliasResult>>;
@@ -152,19 +152,25 @@ class DataStore implements IDataStore, Partial<IFluidLoadable> {
     }
 
     /**
-     * Handle to the data store. Use this as the primary way of interacting with it, and only fall back to
-     * requesting the root object through the request pattern if the handle is not defined.
+     * Exposes a handle to the data store's root object / entrypoint. Use this as the primary way of interacting with
+     * the data store, and only fall back to requesting the root object through the request pattern if this property
+     * or the handle within it are not defined.
      */
-    public get handle(): IFluidHandle | undefined {
-        // TODO: IFluidHandle is currently only exposed in the FluidDataStoreRuntime class, not the
-        // IFluidDataStoreChannel interface, thus the discovery with FluidObject. Once entrypoints are exposed more
-        // directly this should be simplified.
-        const maybeHandle: IFluidDataStoreChannel & FluidObject<IFluidHandle> = this.fluidDataStoreChannel;
-        return maybeHandle.IFluidHandle;
-    }
-
-    public set handle(newValue) {
-        throw new Error("Handle cannot be set");
+    public get IFluidLoadable() {
+        // While we plumb entrypoints everywhere and this way of getting to the data store's entrypoint could still be
+        // undefined, we have to do some sleight-of-hand and return an object whose 'handle' property is not undefined
+        // so it matches the definition of the IFluidLoadable interface.
+        const maybeIFluidLoadable: IFluidDataStoreChannel & FluidObject<IProvideFluidLoadable>
+            = this.fluidDataStoreChannel;
+        const handle = maybeIFluidLoadable.IFluidLoadable?.handle;
+        if (handle !== undefined) {
+            return {
+                handle,
+                get IFluidLoadable() {
+                    return this;
+                },
+            };
+        }
     }
 
     constructor(

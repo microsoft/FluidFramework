@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { FluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidLoadable, IProvideFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode, IDataStore } from "@fluidframework/runtime-definitions";
 import {
     ContainerSchema,
@@ -122,8 +122,8 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         const factory = dataObjectClass.factory;
         const packagePath = [...this.context.packagePath, factory.type];
         const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
-        const maybeIFluidHandle: IDataStore & FluidObject<IFluidHandle> = dataStore;
-        const entrypoint = maybeIFluidHandle.IFluidHandle?.get();
+        const maybeIFluidLoadable: IDataStore & FluidObject<IProvideFluidLoadable> = dataStore;
+        const entrypoint = maybeIFluidLoadable.IFluidLoadable?.handle?.get();
         assert(entrypoint instanceof DataObject, "The data store's handle is not of the correct type!");
         return entrypoint as unknown as T;
     }

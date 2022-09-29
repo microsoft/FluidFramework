@@ -22,6 +22,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
+import { IProvideFluidLoadable } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -41,7 +42,7 @@ export enum DataStoreMessageType {
 }
 
 // @public
-export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext, Partial<IFluidLoadable> {
+export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext, Partial<IProvideFluidLoadable> {
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntrypoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
@@ -85,6 +86,13 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     readonly id: string;
     // (undocumented)
     get IFluidHandleContext(): this;
+    get IFluidLoadable(): {
+        handle: IFluidHandle<FluidObject<unknown> & IFluidLoadable>;
+        readonly IFluidLoadable: {
+            handle: IFluidHandle<FluidObject<unknown> & IFluidLoadable>;
+            readonly IFluidLoadable: any;
+        };
+    } | undefined;
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)

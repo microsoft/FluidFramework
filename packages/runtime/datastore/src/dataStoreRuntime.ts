@@ -8,7 +8,7 @@ import {
     FluidObject,
     IFluidHandle,
     IFluidHandleContext,
-    IFluidLoadable,
+    IProvideFluidLoadable,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -102,7 +102,7 @@ export interface ISharedObjectRegistry {
 export class FluidDataStoreRuntime extends
 TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements
 IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext,
-Partial<IFluidLoadable> {
+Partial<IProvideFluidLoadable> {
     /**
      * @deprecated - Instantiate the class using its constructor instead.
      *
@@ -132,6 +132,26 @@ Partial<IFluidLoadable> {
      * current approaches (e.g. using the request pattern) if it is.
      */
     public handle?: IFluidHandle;
+
+    /**
+     * Exposes a handle to the data store's root object / entrypoint. Use this as the primary way of interacting with
+     * the data store, and only fall back to requesting the root object through the request pattern if this property
+     * or the handle within it are not defined.
+     */
+    public get IFluidLoadable() {
+        // While we plumb entrypoints everywhere and this way of getting to the data store's entrypoint could still be
+        // undefined, we have to do some sleight-of-hand and return an object whose 'handle' property is not undefined
+        // so it matches the definition of the IFluidLoadable interface.
+        const handle = this.handle;
+        if (handle !== undefined) {
+            return {
+                handle,
+                get IFluidLoadable() {
+                    return this;
+                },
+            };
+        }
+    }
 
     public get IFluidRouter() { return this; }
 

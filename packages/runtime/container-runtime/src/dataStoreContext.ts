@@ -9,6 +9,7 @@ import {
     IRequest,
     IResponse,
     IFluidHandle,
+    IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -381,8 +382,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!existing) {
             // Load the handle to initialize the object. The only implementation of IFluidDataStoreChannel is
             // FluidDataStoreRuntime, which exposes its handle.
-            const channelAsFluidObject: IFluidDataStoreChannel & FluidObject<IFluidHandle> = channel;
-            await channelAsFluidObject.IFluidHandle?.get();
+            const channelAsFluidObject: IFluidDataStoreChannel & FluidObject<IProvideFluidLoadable> = channel;
+            await channelAsFluidObject.IFluidLoadable?.handle?.get();
         }
     }
 
@@ -1042,8 +1043,8 @@ export class LocalDetachedFluidDataStoreContext
 
         // Load the handle to initialize the object. The only implementation of IFluidDataStoreChannel is
         // FluidDataStoreRuntime, which exposes its handle.
-        const maybeIFluidHandle: IFluidDataStoreChannel & FluidObject<IFluidHandle> = dataStoreChannel;
-        await maybeIFluidHandle.IFluidHandle?.get();
+        const maybeIFluidLoadable: IFluidDataStoreChannel & FluidObject<IProvideFluidLoadable> = dataStoreChannel;
+        await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
 
         if (await this.isRoot()) {
             dataStoreChannel.makeVisibleAndAttachGraph();
