@@ -8,7 +8,7 @@ import program from "commander";
 import {
     findPackagesUnderPath,
     // getAndUpdatePackageDetails
- } from "./packageJson";
+} from "./packageJson";
 
 // import { validateRepo } from "./repoValidator";
 // import { enableLogging } from "./validatorUtils";
@@ -18,8 +18,8 @@ import { Project } from "ts-morph";
  * argument parsing
  */
 program
-    .option("-d|--packageDir <dir>","The root directory of the package")
-    .option("-m|--monoRepoDir <dir>","The root directory of the mono repo, under which there are packages.")
+    .option("-d|--packageDir <dir>", "The root directory of the package")
+    .option("-m|--monoRepoDir <dir>", "The root directory of the mono repo, under which there are packages.")
     .option("-p|--preinstallOnly", "Only prepares the package json. Doesn't generate tests. This should be done before npm install")
     .option("-g|--generateOnly", "This only generates the tests. If does not prepare the package.json")
     .option('-v|--verbose', 'Verbose logging mode')
@@ -31,16 +31,16 @@ function writeOutLine(output: string) {
     }
 }
 
-async function run(): Promise<boolean>{
+async function run(): Promise<boolean> {
 
     const packageDirs: string[] = [];
-    if(program.monoRepoDir){
+    if (program.monoRepoDir) {
         writeOutLine(`Finding packages in mono repo ${program.monoRepoDir}`);
         packageDirs.push(... (await findPackagesUnderPath(program.monoRepoDir)));
-    }else if(program.packageDir){
+    } else if (program.packageDir) {
         writeOutLine(`${program.packageDir}`);
         packageDirs.push(program.packageDir);
-    }else{
+    } else {
         console.log(program.helpInformation());
         return false;
     }
@@ -52,26 +52,49 @@ async function run(): Promise<boolean>{
     // const sourceFiles = project.getSourceFiles();
     const sourceFiles = project.addSourceFilesAtPaths([`${program.packageDir}/src/**.ts`])
     console.log(sourceFiles.length)
-    sourceFiles.forEach(async(sourceFile) => {
+    sourceFiles.forEach((sourceFile) => {
+        const exportsToAdd = new Map<string, Set<string>>();
         console.log(sourceFile.getBaseName());
         const exportDeclarations = sourceFile.getExportDeclarations();
-        exportDeclarations.forEach(async(exportDeclaration) => {
-            console.log(exportDeclaration.isNamespaceExport())
-            if(exportDeclaration.isNamespaceExport()){
+
+        exportDeclarations.forEach((exportDeclaration) => {
+            console.log(exportDeclaration.isNamespaceExport());
+            if (exportDeclaration.isNamespaceExport()) {
                 for (const [name, _] of sourceFile.getExportedDeclarations()) {
-                    console.log(`${name}`);
-                    exportDeclaration.addNamedExport(`${name}`);
-                    await sourceFile.save();
-                    sourceFile.saveSync();
+                    const moduleSpecifier = exportDeclaration.getModuleSpecifierValue() || '';
+                    console.log(`${moduleSpecifier} has ${name}`);
+                    if (moduleSpecifier !== undefined) {
+                        if (!exportsToAdd.has(moduleSpecifier)) {
+                            exportsToAdd.set(moduleSpecifier,new Set<string>());
+                        }
+                        exportsToAdd.get(moduleSpecifier)?.add(name);
+                    }
                 }
+
+                exportDeclaration.remove();
+
+                (async function() {
+                    for (const moduleSpecifier of exportsToAdd.keys()) {
+                        console.log(`im a here bear ${moduleSpecifier}`)
+                        console.log(`moduleSpecifier ${moduleSpecifier}`);
+                        console.log(exportsToAdd.get(moduleSpecifier)?.size);
+                        const boop = exportsToAdd.get(moduleSpecifier) || [];
+                        sourceFile.addExportDeclaration({
+                            namedExports: Array.from(boop),
+                            moduleSpecifier: moduleSpecifier
+                        });
+                        await sourceFile.save();
+                        sourceFile.saveSync();
+                        await project.save()
+                    }
+                })();
             }
-            // exportDeclaration.remove();
         });
     });
-    project.save()
+    await project.save()
 
     // const concurrency = 25;
-    const runningGenerates: Promise<boolean>[]=[];
+    const runningGenerates: Promise<boolean>[] = [];
 
     // const includeOnly: Set<string> | undefined = program.packages ? new Set(program.packages) : undefined;
     // if (program.verbose !== undefined) {
@@ -80,7 +103,7 @@ async function run(): Promise<boolean>{
     // this loop incrementally builds up the runningGenerates promise list
     // each dir with an index greater than concurrency looks back the concurrency value
     // to determine when to run
-    packageDirs.forEach(( packageDir,i)=> runningGenerates.push((async ()=> {
+    packageDirs.forEach((packageDir, i) => runningGenerates.push((async () => {
 
         // Get validation results for the repo
         // const validationResults = await validateRepo({ includeOnly });
@@ -89,43 +112,43 @@ async function run(): Promise<boolean>{
         //     await runningGenerates[i - concurrency];
         // }
         const packageName = packageDir.substring(packageDir.lastIndexOf("/") + 1)
-        const output = [`${(i+1).toString()}/${packageDirs.length}`,`${packageName}`];
-        try{
-        //     const start = Date.now();
-        //     const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
-        //         program.generateOnly ? undefined : {cwd: program.monoRepoDir};
-        //     const packageData = await getAndUpdatePackageDetails(packageDir, updateOptions)
-        //         .finally(()=>output.push(`Loaded(${Date.now() - start}ms)`));
-        //     if(packageData.skipReason !== undefined){
-        //         output.push(packageData.skipReason)
-        //     }
-        //     else if(packageData.oldVersions.length > 0
-        //         && program.preinstallOnly === undefined){
-        //         const start = Date.now();
-        //         await generateTests(packageData)
-        //             .then((s)=>output.push(`dirs(${s.dirs}) files(${s.files}) tests(${s.tests})`))
-        //             .finally(()=> output.push(`Generated(${Date.now() - start}ms)`));
-        //     }
+        const output = [`${(i + 1).toString()}/${packageDirs.length}`, `${packageName}`];
+        try {
+            //     const start = Date.now();
+            //     const updateOptions: Parameters<typeof getAndUpdatePackageDetails>[1] =
+            //         program.generateOnly ? undefined : {cwd: program.monoRepoDir};
+            //     const packageData = await getAndUpdatePackageDetails(packageDir, updateOptions)
+            //         .finally(()=>output.push(`Loaded(${Date.now() - start}ms)`));
+            //     if(packageData.skipReason !== undefined){
+            //         output.push(packageData.skipReason)
+            //     }
+            //     else if(packageData.oldVersions.length > 0
+            //         && program.preinstallOnly === undefined){
+            //         const start = Date.now();
+            //         await generateTests(packageData)
+            //             .then((s)=>output.push(`dirs(${s.dirs}) files(${s.files}) tests(${s.tests})`))
+            //             .finally(()=> output.push(`Generated(${Date.now() - start}ms)`));
+            //     }
             output.push("Done");
-        }catch(error){
+        } catch (error) {
             output.push("Error");
-            if(typeof error === "string"){
+            if (typeof error === "string") {
                 output.push(error);
-            }else if(error instanceof Error){
+            } else if (error instanceof Error) {
                 output.push(error.message, `\n ${error.stack}`)
-            }else{
+            } else {
                 output.push(typeof error, `${error}`);
             }
             return false;
-        }finally{
+        } finally {
             writeOutLine(output.join(": "));
         }
         return true;
     })()));
 
-    return (await Promise.all(runningGenerates)).every((v)=>v);
+    return (await Promise.all(runningGenerates)).every((v) => v);
 }
 
 run()
-    .then((success)=>process.exit(success ? 0 : 1))
-    .catch(()=>process.exit(2));
+    .then((success) => process.exit(success ? 0 : 1))
+    .catch(() => process.exit(2));
