@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-query-service",
-  "version": "2.0.0-internal.1.2.0",
+  "version": "2.0.0-internal.1.3.0",
   "private": true,
   "description": "Moira service",
   "homepage": "https://fluidframework.com",
@@ -42,10 +42,10 @@
     "tempDirectory": "coverage/tmp"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluid-experimental/property-common": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluid-experimental/property-properties": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluid-experimental/property-query": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-changeset": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-common": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-properties": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-query": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "async": "^3.2.0",
     "basicauth-middleware": "2.0.0",
     "body-parser": "^1.18.3",
@@ -69,13 +69,13 @@
     "sleep-promise": "8.0.1"
   },
   "devDependencies": {
-    "@fluid-experimental/property-dds": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-dds": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/local-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/server-local-server": "^0.1038.1000",
-    "@fluidframework/test-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/local-driver": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/server-local-server": "^0.1037.2001",
+    "@fluidframework/test-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "aws-sdk": "2.547.0",
     "chai": "^4.2.0",

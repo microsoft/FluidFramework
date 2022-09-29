@@ -1,0 +1,5 @@
+"eventName","category","prop1","prop2"
+"event1","category1","value1",
+"event2","category1",,"value2"
+"event3","category2","value3",
+"event4","category2",,"value4"

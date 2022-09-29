@@ -36,7 +36,7 @@ interface ITestAction {
     [key: string]: any;
 }
 
-describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
+describeNoCompat.skip("GC Sweep tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     // Summaries should run automatically
