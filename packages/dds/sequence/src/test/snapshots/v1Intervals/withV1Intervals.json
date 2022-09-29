@@ -1,6 +1,15 @@
 {
  "entries": [
   {
+   "path": "header",
+   "mode": "100644",
+   "type": "Blob",
+   "value": {
+    "contents": "{\"collection1\":{\"type\":\"sharedStringIntervalCollection\"},\"collection2\":{\"type\":\"sharedStringIntervalCollection\"}}",
+    "encoding": "utf-8"
+   }
+  },
+  {
    "path": "content",
    "value": {
     "entries": [

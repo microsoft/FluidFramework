@@ -15,7 +15,7 @@ import {
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalType } from "../intervalCollection";
-import { generateStrings, generateTestStrings, LocationBase } from "./generateSharedStrings";
+import { generateStrings, LocationBase } from "./generateSharedStrings";
 
 function assertIntervalCollectionsAreEquivalent(
     actual: SharedString,
@@ -84,7 +84,7 @@ describe("SharedString Snapshot Version", () => {
         return sharedString;
     }
 
-    function generateSnapshotRebuildTest(name: string, testString: SharedString) {
+    function generateSnapshotRebuildTest(name: string, testString: SharedString, normalized: boolean) {
         it(name, async () => {
             const filename = `${filebase}${name}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
@@ -118,22 +118,13 @@ describe("SharedString Snapshot Version", () => {
     function generateSnapshotRebuildTests() {
         describe("Snapshot rebuild", () => {
             for (const str of generateStrings()) {
-                generateSnapshotRebuildTest(str[0], str[1]);
-            }
-        });
-    }
-    generateSnapshotRebuildTests();
-
-    function generateOldSnapshotRebuildTests() {
-        describe("Snapshot rebuild for old format", () => {
-            for (const str of generateTestStrings()) {
-                if (str[2]) {
-                    generateSnapshotRebuildTest(str[0], str[1]);
+                if (str.snapshotIsNormalized || str.snapshotPath === "v1Intervals/withV1Intervals") {
+                    generateSnapshotRebuildTest(str.snapshotPath, str.expected, str.snapshotIsNormalized);
                 }
             }
         });
     }
-    generateOldSnapshotRebuildTests();
+    generateSnapshotRebuildTests();
 
     function generateSnapshotDiffTest(name: string, testString: SharedString) {
         it(name, async () => {
@@ -154,7 +145,9 @@ describe("SharedString Snapshot Version", () => {
     function generateSnapshotDiffTests() {
         describe("Snapshot diff", () => {
             for (const str of generateStrings()) {
-                generateSnapshotDiffTest(str[0], str[1]);
+                if (str.snapshotIsNormalized) {
+                    generateSnapshotDiffTest(str.snapshotPath, str.expected);
+                }
             }
         });
     }

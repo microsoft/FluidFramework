@@ -15,7 +15,6 @@ import {
 } from "./v1IntervalCollectionHelpers";
 
 export const LocationBase: string = "src/test/snapshots/";
-export const TestLocationBase: string = "src/test/snapshots/OLD/";
 
 export const supportedVersions = new Map<string, any>([
     // the catchUpBlob had to be renamed.
@@ -25,9 +24,14 @@ export const supportedVersions = new Map<string, any>([
     ["legacy", { catchUpBlobName: "randomNameForCatchUpOps" }],
     ["legacyWithCatchUp", {}],
     ["v1", { newMergeTreeSnapshotFormat: true }],
+    ["v1Intervals", {}],
 ]);
 
-export function* generateStrings(): Generator<[string, SharedString]> {
+export function* generateStrings(): Generator<{
+    snapshotPath: string;
+    expected: SharedString;
+    snapshotIsNormalized: boolean; // false for v1, true for new formats
+}> {
     for (const [version, options] of supportedVersions) {
         const documentId = "fakeId";
         const dataStoreRuntime: mocks.MockFluidDataStoreRuntime = new mocks.MockFluidDataStoreRuntime();
@@ -36,98 +40,7 @@ export function* generateStrings(): Generator<[string, SharedString]> {
             string.initializeLocal();
             return string;
         };
-
-        for (const key of Object.keys(options)) {
-            dataStoreRuntime.options[key] = options[key];
-        }
-        const insertText = "text";
-
-        let sharedString = createNewSharedString();
-        // Small enough so snapshot won't have body
-        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
-            sharedString.insertText(0, `${insertText}${i}`);
-        }
-
-        yield [`${version}/headerOnly`, sharedString];
-
-        sharedString = createNewSharedString();
-        // Big enough that snapshot will have body
-        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
-            sharedString.insertText(0, `${insertText}${i}`);
-        }
-
-        yield [`${version}/headerAndBody`, sharedString];
-
-        sharedString = createNewSharedString();
-        // Very big sharedString
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
-            sharedString.insertText(0, `${insertText}-${i}`);
-        }
-
-        yield [`${version}/largeBody`, sharedString];
-
-        sharedString = createNewSharedString();
-        // SharedString with markers
-        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
-            sharedString.insertText(0, `${insertText}${i}`);
-        }
-        for (let i = 0; i < sharedString.getLength(); i += 70) {
-            sharedString.insertMarker(i, 1, {
-                ItemType: "Paragraph",
-                Properties: { Bold: false },
-                markerId: `marker${i}`,
-                referenceTileLabels: ["Eop"],
-            });
-        }
-
-        yield [`${version}/withMarkers`, sharedString];
-
-        sharedString = createNewSharedString();
-        // SharedString with annotations
-        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
-            sharedString.insertText(0, `${insertText}${i}`);
-        }
-        for (let i = 0; i < sharedString.getLength(); i += 70) {
-            sharedString.annotateRange(i, i + 10, { bold: true });
-        }
-
-        yield [`${version}/withAnnotations`, sharedString];
-
-        sharedString = createNewSharedString();
-        // Very big sharedString
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
-            sharedString.insertText(0, `${insertText}-${i}`);
-        }
-
-        yield [`${version}/largeBody`, sharedString];
-
-        sharedString = createNewSharedString();
-        // SharedString with intervals
-        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; i++) {
-            sharedString.insertText(0, `${insertText}${i}`);
-        }
-
-        const rand = new Random(Random.engines.mt19937().seed(0));
-        const collection1 = sharedString.getIntervalCollection("collection1");
-        collection1.add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
-
-        const collection2 = sharedString.getIntervalCollection("collection2");
-        for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
-            collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
-        }
-
-        yield [`${version}/withIntervals`, sharedString];
-    }
-}
-
-// Adding a flag to determine if we should run a test on the document in snapshotVersion.spec.ts.
-// We only want to test the wiithIntervals.json documents, since these are
-// the only ones with format changes.
-export function* generateTestStrings(): Generator<[string, SharedStringWithV1IntervalCollection, boolean]> {
-    for (const [version, options] of supportedVersions) {
-        const documentId = "fakeId";
-        const dataStoreRuntime: mocks.MockFluidDataStoreRuntime = new mocks.MockFluidDataStoreRuntime();
-        const createNewSharedString = (): SharedStringWithV1IntervalCollection => {
+        const createNewV1SharedString = (): SharedStringWithV1IntervalCollection => {
             const string = new SharedStringWithV1IntervalCollection(
                 dataStoreRuntime,
                 documentId,
@@ -137,6 +50,8 @@ export function* generateTestStrings(): Generator<[string, SharedStringWithV1Int
             return string;
         };
 
+        const normalized = version !== "v1Intervals";
+
         for (const key of Object.keys(options)) {
             dataStoreRuntime.options[key] = options[key];
         }
@@ -148,7 +63,7 @@ export function* generateTestStrings(): Generator<[string, SharedStringWithV1Int
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        yield [`${version}/headerOnly`, sharedString, false];
+        yield { snapshotPath: `${version}/headerOnly`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // Big enough that snapshot will have body
@@ -156,7 +71,7 @@ export function* generateTestStrings(): Generator<[string, SharedStringWithV1Int
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        yield [`${version}/headerAndBody`, sharedString, false];
+        yield { snapshotPath: `${version}/headerAndBody`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // Very big sharedString
@@ -164,7 +79,7 @@ export function* generateTestStrings(): Generator<[string, SharedStringWithV1Int
             sharedString.insertText(0, `${insertText}-${i}`);
         }
 
-        yield [`${version}/largeBody`, sharedString, false];
+        yield { snapshotPath: `${version}/largeBody`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // SharedString with markers
@@ -180,7 +95,7 @@ export function* generateTestStrings(): Generator<[string, SharedStringWithV1Int
             });
         }
 
-        yield [`${version}/withMarkers`, sharedString, false];
+        yield { snapshotPath: `${version}/withMarkers`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // SharedString with annotations
@@ -191,15 +106,15 @@ export function* generateTestStrings(): Generator<[string, SharedStringWithV1Int
             sharedString.annotateRange(i, i + 10, { bold: true });
         }
 
-        yield [`${version}/withAnnotations`, sharedString, false];
+        yield { snapshotPath: `${version}/withAnnotations`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // Very big sharedString
         for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
             sharedString.insertText(0, `${insertText}-${i}`);
         }
-
-        yield [`${version}/largeBody`, sharedString, false];
+        // is there a reason this is generated twice?
+        yield { snapshotPath: `${version}/largeBody`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
         // SharedString with intervals
@@ -207,15 +122,32 @@ export function* generateTestStrings(): Generator<[string, SharedStringWithV1Int
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        const rand = new Random(Random.engines.mt19937().seed(0));
-        const collection1 = sharedString.getIntervalCollection("collection1");
+        let rand = new Random(Random.engines.mt19937().seed(0));
+        let collection1 = sharedString.getIntervalCollection("collection1");
         collection1.add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
 
-        const collection2 = sharedString.getIntervalCollection("collection2");
+        let collection2 = sharedString.getIntervalCollection("collection2");
         for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
             collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
         }
 
-        yield [`${version}/withIntervals`, sharedString, true];
+        yield { snapshotPath: `${version}/withIntervals`, expected: sharedString, snapshotIsNormalized: normalized };
+
+        sharedString = createNewV1SharedString();
+        // SharedString with V1 intervals
+        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; i++) {
+            sharedString.insertText(0, `${insertText}${i}`);
+        }
+
+        rand = new Random(Random.engines.mt19937().seed(0));
+        collection1 = sharedString.getIntervalCollection("collection1");
+        collection1.add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+
+        collection2 = sharedString.getIntervalCollection("collection2");
+        for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
+            collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+        }
+
+        yield { snapshotPath: `${version}/withV1Intervals`, expected: sharedString, snapshotIsNormalized: normalized };
     }
 }

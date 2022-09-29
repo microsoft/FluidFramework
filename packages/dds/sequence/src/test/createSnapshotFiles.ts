@@ -5,16 +5,12 @@
 
 import fs from "fs";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { generateStrings, generateTestStrings, LocationBase, TestLocationBase } from "./generateSharedStrings";
+import { generateStrings, LocationBase } from "./generateSharedStrings";
 
 for (const s of generateStrings()) {
-    const summaryTree = s[1].getAttachSummary().summary;
+    const summaryTree = s.expected.getAttachSummary().summary;
     const snapshotTree = convertSummaryTreeToITree(summaryTree);
-    fs.writeFileSync(`${LocationBase}${s[0]}.json`, JSON.stringify(snapshotTree, undefined, 1));
-}
-
-for (const s of generateTestStrings()) {
-    const summaryTree = s[1].getAttachSummary().summary;
-    const snapshotTree = convertSummaryTreeToITree(summaryTree);
-    fs.writeFileSync(`${TestLocationBase}${s[0]}.json`, JSON.stringify(snapshotTree, undefined, 1));
+    if (s.snapshotIsNormalized || s.snapshotPath === "v1Intervals/withV1Intervals") {
+        fs.writeFileSync(`${LocationBase}${s.snapshotPath}.json`, JSON.stringify(snapshotTree, undefined, 1));
+    }
 }
