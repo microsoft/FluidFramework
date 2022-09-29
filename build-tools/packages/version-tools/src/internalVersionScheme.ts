@@ -291,7 +291,10 @@ export function getVersionRange(
     return range;
 }
 
-export function changePreReleaseIdentifier(version: semver.SemVer | string, newIdentifier: string): string {
+export function changePreReleaseIdentifier(
+    version: semver.SemVer | string,
+    newIdentifier: string,
+): string {
     const ver = semver.parse(version);
 
     if (ver === null) {
