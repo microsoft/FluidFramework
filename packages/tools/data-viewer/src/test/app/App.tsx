@@ -41,21 +41,32 @@ function useContainerInfo(): ContainerInfo | undefined {
         let services: TinyliciousContainerServices;
         let containerId = getContainerIdFromLocation(window.location);
         if (containerId.length === 0) {
+            console.log("Creating new container...");
             const createContainerResult = await client.createContainer(containerSchema);
+            console.log("Container created!");
+
             container = createContainerResult.container;
             services = createContainerResult.services;
+
+            console.log("Awaiting container attach...");
             containerId = await container.attach();
+            console.log("Attached!");
         } else {
+            console.log("Loading existing container...");
             const getContainerResult = await client.getContainer(containerId, containerSchema);
+            console.log("Container loaded!");
+
             container = getContainerResult.container;
             services = getContainerResult.services;
 
             if (container.connectionState !== ConnectionState.Connected) {
+                console.log("Connecting to container...");
                 await new Promise<void>((resolve) => {
                     container.once("connected", () => {
                         resolve();
                     });
                 });
+                console.log("Connected!");
             }
         }
 
@@ -75,7 +86,7 @@ function useContainerInfo(): ContainerInfo | undefined {
                 throw error;
             },
         );
-    });
+    }, []);
 
     return containerInfo;
 }
