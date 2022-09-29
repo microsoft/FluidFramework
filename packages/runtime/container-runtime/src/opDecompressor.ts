@@ -18,7 +18,7 @@ import { CompressionAlgorithms } from ".";
  */
 export class OpDecompressor {
     private activeBatch = false;
-    private rootMessage: ISequencedDocumentMessage | undefined;
+    private rootMessageContents: any | undefined;
     private processedCount = 0;
 
     constructor() {
@@ -32,25 +32,24 @@ export class OpDecompressor {
             assert(this.activeBatch === false, "shouldn't have multiple active batches");
 
             this.activeBatch = true;
-            this.rootMessage = message;
 
-            const contents = IsoBuffer.from(this.rootMessage.contents.packedContents, "base64");
+            const contents = IsoBuffer.from(message.contents.packedContents, "base64");
             const decompressedMessage = decompress(contents);
             const intoString = Uint8ArrayToString(decompressedMessage);
             const asObj = JSON.parse(intoString);
-            this.rootMessage.contents = asObj;
+            this.rootMessageContents = asObj;
 
-            return { ...message, contents: this.rootMessage.contents[this.processedCount++] };
-        } else if (this.rootMessage !== undefined && message.metadata === undefined && this.activeBatch) {
+            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
+        } else if (this.rootMessageContents !== undefined && message.metadata === undefined && this.activeBatch) {
             // Continuation of compressed batch
-            return { ...message, contents: this.rootMessage.contents[this.processedCount++] };
-        } else if (this.rootMessage !== undefined && message.metadata?.batch === false) {
+            return { ...message, contents: this.rootMessageContents[this.processedCount++] };
+        } else if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
             // End of compressed batch
             const returnMessage = { ...message,
-                                    contents: this.rootMessage.contents[this.processedCount++] };
+                                    contents: this.rootMessageContents[this.processedCount++] };
 
             this.activeBatch = false;
-            this.rootMessage = undefined;
+            this.rootMessageContents = undefined;
             this.processedCount = 0;
 
             return returnMessage;
