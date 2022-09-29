@@ -130,7 +130,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "memberAdded", listener: MemberChangedListener<M>): void;
 
     /**
-     * Eitted when a {@link IMember | member} leaves the audience.
+     * Emitted when a {@link IMember | member} leaves the audience.
      *
      * @eventProperty
      */
