@@ -257,11 +257,11 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             if (this.isActive() && currentClient === this.clientId) {
                 this.onNewTaskAssigned(key);
             } else {
-                // The function below mutates the consensusRegisterCollection in
+                // The call below mutates the consensusRegisterCollection in
                 // its event handler, which is not safe.
                 // We need to force this to be part of a different batch of ops by
                 // scheduling a microtask in order to work around the current validations.
-                // This practice is not recommended and should be avoided.
+                // This is not recommended and should be avoided.
                 await Promise.resolve().then(async () => {
                     await this.onTaskReassigned(key, currentClient);
                 });
