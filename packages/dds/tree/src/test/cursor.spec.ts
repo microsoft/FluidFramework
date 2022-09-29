@@ -104,34 +104,34 @@ export function testJsonableTreeCursor(
             const getKeysAsSet = (cursor: ITreeCursor) => new Set(mapCursorFields(cursor, getFieldKey));
 
             it("object", () => {
-                assertSetsEqual(getKeysAsSet(factory({ type: brand("Foo") })), new Set([]));
-                assertSetsEqual(getKeysAsSet(factory({
+                assert.deepEqual(getKeysAsSet(factory({ type: brand("Foo") })), new Set());
+                assert.deepEqual(getKeysAsSet(factory({
                     type: brand("Foo"),
                     fields: { x: [{ type: brand("Bar") }] },
-                })), new Set([brand("x")]));
-                assertSetsEqual(
+                })), new Set([brand<FieldKey>("x")]));
+                assert.deepEqual(
                     getKeysAsSet(factory({
                         type: brand("Foo"),
                         fields: { x: [{ type: brand("Bar") }], test: [{ type: brand("Bar"), value: 6 }] },
                     })),
-                    new Set([brand("x"), brand("test")]),
+                    new Set([brand<FieldKey>("x"), brand<FieldKey>("test")]),
                 );
             });
 
             it("array", () => {
                 // TODO: should empty arrays report this key?
-                assertSetsEqual(
+                assert.deepEqual(
                     getKeysAsSet(factory({ type: brand("Foo"), fields: { [EmptyKey]: [] } })),
                     new Set([EmptyKey]),
                 );
-                assertSetsEqual(
+                assert.deepEqual(
                     getKeysAsSet(factory({
                         type: brand("Foo"),
                         fields: { [EmptyKey]: [{ type: brand("Bar"), value: 0 }] },
                     })),
                     new Set([EmptyKey]),
                 );
-                assertSetsEqual(
+                assert.deepEqual(
                     getKeysAsSet(factory({
                         type: brand("Foo"),
                         fields: { [EmptyKey]: [{ type: brand("Bar"), value: "test" }, { type: brand("Bar") }] },
@@ -141,18 +141,18 @@ export function testJsonableTreeCursor(
             });
 
             it("string", () => {
-                assertSetsEqual(getKeysAsSet(factory({ type: brand("Foo"), value: "" })), new Set([]));
-                assertSetsEqual(getKeysAsSet(factory({ type: brand("Foo"), value: "test" })), new Set([]));
+                assert.deepEqual(getKeysAsSet(factory({ type: brand("Foo"), value: "" })), new Set());
+                assert.deepEqual(getKeysAsSet(factory({ type: brand("Foo"), value: "test" })), new Set());
             });
 
             it("number", () => {
-                assertSetsEqual(getKeysAsSet(factory({ type: brand("Foo"), value: 0 })), new Set([]));
-                assertSetsEqual(getKeysAsSet(factory({ type: brand("Foo"), value: 6.5 })), new Set([]));
+                assert.deepEqual(getKeysAsSet(factory({ type: brand("Foo"), value: 0 })), new Set());
+                assert.deepEqual(getKeysAsSet(factory({ type: brand("Foo"), value: 6.5 })), new Set());
             });
 
             it("boolean", () => {
-                assertSetsEqual(getKeysAsSet(factory({ type: brand("Foo"), value: false })), new Set([]));
-                assertSetsEqual(getKeysAsSet(factory({ type: brand("Foo"), value: true })), new Set([]));
+                assert.deepEqual(getKeysAsSet(factory({ type: brand("Foo"), value: false })), new Set());
+                assert.deepEqual(getKeysAsSet(factory({ type: brand("Foo"), value: true })), new Set());
             });
         });
 
@@ -416,12 +416,4 @@ export function testCursors(
             });
         }
     });
-}
-
-function assertSetsEqual<T>(a: Set<T>, b: Set<T>, message?: string): void {
-    if (a.size !== b.size) {
-        assert.fail(message);
-    }
-
-    assert([...a].every((value) => b.has(value)), message);
 }
