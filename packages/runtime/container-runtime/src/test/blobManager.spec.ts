@@ -52,6 +52,9 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
             this,
         );
     }
+    public get isDirty(): boolean {
+        return true;
+    }
 
     public get storage() {
         return (this.attachState === AttachState.Detached ?
