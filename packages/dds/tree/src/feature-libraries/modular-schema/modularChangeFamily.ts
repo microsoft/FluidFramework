@@ -181,7 +181,7 @@ export class ModularChangeFamily implements
         };
 
         if (change.valueChange !== undefined) {
-            modify.setValue = change.valueChange;
+            modify.setValue = change.valueChange.value;
         }
 
         if (change.fieldChanges !== undefined) {

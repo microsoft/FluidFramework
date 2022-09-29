@@ -283,8 +283,7 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
                 verifyBatchMetadata(dataObject2BatchMessages);
             });
 
-            // Disabled due to issue #9546
-            it.skip("can send and receive consecutive batches that are flushed on JS turn", async () => {
+            it("can send and receive consecutive batches that are flushed on JS turn", async () => {
                 /**
                  * This test verifies that among other things, the PendingStateManager's algorithm of handling
                  * consecutive batches is correct.
@@ -294,15 +293,15 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
                 dataObject1map1.set("key1", "value1");
                 dataObject1map2.set("key2", "value2");
 
-                // Yield a turn so that the ops are flushed.
-                await yieldJSTurn();
+                // wait for ops to be flushed.
+                await provider.ensureSynchronized();
 
                 // Send the second set of ops that are to be batched together.
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
 
-                // Yield a turn so that the ops are flushed.
-                await yieldJSTurn();
+                // wait for ops to be flushed.
+                await provider.ensureSynchronized();
 
                 // Send a third set of ops that are to be batched together.
                 dataObject1map1.set("key5", "value5");
