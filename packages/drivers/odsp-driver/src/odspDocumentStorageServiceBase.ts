@@ -9,9 +9,11 @@ import {
     IDocumentStorageServicePolicies,
     ISummaryContext,
     LoaderCachingPolicy,
+    TwoDaysMs,
 } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils";
+import { maximumCacheDurationMs } from "./epochTracker";
 import { ISnapshotContents } from "./odspPublicUtils";
 
 /* eslint-disable max-len */
@@ -116,10 +118,16 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
     readonly policies: IDocumentStorageServicePolicies;
 
     constructor(config: IConfigProvider) {
-        const maximumCacheDurationMs =
+        // We circumvent the restrictions on the policy only when using this TestOverride setting,
+        // which also applies to the code that reads from the cache in epochTracker.ts
+        // This may result in files created for testing being unusable in production sessions,
+        // due to the GC code guarding against this policy changing over the lifetime of a file.
+        const maximumCacheDurationMsInEffect = (
             config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache")
                 ? 0
-                : 172800000; // 2 * 24 * 60 * 60 * 1000
+                : maximumCacheDurationMs
+        ) as any as TwoDaysMs;
+
         this.policies = {
             // By default, ODSP tells the container not to prefetch/cache.
             caching: LoaderCachingPolicy.NoCaching,
@@ -135,7 +143,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
             // Note that duplication of content should not have significant impact for bytes over wire as
             // compression of http payload mostly takes care of it, but it does impact storage size and in-memory sizes.
             minBlobSize: 2048,
-            maximumCacheDurationMs,
+            maximumCacheDurationMs: maximumCacheDurationMsInEffect,
         };
     }
     protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();

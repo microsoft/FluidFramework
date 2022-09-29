@@ -91,6 +91,9 @@ export interface IDocumentDeltaStorageService {
     ): IStream<ISequencedDocumentMessage[]>;
 }
 
+// DO NOT INCREASE THIS TYPE'S VALUE - If a driver started using a larger value, GC would likely start closing sessions
+export type TwoDaysMs = 172800000; /* 2 days in milliseconds */
+
 export interface IDocumentStorageServicePolicies {
     readonly caching?: LoaderCachingPolicy;
 
@@ -102,12 +105,11 @@ export interface IDocumentStorageServicePolicies {
 
     /**
      * The driver will not use cached snapshots older than this value.
-     * If 0, caching is disabled. This can be useful for testing to ensure only the latest snapshot is used
+     * If undefined, the driver makes no guarantees about the age of snapshots used for loading.
      * Otherwise, the value MUST be 2 days. This fixed upper bound is necessary for the Garbage Collection feature
      * in the Runtime layer to reliably compute when an object will never be referenced again and can be deleted.
-     * Even if undefined the Runtime will assume the 2-day max is respected.
      */
-    readonly maximumCacheDurationMs?: 0 | 172800000 /* 2 days in milliseconds */;
+    readonly maximumCacheDurationMs?: TwoDaysMs;
 }
 
 /**
