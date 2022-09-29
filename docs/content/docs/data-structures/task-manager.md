@@ -12,10 +12,10 @@ A task is simply code that should only be executed by **one** client at any give
 {{% /callout %}}
 
 ### Task Queue
-TaskManager's main role is to maintain a queue of clients for each unique task. The client at the top of the queue is assigned the task, and is given permission to exclusively execute the task. All other clients will remain in queue until they leave, disconnect (unexpectedly), or the task is completed by the assigned client. It's important to note that TaskManager maintains the consensus state of the task queue. This means that locally submitted ops will not affect the queue until the op is accepted by all other clients. To learn more about conensus based data structures, click [here]({{< relref "./overview.md#consensus-data-structures" >}}).
+TaskManager's main role is to maintain a queue of clients for each unique task. The client at the top of the queue is assigned the task, and is given permission to exclusively execute the task. All other clients will remain in queue until they leave, disconnect (unexpectedly), or the task is completed by the assigned client. It's important to note that TaskManager maintains the consensus state of the task queue. This means that locally submitted operations will not affect the queue until the operation is accepted by all other clients. To learn more about conensus based data structures, click [here]({{< relref "./overview.md#consensus-data-structures" >}}).
 
 ### Consensus Based DDS
-An important note about TaskManager is that it is a consensus based DDS. This essentially means that ops are not accepted until every client acknowledge and accepts the op. This differs from an "optimistic" DDS (i.e. [SharedMap]({{< relref "./map.md" >}})) which immediately accept ops and then relays them to other clients. For more information regarding different types of DDSes, click [here]({{< relref "./overview.md" >}}).
+An important note about TaskManager is that it is a consensus based DDS. This essentially means that operations are not accepted until every client acknowledge and accepts the operation. This differs from an "optimistic" DDS (i.e. [SharedMap]({{< relref "./map.md" >}})) which immediately accept ops and then relays them to other clients. For more information regarding different types of DDSes, click [here]({{< relref "./overview.md" >}}).
 
 ## Usage
 
@@ -34,7 +34,7 @@ The `TaskManager` object provides a number of methods to manage the execution of
 
 ### Events
 
-`TaskManager` is an `EventEmitter`, and will emit events when a task is assigned to the client or released. Each of the below events fire with an event listener that contains a callback argument `taskId`. This represents the task for which the event was fired for.
+`TaskManager` is an `EventEmitter`, and will emit events when a task is assigned to the client or released. Each of the following events fires with an event listener that contains a callback argument `taskId`. This represents the task for which the event was fired.
 
 - `assigned` -- Fires when the client reaches the top of the task queue and is assigned the task.
 - `lost` -- Fires when the client disconnects while being assigned a task and is removed from the queue.
