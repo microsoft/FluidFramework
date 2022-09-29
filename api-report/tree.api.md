@@ -143,7 +143,7 @@ interface Delete {
     type: typeof MarkType.Delete;
 }
 
-// @public (undocumented)
+// @public
 export const deleteNodeSymbol: unique symbol;
 
 declare namespace Delta {
@@ -223,7 +223,7 @@ export enum Effects {
 // @public (undocumented)
 const empty: Root<any>;
 
-// @public (undocumented)
+// @public
 export interface EmptyEditableTree {
     // (undocumented)
     readonly [insertRootSymbol]: (root: ITreeCursor) => UnwrappedEditableTree;
@@ -339,12 +339,10 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 
 // @public
 export interface FieldlessEditableTree {
-    // (undocumented)
     readonly [deleteNodeSymbol]: (key: string) => boolean;
     readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
     readonly [insertNodeSymbol]: (key: string, value: ITreeCursor) => boolean;
     readonly [proxyTargetSymbol]: object;
-    // (undocumented)
     readonly [setValueSymbol]: (key: string, value: unknown, typeName: TreeSchemaIdentifier) => boolean;
     readonly [valueSymbol]: Value;
 }
@@ -468,10 +466,10 @@ interface InsertAndModify<TTree = ProtoNode_2> {
     type: typeof MarkType.InsertAndModify;
 }
 
-// @public (undocumented)
+// @public
 export const insertNodeSymbol: unique symbol;
 
-// @public (undocumented)
+// @public
 export const insertRootSymbol: unique symbol;
 
 // @public
@@ -987,7 +985,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
     setValue(node: NodePath, value: Value): void;
 }
 
-// @public (undocumented)
+// @public
 export const setValueSymbol: unique symbol;
 
 // @public
