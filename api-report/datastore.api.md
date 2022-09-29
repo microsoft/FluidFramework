@@ -85,13 +85,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     readonly id: string;
     // (undocumented)
     get IFluidHandleContext(): this;
-    get IFluidLoadable(): {
-        handle: IFluidHandle<FluidObject<unknown> & IFluidLoadable>;
-        readonly IFluidLoadable: {
-            handle: IFluidHandle<FluidObject<unknown> & IFluidLoadable>;
-            readonly IFluidLoadable: any;
-        };
-    } | undefined;
+    get IFluidLoadable(): IFluidLoadable | undefined;
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)

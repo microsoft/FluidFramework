@@ -7,7 +7,13 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { FluidObject, IProvideFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+    FluidObject,
+    IFluidLoadable,
+    IProvideFluidLoadable,
+    IRequest,
+    IResponse,
+} from "@fluidframework/core-interfaces";
 import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -156,7 +162,7 @@ class DataStore implements IDataStore, Partial<IProvideFluidLoadable> {
      * the data store, and only fall back to requesting the root object through the request pattern if this property
      * or the handle within it are not defined.
      */
-    public get IFluidLoadable() {
+    public get IFluidLoadable(): IFluidLoadable | undefined {
         // While we plumb entrypoints everywhere and this way of getting to the data store's entrypoint could still be
         // undefined, we have to do some sleight-of-hand and return an object whose 'handle' property is not undefined
         // so it matches the definition of the IFluidLoadable interface.

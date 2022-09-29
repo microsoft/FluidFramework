@@ -8,6 +8,7 @@ import {
     FluidObject,
     IFluidHandle,
     IFluidHandleContext,
+    IFluidLoadable,
     IProvideFluidLoadable,
     IRequest,
     IResponse,
@@ -140,7 +141,7 @@ Partial<IProvideFluidLoadable> {
      * the data store, and only fall back to requesting the root object through the request pattern if this property
      * or the handle within it are not defined.
      */
-    public get IFluidLoadable() {
+    public get IFluidLoadable(): IFluidLoadable | undefined {
         // While we plumb entrypoints everywhere and this way of getting to the data store's entrypoint could still be
         // undefined, we have to do some sleight-of-hand and return an object whose 'handle' property is not undefined
         // so it matches the definition of the IFluidLoadable interface.
