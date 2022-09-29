@@ -26,12 +26,12 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
     const { audience } = props;
 
     const [myself, updateMyself] = useState<IMember | undefined>(audience.getMyself());
-    // const [allMembers, updateAllMembers] = useState<Map<string, IMember>>(audience.getMembers());
+    const [allMembers, updateAllMembers] = useState<Map<string, IMember>>(audience.getMembers());
 
     useEffect(() => {
         function onUpdateMembers(): void {
             updateMyself(audience.getMyself());
-            // updateAllMembers(audience.getMembers());
+            updateAllMembers(audience.getMembers());
         }
 
         audience.on("membersChanged", onUpdateMembers);
@@ -41,24 +41,24 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
         };
     }, [audience]);
 
-    // const renderedOthers: React.ReactElement[] = [];
-    // for (const member of allMembers.values()) {
-    //     if (member.userId !== myself?.userId) {
-    //         renderedOthers.push(
-    //             <li key={member.userId}>
-    //                 <OtherMemberView member={member} />
-    //             </li>,
-    //         );
-    //     }
-    // }
+    const renderedOthers: React.ReactElement[] = [];
+    for (const member of allMembers.values()) {
+        if (member.userId !== myself?.userId) {
+            renderedOthers.push(
+                <li key={member.userId}>
+                    <OtherMemberView member={member} />
+                </li>,
+            );
+        }
+    }
 
     return (
         <div className="audience-view">
             <h2>Audience</h2>
             <Stack>
-                {/* <AudienceCount audienceCount={allMembers.size + 1} /> */}
                 <MyselfView myself={myself} />
-                {/* <ul>{renderedOthers}</ul> */}
+                <AudienceCount audienceCount={allMembers.size} />
+                <ul>{renderedOthers}</ul>
             </Stack>
         </div>
     );
@@ -77,28 +77,28 @@ function MyselfView(props: MyselfViewProps): React.ReactElement {
     );
 }
 
-// interface OtherMemberViewProps {
-//     member: IMember;
-// }
+interface OtherMemberViewProps {
+    member: IMember;
+}
 
-// function OtherMemberView(props: OtherMemberViewProps): React.ReactElement {
-//     const { member } = props;
+function OtherMemberView(props: OtherMemberViewProps): React.ReactElement {
+    const { member } = props;
 
-//     const connectionsPostfix =
-//         member.connections.length !== 1 ? ` (connections: ${member.connections.length})` : "";
+    const connectionsPostfix =
+        member.connections.length !== 1 ? ` (connections: ${member.connections.length})` : "";
 
-//     return <div className="audience-view-member">{`${member.userId}${connectionsPostfix}`}</div>;
-// }
+    return <div className="audience-view-member">{`${member.userId}${connectionsPostfix}`}</div>;
+}
 
-// interface AudienceCountProps {
-//     audienceCount: number;
-// }
+interface AudienceCountProps {
+    audienceCount: number;
+}
 
-// function AudienceCount(props: AudienceCountProps): React.ReactElement {
-//     const { audienceCount } = props;
-//     return (
-//         <div className="audience-view-members-list">
-//             <b>Audience Members:</b> {audienceCount}
-//         </div>
-//     );
-// }
+function AudienceCount(props: AudienceCountProps): React.ReactElement {
+    const { audienceCount } = props;
+    return (
+        <div className="audience-view-members-list">
+            <b>Audience Members:</b> {audienceCount}
+        </div>
+    );
+}
