@@ -41,7 +41,7 @@ parameters:
   type: string
   default: null
 
-jobs:
+job:
   displayName: Run Test Coverage
   pool: ${{ parameters.poolBuild }}
   timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
