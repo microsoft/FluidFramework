@@ -19,7 +19,7 @@ module.exports = {
         // oclif uses default exports for commands
         "import/no-default-export": "off",
 
-        //This package uses interfaces and types that are not exposed directly by oclif and npm-check-updates.
+        // This package uses interfaces and types that are not exposed directly by oclif and npm-check-updates.
         "import/no-internal-modules": [
             "error",
             {
