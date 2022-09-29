@@ -88,15 +88,15 @@ describe("obliterate partial lengths", () => {
                 0,
                 "hello ".length,
             );
-            client.obliterateRange(
-                0,
-                "hello ".length,
+            client.obliterateRange({
+                start: 0,
+                end: "hello ".length,
                 refSeq,
-                remoteClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
+                clientId: remoteClientId,
+                seq: refSeq + 1,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             validatePartialLengths(localClientId, client.mergeTree, [
                 { seq: refSeq, len: "hello world".length },
@@ -147,15 +147,15 @@ describe("obliterate partial lengths", () => {
                 refSeq,
                 client.getLongClientId(remoteClientId),
             );
-            client.obliterateRange(
-                0,
-                "hello ".length,
+            client.obliterateRange({
+                start: 0,
+                end: "hello ".length,
                 refSeq,
-                remoteClientId + 1,
-                refSeq + 2,
-                false,
-                undefined as any,
-            );
+                clientId: remoteClientId + 1,
+                seq: refSeq + 2,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             validatePartialLengths(localClientId, client.mergeTree, [
                 { seq: refSeq, len: "hello world".length },
@@ -181,15 +181,15 @@ describe("obliterate partial lengths", () => {
                 0,
                 "hello ".length,
             );
-            client.obliterateRange(
-                0,
-                "hello ".length,
+            client.obliterateRange({
+                start: 0,
+                end: "hello ".length,
                 refSeq,
-                remoteClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
+                clientId: remoteClientId,
+                seq: refSeq + 1,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
 
             validatePartialLengths(localClientId, client.mergeTree, [
                 { seq: refSeq, len: "hello world".length },
@@ -207,15 +207,15 @@ describe("obliterate partial lengths", () => {
         });
 
         it("passes for remote obliterate and local obliterate", () => {
-            client.obliterateRange(
-                0,
-                "hello ".length,
+            client.obliterateRange({
+                start: 0,
+                end: "hello ".length,
                 refSeq,
-                remoteClientId,
-                refSeq + 1,
-                false,
-                undefined as any,
-            );
+                clientId: remoteClientId,
+                seq: refSeq + 1,
+                overwrite: false,
+                opArgs: undefined as any,
+            });
             const localObliterateOp = client.obliterateRangeLocal(
                 0,
                 "hello ".length,
@@ -243,16 +243,16 @@ describe("obliterate partial lengths", () => {
                 0,
                 client.getLength(),
             );
-            insertText(
-                client.mergeTree,
-                "hello".length,
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: "hello".length,
                 refSeq,
-                remoteClientId,
-                refSeq + 2,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId,
+                seq: refSeq + 2,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "");
 
             validatePartialLengths(localClientId, client.mergeTree, [
@@ -267,16 +267,16 @@ describe("obliterate partial lengths", () => {
                 0,
                 client.getLength(),
             );
-            insertText(
-                client.mergeTree,
-                0,
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 0,
                 refSeq,
-                remoteClientId,
-                refSeq + 2,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId,
+                seq: refSeq + 2,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "");
 
             validatePartialLengths(localClientId, client.mergeTree, [
@@ -291,16 +291,16 @@ describe("obliterate partial lengths", () => {
                 0,
                 client.getLength(),
             );
-            insertText(
-                client.mergeTree,
-                "hello world".length,
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: "hello world".length,
                 refSeq,
-                remoteClientId,
-                refSeq + 2,
-                "more ",
-                undefined,
-                { op: { type: MergeTreeDeltaType.INSERT } },
-            );
+                clientId: remoteClientId,
+                seq: refSeq + 2,
+                text: "more ",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
             assert.equal(client.getText(), "");
 
             validatePartialLengths(localClientId, client.mergeTree, [

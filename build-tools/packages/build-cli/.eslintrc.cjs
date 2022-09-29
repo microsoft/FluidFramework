@@ -16,6 +16,7 @@ module.exports = {
     ],
     rules: {
         "@typescript-eslint/no-unused-vars": "warn",
+        "unused-imports/no-unused-imports": "warn",
 
         // oclif uses default exports for commands
         "import/no-default-export": "off",
