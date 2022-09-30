@@ -510,7 +510,7 @@ export class NodeCore {
         assert(length === stringBuffer.length, "properly encoded");
 
         const result = Uint8ArrayToString(stringBuffer, "utf-8").split(String.fromCharCode(0));
-        if (result.length === stringsToResolve.length) {
+        if (result.length === stringsToResolve.length + 1) {
             // All is good, we expect all the cases to get here
             for (let i = 0; i < stringsToResolve.length; i++) {
                 stringsToResolve[i].content = result[i];
