@@ -18,8 +18,12 @@ import { MakeThinProxy } from "./proxyUtils";
 
 /**
  * Connects to the outerDocumentService factory across the iframe boundary
+ * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
  */
 export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public static async create(outerPort: MessagePort): Promise<InnerDocumentServiceFactory> {
         // The outer host is responsible for setting up the iframe, so the proxy connection
         // is expected to exist when running any inner iframe code.
@@ -31,13 +35,22 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         return new InnerDocumentServiceFactory(outerProxy);
     }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public static readonly protocolName = "fluid:";
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public readonly protocolName = InnerDocumentServiceFactory.protocolName;
     private constructor(
         private readonly outerProxy: Comlink.Remote<IDocumentServiceFactoryProxy>,
     ) {
     }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
@@ -49,6 +62,9 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         return InnerDocumentService.create(clients[outerDocumentServiceProxyId], resolvedUrl, logger);
     }
 
+    /**
+     * @deprecated The iframe-driver is deprecated and should not be used, it will be removed in an upcoming release
+     */
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
