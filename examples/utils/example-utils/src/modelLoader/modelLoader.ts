@@ -9,7 +9,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { create404Response, requestFluidObject } from "@fluidframework/runtime-utils";
-import type { IModelLoader, ModelMakerCallback } from "./interfaces";
+import type { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
 
 // This ModelLoader works on a convention, that the container it will load a model for must respond to a specific
 // request format with the model object.  Here we export a helper function for those container authors to align to
@@ -82,7 +82,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 
     // It would be preferable for attaching to look more like service.attach(model) rather than returning an attach
     // callback here, but this callback at least allows us to keep the method off the model interface.
-    public async createDetached(version: string): Promise<{ model: ModelType; attach: () => Promise<string>; }> {
+    public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
         const container = await this.loader.createDetachedContainer({ package: version });
         const model = await this.getModelFromContainer(container);
         // The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
