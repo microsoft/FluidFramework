@@ -5,13 +5,9 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { TypedJsonCursor } from "../../domains";
-import {
-    ITreeCursor,
-    ITreeSubscriptionCursor, mapCursorField, TreeNavigationResult,
-} from "../../forest";
+import { ITreeCursor, ITreeSubscriptionCursor, TreeNavigationResult } from "../../forest";
 import { LocalFieldKey, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier } from "../../schema-stored";
 import { Anchor, UpPath } from "../../tree";
-import { brand } from "../../util";
 import {
     FieldlessEditableTree, getTypeSymbol, inProxyOrUnwrap, ProxyTarget, proxyTargetSymbol,
     UnwrappedEditableTree, valueSymbol,
@@ -129,7 +125,9 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
     public setValue(index: number, value: unknown): boolean {
         const primaryKey = this.primaryKey;
         assert(primaryKey !== undefined, "Not supported");
-        const target = mapCursorField(this.cursor, brand(primaryKey), (c) => this.context.createTarget(c))[index];
+        assert(this.cursor.down(primaryKey, index) === TreeNavigationResult.Ok, "Cannot navigate to a node to set value");
+        const target = this.context.createTarget(this.cursor);
+        this.cursor.up();
         const type = target.getType() as TreeSchema;
         assert(isPrimitive(type), `"Set value" is not supported for non-primitive fields`);
         const path = target.getPath();
