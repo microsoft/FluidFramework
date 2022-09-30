@@ -290,3 +290,37 @@ export function getVersionRange(
     }
     return range;
 }
+
+export function changePreReleaseIdentifier(
+    version: semver.SemVer | string,
+    newIdentifier: string,
+): string {
+    const ver = semver.parse(version);
+
+    if (ver === null) {
+        throw new Error(`Can't parse version: ${version}`);
+    }
+
+    const pr = ver.prerelease;
+    if (pr.length < 1) {
+        throw new Error(`Version has no prerelease section: ${version}`);
+    }
+
+    const identifier = pr[0];
+
+    if (typeof identifier === "number") {
+        // eslint-disable-next-line unicorn/prefer-type-error
+        throw new Error(`Prerelease identifier is numeric; it should be a string: ${version}`);
+    }
+
+    const newPrereleaseSection = [newIdentifier, ...pr.slice(1)].join(".");
+    const newVersionString = `${ver.major}.${ver.minor}.${ver.patch}-${newPrereleaseSection}`;
+
+    const newVer = semver.parse(newVersionString)?.version;
+
+    if (newVer === null || newVer === undefined) {
+        throw new Error(`Can't parse new version string: ${version}`);
+    }
+
+    return newVer;
+}

@@ -105,15 +105,8 @@ describe("SharedTree", () => {
 
             await provider.ensureSynchronized();
 
-            // Validate deletion
-            {
-                const readCursor = tree2.forest.allocateCursor();
-                const destination = tree2.forest.root(tree2.forest.rootField);
-                const cursorResult = tree2.forest.tryMoveCursorTo(destination, readCursor);
-                assert.equal(cursorResult, TreeNavigationResult.NotFound);
-                readCursor.free();
-                tree2.forest.forgetAnchor(destination);
-            }
+            assert.equal(getTestValue(tree1), undefined);
+            assert.equal(getTestValue(tree2), undefined);
         });
 
         it("can insert multiple nodes", async () => {
@@ -231,6 +224,9 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
     const readCursor = forest.allocateCursor();
     const destination = forest.root(forest.rootField);
     const cursorResult = forest.tryMoveCursorTo(destination, readCursor);
+    if (cursorResult !== TreeNavigationResult.Ok) {
+        return undefined;
+    }
     const { value } = readCursor;
     readCursor.free();
     forest.forgetAnchor(destination);

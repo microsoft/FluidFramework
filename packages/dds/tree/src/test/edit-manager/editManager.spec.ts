@@ -51,10 +51,10 @@ function editManagerFactory(rebaser?: ChangeRebaser<TestChange>): {
     const family = changeFamilyFactory(rebaser);
     const anchors = new TestAnchorSet();
     const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(
+        localSessionId,
         family,
         anchors,
     );
-    manager.setLocalSessionId(localSessionId);
     return { manager, anchors };
 }
 
