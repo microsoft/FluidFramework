@@ -412,7 +412,6 @@ class PathNode implements UpPath {
     }
 
     public removeRef(count = 1): void {
-        assert(!this.deleted, 0x357 /* PathNode must not be deleted */);
         this.refCount -= count;
         if (this.refCount < 1) {
             assert(
@@ -420,7 +419,7 @@ class PathNode implements UpPath {
                 0x358 /* PathNode Refcount should not be negative. */,
             );
 
-            if (this.children.size === 0) {
+            if (this.children.size === 0 && !this.deleted) {
                 this.deleteThis();
             }
         }

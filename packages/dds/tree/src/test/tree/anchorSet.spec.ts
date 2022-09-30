@@ -51,6 +51,8 @@ describe("AnchorSet", () => {
         checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
         checkEquality(anchors.locate(anchor2), path2);
         assert.equal(anchors.locate(anchor3), undefined);
+        assert.doesNotThrow(() => anchors.forget(anchor3));
+        assert.throws(() => anchors.locate(anchor3));
     });
 
     it("can rebase over move", () => {
