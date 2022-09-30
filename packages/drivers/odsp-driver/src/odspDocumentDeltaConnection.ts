@@ -112,27 +112,6 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
         SocketReference.socketIoSockets.set(key, this);
 
-        const disconnectHandler = (socketError: IOdspSocketError, clientId?: string) => {
-            // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
-            // filter out retryable vs. non-retryable cases.
-            const error = errorObjectFromSocketError(socketError, clientId
-                ? "disconnect_document" : "server_disconnect");
-            error.canRetry = true;
-
-            // see comment in disconnected() getter
-            // Setting it here to ensure socket reuse does not happen if new request to connect
-            // comes in from "disconnect" listener below, before we close socket.
-            this.isPendingInitialConnection = false;
-
-            if (clientId !== undefined) {
-                // We don't need to close the socket in case of this event.
-                this.emit("disconnect_document", error, clientId);
-                return;
-            }
-            this.emit("server_disconnect", error);
-            this.closeSocket();
-        };
-
         // Server sends this event when it wants to disconnect a particular client in which case the client id would
         // be present or if it wants to disconnect all the clients. The server always closes the socket in case all
         // clients needs to be disconnected. So fully remove the socket reference in this case.
@@ -491,7 +470,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         }
 
         this.socketReference!.on("server_disconnect", this.serverDisconnectHandler);
-        this.socketReference!.on("disconnect_document", this.documentDisconnectHandler);
 
         this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
             const messages = result.messages;
