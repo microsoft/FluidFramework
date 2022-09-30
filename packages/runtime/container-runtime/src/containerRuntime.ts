@@ -2939,12 +2939,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private async processSavedOps(state: IPendingRuntimeState) {
         for (const op of state.savedOps) {
-            await this.pendingStateManager.applyStashedOpsUpTo(op.sequenceNumber);
             this.process(op, false);
+            await this.pendingStateManager.applyStashedOpsAt(op.sequenceNumber);
         }
         // we may not have seen every sequence number (because of system ops) so apply everything once we
         // don't have any more saved ops
-        await this.pendingStateManager.applyStashedOpsUpTo();
+        await this.pendingStateManager.applyStashedOpsAt();
 
         // If it's not the case, we should take it into account when calculating dirty state.
         assert(this.context.attachState === AttachState.Attached,
