@@ -2141,9 +2141,8 @@ export class MergeTree {
 
     // Segments should either be removed remotely, removed locally, or inserted locally
     private normalizeAdjacentSegments(affectedSegments: List<ISegment>): void {
-        const currentOrderTest = Array.from(affectedSegments.map(({ data }) => data));
         // Eagerly demand this since we're about to shift elements in the list around
-        const currentOrder = currentOrderTest.map((seg) => ({
+        const currentOrder = Array.from(affectedSegments, ({ data: seg }) => ({
             parent: seg.parent,
             index: seg.index,
             ordinal: seg.ordinal,
