@@ -27,7 +27,6 @@ export {
     IntervalType,
     ISerializableInterval,
     ISerializedInterval,
-    LocalIntervalCollection,
     SequenceInterval,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,

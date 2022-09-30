@@ -295,47 +295,6 @@ export interface IValueOpEmitter {
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 
-// @public (undocumented)
-export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
-    constructor(client: Client, label: string, helpers: IIntervalHelpers<TInterval>,
-    onPositionChange?: (interval: TInterval) => void);
-    // (undocumented)
-    add(interval: TInterval): void;
-    // (undocumented)
-    addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
-    // (undocumented)
-    addInterval(start: number, end: number, intervalType: IntervalType, props?: PropertySet, op?: ISequencedDocumentMessage): TInterval;
-    // (undocumented)
-    changeInterval(interval: TInterval, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): TInterval;
-    // (undocumented)
-    createInterval(start: number, end: number, intervalType: IntervalType, op?: ISequencedDocumentMessage): TInterval;
-    // (undocumented)
-    createLegacyId(start: number, end: number): string;
-    ensureSerializedId(serializedInterval: ISerializedInterval): string;
-    // (undocumented)
-    findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
-    // (undocumented)
-    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
-    // (undocumented)
-    getIntervalById(id: string): TInterval;
-    // (undocumented)
-    map(fn: (interval: TInterval) => void): void;
-    // (undocumented)
-    mapUntil(fn: (interval: TInterval) => boolean): void;
-    // (undocumented)
-    nextInterval(pos: number): TInterval;
-    // (undocumented)
-    previousInterval(pos: number): TInterval;
-    // (undocumented)
-    removeExistingInterval(interval: TInterval): void;
-    // (undocumented)
-    removeInterval(startPosition: number, endPosition: number): TInterval;
-    // Warning: (ae-incompatible-release-tags) The symbol "serialize" is marked as @public, but its signature references "ISerializedIntervalCollectionV2" which is marked as @internal
-    //
-    // (undocumented)
-    serialize(snapshotIsNormalized: boolean): ISerializedIntervalCollectionV2;
-}
-
 // @public @deprecated (undocumented)
 export type MatrixSegment = RunSegment | PaddingSegment;
 
