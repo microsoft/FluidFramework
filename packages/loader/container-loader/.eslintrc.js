@@ -4,15 +4,13 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
-    ],
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    extends: [require.resolve("@fluidframework/eslint-config-fluid")],
+    parserOptions: {
+        project: ["./tsconfig.json", "./src/test/tsconfig.json"],
     },
-    "rules": {
+    rules: {
         // This library is used in the browser, so we don't want dependencies on most node libraries.
-        "import/no-nodejs-modules": ["error", { allow: ["url", "url"] }],
+        "import/no-nodejs-modules": ["error", { allow: ["events", "url"] }],
     },
     overrides: [
         {
@@ -22,9 +20,9 @@ module.exports = {
                 // Test files are run in node only so additional node libraries can be used.
                 "import/no-nodejs-modules": [
                     "error",
-                    { allow: ["assert", "url"] },
+                    { allow: ["assert", "events", "url"] },
                 ],
             },
         },
     ],
-}
+};
