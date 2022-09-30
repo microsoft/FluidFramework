@@ -62,8 +62,8 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
     public constructor(public readonly policy: TPolicy, data?: SchemaData) {
         super();
         this.data = {
-            treeSchema: new Map(data?.treeSchema),
-            globalFieldSchema: new Map(data?.globalFieldSchema),
+            treeSchema: new Map(data?.treeSchema ?? []),
+            globalFieldSchema: new Map(data?.globalFieldSchema ?? []),
         };
     }
 

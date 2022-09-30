@@ -916,7 +916,7 @@ export interface SchemaData {
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
-// @public (undocumented)
+// @public
 export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy> extends SchemaData {
     readonly policy: TPolicy;
 }
