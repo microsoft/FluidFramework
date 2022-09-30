@@ -146,9 +146,14 @@ export class AnchorSet {
         return parentPath?.tryGetChild(path.parentField, path.parentIndex);
     }
 
+    /**
+     * Recursively marks the given `nodes` and their descendants as deleted.
+     * Node that this does NOT detach the nodes.
+     */
     private deepDelete(nodes: readonly PathNode[]): void {
         const stack = [...nodes];
         while (stack.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const node = stack.pop()!;
             assert(!node.deleted, 0x353 /* PathNode must not be deleted */);
             node.deleted = true;
@@ -366,6 +371,12 @@ class PathNode implements UpPath {
      */
     private refCount = 1;
 
+    /**
+     * Whether the PathNode represents a document node that has been deleted.
+     *
+     * Used to determine whether an anchor can be resolved to a valid path
+     * (where "valid" means a path to an existing node).
+     */
     public deleted = false;
 
     /**
@@ -508,7 +519,7 @@ class PathNode implements UpPath {
     }
 
     /**
-     * Removes this from parent, and sets this to deleated.
+     * Removes this from parent, and sets this to deleted.
      */
     private deleteThis(): void {
         assert(!this.deleted, 0x35e /* must not double delete PathNode */);
