@@ -1,0 +1,70 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-real-service-e2e pipeline
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+      - lts
+
+variables:
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+
+stages:
+  # end-to-end tests local server
+  - stage:
+    displayName: test-coverage-1
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # end-to-end tests tinylicious
+  - stage:
+    displayName: test-coverage-2
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
+      parameters:
+        poolBuild: Large
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # end-to-end tests routerlicious
+  - stage:
+    displayName: test-coverage-3
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-coverage.yml
+      parameters:
+        poolBuild: Large
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:report
+        continueOnError: true
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
