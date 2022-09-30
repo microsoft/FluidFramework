@@ -36,7 +36,7 @@ export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPol
 
 /**
  * StoredSchemaRepository for in memory use:
- * not hooked up to Fluid: does not create an FLuid Ops when editing.
+ * not hooked up to Fluid (does not create Fluid ops when editing).
  */
 export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
     extends SimpleDependee
