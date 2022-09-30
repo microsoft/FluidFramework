@@ -24,6 +24,9 @@ export interface InstructionalPrompt {
     sections: Section[];
 }
 
+/**
+ * A section of an {@link InstructionalPrompt}.
+ */
 interface Section {
     /**
      * The title of the section.
@@ -41,6 +44,9 @@ interface Section {
     cmd?: string;
 }
 
+/**
+ * An abstract base class for classes that write {@link InstructionalPrompt}s to the terminal.
+ */
 export abstract class InstructionalPromptWriter {
     protected abstract get log(): CommandLogger;
 
@@ -80,6 +86,9 @@ export abstract class InstructionalPromptWriter {
     }
 }
 
+/**
+ * A simple concrete implementation of {@link InstructionalPromptWriter}.
+ */
 export class PromptWriter extends InstructionalPromptWriter {
     public constructor(public log: CommandLogger) {
         super();

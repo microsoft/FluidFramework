@@ -397,9 +397,9 @@ export function getVersionFromTag(tag: string): string | undefined {
  */
 export interface VersionDetails {
     /**
-     * The version.
+     * The version of the release.
      */
-    version: string;
+    version: ReleaseVersion;
 
     /**
      * The date the version was released, if applicable.
