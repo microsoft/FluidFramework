@@ -46,13 +46,13 @@ export type TelemetryBaseEventPropertyValue = string | number | boolean | null |
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark sensitive information that should not be stored in logs.
  */
-export interface ITaggedBaseTelemetryProperty {
+export interface ITaggedBaseTelemetryPropertyValue {
     value: TelemetryBaseEventPropertyValue;
     tag: string;
 }
 
 export interface ITelemetryBaseProperties {
-    [index: string]: TelemetryBaseEventPropertyValue | ITaggedBaseTelemetryProperty;
+    [index: string]: TelemetryBaseEventPropertyValue | ITaggedBaseTelemetryPropertyValue;
 }
 
 /**

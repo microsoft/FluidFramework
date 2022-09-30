@@ -196,7 +196,7 @@ export interface ILoggingError extends Error {
 }
 
 // @public
-export interface ITaggedBaseTelemetryProperty {
+export interface ITaggedBaseTelemetryPropertyValue {
     // (undocumented)
     tag: string;
     // (undocumented)
@@ -228,7 +228,7 @@ export interface ITelemetryBaseLogger {
 // @public (undocumented)
 export interface ITelemetryBaseProperties {
     // (undocumented)
-    [index: string]: TelemetryBaseEventPropertyValue | ITaggedBaseTelemetryProperty;
+    [index: string]: TelemetryBaseEventPropertyValue | ITaggedBaseTelemetryPropertyValue;
 }
 
 // @public
