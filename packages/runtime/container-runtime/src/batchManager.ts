@@ -42,7 +42,7 @@ export class BatchManager {
     }
 
     public push(message: BatchMessage): boolean {
-        const contentSize = this.batchContentSize + message.contents.length;
+        const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
         const opCount = this.pendingBatch.length;
 
         // Attempt to estimate batch size, aka socket message size.
@@ -95,7 +95,7 @@ export class BatchManager {
                 for (let i = this.pendingBatch.length; i > startPoint;) {
                     i--;
                     const message = this.pendingBatch[i];
-                    this.batchContentSize -= message.contents.length;
+                    this.batchContentSize -= message.contents?.length ?? 0;
                     process(message);
                 }
 

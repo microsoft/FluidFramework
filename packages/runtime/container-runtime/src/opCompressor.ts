@@ -48,7 +48,7 @@ export class OpCompressor {
                            compression: CompressionAlgorithms.lz4 });
 
         for (let i = 1; i < batch.length; i++) {
-            batchToSend.push({ ...batch[i], contents: "", metadata: batch[i].metadata });
+            batchToSend.push({ ...batch[i], contents: undefined, metadata: batch[i].metadata });
         }
 
         console.error(batchToSend);

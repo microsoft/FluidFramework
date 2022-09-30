@@ -2690,7 +2690,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                             "BatchTooLarge",
                             /* error */ undefined,
                             {
-                                opSize: message.contents.length,
+                                opSize: (message.contents?.length) ?? 0,
                                 count: this.pendingAttachBatch.length,
                                 limit: this.pendingAttachBatch.limit,
                             });
@@ -2702,7 +2702,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         "BatchTooLarge",
                         /* error */ undefined,
                         {
-                            opSize: message.contents.length,
+                            opSize: (message.contents?.length) ?? 0,
                             count: this.pendingBatch.length,
                             limit: this.pendingBatch.limit,
                         });

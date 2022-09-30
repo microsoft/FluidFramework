@@ -108,7 +108,7 @@ export interface IRuntime extends IDisposable {
  * Payload type for IContainerContext.submitBatchFn()
  */
 export interface IBatchMessage {
-    contents: string;
+    contents?: string;
     metadata: Record<string, unknown> | undefined;
     compression?: string;
 }

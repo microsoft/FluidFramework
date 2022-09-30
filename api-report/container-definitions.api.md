@@ -88,7 +88,7 @@ export interface IBatchMessage {
     // (undocumented)
     compression?: string;
     // (undocumented)
-    contents: string;
+    contents?: string;
     // (undocumented)
     metadata: Record<string, unknown> | undefined;
 }
