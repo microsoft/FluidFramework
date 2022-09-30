@@ -32,7 +32,7 @@
     "@fluidframework/server-services-client": "^0.1038.2000",
     "@fluidframework/server-services-core": "^0.1038.2000",
     "nconf": "^0.12.0",
-    "node-rdkafka": "^2.13.0",
+    "node-rdkafka": "github:GaryWilber/node-rdkafka#user/garywilb/1.9.2_threadconsume_packaging",
     "sillyname": "^0.1.0"
   },
   "devDependencies": {
