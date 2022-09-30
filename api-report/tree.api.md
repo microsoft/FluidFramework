@@ -311,6 +311,9 @@ declare namespace FieldKinds {
         ValueChangeset,
         ValueFieldEditor,
         value,
+        OptionalFieldChange,
+        OptionalChangeset,
+        OptionalFieldEditor,
         optional,
         sequence,
         forbidden,
@@ -815,6 +818,23 @@ export type OpId = number;
 
 // @public
 const optional: FieldKind;
+
+// @public (undocumented)
+interface OptionalChangeset {
+    childChange?: NodeChangeset;
+    fieldChange?: OptionalFieldChange;
+}
+
+// @public (undocumented)
+interface OptionalFieldChange {
+    newContent?: JsonableTree;
+    wasEmpty: boolean;
+}
+
+// @public (undocumented)
+interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
+    set(newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset;
+}
 
 // @public
 export interface PlacePath extends UpPath {
