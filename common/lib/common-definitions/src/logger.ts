@@ -41,7 +41,7 @@ export interface ITelemetryProperties {
 // eslint-disable-next-line @rushstack/no-new-null
 export type TelemetryBaseEventPropertyType = string | number | boolean | null | undefined;
 
- /**
+/**
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
