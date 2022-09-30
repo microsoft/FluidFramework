@@ -11,8 +11,13 @@ export {
 export {
     EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
     UpPath, Anchor, RootField, ChildCollection,
-    ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
-    Delta,
+    ChildLocation, FieldMapObject, NodeData, GenericTreeNode, JsonableTree,
+    Delta, rootFieldKey, FieldScope, GlobalFieldKeySymbol, symbolFromKey, keyFromSymbol,
+    ITreeCursorNew,
+    CursorLocationType,
+    ITreeCursorSynchronous,
+    GenericFieldsNode,
+    AnchorLocator
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -29,7 +34,7 @@ export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
     FieldSchema, ValueSchema, TreeSchema,
     StoredSchemaRepository, FieldKindIdentifier,
-    rootFieldKey, TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataAndPolicy,
 } from "./schema-stored";
 
 export {
@@ -47,14 +52,15 @@ export {
     brandOpaque,
     ValueFromBranded,
     NameFromBranded,
+    JsonCompatibleReadOnly,
+    JsonCompatible,
+    JsonCompatibleObject,
 } from "./util";
 
 export {
     ChangeEncoder,
     ChangeFamily,
     ProgressiveEditBuilder,
-    JsonCompatibleReadOnly,
-    JsonCompatible,
 } from "./change-family";
 
 export {
@@ -65,10 +71,15 @@ export {
 } from "./rebase";
 
 export {
+    ICheckout,
+    TransactionResult,
+} from "./checkout";
+
+export {
     cursorToJsonObject,
     JsonCursor,
-    jsonTypeSchema,
     jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+    jsonSchemaData,
 } from "./domains";
 
 export {
@@ -82,12 +93,16 @@ export {
     ModularChangeFamily,
     ModularEditBuilder,
     FieldChangeHandler,
+    FieldEditor,
     FieldChangeRebaser,
     FieldChangeEncoder,
+    NodeChangeset,
+    ValueChange,
     FieldChangeMap,
     FieldChangeset,
     FieldChange,
     ToDelta,
+    UpPathWithFieldKinds,
     NodeChangeComposer,
     NodeChangeInverter,
     NodeChangeRebaser,
@@ -97,5 +112,39 @@ export {
     Multiplicity,
     isNeverField,
     FullSchemaPolicy,
+    UnwrappedEditableField,
+    EditableTreeContext,
+    UnwrappedEditableTree,
+    EditableTreeOrPrimitive,
+    EditableTree,
+    isPrimitiveValue,
+    isPrimitive,
+    getTypeSymbol,
+    valueSymbol,
+    proxyTargetSymbol,
     defaultSchemaPolicy,
+    singleTextCursorNew,
+    jsonableTreeFromCursorNew,
+    PrimitiveValue,
+    SequenceEditBuilder,
+    SequenceChangeset,
+    NodePath,
+    PlacePath,
+    Transposed,
+    TreeForestPath,
+    TreeRootPath,
+    OpId,
+    Skip,
+    ChangesetTag,
+    Effects,
+    Tiebreak,
+    ProtoNode,
+    GapCount,
+    HasOpId,
+    NodeCount,
 } from "./feature-libraries";
+
+export {
+    ISharedTree,
+    SharedTreeFactory,
+} from "./shared-tree";

@@ -187,7 +187,7 @@ Each change is processed in two ways:
 -   the change is accumulated in a `ProgressiveEditBuilder` which will be used to create/encode the actual edit to send to Fluid.
 
 Once the command ends, the transaction is rolled back leaving the forest in a clean state.
-Then if the command did not error, a [`changeset`](./src/changeset/README.md) is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
+Then if the command did not error, a `changeset` is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
 The checkout then rebases the op if any Ops came in while the transaction was pending (only possible for async transactions or if the checkout was behind due to it being async for some reason).
 Finally the checkout sends the op to `shared-tree-core` which submits it to Fluid.
 This submission results in the op becoming a local op, which `shared-tree-core` creates a delta for.
@@ -291,7 +291,6 @@ flowchart
             shared-tree-core-->change-family
             forest-->schema-stored
             change-family-->rebase
-            changeset-->tree
             edit-manager-->change-family
             rebase-->tree
             schema-stored-->dependency-tracking
@@ -321,3 +320,27 @@ flowchart
     end
     package-->runtime["Fluid runtime"]
 ```
+
+# Open Design Questions
+
+The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
+Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
+
+## How should indexes relate to branches?
+Some possible options:
+
+ - Use copy on write in indexes, and keep all needed indexes for all needed revisions within edit-manager. Provide all relevant indexes to `ChangeRebaser`. Maybe allow `ChangeRebaser` to compute intermediate indexes as needed.
+ - Keep a single index, and adjust it to the needed location in the branch tree as needed using deltas.
+ - Keep multiple indexes, one at each branch head, updated via mutation.
+ - Keep a single reference index (maybe after the latest sequenced edit), and make delta indexes referencing it for the other required branches.
+ - Something else?
+
+## How should specialized sub-tree handling compose?
+
+Applications should have a domain model that can mix editable tree nodes with custom implementations as needed.
+Custom implementations should probably be able to be projections of editable trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
+This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
+This might also be the layer at which we hook up schematize.
+Alternatively, it might be an explicitly two-phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
+
+How all this relates to [dependency-tracking](./src/dependency-tracking/README.md) is to be determined.

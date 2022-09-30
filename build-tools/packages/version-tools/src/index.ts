@@ -5,6 +5,7 @@
 
 export * from "./bumpTypes";
 export {
+    changePreReleaseIdentifier,
     getVersionRange,
     fromInternalScheme,
     isInternalVersionScheme,

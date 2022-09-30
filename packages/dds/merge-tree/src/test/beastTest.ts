@@ -304,8 +304,16 @@ function checkInsertMergeTree(
     let checkText = new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     const clockStart = clock();
-    insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
-        textSegment.text, undefined, undefined);
+    insertText({
+        mergeTree,
+        pos,
+        refSeq: UniversalSequenceNumber,
+        clientId: LocalClientId,
+        seq: UniversalSequenceNumber,
+        text: textSegment.text,
+        props: undefined,
+        opArgs: undefined,
+    });
     accumTime += elapsedMicroseconds(clockStart);
     const updatedText = new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
     const result = (checkText === updatedText);
@@ -379,8 +387,16 @@ export function mergeTreeLargeTest() {
         const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
         const pos = random.integer(0, preLen)(mt);
         const clockStart = clock();
-        insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
-            s, undefined, undefined);
+        insertText({
+            mergeTree,
+            pos,
+            refSeq: UniversalSequenceNumber,
+            clientId: LocalClientId,
+            seq: UniversalSequenceNumber,
+            text: s,
+            props: undefined,
+            opArgs: undefined,
+        });
         accumTime += elapsedMicroseconds(clockStart);
         if ((i > 0) && (0 === (i % 50000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -726,23 +742,17 @@ export function TestPack(verbose = true) {
 
         function clientProcessSome(client: TestClient, all = false) {
             const cliMsgCount = client.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = cliMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
-            }
+            const countToApply = all
+                ? cliMsgCount
+                : random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
             client.applyMessages(countToApply);
         }
 
         function serverProcessSome(_server: TestClient, all = false) {
             const svrMsgCount = _server.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = svrMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
-            }
+            const countToApply = all
+                ? svrMsgCount
+                : random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             return _server.applyMessages(countToApply);
         }
 
@@ -1460,11 +1470,7 @@ export class RandomPack {
 }
 
 function docNodeToString(docNode: DocumentNode) {
-    if (typeof docNode === "string") {
-        return docNode;
-    } else {
-        return docNode.name;
-    }
+    return typeof docNode === "string" ? docNode : docNode.name;
 }
 
 export type DocumentNode = string | DocumentTree;
@@ -1738,15 +1744,16 @@ function findReplacePerf(filename: string) {
                     1,
                     false,
                     undefined as any);
-                insertText(
-                    client.mergeTree,
-                    pos + i,
-                    UniversalSequenceNumber,
-                    client.getClientId(),
-                    1,
-                    "teh",
-                    undefined,
-                    undefined);
+                insertText({
+                    mergeTree: client.mergeTree,
+                    pos: pos + i,
+                    refSeq: UniversalSequenceNumber,
+                    clientId: client.getClientId(),
+                    seq: 1,
+                    text: "teh",
+                    props: undefined,
+                    opArgs: undefined,
+                });
                 pos = pos + i + 3;
                 cReplaces++;
             } else {

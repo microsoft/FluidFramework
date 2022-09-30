@@ -80,6 +80,9 @@ interface ChildSectionProperties {
     items: readonly ApiItem[];
 }
 
+// @public
+export const defaultConsoleLogger: Logger;
+
 // @public (undocumented)
 export namespace DefaultPolicies {
     const defaultDocumentBoundaries: ApiMemberKind[];
@@ -158,7 +161,7 @@ export class DocHeading extends DocNode {
 
 // @public
 export class DocList extends DocNodeContainer {
-    constructor(parameters: IDocListParameters, childNodes?: ReadonlyArray<DocNode>);
+    constructor(parameters: IDocListParameters, childNodes?: readonly DocNode[]);
     // @override (undocumented)
     get kind(): string;
     readonly listKind: ListKind;
@@ -195,9 +198,10 @@ export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 
 // @public
 export interface EmitterOptions extends IMarkdownEmitterOptions {
-    contextApiItem: ApiItem | undefined;
+    contextApiItem: ApiItem;
     getLinkUrlApiItem: (apiItem: ApiItem) => string | undefined;
     headingLevel?: number;
+    logger?: Logger;
 }
 
 // @public
@@ -210,7 +214,7 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
 export function getAncestralHierarchy(apiItem: ApiItem, includePredecate: (apiItem: ApiItem) => boolean, breakPredicate?: (apiItem: ApiItem) => boolean): ApiItem[];
 
 // @public
-export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined;
+export function getDefaultValueBlock(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
@@ -320,7 +324,19 @@ export enum ListKind {
 }
 
 // @public
-export function loadModel(reportsDirectoryPath: string): Promise<ApiModel>;
+export function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel>;
+
+// @public
+export interface Logger {
+    error: LoggingFunction;
+    info: LoggingFunction;
+    success: LoggingFunction;
+    verbose: LoggingFunction;
+    warning: LoggingFunction;
+}
+
+// @public
+export type LoggingFunction = (message: string | Error, ...args: unknown[]) => void;
 
 // @public
 export interface MarkdownDocument {
@@ -332,10 +348,10 @@ export interface MarkdownDocument {
 // @public
 export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
     apiModel: ApiModel;
+    readonly logger?: Logger;
     readonly newlineKind?: NewlineKind;
     readonly tsdocConfiguration?: TSDocConfiguration;
     readonly uriRoot: string;
-    readonly verbose?: boolean;
 }
 
 // @public
@@ -343,10 +359,12 @@ export function markdownDocumenterConfigurationWithDefaults(partialConfig: Markd
 
 // @public
 export class MarkdownEmitter extends MarkdownEmitter_2 {
-    constructor(apiModel: ApiModel);
+    constructor(apiModel: ApiModel, generateFrontMatter?: (contextApiItem: ApiItem) => string);
     protected readonly apiModel: ApiModel;
     // @virtual @override
     emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string;
+    // @virtual
+    protected readonly generateFrontMatter?: (contextApiItem: ApiItem) => string;
     // @virtual
     protected writeAlert(docAlert: DocAlert, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual
@@ -655,5 +673,8 @@ interface TableRenderingOptions {
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
+
+// @public
+export const verboseConsoleLogger: Logger;
 
 ```

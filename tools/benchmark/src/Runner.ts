@@ -23,13 +23,16 @@ import { BenchmarkData } from "./Reporter";
  * This is wrapper for Mocha's it function that runs a performance benchmark.
  *
  * Here is how benchmarking works:
- *	For each benchmark
- *		For each sampled run
- *			// Run fn once to check for errors
- *			fn()
- *			// Run fn multiple times and measure results.
- *			for each Benchmark.count
- *				fn()
+ *
+ * ```
+ *  For each benchmark
+ *      For each sampled run
+ *          // Run fn once to check for errors
+ *          fn()
+ *          // Run fn multiple times and measure results.
+ *          for each Benchmark.count
+ *              fn()
+ * ```
  *
  * For the first few sampled runs, the benchmarking library is in an analysis phase. It uses these sample runs to
  * determine an iteration number that his at most 1% statistical uncertainty. It does this by incrementally increasing

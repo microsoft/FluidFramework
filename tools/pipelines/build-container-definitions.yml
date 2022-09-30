@@ -63,4 +63,4 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/container-definitions
     tagName: container-definitions
-    taskTest: false
+    taskTest: [] # no tests

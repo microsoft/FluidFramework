@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Context } from "@fluidframework/build-tools";
+import { Context, MonoRepoKind } from "@fluidframework/build-tools";
 import {
     bumpVersionScheme,
     detectVersionScheme,
     fromInternalScheme,
     fromVirtualPatchScheme,
+    ReleaseVersion,
     toVirtualPatchScheme,
     VersionBumpType,
     VersionBumpTypeExtended,
+    VersionScheme,
 } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
+import { isReleaseGroup, ReleaseGroup, ReleasePackage, ReleaseSource } from "../releaseGroups";
+import { DependencyUpdateType } from "./bump";
 
 /**
  * Creates an appropriate branch for a release group and bump type. Does not commit!
@@ -47,7 +50,7 @@ export async function createBumpBranch(
  *
  * @param releaseGroupOrPackage - The release group or independent package to generate a branch name for.
  * @param bumpType - The bump type.
- * @param version - The version to use for the generated branch name.
+ * @param version - The current version of the release group or package.
  * @returns The generated branch name.
  *
  * @remarks
@@ -59,9 +62,10 @@ export async function createBumpBranch(
 export function generateBumpVersionBranchName(
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
     bumpType: VersionBumpTypeExtended,
-    version: string,
+    version: ReleaseVersion,
+    scheme?: VersionScheme,
 ) {
-    const newVersion = bumpVersionScheme(version, bumpType);
+    const newVersion = bumpVersionScheme(version, bumpType, scheme);
     const name = isReleaseGroup(releaseGroupOrPackage)
         ? releaseGroupOrPackage
         : PackageName.getUnscopedName(releaseGroupOrPackage);
@@ -85,7 +89,7 @@ export function generateBumpVersionBranchName(
  */
 export function generateBumpDepsBranchName(
     bumpedDep: ReleaseGroup,
-    bumpType: VersionBumpTypeExtended | "releasedDeps",
+    bumpType: DependencyUpdateType | VersionBumpType,
     releaseGroup?: ReleaseGroup,
 ): string {
     const releaseGroupSegment = releaseGroup ? `_${releaseGroup}` : "";
@@ -161,4 +165,25 @@ export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType
     if (branchName.startsWith("release/")) {
         return "patch";
     }
+}
+
+const releaseGroupReleaseTypeMap = new Map<string, ReleaseSource>([
+    [MonoRepoKind.BuildTools, "interactive"],
+]);
+
+/**
+ * @internal
+ */
+export function getReleaseSourceForReleaseGroup(
+    releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
+): ReleaseSource {
+    if (!isReleaseGroup(releaseGroupOrPackage)) {
+        return "direct";
+    }
+
+    if ([MonoRepoKind.BuildTools].includes(releaseGroupOrPackage)) {
+        return "interactive";
+    }
+
+    return "releaseBranches";
 }

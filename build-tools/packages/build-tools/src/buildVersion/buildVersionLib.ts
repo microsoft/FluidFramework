@@ -19,7 +19,7 @@
 
 import child_process from "child_process";
 import fs from "fs";
-import { detectVersionScheme, getLatestReleaseFromList, isInternalVersionScheme } from "@fluid-tools/version-tools";
+import { changePreReleaseIdentifier, detectVersionScheme, getLatestReleaseFromList, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 import { Logger } from "../common/logging";
 
@@ -91,6 +91,16 @@ export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRe
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
     const buildId = patch ? parseInt(argBuildNum.split('.')[0]) : undefined;
+
+    if(isInternalVersionScheme(fileVersion, /* allowPrereleases */ true)) {
+        if(patch) {
+            throw new Error(`Cannot use simple patch versioning with Fluid internal versions. Version: ${fileVersion}`);
+        }
+
+        if(!argRelease) {
+            fileVersion = changePreReleaseIdentifier(fileVersion, "dev");
+        }
+    }
 
     const { releaseVersion, prereleaseVersion } = parseFileVersion(fileVersion, buildId);
     const build_suffix = buildId ? "" : getBuildSuffix(argRelease, argBuildNum);

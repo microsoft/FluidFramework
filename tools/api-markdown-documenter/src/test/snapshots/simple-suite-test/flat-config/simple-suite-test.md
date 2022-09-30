@@ -1,3 +1,5 @@
+<!--- This is sample front-matter for API item "simple-suite-test" -->
+
 [Packages](docs/) &gt; [simple-suite-test](docs/simple-suite-test)
 
 Test package
@@ -43,6 +45,7 @@ const foo = bar;
 |  [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) | An empty interface |
 |  [TestInterface](docs/simple-suite-test#testinterface-interface) | Test interface |
 |  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test#testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithIndexSignature](docs/simple-suite-test#testinterfacewithindexsignature-interface) | An interface with an index signature. |
 |  [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
 ## Classes
@@ -118,7 +121,7 @@ Here are some remarks about the interface
 
 |  ConstructSignature | Return Type | Description |
 |  --- | --- | --- |
-|  [(new)()](docs/simple-suite-test#testinterface-_new_-constructsignature) | [TestInterface](docs/simple-suite-test#testinterface-interface) | Test construct signature. |
+|  [new (): TestInterface](docs/simple-suite-test#testinterface-_new_-constructsignature) | [TestInterface](docs/simple-suite-test#testinterface-interface) | Test construct signature. |
 
 #### Events
 
@@ -143,8 +146,8 @@ Here are some remarks about the interface
 
 |  CallSignature | Description |
 |  --- | --- |
-|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call_-callsignature) | Test interface event call signature |
-|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call__1-callsignature) | Another example call signature |
+|  [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/simple-suite-test#testinterface-_call_-callsignature) | Test interface event call signature |
+|  [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/simple-suite-test#testinterface-_call__1-callsignature) | Another example call signature |
 
 #### Construct Signature Details
 
@@ -316,6 +319,36 @@ A number
 - [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)
 
 - [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
+
+### TestInterfaceWithIndexSignature {#testinterfacewithindexsignature-interface}
+
+An interface with an index signature.
+
+#### Signature {#testinterfacewithindexsignature-signature}
+
+```typescript
+export interface TestInterfaceWithIndexSignature 
+```
+
+#### Index Signatures
+
+|  IndexSignature | Description |
+|  --- | --- |
+|  [[foo: number]: { bar: string; }](docs/simple-suite-test#testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |
+
+#### Index Signature Details
+
+##### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-_indexer_-indexsignature}
+
+Test index signature.
+
+###### Signature {#_indexer_-signature}
+
+```typescript
+[foo: number]: {
+        bar: string;
+    };
+```
 
 ### TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
 
@@ -529,7 +562,7 @@ Here are some remarks about the class
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | <code>readonly</code> | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | <code>readonly</code><code>virtual</code> | number | Test class getter-only property |
+|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | <code>readonly</code>, <code>virtual</code> | number | Test class getter-only property |
 |  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | <code>readonly</code> | TTypeParameterB | Test class property |
 
 #### Methods

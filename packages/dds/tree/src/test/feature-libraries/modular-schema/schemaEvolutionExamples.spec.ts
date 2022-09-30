@@ -7,27 +7,28 @@ import { strict as assert } from "assert";
 
 import {
     FieldTypeView, FullSchemaPolicy, TreeViewSchema, ViewSchemaCollection, allowsFieldSuperset,
-    allowsTreeSuperset, ViewSchema, allowsRepoSuperset,
+    allowsTreeSuperset, ViewSchema,
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema";
 
 import {
-    treeSchema, fieldSchema, rootFieldKey,
+    treeSchema, fieldSchema,
     FieldSchema,
-    GlobalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema, StoredSchemaRepository, SchemaData,
+    GlobalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema, SchemaData, InMemoryStoredSchemaRepository, lookupGlobalFieldSchema, lookupTreeSchema,
 } from "../../../schema-stored";
 import {
     Adapters, Compatibility, TreeAdapter, FieldAdapter,
 } from "../../../schema-view";
 import { brand } from "../../../util";
 import { defaultSchemaPolicy, emptyField, FieldKinds } from "../../../feature-libraries";
+import { rootFieldKey } from "../../../tree";
 
 // Allow importing specific example files:
 /* eslint-disable-next-line import/no-internal-modules */
 import { codePoint, string } from "../../schema-stored/examples/schemaExamples";
 
-class TestSchemaRepository extends StoredSchemaRepository<FullSchemaPolicy> {
+class TestSchemaRepository extends InMemoryStoredSchemaRepository<FullSchemaPolicy> {
     public clone(): TestSchemaRepository {
         return new TestSchemaRepository(
             this.policy,
@@ -47,7 +48,7 @@ class TestSchemaRepository extends StoredSchemaRepository<FullSchemaPolicy> {
             allowsFieldSuperset(
                 this.policy,
                 this.data,
-                this.lookupGlobalFieldSchema(identifier),
+                lookupGlobalFieldSchema(this, identifier),
                 schema,
             )
         ) {
@@ -66,7 +67,7 @@ class TestSchemaRepository extends StoredSchemaRepository<FullSchemaPolicy> {
         identifier: TreeSchemaIdentifier,
         schema: TreeSchema,
     ): boolean {
-        const original = this.lookupTreeSchema(identifier);
+        const original = lookupTreeSchema(this, identifier);
         if (allowsTreeSuperset(this.policy, this.data, original, schema)) {
             this.data.treeSchema.set(identifier, schema);
             this.invalidateDependents();

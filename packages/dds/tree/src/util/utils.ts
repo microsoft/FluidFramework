@@ -106,3 +106,43 @@ export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
 	}
 	return collection;
 }
+
+/**
+ * Use for Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | JsonCompatibleObject;
+
+/**
+ * Use for Json object compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleObject = { [P in string]: JsonCompatible; };
+
+/**
+ * Use for readonly view of Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleReadOnly =
+    | string
+    | number
+    | boolean
+    // eslint-disable-next-line @rushstack/no-new-null
+    | null
+    | readonly JsonCompatibleReadOnly[]
+    | { readonly [P in string]: JsonCompatibleReadOnly | undefined; };
+
+/**
+ * Returns if a particular json compatible value is an object.
+ * Does not include `null` or arrays.
+ */
+export function isJsonObject(value: JsonCompatibleReadOnly): value is { readonly [P in string]: JsonCompatibleReadOnly | undefined; } {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}

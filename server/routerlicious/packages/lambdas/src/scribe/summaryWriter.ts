@@ -55,6 +55,7 @@ export class SummaryWriter implements ISummaryWriter {
         private readonly summaryStorage: IGitManager,
         private readonly opStorage: ICollection<ISequencedOperationMessage>,
         private readonly enableWholeSummaryUpload: boolean,
+        private readonly lastSummaryMessages: ISequencedDocumentMessage[],
         private readonly maxRetriesOnError: number = 6,
     ) {
         this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
@@ -179,7 +180,7 @@ export class SummaryWriter implements ISummaryWriter {
 
             // Generate a tree of logTail starting from protocol sequence number to summarySequenceNumber
             const logTailEntries = await requestWithRetry(
-                async () => this.generateLogtailEntries(checkpoint.protocolState.sequenceNumber, op.sequenceNumber + 1, pendingOps),
+                async () => this.generateLogtailEntries(checkpoint.protocolState.sequenceNumber, op.sequenceNumber + 1, pendingOps, this.lastSummaryMessages),
                 "writeClientSummary_generateLogtailEntries",
                 this.lumberProperties,
                 shouldRetryNetworkError,
@@ -278,21 +279,17 @@ export class SummaryWriter implements ISummaryWriter {
                     this.maxRetriesOnError);
                 uploadHandle = commit.sha;
 
-                if (existingRef) {
-                    await requestWithRetry(
+                await (existingRef ? requestWithRetry(
                         async () => this.summaryStorage.upsertRef(this.documentId, uploadHandle),
                         "writeClientSummary_upsertRef",
                         this.lumberProperties,
                         shouldRetryNetworkError,
-                        this.maxRetriesOnError);
-                } else {
-                    await requestWithRetry(
+                        this.maxRetriesOnError) : requestWithRetry(
                         async () => this.summaryStorage.createRef(this.documentId, uploadHandle),
                         "writeClientSummary_createRef",
                         this.lumberProperties,
                         shouldRetryNetworkError,
-                        this.maxRetriesOnError);
-                }
+                        this.maxRetriesOnError));
             }
             clientSummaryMetric.success(`Client summary success`);
             return {
@@ -373,7 +370,8 @@ export class SummaryWriter implements ISummaryWriter {
                 async () => this.generateLogtailEntries(
                     currentProtocolHead,
                     op.sequenceNumber + 1,
-                    pendingOps),
+                    pendingOps,
+                    this.lastSummaryMessages),
                 "writeServiceSummary_generateLogtailEntries",
                 this.lumberProperties,
                 shouldRetryNetworkError,
@@ -505,20 +503,61 @@ export class SummaryWriter implements ISummaryWriter {
     private async generateLogtailEntries(
         from: number,
         to: number,
-        pending: ISequencedOperationMessage[]): Promise<ITreeEntry[]> {
+        pending: ISequencedOperationMessage[],
+        lastSummaryMessages: ISequencedDocumentMessage[] | undefined): Promise<ITreeEntry[]> {
         const logTail = await this.getLogTail(from, to, pending);
+
+        // Some ops would be missing if we switch cluster during routing.
+        // We need to load these missing ops from the last summary.
+        const missingOps = await this.getMissingOpsFromLastSummaryLogtail(from, to, logTail, lastSummaryMessages);
+        const fullLogTail = missingOps ?
+            (missingOps.concat(logTail)).sort((op1, op2) => op1.sequenceNumber - op2.sequenceNumber) :
+            logTail;
+
+        // Check the missing operations in the fullLogTail
+        if (fullLogTail.length !== (to - from - 1)) {
+            const missingOpsSequenceNumbers: number[] = [];
+            const fullLogTailSequenceNumbers = fullLogTail.map((ms) => ms.sequenceNumber);
+            let j = 0;
+            for (let i = from + 1; i < to; i++) {
+                if (i === fullLogTailSequenceNumbers[j]) {
+                    j++;
+                    continue;
+                }
+                missingOpsSequenceNumbers.push(i);
+            }
+            Lumberjack.error(`Missing ops in the fullLogTail: ${JSON.stringify(missingOpsSequenceNumbers)}`
+                , this.lumberProperties);
+        }
+
         const logTailEntries: ITreeEntry[] = [
             {
                 mode: FileMode.File,
                 path: "logTail",
                 type: TreeEntry.Blob,
                 value: {
-                    contents: JSON.stringify(logTail),
+                    contents: JSON.stringify(fullLogTail),
                     encoding: "utf-8",
                 },
             },
         ];
         return logTailEntries;
+    }
+
+    private async getMissingOpsFromLastSummaryLogtail(
+        gt: number,
+        lt: number,
+        logTail: ISequencedDocumentMessage[],
+        lastSummaryMessages: ISequencedDocumentMessage[] | undefined):
+        Promise<ISequencedDocumentMessage[] | undefined> {
+        if (lt - gt <= 1) {
+            return undefined;
+        }
+        const logtailSequenceNumbers = new Set();
+        logTail.forEach((ms) => logtailSequenceNumbers.add(ms.sequenceNumber));
+        const missingOps = lastSummaryMessages?.filter((ms) =>
+            !(logtailSequenceNumbers.has(ms.sequenceNumber)));
+        return missingOps;
     }
 
     private async getLogTail(

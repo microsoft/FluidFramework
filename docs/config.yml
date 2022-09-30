@@ -16,6 +16,8 @@ module:
     target: content
   - source: _replacements
     target: content
+  - source: ../packages/dds/counter/README.md
+    target: content/docs/counter-readme.md
   - source: ../packages/dds/sequence/README.md
     target: content/docs/sequence-readme.md
 
