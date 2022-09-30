@@ -109,14 +109,6 @@ export function* generateStrings(): Generator<{
         yield { snapshotPath: `${version}/withAnnotations`, expected: sharedString, snapshotIsNormalized: normalized };
 
         sharedString = createNewSharedString();
-        // Very big sharedString
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
-            sharedString.insertText(0, `${insertText}-${i}`);
-        }
-        // is there a reason this is generated twice?
-        yield { snapshotPath: `${version}/largeBody`, expected: sharedString, snapshotIsNormalized: normalized };
-
-        sharedString = createNewSharedString();
         // SharedString with intervals
         for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; i++) {
             sharedString.insertText(0, `${insertText}${i}`);
@@ -139,15 +131,21 @@ export function* generateStrings(): Generator<{
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        rand = new Random(Random.engines.mt19937().seed(0));
-        collection1 = sharedString.getIntervalCollection("collection1");
-        collection1.add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+        if (version === "v1Intervals") {
+            rand = new Random(Random.engines.mt19937().seed(0));
+            collection1 = (sharedString as SharedStringWithV1IntervalCollection).getIntervalCollection("collection1");
+            (collection1).add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
 
-        collection2 = sharedString.getIntervalCollection("collection2");
-        for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
-            collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+            collection2 = (sharedString as SharedStringWithV1IntervalCollection).getIntervalCollection("collection2");
+            for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
+                collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+            }
+
+            yield {
+                snapshotPath: `${version}/withV1Intervals`,
+                expected: sharedString,
+                snapshotIsNormalized: normalized,
+            };
         }
-
-        yield { snapshotPath: `${version}/withV1Intervals`, expected: sharedString, snapshotIsNormalized: normalized };
     }
 }

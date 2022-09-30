@@ -856,20 +856,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return newInterval;
     }
 
-    public serialize(): ISerializedIntervalCollectionV2 {
+    public serialize(snapshotIsNormalized: boolean): ISerializedIntervalCollectionV2 {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
-
-        return {
+        return snapshotIsNormalized ? {
             label: this.label,
             intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
             version: 2,
-        };
-    }
-
-    public testSerialize(): ISerializedInterval[] {
-        const intervals = this.intervalTree.intervals.keys();
-        return (intervals as unknown as ISerializedInterval[]);
+        } : intervals.map((interval) => interval.serialize(client)) as unknown as ISerializedIntervalCollectionV2;
     }
 
     private addIntervalListeners(interval: TInterval) {
@@ -908,49 +902,9 @@ class SequenceIntervalCollectionFactory
     }
 
     public store(value: IntervalCollection<SequenceInterval>): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-        return value.serializeInternal();
+        return value.serializeInternal(true);
     }
 }
-
-// class OldSequenceIntervalCollectionFactory
-//     implements IValueFactory<TestIntervalCollection<SequenceInterval>> {
-//     public load(
-//         emitter: IValueOpEmitter,
-//         raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
-//     ): TestIntervalCollection<SequenceInterval> {
-//         const helpers: IIntervalHelpers<SequenceInterval> = {
-//             compareEnds: compareSequenceIntervalEnds,
-//             create: createSequenceInterval,
-//         };
-//         return new TestIntervalCollection(helpers, true, emitter, raw);
-//     }
-//     public store(value: TestIntervalCollection<SequenceInterval>):
-//     ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-//         return value.serializeInternal();
-//     }
-// }
-
-// export class OldSequenceIntervalCollectionValueType
-//     implements IValueType<TestIntervalCollection<SequenceInterval>> {
-//     public static Name = "sharedStringIntervalCollection";
-
-//     public get name(): string {
-//         return OldSequenceIntervalCollectionValueType.Name;
-//     }
-
-//     public get factory(): IValueFactory<TestIntervalCollection<SequenceInterval>> {
-//         return OldSequenceIntervalCollectionValueType._factory;
-//     }
-
-//     public get ops(): Map<string, IValueOperation<TestIntervalCollection<SequenceInterval>>> {
-//         return OldSequenceIntervalCollectionValueType._ops;
-//     }
-
-//     private static readonly _factory: IValueFactory<TestIntervalCollection<SequenceInterval>> =
-//         new OldSequenceIntervalCollectionFactory();
-
-//     private static readonly _ops = makeOpsMap<SequenceInterval>();
-// }
 
 export class SequenceIntervalCollectionValueType
     implements IValueType<IntervalCollection<SequenceInterval>> {
@@ -1002,7 +956,7 @@ class IntervalCollectionFactory
     }
 
     public store(value: IntervalCollection<Interval>): ISerializedIntervalCollectionV2 {
-        return value.serializeInternal();
+        return value.serializeInternal(true);
     }
 }
 
@@ -1697,14 +1651,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     /**
      * @internal
      */
-    public serializeInternal(): ISerializedIntervalCollectionV2 {
+    public serializeInternal(snapshotIsNormalized: boolean): ISerializedIntervalCollectionV2 {
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
         }
-        if (Array.isArray(this.savedSerializedIntervals)) {
-            return (this.localCollection.testSerialize() as unknown as ISerializedIntervalCollectionV2);
-        }
-        return this.localCollection.serialize();
+
+        return this.localCollection.serialize(snapshotIsNormalized);
     }
 
     public [Symbol.iterator](): IntervalCollectionIterator<TInterval> {
@@ -1776,163 +1728,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.localCollection.nextInterval(pos);
     }
 }
-
-// export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
-//     savedSerializedIntervals?: ISerializedInterval[];
-//     // localCollection: LocalIntervalCollection<TInterval>;
-//     // client: Client | undefined;
-//     // readonly helpers: IIntervalHelpers<TInterval>;
-//     // readonly requiresClient: boolean;
-//     // /**
-//     //  * @internal
-//     //  */
-//     // readonly emitter: IValueOpEmitter;
-//     getNextLocalSeq(): number;
-// }
-
-// export class TestIntervalCollection<TInterval extends ISerializableInterval>
-//  extends IntervalCollection<SequenceInterval> {
-//     casted = (this as unknown as IntervalCollectionInternals<SequenceInterval>);
-
-//     // public get attached(): boolean {
-//     //     return !!this.casted.localCollection;
-//     // }
-
-//     /**
-//      * @internal
-//      */
-//     // actually returns an ISerializedInterval[], but it is cast as an ISerializableIntervalCollectionV2
-//      public override serializeInternal(): ISerializedIntervalCollectionV2 {
-//         if (!this.attached) {
-//             throw new LoggingError("attachSequence must be called");
-//         }
-//         const intervals = this.casted.savedSerializedIntervals;
-
-//         // Cast intervals as the new document format so the return type matches but we have the old format's type
-//         return (intervals as unknown as ISerializedIntervalCollectionV2);
-//     }
-
-//     /**
-//      * Create a new interval and add it to the collection
-//      * @param start - interval start position
-//      * @param end - interval end position
-//      * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
-//      * @param props - properties of the interval
-//      * @returns - the created interval
-//      */
-//     //  public add(
-//     //     start: number,
-//     //     end: number,
-//     //     intervalType: IntervalType,
-//     //     props?: PropertySet,
-//     // ) {
-//     //     if (!this.attached) {
-//     //         throw new LoggingError("attach must be called prior to adding intervals");
-//     //     }
-//     //     if (intervalType & IntervalType.Transient) {
-//     //         throw new LoggingError("Can not add transient intervals");
-//     //     }
-
-        // eslint-disable-next-line max-len
-//     //     const interval: SequenceInterval = this.casted.localCollection.addInterval(start, end, intervalType, props);
-
-//     //     if (interval) {
-//     //         const serializedInterval = {
-//     //             end,
-//     //             intervalType,
-//     //             properties: interval.properties,
-//     //             sequenceNumber:
-//     //             this.casted.client?.getCurrentSeq() ?? 0,
-//     //             start,
-//     //         };
-//     //         // Local ops get submitted to the server. Remote ops have the deserializer run.
-//     //         this.casted.emitter.emit(
-//     //             "add", undefined, serializedInterval, { localSeq: this.casted.getNextLocalSeq() },
-//     //         );
-//     //     }
-
-//     //     this.emit("addInterval", interval, true, undefined);
-
-//     //     return interval;
-//     // }
-
-//     // public attachGraph(client: Client, label: string) {
-//     //     if (this.attached) {
-//     //         throw new LoggingError("Only supports one Sequence attach");
-//     //     }
-
-//     //     if ((client === undefined) &&
-//     //         (this.casted.requiresClient)) {
-//     //         throw new LoggingError("Client required for this collection");
-//     //     }
-
-//     //     // Instantiate the local interval collection based on the saved intervals
-//     //     this.casted.client = client;
-//     //     // eslint-disable-next-line max-len
-//     //     this.casted.localCollection = new LocalIntervalCollection<SequenceInterval>(
-//     //         client,
-//     //         label,
-//     //         this.casted.helpers,
-//     //         (interval) => this.emit("changeInterval", interval, true, undefined),
-//     //     );
-//     //     if (this.casted.savedSerializedIntervals) {
-//     //         // eslint-disable-next-line max-len
-//     //         for (const serializedInterval of this.casted.savedSerializedIntervals) {
-//     //             // eslint-disable-next-line max-len
-//     //             this.casted.localCollection.ensureSerializedId(serializedInterval);
-//     //             const { start, end, intervalType, properties } = serializedInterval;
-//     //             const interval = this.casted.helpers.create(
-//     //                 label,
-//     //                 start,
-//     //                 end,
-//     //                 client,
-//     //                 intervalType,
-//     //                 undefined,
-//     //                 true,
-//     //             );
-//     //             interval.addProperties(properties);
-//     //             this.casted.localCollection.add(interval);
-//     //         }
-//     //     }
-//     //     this.casted.savedSerializedIntervals = undefined;
-//     // }
-
-//     // public [Symbol.iterator](): IntervalCollectionIterator<SequenceInterval> {
-//     //     const iterator = new IntervalCollectionIterator<SequenceInterval>(this);
-//     //     return iterator;
-//     // }
-
-//     // public gatherIterationResults(
-//     //     results: SequenceInterval[],
-//     //     iteratesForward: boolean,
-//     //     start?: number,
-//     //     end?: number) {
-//     //     if (!this.attached) {
-//     //         return;
-//     //     }
-
-//     //     this.casted.localCollection.gatherIterationResults(results, iteratesForward, start, end);
-//     // }
-
-//     // public findOverlappingIntervals(startPosition: number, endPosition: number): SequenceInterval[] {
-//     //     if (!this.attached) {
-//     //         throw new LoggingError("attachSequence must be called");
-//     //     }
-
-//     //     return this.casted.localCollection.findOverlappingIntervals(startPosition, endPosition);
-//     // }
-
-//     // /**
-//     //  * Gets the next local sequence number, modifying this client's collab window in doing so.
-//     //  */
-//     // private getNextLocalSeq(): number {
-//     //     if (this.casted.client) {
-//     //         return ++this.casted.client.getCollabWindow().localSeq;
-//     //     }
-
-//     //     return 0;
-//     // }
-// }
 
 /**
  * Information that identifies an interval within a `Sequence`.

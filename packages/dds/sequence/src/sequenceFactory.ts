@@ -68,53 +68,6 @@ export class SharedStringFactory implements IChannelFactory {
     }
 }
 
-// export class TestSharedStringFactory implements IChannelFactory {
-//     // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
-//     // load code
-//     public static Type = "https://graph.microsoft.com/types/mergeTree";
-
-//     public static readonly Attributes: IChannelAttributes = {
-//         type: TestSharedStringFactory.Type,
-//         snapshotFormatVersion: "0.1",
-//         packageVersion: pkgVersion,
-//     };
-
-//     public static segmentFromSpec(spec: any): SharedStringSegment {
-//         const maybeText = TextSegment.fromJSONObject(spec);
-//         if (maybeText) { return maybeText; }
-
-//         const maybeMarker = Marker.fromJSONObject(spec);
-//         if (maybeMarker) { return maybeMarker; }
-//     }
-
-//     public get type() {
-//         return TestSharedStringFactory.Type;
-//     }
-
-//     public get attributes() {
-//         return TestSharedStringFactory.Attributes;
-//     }
-
-//     /**
-//      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-//      */
-//     public async load(
-//         runtime: IFluidDataStoreRuntime,
-//         id: string,
-//         services: IChannelServices,
-//         attributes: IChannelAttributes): Promise<TestSharedString> {
-//         const sharedString = new TestSharedString(runtime, id, attributes);
-//         await sharedString.load(services);
-//         return sharedString;
-//     }
-
-//     public create(document: IFluidDataStoreRuntime, id: string): TestSharedString {
-//         const sharedString = new TestSharedString(document, id, this.attributes);
-//         sharedString.initializeLocal();
-//         return sharedString;
-//     }
-// }
-
 /**
  * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
  * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import {
     IFluidDataStoreRuntime,
     IChannelFactory,
@@ -16,12 +21,14 @@ import {
     makeOpsMap,
     createSequenceInterval,
     compareSequenceIntervalEnds,
+    LocalIntervalCollection,
 } from "../intervalCollection";
 import { pkgVersion } from "../packageVersion";
 import { SharedString } from "../sharedString";
 
 export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
     savedSerializedIntervals?: ISerializedInterval[];
+    localCollection: LocalIntervalCollection<SequenceInterval>;
     getNextLocalSeq(): number;
 }
 
@@ -37,10 +44,11 @@ export class V1IntervalCollection<TInterval extends ISerializableInterval>
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
         }
-        const intervals = this.casted.savedSerializedIntervals;
+        return this.casted.localCollection.serialize(false);
+        // const intervals = this.casted.savedSerializedIntervals;
 
-        // Cast intervals as the new document format so the return type matches but we have the old format's type
-        return (intervals as unknown as ISerializedIntervalCollectionV2);
+        // // Cast intervals as the new document format so the return type matches but we have the old format's type
+        // return (intervals as unknown as ISerializedIntervalCollectionV2);
     }
 }
 

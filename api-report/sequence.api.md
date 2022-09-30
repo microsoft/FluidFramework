@@ -184,7 +184,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     removeIntervalById(id: string): TInterval;
     // @internal (undocumented)
-    serializeInternal(): ISerializedIntervalCollectionV2;
+    serializeInternal(snapshotIsNormalized: boolean): ISerializedIntervalCollectionV2;
 }
 
 // @public (undocumented)
@@ -333,9 +333,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     // Warning: (ae-incompatible-release-tags) The symbol "serialize" is marked as @public, but its signature references "ISerializedIntervalCollectionV2" which is marked as @internal
     //
     // (undocumented)
-    serialize(): ISerializedIntervalCollectionV2;
-    // (undocumented)
-    testSerialize(): ISerializedInterval[];
+    serialize(snapshotIsNormalized: boolean): ISerializedIntervalCollectionV2;
 }
 
 // @public @deprecated (undocumented)
