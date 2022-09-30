@@ -129,6 +129,29 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), testString);
     });
 
+    it("isDirty state is correct before/after blob upload", async function() {
+        const testString = "teststring";
+        const testKey = "blob";
+        const container1 = await provider.makeTestContainer(testContainerConfig);
+
+        const dataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
+
+        assert.equal(container1.isDirty, false);
+        const blob = await dataStore1._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
+        assert.equal(container1.isDirty, false);
+        dataStore1._root.set(testKey, blob);
+        assert.equal(container1.isDirty, true);
+
+        const container2 = await provider.loadTestContainer(testContainerConfig);
+        const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
+
+        await provider.ensureSynchronized(this.timeout() / 3);
+        assert.equal(container1.isDirty, false);
+        const blobHandle = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>(testKey);
+        assert(blobHandle);
+        assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), testString);
+    });
+
     it("round trip blob handle on shared string property", async function() {
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const container2 = await provider.loadTestContainer(testContainerConfig);
