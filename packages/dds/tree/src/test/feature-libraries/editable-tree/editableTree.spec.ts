@@ -5,7 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable max-len */
 import { fail, strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
