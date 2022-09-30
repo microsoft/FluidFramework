@@ -191,43 +191,6 @@ EXAMPLES
 
 _See code: [src/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bump.ts)_
 
-## `flub bump PACKAGE_OR_RELEASE_GROUP`
-
-Bumps the version of a release group or package to the next minor, major, or patch version.
-
-```
-USAGE
-  $ flub bump [PACKAGE_OR_RELEASE_GROUP] -t major|minor|patch [--scheme semver|internal|virtualPatch] [-x
-    | --install | --commit |  |  | ] [-v]
-
-ARGUMENTS
-  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
-
-FLAGS
-  -t, --bumpType=<option>  (required) Bump the release group or package to the next version according to this bump type.
-                           <options: major|minor|patch>
-  -v, --verbose            Verbose logging.
-  -x, --skipChecks         Skip all checks.
-  --[no-]commit            Commit changes to a new branch.
-  --[no-]install           Update lockfiles by running 'npm install' automatically.
-  --scheme=<option>        Override the version scheme used by the release group or package.
-                           <options: semver|internal|virtualPatch>
-
-DESCRIPTION
-  Bumps the version of a release group or package to the next minor, major, or patch version.
-
-EXAMPLES
-  Bump @fluidframework/build-common to the next minor version.
-
-    $ flub bump @fluidframework/build-common -t minor
-
-  Bump the server release group to the next major version, forcing the semver version scheme.
-
-    $ flub bump server -t major --scheme semver
-```
-
-_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/bump.ts)_
-
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
 
 Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.
