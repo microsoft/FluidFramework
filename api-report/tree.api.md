@@ -17,19 +17,22 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 // @public
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
+// @public
+export interface AnchorLocator {
+    locate(anchor: Anchor): UpPath | undefined;
+}
+
 // @public @sealed
 export class AnchorSet {
     applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
     isEmpty(): boolean;
+    // (undocumented)
     locate(anchor: Anchor): UpPath | undefined;
     moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
     track(path: UpPath | null): Anchor;
 }
-
-// @public
-function applyModifyToInsert(node: JsonableTree, modify: Modify): Map<FieldKey, MarkList>;
 
 // @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -140,9 +143,10 @@ interface Delete {
 declare namespace Delta {
     export {
         inputLength,
-        applyModifyToInsert,
+        isSkipMark,
         Root,
         empty,
+        ProtoNode_2 as ProtoNode,
         Mark,
         MarkList,
         Skip_2 as Skip,
@@ -155,7 +159,6 @@ declare namespace Delta {
         MoveInAndModify,
         Insert,
         InsertAndModify,
-        ProtoNode_2 as ProtoNode,
         MoveId,
         Offset,
         FieldMap,
@@ -182,6 +185,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 
 // @public
 export interface EditableTree {
+    readonly [anchorSymbol]: Anchor;
     readonly [getTypeSymbol]: (key?: string, nameOnly?: boolean) => TreeSchema | TreeSchemaIdentifier | undefined;
     readonly [proxyTargetSymbol]: object;
     readonly [valueSymbol]: Value;
@@ -192,6 +196,7 @@ export interface EditableTree {
 export interface EditableTreeContext {
     free(): void;
     prepareForEdit(): void;
+    readonly root: UnwrappedEditableField;
 }
 
 // @public
@@ -210,7 +215,7 @@ export enum Effects {
 }
 
 // @public (undocumented)
-const empty: Root;
+const empty: Root<any>;
 
 // @public
 export const emptyField: FieldSchema;
@@ -306,6 +311,9 @@ declare namespace FieldKinds {
         ValueChangeset,
         ValueFieldEditor,
         value,
+        OptionalFieldChange,
+        OptionalChangeset,
+        OptionalFieldEditor,
         optional,
         sequence,
         forbidden,
@@ -335,7 +343,7 @@ export interface FieldMapObject<TChild> {
 }
 
 // @public (undocumented)
-type FieldMarks = FieldMap<MarkList>;
+type FieldMarks<TTree = ProtoNode_2> = FieldMap<MarkList<TTree>>;
 
 // @public (undocumented)
 export interface FieldSchema {
@@ -379,9 +387,6 @@ export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, Node
 }
 
 // @public
-export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField];
-
-// @public
 export const getTypeSymbol: unique symbol;
 
 // @public
@@ -419,22 +424,22 @@ export interface IForestSubscription extends Dependee {
 }
 
 // @public
-function inputLength(mark: Mark): number;
+function inputLength(mark: Mark<unknown>): number;
 
 // @public
-interface Insert {
+interface Insert<TTree = ProtoNode_2> {
     // (undocumented)
-    content: ProtoNode_2[];
+    content: TTree[];
     // (undocumented)
     type: typeof MarkType.Insert;
 }
 
 // @public
-interface InsertAndModify {
+interface InsertAndModify<TTree = ProtoNode_2> {
     // (undocumented)
-    content: ProtoNode_2;
+    content: TTree;
     // (undocumented)
-    fields: FieldMarks;
+    fields: FieldMarks<TTree>;
     // (undocumented)
     type: typeof MarkType.InsertAndModify;
 }
@@ -458,7 +463,10 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
-export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject {
+export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject, AnchorLocator {
+    readonly context: EditableTreeContext;
+    readonly root: UnwrappedEditableField;
+    readonly storedSchema: StoredSchemaRepository;
 }
 
 // @public (undocumented)
@@ -469,6 +477,9 @@ export function isPrimitive(schema: TreeSchema): boolean;
 
 // @public (undocumented)
 export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
+
+// @public (undocumented)
+function isSkipMark(mark: Mark<unknown>): mark is Skip_2;
 
 // @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {
@@ -592,10 +603,10 @@ export const jsonNumber: NamedTreeSchema;
 export const jsonObject: NamedTreeSchema;
 
 // @public (undocumented)
-export const jsonString: NamedTreeSchema;
+export const jsonSchemaData: SchemaData;
 
 // @public (undocumented)
-export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema>;
+export const jsonString: NamedTreeSchema;
 
 // @public (undocumented)
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
@@ -614,10 +625,10 @@ export interface MakeNominal {
 }
 
 // @public
-type Mark = Skip_2 | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
+type Mark<TTree = ProtoNode_2> = Skip_2 | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | MoveInAndModify<TTree> | InsertAndModify<TTree>;
 
 // @public
-type MarkList = Mark[];
+type MarkList<TTree = ProtoNode_2> = Mark<TTree>[];
 
 // @public (undocumented)
 const MarkType: {
@@ -633,9 +644,9 @@ const MarkType: {
 };
 
 // @public
-interface Modify {
+interface Modify<TTree = ProtoNode_2> {
     // (undocumented)
-    fields?: FieldMarks;
+    fields?: FieldMarks<TTree>;
     // (undocumented)
     setValue?: Value;
     // (undocumented)
@@ -643,17 +654,17 @@ interface Modify {
 }
 
 // @public
-interface ModifyAndDelete {
+interface ModifyAndDelete<TTree = ProtoNode_2> {
     // (undocumented)
-    fields: FieldMarks;
+    fields: FieldMarks<TTree>;
     // (undocumented)
     type: typeof MarkType.ModifyAndDelete;
 }
 
 // @public
-interface ModifyAndMoveOut {
+interface ModifyAndMoveOut<TTree = ProtoNode_2> {
     // (undocumented)
-    fields?: FieldMarks;
+    fields?: FieldMarks<TTree>;
     moveId: MoveId;
     // (undocumented)
     setValue?: Value;
@@ -704,9 +715,9 @@ interface MoveIn {
 }
 
 // @public
-interface MoveInAndModify {
+interface MoveInAndModify<TTree = ProtoNode_2> {
     // (undocumented)
-    fields: FieldMarks;
+    fields: FieldMarks<TTree>;
     moveId: MoveId;
     // (undocumented)
     type: typeof MarkType.MoveInAndModify;
@@ -809,6 +820,23 @@ export type OpId = number;
 // @public
 const optional: FieldKind;
 
+// @public (undocumented)
+interface OptionalChangeset {
+    childChange?: NodeChangeset;
+    fieldChange?: OptionalFieldChange;
+}
+
+// @public (undocumented)
+interface OptionalFieldChange {
+    newContent?: JsonableTree;
+    wasEmpty: boolean;
+}
+
+// @public (undocumented)
+interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
+    set(newContent: ITreeCursor | undefined, wasEmpty: boolean): OptionalChangeset;
+}
+
 // @public
 export interface PlacePath extends UpPath {
 }
@@ -869,7 +897,7 @@ function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>>;
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public
-type Root = FieldMarks;
+type Root<TTree = ProtoNode_2> = FieldMarks<TTree>;
 
 // @public
 export interface RootField {
@@ -881,7 +909,7 @@ export interface RootField {
 export const rootFieldKey: GlobalFieldKey;
 
 // @public
-export interface SchemaData extends SchemaDataReader {
+export interface SchemaData {
     // (undocumented)
     readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
     // (undocumented)
@@ -889,11 +917,8 @@ export interface SchemaData extends SchemaDataReader {
 }
 
 // @public
-export interface SchemaDataReader {
-    // (undocumented)
-    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
-    // (undocumented)
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy> extends SchemaData {
+    readonly policy: TPolicy;
 }
 
 // @public
@@ -959,30 +984,9 @@ export type Skip = number;
 // @public
 type Skip_2 = number;
 
-// @public @sealed
-export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends SimpleDependee implements SchemaData {
-    constructor(policy: TPolicy, data?: SchemaData);
-    // (undocumented)
-    clone(): StoredSchemaRepository;
-    // (undocumented)
-    readonly computationName: string;
-    // (undocumented)
-    protected readonly data: {
-        treeSchema: Map<TreeSchemaIdentifier, TreeSchema>;
-        globalFieldSchema: Map<GlobalFieldKey, FieldSchema>;
-    };
-    // (undocumented)
-    get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema>;
-    // (undocumented)
-    lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema;
-    // (undocumented)
-    lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema;
-    // (undocumented)
-    readonly policy: TPolicy;
-    // (undocumented)
-    get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
-    updateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): void;
-    updateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): void;
+// @public
+export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, SchemaDataAndPolicy<TPolicy> {
+    update(newSchema: SchemaData): void;
 }
 
 // @public (undocumented)

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluidframework/driver-definitions";
+import {
+    IDocumentDeltaStorageService,
+    IStream,
+} from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDatabaseManager } from "@fluidframework/server-services-core";
 import { streamFromMessages } from "@fluidframework/driver-utils";
@@ -11,7 +14,7 @@ import { streamFromMessages } from "@fluidframework/driver-utils";
 /**
  * Provides access to the underlying delta storage on the server for local driver.
  */
-export class LocalDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class LocalDeltaStorageService implements IDocumentDeltaStorageService {
     constructor(
         private readonly tenantId: string,
         private readonly id: string,
@@ -23,7 +26,7 @@ export class LocalDeltaStorageService implements api.IDocumentDeltaStorageServic
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-    ): api.IStream<ISequencedDocumentMessage[]> {
+    ): IStream<ISequencedDocumentMessage[]> {
             return streamFromMessages(this.getCore(from, to));
     }
 

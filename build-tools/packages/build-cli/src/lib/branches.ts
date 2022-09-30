@@ -9,9 +9,11 @@ import {
     detectVersionScheme,
     fromInternalScheme,
     fromVirtualPatchScheme,
+    ReleaseVersion,
     toVirtualPatchScheme,
     VersionBumpType,
     VersionBumpTypeExtended,
+    VersionScheme,
 } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
@@ -48,7 +50,7 @@ export async function createBumpBranch(
  *
  * @param releaseGroupOrPackage - The release group or independent package to generate a branch name for.
  * @param bumpType - The bump type.
- * @param version - The version to use for the generated branch name.
+ * @param version - The current version of the release group or package.
  * @returns The generated branch name.
  *
  * @remarks
@@ -60,9 +62,10 @@ export async function createBumpBranch(
 export function generateBumpVersionBranchName(
     releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
     bumpType: VersionBumpTypeExtended,
-    version: string,
+    version: ReleaseVersion,
+    scheme?: VersionScheme,
 ) {
-    const newVersion = bumpVersionScheme(version, bumpType);
+    const newVersion = bumpVersionScheme(version, bumpType, scheme);
     const name = isReleaseGroup(releaseGroupOrPackage)
         ? releaseGroupOrPackage
         : PackageName.getUnscopedName(releaseGroupOrPackage);
