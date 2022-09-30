@@ -5,6 +5,7 @@
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
+import { IGitManager } from "@fluidframework/server-services-client";
 import {
     ICollection,
     IDatabaseManager,
@@ -13,8 +14,7 @@ import {
     IDocumentStorage,
     ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
-// eslint-disable-next-line import/no-internal-modules
-import { IGitManager } from "../../services-client/dist";
+
 import { ILocalOrdererSetup } from "./interfaces";
 
 export class LocalOrdererSetup implements ILocalOrdererSetup {
