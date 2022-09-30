@@ -826,7 +826,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private _orderSequentiallyCalls: number = 0;
     private readonly _flushMode: FlushMode;
-    private flushMicroTaskExists = false;
+    private flushTrigger = false;
 
     private _connected: boolean;
 
@@ -1103,6 +1103,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
             this,
+            () => this.clientId,
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
 
@@ -1994,13 +1995,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.connected && !this.deltaManager.readOnlyInfo.readonly;
     }
 
-    /**
-     * Are we in the middle of batching ops together?
-     */
-    private currentlyBatching() {
-        return this.flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls !== 0;
-    }
-
     public getQuorum(): IQuorumClients {
         return this.context.quorum;
     }
@@ -2699,8 +2693,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             //    issue than sending.
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
-            if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
-                    this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
+            if (type === ContainerMessageType.Attach &&
+                this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
                 if (!this.pendingAttachBatch.push(message)) {
                     // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
                     // when queue is not empty.
@@ -2728,17 +2722,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                             limit: this.pendingBatch.limit,
                         });
                 }
-                if (!this.currentlyBatching()) {
+            }
+
+            if (this._flushMode !== FlushMode.TurnBased) {
+                this.flush();
+            } else if (!this.flushTrigger) {
+                this.flushTrigger = true;
+                // Queue a microtask to detect the end of the turn and force a flush.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flushTrigger = false;
                     this.flush();
-                } else if (!this.flushMicroTaskExists) {
-                    this.flushMicroTaskExists = true;
-                    // Queue a microtask to detect the end of the turn and force a flush.
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flushMicroTaskExists = false;
-                        this.flush();
                     });
-                }
             }
         } catch (error) {
             this.closeFn(error as GenericError);
@@ -2835,25 +2830,25 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // It should only be done by the summarizerNode, if required.
         const snapshotTreeFetcher = async () => {
             const fetchResult = await this.fetchSnapshotFromStorage(
-             ackHandle,
-             summaryLogger,
-             {
-                 eventName: "RefreshLatestSummaryGetSnapshot",
-                 ackHandle,
-                 summaryRefSeq,
-                 fetchLatest: false,
-             });
-             return fetchResult.snapshotTree;
-         };
-         const result = await this.summarizerNode.refreshLatestSummary(
-             proposalHandle,
-             summaryRefSeq,
-             snapshotTreeFetcher,
-             readAndParseBlob,
-             summaryLogger,
-         );
+                ackHandle,
+                summaryLogger,
+                {
+                    eventName: "RefreshLatestSummaryGetSnapshot",
+                    ackHandle,
+                    summaryRefSeq,
+                    fetchLatest: false,
+                });
+            return fetchResult.snapshotTree;
+        };
+        const result = await this.summarizerNode.refreshLatestSummary(
+            proposalHandle,
+            summaryRefSeq,
+            snapshotTreeFetcher,
+            readAndParseBlob,
+            summaryLogger,
+        );
 
-         // Notify the garbage collector so it can update its latest summary state.
+        // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
     }
 

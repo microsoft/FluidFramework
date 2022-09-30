@@ -1574,6 +1574,7 @@ declare function get_old_ClassDeclaration_ScheduleManager():
 declare function use_current_ClassDeclaration_ScheduleManager(
     use: TypeOnly<current.ScheduleManager>);
 use_current_ClassDeclaration_ScheduleManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ScheduleManager());
 
 /*
