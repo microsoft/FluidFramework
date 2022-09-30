@@ -125,18 +125,6 @@ Partial<IProvideFluidLoadable> {
     }
 
     /**
-     * Fluid handle to the object that acts as entry point for the data store runtime. It'll only be defined if
-     * initializeEntrypoint was passed to the constructor when instantiating the runtime. It's exposed through
-     * the IFluidLoadable property so we can start making handles a first-class citizen and the primary way of
-     * interacting with some Fluid objects; in this case accessing the entry point of a data store runtime without
-     * having to use the request pattern to gets its root object. Use the IFluidLoadable property (with discovery
-     * through FluidObject<IProvideFluidLoadable>) if possible, but for now all code paths should first check
-     * if that property or the handle obtained through it are not undefined, and keep using current approaches
-     * (e.g. using the request pattern) if they are.
-     */
-    private readonly handle?: IFluidHandle;
-
-    /**
      * Exposes a handle to the data store's root object / entrypoint. Use this as the primary way of interacting with
      * the data store, and only fall back to requesting the root object through the request pattern if this property
      * or the handle within it are not defined.
@@ -309,14 +297,22 @@ Partial<IProvideFluidLoadable> {
         }
 
         if (initializeEntrypoint) {
-            this.handle = new FluidObjectHandle<FluidObject>(
+            /**
+             * This is a Fluid handle to the object that acts as entry point for the data store runtime. It's exposed
+             * through the IFluidLoadable property so we can start making handles a first-class citizen and the primary
+             * way of interacting with some Fluid objects; in this case accessing the entry point of a data store
+             * runtime without having to use the request pattern to gets its root object. Use the IFluidLoadable
+             * property (with discovery through FluidObject<IProvideFluidLoadable>) if possible, but for now all code
+             * paths should first check if that property or the handle obtained through it are not undefined, and keep
+             * using current approaches (e.g. using the request pattern) if they are.
+             */
+            const handle = new FluidObjectHandle<FluidObject>(
                 new LazyPromise(async () => initializeEntrypoint(this)),
                 "",
                 this.objectsRoutingContext,
                 );
             // Do some sleight-of-hand and return an object whose 'handle' property is always defined, and whose
             // 'IFluidLoadable' property returns an object that complies with the necessary interface.
-            const handle = this.handle;
             this.IFluidLoadable = {
                 handle,
                 get IFluidLoadable() {

@@ -383,9 +383,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     }
 
     public get IFluidLoadable(): IFluidLoadable {
-        const handle = this.handle;
         return {
-            handle,
+            handle: this.handle,
             get IFluidLoadable() {
                 return this;
             },

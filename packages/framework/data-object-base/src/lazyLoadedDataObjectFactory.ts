@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IProvideFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import {
+    FluidObject,
+    IFluidLoadable,
+    IFluidRouter,
+    IProvideFluidLoadable,
+    IRequest,
+} from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -57,9 +63,10 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
                 // (or child of it) because it passed it in (see the call to new runtimeClass(...) below), so it
                 // can cast safely here.
                 const maybeIFluidLoadable: FluidObject<IProvideFluidLoadable> = rt;
-                const router = (await maybeIFluidLoadable.IFluidLoadable?.handle?.get() as LazyLoadedDataObject);
-                assert(router !== undefined, "Entrypoint should have been initialized by now");
-                return router.request(request);
+                const maybeRouter: FluidObject<IFluidRouter> & IFluidLoadable | undefined
+                    = await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
+                assert(maybeRouter?.IFluidRouter !== undefined, "Entrypoint should have been initialized by now");
+                return maybeRouter.IFluidRouter.request(request);
             });
 
         const runtime = new runtimeClass(
