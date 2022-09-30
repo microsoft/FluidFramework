@@ -12,6 +12,10 @@
             "readWriteCycleMs": 30000,
             "faultInjectionMinMs": 0,
             "faultInjectionMaxMs": 150000,
+            "offlineDelayMinMs": 0,
+            "offlineDelayMaxMs": 150000,
+            "offlineDurationMinMs": 5000,
+            "offlineDurationMaxMs": 15000,
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
@@ -99,10 +103,14 @@
             "totalSendCount": 150,
             "readWriteCycleMs": 10000,
             "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 50000,
+            "faultInjectionMaxMs": 10000,
+            "offlineDelayMinMs": 0,
+            "offlineDelayMaxMs": 30000,
+            "offlineDurationMinMs": 5000,
+            "offlineDurationMaxMs": 15000,
             "totalBlobCount": 300,
             "blobSize": 10240,
-            "detachedBlobCount": 10
+            "detachedBlobCount": 0
         },
         "binarySnapshotFormat": {
             "opRatePerMin": 60,
