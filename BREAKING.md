@@ -2,7 +2,7 @@
 
 Notes on breaking, upcoming, and otherwise interesting changes go here. They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
 
-For more information on best practices around communicating breaking please see our docs [here](https://github.com/microsoft/FluidFramework/wiki/Communicating-breaking-changes)
+For instructions on how to communicate breaking changes please see our docs [here](https://github.com/microsoft/FluidFramework/wiki/Communicating-breaking-changes).
 
 ## Writing a change note
 
@@ -15,9 +15,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
-# 2.0.0-internal-1.3.0
+# 2.0.0-internal.1.3.0
 
-## 2.0.0-internal-1.3.0 Upcoming changes
+## 2.0.0-internal.1.3.0 Upcoming changes
 - [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
 - [`PureDataObject.getDataObject()` is now deprecated](#PureDataObjectgetDataObject-is-now-deprecated)
 
@@ -33,9 +33,9 @@ That object is now stored as the entrypoint of the data store runtime, so you sh
 `(runtime as FluidObject<IProvideFluidLoadable>)?.IFluidLoadable?.handle?.get() as PureDataObject` to get it.
 Entrypoints will eventually be exposed more directly and that access pattern will be simplified.
 
-# 2.0.0-internal-1.1.0
+# 2.0.0-internal.1.1.0
 
-## 2.0.0-internal-1.1.0 Upcoming changes
+## 2.0.0-internal.1.1.0 Upcoming changes
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
 - [Remove type field from ShareLinkInfoType](#Remove-type-field-from-ShareLinkInfoType)
 - [Remove ShareLinkTypes interface](#Remove-ShareLinkTypes-interface)
@@ -64,9 +64,9 @@ This field has been deprecated and will be removed in a future breaking change. 
 ### Remove enableShareLinkWithCreate from HostStoragePolicy
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
 
-# 2.0.0-internal-1.0.0
+# 2.0.0-internal.1.0.0
 
-## 2.0.0-internal-1.0.0 Upcoming changes
+## 2.0.0-internal.1.0.0 Upcoming changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 - [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
 - [IContainerRuntime.flush is deprecated](#icontainerruntimeflush-is-deprecated)
@@ -129,7 +129,7 @@ The functions affected are:
  - `SubSequence.fromJSONObject`
 
 
-## 2.0.0-internal-1.0.0 Breaking changes
+## 2.0.0-internal.1.0.0 Breaking changes
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
 - [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
 - [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)

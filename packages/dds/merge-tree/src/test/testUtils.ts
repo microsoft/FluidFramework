@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import {
     IMergeBlock,
+    ISegment,
     Marker,
 } from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
@@ -26,28 +27,98 @@ export function loadTextFromFileWithMarkers(filename: string, mergeTree: MergeTr
     return loadText(content, mergeTree, segLimit, true);
 }
 
-export function insertMarker(
-    mergeTree: MergeTree,
-    pos: number,
-    refSeq: number,
-    clientId: number,
-    seq: number,
-    behaviors: ReferenceType, props: PropertySet | undefined, opArgs: IMergeTreeDeltaOpArgs,
-) {
+interface InsertMarkerArgs {
+    mergeTree: MergeTree;
+    pos: number;
+    refSeq: number;
+    clientId: number;
+    seq: number;
+    behaviors: ReferenceType;
+    props: PropertySet | undefined;
+    opArgs: IMergeTreeDeltaOpArgs;
+}
+
+export function insertMarker({
+    mergeTree,
+    pos,
+    refSeq,
+    clientId,
+    seq,
+    behaviors,
+    props,
+    opArgs,
+}: InsertMarkerArgs) {
     mergeTree.insertSegments(pos, [Marker.make(behaviors, props)], refSeq, clientId, seq, opArgs);
 }
 
-export function insertText(
-    mergeTree: MergeTree,
-    pos: number,
-    refSeq: number,
-    clientId: number,
-    seq: number,
-    text: string,
-    props?: PropertySet,
-    opArgs?: IMergeTreeDeltaOpArgs,
-) {
+interface InsertTextArgs {
+    mergeTree: MergeTree;
+    pos: number;
+    refSeq: number;
+    clientId: number;
+    seq: number;
+    text: string;
+    props?: PropertySet;
+    opArgs?: IMergeTreeDeltaOpArgs;
+}
+
+export function insertText({
+    mergeTree,
+    pos,
+    refSeq,
+    clientId,
+    seq,
+    text,
+    props,
+    opArgs,
+}: InsertTextArgs) {
     mergeTree.insertSegments(pos, [TextSegment.make(text, props)], refSeq, clientId, seq, opArgs);
+}
+
+interface InsertSegmentsArgs {
+    mergeTree: MergeTree;
+    pos: number;
+    segments: ISegment[];
+    refSeq: number;
+    clientId: number;
+    seq: number;
+    opArgs: IMergeTreeDeltaOpArgs | undefined;
+}
+
+export function insertSegments({
+    mergeTree,
+    pos,
+    segments,
+    refSeq,
+    clientId,
+    seq,
+    opArgs,
+}: InsertSegmentsArgs): void {
+    mergeTree.insertSegments(pos, segments, refSeq, clientId, seq, opArgs);
+}
+
+interface MarkRangeRemovedArgs {
+    mergeTree: MergeTree;
+    start: number;
+    end: number;
+    refSeq: number;
+    clientId: number;
+    seq: number;
+    overwrite: boolean;
+    opArgs: IMergeTreeDeltaOpArgs;
+}
+
+export function markRangeRemoved({
+    mergeTree,
+    start,
+    end,
+    refSeq,
+    clientId,
+    seq,
+    overwrite = false,
+    opArgs,
+}: MarkRangeRemovedArgs): void {
+    mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
 }
 
 export function nodeOrdinalsHaveIntegrity(block: IMergeBlock): boolean {
