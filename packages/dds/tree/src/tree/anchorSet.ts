@@ -146,6 +146,18 @@ export class AnchorSet {
         return parentPath?.tryGetChild(path.parentField, path.parentIndex);
     }
 
+    private deepDelete(nodes: readonly PathNode[]): void {
+        const stack = [...nodes];
+        while (stack.length > 0) {
+            const node = stack.pop()!;
+            assert(!node.deleted, 0x353 /* PathNode must not be deleted */);
+            node.deleted = true;
+            for (const children of node.children.values()) {
+                stack.push(...children);
+            }
+        }
+    }
+
     /**
      * Updates paths for a range move (including re-parenting path items and updating indexes).
      * @param count - number of siblings to insert/delete/move.
@@ -211,10 +223,7 @@ export class AnchorSet {
         if (dst === undefined) {
             // Change is a delete.
             // Moved items have already been un-parented, so just mark them as deleted.
-            for (const moved of toMove) {
-                assert(!moved.deleted, 0x353 /* PathNode must not be deleted */);
-                moved.deleted = true;
-            }
+            this.deepDelete(toMove);
             return;
         }
 
@@ -412,7 +421,6 @@ class PathNode implements UpPath {
     }
 
     public removeRef(count = 1): void {
-        assert(!this.deleted, 0x357 /* PathNode must not be deleted */);
         this.refCount -= count;
         if (this.refCount < 1) {
             assert(

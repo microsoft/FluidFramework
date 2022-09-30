@@ -56,7 +56,7 @@ describe("AnchorSet", () => {
         assert.throws(() => anchors.locate(anchor3));
     });
 
-    it("can rebase over delete parent node", () => {
+    it("can rebase over delete of parent node", () => {
         const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
         const deleteMark = {
             type: Delta.MarkType.Delete,
@@ -64,12 +64,10 @@ describe("AnchorSet", () => {
         };
 
         anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])));
-        // TODO: what should happen with children and sibling anchors now?
-        // E.g. deleted parent in anchor1
-        checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 5], [fieldBar, 4]));
+        assert.equal(anchors.locate(anchor4), undefined);
+        assert.equal(anchors.locate(anchor1), undefined);
         checkEquality(anchors.locate(anchor2), path2);
         checkEquality(anchors.locate(anchor3), path3);
-        assert.equal(anchors.locate(anchor4), undefined);
         assert.doesNotThrow(() => anchors.forget(anchor4));
         assert.throws(() => anchors.locate(anchor4));
     });
