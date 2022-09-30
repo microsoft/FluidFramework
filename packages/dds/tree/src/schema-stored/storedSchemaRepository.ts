@@ -13,6 +13,9 @@ import {
     SchemaPolicy,
 } from "./schema";
 
+/**
+ * A {@link SchemaData} with a {@link SchemaPolicy}.
+ */
 export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy>
     extends SchemaData {
     /**
