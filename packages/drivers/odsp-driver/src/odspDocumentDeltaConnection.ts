@@ -155,7 +155,10 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         // All event raising is synchronous, so clients will have a chance to react before socket is
         // closed without any extra data on why it was closed.
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        Promise.resolve().then(() => { socket.disconnect(); });
+        Promise.resolve().then(() => {
+            assert(this.references === 0, "Nobody should be connected to this socket at this point!");
+            socket.disconnect();
+        });
     }
 
     private get disconnected() {
