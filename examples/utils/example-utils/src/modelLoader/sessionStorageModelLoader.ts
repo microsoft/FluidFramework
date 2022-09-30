@@ -21,7 +21,7 @@ const deltaConnectionServerMap = new Map<string, ILocalDeltaConnectionServer>();
 const getDocumentServiceFactory = (documentId: string) => {
     let deltaConnection = deltaConnectionServerMap.get(documentId);
     if (deltaConnection === undefined) {
-        deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
+        deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
         deltaConnectionServerMap.set(documentId, deltaConnection);
     }
 
