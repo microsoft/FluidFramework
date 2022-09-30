@@ -54,8 +54,6 @@ describe("AnchorSet", () => {
         assert.equal(anchors.locate(anchor3), undefined);
         assert.doesNotThrow(() => anchors.forget(anchor3));
         assert.throws(() => anchors.locate(anchor3));
-        assert.doesNotThrow(() => anchors.forget(anchor3));
-        assert.throws(() => anchors.locate(anchor3));
     });
 
     it("can rebase over delete parent node", () => {
