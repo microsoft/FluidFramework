@@ -200,7 +200,7 @@ const personData: JsonableTree = {
 let _provider: ITestTreeProvider;
 
 async function createSharedTrees(schema: SchemaData, data: JsonableTree, nofTrees = 1): Promise<readonly ISharedTree[]> {
-    const provider = await TestTreeProvider.create(nofTrees + 1);
+    const provider = await TestTreeProvider.create(nofTrees);
     _provider = provider;
     for (const tree of provider.trees) {
         assert(tree.isAttached());
@@ -213,7 +213,7 @@ async function createSharedTrees(schema: SchemaData, data: JsonableTree, nofTree
     assert(isEmptyTree(provider.trees[0].root));
     provider.trees[0].root[insertRootSymbol](singleTextCursor(data));
     await provider.ensureSynchronized();
-    return provider.trees.slice(1);
+    return provider.trees;
 }
 
 describe("editing with editable-tree", () => {
