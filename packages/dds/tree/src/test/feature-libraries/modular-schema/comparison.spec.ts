@@ -17,7 +17,7 @@ import {
     TreeSchema,
     ValueSchema,
     TreeTypeSet,
-    emptyMap, emptySet, fieldSchema, StoredSchemaRepository,
+    emptyMap, emptySet, fieldSchema, InMemoryStoredSchemaRepository, lookupTreeSchema,
 } from "../../../schema-stored";
 import { brand } from "../../../util";
 import { defaultSchemaPolicy, emptyField, FieldKinds, neverField, neverTree } from "../../../feature-libraries";
@@ -91,7 +91,7 @@ describe("Schema Comparison", () => {
     const optionalEmptyTreeField = fieldSchema(FieldKinds.optional, [emptyTree.name]);
 
     it("isNeverField", () => {
-        const repo = new StoredSchemaRepository(defaultSchemaPolicy);
+        const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
         assert(isNeverField(defaultSchemaPolicy, repo, neverField));
         repo.updateTreeSchema(brand("never"), neverTree);
         const neverField2: FieldSchema = fieldSchema(
@@ -111,7 +111,7 @@ describe("Schema Comparison", () => {
     });
 
     it("isNeverTree", () => {
-        const repo = new StoredSchemaRepository(defaultSchemaPolicy);
+        const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
         assert(isNeverTree(defaultSchemaPolicy, repo, neverTree));
         assert(isNeverTree(defaultSchemaPolicy, repo, {
             localFields: emptyMap,
@@ -138,7 +138,7 @@ describe("Schema Comparison", () => {
         }), false);
         assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyTree), false);
 
-        assert(allowsTreeSuperset(defaultSchemaPolicy, repo, repo.lookupTreeSchema(emptyTree.name), emptyTree));
+        assert(allowsTreeSuperset(defaultSchemaPolicy, repo, lookupTreeSchema(repo, emptyTree.name), emptyTree));
         repo.updateTreeSchema(emptyTree.name, emptyTree);
 
         assert.equal(isNeverTree(defaultSchemaPolicy, repo, emptyLocalFieldTree), false);
@@ -180,7 +180,7 @@ describe("Schema Comparison", () => {
     });
 
     it("allowsFieldSuperset", () => {
-        const repo = new StoredSchemaRepository(defaultSchemaPolicy);
+        const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
         repo.updateTreeSchema(brand("never"), neverTree);
         repo.updateTreeSchema(emptyTree.name, emptyTree);
         const neverField2: FieldSchema = fieldSchema(
@@ -199,7 +199,7 @@ describe("Schema Comparison", () => {
     });
 
     it("allowsTreeSuperset", () => {
-        const repo = new StoredSchemaRepository(defaultSchemaPolicy);
+        const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
         repo.updateTreeSchema(emptyTree.name, emptyTree);
         const compare = (a: TreeSchema, b: TreeSchema): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
         testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTree]);
