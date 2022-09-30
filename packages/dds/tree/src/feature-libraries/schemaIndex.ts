@@ -285,6 +285,9 @@ export class SchemaEditor implements StoredSchemaRepository {
 
     /**
      * @returns true if this is a schema op and was handled.
+     *
+     * TODO: Shared tree needs a pattern for handling non-changeset operations.
+     * See TODO on `SharedTree.processCore`.
      */
     tryHandleOp(message: ISequencedDocumentMessage): boolean {
         const op: JsonCompatibleReadOnly = message.contents;

@@ -140,6 +140,15 @@ class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
         return runSynchronousTransaction(this.transactionCheckout, transaction);
     }
 
+    /**
+     * TODO: Shared tree needs a pattern for handling non-changeset operations.
+     * Whatever pattern is adopted should probably also handle multiple versions of changeset operations.
+     * A single top level enum listing all ops (including their different versions),
+     * with at least fine grained enough detail to direct them to the correct subsystem would be a good approach.
+     * The current use-case (with an op applying to a specific index) is a temporary hack,
+     * and its not clear how it would fit into such a system if implemented in shared-tree-core:
+     * maybe op dispatch is part of the shared-tree level?
+     */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (!this.storedSchema.tryHandleOp(message)) {
             super.processCore(message, local, localOpMetadata);
