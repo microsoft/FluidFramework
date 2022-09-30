@@ -1,0 +1,39 @@
+ title: Single doc load test
+ description: In this scenario we create single container with no data, then let client run a bunch of writes on it while looking at perf and reliability.
+ env:
+    schema:
+      initialObjects:
+        key1: SharedMap
+        key2: SharedMap
+ stages:
+  - task-1:
+    id: 1
+    name: Create azure client
+    package: azureFactory
+    params:
+      type: local
+      endpoint: http://localhost:7070
+      userId: SomeUserId;
+      userName: SomeName;
+    out: $(client)
+  - task-2:
+    id: 2
+    name: Create document
+    package: emptyDocCreator
+    params:
+      client: $(client)
+      schema: ${schema}
+    out: $(docId)
+  - task-3:
+    id: 3
+    name: Create traffic
+    package: sharedMapTrafficGen
+    params:
+      client: $(client)
+      docId: $(docId)
+      schema: ${schema}
+      numClients: 5
+      writeRatePerMin: 60
+      sharedMapKey: key1
+      totalWriteCount: 1000
+      totalGroupCount: 100
