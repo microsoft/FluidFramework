@@ -127,7 +127,9 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             this.isPendingInitialConnection = false;
 
             this.emit("server_disconnect", error, clientId);
-            this.closeSocket();
+            if (clientId === undefined) {
+                this.closeSocket();
+            }
         });
     }
 
@@ -236,7 +238,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         };
 
         // Reference to this client supporting get_ops flow.
-        connectMessage.supportedFeatures = {};
+        connectMessage.supportedFeatures = { };
         if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
             connectMessage.supportedFeatures[feature_get_ops] = true;
         }
@@ -445,10 +447,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             receivedClientId: clientId,
         }, error);
         // Don't dispose the socket in case a single client needs to be disconnected.
-        if (clientId !== undefined) {
-            this.disposeCore(error);
-        } else {
+        if (clientId === undefined) {
             this.disposeSocket(error);
+        } else if (this.clientId === clientId) {
+            this.disposeCore(error);
         }
     };
 
