@@ -27,9 +27,18 @@ export class OpDecompressor {
 
     public processMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
         // Beginning of a compressed batch
+        // We're checking for compression = true or top level compression property so
+        // that we can enable compression without waiting on all ordering services
+        // to pick up protocol change. Eventually only the top level property should
+        // be used.
         if (message.metadata?.batch === true
-            && (message.metadata?.compressed || (message as any).compression === CompressionAlgorithms.lz4)) {
+            && (message.metadata?.compressed || (message as any).compression !== undefined)) {
             assert(this.activeBatch === false, "shouldn't have multiple active batches");
+            if ((message as any).compression) {
+                // lz4 is the only supported compression algorithm for now
+                assert((message as any).compression === CompressionAlgorithms.lz4,
+                        "lz4 is currently the only supported compression algorithm");
+            }
 
             this.activeBatch = true;
 
