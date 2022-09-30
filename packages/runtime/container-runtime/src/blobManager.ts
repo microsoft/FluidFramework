@@ -327,7 +327,17 @@ export class BlobManager {
         ).then(
             (response) => this.onUploadResolve(localId, response),
             async (err) => this.onUploadReject(localId, err),
-        );
+        ).catch((error) => {
+            const entry = this.pendingBlobs.get(localId);
+            assert(!!entry, "no entry found when error thrown while handling blob upload response");
+            entry.handleP.reject(error);
+            this.logger.sendErrorEvent({
+                eventName: "blobUploadResponseHandlingError",
+                localId,
+                status: entry?.status,
+            }, error);
+            throw error;
+        });
     }
 
     private onUploadResolve(localId: string, response: ICreateBlobResponse) {
