@@ -878,7 +878,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
-    private readonly batchManager: BatchManager;
+
+    private readonly pendingAttachBatch: BatchManager;
+    private readonly pendingBatch: BatchManager;
+
     private readonly garbageCollector: IGarbageCollector;
 
     // Local copy of incomplete received chunks.
@@ -888,6 +891,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     /** The last message processed at the time of the last summary. */
     private messageAtLastSummary: ISummaryMetadataMessage | undefined;
+
+    private get emptyBatch() {
+        return this.pendingBatch.empty && this.pendingAttachBatch.empty;
+    }
 
     private get summarizer(): Summarizer {
         assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
@@ -991,7 +998,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
 
-        this.batchManager = new BatchManager(this.mc.logger, this.runtimeOptions.compressionOptions);
+        // Provide lower soft limit - we want to have some number of ops to get efficiency in compression & bandwidth
+        // usage, but at the same time we want to send these ops sooner to reduce overall latency of processing a batch.
+        // So there is some ballance here, that depends on compression algorithm and its efficiency working with smaller
+        // payloads. That number represents final (compressed) bits (once compression is implemented).
+        this.pendingAttachBatch = new BatchManager(this.mc.logger, 64 * 1024, this.runtimeOptions.compressionOptions);
+        this.pendingBatch = new BatchManager(this.mc.logger, undefined, this.runtimeOptions.compressionOptions);
 
         if (this.summaryConfiguration.state === "enabled") {
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
@@ -1795,10 +1807,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
-        const batch = this.batchManager.popBatch();
-        this.flushBatch(batch);
+        this.flushBatch(this.pendingAttachBatch.popBatch());
+        this.flushBatch(this.pendingBatch.popBatch());
 
-        assert(this.batchManager.empty, 0x3cf /* reentrancy */);
+        assert(this.emptyBatch, 0x3cf /* reentrancy */);
     }
 
     protected flushBatch(batch: BatchMessage[]): void {
@@ -1873,7 +1885,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         let checkpoint: { rollback: (action: (message: BatchMessage) => void) => void; } | undefined;
 
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
-            checkpoint = this.batchManager.checkpoint();
+            // Note: we are not touching this.pendingAttachBatch here, for two reasons:
+            // 1. It would not help, as we flush attach ops as they become available.
+            // 2. There is no way to undo process of data store creation.
+            checkpoint = this.pendingBatch.checkpoint();
         }
         try {
             this._orderSequentiallyCalls++;
@@ -2309,7 +2324,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
-        assert(this.batchManager.empty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
+        assert(this.emptyBatch, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
         let latestSnapshotVersionId: string | undefined;
         if (refreshLatestAck) {
@@ -2568,7 +2583,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private hasPendingMessages() {
-        return this.pendingStateManager.hasPendingMessages() || !this.batchManager.empty;
+        return this.pendingStateManager.hasPendingMessages() || !this.emptyBatch;
     }
 
     private updateDocumentDirtyState(dirty: boolean) {
@@ -2654,17 +2669,44 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             //    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
             //    these issues.
             // Cons:
-            //    With large batches, relay service may throttle clients. Clients may disconnect while throttled.
+            //    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
             //    This change creates new possibility of a lot of newly created data stores never being referenced
             //    because client died before it had a change to submit the rest of the ops. This will create more
             //    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
+            //    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
+            //    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
+            //    issue than sending.
             // Please note that this does not change file format, so it can be disabled in the future if this
             // optimization no longer makes sense (for example, batch compression may make it less appealing).
             if (this.currentlyBatching() && type === ContainerMessageType.Attach &&
                     this.mc.config.getBoolean("Fluid.ContainerRuntime.disableAttachOpReorder") !== true) {
-                this.flushBatch([message]);
+                if (!this.pendingAttachBatch.push(message)) {
+                    // BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
+                    // when queue is not empty.
+                    // Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
+                    this.flushBatch(this.pendingAttachBatch.popBatch());
+                    if (!this.pendingAttachBatch.push(message)) {
+                        throw new GenericError(
+                            "BatchTooLarge",
+                            /* error */ undefined,
+                            {
+                                opSize: message.contents.length,
+                                count: this.pendingAttachBatch.length,
+                                limit: this.pendingAttachBatch.limit,
+                            });
+                    }
+                }
             } else {
-                this.batchManager.push(message);
+                if (!this.pendingBatch.push(message)) {
+                    throw new GenericError(
+                        "BatchTooLarge",
+                        /* error */ undefined,
+                        {
+                            opSize: message.contents.length,
+                            count: this.pendingBatch.length,
+                            limit: this.pendingBatch.limit,
+                        });
+                }
                 if (!this.currentlyBatching()) {
                     this.flush();
                 } else if (!this.flushMicroTaskExists) {
@@ -2692,7 +2734,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
         // System message should not be sent in the middle of the batch.
-        assert(this.batchManager.empty, 0x3d4 /* System op in the middle of a batch */);
+        assert(this.emptyBatch, 0x3d4 /* System op in the middle of a batch */);
 
         // back-compat: ADO #1385: Make this call unconditional in the future
         return this.context.submitSummaryFn !== undefined
