@@ -11,10 +11,11 @@ import { ISequencedDocumentMessage, ISummaryTree, SummaryType } from "@fluidfram
 import { ITelemetryContext, ISummaryTreeWithStats, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, ISharedObjectEvents, SharedObject } from "@fluidframework/shared-object-base";
+import { v4 as uuid } from "uuid";
 import { ChangeFamily } from "../change-family";
 import { Commit, EditManager } from "../edit-manager";
 import { AnchorSet, Delta } from "../tree";
-import { brand } from "../util";
+import { brand, JsonCompatibleReadOnly } from "../util";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -39,6 +40,14 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
     public readonly editManager: EditManager<TChange, TChangeFamily>;
 
     /**
+     * A random ID that uniquely identifies this client in the collab session.
+     * This is sent alongside every op to identify which client the op originated from.
+     *
+     * This is needed because the client ID given by the Fluid protocol is not stable across reconnections.
+     */
+    private readonly stableId: string;
+
+    /**
      * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
      */
     private readonly summaryElements: SummaryElement[];
@@ -60,13 +69,9 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
         telemetryContextPrefix: string) {
         super(id, runtime, attributes, telemetryContextPrefix);
 
-        // TODO: clientId may not exist at SharedTree creation.
-        // Should we change EditManager to not need the client ID? Can we create the edit manager once we are connected?
-        this.editManager = new EditManager(changeFamily, anchors);
-        if (this.runtime.clientId !== undefined) {
-            this.editManager.setLocalSessionId(this.runtime.clientId);
-        }
+        this.stableId = uuid();
 
+        this.editManager = new EditManager(this.stableId, changeFamily, anchors);
         this.summaryElements = indexes.map((i) => i.summaryElement).filter((e): e is SummaryElement => e !== undefined);
         assert(
             new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
@@ -119,11 +124,6 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
         await Promise.all(loadIndexes);
     }
 
-    protected onConnect() {
-        assert(this.runtime.clientId !== undefined, 0x3a5 /* Expected clientId to be defined once connected */);
-        this.editManager.setLocalSessionId(this.runtime.clientId);
-    }
-
     public submitEdit(edit: TChange): void {
         const delta = this.editManager.addLocalChange(edit);
         for (const index of this.indexes) {
@@ -131,13 +131,18 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
             index.newLocalState?.(delta);
         }
 
-        this.submitLocalMessage(this.changeFamily.encoder.encodeForJson(formatVersion, edit));
+        const message: Message = {
+            originatorId: this.stableId,
+            changeset: this.changeFamily.encoder.encodeForJson(formatVersion, edit),
+        };
+        this.submitLocalMessage(message);
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const changes = this.changeFamily.encoder.decodeJson(formatVersion, message.contents);
+        const { originatorId: stableClientId, changeset } = message.contents as Message;
+        const changes = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
         const commit: Commit<TChange> = {
-            sessionId: message.clientId,
+            sessionId: stableClientId,
             seqNumber: brand(message.sequenceNumber),
             refNumber: brand(message.referenceSequenceNumber),
             changeset: changes,
@@ -151,9 +156,7 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
         }
     }
 
-    protected onDisconnect() {
-        throw new Error("Method not implemented.");
-    }
+    protected onDisconnect() { }
 
     protected applyStashedOp(content: any): unknown {
         throw new Error("Method not implemented.");
@@ -174,6 +177,20 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
             gcNodes,
         };
     }
+}
+
+/**
+ * The format of messages that SharedTree sends and receives.
+ */
+interface Message {
+    /**
+     * The stable ID that identifies the originator of the message.
+     */
+    readonly originatorId: string;
+    /**
+     * The changeset to be applied.
+     */
+    readonly changeset: JsonCompatibleReadOnly;
 }
 
 /**
