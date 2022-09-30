@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { brand, brandOpaque } from "../util";
+import { brand } from "../util";
 import {
-    FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    FieldKindIdentifier,
+    FieldSchema, GlobalFieldKey, Named, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "./schema";
 
 /**
@@ -26,29 +27,15 @@ export const emptySet: ReadonlySet<never> = new Set();
 export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
- * LocalFieldKey to use for when there is a collection of items under a tree node
- * that makes up the logical primary significant of that tree.
+ * Helper for building {@link FieldSchema}.
  */
-export const itemsKey: LocalFieldKey = brand("items");
-
-/**
- * GlobalFieldKey to use for the root of documents.
- * TODO: if we do want to standardize on a single value for this,
- * it likely should be namespaced or a UUID to avoid risk of collisions.
- */
-export const rootFieldKey = brandOpaque<GlobalFieldKey>("rootFieldKey");
-
-/**
- * Default field which only permits emptiness.
- */
-export const emptyField: FieldSchema = {
-    kind: FieldKind.Forbidden,
-};
-
-export function fieldSchema(kind: FieldKind, types: readonly TreeSchemaIdentifier[]): FieldSchema {
+export function fieldSchema(
+    kind: { identifier: FieldKindIdentifier; },
+    types?: Iterable<TreeSchemaIdentifier>,
+): FieldSchema {
     return {
-        kind,
-        types: new Set(types),
+        kind: kind.identifier,
+        types: types === undefined ? undefined : new Set(types),
     };
 }
 
@@ -60,11 +47,14 @@ const defaultExtraGlobalFields = false;
 export interface TreeSchemaBuilder {
     readonly localFields?: { [key: string]: FieldSchema; };
     readonly globalFields?: Iterable<GlobalFieldKey>;
-    readonly extraLocalFields?: FieldSchema;
+    readonly extraLocalFields: FieldSchema;
     readonly extraGlobalFields?: boolean;
     readonly value?: ValueSchema;
 }
 
+/**
+ * Helper for building {@link TreeSchema}.
+ */
 export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
     const localFields = new Map();
     const local = data.localFields ?? {};
@@ -78,8 +68,18 @@ export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
     return {
         localFields,
         globalFields: new Set(data.globalFields ?? []),
-        extraLocalFields: data.extraLocalFields ?? emptyField,
+        extraLocalFields: data.extraLocalFields,
         extraGlobalFields: data.extraGlobalFields ?? defaultExtraGlobalFields,
         value: data.value ?? ValueSchema.Nothing,
+    };
+}
+
+/**
+ * Helper for building {@link NamedTreeSchema}.
+ */
+ export function namedTreeSchema(data: TreeSchemaBuilder & Named<TreeSchemaIdentifier>): NamedTreeSchema {
+    return {
+        name: data.name,
+        ...treeSchema(data),
     };
 }

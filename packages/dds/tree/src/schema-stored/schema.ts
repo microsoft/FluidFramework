@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Brand, Opaque } from "../util";
+import { Brand } from "../util";
 
 /**
  * Example internal schema representation types.
@@ -36,65 +36,19 @@ export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 /**
- * SchemaIdentifier for a Field "global field",
- * meaning a field which has the same meaning for all usages within the document
- * (not scoped to a specific TreeSchema like LocalFieldKey).
- *
- * Note that the implementations should ensure that GlobalFieldKeys can never collide with LocalFieldKeys.
- * This can be done in several ways
- * (keeping the two classes of fields separate, name-spacing/escaping,
- * compressing one into numbers and leaving the other strings, etc.)
+ * Identifier for a FieldKind.
+ * Refers to an exact stable policy (ex: specific version of a policy),
+ * for how to handle (ex: edit and merge edits to) fields marked with this kind.
+ * Persisted in documents as part of stored schema.
  */
-export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">>{}
+export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 /**
- * Describes how a particular field functions.
- *
- * This determine its reading and editing APIs, multiplicity, and what merge resolution policies it will use.
+ * SchemaIdentifier for a "global field",
+ * meaning a field which has the same meaning for all usages within the document
+ * (not scoped to a specific TreeSchema like LocalFieldKey).
  */
-export enum FieldKind {
-    /**
-     * Exactly one item.
-     */
-    Value,
-    /**
-     * 0 or 1 items.
-     */
-    Optional,
-    /**
-     * 0 or more items.
-     */
-    Sequence,
-    /**
-     * Exactly 0 items.
-     *
-     * Using Forbidden makes what types are listed for allowed in a field irrelevant
-     * since the field will never have values in it.
-     *
-     * Using Forbidden is equivalent to picking a kind that permits empty (like sequence or optional)
-     * and having no allowed types (or only never types).
-     * Because of this, its possible to express everything constraint wise without Forbidden,
-     * but using Forbidden can be more semantically clear than optional with no allowed types.
-     *
-     * For view schema, this can be useful if you need to:
-     * - run a specific out of schema handler when a field is present,
-     * but otherwise are ignoring or tolerating (ex: via extra fields) unmentioned fields.
-     * - prevent a specific field from being used as an extra field
-     * (perhaps for some past of future compatibility reason)
-     * - keep a field in a schema for metadata purposes
-     * (ex: for improved error messaging, error handling or documentation)
-     * that is not used in this specific version of the schema (ex: to document what it was or will be used for).
-     *
-     * For stored schema, this can be useful if you need to:
-     * - have a field which can have its schema updated to Optional or Sequence of any type.
-     * - to exclude a field from extra fields
-     * - for the schema system to use as a default for fields which aren't declared
-     * (ex: when updating a field that did not exist into one that does)
-     *
-     * See {@link emptyField} for a constant, reusable field using Forbidden.
-     */
-    Forbidden,
-}
+export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
 
 /**
  * Example for how we might want to handle values.
@@ -142,21 +96,27 @@ export enum ValueSchema {
  * In the future, this could be extended to allow inlining a TreeSchema here
  * (or some similar structural schema system).
  * For structural types which could go here, there are a few interesting options:
+ *
  * - Allow replacing the whole set with a structural type for terminal / non-tree data,
  * and use this as a replacement for values on the tree nodes.
+ *
  * - Allow expression structural constraints for child trees, for example requiring specific traits
  * (ex: via TreeSchema), instead of by type.
+ *
  * There are two ways this could work:
- *      - Constrain the child nodes based on their shape:
+ *
+ * - Constrain the child nodes based on their shape:
  * this makes schema safe editing difficult because nodes would incur extra editing constraints to prevent them
  * from going out of schema based on their location in such a field.
- *      - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
+ *
+ * - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
+ *
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
  */
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 export interface FieldSchema {
-    readonly kind: FieldKind;
+    readonly kind: FieldKindIdentifier;
     /**
      * The set of allowed child types.
      * If not specified, types are unconstrained.
@@ -248,18 +208,34 @@ export interface Named<TName> {
 }
 
 export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
+export type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
 
-export interface SchemaRepository {
-    /**
-     * All fields with the specified GlobalFieldKey must comply with the returned schema.
-     */
-    lookupGlobalFieldSchema(key: GlobalFieldKey): FieldSchema;
-
-    /**
-     * All trees with the specified identifier must comply with the returned schema.
-     */
-    lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema;
-
+/**
+ * View of schema data that can be stored in a document.
+ *
+ * Note: the owner of this may modify it over time:
+ * thus if needing to hand onto a specific version, make a copy.
+ */
+export interface SchemaDataReader {
     readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+}
+
+/**
+ * Policy from the app for interpreting the stored schema.
+ * The app must ensure consistency for all users of the document.
+ */
+export interface SchemaPolicy {
+    /**
+     * Schema used when there is no schema explicitly specified for an identifier.
+     * Typically a "never" schema which forbids any nodes with that type.
+     */
+    readonly defaultTreeSchema: TreeSchema;
+
+    /**
+     * Schema used when there is no schema explicitly specified for an identifier.
+     * Typically an "empty" schema which forbids any field with that type from having children.
+     * TODO: maybe this must be an empty field? Anything else might break things.
+     */
+    readonly defaultGlobalFieldSchema: FieldSchema;
 }

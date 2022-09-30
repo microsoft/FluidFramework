@@ -5,15 +5,16 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
-import { ISnapshotTreeEx } from "./contracts";
 import {
     assertBlobCoreInstance,
+    getStringInstance,
     assertBoolInstance,
     assertNodeCoreInstance,
     assertNumberInstance,
-    getAndValidateNodeProps,
+    getNodeProps,
     NodeCore,
     NodeTypes,
     TreeBuilder,
@@ -34,12 +35,28 @@ interface ISnapshotSection {
 function readBlobSection(node: NodeTypes) {
     assertNodeCoreInstance(node, "TreeBlobs should be of type NodeCore");
     const blobs: Map<string, ArrayBuffer> = new Map();
-    for (let count = 0; count < node.length; ++count) {
-        const blob = node.getNode(count);
-        const records = getAndValidateNodeProps(blob, ["id", "data"]);
+    for (const blob of node) {
+        assertNodeCoreInstance(blob, "blob should be node");
+
+        /**
+         * Perf optimization - the most common cases!
+         * This is essentially unrolling code below for faster processing
+         * It speeds up tree parsing by 2-3x times!
+         */
+        if (blob.length === 4 && blob.getMaybeString(0) === "id" && blob.getMaybeString(2) === "data") {
+            // "id": <node name>
+            // "data": <blob>
+            blobs.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
+            continue;
+        }
+
+        /**
+         * More generalized workflow
+         */
+        const records = getNodeProps(blob);
         assertBlobCoreInstance(records.data, "data should be of BlobCore type");
-        assertBlobCoreInstance(records.id, "blob id should be of BlobCore type");
-        blobs.set(records.id.toString(), records.data.arrayBuffer);
+        const id = getStringInstance(records.id, "blob id should be string");
+        blobs.set(id, records.data.arrayBuffer);
     }
     return blobs;
 }
@@ -51,7 +68,7 @@ function readBlobSection(node: NodeTypes) {
 function readOpsSection(node: NodeTypes) {
     assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
     const ops: ISequencedDocumentMessage[] = [];
-    const records = getAndValidateNodeProps(node, ["firstSequenceNumber", "deltas"]);
+    const records = getNodeProps(node);
     assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
     assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
     for (let i = 0; i < records.deltas.length; ++i) {
@@ -67,31 +84,79 @@ function readOpsSection(node: NodeTypes) {
  * @param node - tree node to de-serialize from
  */
 function readTreeSection(node: NodeCore) {
-    const snapshotTree: ISnapshotTreeEx = {
+    const trees = {};
+    const snapshotTree: ISnapshotTree = {
         blobs: {},
-        commits: {},
-        trees: {},
+        trees,
     };
-    for (let count = 0; count < node.length; count++) {
-        const treeNode = node.getNode(count);
-        const records = getAndValidateNodeProps(treeNode,
-            ["name", "value", "children", "unreferenced"], false);
-        assertBlobCoreInstance(records.name, "Path should be of BlobCore");
-        const path = records.name.toString();
-        if (records.value !== undefined) {
-            assertBlobCoreInstance(records.value, "Blob value should be BlobCore");
-            snapshotTree.blobs[path] = records.value.toString();
-        } else if (records.children !== undefined) {
-            assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
-            snapshotTree.trees[path] = readTreeSection(records.children);
-        } else {
-            snapshotTree.trees[path] = { blobs: {}, commits: {}, trees: {} };
+    for (const treeNode of node) {
+        assertNodeCoreInstance(treeNode, "tree nodes should be nodes");
+
+        /**
+         * Perf optimization - the most common cases!
+         * This is essentially unrolling code below for faster processing
+         * It speeds up tree parsing by 2-3x times!
+         */
+         const length = treeNode.length;
+         if (length > 0 && treeNode.getMaybeString(0) === "name") {
+            if (length === 4) {
+                const content = treeNode.getMaybeString(2);
+                // "name": <node name>
+                // "children": <blob id>
+                if (content === "children") {
+                    trees[treeNode.getString(1)] = readTreeSection(treeNode.getNode(3));
+                    continue;
+                }
+                // "name": <node name>
+                // "value": <blob id>
+                if (content === "value") {
+                    snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
+                    continue;
+                }
+            }
+
+            // "name": <node name>
+            // "nodeType": 3
+            // "value": <blob id>
+            if (length === 6 &&
+                    treeNode.getMaybeString(2) === "nodeType" &&
+                    treeNode.getMaybeString(4) === "value") {
+                snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
+                continue;
+            }
+
+            // "name": <node name>
+            // "unreferenced": true
+            // "children": <blob id>
+            if (length === 6 &&
+                    treeNode.getMaybeString(2) === "unreferenced" &&
+                    treeNode.getMaybeString(4) === "children") {
+                trees[treeNode.getString(1)] = readTreeSection(treeNode.getNode(5));
+                assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
+                snapshotTree.unreferenced = true;
+                continue;
+            }
         }
+
+        /**
+         * More generalized workflow
+         */
+        const records = getNodeProps(treeNode);
+
         if (records.unreferenced !== undefined) {
             assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
-            const unreferenced = records.unreferenced.valueOf();
-            assert(unreferenced, 0x281 /* "Unreferenced if present should be true" */);
-            snapshotTree.unreferenced = unreferenced;
+            assert(records.unreferenced, 0x281 /* "Unreferenced if present should be true" */);
+            snapshotTree.unreferenced = true;
+        }
+
+        const path = getStringInstance(records.name, "Path name should be string");
+        if (records.value !== undefined) {
+            snapshotTree.blobs[path] = getStringInstance(records.value, "Blob value should be string");
+        } else if (records.children !== undefined) {
+            assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
+            trees[path] = readTreeSection(records.children);
+        } else {
+            trees[path] = { blobs: {}, trees: {} };
         }
     }
     return snapshotTree;
@@ -103,14 +168,12 @@ function readTreeSection(node: NodeCore) {
  */
 function readSnapshotSection(node: NodeTypes): ISnapshotSection {
     assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
-    const records = getAndValidateNodeProps(node,
-        ["id", "sequenceNumber", "treeNodes"]);
+    const records = getNodeProps(node);
 
     assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
     assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
-    assertBlobCoreInstance(records.id, "snapshotId should be BlobCore");
     const snapshotTree: ISnapshotTree = readTreeSection(records.treeNodes);
-    snapshotTree.id = records.id.toString();
+    snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
     const sequenceNumber = records.sequenceNumber.valueOf();
     return {
         sequenceNumber,
@@ -123,25 +186,24 @@ function readSnapshotSection(node: NodeTypes): ISnapshotSection {
  * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
  * @returns - tree, blobs and ops from the snapshot.
  */
-export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotContents {
-    const builder = TreeBuilder.load(buffer);
+export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLogger): ISnapshotContents {
+    const builder = TreeBuilder.load(new ReadBuffer(buffer), logger);
     assert(builder.length === 1, 0x219 /* "1 root should be there" */);
     const root = builder.getNode(0);
 
-    const records = getAndValidateNodeProps(root,
-        ["mrv", "cv", "lsn", "snapshot", "blobs", "deltas"], false);
+    const records = getNodeProps(root);
 
-    assertBlobCoreInstance(records.mrv, "minReadVersion should be of BlobCore type");
-    assertBlobCoreInstance(records.cv, "createVersion should be of BlobCore type");
+    const mrv = getStringInstance(records.mrv, "minReadVersion should be string");
+    const cv = getStringInstance(records.cv, "createVersion should be string");
     if (records.lsn !== undefined) {
         assertNumberInstance(records.lsn, "lsn should be a number");
     }
 
-    assert(parseFloat(snapshotMinReadVersion) >= parseFloat(records.mrv.toString()),
+    assert(parseFloat(snapshotMinReadVersion) >= parseFloat(mrv),
         0x20f /* "Driver min read version should >= to server minReadVersion" */);
-    assert(parseFloat(records.cv.toString()) >= parseFloat(snapshotMinReadVersion),
+    assert(parseFloat(cv) >= parseFloat(snapshotMinReadVersion),
         0x210 /* "Snapshot should be created with minReadVersion or above" */);
-    assert(currentReadVersion === records.cv.toString(),
+    assert(currentReadVersion === cv,
         0x2c2 /* "Create Version should be equal to currentReadVersion" */);
 
     return {

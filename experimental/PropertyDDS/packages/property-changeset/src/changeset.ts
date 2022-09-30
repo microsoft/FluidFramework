@@ -341,11 +341,9 @@ export class ChangeSet {
                 if (baseIsSetChange) {
                     // we have to convert back to a string, if it had been converted before
                     let newValue;
-                    if (isEmpty(in_baseChanges[in_changedKey])) {
-                        newValue = "";
-                    } else {
-                        newValue = in_baseChanges[in_changedKey].insert[0][1];
-                    }
+                    newValue = isEmpty(in_baseChanges[in_changedKey])
+                        ? ""
+                        : in_baseChanges[in_changedKey].insert[0][1];
                     if (oldValue !== undefined) {
                         in_baseChanges[in_changedKey] = {
                             value: newValue,

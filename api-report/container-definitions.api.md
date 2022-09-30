@@ -28,6 +28,7 @@ import { ISequencedProposal } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
@@ -77,9 +78,16 @@ export interface IAudience extends EventEmitter {
 
 // @public
 export interface IAudienceOwner extends IAudience {
-    addMember(clientId: string, details: IClient): any;
-    clear(): any;
+    addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;
+}
+
+// @public
+export interface IBatchMessage {
+    // (undocumented)
+    contents: string;
+    // (undocumented)
+    metadata: Record<string, unknown> | undefined;
 }
 
 // @public
@@ -179,9 +187,13 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
+    readonly submitBatchFn: (batch: IBatchMessage[]) => number;
+    // @deprecated (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
+    // (undocumented)
+    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)

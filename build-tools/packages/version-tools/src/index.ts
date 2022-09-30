@@ -4,6 +4,20 @@
  */
 
 export * from "./bumpTypes";
-export * from "./internalVersionScheme";
-export * from "./schemes";
-export { incRange } from "./semver";
+export {
+    changePreReleaseIdentifier,
+    getVersionRange,
+    fromInternalScheme,
+    isInternalVersionScheme,
+    toInternalScheme,
+} from "./internalVersionScheme";
+export {
+    bumpVersionScheme,
+    detectVersionScheme,
+    getLatestReleaseFromList,
+    isVersionScheme,
+    sortVersions,
+    VersionScheme,
+} from "./schemes";
+export { bumpRange, detectBumpType, isPrereleaseVersion } from "./semver";
+export { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";

@@ -41,6 +41,18 @@ describe("internalScheme", () => {
             assert.isFalse(result);
         });
 
+        it("2.0.0-internal.1.1.0.123 is a valid internal prerelease version", () => {
+            const input = `2.0.0-internal.1.1.0.123`;
+            const result = isInternalVersionScheme(input, true);
+            assert.isTrue(result);
+        });
+
+        it("2.0.0-internal.1.1.0 is a valid internal version when prerelease is true", () => {
+            const input = `2.0.0-internal.1.1.0`;
+            const result = isInternalVersionScheme(input, true);
+            assert.isTrue(result);
+        });
+
         it("2.0.0 is not internal scheme (no prerelease)", () => {
             const input = `2.0.0`;
             const result = isInternalVersionScheme(input);
@@ -81,6 +93,15 @@ describe("internalScheme", () => {
             assert.strictEqual(calculated.version, expected);
         });
 
+        it("parses 2.0.0-internal.1.1.0.12345", () => {
+            const input = `2.0.0-internal.1.1.0.12345`;
+            const expected = `1.1.0-12345`;
+            const [_, calculated] = fromInternalScheme(input, true);
+            assert.strictEqual(calculated.version, expected);
+
+            assert.throws(() => fromInternalScheme(input));
+        });
+
         it("throws on 2.0.0-alpha.1.0.0 (must use internal)", () => {
             const input = `2.0.0-alpha.1.0.0`;
             assert.throws(() => fromInternalScheme(input));
@@ -105,6 +126,13 @@ describe("internalScheme", () => {
             assert.strictEqual(calculated.version, expected);
         });
 
+        it("converts 1.1.0-12345.12 to internal version with public version 2.0.0", () => {
+            const input = `1.1.0-12345.12`;
+            const expected = `2.0.0-internal.1.1.0.12345.12`;
+            const calculated = toInternalScheme("2.0.0", input, true);
+            assert.strictEqual(calculated.version, expected);
+        });
+
         it("throws when resulting version does not conform to the scheme", () => {
             const input = `1.0.0`;
             assert.throws(() => toInternalScheme("1.2.2", input));
@@ -124,7 +152,7 @@ describe("internalScheme", () => {
             assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.2`, range));
             assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.3`, range));
 
-            // Check that minor and major bumps do not saisfy the range
+            // Check that minor and major bumps do not satisfy the range
             assert.isFalse(semver.satisfies(`2.0.0-internal.1.1.0`, range));
             assert.isFalse(semver.satisfies(`2.0.0-internal.2.1.0`, range));
         });
@@ -141,9 +169,26 @@ describe("internalScheme", () => {
             assert.isTrue(semver.satisfies(`2.0.0-internal.1.2.2`, range));
             assert.isTrue(semver.satisfies(`2.0.0-internal.1.3.3`, range));
 
-            // Check that major bumps do not saisfy the range
+            // Check that major bumps do not satisfy the range
             assert.isFalse(semver.satisfies(`2.0.0-internal.2.0.0`, range));
             assert.isFalse(semver.satisfies(`2.0.0-internal.3.1.0`, range));
+        });
+
+        // Skipped for now because they are known to fail. We'll enable them once we've determined how to number our PR
+        // builds
+        it.skip("Prerelease versions do not satisfy ranges", () => {
+            assert.isFalse(
+                semver.satisfies(
+                    `2.0.0-internal.1.1.1.95400`,
+                    `>=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0`,
+                ),
+            );
+            assert.isFalse(
+                semver.satisfies(
+                    `2.0.0-internal.1.0.1.95400`,
+                    `>=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0`,
+                ),
+            );
         });
     });
 });

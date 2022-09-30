@@ -143,7 +143,6 @@ export class DataStores implements IDisposable {
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ),
                     writeGCDataAtRoot: this.writeGCDataAtRoot,
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             } else {
                 if (typeof value !== "object") {
@@ -164,7 +163,6 @@ export class DataStores implements IDisposable {
                     snapshotTree,
                     isRootDataStore: undefined,
                     writeGCDataAtRoot: this.writeGCDataAtRoot,
-                    disableIsolatedChannels: this.runtime.disableIsolatedChannels,
                 });
             }
             this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -245,13 +243,11 @@ export class DataStores implements IDisposable {
                         entries: [createAttributesBlob(
                             pkg,
                             true /* isRootDataStore */,
-                            this.runtime.disableIsolatedChannels,
                         )],
                     },
                 },
             ),
             writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             pkg,
         });
 
@@ -356,7 +352,6 @@ export class DataStores implements IDisposable {
             snapshotTree: undefined,
             isRootDataStore: isRoot,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
         });
         this.contexts.addUnbound(context);
         return context;
@@ -378,7 +373,6 @@ export class DataStores implements IDisposable {
             snapshotTree: undefined,
             isRootDataStore: false,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
-            disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             createProps: props,
         });
         this.contexts.addUnbound(context);
@@ -475,12 +469,7 @@ export class DataStores implements IDisposable {
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-        let eventName: "attaching" | "attached";
-        if (attachState === AttachState.Attaching) {
-            eventName = "attaching";
-        } else {
-            eventName = "attached";
-        }
+        const eventName = attachState === AttachState.Attaching ? "attaching" : "attached";
         for (const [, context] of this.contexts) {
             // Fire only for bounded stores.
             if (!this.contexts.isNotBound(context.id)) {
@@ -572,11 +561,15 @@ export class DataStores implements IDisposable {
 
     /**
      * Generates data used for garbage collection. It does the following:
+     *
      * 1. Calls into each child data store context to get its GC data.
+     *
      * 2. Prefixes the child context's id to the GC nodes in the child's GC data. This makes sure that the node can be
-     *    identified as belonging to the child.
+     * identified as belonging to the child.
+     *
      * 3. Adds a GC node for this channel to the nodes received from the children. All these nodes together represent
-     *    the GC data of this channel.
+     * the GC data of this channel.
+     *
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
     public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {

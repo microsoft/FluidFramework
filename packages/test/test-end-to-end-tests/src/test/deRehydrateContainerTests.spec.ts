@@ -29,7 +29,7 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import {
     getSnapshotTreeFromSerializedContainer,
 // eslint-disable-next-line import/no-internal-modules
@@ -114,8 +114,6 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
 }
 
 describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
-    let disableIsolatedChannels = false;
-
     function assertSubtree(tree: ISnapshotTreeWithBlobContents, key: string, msg?: string):
         ISnapshotTreeWithBlobContents {
         const subTree = tree.trees[key];
@@ -123,9 +121,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         return subTree;
     }
 
-    const assertChannelsTree = (rootOrDatastore: ISnapshotTreeWithBlobContents) => disableIsolatedChannels
-        ? rootOrDatastore
-        : assertSubtree(rootOrDatastore, ".channels");
+    const assertChannelsTree = (rootOrDatastore: ISnapshotTreeWithBlobContents) =>
+        assertSubtree(rootOrDatastore, ".channels");
     const assertProtocolTree = (root: ISnapshotTreeWithBlobContents) => assertSubtree(root, ".protocol");
 
     function assertChannelTree(rootOrDatastore: ISnapshotTreeWithBlobContents, key: string, msg?: string) {
@@ -195,7 +192,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         ]);
         const codeLoader = new LocalCodeLoader(
             [[codeDetails, factory]],
-            { summaryOptions: { disableIsolatedChannels } });
+            {});
         const testLoader = new Loader({
             urlResolver: provider.urlResolver,
             documentServiceFactory: provider.documentServiceFactory,
@@ -426,12 +423,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
-        itExpects("Storage in detached container",
-        [
-            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
-            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
-        ],
-        async () => {
+        it("Storage in detached container", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
 
@@ -568,7 +560,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create and reference another dataStore
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
             await provider.ensureSynchronized();
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
@@ -608,15 +599,14 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Rehydrate container, create but don't load a data store. Attach rehydrated container and load " +
             "container 2 from another loader. Then load the created dataStore from container 2, make changes to dds " +
             "in it check reflection of changes in rehydrated container",
-        async () => {
+        async function() {
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
 
             // Create and reference another dataStore
             const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             defaultDataStore.root.set("dataStore2", dataStore2.handle);
-            //* Unnecessary?
-            await provider.ensureSynchronized();
+            await provider.ensureSynchronized(this.timeout() / 3);
 
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");
@@ -797,13 +787,4 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
     // Run once with isolated channels
     tests();
-
-    // Run again with isolated channels disabled
-    describe("With isolated channels disabled", () => {
-        before(() => {
-            disableIsolatedChannels = true;
-        });
-
-        tests();
-    });
 });

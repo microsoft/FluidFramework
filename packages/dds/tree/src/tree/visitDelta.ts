@@ -9,6 +9,7 @@ import * as Delta from "./delta";
 
 /**
  * Implementation notes:
+ *
  * Because visitors are based on describing changes at some location in the tree (with the exception of "build"),
  * we want to ensure that visitors visit changes in an order that guarantees all changes are describable in terms
  * of some position in the tree. This means that we need to detach content bottom-up and attach content top-down.
@@ -17,33 +18,42 @@ import * as Delta from "./delta";
  *
  * The second challenge, is that of the inability of the visitor to move-in content that has yet to be moved-out.
  * This leads to a two-pass algorithm, but there are two degrees for freedom to consider:
- * 1) Whether inserts should be performed in the first pass whenever possible (some are not: inserts below a move-ins
- *   for which we have not yet seen the matching move-out).
+ *
+ * 1. Whether inserts should be performed in the first pass whenever possible (some are not: inserts below a move-ins
+ * for which we have not yet seen the matching move-out).
  * Pros: The path above the insertion point is walked once instead of twice
  * Cons: The paths within the inserted content risk being walked twice instead of once (once for building the content,
  * once for traversing the tree to reach move-in marks in the second phase).
  *
- * 2) Whether move-ins for which we have the move-out content should be performed in the first pass.
+ * 2. Whether move-ins for which we have the move-out content should be performed in the first pass.
  * Pros: The path above the move-in point is walked once instead of twice
  * Cons: We now have to record which of the move-ins we did not perform in the first pass. We could build a trie of
  * those to reduce the amount of sifting we have to do on the second pass.
  *
  * The presence of a move table, which lists the src and dst paths for each move, could be leveraged to make some of
  * these option more efficient:
+ *
  * - If inserts are allowed in the first pass and move-ins are not allowed in the first pass, then the move table
- *   describes exactly which parts of the delta need applying in the second pass.
+ * describes exactly which parts of the delta need applying in the second pass.
+ *
  * - If inserts and move-ins are allowed in the first pass then having a boolean flag for each entry in the move table
- *   that describes whether the move has been attached, or having a set for that describes which entries remain, would
- *   describe which parts of the delta  need applying in the second pass.
+ * that describes whether the move has been attached, or having a set for that describes which entries remain, would
+ * describe which parts of the delta  need applying in the second pass.
  *
  * Current implementation:
+ *
  * - Performs inserts in the first pass
+ *
  * - Does not perform move-ins in the first pass
+ *
  * - Skips the second pass if no move-outs were encountered in the first pass
+ *
  * - Does not leverage the move table
  *
  * Future work:
+ *
  * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial checkouts).
+ *
  * - Leverage move table when it gets added to Delta
 */
 
@@ -71,7 +81,7 @@ export interface DeltaVisitor {
     onMoveIn(index: number, count: number, id: Delta.MoveId): void;
     onSetValue(value: Value): void;
     // TODO: better align this with ITreeCursor:
-    // maybe rename it's up and down to enter / exit? Maybe Also)?
+    // maybe rename its up and down to enter / exit? Maybe Also)?
     // Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match
     // this visitor?
     enterNode(index: number): void;
@@ -95,20 +105,20 @@ type Pass = (delta: Delta.MarkList, props: PassProps) => void;
 
 interface ModifyLike {
     setValue?: Value;
-    fields?: Delta.FieldMarks<Delta.Mark>;
+    fields?: Delta.FieldMarks;
 }
 
-function visitFieldMarks(fields: Delta.FieldMarks<Delta.Mark>, props: PassProps, func: Pass): void {
+function visitFieldMarks(fields: Delta.FieldMarks, props: PassProps, func: Pass): void {
     for (const [key, field] of fields) {
         props.visitor.enterField(key);
-        func(field, props);
+        func(field, { ...props, startIndex: 0 });
         props.visitor.exitField(key);
     }
 }
 
 function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
     const { startIndex, visitor } = props;
-    visitor.enterNode(startIndex || 0);
+    visitor.enterNode(startIndex ?? 0);
     // Note that the `in` operator return true for properties that are present on the object even if they
     // are set to `undefined. This is leveraged here to represent the fact that the value should be set to
     // `undefined` as opposed to leaving the value untouched.
@@ -118,7 +128,7 @@ function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
     if (modify.fields !== undefined) {
         visitFieldMarks(modify.fields, props, func);
     }
-    visitor.exitNode(startIndex || 0);
+    visitor.exitNode(startIndex ?? 0);
 }
 
 function firstPass(delta: Delta.MarkList, props: PassProps): void {
@@ -184,8 +194,8 @@ function secondPass(delta: Delta.MarkList, props: PassProps): void {
             const type = mark.type;
             switch (type) {
                 case Delta.MarkType.ModifyAndDelete:
-                case Delta.MarkType.Delete:
                 case Delta.MarkType.ModifyAndMoveOut:
+                case Delta.MarkType.Delete:
                 case Delta.MarkType.MoveOut:
                     // Handled in the first pass
                     break;

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
+import { singleTextCursorNew } from "../../feature-libraries";
 import { FieldKey, Delta, DeltaVisitor, visitDelta } from "../../tree";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -56,7 +57,7 @@ function testTreeVisit(marks: Delta.MarkList, expected: Readonly<VisitScript>): 
 const rootKey: FieldKey = brand("root");
 const fooKey: FieldKey = brand("foo");
 const nodeX = { type: jsonString.name, value: "X" };
-const content = [nodeX];
+const content = [singleTextCursorNew(nodeX)];
 
 describe("visit", () => {
     it("empty delta", () => {
@@ -183,5 +184,49 @@ describe("visit", () => {
             ["exitNode", 0],
         ];
         testTreeVisit(delta, expected);
+    });
+
+    it("move children", () => {
+        const moveId: Delta.MoveId = brand(1);
+        const moveOut: Delta.MoveOut = {
+            type: Delta.MarkType.MoveOut,
+            count: 2,
+            moveId,
+        };
+
+        const moveIn: Delta.MoveIn = {
+            type: Delta.MarkType.MoveIn,
+            moveId,
+        };
+
+        const delta: Delta.Root = new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                fields: new Map([[
+                    fooKey,
+                    [2, moveOut, 3, moveIn],
+                ]]),
+            }],
+        ]]);
+
+        const expected: VisitScript = [
+            ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["onMoveOut", 2, 2, moveId],
+            ["exitField", fooKey],
+            ["exitNode", 0],
+            ["exitField", rootKey],
+            ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["onMoveIn", 5, 2, moveId],
+            ["exitField", fooKey],
+            ["exitNode", 0],
+            ["exitField", rootKey],
+        ];
+
+        testVisit(delta, expected);
     });
 });

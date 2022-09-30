@@ -4,9 +4,10 @@
  */
 
  /**
-  * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidPackageEnvironment}
+  * Specifies an environment on Fluid property of an {@link IFluidPackage}.
+  *
+  * @deprecated In favor of {@link @fluidframework/container-definitions#IFluidPackageEnvironment}
   * to have code loading modules in same package.
-  * Specifies an environment on Fluid property of a IFluidPackage
   */
 export interface IFluidPackageEnvironment {
     /**
@@ -31,12 +32,13 @@ export interface IFluidPackageEnvironment {
 }
 
 /**
- * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidPackage}
- * to have code loading modules in same package.
  * Fluid-specific properties expected on a package to be loaded by the code loader.
  * While compatible with the npm package format it is not necessary that that package is an
  * npm package:
  * {@link https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid}
+ *
+ * @deprecated In favor of {@link @fluidframework/container-definitions#IFluidPackage}
+ * to have code loading modules in same package.
  */
 export interface IFluidPackage {
     /**
@@ -62,10 +64,12 @@ export interface IFluidPackage {
 }
 
 /**
- * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#isFluidPackage}
+ * Check if the package.json defines a Fluid package.
+ *
+ * @deprecated in favor of {@link @fluidframework/container-definitions#isFluidPackage}
  * to have code loading modules in same package.
- * Check if the package.json defines a Fluid package
- * @param pkg - the package json data to check if it is a Fluid package.
+ *
+ * @param pkg - The package json data to check if it is a Fluid package.
  */
 export const isFluidPackage = (pkg: any): pkg is Readonly<IFluidPackage> =>
     typeof pkg === "object"
@@ -73,18 +77,20 @@ export const isFluidPackage = (pkg: any): pkg is Readonly<IFluidPackage> =>
     && typeof pkg?.fluid === "object";
 
 /**
- * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetailsConfig}
+ * Package manager configuration. Provides a key value mapping of config values.
+ *
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsConfig}
  * to have code loading modules in same package.
- * Package manager configuration. Provides a key value mapping of config values
  */
 export interface IFluidCodeDetailsConfig {
     readonly [key: string]: string;
 }
 
 /**
- * @deprecated in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetails}
+ * Data structure used to describe the code to load on the Fluid document.
+ *
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetails}
  * to have code loading modules in same package.
- * Data structure used to describe the code to load on the Fluid document
  */
 export interface IFluidCodeDetails {
     /**
@@ -100,8 +106,8 @@ export interface IFluidCodeDetails {
 }
 
 /**
- * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#isFluidCodeDetails}
- * to have code loading modules in same package
+ * @deprecated in favor of {@link @fluidframework/container-definitions#isFluidCodeDetails}
+ * to have code loading modules in same package.
 */
 export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluidCodeDetails> => {
     const maybeCodeDetails = details as Partial<IFluidCodeDetails> | undefined;
@@ -111,14 +117,13 @@ export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluid
 };
 
 /**
- * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetailsComparer}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsComparer}
  * to have code loading modules in same package.
 */
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer = "IFluidCodeDetailsComparer";
 
 /**
- * @deprecated  in favor of
- * {@link @fluidframework/container-definitions/fluidPackage.ts#IProvideFluidCodeDetailsComparer}
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IProvideFluidCodeDetailsComparer}
  * to have code loading modules in same package.
 */
 export interface IProvideFluidCodeDetailsComparer {
@@ -126,9 +131,10 @@ export interface IProvideFluidCodeDetailsComparer {
 }
 
 /**
- * @deprecated  in favor of {@link @fluidframework/container-definitions/fluidPackage.ts#IFluidCodeDetailsComparer}
- * to have code loading modules in same package.
  * Provides capability to compare Fluid code details.
+ *
+ * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsComparer}
+ * to have code loading modules in same package.
  */
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
 
@@ -142,14 +148,18 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
 
 /* eslint-disable max-len */
     /**
-     * Return a number representing the ascending sort order of the `a` and `b` code details;
-     *      `< 0` if `a < b`.
-     *      `= 0` if `a === b`.
-     *      `> 0` if `a > b`.
-     *      `undefined` if `a` is not comparable to `b`.
+     * Returns a number representing the ascending sort order of the `a` and `b` code details:
+     *
+     * - `< 0` if `a < b`.
+     *
+     * - `= 0` if `a === b`.
+     *
+     * - `> 0` if `a > b`.
+     *
+     * - `undefined` if `a` is not comparable to `b`.
      *
      * Similar semantics to:
-     * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description | Array.sort}
+     * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#description | Array.sort}
      */
     compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
 /* eslint-enable max-len */
