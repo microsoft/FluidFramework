@@ -38,7 +38,6 @@ const socketReferenceBufferTime = 2000;
 
 export interface ISocketEvents extends IEvent {
     (event: "server_disconnect", listener: (error: IFluidErrorBase & OdspError) => void);
-    (event: "disconnect_document", listener: (error: IFluidErrorBase & OdspError, clientId: string) => void);
 }
 
 class SocketReference extends TypedEventEmitter<ISocketEvents> {
@@ -134,15 +133,22 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             this.closeSocket();
         };
 
-        // The server always closes the socket after sending this message
-        // fully remove the socket reference now
-        socket.on("server_disconnect", (socketError: IOdspSocketError) => {
-            disconnectHandler(socketError);
-        });
+        // Server sends this event when it wants to disconnect a particular client in which case the client id would
+        // be present or if it wants to disconnect all the clients. The server always closes the socket in case all
+        // clients needs to be disconnected. So fully remove the socket reference in this case.
+        socket.on("server_disconnect", (socketError: IOdspSocketError, clientId?: string) => {
+            // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
+            // filter out retryable vs. non-retryable cases.
+            const error = errorObjectFromSocketError(socketError, "server_disconnect");
+            error.canRetry = true;
 
-        // Server sends this event when it wants to disconnected a particular client.
-        socket.on("disconnect_document", (clientId: string, socketError: IOdspSocketError) => {
-            disconnectHandler(socketError, clientId);
+            // see comment in disconnected() getter
+            // Setting it here to ensure socket reuse does not happen if new request to connect
+            // comes in from "disconnect" listener below, before we close socket.
+            this.isPendingInitialConnection = false;
+
+            this.emit("server_disconnect", error, clientId);
+            this.closeSocket();
         });
     }
 
