@@ -61,6 +61,10 @@
   },
   "typeValidation": {
     "version": "0.21.1000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_ITelemetryBaseEvent": {
+        "backCompat": false
+      }
+    }
   }
 }

@@ -20,7 +20,7 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
 /**
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
- * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
+ * party scenarios. For example, tags are used to mark sensitive information that should not be stored in logs.
  */
 export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType;
@@ -29,7 +29,7 @@ export interface ITaggedTelemetryPropertyType {
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
- * @deprecated interface will be repurposed to support flat arrays and objects.
+ * @deprecated interface will be repurposed to support flat arrays and objects for FF internal logging APIs
  */
 export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
@@ -39,20 +39,20 @@ export interface ITelemetryProperties {
  * Set of properties defined for the base logger to use only primitive types.
  */
 // eslint-disable-next-line @rushstack/no-new-null
-export type TelemetryBaseEventPropertyType = string | number | boolean | null | undefined;
+export type TelemetryBaseEventPropertyValue = string | number | boolean | null | undefined;
 
 /**
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
- * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
+ * party scenarios. For example, tags are used to mark sensitive information that should not be stored in logs.
  */
-export interface ITaggedBaseTelemetryPropertyType {
+export interface ITaggedBaseTelemetryProperty {
     value: TelemetryEventPropertyType;
     tag: string;
 }
 
 export interface ITelemetryBaseProperties {
-    [index: string]: TelemetryBaseEventPropertyType | ITaggedBaseTelemetryPropertyType;
+    [index: string]: TelemetryBaseEventPropertyValue | ITaggedBaseTelemetryProperty;
 }
 
 /**
@@ -61,7 +61,7 @@ export interface ITelemetryBaseProperties {
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  */
-export interface ITelemetryBaseEvent extends ITelemetryProperties {
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     category: string;
     eventName: string;
 }

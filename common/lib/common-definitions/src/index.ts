@@ -22,7 +22,7 @@ export type {
 } from "./events";
 export type {
     ILoggingError,
-    ITaggedBaseTelemetryPropertyType,
+    ITaggedBaseTelemetryProperty,
     ITaggedTelemetryPropertyType,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
@@ -32,7 +32,7 @@ export type {
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
     ITelemetryProperties,
-    TelemetryBaseEventPropertyType,
+    TelemetryBaseEventPropertyValue,
     TelemetryEventCategory,
     TelemetryEventPropertyType,
 } from "./logger";

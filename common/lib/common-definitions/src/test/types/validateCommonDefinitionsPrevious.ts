@@ -251,6 +251,7 @@ declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
 declare function use_old_InterfaceDeclaration_ITelemetryBaseEvent(
     use: TypeOnly<old.ITelemetryBaseEvent>);
 use_old_InterfaceDeclaration_ITelemetryBaseEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryBaseEvent());
 
 /*
