@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ThemeProvider } from "@fluentui/react";
-import { createTheme, Spinner } from "office-ui-fabric-react";
+import { Spinner, Stack, ThemeProvider, createTheme, StackItem, mergeStyles } from "@fluentui/react";
 import React from "react";
 
 import { ConnectionState, ContainerSchema, IFluidContainer, SharedString } from "fluid-framework";
@@ -13,6 +12,8 @@ import {
     TinyliciousClient,
     TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
+
+import { CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 
 import { SessionDataView } from "../../components";
 
@@ -145,25 +146,45 @@ const appTheme = createTheme({
     },
 });
 
+const rootStackStyles = mergeStyles({
+    padding: "5px",
+    height: "100vh",
+});
+
+const viewPaneStackStyles = mergeStyles({
+        padding: "5px",
+        height: "100%",
+    });
+
 export function App(): React.ReactElement {
     // Load the collaborative SharedString object
     const containerAndAudience = useContainerInfo();
 
-    // Create the view using CollaborativeTextArea & SharedStringHelper
+    // Create the view using CollaborativeTextArea
     if (containerAndAudience !== undefined) {
         const { container, containerId, audience } = containerAndAudience;
+        const sharedString = container.initialObjects.sharedString as SharedString;
         return (
-            <div className="app">
-                <ThemeProvider theme={appTheme}>
+            <ThemeProvider theme={appTheme}>
+            <Stack horizontal className={rootStackStyles}>
+                <StackItem className={viewPaneStackStyles}>
+                    <CollaborativeTextView text={sharedString} />
+                </StackItem>
+                <StackItem className={viewPaneStackStyles}>
                     <SessionDataView
-                        container={container}
-                        containerId={containerId}
-                        audience={audience}
-                    />
-                </ThemeProvider>
-            </div>
+                            container={container}
+                            containerId={containerId}
+                            audience={audience}
+                        />
+                </StackItem>
+            </Stack>
+                    </ThemeProvider>
         );
     } else {
-        return <div><Spinner /> Loading Fluid container...</div>;
+        return (
+            <div>
+                <Spinner /> Loading Fluid container...
+            </div>
+        );
     }
 }

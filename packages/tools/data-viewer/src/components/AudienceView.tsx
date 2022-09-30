@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack } from "office-ui-fabric-react";
+import { Stack } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 
 import { IMember, IServiceAudience } from "fluid-framework";
