@@ -73,8 +73,8 @@ also available in the Fluid build and release tool (`flub`). This is accomplishe
 $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
-$ fluv (--version)
-@fluid-tools/version-tools/0.4.6000 linux-x64 node-v14.20.0
+$ fluv (--version|-V)
+@fluid-tools/version-tools/0.4.7000
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
@@ -153,7 +153,7 @@ EXAMPLES
     $ fluv version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.6000/dist/commands/version.ts)_
+_See code: [src/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/src/commands/version.ts)_
 
 ## `fluv version latest`
 
@@ -185,6 +185,12 @@ EXAMPLES
     $ fluv version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
 ```
 <!-- commandsstop -->
+
+## Developer notes
+
+This package outputs its build files to `lib/` instead of `dist/` like most of our other packages. The reason is that
+oclif uses the lib folder by convention, and there are oclif bugs that can be avoided by putting stuff in lib. See the
+PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
 
 ## Trademark
 

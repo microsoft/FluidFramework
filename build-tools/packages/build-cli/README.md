@@ -129,8 +129,8 @@ For more detailed usage information see the [release command reference](#flub-re
 $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
-$ flub (--version)
-@fluid-tools/build-cli/0.4.7000 linux-x64 node-v14.20.0
+$ flub (--version|-V)
+@fluid-tools/build-cli/0.4.7000
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -147,13 +147,49 @@ USAGE
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate packageJson`](#flub-generate-packagejson)
+* [`flub generate readme`](#flub-generate-readme)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
 * [`flub release`](#flub-release)
 * [`flub release report`](#flub-release-report)
 * [`flub run bundleStats`](#flub-run-bundlestats)
-* [`flub version VERSION`](#flub-version-version)
-* [`flub version latest`](#flub-version-latest)
+
+## `flub bump PACKAGE_OR_RELEASE_GROUP`
+
+Bumps the version of a release group or package to the next minor, major, or patch version.
+
+```
+USAGE
+  $ flub bump [PACKAGE_OR_RELEASE_GROUP] -t major|minor|patch [--scheme semver|internal|virtualPatch] [-x
+    | --install | --commit |  |  | ] [-v]
+
+ARGUMENTS
+  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
+
+FLAGS
+  -t, --bumpType=<option>  (required) Bump the release group or package to the next version according to this bump type.
+                           <options: major|minor|patch>
+  -v, --verbose            Verbose logging.
+  -x, --skipChecks         Skip all checks.
+  --[no-]commit            Commit changes to a new branch.
+  --[no-]install           Update lockfiles by running 'npm install' automatically.
+  --scheme=<option>        Override the version scheme used by the release group or package.
+                           <options: semver|internal|virtualPatch>
+
+DESCRIPTION
+  Bumps the version of a release group or package to the next minor, major, or patch version.
+
+EXAMPLES
+  Bump @fluidframework/build-common to the next minor version.
+
+    $ flub bump @fluidframework/build-common -t minor
+
+  Bump the server release group to the next major version, forcing the semver version scheme.
+
+    $ flub bump server -t major --scheme semver
+```
+
+_See code: [src/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bump.ts)_
 
 ## `flub bump PACKAGE_OR_RELEASE_GROUP`
 
@@ -370,12 +406,45 @@ USAGE
   $ flub generate packageJson -g client|server|azure|build-tools [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  (required) Name of release group
+  -g, --releaseGroup=<option>  (required) Name of the release group
                                <options: client|server|azure|build-tools>
   -v, --verbose                Verbose logging.
 
 DESCRIPTION
   Generate mono repo package json
+```
+
+## `flub generate readme`
+
+Adds commands to README.md in current directory.
+
+```
+USAGE
+  $ flub generate readme --dir <value> [--multi] [--aliases]
+
+FLAGS
+  --[no-]aliases  include aliases in the command list
+  --dir=<value>   (required) [default: docs] output directory for multi docs
+  --multi         create a different markdown page for each topic
+
+DESCRIPTION
+  Adds commands to README.md in current directory.
+
+  The readme must have any of the following tags inside of it for it to be replaced or else it will do nothing:
+
+  # Usage
+
+  <!-- usage -->
+
+  # Commands
+
+  <!-- commands -->
+
+  # Table of contents
+
+  <!-- toc -->
+
+  Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.
 ```
 
 ## `flub help [COMMAND]`
@@ -407,7 +476,7 @@ USAGE
   $ flub info [-g client|server|azure|build-tools] [-p] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of release group
+  -g, --releaseGroup=<option>  Name of the release group
                                <options: client|server|azure|build-tools>
   -p, --[no-]private           Include private packages (default true).
   -v, --verbose                Verbose logging.
@@ -416,7 +485,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/info.ts)_
+_See code: [src/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/info.ts)_
 
 ## `flub release`
 
@@ -428,7 +497,7 @@ USAGE
     --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of release group
+  -g, --releaseGroup=<option>  Name of the release group
                                <options: client|server|azure|build-tools>
   -p, --package=<value>        Name of package.
   -t, --bumpType=<option>      Version bump type.
@@ -456,7 +525,7 @@ DESCRIPTION
   released.
 ```
 
-_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/release.ts)_
+_See code: [src/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release.ts)_
 
 ## `flub release report`
 
@@ -468,7 +537,7 @@ USAGE
     <value>]] [-p <value> ] [--limit <value> ] [-v]
 
 FLAGS
-  -g, --releaseGroup=<option>  Name of release group
+  -g, --releaseGroup=<option>  Name of the release group
                                <options: client|server|azure|build-tools>
   -o, --output=<value>         Output JSON report files to this location.
   -p, --package=<value>        Name of package.
@@ -531,89 +600,19 @@ USAGE
 
 FLAGS
   -v, --verbose      Verbose logging.
-  --dirname=<value>  [default: /home/tylerbu/code/FluidFramework/build-tools/packages/build-cli/dist/commands/run]
+  --dirname=<value>  [default: /home/tylerbu/code/FluidFramework/build-tools/packages/build-cli/lib/commands/run]
                      Directory
 
 DESCRIPTION
   Generate a report from input bundle stats collected through the collect bundleStats command.
 ```
-
-## `flub version VERSION`
-
-Convert version strings between regular semver and the Fluid internal version scheme.
-
-```
-USAGE
-  $ flub version [VERSION] [--json] [-t major|minor|patch|current] [--publicVersion <value>]
-
-ARGUMENTS
-  VERSION  The version to convert.
-
-FLAGS
-  -t, --type=<option>      bump type
-                           <options: major|minor|patch|current>
-  --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
-
-GLOBAL FLAGS
-  --json  Format output as json.
-
-DESCRIPTION
-  Convert version strings between regular semver and the Fluid internal version scheme.
-
-EXAMPLES
-  The version can be a Fluid internal version.
-
-    $ flub version 2.0.0-internal.1.0.0 --type minor
-
-  The version can also be a semver with a bump type.
-
-    $ flub version 1.0.0 --type minor
-
-  If needed, you can provide a public version to override the default.
-
-    $ flub version 1.0.0 --type patch --publicVersion 3.1.0
-
-  You can use ^ and ~ as a shorthand.
-
-    $ flub version ^1.0.0
-
-  You can use the 'current' bump type to calculate ranges without bumping the version.
-
-    $ flub version 2.0.0-internal.1.0.0 --type current
-```
-
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.4.7000/dist/commands/version.ts)_
-
-## `flub version latest`
-
-Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
-
-```
-USAGE
-  $ flub version latest -r <value> [--json] [--prerelease]
-
-FLAGS
-  -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
-                             multiple versions, or a space-delimited list of versions can be provided using a single
-                             argument.
-  --prerelease               Include prerelease versions. By default, prerelease versions are excluded.
-
-GLOBAL FLAGS
-  --json  Format output as json.
-
-DESCRIPTION
-  Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
-
-EXAMPLES
-  You can use the --versions (-r) flag multiple times.
-
-    $ flub version latest -r 2.0.0 -r 2.0.0-internal.1.0.0 -r 1.0.0 -r 0.56.1000
-
-  You can omit the repeated --versions (-r) flag and pass a space-delimited list instead.
-
-    $ flub version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
-```
 <!-- commandsstop -->
+
+## Developer notes
+
+This package outputs its build files to `lib/` instead of `dist/` like most of our other packages. The reason is that
+oclif uses the lib folder by convention, and there are oclif bugs that can be avoided by putting stuff in lib. See the
+PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
 
 ## Trademark
 
