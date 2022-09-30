@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
-import { ContainerRuntimeMessage } from "./containerRuntime";
+import { ContainerRuntimeMessage, ICompressionRuntimeOptions } from "./containerRuntime";
+import { OpCompressor } from "./opCompressor";
 
 /**
  * Message type used by BatchManager
@@ -20,8 +22,13 @@ export type BatchMessage = IBatchMessage & {
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
+    private readonly opCompressor: OpCompressor;
     private pendingBatch: BatchMessage [] = [];
     private batchContentSize = 0;
+
+    constructor(logger: ITelemetryLogger, private readonly compressionOptions?: ICompressionRuntimeOptions) {
+        this.opCompressor = new OpCompressor(logger);
+    }
 
     // The actual limit is 1Mb (socket.io and Kafka limits)
     // We can't estimate it fully, as we
@@ -62,8 +69,16 @@ export class BatchManager {
 
     public popBatch() {
         const batch = this.pendingBatch;
+        const size = this.batchContentSize;
         this.pendingBatch = [];
         this.batchContentSize = 0;
+
+        if (batch.length > 0
+            && this.compressionOptions !== undefined
+            && this.compressionOptions.minimumBatchSize < this.batchContentSize) {
+            return this.opCompressor.compressBatch(batch, size);
+        }
+
         return batch;
     }
 

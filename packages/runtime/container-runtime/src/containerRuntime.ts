@@ -168,7 +168,6 @@ import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
 import { OpDecompressor } from "./opDecompressor";
-import { OpCompressor } from "./opCompressor";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -814,7 +813,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly mc: MonitoringContext;
 
     private readonly opDecompressor: OpDecompressor = new OpDecompressor();
-    private readonly opCompressor: OpCompressor;
 
     private readonly summarizerClientElection?: SummarizerClientElection;
     /**
@@ -880,7 +878,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
-    private readonly batchManager = new BatchManager();
+    private readonly batchManager: BatchManager;
     private readonly garbageCollector: IGarbageCollector;
 
     // Local copy of incomplete received chunks.
@@ -993,7 +991,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
 
-        this.opCompressor = new OpCompressor(this.mc.logger);
+        this.batchManager = new BatchManager(this.mc.logger, this.runtimeOptions.compressionOptions);
 
         if (this.summaryConfiguration.state === "enabled") {
             this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
@@ -1829,18 +1827,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (this.context.submitBatchFn !== undefined) {
                 const batchToSend: IBatchMessage[] = [];
 
-                let batchContentsLength = 0;
                 for (const message of batch) {
-                    batchContentsLength += message.contents.length;
-                }
-
-                if (this.runtimeOptions.compressionOptions !== undefined
-                    && batchContentsLength > this.runtimeOptions.compressionOptions.minimumBatchSize) {
-                        batchToSend.push(...this.opCompressor.compressBatch(batch, batchContentsLength));
-                } else {
-                    for (const message of batch) {
-                        batchToSend.push({ contents: message.contents, metadata: message.metadata });
-                    }
+                    batchToSend.push({ contents: message.contents, metadata: message.metadata });
                 }
 
                 // returns clientSequenceNumber of last message in a batch

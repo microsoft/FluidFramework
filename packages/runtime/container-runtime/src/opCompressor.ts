@@ -5,7 +5,6 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { IBatchMessage } from "@fluidframework/container-definitions";
 import { compress } from "lz4js";
 import { BatchMessage } from "./batchManager";
 import { CompressionAlgorithms, ContainerRuntimeMessage } from "./containerRuntime";
@@ -20,11 +19,11 @@ export class OpCompressor {
 
     constructor(private readonly logger: ITelemetryLogger) {}
 
-    public compressBatch(batch: BatchMessage[], originalLength: number): IBatchMessage[] {
-        const batchToSend: IBatchMessage[] = [];
+    public compressBatch(batch: BatchMessage[], originalLength: number): BatchMessage[] {
+        const batchToSend: BatchMessage[] = [];
         this.compressedBatchCount++;
         const batchedContents: ContainerRuntimeMessage[] = [];
-
+        console.error(batch);
         for (const message of batch) {
             batchedContents.push(message.deserializedContent);
         }
@@ -44,13 +43,15 @@ export class OpCompressor {
             });
         }
 
-        batchToSend.push({ contents: JSON.stringify({ packedContents: compressedContent }),
+        batchToSend.push({ ...batch[0], contents: JSON.stringify({ packedContents: compressedContent }),
                            metadata: { ...batch[0].metadata, compressed: true },
                            compression: CompressionAlgorithms.lz4 });
 
         for (let i = 1; i < batch.length; i++) {
-            batchToSend.push({ contents: "", metadata: batch[i].metadata });
+            batchToSend.push({ ...batch[i], contents: "", metadata: batch[i].metadata });
         }
+
+        console.error(batchToSend);
 
         return batchToSend;
     }
