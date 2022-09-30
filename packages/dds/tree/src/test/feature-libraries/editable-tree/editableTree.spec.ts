@@ -8,168 +8,23 @@
 import { fail, strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-    NamedTreeSchema, StoredSchemaRepository, namedTreeSchema, ValueSchema, fieldSchema, SchemaData,
-    TreeSchemaIdentifier,
+    StoredSchemaRepository, fieldSchema, SchemaData,
 } from "../../../schema-stored";
 import { IEditableForest, initializeForest } from "../../../forest";
 import { JsonableTree, EmptyKey, Value, rootFieldKey } from "../../../tree";
-import { brand, Brand, clone } from "../../../util";
+import { clone } from "../../../util";
 import {
     defaultSchemaPolicy, getEditableTreeContext, EditableTree, buildForest, getTypeSymbol, UnwrappedEditableField,
-    proxyTargetSymbol, emptyField, FieldKinds, valueSymbol, EditableTreeOrPrimitive, isPrimitiveValue, Multiplicity, singleTextCursorNew,
-    isEmptyTree, UnwrappedEditableSequence, isEditableFieldSequence, isUnwrappedNode,
+    proxyTargetSymbol, FieldKinds, valueSymbol, EditableTreeOrPrimitive, isPrimitiveValue, Multiplicity, singleTextCursorNew,
+    isEmptyTree, isEditableFieldSequence, isUnwrappedNode,
 } from "../../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
 import { getFieldKind, getFieldSchema, getPrimaryField } from "../../../feature-libraries/editable-tree/utilities";
-
-// TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
-
-const stringSchema = namedTreeSchema({
-    name: brand("String"),
-    extraLocalFields: emptyField,
-    value: ValueSchema.String,
-});
-
-const int32Schema = namedTreeSchema({
-    name: brand("Int32"),
-    extraLocalFields: emptyField,
-    value: ValueSchema.Number,
-});
-
-const float32Schema = namedTreeSchema({
-    name: brand("Float32"),
-    extraLocalFields: emptyField,
-    value: ValueSchema.Number,
-});
-
-const complexPhoneSchema = namedTreeSchema({
-    name: brand("Test:Phone-1.0.0"),
-    localFields: {
-        number: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        prefix: fieldSchema(FieldKinds.value, [stringSchema.name]),
-    },
-    extraLocalFields: emptyField,
-});
-
-// This schema is really unnecessary: it could just use a sequence field instead.
-// Array nodes are only needed when you want polymorphism over array vs not-array.
-// Using this tests handling of array nodes (though it makes this example not cover other use of sequence fields).
-const phonesSchema = namedTreeSchema({
-    name: brand("Test:Phones-1.0.0"),
-    localFields: {
-        [EmptyKey]: fieldSchema(FieldKinds.sequence, [stringSchema.name, int32Schema.name, complexPhoneSchema.name]),
-    },
-    extraLocalFields: emptyField,
-});
-
-const addressSchema = namedTreeSchema({
-    name: brand("Test:Address-1.0.0"),
-    localFields: {
-        street: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        zip: fieldSchema(FieldKinds.optional, [stringSchema.name]),
-        phones: fieldSchema(FieldKinds.value, [phonesSchema.name]),
-    },
-    extraLocalFields: emptyField,
-});
-
-const mapStringSchema = namedTreeSchema({
-    name: brand("Map<String>"),
-    extraLocalFields: fieldSchema(FieldKinds.value, [stringSchema.name]),
-    value: ValueSchema.Serializable,
-});
-
-const personSchema = namedTreeSchema({
-    name: brand("Test:Person-1.0.0"),
-    localFields: {
-        name: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        age: fieldSchema(FieldKinds.value, [int32Schema.name]),
-        salary: fieldSchema(FieldKinds.value, [float32Schema.name]),
-        friends: fieldSchema(FieldKinds.value, [mapStringSchema.name]),
-        address: fieldSchema(FieldKinds.value, [addressSchema.name]),
-    },
-    extraLocalFields: emptyField,
-});
-
-const optionalChildSchema = namedTreeSchema({
-    name: brand("Test:OptionalChild-1.0.0"),
-    localFields: {
-        child: fieldSchema(FieldKinds.optional),
-    },
-    value: ValueSchema.Serializable,
-    extraLocalFields: emptyField,
-});
-
-const emptyNode: JsonableTree = { type: optionalChildSchema.name };
-
-const schemaTypes: Set<NamedTreeSchema> = new Set([optionalChildSchema, stringSchema, float32Schema, int32Schema, complexPhoneSchema, phonesSchema, addressSchema, mapStringSchema, personSchema]);
-
-const schemaMap: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
-for (const named of schemaTypes) {
-    schemaMap.set(named.name, named);
-}
-
-const rootPersonSchema = fieldSchema(FieldKinds.value, [personSchema.name]);
-
-const fullSchemaData: SchemaData = {
-    treeSchema: schemaMap,
-    globalFieldSchema: new Map([[rootFieldKey, rootPersonSchema]]),
-};
-
-// TODO: derive types like these from those schema, which subset EditableTree
-
-type Int32 = Brand<number, "Int32">;
-const newAge: Int32 = brand(55);
-
-type ComplexPhoneType = EditableTree & {
-    number: string;
-    prefix: string;
-};
-
-type AddressType = EditableTree & {
-    street: string;
-    zip?: string;
-    phones: UnwrappedEditableSequence & (number | string | ComplexPhoneType)[];
-};
-
-type PersonType = EditableTree & {
-    name: string;
-    age: Int32;
-    salary: number;
-    friends: Record<string, string>;
-    address: AddressType;
-};
-
-const person: JsonableTree = {
-    type: personSchema.name,
-    fields: {
-        name: [{ value: "Adam", type: stringSchema.name }],
-        age: [{ value: 35, type: int32Schema.name }],
-        salary: [{ value: 10420.2, type: float32Schema.name }],
-        friends: [{ fields: {
-            Mat: [{ type: stringSchema.name, value: "Mat" }],
-        }, type: mapStringSchema.name }],
-        address: [{
-            fields: {
-                street: [{ value: "treeStreet", type: stringSchema.name }],
-                phones: [{
-                    type: phonesSchema.name,
-                    fields: {
-                        [EmptyKey]: [
-                            { type: stringSchema.name, value: "+49123456778" },
-                            { type: int32Schema.name, value: 123456879 },
-                            { type: complexPhoneSchema.name, fields: {
-                                number: [{ value: "012345", type: stringSchema.name }],
-                                prefix: [{ value: "0123", type: stringSchema.name }],
-                            } },
-                        ],
-                    },
-                }],
-            },
-            type: addressSchema.name,
-        }],
-    },
-};
+import {
+    fullSchemaData, PersonType, schemaMap, personSchema, addressSchema, ComplexPhoneType, complexPhoneSchema,
+    stringSchema, phonesSchema, optionalChildSchema, int32Schema, personData, emptyNode,
+} from "./mocks";
 
 function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
     const schemaRepo = new StoredSchemaRepository(defaultSchemaPolicy, schema);
@@ -186,7 +41,7 @@ function buildTestProxy(data: JsonableTree): UnwrappedEditableField {
 }
 
 function buildTestPerson(): PersonType {
-    const proxy = buildTestProxy(person);
+    const proxy = buildTestProxy(personData);
     return proxy as PersonType;
 }
 
@@ -252,6 +107,7 @@ describe("editable-tree", () => {
         assert.equal(Object.keys(proxy).length, 5);
         assert.equal(proxy[getTypeSymbol](), personSchema);
         assert.equal(proxy.address[getTypeSymbol](), addressSchema);
+        assert(isEditableFieldSequence(proxy.address.phones));
         assert.equal((proxy.address.phones[2] as ComplexPhoneType)[getTypeSymbol](), complexPhoneSchema);
         assert(isUnwrappedNode(proxy.address.phones[2]));
         assert.equal(proxy.address.phones[2][getTypeSymbol](), complexPhoneSchema);
@@ -261,11 +117,11 @@ describe("editable-tree", () => {
 
     it("traverse a complete tree", () => {
         const typedProxy = buildTestPerson();
-        expectTreeEquals(typedProxy, person);
+        expectTreeEquals(typedProxy, personData);
     });
 
     it('"in" works as expected', () => {
-        const personProxy = buildTestProxy(person) as object;
+        const personProxy = buildTestProxy(personData) as object;
         // Confirm that methods on ProxyTarget are not leaking through.
         assert.equal("free" in personProxy, false);
         // Confirm that fields on ProxyTarget are not leaking through.
@@ -449,7 +305,7 @@ describe("editable-tree", () => {
         assert.equal(proxy.salary, 10420.2);
         const cloned = clone(proxy.friends);
         assert.deepEqual(cloned, { Mat: "Mat" });
-        assert.deepEqual(Object.keys(proxy.address!), ["street", "phones"]);
+        assert.deepEqual(Object.keys(proxy.address!), ["street", "phones", "simplePhones", "sequencePhones"]);
         assert.equal(proxy.address?.street, "treeStreet");
         assert.equal(proxy.address?.phones![1], 123456879);
         assert.equal(proxy.address?.zip, undefined);
@@ -457,7 +313,7 @@ describe("editable-tree", () => {
 
     it("read upwards", () => {
         const proxy = buildTestPerson();
-        assert.deepEqual(Object.keys(proxy.address!), ["street", "phones"]);
+        assert.deepEqual(Object.keys(proxy.address!), ["street", "phones", "simplePhones", "sequencePhones"]);
         assert.equal(proxy.address?.phones![1], 123456879);
         assert.equal(proxy.address?.street, "treeStreet");
         assert.deepEqual(Object.keys(proxy), ["name", "age", "salary", "friends", "address"]);
@@ -466,6 +322,7 @@ describe("editable-tree", () => {
 
     it("access array data", () => {
         const proxy = buildTestPerson();
+        assert(isEditableFieldSequence(proxy.address.phones));
         assert.equal(proxy.address.phones.length, 3);
         assert.equal(proxy.address.phones[getTypeSymbol](undefined, true), phonesSchema.name);
         assert.equal(proxy.address.phones[getTypeSymbol]("0", true), stringSchema.name);
