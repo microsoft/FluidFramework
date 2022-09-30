@@ -200,7 +200,7 @@ export interface ITaggedBaseTelemetryProperty {
     // (undocumented)
     tag: string;
     // (undocumented)
-    value: TelemetryEventPropertyType;
+    value: TelemetryBaseEventPropertyValue;
 }
 
 // @public

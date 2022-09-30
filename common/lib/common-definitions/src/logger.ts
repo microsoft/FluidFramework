@@ -47,7 +47,7 @@ export type TelemetryBaseEventPropertyValue = string | number | boolean | null |
  * party scenarios. For example, tags are used to mark sensitive information that should not be stored in logs.
  */
 export interface ITaggedBaseTelemetryProperty {
-    value: TelemetryEventPropertyType;
+    value: TelemetryBaseEventPropertyValue;
     tag: string;
 }
 
