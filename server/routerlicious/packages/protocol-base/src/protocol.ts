@@ -48,6 +48,8 @@ export interface ILocalSequencedClient extends ISequencedClient {
      * True if the client should have left the quorum, false otherwise
      */
     shouldHaveLeft?: boolean;
+
+    lastSequenceNumber?: number;
 }
 
 export interface IProtocolHandler {

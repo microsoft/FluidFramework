@@ -4,6 +4,7 @@
  */
 
 import { IAudienceOwner } from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/common-utils";
 import {
     ILocalSequencedClient,
     IProtocolHandler as IBaseProtocolHandler,
@@ -82,6 +83,12 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
                 throw new Error("Remote message's clientId already should have left");
             }
         }
+
+        const currentSeqNum = message.clientSequenceNumber;
+        if (client?.lastSequenceNumber !== undefined && !canBeCoalescedByService(message)) {
+            assert(client?.lastSequenceNumber + 1 === currentSeqNum, "gap in sequence number");
+        }
+        client?.lastSequenceNumber = currentSeqNum;
 
         return super.processMessage(message, local);
     }
