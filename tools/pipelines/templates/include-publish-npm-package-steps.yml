@@ -49,7 +49,6 @@ steps:
           echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-
           echo Deleting @fluid-internal packages
           rm -f fluid-internal-*
           echo Deleting @fluid-example packages
@@ -66,7 +65,6 @@ steps:
     workingFile: $(Pipeline.Workspace)/pack//${{ parameters.artifactPath }}/.npmrc
     customEndPoint: ${{ parameters.customEndPoint }}
 - task: Bash@3
-  retryCountOnTaskFailure: 3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
   inputs:
     targetType: 'inline'
@@ -90,10 +88,6 @@ steps:
         packages=*.tgz
         sorted=false
       fi
-      echo "------------------------------"
-      echo "NPM List : " npm list -g
-      echo "NPM List : " $(npm list -g)
-      echo "------------------------------"
       for packageName in $packages
       do
         if [[ $sorted == true ]]; then
@@ -101,41 +95,32 @@ steps:
         else
           f=$packageName
         fi
+        echo "File Name :" $f
         if [[ $f != "" ]]; then
-          echo "------------------------------"
-          echo "Package Name : " $f
-          echo "------------------------------"
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
           then
-              if [[ "$(npm list -g $f)" =~ "empty" ]]; then
-                if ! grep -q "You cannot publish over the previously published versions" "publish_log"
+              if ! grep -q "You cannot publish over the previously published versions" "publish_log"
+              then
+                let t1+=1
+              else
+                echo Package has already been published.
+                local_f="${f}_local"
+                mv "$f" "$local_f"
+                package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
+                npm pack $package_name
+                if cmp -s "$f" "$local_f"
                 then
-                  let t1+=1
+                  echo Continuing as published package matches the current one that was attempting to be released.
                 else
-                  echo Package has already been published.
-                  local_f="${f}_local"
-                  mv "$f" "$local_f"
-                  package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
-                  npm pack $package_name
-                  if cmp -s "$f" "$local_f"
-                  then
-                    echo Continuing as published package matches the current one that was attempting to be released.
-                  else
-                    echo ERROR: Published package does not match the current one attempting to be released for the same version.
-                    let t1+=1
-                  fi
-                  rm "$f"
-                  mv "$local_f" "$f"
+                  echo ERROR: Published package does not match the current one attempting to be released for the same version.
+                  let t1+=1
                 fi
+                rm "$f"
+                mv "$local_f" "$f"
               fi
           fi
           rm publish_log
-        fi
-        if [[ "$(npm list -g $f)" =~ "empty" ]]; then
-          echo "Not Installed"
-        else
-          echo "Already Installed"
         fi
       done
       rm ~/.npmrc
