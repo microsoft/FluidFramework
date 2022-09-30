@@ -141,20 +141,7 @@ Partial<IProvideFluidLoadable> {
      * the data store, and only fall back to requesting the root object through the request pattern if this property
      * or the handle within it are not defined.
      */
-    public get IFluidLoadable(): IFluidLoadable | undefined {
-        // While we plumb entrypoints everywhere and this way of getting to the data store's entrypoint could still be
-        // undefined, we have to do some sleight-of-hand and return an object whose 'handle' property is not undefined
-        // so it matches the definition of the IFluidLoadable interface.
-        const handle = this.handle;
-        if (handle !== undefined) {
-            return {
-                handle,
-                get IFluidLoadable() {
-                    return this;
-                },
-            };
-        }
-    }
+    public readonly IFluidLoadable?: IFluidLoadable;
 
     public get IFluidRouter() { return this; }
 
@@ -327,6 +314,15 @@ Partial<IProvideFluidLoadable> {
                 "",
                 this.objectsRoutingContext,
                 );
+            // Do some sleight-of-hand and return an object whose 'handle' property is always defined, and whose
+            // 'IFluidLoadable' property returns an object that complies with the necessary interface.
+            const handle = this.handle;
+            this.IFluidLoadable = {
+                handle,
+                get IFluidLoadable() {
+                    return this;
+                },
+            };
         }
 
         this.attachListener();
