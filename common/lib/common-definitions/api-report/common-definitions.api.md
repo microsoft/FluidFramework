@@ -196,6 +196,14 @@ export interface ILoggingError extends Error {
 }
 
 // @public
+export interface ITaggedBaseTelemetryPropertyType {
+    // (undocumented)
+    tag: string;
+    // (undocumented)
+    value: TelemetryEventPropertyType;
+}
+
+// @public
 export interface ITaggedTelemetryPropertyType {
     // (undocumented)
     tag: string;
@@ -215,6 +223,12 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 export interface ITelemetryBaseLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public (undocumented)
+export interface ITelemetryBaseProperties {
+    // (undocumented)
+    [index: string]: TelemetryBaseEventPropertyType | ITaggedBaseTelemetryPropertyType;
 }
 
 // @public
@@ -245,7 +259,7 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     duration?: number;
 }
 
-// @public
+// @public @deprecated
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
@@ -255,6 +269,9 @@ export interface ITelemetryProperties {
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
+
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | null | undefined;
 
 // @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
