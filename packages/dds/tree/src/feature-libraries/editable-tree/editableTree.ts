@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Value, Anchor, NeverAnchor, detachedFieldAsKey } from "../../tree";
+import { Value, Anchor, NeverAnchor, detachedFieldAsKey, UpPath } from "../../tree";
 import {
     TreeNavigationResult, mapCursorField, ITreeSubscriptionCursor, ITreeSubscriptionCursorState, ITreeCursor,
 } from "../../forest";
@@ -14,7 +14,6 @@ import {
 } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import { TypedJsonCursor } from "../../domains";
-// import { RootedTextCursor } from "../treeTextCursorLegacy";
 import {
     AdaptingProxyHandler,
     adaptWithProxy,
@@ -202,17 +201,25 @@ export class ProxyTarget {
         this.lazyCursor.free();
         this.context.withCursors.delete(this);
         if (this.anchor !== undefined) {
-            this.context.forest.anchors.forget(this.anchor);
+            // TODO: this is a workaround, since currently deleted anchors, i.e.,
+            // within this context, the anchors for which the forest returns no path,
+            // cannot be forgotten.
+            if (this.getPath() !== undefined) {
+                this.context.forest.anchors.forget(this.anchor);   
+            }
             this.context.withAnchors.delete(this);
             this.anchor = undefined;
         }
     }
 
-    public prepareAnchorForEdit(): Anchor {
-        const anchor = this.getAnchor();
+    public prepareForEdit(): void {
+        this.getAnchor();
         this.lazyCursor.clear();
         this.context.withCursors.delete(this);
-        return anchor;
+    }
+
+    public getPath(): UpPath | undefined {
+        return this.context.forest.anchors.locate(this.getAnchor());
     }
 
     public get cursor(): ITreeSubscriptionCursor {
@@ -296,35 +303,42 @@ export class ProxyTarget {
 
     /**
      * Sets value of a non-sequence field.
-     * This is correct only if sequence fields are unwrapped into arrays.
+     * This is correct only if sequence fields are handled with {@link UnwrappedEditableSequence}.
      */
-    public setValue(key: string, _value: unknown, typeName: TreeSchemaIdentifier): boolean {
+    public setValue(key: string, value: Value, typeName: TreeSchemaIdentifier): boolean {
         const type = { name: typeName, ...this.context.forest.schema.lookupTreeSchema(typeName) };
         assert(isPrimitive(type), "Cannot set value of a non-primitive field");
         const target = mapCursorField(this.cursor, brand(key), (c) => this.context.createTarget(c))[0];
-        const path = this.context.forest.anchors.locate(target.prepareAnchorForEdit());
+        const path = target.getPath();
         assert(path !== undefined, "Cannot locate a path to set a value");
-        return this.context.setNodeValue(path, _value);
+        return this.context.setNodeValue(path, value);
     }
 
-    public insertNode(key: string, cursor: ITreeCursor): boolean {
+    /**
+     * Insert a child into this node.
+     * This is correct only if sequence fields are handled with {@link UnwrappedEditableSequence}.
+     * TODO: think about having a replace logic instead/in addition.
+     */
+    public insertNode(key: string, newNodeCursor: ITreeCursor): boolean {
         const fieldSchema = getFieldSchema(this.getType() as TreeSchema, key);
         const fieldKind = getFieldKind(fieldSchema);
-        assert(fieldKind.multiplicity !== Multiplicity.Forbidden, "");
+        assert(fieldKind.multiplicity !== Multiplicity.Forbidden, "Insertion into a forbidden field");
         // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-        assert(fieldSchema.types !== undefined && fieldSchema.types?.has(cursor.type), "Unknown type");
-        const path = this.context.forest.anchors.locate(this.prepareAnchorForEdit());
+        assert(fieldSchema.types !== undefined && fieldSchema.types?.has(newNodeCursor.type), "Unknown type");
+        assert(!this.has(key),
+            "Insertion into a non-empty non-sequence field. Consider to use 'setValueSymbol' or delete the node first.");
+        const path = this.getPath();
         assert(path !== undefined, "Cannot locate a path to insert a node");
         return this.context.insertNode({
             parent: path,
             parentField: brand(key),
             parentIndex: 0,
-        }, cursor);
+        }, newNodeCursor);
     }
 
     public deleteNode(key: string): boolean {
-        const path = this.context.forest.anchors.locate(this.prepareAnchorForEdit());
-        assert(path !== undefined, "Can't locate a path to delete a node");
+        const path = this.getPath();
+        assert(path !== undefined, "Cannot locate a path to delete a node");
         return this.context.deleteNode({
             parent: path,
             parentField: brand(key),
@@ -336,13 +350,13 @@ export class ProxyTarget {
         return this.anchor === NeverAnchor;
     }
 
-    public insertRoot(root: ITreeCursor, typeName: TreeSchemaIdentifier): EditableTree {
+    public insertRoot(rootCursor: ITreeCursor, typeName: TreeSchemaIdentifier): EditableTree {
         const forest = this.context.forest;
         this.context.insertNode({
             parent: undefined,
             parentField: detachedFieldAsKey(forest.rootField),
             parentIndex: 0,
-        }, root);
+        }, rootCursor);
         const cursor = forest.allocateCursor();
         forest.tryMoveCursorTo(forest.root(forest.rootField), cursor);
         const editableTree = inProxyOrUnwrap(this.context, this.context.createTarget(cursor)) as EditableTree;
@@ -508,6 +522,7 @@ export function inProxyOrUnwrap(context: ProxyContext, target: ProxyTarget | Pro
 }
 
 /**
+ * @param context - a common context to handle a "forest" of EditableTrees.
  * @param fieldKind - determines how return value should be typed. See {@link UnwrappedEditableField}.
  * @param childTargets - targets for the children of the field.
  */

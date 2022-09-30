@@ -10,7 +10,7 @@ import {
     ITreeSubscriptionCursor, mapCursorField, TreeNavigationResult,
 } from "../../forest";
 import { LocalFieldKey, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier } from "../../schema-stored";
-import { Anchor } from "../../tree";
+import { Anchor, UpPath } from "../../tree";
 import { brand } from "../../util";
 import {
     FieldlessEditableTree, getTypeSymbol, inProxyOrUnwrap, ProxyTarget, proxyTargetSymbol,
@@ -75,8 +75,12 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
         this.target.free();
     }
 
-    public prepareAnchorForEdit(): Anchor {
-        return this.target.prepareAnchorForEdit();
+    public prepareForEdit(): void {
+        this.target.prepareForEdit();
+    }
+
+    public getPath(): UpPath | undefined {
+        return this.target.getPath();
     }
 
     public get primaryKey(): LocalFieldKey | undefined {
@@ -128,7 +132,7 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
         const target = mapCursorField(this.cursor, brand(primaryKey), (c) => this.context.createTarget(c))[index];
         const type = target.getType() as TreeSchema;
         assert(isPrimitive(type), `"Set value" is not supported for non-primitive fields`);
-        const path = this.context.forest.anchors.locate(target.prepareAnchorForEdit());
+        const path = target.getPath();
         assert(path !== undefined, "Can't locate a path to set a value");
         return this.context.setNodeValue(path, value);
     }
@@ -140,7 +144,7 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
         const primaryKey = this.primaryKey;
         const length = this.length;
         assert(primaryKey !== undefined, "Not supported");
-        const path = this.context.tree?.locate(this.prepareAnchorForEdit());
+        const path = this.getPath();
         if (this.context.insertNode({
             parent: path,
             parentField: primaryKey,

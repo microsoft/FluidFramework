@@ -9,7 +9,7 @@ import { TransactionResult } from "../../checkout";
 import { Dependent, SimpleObservingDependent, InvalidationToken } from "../../dependency-tracking";
 import { IEditableForest, ITreeSubscriptionCursor, ITreeCursor, IForestSubscription, TreeNavigationResult } from "../../forest";
 import { ISharedTree } from "../../shared-tree";
-import { Delta, keyFromSymbol, rootFieldKey, UpPath } from "../../tree";
+import { Delta, keyFromSymbol, rootFieldKey, UpPath, Value } from "../../tree";
 import { Multiplicity } from "../modular-schema";
 import { NodePath, SequenceEditBuilder } from "../sequence-change-family";
 import { RootedTextCursor } from "../treeTextCursorLegacy";
@@ -33,8 +33,6 @@ export interface EditableTreeContext {
      * if ("foo" in data) { ... }
      * context.free();
      * ```
-     *
-     * Not (yet) supported: create properties, set values and delete properties.
      */
     readonly root: UnwrappedEditableField;
 
@@ -80,6 +78,7 @@ export class ProxyContext implements EditableTreeContext {
     ) {
         const observer = new SimpleObservingDependent((token?: InvalidationToken, delta?: Delta.Root): void => {
             if (token?.isSecondaryInvalidation) {
+                // TODO: this is only an example of after change processing, which is not supported yet by ObjectForest/SharedTree.
                 this.handleAfterChange();
             } else {
                 this.prepareForEdit();
@@ -91,7 +90,7 @@ export class ProxyContext implements EditableTreeContext {
 
     public prepareForEdit(): void {
         for (const target of this.withCursors) {
-            target.prepareAnchorForEdit();
+            target.prepareForEdit();
         }
         assert(this.withCursors.size === 0, 0x3c0 /* prepareForEdit should remove all cursors */);
     }
@@ -156,7 +155,7 @@ export class ProxyContext implements EditableTreeContext {
 
     private handleAfterChange(): void {
         for (const [nodePath, target] of this.nodes) {
-            const path = this.tree?.locate(target.getAnchor())
+            const path = target.getPath();
             if (path === undefined) {
                 target.free();
                 this.nodes.delete(nodePath);
@@ -171,12 +170,12 @@ export class ProxyContext implements EditableTreeContext {
         this.afterHandlers.add(afterHandler);
     }
 
-    public setNodeValue(path: NodePath, value: unknown): boolean {
+    public setNodeValue(path: NodePath, value: Value): boolean {
         return this.runTransaction((editor) => editor.setValue(path, value));
     }
 
-    public insertNode(path: NodePath, nodeCursor: ITreeCursor): boolean {
-        return this.runTransaction((editor) => editor.insert(path, nodeCursor));
+    public insertNode(path: NodePath, newNodeCursor: ITreeCursor): boolean {
+        return this.runTransaction((editor) => editor.insert(path, newNodeCursor));
     }
 
     public deleteNode(path: NodePath, count: number): boolean {
@@ -185,18 +184,24 @@ export class ProxyContext implements EditableTreeContext {
 
     private runTransaction(f: (editor: SequenceEditBuilder) => void): boolean {
         assert(this.tree !== undefined, "Transaction-based editing requires `SharedTree` instance");
-        // this.prepareForEdit();
+        this.prepareForEdit();
         const result = this.tree?.runTransaction((forest: IForestSubscription, editor: SequenceEditBuilder) => {
             f(editor);
             return TransactionResult.Apply;
         });
-        return result === TransactionResult.Apply;
+        if (result === TransactionResult.Apply) {
+            this.handleAfterChange();
+            return true;
+        }
+        return false;
     }
 }
 
 /**
  * A simple API for a Forest to interact with the tree.
  *
+ * @param forest - a Forest to interact with.
+ * @param tree - a SharedTree to handle transactional editing, not required in read-only usecases.
  * @returns {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */

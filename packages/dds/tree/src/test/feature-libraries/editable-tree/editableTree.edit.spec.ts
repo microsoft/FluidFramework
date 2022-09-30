@@ -65,7 +65,7 @@ const addressSchema = namedTreeSchema({
     name: brand("Test:Address-1.0.0"),
     localFields: {
         street: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        zip: fieldSchema(FieldKinds.optional, [stringSchema.name]),
+        zip: fieldSchema(FieldKinds.optional, [stringSchema.name, int32Schema.name]),
         phones: fieldSchema(FieldKinds.optional, [phonesSchema.name]),
         simplePhones: fieldSchema(FieldKinds.optional, [simplePhonesSchema.name]),
         sequencePhones: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
@@ -226,7 +226,6 @@ describe("editing with editable-tree", () => {
             assert.equal(person1.address.street, "bla");
             person1.age = newAge;
             assert.equal(person1.age, newAge);
-            trees[1].context.prepareForEdit();
             await _provider.ensureSynchronized();
             assert.deepEqual(person1, person2);
             trees[0].context.free();
@@ -248,7 +247,13 @@ describe("editing with editable-tree", () => {
             person.address[insertNodeSymbol]("zip", cursor);
             assert.equal(person.address.zip, "99038");
             assert.equal("zip" in person.address, true);
-            trees[1].context.prepareForEdit();
+            assert.throws(() => {
+                person.address[insertNodeSymbol]("zip", singleTextCursor({ value: 99038, type: int32Schema.name }));
+            }, /Insertion into a non-empty non-sequence field. Consider to use 'setValueSymbol' or delete the node first./);
+            delete person.address.zip;
+            assert.equal("zip" in person.address, false);
+            person.address[insertNodeSymbol]("zip", singleTextCursor({ value: 99038, type: int32Schema.name }));
+            assert.equal(person.address.zip, 99038);
             await _provider.ensureSynchronized();
             assert.deepEqual(person, trees[1].root);
             trees[0].context.free();
@@ -261,7 +266,6 @@ describe("editing with editable-tree", () => {
             delete person.address.phones;
             assert.equal(person.address.phones, undefined);
             assert.equal("phones" in person.address, false);
-            trees[1].context.prepareForEdit();
             await _provider.ensureSynchronized();
             assert.deepEqual(person, trees[1].root);
             trees[0].context.free();
@@ -291,7 +295,6 @@ describe("editing with editable-tree", () => {
             assert.throws(() => {
                 phones[2] = { number: "123", prefix: "456" } as any;
             });
-            trees[1].context.prepareForEdit();
             await _provider.ensureSynchronized();
             assert.deepEqual(person1, person2);
             trees[0].context.free();
