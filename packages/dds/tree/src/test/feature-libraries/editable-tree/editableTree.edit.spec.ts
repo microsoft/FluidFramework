@@ -13,7 +13,7 @@ import { brand, Brand } from "../../../util";
 import {
     emptyField, FieldKinds, singleTextCursor,
     EditableTree, getTypeSymbol, isEmptyTree, insertRootSymbol, insertNodeSymbol, appendNodeSymbol,
-    isEditableFieldSequence, UnwrappedEditableSequence,
+    isEditableFieldSequence, UnwrappedEditableSequence, isUnwrappedNode,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 
@@ -263,9 +263,37 @@ describe("editing with editable-tree", () => {
         it("delete property", async () => {
             const trees = await createSharedTrees(fullSchemaData, personData, 2);
             const person = trees[0].root as PersonType;
+            assert(isUnwrappedNode(person.address));
+            assert(isEditableFieldSequence(person.address.phones));
+            // reify all children
+            person.address.phones.map(f => f);
+            const complexPhone = person.address.phones[2] as ComplexPhoneType;;
             delete person.address.phones;
+            assert.throws(() => complexPhone[getTypeSymbol]());
             assert.equal(person.address.phones, undefined);
             assert.equal("phones" in person.address, false);
+            // make sure new data does not overlap with deleted nodes
+            const phonesCursor = singleTextCursor({
+                type: phonesSchema.name,
+                fields: {
+                    [EmptyKey]: [
+                        { type: int32Schema.name, value: 1 },
+                        { type: stringSchema.name, value: "112" },
+                        { type: complexPhoneSchema.name, fields: {
+                            number: [{ value: "12345", type: stringSchema.name }],
+                            prefix: [{ value: "987", type: stringSchema.name }],
+                        } },
+                    ],
+                },
+            });
+            person.address[insertNodeSymbol]("phones", phonesCursor);
+            assert(isEditableFieldSequence(person.address.phones));
+            const phones = person.address.phones as PhonesType;
+            assert.equal(person.address.phones[0], 1);
+            assert.equal(person.address.phones[1], "112");
+            assert(isUnwrappedNode(phones[2]));
+            assert.equal(phones[2].number, "12345");
+            assert.equal(phones[2].prefix, "987");
             await _provider.ensureSynchronized();
             assert.deepEqual(person, trees[1].root);
             trees[0].context.free();

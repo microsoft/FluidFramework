@@ -201,12 +201,11 @@ export class ProxyTarget {
         this.lazyCursor.free();
         this.context.withCursors.delete(this);
         if (this.anchor !== undefined) {
-            // TODO: this is a workaround, since currently deleted anchors, i.e.,
-            // within this context, the anchors for which the forest returns no path,
-            // cannot be forgotten.
-            if (this.getPath() !== undefined) {
-                this.context.forest.anchors.forget(this.anchor);   
-            }
+            // TODO: due to an issue with anchorSet there is no way to properly cleanup anchors
+            // see https://github.com/microsoft/FluidFramework/pull/12207
+            // and even if we test here if path exists, still trying to forget a child's anchor
+            // for where the parent's anchor is deleted will crash
+            // this.context.forest.forgetAnchor(this.anchor);
             this.context.withAnchors.delete(this);
             this.anchor = undefined;
         }

@@ -5,7 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { fail, strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
@@ -307,8 +306,7 @@ describe("editable-tree", () => {
         {
             const forest = setupForest(schemaData, []);
             const context = getEditableTreeContext(forest);
-            assert(isEditableFieldSequence(context.root));
-            assert.deepEqual(context.root.map(f => f), []);
+            expectTreeSequence(context.root, []);
             context.free();
         }
         // Test 1 item

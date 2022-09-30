@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EmptyKey, Value } from "../../tree";
+import { EmptyKey, keyFromSymbol, UpPath, Value } from "../../tree";
 import { brand, fail } from "../../util";
 import { TreeSchema, ValueSchema, FieldSchema, LocalFieldKey } from "../../schema-stored";
 // TODO:
@@ -10,6 +10,7 @@ import { TreeSchema, ValueSchema, FieldSchema, LocalFieldKey } from "../../schem
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "../defaultFieldKinds";
 import { FieldKind } from "../modular-schema";
+import { ETreeNodePath } from "./editableTreeContext";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -85,4 +86,21 @@ export function adaptWithProxy<From extends object, To extends object>(
 
 export function getArrayOwnKeys(length: number): string[] {
     return Object.getOwnPropertyNames(Array.from(Array(length)));
+}
+
+const pathDelimiter = "/";
+
+function stringifyPath(path: UpPath, childPath: ETreeNodePath): ETreeNodePath {
+    const fieldName = typeof path.parentField === "string" ? path.parentField : keyFromSymbol(path.parentField);
+    return brand(`${fieldName}[${path.parentIndex}]${childPath}`);
+}
+
+export function pathToString(path: UpPath): ETreeNodePath {
+    let current = path;
+    let upPath = stringifyPath(current, brand(""));
+    while (current.parent !== undefined) {
+        current = current.parent;
+        upPath = stringifyPath(current, brand(`${pathDelimiter}${upPath}`));
+    }
+    return upPath;
 }

@@ -54,8 +54,8 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
         super(...children ?? []);
         if (fieldCursor === undefined) {
             const rootCursor = context.forest.allocateCursor();
-            context.forest.tryMoveCursorTo(context.forest.root(context.forest.rootField), rootCursor);
-            this.target = context.createTarget(rootCursor);
+            const result = context.forest.tryMoveCursorTo(context.forest.root(context.forest.rootField), rootCursor);
+            this.target = result === TreeNavigationResult.Ok ? context.createTarget(rootCursor) : context.createEmptyTarget();
             rootCursor.free();
         } else {
             this.target = context.createTarget(fieldCursor);

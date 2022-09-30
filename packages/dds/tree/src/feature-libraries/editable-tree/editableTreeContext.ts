@@ -9,13 +9,14 @@ import { TransactionResult } from "../../checkout";
 import { Dependent, SimpleObservingDependent, InvalidationToken } from "../../dependency-tracking";
 import { IEditableForest, ITreeSubscriptionCursor, ITreeCursor, IForestSubscription, TreeNavigationResult } from "../../forest";
 import { ISharedTree } from "../../shared-tree";
-import { Delta, keyFromSymbol, rootFieldKey, UpPath, Value } from "../../tree";
+import { Delta, rootFieldKey, UpPath, Value } from "../../tree";
+import { Brand } from "../../util";
 import { Multiplicity } from "../modular-schema";
 import { NodePath, SequenceEditBuilder } from "../sequence-change-family";
 import { RootedTextCursor } from "../treeTextCursorLegacy";
 import { proxifyField, ProxyTarget, UnwrappedEditableField } from "./editableTree";
 import { ProxyTargetSequence } from "./editableTreeSequence";
-import { getFieldKind } from "./utilities";
+import { getFieldKind, pathToString } from "./utilities";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -59,17 +60,14 @@ export interface EditableTreeContext {
 
 export type EditableTreeContextHandler = (this: EditableTreeContext) => void;
 
-function stringifyPath(path: UpPath): string {
-    const fieldName = typeof path.parentField === "string" ? path.parentField : keyFromSymbol(path.parentField);
-    return `${fieldName}[${path.parentIndex}]`;
-}
+export type ETreeNodePath = Brand<string, "editable-tree.NodePath">;
 
 export class ProxyContext implements EditableTreeContext {
     public readonly withCursors: Set<ProxyTarget | ProxyTargetSequence> = new Set();
     public readonly withAnchors: Set<ProxyTarget | ProxyTargetSequence> = new Set();
     private readonly observers: Dependent[] = [];
     private readonly afterHandlers: Set<EditableTreeContextHandler> = new Set();
-    private readonly nodes: Map<string, ProxyTarget | ProxyTargetSequence> = new Map();
+    private readonly nodes: Map<ETreeNodePath, ProxyTarget | ProxyTargetSequence> = new Map();
     private emptyNode?: ProxyTarget;
 
     constructor(
@@ -116,7 +114,7 @@ export class ProxyContext implements EditableTreeContext {
         const targets: ProxyTarget[] = [];
         if (cursorResult === TreeNavigationResult.Ok) {
             do {
-                targets.push(new ProxyTarget(this, cursor));
+                targets.push(this.createTarget(cursor));
             } while (cursor.seek(1) === TreeNavigationResult.Ok);
         }
         cursor.free();
@@ -139,14 +137,8 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     public createTarget(cursor: ITreeSubscriptionCursor): ProxyTarget {
-        const rootedCursor = cursor as unknown as RootedTextCursor;
-        let current = rootedCursor.getPath();
-        const upPath: string[] = [stringifyPath(current)];
-        while (current.parent !== undefined) {
-            current = current.parent;
-            upPath.unshift(stringifyPath(current));
-        }
-        const nodePath = upPath.join("/");
+        const path = (cursor as unknown as RootedTextCursor).getPath();
+        const nodePath = pathToString(path);
         if (!this.nodes.has(nodePath)) {
             this.nodes.set(nodePath, new ProxyTarget(this, cursor));
         }
@@ -154,11 +146,11 @@ export class ProxyContext implements EditableTreeContext {
     }
 
     private handleAfterChange(): void {
-        for (const [nodePath, target] of this.nodes) {
+        for (const [key, target] of this.nodes) {
             const path = target.getPath();
-            if (path === undefined) {
+            if (!this.isValidPath(path)) {
+                this.nodes.delete(key);
                 target.free();
-                this.nodes.delete(nodePath);
             }
         }
         for (const afterHandler of this.afterHandlers) {
@@ -184,16 +176,32 @@ export class ProxyContext implements EditableTreeContext {
 
     private runTransaction(f: (editor: SequenceEditBuilder) => void): boolean {
         assert(this.tree !== undefined, "Transaction-based editing requires `SharedTree` instance");
+        // TODO: currently we can't rely on `invalidateDependents`, since it happens only in forest's `beforeChange`,
+        // and before that delta is applied in `AnchorSet`, so all nodes should already have their anchors allocated.
         this.prepareForEdit();
-        const result = this.tree?.runTransaction((forest: IForestSubscription, editor: SequenceEditBuilder) => {
+        const result = this.tree.runTransaction((forest: IForestSubscription, editor: SequenceEditBuilder) => {
             f(editor);
             return TransactionResult.Apply;
         });
         if (result === TransactionResult.Apply) {
+            // TODO: remove as soon as "after change" notification will be implemented in SharedTree
             this.handleAfterChange();
             return true;
         }
         return false;
+    }
+
+    // this is a workaround to cleanup nodes under deleted parents
+    private isValidPath(path: UpPath | undefined): boolean {
+        let _path = path;
+        try {
+            while (_path?.parent !== undefined) {
+                _path = _path?.parent;
+            }
+        } catch {
+            return false;
+        }
+        return _path !== undefined;
     }
 }
 
