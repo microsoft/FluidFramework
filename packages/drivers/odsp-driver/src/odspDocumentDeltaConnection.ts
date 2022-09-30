@@ -235,9 +235,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
         };
 
-        // Reference to this client supporting individual client disconnect from server.
-        connectMessage.supportedFeatures = { server_disconnect_document: true };
         // Reference to this client supporting get_ops flow.
+        connectMessage.supportedFeatures = {};
         if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
             connectMessage.supportedFeatures[feature_get_ops] = true;
         }
