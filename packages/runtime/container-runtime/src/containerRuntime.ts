@@ -627,17 +627,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Load the stores from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registryEntries - Mapping to the stores.
+     * @param existing - When loading from an existing snapshot.
      * @param requestHandler - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
-     * @param existing - When loading from an existing snapshot.
      */
     public static async load(
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
+        existing: boolean,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         runtimeOptions: IContainerRuntimeOptions = {},
         containerScope: FluidObject = context.scope,
-        existing: boolean = false,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -683,7 +683,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
             tryFetchBlob<[string, string][]>(aliasBlobName),
         ]);
-        const loadExisting = existing === true;
+        const loadExisting = existing;
 
         // read snapshot blobs needed for BlobManager to load
         const blobManagerSnapshot = await BlobManager.load(

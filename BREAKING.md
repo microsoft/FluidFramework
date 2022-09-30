@@ -30,7 +30,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Add assertion that prevents sending op while processing another op](#add-assertion-that-prevents-sending-op-while-processing-another-op)
 
 ### Update `existing` field in runtime
-The existing flag was updated to be required in runtime. The existing field in IContainerContext has also been removed and isn't used to check for an existing snapshot.
+The existing flag was updated to be required in runtime. As a result, the ordering of the parameters for the load function in `containerRuntime` has been updated. The existing field in IContainerContext has also been removed and isn't used to check for an existing snapshot, when instantiating runtime.
 
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
