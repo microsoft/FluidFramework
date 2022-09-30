@@ -143,9 +143,15 @@ This suggests a few strategies for keeping a compact format (either only on seri
 
 1. Intern user objects
 2. Intern attribution objects
-3. Allow "equivalent timestamp" policy injection: it's unlikely any app needs millisecond or better accuracy on the server ack timestamp for attribution purposes.
+3. If a range of sequence numbers all have the same attribution information, store it as such
+4. Allow "equivalent timestamp" policy injection: it's unlikely any app needs millisecond or better accuracy on the server ack timestamp for attribution purposes.
   There should be a configurable policy for how timestamps get binned. Basic implementations could bin on a fixed cadence, but for even more compact files a dynamic bin size policy with larger bins for less recent data could also give a reasonable user experience
-4. If a range of sequence numbers all have the same attribution information, store it as such
+
+Optimizations 1 through 3 are all things that standard compression algorithms can detect: interning objects is essentially
+[dictionary compression](https://en.wikipedia.org/wiki/Dictionary_coder) and compressing adjacent ranges is
+[run-length encoding](https://en.wikipedia.org/wiki/Run-length_encoding), so before going through the trouble of writing bespoke compression code
+we should experiment with things like [LZ4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)) and [DEFLATE](https://en.wikipedia.org/wiki/Deflate).
+For the purposes of illustration, the following sections will outline how the bespoke code might look.
 
 #### Interning
 
@@ -187,9 +193,6 @@ interface SerializedAttributor {
   }
 }
 ```
-
-Another way to accomplish similar gains without the need to compare `IUser`s would be to maintain a historical `clientId -> IUser` lookup and use `clientId` in place of `userRef`.
-This would be less compact but more readable.
 
 #### Adjacent Range Coalescing
 
@@ -245,11 +248,13 @@ interface SerializedAttributor {
 One key aspect of information compaction is the ability to bin the precise timestamps given by the server into more reasonable granularity levels for attribution.
 Unlike the other optimizations to compact information, binning is lossy.
 Binning can simply be dictated by a function that takes in a timestamp and returns a timestamp for the output bin.
-Simple strategies like "bin every 5 minutes" are as simple as `(timestamp: number) => timestamp % (1000 * 60 * 5)`,
+Simple strategies like "bin every 5 minutes" are as simple as `(timestamp: number) => timestamp - (timestamp % (1000 * 60 * 5))`,
 but allowing an arbitrary function here also empowers more advanced users to make partitions of timespace like "5-minute granularity up to a day ago, 1-day granularity up to a month ago, 1-month granularity up to a year ago, yearly granularity otherwise".
 For the simple strategy, running the binning function on initial sequencing of the op would be sufficient.
 To make the second function behave as desired ("old attribution information tends to get coalesced"),
 the runtime would also have to re-bin existing attribution information either every so often or just on document load.
+
+We should apply this optimization last, and only if we need it. It's possible standard time-series compression of numbers will be sufficient here.
 
 ### In-memory attribution structure
 
@@ -262,7 +267,7 @@ One candidate implementation would be to expand the serialized format entirely a
 `O(attributed seq#s)` memory. It would provide `O(1)` lookup.
 Another reasonable candidate would be to keep the overall structure of having coalesced adjacent ranges, putting the serialized form into a
 sorted list that can be binary searched.
-This would give a reasonable memory win at the cost of reducing lookup to `O(log(attributed seq#s))`.
+This would give a reasonable memory win at the cost of increasing lookup time to `O(log(attributed seq#s))`.
 
 Putting all of the optimizations together, an `Attributor` implementation might look something like this:
 
@@ -271,7 +276,7 @@ export interface IAttributor {
   getAttributionInfo(seq: number): AttributionInfo;
 }
 
-export const binByMinutes = (interval: number) => (timestamp: number) => timestamp % (1000 * 60 * interval);
+export const binByMinutes = (interval: number) => (timestamp: number) => timestamp - (timestamp % (1000 * 60 * interval));
 
 const seqComparator = (a: AttributionEntry, b: AttributionEntry) => {
   aEnd = typeof a.k === 'number' ? a.k : a.k[1];
