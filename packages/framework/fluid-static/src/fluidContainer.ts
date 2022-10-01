@@ -185,8 +185,12 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     public constructor(
         private readonly container: IContainer,
         private readonly rootDataObject: RootDataObject,
+        attach?: () => Promise<string>,
     ) {
         super();
+        if (attach !== undefined) {
+            this.attach = attach;
+        }
         container.on("connected", this.connectedHandler);
         container.on("closed", this.disposedHandler);
         container.on("disconnected", this.disconnectedHandler);
@@ -197,7 +201,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * {@inheritDoc IFluidContainer.isDirty}
      */
-     public get isDirty(): boolean {
+    public get isDirty(): boolean {
         return this.container.isDirty;
     }
 
@@ -218,7 +222,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * {@inheritDoc IFluidContainer.connectionState}
      */
-     public get connectionState(): ConnectionState {
+    public get connectionState(): ConnectionState {
         return this.container.connectionState;
     }
 
@@ -242,7 +246,10 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      * but internally this separation is not there.
      */
     public async attach(): Promise<string> {
-        throw new Error("Cannot attach container. Container is not in detached state");
+        if (this.container.attachState !== AttachState.Detached) {
+            throw new Error("Cannot attach container. Container is not in detached state.");
+        }
+        throw new Error("Cannot attach container. Attach method not provided.");
     }
 
     /**
