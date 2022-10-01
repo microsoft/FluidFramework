@@ -106,6 +106,12 @@ export interface FieldlessEditableTree {
  */
 export interface EmptyEditableTree {
     readonly [insertRootSymbol]: (root: ITreeCursor) => UnwrappedEditableTree;
+    /**
+     * Stores the target for the proxy which implements reading and writing for this node.
+     * The details of this object are implementation details,
+     * but the presence of this symbol can be used to separate EditableTrees from other types.
+     */
+    readonly [proxyTargetSymbol]: object;
 }
 
 /**
@@ -173,17 +179,19 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EmptyEd
  * by means of the cursors.
  */
 export class ProxyTarget {
-    public readonly lazyCursor: ITreeSubscriptionCursor;
+    private readonly lazyCursor: ITreeSubscriptionCursor;
     private anchor?: Anchor;
 
     constructor(
         public readonly context: ProxyContext,
-        cursor: ITreeSubscriptionCursor,
+        cursor?: ITreeSubscriptionCursor,
     ) {
-        this.lazyCursor = cursor.fork();
-        if (cursor.state === ITreeSubscriptionCursorState.Current) {
+        if (cursor) {
+            assert(cursor.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
+            this.lazyCursor = cursor.fork();
             this.context.withCursors.add(this);
         } else {
+            this.lazyCursor = context.forest.allocateCursor();
             this.lazyCursor.clear();
             this.anchor = NeverAnchor;
         }
@@ -349,7 +357,7 @@ export class ProxyTarget {
         return this.anchor === NeverAnchor;
     }
 
-    public insertRoot(rootCursor: ITreeCursor, typeName: TreeSchemaIdentifier): EditableTree {
+    public insertRoot(rootCursor: ITreeCursor): EditableTree {
         const forest = this.context.forest;
         this.context.insertNode({
             parent: undefined,
@@ -371,7 +379,7 @@ export class ProxyTarget {
 const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     get: (target: ProxyTarget, key: string | symbol, receiver: unknown): unknown => {
         if (target.isEmpty()) {
-            return key === insertRootSymbol ? target.insertRoot.bind(target) : undefined;
+            return key === insertRootSymbol ? target.insertRoot.bind(target) : key === proxyTargetSymbol ? target : undefined;
         }
         if (typeof key === "string") {
             // All string keys are fields
@@ -553,5 +561,5 @@ export function isUnwrappedNode(field: UnwrappedEditableField): field is Editabl
  * Checks if the root node exists.
  */
 export function isEmptyTree(field: UnwrappedEditableField): field is EmptyEditableTree {
-    return isUnwrappedNode(field) && insertRootSymbol in field;
+    return isUnwrappedNode(field) && (field[proxyTargetSymbol] as ProxyTarget).isEmpty();
 }

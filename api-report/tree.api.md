@@ -227,6 +227,7 @@ const empty: Root<any>;
 export interface EmptyEditableTree {
     // (undocumented)
     readonly [insertRootSymbol]: (root: ITreeCursor) => UnwrappedEditableTree;
+    readonly [proxyTargetSymbol]: object;
 }
 
 // @public

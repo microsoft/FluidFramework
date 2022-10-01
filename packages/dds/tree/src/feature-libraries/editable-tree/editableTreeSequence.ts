@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { TypedJsonCursor } from "../../domains";
 import { ITreeCursor, ITreeSubscriptionCursor, TreeNavigationResult } from "../../forest";
 import { LocalFieldKey, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier } from "../../schema-stored";
-import { Anchor, UpPath } from "../../tree";
+import { Anchor, UpPath, Value } from "../../tree";
 import {
     FieldlessEditableTree, getTypeSymbol, inProxyOrUnwrap, ProxyTarget, proxyTargetSymbol,
     UnwrappedEditableTree, valueSymbol,
@@ -122,7 +122,7 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
     /**
      * Sets value of the node if index exists.
      */
-    public setValue(index: number, value: unknown): boolean {
+    public setValue(index: number, value: Value): boolean {
         const primaryKey = this.primaryKey;
         assert(primaryKey !== undefined, "Not supported");
         assert(this.cursor.down(primaryKey, index) === TreeNavigationResult.Ok, "Cannot navigate to a node to set value");

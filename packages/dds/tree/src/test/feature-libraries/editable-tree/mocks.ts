@@ -15,11 +15,13 @@ export const stringSchema = namedTreeSchema({
     extraLocalFields: emptyField,
     value: ValueSchema.String,
 });
+
 export const int32Schema = namedTreeSchema({
     name: brand("Int32"),
     extraLocalFields: emptyField,
     value: ValueSchema.Number,
 });
+
 export const float32Schema = namedTreeSchema({
     name: brand("Float32"),
     extraLocalFields: emptyField,

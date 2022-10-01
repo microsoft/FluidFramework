@@ -62,6 +62,9 @@ export type EditableTreeContextHandler = (this: EditableTreeContext) => void;
 
 export type ETreeNodePath = Brand<string, "editable-tree.NodePath">;
 
+/**
+ * An implementation of a common context of a "forest" of EditableTrees.
+ */
 export class ProxyContext implements EditableTreeContext {
     public readonly withCursors: Set<ProxyTarget | ProxyTargetSequence> = new Set();
     public readonly withAnchors: Set<ProxyTarget | ProxyTargetSequence> = new Set();
@@ -129,9 +132,7 @@ export class ProxyContext implements EditableTreeContext {
 
     public createEmptyTarget(): ProxyTarget {
         if (!this.emptyNode) {
-            const emptyCursor = this.forest.allocateCursor();
-            this.emptyNode = new ProxyTarget(this, emptyCursor);
-            emptyCursor.free();
+            this.emptyNode = new ProxyTarget(this);
         }
         return this.emptyNode;
     }

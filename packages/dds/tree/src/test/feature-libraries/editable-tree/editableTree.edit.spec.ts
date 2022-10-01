@@ -18,8 +18,6 @@ import {
     int32Schema, personData, PersonType, phonesSchema, PhonesType, stringSchema,
 } from "./mocks";
 
-const newAge: Int32 = brand(55);
-
 async function createSharedTrees(schema: SchemaData, data: JsonableTree, nofTrees = 1):
     Promise<readonly [ITestTreeProvider, readonly ISharedTree[]]> {
     const provider = await TestTreeProvider.create(nofTrees);
@@ -40,6 +38,7 @@ async function createSharedTrees(schema: SchemaData, data: JsonableTree, nofTree
 describe("editing with editable-tree", () => {
     describe("Non-sequence fields", () => {
         it("update property", async () => {
+            const newAge: Int32 = brand(55);
             const [provider, trees] = await createSharedTrees(fullSchemaData, personData, 2);
             const person1 = trees[0].root as PersonType;
             const person2 = trees[1].root as PersonType;
@@ -176,6 +175,6 @@ describe("editing with editable-tree", () => {
             assert.equal(person.address.phones, undefined);
             assert.equal("phones" in person.address, false);
             trees[0].context.free();
-        });        
+        });
     })
 });
