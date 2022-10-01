@@ -185,12 +185,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     public constructor(
         private readonly container: IContainer,
         private readonly rootDataObject: RootDataObject,
-        attach?: () => Promise<string>,
     ) {
         super();
-        if (attach !== undefined) {
-            this.attach = attach;
-        }
         container.on("connected", this.connectedHandler);
         container.on("closed", this.disposedHandler);
         container.on("disconnected", this.disconnectedHandler);

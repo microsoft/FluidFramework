@@ -88,7 +88,8 @@ export class TinyliciousClient {
             return resolved.id;
         };
 
-        const fluidContainer = new FluidContainer(container, rootDataObject, attach);
+        const fluidContainer = new FluidContainer(container, rootDataObject);
+        fluidContainer.attach = attach;
 
         const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
