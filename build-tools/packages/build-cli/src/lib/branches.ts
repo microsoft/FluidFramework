@@ -148,6 +148,8 @@ export function generateReleaseBranchName(releaseGroup: ReleaseGroup, version: s
 }
 
 /**
+ * Returns the default bump type for a branch.
+ *
  * @param branchName - The branch name to check.
  * @returns The default {@link VersionBumpType} for the branch, or `undefined` if no default is set for the branch.
  *
@@ -167,11 +169,9 @@ export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType
     }
 }
 
-const releaseGroupReleaseTypeMap = new Map<string, ReleaseSource>([
-    [MonoRepoKind.BuildTools, "interactive"],
-]);
-
 /**
+ * Returns the default {@link ReleaseSource} for a given release group or package.
+ *
  * @internal
  */
 export function getReleaseSourceForReleaseGroup(

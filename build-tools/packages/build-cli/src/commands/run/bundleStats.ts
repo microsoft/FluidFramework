@@ -12,6 +12,7 @@ export default class RunBundlestats extends BaseCommand<typeof RunBundlestats.fl
     static flags = {
         dirname: Flags.string({
             description: "Directory",
+            // eslint-disable-next-line unicorn/prefer-module
             default: __dirname,
             required: false,
         }),
