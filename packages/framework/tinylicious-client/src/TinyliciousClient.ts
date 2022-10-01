@@ -77,6 +77,9 @@ export class TinyliciousClient {
 
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
 
+        /**
+         * See {@link FluidContainer.attach}
+         */
         const attach = async (): Promise<string> => {
             if (container.attachState !== AttachState.Detached) {
                 throw new Error("Cannot attach container. Container is not in detached state.");
