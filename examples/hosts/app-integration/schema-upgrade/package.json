@@ -38,6 +38,7 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
+    "@fluid-example/example-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluid-experimental/get-container": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluid-experimental/quorum": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluid-experimental/react-inputs": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",

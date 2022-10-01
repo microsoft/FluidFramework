@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { makeModelRequestHandler, ModelMakerCallback } from "@fluid-example/example-utils";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -12,7 +13,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import type { IMigrationTool } from "../migrationInterfaces";
 import { MigrationToolInstantiationFactory } from "../migrationTool";
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
-import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoader";
 import { InventoryListAppModel } from "./appModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
