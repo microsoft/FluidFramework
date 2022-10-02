@@ -7,17 +7,17 @@ import * as fs from "node:fs";
 import * as yaml from "js-yaml";
 
 import {
-    AzureClientFactory,
-    AzureClientFactoryConfig,
-} from "./azureClientRunner";
+    AzureClientRunner,
+    AzureClientRunnerConfig,
+} from "./AzureClientRunner";
 import {
     DocCreatorConfig,
     DocCreatorRunner,
-} from "./docCreatorRunner";
+} from "./DocCreatorRunner";
 import {
     MapTrafficRunnerConfig,
     MapTrafficRunner,
-} from "./mapTrafficRunner";
+} from "./MapTrafficRunner";
 import { IRunner } from "./interface";
 
 export interface IStageParams {
@@ -144,13 +144,13 @@ export class TestOrchestrator {
 
     private createRunner(stage: IStage): IRunner | undefined {
         switch (stage.package) {
-            case "azureFactory": {
-                return new AzureClientFactory(stage.params as unknown as AzureClientFactoryConfig);
+            case "azure-client": {
+                return new AzureClientRunner(stage.params as unknown as AzureClientRunnerConfig);
             }
-            case "emptyDocCreator": {
+            case "doc-creator": {
                 return new DocCreatorRunner(stage.params as unknown as DocCreatorConfig);
             }
-            case "sharedMapTrafficGen": {
+            case "shared-map-traffic": {
                 return new MapTrafficRunner(stage.params as unknown as MapTrafficRunnerConfig);
             }
             default: {

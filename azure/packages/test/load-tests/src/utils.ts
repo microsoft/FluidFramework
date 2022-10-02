@@ -4,6 +4,7 @@
  */
 import {
     AzureClient,
+    AzureFunctionTokenProvider,
     AzureLocalConnectionConfig,
     AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
@@ -12,8 +13,6 @@ import { SharedMap } from "@fluidframework/map";
 import { generateUser } from "@fluidframework/server-services-client";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
-
-import { createAzureTokenProvider } from "./AzureTokenFactory";
 import { ContainerFactorySchema } from "./interface";
 
 export interface AzureClientConfig {
@@ -40,6 +39,17 @@ export function loadInitialObjSchema(source: ContainerFactorySchema): ContainerS
     return schema;
 }
 
+export function createAzureTokenProvider(
+    userID?: string,
+    userName?: string,
+): AzureFunctionTokenProvider {
+    const fnUrl = process.env.azure__fluid__relay__service__function__url as string;
+    return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
+        userId: userID ?? "foo",
+        userName: userName ?? "bar",
+    });
+}
+
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
@@ -50,8 +60,6 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
         ? (process.env.azure__fluid__relay__service__tenantId as string)
         : "frs-client-tenant";
 
-
-    console.log("n-------", useAzure)
     // use AzureClient remote mode will run against live Azure Fluid Relay.
     // Default to running Tinylicious for PR validation
     // and local testing so it's not hindered by service availability

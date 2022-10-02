@@ -11,8 +11,8 @@
  stages:
   - stage-1:
     id: 1
-    name: Create azure client
-    package: azureFactory
+    name: Create single azure client
+    package: azure-client
     params:
       connectionConfig: ${connectionConfig}
       userId: SomeUserId;
@@ -20,16 +20,16 @@
     out: ${client}
   - stage-2:
     id: 2
-    name: Create document
-    package: emptyDocCreator
+    name: Create empty document
+    package: doc-creator
     params:
       client: ${client}
       schema: ${schema}
     out: ${docId}
   - stage-3:
     id: 3
-    name: Create traffic
-    package: sharedMapTrafficGen
+    name: Create traffic on SharedMap
+    package: shared-map-traffic
     params:
       connectionConfig: ${connectionConfig}
       docId: ${docId}

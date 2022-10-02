@@ -2,44 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-    AzureClient,
-    AzureLocalConnectionConfig,
-    AzureRemoteConnectionConfig,
-} from "@fluidframework/azure-client";
+import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
-
 import { IRunner, IRunnerEvents, IRunnerStatus } from "./interface";
+import { createAzureClient } from "./utils";
 
 export interface ICustomUserDetails {
     gender: string;
     email: string;
 }
 
-export interface AzureClientFactoryConnectionConfig {
+export interface AzureClientRunnerConnectionConfig {
     type: "remote" | "local";
     endpoint: string;
     key?: string;
     tenantId?: string;
     funTokenProvider?: string;
 }
-export interface AzureClientFactoryConfig {
-    connectionConfig: AzureClientFactoryConnectionConfig;
+export interface AzureClientRunnerConfig {
+    connectionConfig: AzureClientRunnerConnectionConfig;
     userId?: string;
     userName?: string;
 }
 
-export class AzureClientFactory extends TypedEventEmitter<IRunnerEvents> implements IRunner {
-    constructor(private readonly c: AzureClientFactoryConfig) {
+export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
+    constructor(private readonly c: AzureClientRunnerConfig) {
         super();
     }
 
     public async run(): Promise<AzureClient | undefined> {
-        const user = {
-            id: this.c.userId ?? "testUserId",
-            name: this.c.userName ?? "testUserId",
-        };
         if (this.c.connectionConfig.type === "remote") {
             if (!this.c.connectionConfig.key) {
                 this.emit("status", {
@@ -59,28 +50,13 @@ export class AzureClientFactory extends TypedEventEmitter<IRunnerEvents> impleme
             }
         }
 
-        const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig =
-            this.c.connectionConfig.type === "remote"
-                ? {
-                      type: this.c.connectionConfig.type,
-                      tenantId: this.c.connectionConfig.tenantId as string,
-                      tokenProvider: new InsecureTokenProvider(
-                          this.c.connectionConfig.key as string,
-                          user,
-                      ),
-                      endpoint: this.c.connectionConfig.endpoint,
-                  }
-                : {
-                      type: this.c.connectionConfig.type,
-                      tokenProvider: new InsecureTokenProvider("", user),
-                      endpoint: this.c.connectionConfig.endpoint,
-                  };
+        const ac = await createAzureClient({
+            connType: this.c.connectionConfig.type,
+            connEndpoint: this.c.connectionConfig.endpoint,
+            userId: this.c.userId ?? "testUserId",
+            userName: this.c.userName ?? "testUserId",
+        });
 
-        const clientProps = {
-            connection: connectionConfig,
-        };
-
-        const ac = new AzureClient(clientProps);
         this.emit("status", {
             status: "success",
             description: this.description(),
@@ -97,9 +73,7 @@ export class AzureClientFactory extends TypedEventEmitter<IRunnerEvents> impleme
         };
     }
 
-    public stop(): void {
-        console.log("stop");
-    }
+    public stop(): void {}
 
     private description(): string {
         return `Creating ${this.c.connectionConfig.type} Azure Client pointing to: ${this.c.connectionConfig.endpoint}`;
