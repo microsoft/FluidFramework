@@ -16,8 +16,6 @@ export interface ICustomUserDetails {
 export interface AzureClientRunnerConnectionConfig {
     type: "remote" | "local";
     endpoint: string;
-    key?: string;
-    tenantId?: string;
     funTokenProvider?: string;
 }
 export interface AzureClientRunnerConfig {
@@ -34,21 +32,13 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
 
     public async run(): Promise<AzureClient | undefined> {
         this.status = "running";
-        if (this.c.connectionConfig.type === "remote") {
-            if (!this.c.connectionConfig.key) {
-                throw new Error("Invalid connection config. Missing Key.");
-            }
-            if (!this.c.connectionConfig.tenantId) {
-                throw new Error("Invalid connection config. Missing Tenant ID.");
-            }
-        }
-
         const ac = await createAzureClient({
             connType: this.c.connectionConfig.type,
             connEndpoint: this.c.connectionConfig.endpoint,
             userId: this.c.userId ?? "testUserId",
             userName: this.c.userName ?? "testUserId",
         });
+        this.status = "success";
         return ac;
     }
 

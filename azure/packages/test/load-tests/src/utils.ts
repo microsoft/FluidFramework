@@ -13,6 +13,7 @@ import { SharedMap } from "@fluidframework/map";
 import { generateUser } from "@fluidframework/server-services-client";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
+
 import { ContainerFactorySchema } from "./interface";
 
 export interface AzureClientConfig {
@@ -40,10 +41,11 @@ export function loadInitialObjSchema(source: ContainerFactorySchema): ContainerS
 }
 
 export function createAzureTokenProvider(
+    fnUrl: string,
     userID?: string,
     userName?: string,
 ): AzureFunctionTokenProvider {
-    const fnUrl = process.env.azure__fluid__relay__service__function__url as string;
+    // const fnUrl = process.env.azure__fluid__relay__service__function__url as string;
     return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
         userId: userID ?? "foo",
         userName: userName ?? "bar",
@@ -56,9 +58,25 @@ export function createAzureTokenProvider(
  */
 export async function createAzureClient(config: AzureClientConfig): Promise<AzureClient> {
     const useAzure = config.connType === "remote";
-    const tenantId = useAzure
-        ? (process.env.azure__fluid__relay__service__tenantId as string)
-        : "frs-client-tenant";
+    const configStr = process.env.fluid__scenario__runner;
+
+    let frsConfig;
+    if (useAzure) {
+        if (!configStr) {
+            throw new Error("Missing FRS env. configuration.");
+        }
+
+        frsConfig = JSON.parse(configStr);
+        if (!frsConfig.tenantId) {
+            throw new Error("Missing FRS env. configuration: Tenant ID.");
+        }
+        if (!frsConfig.fnUrl) {
+            throw new Error("Missing FRS env. configuration: Secret.");
+        }
+    }
+
+    const tenantId = useAzure ? (frsConfig.tenantId as string) : "frs-client-tenant";
+    const fnUrl = useAzure ? (frsConfig.fnUrl as string) : "";
 
     // use AzureClient remote mode will run against live Azure Fluid Relay.
     // Default to running Tinylicious for PR validation
@@ -66,8 +84,8 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
     const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
         ? {
               tenantId,
-              tokenProvider: createAzureTokenProvider(config.userId, config.userName),
-              endpoint: config.connEndpoint, // "https://alfred.westus2.fluidrelay.azure.com",
+              tokenProvider: createAzureTokenProvider(fnUrl),
+              endpoint: config.connEndpoint,
               type: "remote",
           }
         : {

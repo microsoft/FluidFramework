@@ -71,7 +71,10 @@ export class TestOrchestrator {
     }
 
     public static getConfigs(): VersionedRunConfig[] {
-        return [{ version: "v1", config: this.getConfig("v1") }];
+        return [
+            { version: "v1", config: this.getConfig("v1") },
+            { version: "v2", config: this.getConfig("v2") }
+        ];
     }
 
     public static getConfig(version: string): RunConfig {
@@ -194,6 +197,9 @@ export class TestOrchestrator {
         switch (version) {
             case "v1": {
                 return "./testConfig.yml";
+            }
+            case "v2": {
+                return "./testConfigV2.yml";
             }
             default: {
                 return "";
