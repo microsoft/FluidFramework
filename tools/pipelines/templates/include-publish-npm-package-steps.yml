@@ -96,8 +96,13 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
+          echo "Check $f : " $f
+
+          checkFile=$f
           checkFile=${f:2:-4}
           checkFile=${chekFile//"***"/"fluid"}
+
+          echo "Check File : " $checkFile
 
           if [[ $checkFile == *"fluidframework"* ]]; then
             checkFile=$(echo $checkFile | sed 's/-/\/''/1')
