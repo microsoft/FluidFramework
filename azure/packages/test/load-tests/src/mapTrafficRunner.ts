@@ -6,6 +6,7 @@
 import child_process from "child_process";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IRunner, IRunnerEvents, IRunnerStatus } from "./interface"
+import { delay } from "./utils"
 
 export interface ContainerTrafficSchema {
     initialObjects: {[key: string]: string},
@@ -16,50 +17,50 @@ export interface MapTrafficRunnerConfig {
     docId: string;
     schema: ContainerTrafficSchema;
     numClients: number;
+    clientStartDelayMs: number;
     writeRatePerMin: number;
     sharedMapKey: string;
     totalWriteCount: number;
-    totalGroupCount: number;
 }
 
 export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
-    private readonly c: MapTrafficRunnerConfig;
-    constructor(config: MapTrafficRunnerConfig) {
+    constructor(public readonly config: MapTrafficRunnerConfig) {
         super();
-        this.c = config;
     }
 
     public async run(): Promise<void> {
         const runnerArgs: string[][] = [];
-        for (let i = 0; i < this.c.numClients; i++) {
+        for (let i = 0; i < this.config.numClients; i++) {
             const childArgs: string[] = [
                 "./dist/mapTrafficRunnerClient.js",
-                "--docId", this.c.docId,
-                "--schema", JSON.stringify(this.c.schema),
+                "--docId", this.config.docId,
+                "--schema", JSON.stringify(this.config.schema),
                 "--runId", i.toString(),
-                "--writeRatePerMin", this.c.writeRatePerMin.toString(),
-                "--totalWriteCount", this.c.totalWriteCount.toString(),
-                "--totalGroupCount", this.c.totalGroupCount.toString(),
-                "--sharedMapKey", this.c.sharedMapKey,
+                "--writeRatePerMin", this.config.writeRatePerMin.toString(),
+                "--totalWriteCount", this.config.totalWriteCount.toString(),
+                "--sharedMapKey", this.config.sharedMapKey,
             ];
 
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);
         }
 
+        const children: Promise<boolean>[] = []
+        for(const runnerArg of runnerArgs) {
+            try {
+                children.push(this.createChild(runnerArg))
+            } catch {
+                this.emit("error", {
+                    status: "Failed to spawn child",
+                    description: this.description(),
+                    details: {},
+                });
+            }
+            await delay(this.config.clientStartDelayMs)
+        }
+
         try {
-            await Promise.all(runnerArgs.map(async (childArgs, index) => {
-                const envVar = { ...process.env };
-                const runnerProcess = child_process.spawn(
-                    "node",
-                    childArgs,
-                    {
-                        stdio: "inherit",
-                        env: envVar,
-                    },
-                );
-                return new Promise((resolve) => runnerProcess.once("close", resolve));
-            }));
+            await Promise.all(children);
         } finally {
             this.emit("status", {
                 status: "success",
@@ -83,5 +84,18 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
 
     private description(): string {
         return `This stage runs SharedMap traffic on multiple clients.`
+    }
+
+    private async createChild(childArgs: string[]): Promise<boolean> {
+        const envVar = { ...process.env };
+        const runnerProcess = child_process.spawn(
+            "node",
+            childArgs,
+            {
+                stdio: "inherit",
+                env: envVar,
+            },
+        );
+        return new Promise((resolve) => runnerProcess.once("close", () => resolve(true)));
     }
 }

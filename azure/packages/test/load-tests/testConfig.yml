@@ -32,8 +32,8 @@
       client: $(client)
       docId: $(docId)
       schema: ${schema}
-      numClients: 5
+      numClients: 1
+      clientStartDelayMs: 100
       writeRatePerMin: 60
       sharedMapKey: key1
-      totalWriteCount: 1000
-      totalGroupCount: 100
+      totalWriteCount: 30

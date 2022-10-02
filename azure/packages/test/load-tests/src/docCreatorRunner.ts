@@ -9,12 +9,8 @@ import {
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from '@fluidframework/map';
-import { IRunner, IRunnerEvents, IRunnerStatus } from "./interface";
+import { ContainerFactorySchema, IRunner, IRunnerEvents, IRunnerStatus } from "./interface";
 
-export interface ContainerFactorySchema {
-    initialObjects: {[key: string]: string},
-    dynamicObjects?: {[key: string]: string}
-}
 export interface DocCreatorConfig {
     client: AzureClient;
     schema: ContainerFactorySchema,

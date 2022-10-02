@@ -34,7 +34,7 @@ export function createAzureClient(userID?: string, userName?: string): AzureClie
           }
         : {
               tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
-              endpoint: "http://localhost:7071",
+              endpoint: "http://localhost:7070",
               type: "local",
           };
     return new AzureClient({ connection: connectionProps });

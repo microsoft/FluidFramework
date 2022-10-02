@@ -25,3 +25,8 @@ export interface IRunner extends IEventProvider<IRunnerEvents> {
     getStatus(): IRunnerStatus;
     stop(): void;
 }
+
+export interface ContainerFactorySchema {
+    initialObjects: {[key: string]: string},
+    dynamicObjects?: {[key: string]: string}
+}
