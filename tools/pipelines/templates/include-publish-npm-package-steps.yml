@@ -92,25 +92,27 @@ steps:
       do
         if [[ $sorted == true ]]; then
           f=$(find -name "${packageName}-[0-9]*.tgz")
+          checkVersion=$(find -name "${packageName}-[0-9]*.tgz")
         else
           f=$packageName
+          checkVersion=$packageName
         fi
         if [[ $f != "" ]]; then
-          echo "---------------------------"
-          echo "Check File Name : " $f
-          echo "---------------------------"
+          echo "Check Version : " $checkVersion
 
-          packageVersion=$packageName
-          echo "---------------------------"
-          echo "Before : " $packageVersion
-          echo "---------------------------"
+          checkVersion=${checkVersion:2:-4}
+          checkVersion=${checkVersion//"***"/"fluid"}
 
-          packageVersion=${packageVersion:2:-4}
-          packageVersion=${packageVersion//"***"/"fluid"}
+          if [[ $checkVersion == *"fluidframework"* ]]; then
+            echo "Passed First Case"
+            checkVersion=$(echo $package | sed 's/-/\/''/1')
+          else
+            echo "Passed Second Case"
+            checkVersion=$(echo $package | sed 's/-/\/''/2')
+          fi
 
-          echo "---------------------------"
-          echo "After : " $packageVersion
-          echo "---------------------------"
+          checkVersion=@$(echo $checkVersion | sed -E 's/-([0-9])/@\1/')
+          echo "Final Check : " $checkVersion
 
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
