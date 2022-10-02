@@ -95,8 +95,19 @@ steps:
         else
           f=$packageName
         fi
-        echo "File Name :" $f
         if [[ $f != "" ]]; then
+          checkFile=${f:2:-4}
+          checkFile=${chekFile//"***"/"fluid"}
+
+          if [[ $checkFile == *"fluidframework"* ]]; then
+            checkFile=$(echo $checkFile | sed 's/-/\/''/1')
+          else
+            checkFile=$(echo $checkFile | sed 's/-/\/''/2')
+          fi
+
+          checkFile=@$(echo $checkFile | sed -E 's/-([0-9])/@\1/')
+          echo "Name Format : " $checkFile
+
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
           then
