@@ -202,11 +202,3 @@ export class TestOrchestrator {
     }
 }
 
-const o = new TestOrchestrator({version: "v1"})
-o.run()
-    .then(() => {
-        console.log("TestOrchestrator: done");
-    })
-    .catch((error) => {
-        console.log("TestOrchestrator: error:", error);
-    });
