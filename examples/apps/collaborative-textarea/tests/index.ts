@@ -59,7 +59,6 @@ async function setup() {
     if (rightElement === null) {
         throw new Error("sbs-right does not exist");
     }
-    // The second time we don't need to createNew because we know a Container exists.
     await createContainerAndRenderInElement(rightElement);
 }
 
