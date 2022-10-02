@@ -20,6 +20,8 @@ export interface MapTrafficRunnerConfig {
     writeRatePerMin: number;
     totalWriteCount: number;
     sharedMapKey: string;
+    connType: string;
+    connEndpoint: string;
 }
 
 async function main() {
@@ -45,6 +47,8 @@ async function main() {
             parseIntArg,
         )
         .requiredOption("-k, --sharedMapKey <sharedMapKey>", "Shared map location")
+        .requiredOption("-ct, --connType <connType>", "Connection type")
+        .requiredOption("-ce, --connEndpoint <connEndpoint>", "Connection endpoint")
         .option(
             "-l, --log <filter>",
             "Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -58,6 +62,8 @@ async function main() {
         writeRatePerMin: commander.writeRatePerMin,
         totalWriteCount: commander.totalWriteCount,
         sharedMapKey: commander.sharedMapKey,
+        connType: commander.connType,
+        connEndpoint: commander.connEndpoint,
     };
 
     if (commander.log !== undefined) {
@@ -78,6 +84,8 @@ async function main() {
     const ac = await createAzureClient({
         userId: "testUserId",
         userName: "testUserName",
+        connType: config.connType,
+        connEndpoint: config.connEndpoint,
         logger
     });
     const s = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);

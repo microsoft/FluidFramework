@@ -17,6 +17,8 @@ import { createAzureTokenProvider } from "./AzureTokenFactory";
 import { ContainerFactorySchema } from "./interface";
 
 export interface AzureClientConfig {
+    connType: string;
+    connEndpoint: string;
     userId?: string;
     userName?: string;
     logger?: TelemetryLogger;
@@ -43,11 +45,13 @@ export function loadInitialObjSchema(source: ContainerFactorySchema): ContainerS
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
  */
 export async function createAzureClient(config: AzureClientConfig): Promise<AzureClient> {
-    const useAzure = process.env.FLUID_CLIENT === "azure";
+    const useAzure = config.connType === "remote";
     const tenantId = useAzure
         ? (process.env.azure__fluid__relay__service__tenantId as string)
         : "frs-client-tenant";
 
+
+    console.log("n-------", useAzure)
     // use AzureClient remote mode will run against live Azure Fluid Relay.
     // Default to running Tinylicious for PR validation
     // and local testing so it's not hindered by service availability
@@ -55,12 +59,12 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
         ? {
               tenantId,
               tokenProvider: createAzureTokenProvider(config.userId, config.userName),
-              endpoint: "https://alfred.westus2.fluidrelay.azure.com",
+              endpoint: config.connEndpoint, // "https://alfred.westus2.fluidrelay.azure.com",
               type: "remote",
           }
         : {
               tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
-              endpoint: "http://localhost:7070",
+              endpoint: config.connEndpoint, // "http://localhost:7070",
               type: "local",
           };
 

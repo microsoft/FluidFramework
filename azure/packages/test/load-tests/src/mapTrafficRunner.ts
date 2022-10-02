@@ -8,12 +8,20 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IRunner, IRunnerEvents, IRunnerStatus } from "./interface"
 import { delay } from "./utils"
 
+export interface AzureClientConfig {
+    type: "remote" | "local";
+    endpoint: string;
+    key?: string;
+    tenantId?: string;
+}
+
 export interface ContainerTrafficSchema {
     initialObjects: {[key: string]: string},
     dynamicObjects?: {[key: string]: string}
 }
 
 export interface MapTrafficRunnerConfig {
+    connectionConfig: AzureClientConfig;
     docId: string;
     schema: ContainerTrafficSchema;
     numClients: number;
@@ -24,23 +32,25 @@ export interface MapTrafficRunnerConfig {
 }
 
 export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
-    constructor(public readonly config: MapTrafficRunnerConfig) {
+    constructor(public readonly c: MapTrafficRunnerConfig) {
         super();
     }
 
     public async run(): Promise<void> {
         const runnerArgs: string[][] = [];
-        for (let i = 0; i < this.config.numClients; i++) {
+        for (let i = 0; i < this.c.numClients; i++) {
+            const connection = this.c.connectionConfig;
             const childArgs: string[] = [
                 "./dist/mapTrafficRunnerClient.js",
-                "--docId", this.config.docId,
-                "--schema", JSON.stringify(this.config.schema),
+                "--docId", this.c.docId,
+                "--schema", JSON.stringify(this.c.schema),
                 "--runId", i.toString(),
-                "--writeRatePerMin", this.config.writeRatePerMin.toString(),
-                "--totalWriteCount", this.config.totalWriteCount.toString(),
-                "--sharedMapKey", this.config.sharedMapKey,
+                "--writeRatePerMin", this.c.writeRatePerMin.toString(),
+                "--totalWriteCount", this.c.totalWriteCount.toString(),
+                "--sharedMapKey", this.c.sharedMapKey,
+                "--connType", connection.type,
+                "--connEndpoint", connection.endpoint,
             ];
-
             childArgs.push("--verbose");
             runnerArgs.push(childArgs);
         }
@@ -56,7 +66,7 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
                     details: {},
                 });
             }
-            await delay(this.config.clientStartDelayMs)
+            await delay(this.c.clientStartDelayMs)
         }
 
         try {

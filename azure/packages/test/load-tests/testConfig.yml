@@ -5,32 +5,34 @@
       initialObjects:
         key1: SharedMap
         key2: SharedMap
+    connectionConfig:
+      type: local
+      endpoint: http://localhost:7070
  stages:
-  - task-1:
+  - stage-1:
     id: 1
     name: Create azure client
     package: azureFactory
     params:
-      type: local
-      endpoint: http://localhost:7070
+      connectionConfig: ${connectionConfig}
       userId: SomeUserId;
       userName: SomeName;
-    out: $(client)
-  - task-2:
+    out: ${client}
+  - stage-2:
     id: 2
     name: Create document
     package: emptyDocCreator
     params:
-      client: $(client)
+      client: ${client}
       schema: ${schema}
-    out: $(docId)
-  - task-3:
+    out: ${docId}
+  - stage-3:
     id: 3
     name: Create traffic
     package: sharedMapTrafficGen
     params:
-      client: $(client)
-      docId: $(docId)
+      connectionConfig: ${connectionConfig}
+      docId: ${docId}
       schema: ${schema}
       numClients: 1
       clientStartDelayMs: 100

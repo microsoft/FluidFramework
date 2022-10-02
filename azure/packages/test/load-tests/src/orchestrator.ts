@@ -103,6 +103,7 @@ export class TestOrchestrator {
             const runner = this.createRunner(stage);
             if (runner) {
                 try {
+                    console.log("starting stage", stage.name);
                     const r = await this.runStage(runner, stage);
                     if (r !== undefined && stage.out !== undefined) {
                         this.env.set(stage.out, r);

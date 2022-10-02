@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import {
     AzureClient,
-    AzureRemoteConnectionConfig,
     AzureLocalConnectionConfig,
+    AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { generateTestUser, InsecureTokenProvider } from "@fluidframework/test-client-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
+
 import { IRunner, IRunnerEvents, IRunnerStatus } from "./interface";
 
 export interface ICustomUserDetails {
@@ -17,37 +17,64 @@ export interface ICustomUserDetails {
     email: string;
 }
 
-export interface AzureClientFactoryConfig {
+export interface AzureClientFactoryConnectionConfig {
     type: "remote" | "local";
-    tenantId: string;
     endpoint: string;
-    key: string;
+    key?: string;
+    tenantId?: string;
     funTokenProvider?: string;
+}
+export interface AzureClientFactoryConfig {
+    connectionConfig: AzureClientFactoryConnectionConfig;
     userId?: string;
     userName?: string;
 }
 
 export class AzureClientFactory extends TypedEventEmitter<IRunnerEvents> implements IRunner {
-    private readonly c: AzureClientFactoryConfig;
-    constructor(config: AzureClientFactoryConfig) {
+    constructor(private readonly c: AzureClientFactoryConfig) {
         super();
-        this.c = config;
     }
 
-    public async run(): Promise<AzureClient> {
-        const user = generateTestUser();
-        const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = this.c.type === "remote"
-        ? {
-            type: this.c.type,
-            tenantId: this.c.tenantId,
-            tokenProvider: new InsecureTokenProvider(this.c.key, user),
-            endpoint: this.c.endpoint,
-        }
-        : {
-            type: this.c.type,
-            tokenProvider: new InsecureTokenProvider("", user),
-            endpoint: this.c.endpoint,
+    public async run(): Promise<AzureClient | undefined> {
+        const user = {
+            id: this.c.userId ?? "testUserId",
+            name: this.c.userName ?? "testUserId",
         };
+        if (this.c.connectionConfig.type === "remote") {
+            if (!this.c.connectionConfig.key) {
+                this.emit("status", {
+                    status: "error",
+                    description: "Invalid connection config. Missing Key.",
+                    details: {},
+                });
+                return;
+            }
+            if (!this.c.connectionConfig.tenantId) {
+                this.emit("status", {
+                    status: "error",
+                    description: "Invalid connection config. Missing Tenant ID.",
+                    details: {},
+                });
+                return;
+            }
+        }
+
+        const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig =
+            this.c.connectionConfig.type === "remote"
+                ? {
+                      type: this.c.connectionConfig.type,
+                      tenantId: this.c.connectionConfig.tenantId as string,
+                      tokenProvider: new InsecureTokenProvider(
+                          this.c.connectionConfig.key as string,
+                          user,
+                      ),
+                      endpoint: this.c.connectionConfig.endpoint,
+                  }
+                : {
+                      type: this.c.connectionConfig.type,
+                      tokenProvider: new InsecureTokenProvider("", user),
+                      endpoint: this.c.connectionConfig.endpoint,
+                  };
 
         const clientProps = {
             connection: connectionConfig,
@@ -75,6 +102,6 @@ export class AzureClientFactory extends TypedEventEmitter<IRunnerEvents> impleme
     }
 
     private description(): string {
-        return `Creating ${this.c.type} Azure Client pointing to: ${this.c.endpoint}`
+        return `Creating ${this.c.connectionConfig.type} Azure Client pointing to: ${this.c.connectionConfig.endpoint}`;
     }
 }
