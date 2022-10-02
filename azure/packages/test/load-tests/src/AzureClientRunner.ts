@@ -4,7 +4,8 @@
  */
 import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IRunner, IRunnerEvents, IRunnerStatus } from "./interface";
+
+import { IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
 import { createAzureClient } from "./utils";
 
 export interface ICustomUserDetails {
@@ -26,27 +27,19 @@ export interface AzureClientRunnerConfig {
 }
 
 export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
+    private status: RunnnerStatus = "notstarted";
     constructor(private readonly c: AzureClientRunnerConfig) {
         super();
     }
 
     public async run(): Promise<AzureClient | undefined> {
+        this.status = "running";
         if (this.c.connectionConfig.type === "remote") {
             if (!this.c.connectionConfig.key) {
-                this.emit("status", {
-                    status: "error",
-                    description: "Invalid connection config. Missing Key.",
-                    details: {},
-                });
-                return;
+                throw new Error("Invalid connection config. Missing Key.");
             }
             if (!this.c.connectionConfig.tenantId) {
-                this.emit("status", {
-                    status: "error",
-                    description: "Invalid connection config. Missing Tenant ID.",
-                    details: {},
-                });
-                return;
+                throw new Error("Invalid connection config. Missing Tenant ID.");
             }
         }
 
@@ -56,18 +49,12 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
             userId: this.c.userId ?? "testUserId",
             userName: this.c.userName ?? "testUserId",
         });
-
-        this.emit("status", {
-            status: "success",
-            description: this.description(),
-            details: {},
-        });
         return ac;
     }
 
     public getStatus(): IRunnerStatus {
         return {
-            status: "notstarted",
+            status: this.status,
             description: this.description(),
             details: {},
         };

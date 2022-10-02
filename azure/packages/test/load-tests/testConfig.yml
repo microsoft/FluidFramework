@@ -38,4 +38,4 @@
       clientStartDelayMs: 100
       writeRatePerMin: 60
       sharedMapKey: key1
-      totalWriteCount: 30
+      totalWriteCount: 5

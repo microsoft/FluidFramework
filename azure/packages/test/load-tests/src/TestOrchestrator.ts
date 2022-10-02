@@ -2,22 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as fs from "node:fs";
+
 import * as yaml from "js-yaml";
 
-import {
-    AzureClientRunner,
-    AzureClientRunnerConfig,
-} from "./AzureClientRunner";
-import {
-    DocCreatorConfig,
-    DocCreatorRunner,
-} from "./DocCreatorRunner";
-import {
-    MapTrafficRunnerConfig,
-    MapTrafficRunner,
-} from "./MapTrafficRunner";
+import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner";
+import { DocCreatorConfig, DocCreatorRunner } from "./DocCreatorRunner";
+import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner";
 import { IRunner } from "./interface";
 
 export interface IStageParams {
@@ -54,13 +45,13 @@ export interface TestOrchestratorConfig {
 export type RunStatus = "notstarted" | "running" | "done";
 export type StageStatus = "notstarted" | "running" | "success" | "error";
 
-export interface IRunStatus{
+export interface IRunStatus {
     title: string;
     description: string;
     status: string;
     stages: IStageStatus[];
 }
-export interface IStageStatus{
+export interface IStageStatus {
     id: number;
     title: string;
     description?: string;
@@ -80,9 +71,7 @@ export class TestOrchestrator {
     }
 
     public static getConfigs(): VersionedRunConfig[] {
-        return [
-            { version: "v1", config: this.getConfig("v1") },
-        ];
+        return [{ version: "v1", config: this.getConfig("v1") }];
     }
 
     public static getConfig(version: string): RunConfig {
@@ -91,10 +80,10 @@ export class TestOrchestrator {
 
     public async run(): Promise<void> {
         this.runStatus = "running";
-        console.log("running config version:", this.c.version)
-        this.doc = TestOrchestrator.getConfig(this.c.version)
+        console.log("running config version:", this.c.version);
+        this.doc = TestOrchestrator.getConfig(this.c.version);
 
-        for(const key of Object.keys(this.doc.env)) {
+        for (const key of Object.keys(this.doc.env)) {
             this.env.set(`\${${key}}`, this.doc.env[key]);
         }
 
@@ -109,7 +98,21 @@ export class TestOrchestrator {
                         this.env.set(stage.out, r);
                     }
                     console.log("done with stage", stage.name);
-                } catch(error) {
+                    this.stageStatus.set(stage.id, {
+                        id: stage.id,
+                        title: stage.name,
+                        description: stage.description,
+                        status: "success",
+                        details: {},
+                    });
+                } catch (error) {
+                    this.stageStatus.set(stage.id, {
+                        id: stage.id,
+                        title: stage.name,
+                        description: error as string,
+                        status: "error",
+                        details: {},
+                    });
                     console.log("stage existed with error:", stage.name, error);
                     break;
                 }
@@ -120,17 +123,17 @@ export class TestOrchestrator {
 
     public getStatus(): IRunStatus {
         const r: IStageStatus[] = [];
-        for(const [, value] of this.stageStatus) {
-            r.push(value)
+        for (const [, value] of this.stageStatus) {
+            r.push(value);
         }
-        const stages = r.sort((a, b) => a.id < b.id ? -1 : 1);
+        const stages = r.sort((a, b) => (a.id < b.id ? -1 : 1));
 
         return {
             title: this.doc?.title ?? "title",
             description: this.doc?.description ?? "description",
             status: this.runStatus,
             stages,
-        }
+        };
     }
 
     private fillEnvForStage(params: IStageParams): void {
@@ -161,7 +164,7 @@ export class TestOrchestrator {
 
     private async runStage(runner: IRunner, stage: IStage): Promise<unknown> {
         // Initial status
-        const initStatus = runner.getStatus()
+        const initStatus = runner.getStatus();
         this.stageStatus.set(stage.id, {
             id: stage.id,
             title: stage.name,
@@ -178,12 +181,9 @@ export class TestOrchestrator {
                 description: e?.description ?? stage.description,
                 status: e.status,
                 details: JSON.stringify(e.details),
-            })
+            });
             console.log("state change --------------->:");
-            console.log(this.getStatus())
-        });
-        runner.on("done", () => {
-            console.log("stage done");
+            console.log(this.getStatus());
         });
 
         // exec
@@ -193,12 +193,11 @@ export class TestOrchestrator {
     private static getConfigFileName(version: string): string {
         switch (version) {
             case "v1": {
-                return "./testConfig.yml"
+                return "./testConfig.yml";
             }
             default: {
-                return ""
+                return "";
             }
         }
     }
 }
-

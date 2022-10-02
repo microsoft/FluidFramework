@@ -7,7 +7,13 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 
-import { ContainerFactorySchema, IRunner, IRunnerEvents, IRunnerStatus } from "./interface";
+import {
+    ContainerFactorySchema,
+    IRunner,
+    IRunnerEvents,
+    IRunnerStatus,
+    RunnnerStatus,
+} from "./interface";
 
 export interface DocCreatorConfig {
     client: AzureClient;
@@ -16,12 +22,15 @@ export interface DocCreatorConfig {
 
 export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
     private readonly c: DocCreatorConfig;
+    private status: RunnnerStatus = "notstarted";
+
     constructor(config: DocCreatorConfig) {
         super();
         this.c = config;
     }
 
     public async run(): Promise<string | undefined> {
+        this.status = "running";
         const schema: ContainerSchema = {
             initialObjects: {},
         };
@@ -29,40 +38,23 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
         try {
             this.loadInitialObjSchema(schema);
         } catch {
-            this.emit("status", {
-                status: "error",
-                description: "Invalid schema provided.",
-            });
-            return;
+            throw new Error("Invalid schema provided.");
         }
-        const ac = this.c.client;
 
+        const ac = this.c.client;
         let container: IFluidContainer;
         try {
             ({ container } = await ac.createContainer(schema));
         } catch {
-            this.emit("status", {
-                status: "error",
-                description: "Unable to create container.",
-            });
-            return;
+            throw new Error("Unable to create container.");
         }
 
         let id: string;
         try {
             id = await container.attach();
         } catch {
-            this.emit("status", {
-                status: "error",
-                description: "Unable to attach container.",
-            });
-            return;
+            throw new Error("Unable to attach container.");
         }
-
-        this.emit("status", {
-            status: "success",
-            description: this.description(),
-        });
         return id;
     }
 
@@ -70,7 +62,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 
     public getStatus(): IRunnerStatus {
         return {
-            status: "notstarted",
+            status: this.status,
             description: this.description(),
             details: {},
         };

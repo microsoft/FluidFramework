@@ -33,7 +33,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     }
 
     async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
-        console.log("event----", this.targetEvents);
+        // console.log("event----", this.targetEvents);
         const baseFlushP = this.baseLogger?.flush();
 
         if (this.error && runInfo !== undefined) {
@@ -62,7 +62,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     }
 
     send(event: ITelemetryBaseEvent): void {
-        // console.log("event----", event, this.targetEvents);
+        console.log("event----", event, this.targetEvents);
         if (typeof event.testCategoryOverride === "string") {
             event.category = event.testCategoryOverride;
         } else if (

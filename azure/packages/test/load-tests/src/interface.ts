@@ -17,7 +17,6 @@ export interface IRunnerStatus{
 
 export interface IRunnerEvents extends IEvent {
     (event: "status", listener: (s: IRunnerStatus) => void): void;
-    (event: "started" | "done", listener: () => void): void;
 }
 
 export interface IRunner extends IEventProvider<IRunnerEvents> {
