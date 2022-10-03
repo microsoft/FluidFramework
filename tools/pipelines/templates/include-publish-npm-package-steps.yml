@@ -96,8 +96,9 @@ steps:
           f=$packageName
         fi
         if [[ $f != "" ]]; then
-          checkVersion=$${f##*/}
+          checkVersion=${f##*/}
 
+          echo "File Name: " $f
           echo "checkVersion BEFORE : " $checkVersion
 
           checkVersion=${checkVersion:2:-4}
