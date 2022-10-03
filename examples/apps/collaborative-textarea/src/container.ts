@@ -11,7 +11,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { CollaborativeText } from "./fluid-object";
 
 export interface ICollaborativeTextAppModel {
-    collaborativeText: CollaborativeText;
+    readonly collaborativeText: CollaborativeText;
 }
 
 class CollaborativeTextAppModel implements ICollaborativeTextAppModel {
