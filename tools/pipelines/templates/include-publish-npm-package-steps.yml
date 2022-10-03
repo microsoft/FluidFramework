@@ -118,6 +118,7 @@ steps:
           if grep -q "npm ERR!"
             echo $"NPM View Error"
             npm view fluidframework-tinylicious-client-0.0.0-96564-test.tgz
+          fi
 
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
