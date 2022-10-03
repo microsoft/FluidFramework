@@ -5,7 +5,7 @@
 import commander from "commander";
 import { v4 as uuid } from "uuid";
 
-import { IFluidContainer } from "@fluidframework/fluid-static";
+import { AzureClient } from "@fluidframework/azure-client";
 import { SharedMap } from "@fluidframework/map";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
@@ -80,7 +80,6 @@ async function main() {
     const logger = await getLogger({
         runId: config.runId,
         scenarioName: "test",
-        namespace: "hey:",
     });
 
     const ac = await createAzureClient({
@@ -90,23 +89,31 @@ async function main() {
         connEndpoint: config.connEndpoint,
         logger,
     });
-    const s = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
-    await delay(2000);
-    const { container } = await ac.getContainer(config.docId, s);
-    await execRun(container, config);
+
+    await execRun(ac, config);
     process.exit(0);
 }
 
-async function execRun(container: IFluidContainer, config: MapTrafficRunnerConfig): Promise<void> {
+async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise<void> {
     const msBetweenWrites = 60000 / config.writeRatePerMin;
-    const initialObjectsCreate = container.initialObjects;
-    const map = initialObjectsCreate[config.sharedMapKey] as SharedMap;
-
     const logger = await getLogger({
         runId: config.runId,
         scenarioName: config.scenarioName,
         namespace: "scenario:runner:maptraffic:client",
     });
+
+    const s = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
+    const { container } = await PerformanceEvent.timedExecAsync(
+        logger,
+        { eventName: "ContainerLoad", clientId: config.clientId },
+        async (_event) => {
+            return ac.getContainer(config.docId, s);
+        },
+        { start: true, end: true, cancel: "generic" },
+    );
+
+    const initialObjectsCreate = container.initialObjects;
+    const map = initialObjectsCreate[config.sharedMapKey] as SharedMap;
 
     for (let i = 0; i < config.totalWriteCount; i++) {
         await delay(msBetweenWrites);
@@ -116,7 +123,7 @@ async function execRun(container: IFluidContainer, config: MapTrafficRunnerConfi
 
     await PerformanceEvent.timedExecAsync(
         logger,
-        { eventName: "CatchupEvent", clientId: config.clientId },
+        { eventName: "Catchup", clientId: config.clientId },
         async (_event) => {
             await timeoutPromise((resolve) => container.once("saved", () => resolve()), {
                 durationMs: 20000,
