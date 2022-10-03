@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 
-import { detectVersionScheme, VersionBumpType } from "@fluid-tools/version-tools";
 import {
     bumpTypeFlag,
     checkFlags,
