@@ -23,7 +23,10 @@ export function errorObjectFromSocketError(socketError: IOdspSocketError, handle
         const error = createOdspNetworkError(
             message,
             socketError.code,
-            socketError.retryAfter);
+            socketError.retryAfter,
+            undefined,
+            socketError.error ? JSON.stringify({ error: socketError.error }) : undefined,
+        );
 
         error.addTelemetryProperties({ odspError: true, relayServiceError: true });
         return error;
