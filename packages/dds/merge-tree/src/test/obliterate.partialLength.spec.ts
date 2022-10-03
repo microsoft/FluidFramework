@@ -82,6 +82,40 @@ describe("obliterate partial lengths", () => {
         ]);
     });
 
+    it("is correct for different heights", () => {
+        client = new TestClient();
+        client.startOrUpdateCollaboration("local");
+
+        for (let i = 0; i < 100; i++) {
+            insertText({
+                mergeTree: client.mergeTree,
+                pos: 0,
+                refSeq: i,
+                clientId: localClientId,
+                seq: i + 1,
+                text: "a",
+                props: undefined,
+                opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+            });
+
+            validatePartialLengths(localClientId, client.mergeTree, [{ seq: i + 1, len: i + 1 }]);
+            validatePartialLengths(remoteClientId, client.mergeTree, [{ seq: i + 1, len: i + 1 }]);
+
+            refSeq += 1;
+        }
+
+        const localObliterateOp = client.obliterateRangeLocal(
+            50,
+            100,
+        );
+
+        validatePartialLengths(localClientId, client.mergeTree);
+
+        client.applyMsg(client.makeOpMessage(localObliterateOp, refSeq + 1));
+
+        validatePartialLengths(remoteClientId, client.mergeTree);
+    });
+
     describe("overlapping remove+obliterate", () => {
         it("passes for local remove and remote obliterate", () => {
             const localRemoveOp = client.removeRangeLocal(
