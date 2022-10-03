@@ -312,8 +312,8 @@ export class DocumentDeltaConnection
     /**
      * Disconnect from the websocket and close the websocket too.
      */
-    protected disposeSocket(error: IAnyDriverError) {
-        this.disposeCore(error);
+    protected closeSocket(error: IAnyDriverError) {
+        this.disconnect(error);
     }
 
     /**
@@ -322,13 +322,13 @@ export class DocumentDeltaConnection
      * multiplexing here, so we need to close the socket here.
      */
     public dispose() {
-        this.disposeCore(createGenericNetworkError(
+        this.disconnect(createGenericNetworkError(
             // pre-0.58 error message: clientClosingConnection
             "Client closing delta connection", { canRetry: true }, { driverVersion }),
         );
     }
 
-    protected disposeCore(err: IAnyDriverError) {
+    protected disconnect(err: IAnyDriverError) {
         // Can't check this.disposed here, as we get here on socket closure,
         // so _disposed & socket.connected might be not in sync while processing
         // "dispose" event.
@@ -347,18 +347,19 @@ export class DocumentDeltaConnection
         // removing all listeners!
         this.emit("disconnect", err);
 
-        // user of DeltaConnection should have processed "disconnect" event and removed all listeners.
-        assert(this.listenerCount("disconnect") === 0, "'disconnect` events should be processed synchronously");
+        // user of DeltaConnection should have processed "disconnect" event and removed all listeners. Not clear
+        // if we want to enforce that, as some users (like LocalDocumentService) do not unregister any handlers
+        // assert(this.listenerCount("disconnect") === 0, "'disconnect` events should be processed synchronously");
 
         this.removeTrackedListeners();
-        this.disconnect();
+        this.disconnectCore();
     }
 
     /**
      * Disconnect from the websocket.
      * @param reason - reason for disconnect
      */
-    protected disconnect() {
+    protected disconnectCore() {
         this.socket.disconnect();
     }
 
@@ -377,13 +378,13 @@ export class DocumentDeltaConnection
             getMaxInternalSocketReconnectionAttempts() + 1;
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
-            const failAndDisposeSocket = (err: IAnyDriverError) => {
-                this.disposeSocket(err);
+            const failAndCloseSocket = (err: IAnyDriverError) => {
+                this.closeSocket(err);
                 reject(err);
             };
 
             const failConnection = (err: IAnyDriverError) => {
-                this.disposeCore(err);
+                this.disconnect(err);
                 reject(err);
             };
             // Listen for connection issues
@@ -423,12 +424,12 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                failAndDisposeSocket(this.createErrorObject("connect_error", error));
+                failAndCloseSocket(this.createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                failAndDisposeSocket(this.createErrorObject("connect_timeout"));
+                failAndCloseSocket(this.createErrorObject("connect_timeout"));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -477,7 +478,7 @@ export class DocumentDeltaConnection
             this.addTrackedListener("disconnect", (reason) => {
                 const err = this.createErrorObject("disconnect", reason);
                 this.emit("disconnect", err);
-                failAndDisposeSocket(err);
+                failAndCloseSocket(err);
             });
 
             this.addTrackedListener("error", ((error) => {
@@ -486,7 +487,7 @@ export class DocumentDeltaConnection
                 const err = this.createErrorObject("error", error, error !== "Invalid namespace");
                 this.emit("error", err);
                 // Disconnect socket - required if happened before initial handshake
-                failAndDisposeSocket(err);
+                failAndCloseSocket(err);
             }));
 
             this.addConnectionListener("connect_document_error", ((error) => {

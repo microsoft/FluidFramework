@@ -128,6 +128,8 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             this.isPendingInitialConnection = false;
 
             if (clientId === undefined) {
+                // We could first raise "disconnect" event, but that may result in socket reuse due to
+                // new connection comming in. So, it's better to have more explicit flow to make it impossible.
                 this.closeSocket(error);
             } else {
                 this.emit("disconnect", error, clientId);
@@ -149,7 +151,14 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 
         assert(SocketReference.socketIoSockets.get(this.key) === this,
             0x0a1 /* "Socket reference set unexpectedly does not point to this socket!" */);
+
+        // First, remove socket to ensure no socket reuse is possible.
         SocketReference.socketIoSockets.delete(this.key);
+
+        // Block access to socket. From now on, calls like flush() or requestOps()
+        // Disconnect flow should be synchronous and result in system fully forgetting about this connection / socket.
+        const socket = this._socket;
+        this._socket = undefined;
 
         // Let all connections know they need to go through disconnect flow
         this.emit("disconnect", error, undefined /* clientId */);
@@ -158,21 +167,10 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         // "disconnect" event
         assert(this.references === 0, "Nobody should be connected to this socket at this point!");
 
-        const socket = this._socket;
-        this._socket = undefined;
-
-        // Delay closing socket, to make sure all users of socket observe the same event that causes
-        // this instance to close, and thus properly record reason for closure.
-        // All event raising is synchronous, so clients will have a chance to react before socket is
-        // closed without any extra data on why it was closed.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        Promise.resolve().then(() => {
-            assert(this.references === 0, "Nobody should be connected to this socket at this point!");
-            socket.disconnect();
-        });
+        socket.disconnect();
     }
 
-    private get disconnected() {
+    public get disconnected() {
         if (this._socket === undefined) { return true; }
         if (this.socket.connected) { return false; }
 
@@ -366,6 +364,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * @returns ops retrieved
      */
      public requestOps(from: number, to: number) {
+        assert(!this.socketReference?.disconnected, "non-active socket");
+
         // Given that to is exclusive, we should be asking for at least something!
         assert(to > from, 0x272 /* "empty request" */);
 
@@ -422,6 +422,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     public async flush(): Promise<FlushResult> {
+        assert(!this.socketReference?.disconnected, "non-active socket");
+
         // back-compat: remove cast to any once latest version of IConnected is consumed
         if ((this.details as any).supportedFeatures?.[feature_flush_ops] !== true) {
             // Once single-commit summary is enabled end-to-end, flush support is a must!
@@ -451,12 +453,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     protected disconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string) => {
         if (clientId === undefined || clientId === this.clientId) {
-            this.disposeCore(error);
+            this.disconnect(error);
             this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.clientId }, error);
         }
     };
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
+        assert(!this.socketReference?.disconnected, "non-active socket");
+
         if (this.enableMultiplexing) {
             // multiplex compatible early handlers
             this.earlyOpHandler = (messageDocumentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -594,21 +598,22 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * Critical path where we need to also close the socket for an error.
      * @param error - Error causing the socket to close.
      */
-    protected disposeSocket(error: IAnyDriverError) {
+    protected closeSocket(error: IAnyDriverError) {
         const socket = this.socketReference;
         assert(socket !== undefined, "reentrancy not supported in close socket");
         socket.closeSocket(error);
+        assert(this.socketReference === undefined, "disconnect flow did not work correctly");
     }
 
     /**
      * Disconnect from the websocket
      */
-    protected disconnect() {
+    protected disconnectCore() {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
+        this.socketReference = undefined;
 
         socket.off("disconnect", this.disconnectHandler);
-        this.socketReference = undefined;
         if (this.hasDetails) {
             // tell the server we are disconnecting this client from the document
             this.socket.emit("disconnect_document", this.clientId, this.documentId);
