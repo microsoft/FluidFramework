@@ -101,8 +101,8 @@ steps:
           echo "File Name: " $f
           echo "checkVersion BEFORE : " $checkVersion
 
-          checkVersion=$(echo $checkVersion | sed -r 's/[*]{3}/fluid/g')
-          checkVersion=${checkVersion//"***"/"fluid"}
+          checkVersion=$(echo "$checkVersion" | sed -r 's/["*"]{3}/fluid/g')
+          checkVersion=${checkVersion//\*\*\*/fluid}
 
           if [[ $checkVersion == *"fluidframework"* ]]; then
             checkVersion=$(echo $checkVersion | sed 's/-/\/''/1')
