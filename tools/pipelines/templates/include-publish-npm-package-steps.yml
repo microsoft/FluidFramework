@@ -101,7 +101,6 @@ steps:
           echo "File Name: " $f
           echo "checkVersion BEFORE : " $checkVersion
 
-          # checkVersion=${checkVersion:2:-4}
           checkVersion=${checkVersion//"***"/"fluid"}
 
           if [[ $checkVersion == *"fluidframework"* ]]; then
