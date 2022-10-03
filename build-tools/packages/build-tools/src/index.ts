@@ -20,7 +20,7 @@ export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
 export { FluidRepo } from "./common/fluidRepo";
 export { getResolvedFluidRoot } from "./common/fluidUtils";
-export { Logger, LoggingFunction } from "./common/logging";
+export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
 export {
     isMonoRepoKind,
     MonoRepo,

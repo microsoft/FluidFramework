@@ -6,29 +6,29 @@
 import chalk from "chalk";
 import { commonOptions } from "./commonOptions";
 
-export type LoggingFunction = (msg: string | Error, ...args: unknown[]) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ErrorLoggingFunction = (msg: string | Error | undefined, ...args: any[]) => void;
+
+export type LoggingFunction = (message?: string, ...args: any[]) => void;
 
 export interface Logger {
-    info: LoggingFunction,
-    warning: LoggingFunction,
-    errorLog: LoggingFunction,
-    verbose: LoggingFunction,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    log: LoggingFunction,
+    info: ErrorLoggingFunction,
+    warning: ErrorLoggingFunction,
+    errorLog: ErrorLoggingFunction,
+    verbose: ErrorLoggingFunction,
 }
 
 export const defaultLogger: Logger = {
+    log: console.log,
     info,
     warning,
     errorLog,
     verbose
 }
 
-function verbose(msg: string | Error) {
-    if (commonOptions.verbose) {
-        info(msg);
-    }
-}
-
-function log(msg: string | Error, logFunc: LoggingFunction) {
+function log(msg: string | Error | undefined, logFunc: ErrorLoggingFunction) {
     if (!commonOptions.logtime) {
         logFunc(msg);
         return;
@@ -43,14 +43,20 @@ function log(msg: string | Error, logFunc: LoggingFunction) {
     logFunc(chalk.yellow(`[${hours}:${mins}:${secs}] `) + msg);
 }
 
-function info(msg: string | Error) {
-    log(msg, console.log);
+function info(msg: string | Error | undefined) {
+    log(`INFO: ${msg}`, console.log);
 }
 
-function warning(msg: string | Error) {
+function verbose(msg: string | Error | undefined) {
+    if (commonOptions.verbose) {
+        log(msg, console.log);
+    }
+}
+
+function warning(msg: string | Error | undefined) {
     log(`${chalk.yellow(`WARNING`)}: ${msg}`, console.log);
 }
 
-function errorLog(msg: string | Error) {
+function errorLog(msg: string | Error | undefined) {
     log(`${chalk.red(`ERROR`)}: ${msg}`, console.error);
 }

@@ -95,14 +95,17 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     protected get logger(): CommandLogger {
         if (this._logger === undefined) {
             this._logger = {
-                info: (msg: string | Error) => {
-                    this.info(msg.toString());
+                log: (msg: string | Error | undefined, ...args: unknown[]) => {
+                    this.log(msg?.toString(), ...args);
+                },
+                info: (msg: string | Error | undefined) => {
+                    this.info(msg?.toString());
                 },
                 warning: this.warning.bind(this),
-                errorLog: (msg: string | Error) => {
+                errorLog: (msg: string | Error | undefined) => {
                     this.errorLog(msg);
                 },
-                verbose: (msg: string | Error) => {
+                verbose: (msg: string | Error | undefined) => {
                     this.verbose(msg);
                 },
                 logHr: this.logHr.bind(this),
@@ -157,23 +160,22 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     /**
      * Logs an informational message.
      */
-    public info(message: string | Error) {
+    public info(message: string | Error | undefined): void {
         this.log(`INFO: ${message}`);
     }
 
     /**
      * Logs an error without exiting.
      */
-    public errorLog(message: string | Error) {
+    public errorLog(message: string | Error | undefined): void {
         this.log(chalk.red(`ERROR: ${message}`));
     }
 
     /**
      * Logs a warning.
      */
-    public warning(message: string | Error): string | Error {
+    public warning(message: string | Error | undefined): void {
         this.log(chalk.yellow(`WARNING: ${message}`));
-        return message;
     }
 
     /**
@@ -246,7 +248,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
     /**
      * Logs a verbose log statement.
      */
-    public verbose(message: string | Error): string | Error {
+    public verbose(message: string | Error | undefined): void {
         if (this.baseFlags.verbose === true) {
             if (typeof message === "string") {
                 this.log(chalk.grey(`VERBOSE: ${message}`));
@@ -254,7 +256,5 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags>
                 this.log(chalk.red(`VERBOSE: ${message}`));
             }
         }
-
-        return message;
     }
 }
