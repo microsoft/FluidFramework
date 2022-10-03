@@ -14,16 +14,20 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:genver && npm run build:compile",
-    "build:clean": "rimraf dist *.tsbuildinfo",
-    "build:compile": "npm run build:clean && npm run tsc && npm run build:copy",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build:compile": "concurrently npm:tsc npm:build:copy",
     "build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
     "build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:docs": "api-extractor run --local",
     "build:full": "npm run build",
-    "build:full:compile": "npm run build:full",
+    "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
     "ci:build:docs": "api-extractor run",
+    "clean": "rimraf dist *.tsbuildinfo",
+    "eslint": "eslint src",
+    "eslint:fix": "eslint src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc -b"
   },
@@ -40,6 +44,7 @@
     "@types/jszip": "^3.4.1",
     "@types/msgpack-lite": "^0.1.8",
     "@types/node": "^14.18.0",
-    "@types/pako": "^2.0.0"
+    "@types/pako": "^2.0.0",
+    "rimraf": "^2.6.2"
   }
 }

@@ -11,7 +11,7 @@ import { Machine } from "jssm";
 import { bumpReleaseGroup, difference, getPreReleaseDependencies, npmCheckUpdates } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
-import { isReleaseGroup } from "../releaseGroups";
+import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../releaseGroups";
 import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
 import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
 
@@ -39,10 +39,14 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 
     const { releaseGroups, packages, isEmpty } = await getPreReleaseDependencies(
         context,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         releaseGroup!,
     );
 
     assert(!isEmpty, `No prereleases found in DoBumpReleasedDependencies state.`);
+
+    const preReleaseGroups = new Set(releaseGroups.keys());
+    const preReleasePackages = new Set(packages.keys());
 
     const packagesToBump = new Set(packages.keys());
     for (const rg of releaseGroups.keys()) {
@@ -63,8 +67,18 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
         log,
     );
 
-    // Divide the updated dependencies into individual packages and release groups
-    const updatedReleaseGroups = new Set<string>();
+    // Divide the updated packages into individual packages and release groups
+    const updatedReleaseGroups = new Set<ReleaseGroup>();
+    const updatedPkgs = new Set<ReleasePackage>();
+
+    for (const pkg of updatedPackages) {
+        if (pkg.monoRepo === undefined) {
+            updatedPkgs.add(pkg.name);
+        } else {
+            updatedReleaseGroups.add(pkg.monoRepo.kind);
+        }
+    }
+
     const updatedDeps = new Set<string>();
     for (const p of Object.keys(updatedDependencies)) {
         const pkg = context.fullPackageMap.get(p);
@@ -76,18 +90,15 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
         if (pkg.monoRepo === undefined) {
             updatedDeps.add(pkg.name);
         } else {
-            updatedReleaseGroups.add(pkg.monoRepo.kind);
+            updatedDeps.add(pkg.monoRepo.kind);
         }
     }
 
-    const remainingReleaseGroupsToBump = difference(
-        new Set(releaseGroups.keys()),
-        updatedReleaseGroups,
-    );
-    const remainingPackagesToBump = difference(new Set(packages.keys()), updatedDeps);
+    const remainingReleaseGroupsToBump = difference(preReleaseGroups, updatedDeps);
+    const remainingPackagesToBump = difference(preReleasePackages, updatedPkgs);
 
     if (remainingReleaseGroupsToBump.size === 0 && remainingPackagesToBump.size === 0) {
-        // This is the same command as run above, but this time we write the changes. THere are more
+        // This is the same command as run above, but this time we write the changes. There are more
         // efficient ways to do this but this is simple.
         ({ updatedPackages, updatedDependencies } = await npmCheckUpdates(
             context,
@@ -136,8 +147,12 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
     assert(bumpType !== undefined, `bumpType is undefined.`);
 
     const rgRepo = isReleaseGroup(releaseGroup)
-        ? context.repo.releaseGroups.get(releaseGroup)!
-        : context.fullPackageMap.get(releaseGroup!)!;
+        ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          context.repo.releaseGroups.get(releaseGroup)!
+        : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          context.fullPackageMap.get(releaseGroup!)!;
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const scheme = detectVersionScheme(releaseVersion!);
     const newVersion = bumpVersionScheme(releaseVersion, bumpType, scheme);
     const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];

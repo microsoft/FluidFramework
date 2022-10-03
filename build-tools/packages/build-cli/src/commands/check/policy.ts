@@ -6,8 +6,7 @@
 import * as fs from "fs";
 import { EOL as newline } from "os";
 import * as childProcess from "child_process";
-// eslint-disable-next-line unicorn/import-style
-import * as path from "path";
+import path from "path";
 import { Flags } from "@oclif/core";
 import { policyHandlers, readJsonAsync } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";

@@ -9,60 +9,69 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 /**
- * A mapping of string identifiers to instantiated DataObjects or SharedObjects.
+ * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
  */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 /**
- * A mapping of string identifiers to classes that will later be used to instantiate a corresponding DataObject
- * or SharedObject in a LoadableObjectRecord.
+ * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
+ * or `SharedObject` in a {@link LoadableObjectRecord}.
  */
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 /**
- * A LoadableObjectClass is an class object of DataObject or SharedObject
- * @typeParam T - The class of the DataObject or SharedObject
+ * A class object of `DataObject` or `SharedObject`.
+ *
+ * @typeParam T - The class of the `DataObject` or `SharedObject`.
  */
 export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
 /**
- * A DataObjectClass is a class that has a factory that can create a DataObject and a
- * constructor that will return the type of the DataObject.
- * @typeParam T - The class of the DataObject
+ * A class that has a factory that can create a `DataObject` and a
+ * constructor that will return the type of the `DataObject`.
+ *
+ * @typeParam T - The class of the `DataObject`.
  */
 export type DataObjectClass<T extends IFluidLoadable>
     = { readonly factory: IFluidDataStoreFactory; } & LoadableObjectCtor<T>;
 
 /**
- * A SharedObjectClass is a class that has a factory that can create a DDS (SharedObject) and a
- * constructor that will return the type of the DataObject.
- * @typeParam T - The class of the SharedObject
+ * A class that has a factory that can create a DDSes (`SharedObject`s) and a
+ * constructor that will return the type of the `DataObject`.
+ *
+ * @typeParam T - The class of the `SharedObject`.
  */
 export type SharedObjectClass<T extends IFluidLoadable>
     = { readonly getFactory: () => IChannelFactory; } & LoadableObjectCtor<T>;
 
 /**
- * An object with a constructor that will return an `IFluidLoadable`.
- * @typeParam T - The class of the loadable object
+ * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
+ *
+ * @typeParam T - The class of the loadable object.
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
 /**
- * The ContainerSchema declares the Fluid objects that will be available in the container.  It includes both the
- * instances of objects that are initially available upon container creation, as well as the types of objects that may
- * be dynamically created throughout the lifetime of the container.
+ * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
+ *
+ * @remarks
+ *
+ * It includes both the instances of objects that are initially available upon `Container` creation, as well
+ * as the types of objects that may be dynamically created throughout the lifetime of the `Container`.
  */
 export interface ContainerSchema {
     /**
-     * Defines loadable objects that will be created when the `Container` is first created.
-     * It uses the key as the id and the value as the loadable object to create.
+     * Defines loadable objects that will be created when the {@link IFluidContainer | Container} is first created.
+     *
+     * @remarks It uses the key as the id and the value as the loadable object to create.
      *
      * @example
-     * In the example below two objects will be created when the Container is first
+     *
+     * In the example below two objects will be created when the `Container` is first
      * created. One with id "map1" that will return a `SharedMap` and the other with
      * id "pair1" that will return a `KeyValueDataObject`.
      *
-     * ```
+     * ```typescript
      * {
      *   map1: SharedMap,
      *   pair1: KeyValueDataObject,
@@ -72,7 +81,9 @@ export interface ContainerSchema {
     initialObjects: LoadableObjectClassRecord;
 
     /**
-     * Dynamic objects are Loadable objects that can be created after the initial Container creation.
+     * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
+     *
+     * @remarks
      *
      * Types defined in `initialObjects` will always be available and are not required to be provided here.
      *
@@ -83,61 +94,59 @@ export interface ContainerSchema {
 }
 
 /**
+ * Signature for {@link IMember} change events.
+ *
+ * @param clientId - A unique identifier for the client.
+ * @param member - The service-specific member object for the client.
+ *
+ * @see See {@link IServiceAudienceEvents} for usage details.
+ */
+export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
+
+/**
  * Events that trigger when the roster of members in the Fluid session change.
- * Only changes that would be reflected in the returned map of {@link IServiceAudience}'s
- * {@link IServiceAudience.getMembers} method will emit events.
  *
  * @remarks
  *
- * The following is the list of events emitted.
+ * Only changes that would be reflected in the returned map of {@link IServiceAudience}'s
+ * {@link IServiceAudience.getMembers} method will emit events.
  *
- * ### "membersChanged"
- *
- * The "membersChanged" event is emitted when a member is either added or removed.
- *
- * #### Listener signature
- *
- * ```typescript
- * () => void;
- * ```
- *
- * ### "memberAdded"
- *
- * The "memberAdded" event is emitted when a member joins the audience.
- *
- * #### Listener signature
- *
- * ```typescript
- * (clientId: string, member: M) => void;
- * ```
- * - `clientId` - A unique identifier for the client
- *
- * - `member` - The service-specific member object for the client
- *
- * ### "memberRemoved"
- *
- * The "memberRemoved" event is emitted when a member leaves the audience.
- *
- * #### Listener signature
- *
- * ```typescript
- * (clientId: string, member: M) => void;
- * ```
- * - `clientId` - A unique identifier for the client
- *
- * - `member` - The service-specific member object for the client
- * @typeParam M - A service-specific member type.
+ * @typeParam M - A service-specific {@link IMember} implementation.
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
+    /* eslint-disable @typescript-eslint/unified-signatures */
+    /**
+     * Emitted when a {@link IMember | member}(s) are either added or removed.
+     *
+     * @eventProperty
+     */
     (event: "membersChanged", listener: () => void): void;
-    (event: "memberAdded" | "memberRemoved", listener: (clientId: string, member: M) => void): void;
+
+    /**
+     * Emitted when a {@link IMember | member} joins the audience.
+     *
+     * @eventProperty
+     */
+    (event: "memberAdded", listener: MemberChangedListener<M>): void;
+
+    /**
+     * Emitted when a {@link IMember | member} leaves the audience.
+     *
+     * @eventProperty
+     */
+    (event: "memberRemoved", listener: MemberChangedListener<M>): void;
+    /* eslint-enable @typescript-eslint/unified-signatures */
 }
 
 /**
- * Base interface to be implemented to fetch each service's audience. The generic M allows consumers to further
- * extend the client object with service-specific details about the connecting client, such as device information,
- * environment, or a username.
- * @typeParam M - A service-specific member type.
+ * Base interface to be implemented to fetch each service's audience.
+ *
+ * @remarks
+ *
+ * The type parameter `M` allows consumers to further extend the client object with service-specific
+ * details about the connecting client, such as device information, environment, or a username.
+ *
+ * @typeParam M - A service-specific {@link IMember} type.
  */
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     /**
@@ -154,8 +163,9 @@ export interface IServiceAudience<M extends IMember> extends IEventProvider<ISer
 }
 
 /**
- * Base interface for information for each connection made to the Fluid session.  This interface can be extended
- * to provide additional information specific to each service.
+ * Base interface for information for each connection made to the Fluid session.
+ *
+ * @remarks This interface can be extended to provide additional information specific to each service.
  */
 export interface IConnection {
     /**
@@ -170,8 +180,9 @@ export interface IConnection {
 }
 
 /**
- * Base interface to be implemented to fetch each service's member.  This interface can be extended by each service
- * to provide additional service-specific user metadata.
+ * Base interface to be implemented to fetch each service's member.
+ *
+ * @remarks This interface can be extended by each service to provide additional service-specific user metadata.
  */
 export interface IMember {
     /**

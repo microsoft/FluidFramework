@@ -11,19 +11,19 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "bin": {
     "fluv": "./bin/run"
   },
   "files": [
     "/bin",
-    "/dist",
+    "/lib",
     "/oclif.manifest.json"
   ],
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
+    "build:clean": "npm run clean",
     "build:commonjs": "npm run build:clean && npm run tsc",
     "build:compile": "npm run build:commonjs",
     "build:docs": "api-extractor run --local",
@@ -31,9 +31,9 @@
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
-    "build:readme": "oclif readme",
+    "build:readme": "node \"../build-cli/bin/dev\" generate readme",
     "ci:build:docs": "api-extractor run",
-    "clean": "rimraf dist oclif.manifest.json lib *.tsbuildinfo *.build.log",
+    "clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
@@ -52,12 +52,12 @@
     "cache-dir": "nyc/.cache",
     "exclude": [
       "src/test/**/*.ts",
-      "dist/test/**/*.js"
+      "lib/test/**/*.js"
     ],
     "exclude-after-remap": false,
     "include": [
       "src/**/*.ts",
-      "dist/**/*.js"
+      "lib/**/*.js"
     ],
     "report-dir": "nyc/report",
     "reporter": [
@@ -108,13 +108,17 @@
   "oclif": {
     "bin": "fluv",
     "dirname": "fluv",
-    "commands": "./dist/commands",
+    "commands": "./lib/commands",
     "additionalHelpFlags": [
       "-h"
+    ],
+    "additionalVersionFlags": [
+      "-V"
     ],
     "plugins": [
       "@oclif/plugin-help"
     ],
+    "repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/version-tools/<%- commandPath %>",
     "topicSeparator": " ",
     "topics": {}
   }

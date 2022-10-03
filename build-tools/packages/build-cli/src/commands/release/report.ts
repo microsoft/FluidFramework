@@ -4,12 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { Context, writeFileAsync } from "@fluidframework/build-tools";
+import path from "path";
+import { Context } from "@fluidframework/build-tools";
 import {
     detectBumpType,
+    detectVersionScheme,
+    getVersionRange,
     isVersionBumpType,
     ReleaseVersion,
     VersionBumpType,
+    VersionScheme,
 } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
@@ -17,9 +21,12 @@ import { differenceInBusinessDays, formatDistanceToNow, formatISO9075 } from "da
 import inquirer from "inquirer";
 import sortJson from "sort-json";
 import { table } from "table";
+import { writeJson } from "fs-extra";
 import { BaseCommand } from "../../base";
-import { getAllVersions, sortVersions, VersionDetails } from "../../lib";
+import { filterVersionsOlderThan, getAllVersions, sortVersions, VersionDetails } from "../../lib";
 import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../../releaseGroups";
+import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
+import { CommandLogger } from "../../logging";
 
 const MAX_BUSINESS_DAYS_TO_CONSIDER_RECENT = 10;
 const DEFAULT_MIN_VERSION = "0.0.0";
@@ -40,7 +47,9 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
     static summary = "Generates a report of Fluid Framework releases.";
     static description = `The release report command is used to produce a report of all the packages that were released and their current version. After a release, it is useful to generate this report to provide to customers, so they can update their dependencies to the most recent version.
 
-    The command will prompt you to select versions for a package or release group in the event that multiple versions have recently been released.`;
+    The command will prompt you to select versions for a package or release group in the event that multiple versions have recently been released.
+
+    Using the --all flag, you can list all the releases for a given release group or package.`;
 
     static examples = [
         {
@@ -59,12 +68,19 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             description: "Output a full release report to 'report.json'.",
             command: "<%= config.bin %> <%= command.id %> -f -o report.json",
         },
+        {
+            description: "List all the releases of the azure release group.",
+            command: "<%= config.bin %> <%= command.id %> --all -g azure",
+        },
+        {
+            description: "List the 10 most recent client releases.",
+            command: "<%= config.bin %> <%= command.id %> --all -g client --limit 10",
+        },
     ];
 
     static enableJsonFlag = true;
     static flags = {
         days: Flags.integer({
-            char: "d",
             description: "The number of days to look back for releases to report.",
             default: MAX_BUSINESS_DAYS_TO_CONSIDER_RECENT,
         }),
@@ -79,15 +95,26 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 "Always pick the most recent version as the latest (ignore semver version sorting).",
             exclusive: ["highest"],
         }),
-        output: Flags.file({
+        output: Flags.directory({
             char: "o",
-            description: "Output a JSON report file to this location.",
+            description: "Output JSON report files to this location.",
         }),
-        full: Flags.boolean({
-            char: "f",
+        all: Flags.boolean({
             description:
-                "Output a full report. A full report includes additional metadata for each package, including the time of the release, the type of release (patch, minor, major), and whether the release is new.",
-            dependsOn: ["output"],
+                "List all releases. Useful when you want to see all the releases done for a release group or package. The number of results can be limited using the --limit argument.",
+            exclusive: ["output"],
+        }),
+        releaseGroup: releaseGroupFlag({
+            dependsOn: ["all"],
+            exclusive: ["package"],
+        }),
+        package: packageSelectorFlag({
+            dependsOn: ["all"],
+            exclusive: ["releaseGroup"],
+        }),
+        limit: Flags.integer({
+            dependsOn: ["all"],
+            description: `Limits the number of displayed releases for each release group.`,
         }),
         ...BaseCommand.flags,
     };
@@ -100,80 +127,107 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         const flags = this.processedFlags;
         const versionData: PackageReleaseData = {};
 
-        const mode = flags.highest ? "version" : flags.mostRecent ? "date" : "interactive";
+        const mode =
+            flags.all || flags.highest ? "version" : flags.mostRecent ? "date" : "interactive";
+        const filter = flags.releaseGroup ?? flags.package;
+        const shouldOutputFiles = flags.output !== undefined;
+        const outputPath = flags.output ?? process.cwd();
 
-        this.log(`Collecting version data for release groups...`);
-        /* eslint-disable no-await-in-loop */
-        // collect version data for each release group
-        for (const rg of context.repo.releaseGroups.keys()) {
-            const name = rg;
-            const repoVersion = context.getVersion(rg);
+        if (filter === undefined || isReleaseGroup(filter)) {
+            this.log(`Collecting version data for release groups...`);
+            for (const rg of context.repo.releaseGroups.keys()) {
+                if (filter !== undefined && filter !== rg) {
+                    this.verbose(`Skipping '${rg} because it's excluded.`);
+                    continue;
+                }
 
-            const data = await this.collectReleaseData(
-                context,
-                name,
-                repoVersion,
-                flags.days,
-                mode,
-            );
-            if (data !== undefined) {
-                versionData[name] = data;
+                const name = rg;
+                const repoVersion = context.getVersion(rg);
+
+                // eslint-disable-next-line no-await-in-loop
+                const data = await this.collectReleaseData(
+                    context,
+                    name,
+                    repoVersion,
+                    flags.days,
+                    mode,
+                );
+                if (data !== undefined) {
+                    versionData[name] = data;
+                }
             }
         }
 
-        this.log(`Collecting version data for independent packages...`);
-        // collect version data for each release package (independent packages)
-        for (const pkg of context.independentPackages) {
-            const name = pkg.name;
-            const repoVersion = pkg.version;
-
-            const data = await this.collectReleaseData(
-                context,
-                name,
-                repoVersion,
-                flags.days,
-                mode,
+        if (isReleaseGroup(filter)) {
+            this.verbose(
+                `Not collecting version data for independent packages because --releaseGroup was set.`,
             );
-            if (data !== undefined) {
-                versionData[name] = data;
+        } else {
+            this.log(`Collecting version data for independent packages...`);
+            for (const pkg of context.independentPackages) {
+                if (filter !== undefined && filter !== pkg.name) {
+                    this.verbose(`Skipping '${pkg.name} because it's excluded.`);
+                    continue;
+                }
+
+                const name = pkg.name;
+                const repoVersion = pkg.version;
+
+                // eslint-disable-next-line no-await-in-loop
+                const data = await this.collectReleaseData(
+                    context,
+                    name,
+                    repoVersion,
+                    flags.days,
+                    mode,
+                );
+                if (data !== undefined) {
+                    versionData[name] = data;
+                }
             }
         }
-        /* eslint-enable no-await-in-loop */
+
+        if (flags.all === true) {
+            for (const [pkgOrReleaseGroup, data] of Object.entries(versionData)) {
+                const versions = sortVersions([...data.versions], "version");
+                const releaseTable = this.generateAllReleasesTable(pkgOrReleaseGroup, versions);
+
+                this.log(
+                    table(releaseTable, {
+                        singleLine: true,
+                    }),
+                );
+            }
+
+            this.exit();
+        }
 
         const report: ReleaseReport = await this.generateReleaseReport(versionData);
-        const packageList: PackageVersionList = await this.generatePackageList(versionData);
         const tableData = this.generateReleaseTable(versionData);
 
-        const finalReport = flags.full ? report : packageList;
-
-        tableData.sort((a, b) => {
-            if (a[0] > b[0]) {
-                return 1;
-            }
-
-            if (a[0] < b[0]) {
-                return -1;
-            }
-
-            return 0;
-        });
-
         const output = table(tableData, {
-            // columns: [{ alignment: "left" }, { alignment: "left" }, { alignment: "center" }, { alignment: "left" }, { alignment: "left" }],
             singleLine: true,
         });
 
-        this.log(`Release Report\n\n${output}`);
+        this.logHr();
+        this.log(chalk.underline(chalk.bold(`Release Report`)));
+        this.log(`\n${output}`);
+        this.logHr();
 
-        if (flags.output !== undefined) {
-            await writeFileAsync(flags.output, JSON.stringify(finalReport));
-            // Sort the JSON in-place
-            sortJson.overwrite(flags.output, { indentSize: 2 });
-            this.info(`Wrote output file: ${flags.output}`);
+        if (shouldOutputFiles) {
+            this.info(`Writing files to path: ${path.resolve(outputPath)}`);
+            const promises = [
+                writeReport(report, "simple", outputPath, this.logger),
+                writeReport(report, "full", outputPath, this.logger),
+                writeReport(report, "caret", outputPath, this.logger),
+                writeReport(report, "tilde", outputPath, this.logger),
+            ];
+
+            await Promise.all(promises);
         }
 
         // When the --json flag is passed, the command will return the raw data as JSON.
-        return finalReport;
+        return report;
     }
 
     /**
@@ -202,8 +256,8 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             return undefined;
         }
 
-        const sortedByVersion = await sortVersions(versions, "version");
-        const sortedByDate = await sortVersions(versions, "date");
+        const sortedByVersion = sortVersions(versions, "version");
+        const sortedByDate = sortVersions(versions, "date");
         const versionCount = sortedByVersion.length;
 
         if (sortedByDate === undefined) {
@@ -216,11 +270,10 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             case "interactive": {
                 let answer: inquirer.Answers | undefined;
 
-                const recentReleases = sortedByDate.filter((v) => {
-                    const diff =
-                        v.date === undefined ? 0 : differenceInBusinessDays(Date.now(), v.date);
-                    return diff <= numberBusinessDaysToConsiderRecent;
-                });
+                const recentReleases = filterVersionsOlderThan(
+                    sortedByDate,
+                    numberBusinessDaysToConsiderRecent,
+                );
 
                 // No recent releases, so set the latest to the highest semver
                 if (recentReleases.length === 0) {
@@ -320,55 +373,48 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 );
             }
 
-            const isNewRelease = this.isRecentRelease(verDetails);
+            const isNewRelease = this.isRecentReleaseByDate(latestDate);
+            const scheme = detectVersionScheme(latestVer);
+            const ranges: ReleaseRanges | undefined =
+                scheme === "internal"
+                    ? {
+                          patch: getVersionRange(latestVer, "patch"),
+                          minor: getVersionRange(latestVer, "minor"),
+                          tilde: getVersionRange(latestVer, "~"),
+                          caret: getVersionRange(latestVer, "^"),
+                      }
+                    : {
+                          patch: `~${latestVer}`,
+                          minor: `^${latestVer}`,
+                          tilde: `~${latestVer}`,
+                          caret: `^${latestVer}`,
+                      };
 
             // Expand the release group to its constituent packages.
             if (isReleaseGroup(pkgName)) {
                 for (const pkg of context.packagesInReleaseGroup(pkgName)) {
                     report[pkg.name] = {
                         version: latestVer,
+                        versionScheme: scheme,
                         date: latestDate,
                         releaseType: bumpType,
                         isNewRelease,
+                        ranges,
                     };
                 }
             } else {
                 report[pkgName] = {
                     version: latestVer,
+                    versionScheme: scheme,
                     date: latestDate,
                     releaseType: bumpType,
                     isNewRelease,
+                    ranges,
                 };
             }
         }
 
         return report;
-    }
-
-    private generateMinimalReport(reportData: PackageReleaseData): MinimalReleaseReport {
-        const newObj: MinimalReleaseReport = {};
-        for (const [pkg, data] of Object.entries(reportData)) {
-            newObj[pkg] = data.latestReleasedVersion;
-        }
-
-        return newObj;
-    }
-
-    private async generatePackageList(reportData: PackageReleaseData): Promise<PackageVersionList> {
-        const context = await this.getContext();
-        const newObj: PackageVersionList = {};
-
-        for (const [pkg, data] of Object.entries(reportData)) {
-            if (isReleaseGroup(pkg)) {
-                for (const p of context.packagesInReleaseGroup(pkg)) {
-                    newObj[p.name] = data.latestReleasedVersion.version;
-                }
-            } else {
-                newObj[pkg] = data.latestReleasedVersion.version;
-            }
-        }
-
-        return newObj;
     }
 
     private generateReleaseTable(reportData: PackageReleaseData): string[][] {
@@ -377,20 +423,9 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
         for (const [pkgName, verDetails] of Object.entries(reportData)) {
             const { date: latestDate, version: latestVer } = verDetails.latestReleasedVersion;
 
-            const displayDate =
-                latestDate === undefined
-                    ? "--no date--"
-                    : formatISO9075(latestDate, { representation: "date" });
-
-            const highlight = this.isRecentRelease(verDetails) ? chalk.green : chalk.white;
-
-            let displayRelDate: string;
-            if (latestDate === undefined) {
-                displayRelDate = "";
-            } else {
-                const relDate = `${formatDistanceToNow(latestDate)} ago`;
-                displayRelDate = highlight(relDate);
-            }
+            const displayDate = getDisplayDate(latestDate);
+            const highlight = this.isRecentReleaseByDate(latestDate) ? chalk.green : chalk.white;
+            const displayRelDate = highlight(getDisplayDateRelative(latestDate));
 
             const displayPreviousVersion =
                 verDetails.previousReleasedVersion?.version === undefined
@@ -416,16 +451,91 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
             ]);
         }
 
+        tableData.sort((a, b) => {
+            if (a[0] > b[0]) {
+                return 1;
+            }
+
+            if (a[0] < b[0]) {
+                return -1;
+            }
+
+            return 0;
+        });
+
         return tableData;
     }
 
-    private isRecentRelease(data: RawReleaseData): boolean {
-        const latestDate = data.latestReleasedVersion.date;
-
-        return latestDate === undefined
+    private isRecentReleaseByDate(date?: Date): boolean {
+        return date === undefined
             ? false
-            : differenceInBusinessDays(Date.now(), latestDate) < this.processedFlags.days;
+            : differenceInBusinessDays(Date.now(), date) < this.processedFlags.days;
     }
+
+    /**
+     * Generates table data for all versions of a package/release group.
+     */
+    private generateAllReleasesTable(
+        pkgOrReleaseGroup: ReleasePackage | ReleaseGroup,
+        versions: VersionDetails[],
+    ): string[][] {
+        const tableData: string[][] = [];
+        const releases = sortVersions(versions, "version").reverse();
+
+        let index = 0;
+        for (const ver of releases) {
+            const displayPreviousVersion =
+                index >= 1 ? releases[index - 1].version : DEFAULT_MIN_VERSION;
+
+            const displayDate = getDisplayDate(ver.date);
+            const highlight = this.isRecentReleaseByDate(ver.date) ? chalk.green : chalk.white;
+            const displayRelDate = highlight(getDisplayDateRelative(ver.date));
+
+            const bumpType = detectBumpType(displayPreviousVersion, ver.version);
+            const displayBumpType = highlight(`${bumpType}`);
+
+            const displayVersionSection = chalk.grey(
+                `${highlight(ver.version)} <= ${displayPreviousVersion}`,
+            );
+
+            tableData.push([
+                pkgOrReleaseGroup,
+                displayBumpType,
+                displayRelDate,
+                displayDate,
+                displayVersionSection,
+            ]);
+
+            index++;
+        }
+
+        const limit = this.processedFlags.limit;
+        if (limit !== undefined && tableData.length > limit) {
+            this.info(
+                `Reached the release limit (${limit}), ignoring the remaining ${
+                    tableData.length - limit
+                } releases.`,
+            );
+            // The most recent releases are last, so slice from the end.
+            return tableData.slice(-limit);
+        }
+
+        return tableData;
+    }
+}
+
+/**
+ * Formats a date for display in the terminal.
+ */
+function getDisplayDate(date?: Date): string {
+    return date === undefined ? "--no date--" : formatISO9075(date, { representation: "date" });
+}
+
+/**
+ * Formats a date relative to the current time for display in the terminal.
+ */
+function getDisplayDateRelative(date?: Date): string {
+    return date === undefined ? "" : `${formatDistanceToNow(date)} ago`;
 }
 
 interface RawReleaseData {
@@ -437,26 +547,127 @@ interface RawReleaseData {
 
 interface ReleaseDetails {
     version: string;
+    versionScheme: VersionScheme;
     date?: Date;
     releaseType: VersionBumpType;
     isNewRelease: boolean;
     releaseGroup?: ReleaseGroup;
+    ranges: ReleaseRanges;
+}
+
+interface ReleaseRanges {
+    minor: string;
+    patch: string;
+    caret: string;
+    tilde: string;
+}
+
+interface PackageCaretRange {
+    [packageName: string]: string;
+}
+
+interface PackageTildeRange {
+    [packageName: string]: string;
 }
 
 interface PackageReleaseData {
     [packageName: string]: RawReleaseData;
 }
 
+interface PackageVersionList {
+    [packageName: string]: string;
+}
+
 interface ReleaseReport {
     [packageName: string]: ReleaseDetails;
 }
 
-interface MinimalReleaseReport {
-    [packageName: string]: VersionDetails;
+/**
+ * A type representing the different kinds of report formats we output.
+ *
+ * "full" corresponds to the {@link ReleaseReport} interface. It contains a lot of package metadata indexed by package
+ * name.
+ *
+ * "simple" corresponds to the {@link PackageVersionList} interface. It contains a map of package names to versions.
+ *
+ * "caret" corresponds to the {@link PackageCaretRange} interface. It contains a map of package names to
+ * caret-equivalent version range strings.
+ *
+ * "tilde" corresponds to the {@link PackageTildeRange} interface. It contains a map of package names to
+ * tilde-equivalent version range strings.
+ */
+type ReportKind = "full" | "caret" | "tilde" | "simple";
+
+/**
+ * Generates a report filename.
+ */
+function generateReportFileName(report: ReleaseReport, kind: ReportKind): string {
+    // Use container-runtime as a proxy for the client release group.
+    const version = report["@fluidframework/container-runtime"].version;
+    return ["fluid-framework-release", version, kind, "json"].join(".");
 }
 
-interface PackageVersionList {
-    [packageName: string]: string;
+/**
+ * Writes a report to a file.
+ */
+async function writeReport(
+    report: ReleaseReport,
+    kind: ReportKind,
+    dir: string,
+    log?: CommandLogger,
+): Promise<void> {
+    const reportName = generateReportFileName(report, kind);
+    const reportPath = path.join(dir, reportName);
+    log?.info(`${kind} report written to ${reportPath}`);
+    const reportOutput = toReportKind(report, kind);
+
+    return writeJson(reportPath, sortJson(reportOutput), { spaces: 2 });
+}
+
+/**
+ * Converts a {@link ReleaseReport} into different formats based on the kind.
+ */
+function toReportKind(
+    report: ReleaseReport,
+    kind: ReportKind,
+): ReleaseReport | PackageVersionList | PackageTildeRange | PackageCaretRange {
+    const toReturn: PackageVersionList | PackageTildeRange | PackageCaretRange = {};
+
+    switch (kind) {
+        case "full": {
+            return report;
+        }
+
+        case "simple": {
+            for (const [pkg, details] of Object.entries(report)) {
+                toReturn[pkg] = details.version;
+            }
+
+            break;
+        }
+
+        case "caret": {
+            for (const [pkg, details] of Object.entries(report)) {
+                toReturn[pkg] = details.ranges.caret;
+            }
+
+            break;
+        }
+
+        case "tilde": {
+            for (const [pkg, details] of Object.entries(report)) {
+                toReturn[pkg] = details.ranges.tilde;
+            }
+
+            break;
+        }
+
+        default: {
+            throw new Error(`Unexpected ReportKind: ${kind}`);
+        }
+    }
+
+    return toReturn;
 }
 
 export type { PackageVersionList, ReleaseReport };

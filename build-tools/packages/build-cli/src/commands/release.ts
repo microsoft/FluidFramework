@@ -60,6 +60,7 @@ export class ReleaseCommand<T extends typeof ReleaseCommand.flags> extends State
         this.handler = new FluidReleaseStateHandler(this.machine, this.logger);
         this.data.context = context;
         this.data.promptWriter = new PromptWriter(this.logger);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.data.releaseGroup = flags.releaseGroup ?? flags.package!;
         this.data.releaseVersion = context.getVersion(this.data.releaseGroup);
         this.data.bumpType = flags.bumpType as VersionBumpType;

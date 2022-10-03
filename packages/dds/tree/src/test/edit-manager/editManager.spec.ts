@@ -5,197 +5,24 @@
 
 import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { ChangeEncoder, ChangeFamily } from "../../change-family";
+import { ChangeFamily } from "../../change-family";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
-import { AnchorSet, Delta, FieldKey } from "../../tree";
-import { brand, makeArray, RecursiveReadonly, JsonCompatible } from "../../util";
+import { Delta, FieldKey } from "../../tree";
+import { brand, makeArray, RecursiveReadonly } from "../../util";
+import {
+    AnchorRebaseData,
+    TestAnchorSet,
+    TestChangeEncoder,
+    TestChangeFamily,
+    TestChangeRebaser,
+    TestChange,
+    UnrebasableTestChangeRebaser,
+} from "../testChange";
 
-interface NonEmptyTestChangeset {
-    /**
-     * Identifies the document state that the changeset should apply to.
-     * Represented as the concatenation of all previous intentions.
-     */
-    inputContext: number[];
-    /**
-     * Identifies the document state brought about by applying the changeset to the document.
-     * Represented as the concatenation of all previous intentions and the intentions in this change.
-     */
-    outputContext: number[];
-    /**
-     * Identifies the editing intentions included in the changeset.
-     * Editing intentions can be thought of as user actions, where each user action is unique.
-     * Editing intentions can be inverted (represented negative number of the same magnitude) but are
-     * otherwise unchanged by rebasing.
-     */
-    intentions: number[];
-}
-
-interface EmptyTestChangeset {
-    intentions: [];
-}
-
-const emptyChange: EmptyTestChangeset = { intentions: [] };
 const rootKey: FieldKey = brand("root");
 
-export type TestChangeset = NonEmptyTestChangeset | EmptyTestChangeset;
-
-function isNonEmptyChange(
-    change: RecursiveReadonly<TestChangeset>,
-): change is RecursiveReadonly<NonEmptyTestChangeset> {
-    return "inputContext" in change;
-}
-
-interface AnchorRebaseData {
-    rebases: RecursiveReadonly<NonEmptyTestChangeset>[];
-    intentions: number[];
-}
-
-class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
-    public static mintChangeset(inputContext: readonly number[], intention: number): NonEmptyTestChangeset {
-        return {
-            inputContext: [...inputContext],
-            intentions: [intention],
-            outputContext: TestChangeRebaser.composeIntentions(inputContext, [intention]),
-        };
-    }
-
-    public static composeIntentions(base: readonly number[], extras: readonly number[]): number[] {
-        const composed = [...base];
-        let last: number | undefined = composed[composed.length - 1];
-        for (const extra of extras) {
-            // Check wether we are composing intentions that cancel each other out.
-            // This helps us ensure that we always represent sequences of intentions
-            // in the same canonical form.
-            if (last === -extra) {
-                composed.pop();
-                last = composed[composed.length - 1];
-            } else {
-                composed.push(extra);
-                last = extra;
-            }
-        }
-        return composed;
-    }
-
-    public compose(changes: TestChangeset[]): TestChangeset {
-        let inputContext: number[] | undefined;
-        let outputContext: number[] | undefined;
-        let intentions: number[] = [];
-        for (const change of changes) {
-            if (isNonEmptyChange(change)) {
-                inputContext ??= change.inputContext;
-                if (outputContext !== undefined) {
-                    // The input context should match the output context of the previous change.
-                    assert.deepEqual(change.inputContext, outputContext);
-                }
-                outputContext = TestChangeRebaser.composeIntentions(
-                    outputContext ?? inputContext,
-                    change.intentions,
-                );
-                intentions = TestChangeRebaser.composeIntentions(
-                    intentions,
-                    change.intentions,
-                );
-            }
-        }
-        if (inputContext !== undefined) {
-            return {
-                inputContext,
-                intentions,
-                outputContext: outputContext ?? fail(),
-            };
-        }
-        return emptyChange;
-    }
-
-    public invert(change: TestChangeset): TestChangeset {
-        if (isNonEmptyChange(change)) {
-            return {
-                inputContext: change.outputContext,
-                outputContext: change.inputContext,
-                intentions: change.intentions.map((i) => -i).reverse(),
-            };
-        }
-        return emptyChange;
-    }
-
-    public rebase(change: TestChangeset, over: TestChangeset): TestChangeset {
-        if (isNonEmptyChange(change)) {
-            if (isNonEmptyChange(over)) {
-                // Rebasing should only occur between two changes with the same input context
-                assert.deepEqual(change.inputContext, over.inputContext);
-                return {
-                    inputContext: over.outputContext,
-                    outputContext: TestChangeRebaser.composeIntentions(over.outputContext, change.intentions),
-                    intentions: change.intentions,
-                };
-            }
-            return change;
-        }
-        return emptyChange;
-    }
-
-    public rebaseAnchors(anchors: AnchorSet, over: TestChangeset): void {
-        if (isNonEmptyChange(over) && anchors instanceof TestAnchorSet) {
-            let lastChange: RecursiveReadonly<NonEmptyTestChangeset> | undefined;
-            const { rebases } = anchors;
-            for (let iChange = rebases.length - 1; iChange >= 0; --iChange) {
-                const change = rebases[iChange];
-                if (isNonEmptyChange(change)) {
-                    lastChange = change;
-                    break;
-                }
-            }
-            if (lastChange !== undefined) {
-                // The new change should apply to the context brought about by the previous change
-                assert.deepEqual(over.inputContext, lastChange.outputContext);
-            }
-            anchors.intentions = TestChangeRebaser.composeIntentions(anchors.intentions, over.intentions);
-            rebases.push(over);
-        }
-    }
-
-    public static checkChangeList(changes: readonly RecursiveReadonly<TestChangeset>[], intentions: number[]): void {
-        const filtered = changes.filter(isNonEmptyChange);
-        let intentionsSeen: number[] = [];
-        let index = 0;
-        for (const change of filtered) {
-            intentionsSeen = TestChangeRebaser.composeIntentions(intentionsSeen, change.intentions);
-            if (index > 0) {
-                const prev = filtered[index - 1];
-                // The current change should apply to the context brought about by the previous change
-                assert.deepEqual(change.inputContext, prev.outputContext);
-            }
-            ++index;
-        }
-        // All expected intentions were present
-        assert.deepEqual(intentionsSeen, intentions);
-    }
-}
-
-class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-    public rebase(change: TestChangeset, over: TestChangeset): TestChangeset {
-        assert.fail("Unexpected call to rebase");
-    }
-}
-
-class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
-    public encodeForJson(formatVersion: number, change: TestChangeset): JsonCompatible {
-        throw new Error("Method not implemented.");
-    }
-    public decodeJson(formatVersion: number, change: JsonCompatible): TestChangeset {
-        throw new Error("Method not implemented.");
-    }
-}
-
-class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
-    public rebases: RecursiveReadonly<NonEmptyTestChangeset>[] = [];
-    public intentions: number[] = [];
-}
-
-type TestChangeFamily = ChangeFamily<unknown, TestChangeset>;
-type TestEditManager = EditManager<TestChangeset, TestChangeFamily>;
+type TestEditManager = EditManager<TestChange, TestChangeFamily>;
 
 /**
  * This is a hack to encode arbitrary information (the intentions) into a Delta.
@@ -207,27 +34,27 @@ function asDelta(intentions: number[]): Delta.Root {
     return intentions.length === 0 ? Delta.empty : new Map([[rootKey, intentions]]);
 }
 
-function changeFamilyFactory(rebaser?: ChangeRebaser<TestChangeset>): ChangeFamily<unknown, TestChangeset> {
+function changeFamilyFactory(rebaser?: ChangeRebaser<TestChange>): ChangeFamily<unknown, TestChange> {
     const family = {
         rebaser: rebaser ?? new TestChangeRebaser(),
         encoder: new TestChangeEncoder(),
         buildEditor: () => assert.fail("Unexpected call to buildEditor"),
-        intoDelta: (change: TestChangeset): Delta.Root => asDelta(change.intentions),
+        intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
     };
     return family;
 }
 
-function editManagerFactory(rebaser?: ChangeRebaser<TestChangeset>): {
+function editManagerFactory(rebaser?: ChangeRebaser<TestChange>): {
     manager: TestEditManager;
     anchors: AnchorRebaseData;
 } {
     const family = changeFamilyFactory(rebaser);
     const anchors = new TestAnchorSet();
-    const manager = new EditManager<TestChangeset, ChangeFamily<unknown, TestChangeset>>(
+    const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(
+        localSessionId,
         family,
         anchors,
     );
-    manager.setLocalSessionId(localSessionId);
     return { manager, anchors };
 }
 
@@ -239,7 +66,7 @@ const NUM_STEPS = 5;
 const NUM_PEERS = 2;
 const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1));
 
-type TestCommit = Commit<TestChangeset>;
+type TestCommit = Commit<TestChange>;
 
 /**
  * Represents the minting and sending of a new local change.
@@ -512,7 +339,7 @@ function* buildScenario(
 function runUnitTestScenario(
     title: string | undefined,
     steps: readonly UnitTestScenarioStep[],
-    rebaser?: ChangeRebaser<TestChangeset>,
+    rebaser?: ChangeRebaser<TestChange>,
 ): void {
     const run = () => {
         const { manager, anchors } = editManagerFactory(rebaser);
@@ -556,7 +383,7 @@ function runUnitTestScenario(
                             : finalSequencedEdit + 1 + iNextAck - acks.length;
                     }
                     iNextAck += 1;
-                    const changeset = TestChangeRebaser.mintChangeset(knownToLocal, seq);
+                    const changeset = TestChange.mint(knownToLocal, seq);
                     localCommits.push({
                         sessionId: localSessionId,
                         seqNumber: brand(seq),
@@ -606,7 +433,7 @@ function runUnitTestScenario(
                         sessionId: step.from,
                         seqNumber: brand(seq),
                         refNumber: brand(step.ref),
-                        changeset: TestChangeRebaser.mintChangeset(knownToPeer, seq),
+                        changeset: TestChange.mint(knownToPeer, seq),
                     };
                     /**
                      * Ordered list of intentions for local changes
@@ -649,9 +476,9 @@ function runUnitTestScenario(
 }
 
 function checkChangeList(manager: TestEditManager, intentions: number[]): void {
-    TestChangeRebaser.checkChangeList(getAllChanges(manager), intentions);
+    TestChange.checkChangeList(getAllChanges(manager), intentions);
 }
 
-function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChangeset>[] {
+function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
     return manager.getTrunk().map((c) => c.changeset).concat(manager.getLocalChanges());
 }

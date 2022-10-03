@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { expect, test } from "@oclif/test";
 import { assert } from "chai";
+import * as semver from "semver";
 import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "@fluidframework/build-tools";
-import { getLatestReleaseFromList } from "@fluid-tools/version-tools";
+import { getVersionRange } from "@fluid-tools/version-tools";
 
 // Deliberately not sorted here; highest version is 0.59.3000
 const test_tags = [
@@ -56,6 +58,38 @@ describe("getSimpleVersion", () => {
             "0.16.0-beta.2.1.12345.0",
         );
         assert.equal(getSimpleVersion("0.16.0-beta", "12345.0", true, false), "0.16.0-beta");
+    });
+
+    describe("Fluid internal versions", () => {
+        it("dev/PR build versions", () => {
+            const input = "2.0.0-internal.1.3.0";
+            const expected = "2.0.0-dev.1.3.0.93923";
+            const result = getSimpleVersion(input, "93923", false, false);
+            expect(result).to.equal(expected);
+
+            const range = getVersionRange("2.0.0-internal.1.3.0", "^");
+            expect(semver.satisfies(result, range)).to.be.false;
+        });
+
+        it("release versions", () => {
+            const input = "2.0.0-internal.1.3.0";
+            const expected = "2.0.0-internal.1.3.0";
+            const result = getSimpleVersion(input, "93923", true, false);
+            expect(result).to.equal(expected);
+
+            const range = getVersionRange("2.0.0-internal.1.3.0", "^");
+            expect(semver.satisfies(result, range)).to.be.true;
+        });
+
+        it("simple patch scheme should throw with Fluid internal versions", () => {
+            const input = "2.0.0-internal.1.3.0";
+            expect(() => getSimpleVersion(input, "93923", false, true)).to.throw();
+        });
+
+        it("release + simple patch scheme should throw with Fluid internal versions", () => {
+            const input = "2.0.0-internal.1.3.0";
+            expect(() => getSimpleVersion(input, "93923", true, true)).to.throw();
+        });
     });
 });
 

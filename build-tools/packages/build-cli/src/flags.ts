@@ -29,7 +29,7 @@ export const rootPathFlag = Flags.build({
  */
 export const releaseGroupFlag = Flags.build({
     char: "g",
-    description: "release group",
+    description: "Name of the release group",
     options: [...supportedMonoRepoValues()],
     parse: async (str: string) => {
         const group = str.toLowerCase();
@@ -106,7 +106,6 @@ export const dependencyUpdateTypeFlag = Flags.build({
  * A re-usable CLI flag to parse version schemes used to adjust versions.
  */
 export const versionSchemeFlag = Flags.build({
-    char: "S",
     description: "Version scheme to use.",
     options: ["semver", "internal", "virtualPatch"],
     parse: async (input) => {
@@ -116,7 +115,8 @@ export const versionSchemeFlag = Flags.build({
     },
 });
 
-/** Reusable flags for cases where a command typically checks something before taking action. They default to true, but
+/**
+ * Reusable flags for cases where a command typically checks something before taking action. They default to true, but
  * can be negated with `--no-<flag>`. Intended to be used with {@link skipCheckFlag}.
  *
  * @remarks

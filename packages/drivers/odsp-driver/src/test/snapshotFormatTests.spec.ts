@@ -8,6 +8,7 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
 import { ISnapshotContents } from "../odspPublicUtils";
@@ -102,7 +103,7 @@ describe("Snapshot Format Conversion Tests", () => {
             latestSequenceNumber: 2,
         };
         const compactSnapshot = convertToCompactSnapshot(snapshotContents);
-        const result = parseCompactSnapshotResponse(compactSnapshot);
+        const result = parseCompactSnapshotResponse(compactSnapshot, new TelemetryUTLogger());
         assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
         assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
         assert.deepStrictEqual(result.ops, ops, "Ops should match");

@@ -72,6 +72,7 @@ export const promptToCreateReleaseBranch: StateHandlerFunction = async (
     assert(context !== undefined, "Context is undefined.");
 
     if (isReleaseGroup(releaseGroup)) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
 
         const prompt: InstructionalPrompt = {
@@ -178,6 +179,7 @@ export const promptToPRBump: StateHandlerFunction = async (
     };
 
     if (isReleaseGroup(releaseGroup)) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
 
         const releaseBranchExists =
@@ -261,6 +263,7 @@ export const promptToRelease: StateHandlerFunction = async (
 
     const flag = isReleaseGroup(releaseGroup) ? "-g" : "-p";
     const prompt: InstructionalPrompt = {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         title: `READY TO RELEASE version ${chalk.bold(releaseVersion!)}!`,
         sections: [
             {
@@ -269,6 +272,7 @@ export const promptToRelease: StateHandlerFunction = async (
                     chalk.bold("release"),
                 )} build for the following release group in ADO for branch ${chalk.blue(
                     chalk.bold(context.originalBranchName),
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 )}:\n\n    ${chalk.green(chalk.bold(releaseGroup!))}`,
             },
             {
@@ -306,6 +310,7 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
     assert(context !== undefined, "Context is undefined.");
     assert(promptWriter !== undefined, "promptWriter is undefined.");
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const prereleaseDepNames = await getPreReleaseDependencies(context, releaseGroup!);
 
     const prompt: InstructionalPrompt = {
