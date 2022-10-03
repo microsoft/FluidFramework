@@ -127,9 +127,6 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             this.isPendingInitialConnection = false;
 
             this.emit("server_disconnect", error, clientId);
-            if (clientId === undefined) {
-                this.closeSocket();
-            }
         });
     }
 
