@@ -17,7 +17,7 @@ import { createAzureClient, delay, loadInitialObjSchema } from "./utils";
 export interface MapTrafficRunnerConfig {
     runId: string;
     scenarioName: string;
-    clientId: number;
+    childId: number;
     docId: string;
     writeRatePerMin: number;
     totalWriteCount: number;
@@ -59,7 +59,7 @@ async function main() {
     const config = {
         runId: commander.runId,
         scenarioName: commander.scenarioName,
-        clientId: commander.clientId,
+        childId: commander.childId,
         docId: commander.docId,
         writeRatePerMin: commander.writeRatePerMin,
         totalWriteCount: commander.totalWriteCount,
@@ -82,7 +82,7 @@ async function main() {
         scenarioName: config.scenarioName,
     }, [
         "scenario:runner",
-        "fluid:telemetry:OpPerf"
+        // "fluid:telemetry:OpPerf"
     ]);
 
     const ac = await createAzureClient({
@@ -108,7 +108,7 @@ async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise
     const s = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
     const { container } = await PerformanceEvent.timedExecAsync(
         logger,
-        { eventName: "ContainerLoad", clientId: config.clientId },
+        { eventName: "ContainerLoad", clientId: config.childId },
         async (_event) => {
             return ac.getContainer(config.docId, s);
         },
@@ -126,7 +126,7 @@ async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise
 
     await PerformanceEvent.timedExecAsync(
         logger,
-        { eventName: "Catchup", clientId: config.clientId },
+        { eventName: "Catchup", clientId: config.childId },
         async (_event) => {
             await timeoutPromise((resolve) => container.once("saved", () => resolve()), {
                 durationMs: 20000,

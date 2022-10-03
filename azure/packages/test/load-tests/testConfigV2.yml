@@ -34,8 +34,8 @@
       connectionConfig: ${connectionConfig}
       docId: ${docId}
       schema: ${schema}
-      numClients: 1
+      numClients: 90
       clientStartDelayMs: 100
-      writeRatePerMin: 60
+      writeRatePerMin: 120
       sharedMapKey: key1
-      totalWriteCount: 5
+      totalWriteCount: 60
