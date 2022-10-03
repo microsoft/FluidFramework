@@ -72,14 +72,18 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
         // Subscribe to the auto roll task. This will constantly keep us in queue for the task until we get it. If we
         // lose the task assignment we will automatically re-enter queue.
 
-        this.taskManager.on("lost", () => {
-            this.emit("taskOwnershipChanged");
-            this.endAutoRollTask();
+        this.taskManager.on("lost", (taskId: string) => {
+            if (taskId === autoRollTaskId) {
+                this.emit("taskOwnershipChanged");
+                this.endAutoRollTask();
+            }
         });
 
-        this.taskManager.on("assigned", () => {
-            this.emit("taskOwnershipChanged");
-            this.startAutoRollTask();
+        this.taskManager.on("assigned", (taskId: string) => {
+            if (taskId === autoRollTaskId) {
+                this.emit("taskOwnershipChanged");
+                this.startAutoRollTask();
+            }
         });
 
         this.taskManager.subscribeToTask(autoRollTaskId);
