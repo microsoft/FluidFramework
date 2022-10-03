@@ -1705,7 +1705,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const result = this.protocolHandler.processMessage(message, local);
 
         // Forward messages to the loaded runtime for processing
-        this.context.process(message, local, undefined);
+        this.context.process(message, local);
 
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {

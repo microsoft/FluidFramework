@@ -3,62 +3,82 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IIntegerRange,
-} from "../base";
-import { ConflictAction, IRBAugmentation, IRBMatcher, RBNode, RBNodeActions, RedBlackTree } from "./rbTree";
+    RBNode,
+    IRBAugmentation,
+    IRBMatcher,
+    RedBlackTree,
+    ConflictAction,
+    RBNodeActions,
+} from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export interface AugmentedIntervalNode {
     minmax: IInterval;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
 
 /**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
+ * Basic interval abstraction
  */
 export interface IInterval {
+    /**
+     * @returns a new interval object with identical semantics.
+     */
     clone(): IInterval;
+    /**
+     * Compares this interval to `b` with standard comparator semantics:
+     * - returns -1 if this is less than `b`
+     * - returns 1 if this is greater than `b`
+     * - returns 0 if this is equivalent to `b`
+     * @param b - Interval to compare against
+     */
     compare(b: IInterval): number;
+    /**
+     * Compares the start endpoint of this interval to `b`'s start endpoint.
+     * Standard comparator semantics apply.
+     * @param b - Interval to compare against
+     */
     compareStart(b: IInterval): number;
+    /**
+     * Compares the end endpoint of this interval to `b`'s end endpoint.
+     * Standard comparator semantics apply.
+     * @param b - Interval to compare against
+     */
     compareEnd(b: IInterval): number;
+    /**
+     * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
+     * @internal
+     */
     modify(
         label: string,
-        start: number,
-        end: number,
+        start: number | undefined,
+        end: number | undefined,
         op?: ISequencedDocumentMessage,
         localSeq?: number
     ): IInterval | undefined;
+    /**
+     * @returns whether this interval overlaps with `b`.
+     * Since intervals are inclusive, this includes cases where endpoints are equal.
+     */
     overlaps(b: IInterval): boolean;
+    /**
+     * Unions this interval with `b`, returning a new interval.
+     * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
+     * intermediate values between the two intervals.
+     * @internal
+     */
     union(b: IInterval): IInterval;
 }
 
 const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
+
 export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
+
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>,
     IRBMatcher<T, AugmentedIntervalNode> {
     public intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);

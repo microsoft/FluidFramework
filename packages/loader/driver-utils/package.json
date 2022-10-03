@@ -108,9 +108,21 @@
         "forwardCompat": false,
         "backCompat": false
       },
-      "ClassDeclaration_AuthorizationError": {"backCompat": false},
-      "ClassDeclaration_GenericNetworkError": {"backCompat": false},
-      "ClassDeclaration_ThrottlingError": {"backCompat": false}
+      "ClassDeclaration_ThrottlingError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_AuthorizationError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_GenericNetworkError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_DeltaStreamConnectionForbiddenError": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_UsageError": {
+        "forwardCompat": false
+      }
     }
   }
 }

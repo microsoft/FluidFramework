@@ -71,12 +71,12 @@ export enum DriverErrorType {
      * and storage / driver / loader detects such mismatch.
      * When it's hit, client needs to forget all the knowlege about this file and start over.
      */
-     fileOverwrittenInStorage = "fileOverwrittenInStorage",
+    fileOverwrittenInStorage = "fileOverwrittenInStorage",
 
-     /**
-      * The document is read-only and delta stream connection is forbidden.
-      */
-     deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
+    /**
+     * The document is read-only and delta stream connection is forbidden.
+     */
+    deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
 
     /**
      * The location of file/container can change on server. So if the file location moves and we try to access the old
@@ -90,6 +90,11 @@ export enum DriverErrorType {
      * "fluidInvalidSchema"
      */
     fluidInvalidSchema = "fluidInvalidSchema",
+    /**
+     * Error indicating an API is being used improperly resulting in an invalid operation.
+     * ! Should match the value of ContainerErrorType.usageError
+    */
+    usageError = "usageError",
 }
 
 /**
@@ -144,7 +149,8 @@ export interface IDriverBasicError extends IDriverErrorBase {
     | DriverErrorType.fetchFailure
     | DriverErrorType.incorrectServerResponse
     | DriverErrorType.fileOverwrittenInStorage
-    | DriverErrorType.fluidInvalidSchema;
+    | DriverErrorType.fluidInvalidSchema
+    | DriverErrorType.usageError;
     readonly statusCode?: number;
 }
 

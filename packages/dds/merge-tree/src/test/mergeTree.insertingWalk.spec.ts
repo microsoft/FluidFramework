@@ -16,6 +16,7 @@ import {
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { insertSegments, insertText, markRangeRemoved, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 interface ITestTreeFactory {
@@ -335,7 +336,7 @@ describe("MergeTree.insertingWalk", () => {
         });
 
         const segments: string[] = [];
-        mergeTree.walkAllSegments(mergeTree.root, (seg) => {
+        walkAllChildSegments(mergeTree.root, (seg) => {
             if (TextSegment.is(seg)) {
                 if (seg.localRemovedSeq !== undefined || seg.removedSeq !== undefined) {
                     segments.push(`(${seg.text})`);

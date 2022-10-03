@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export class Stack<T> {
     public items: T[] = [];
     public push(val: T) {
