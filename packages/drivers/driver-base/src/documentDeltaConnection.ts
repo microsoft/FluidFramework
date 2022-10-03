@@ -343,15 +343,22 @@ export class DocumentDeltaConnection
         // to prevent normal messages from being emitted.
         this._disposed = true;
 
+        // Let user of connection object know about disconnect. This has to happen in betwee setting _disposed and
+        // removing all listeners!
+        this.emit("disconnect", err);
+
+        // user of DeltaConnection should have processed "disconnect" event and removed all listeners.
+        assert(this.listenerCount("disconnect") === 0, "'disconnect` events should be processed synchronously");
+
         this.removeTrackedListeners();
-        this.disconnect(err);
+        this.disconnect();
     }
 
     /**
      * Disconnect from the websocket.
      * @param reason - reason for disconnect
      */
-    protected disconnect(reason: IAnyDriverError) {
+    protected disconnect() {
         this.socket.disconnect();
     }
 

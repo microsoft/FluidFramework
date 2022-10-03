@@ -32,7 +32,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     protected createErrorObject(handler: string, error?: any, canRetry?: boolean): IAnyDriverError;
     // (undocumented)
     get details(): IConnected;
-    protected disconnect(reason: IAnyDriverError): void;
+    protected disconnect(): void;
     dispose(): void;
     // (undocumented)
     protected disposeCore(err: IAnyDriverError): void;
