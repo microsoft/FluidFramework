@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { describeWithVersions, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
+import { installVersionsDescribe, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
@@ -15,7 +15,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 const oldVersions = ["1.0.0", "1.0.1", "0.56.0"];
 
-describeWithVersions({ specificVersions: oldVersions }, 30000 /* timeout */)(
+installVersionsDescribe({ absolute: oldVersions }, /* timeoutMs */ 30000)(
     "Tests with different Fluid versions installed",
     (getTestObjectProvider) => {
         let provider: ITestObjectProvider;

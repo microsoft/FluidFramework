@@ -8,22 +8,34 @@ import { driver, r11sEndpointName, tenantIndex } from "./compatOptions";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ITestObjectProviderOptions } from "./describeCompat";
 import { pkgVersion } from "./packageVersion";
-import { ensurePackageInstalled, IVersionInstall } from "./testApi";
+import { ensurePackageInstalled, InstalledPackage } from "./testApi";
 
-export interface IRequiredVersions {
-    versionsDelta?: number;
-    specificVersions?: string[];
+/**
+ * Interface to hold the requested versions which should be installed
+ * prior to running the test suite. The properties are cumulative, as all
+ * versions deduced from all properties will be installed.
+ */
+export interface RequestedVersions {
+    /**
+     * Count of older versions to be installed with the current
+     * package version as the baseline.
+     */
+    relative?: number;
+    /**
+     * Array of specific versions to be installed
+     */
+    absolute?: string[];
 }
 
-const installRequiredVersions = async (config: IRequiredVersions) => {
-    const installPromises: Promise<IVersionInstall | undefined>[] = [];
-    if (config.specificVersions !== undefined) {
+const installRequiredVersions = async (config: RequestedVersions) => {
+    const installPromises: Promise<InstalledPackage | undefined>[] = [];
+    if (config.absolute !== undefined) {
         installPromises.push(
-            ...config.specificVersions.map(async (version) => ensurePackageInstalled(version, 0, /* force */ false)));
+            ...config.absolute.map(async (version) => ensurePackageInstalled(version, 0, /* force */ false)));
     }
 
-    if (config.versionsDelta !== undefined) {
-        installPromises.push(ensurePackageInstalled(pkgVersion, config.versionsDelta, /* force */ false));
+    if (config.relative !== undefined) {
+        installPromises.push(ensurePackageInstalled(pkgVersion, config.relative, /* force */ false));
     }
 
     let hadErrors = false;
@@ -42,10 +54,11 @@ const installRequiredVersions = async (config: IRequiredVersions) => {
 };
 
 const defaultTimeoutMs = 20000;
+const defaultRequestedVersions = { relative: -2 };
 
 function createTestSuiteWithInstalledVersion(
     tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
-    requiredVersions: IRequiredVersions = { versionsDelta: -2 },
+    requiredVersions: RequestedVersions = defaultRequestedVersions,
     timeoutMs: number = defaultTimeoutMs,
 ) {
     return function(this: Mocha.Suite) {
@@ -100,25 +113,34 @@ function createTestSuiteWithInstalledVersion(
     };
 }
 
-export type DescribeSuiteWithVersions =
+type DescribeSuiteWithVersions =
     (name: string,
         tests: (
             this: Mocha.Suite,
             provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider) => void
     ) => Mocha.Suite | void;
 
-export type DescribeWithVersions =
-    DescribeSuiteWithVersions & Record<"skip" | "only", DescribeSuiteWithVersions>;
+type DescribeWithVersions = DescribeSuiteWithVersions & Record<"skip" | "only", DescribeSuiteWithVersions>;
 
-export function describeWithVersions(
-    requiredVersions?: IRequiredVersions,
+/**
+ * Creates a test suite which will priorly install a set of requested Fluid versions for the tests to use.
+ * If package installation fails for any of the requested versions, the test suite will not be created and
+ * the test run will fail.
+ *
+ * @param requestedVersions - See {@link RequestedVersions}. If unspecified, the test will install the last 2 versions.
+ * @param timeoutMs - the timeout for the tests in milliseconds, as package installation is time consuming.
+ * If unspecified, the timeout is 20000 ms.
+ * @returns A mocha test suite
+ */
+export function installVersionsDescribe(
+    requestedVersions?: RequestedVersions,
     timeoutMs?: number,
 ): DescribeWithVersions {
     const d: DescribeWithVersions =
-        (name, tests) => describe(name, createTestSuiteWithInstalledVersion(tests, requiredVersions, timeoutMs));
+        (name, tests) => describe(name, createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs));
     d.skip =
-        (name, tests) => describe.skip(name, createTestSuiteWithInstalledVersion(tests, requiredVersions, timeoutMs));
+        (name, tests) => describe.skip(name, createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs));
     d.only =
-        (name, tests) => describe.only(name, createTestSuiteWithInstalledVersion(tests, requiredVersions, timeoutMs));
+        (name, tests) => describe.only(name, createTestSuiteWithInstalledVersion(tests, requestedVersions, timeoutMs));
     return d;
 }

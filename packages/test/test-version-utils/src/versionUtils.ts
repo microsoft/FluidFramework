@@ -12,7 +12,7 @@ import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileS
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
 import { pkgVersion } from "./packageVersion";
-import { IVersionInstall } from "./testApi";
+import { InstalledPackage } from "./testApi";
 
 // Assuming this file is in dist\test, so go to ..\node_modules\.legacy as the install location
 const baseModulePath = path.join(__dirname, "..", "node_modules", ".legacy");
@@ -163,7 +163,7 @@ export async function ensureInstalled(
     requested: string,
     packageList: string[],
     force: boolean,
-): Promise<IVersionInstall | undefined> {
+): Promise<InstalledPackage | undefined> {
     if (requested === pkgVersion) { return; }
     const version = resolveVersion(requested, false);
     const modulePath = getModulePath(version);
