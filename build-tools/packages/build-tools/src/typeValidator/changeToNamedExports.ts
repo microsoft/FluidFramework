@@ -53,42 +53,17 @@ async function run(): Promise<boolean> {
     const sourceFiles = project.addSourceFilesAtPaths([`${program.packageDir}/src/**.ts`])
     console.log(sourceFiles.length)
     sourceFiles.forEach((sourceFile) => {
-        const exportsToAdd = new Map<string, Set<string>>();
         console.log(sourceFile.getBaseName());
         const exportDeclarations = sourceFile.getExportDeclarations();
-
         exportDeclarations.forEach((exportDeclaration) => {
-            console.log(exportDeclaration.isNamespaceExport());
             if (exportDeclaration.isNamespaceExport()) {
-                for (const [name, _] of sourceFile.getExportedDeclarations()) {
-                    const moduleSpecifier = exportDeclaration.getModuleSpecifierValue() || '';
-                    console.log(`${moduleSpecifier} has ${name}`);
-                    if (moduleSpecifier !== undefined) {
-                        if (!exportsToAdd.has(moduleSpecifier)) {
-                            exportsToAdd.set(moduleSpecifier,new Set<string>());
-                        }
-                        exportsToAdd.get(moduleSpecifier)?.add(name);
-                    }
+                const moduleSpecifierSourceFile = exportDeclaration.getModuleSpecifierSourceFileOrThrow();
+                for (const [name, _] of moduleSpecifierSourceFile.getExportedDeclarations()) {
+                   exportDeclaration.addNamedExport(name);
+                   console.log(`Added ${name} to ${sourceFile.getBaseName()} from ${moduleSpecifierSourceFile.getBaseName()}`)
                 }
-
-                exportDeclaration.remove();
-
-                (async function() {
-                    for (const moduleSpecifier of exportsToAdd.keys()) {
-                        console.log(`im a here bear ${moduleSpecifier}`)
-                        console.log(`moduleSpecifier ${moduleSpecifier}`);
-                        console.log(exportsToAdd.get(moduleSpecifier)?.size);
-                        const boop = exportsToAdd.get(moduleSpecifier) || [];
-                        sourceFile.addExportDeclaration({
-                            namedExports: Array.from(boop),
-                            moduleSpecifier: moduleSpecifier
-                        });
-                        await sourceFile.save();
-                        sourceFile.saveSync();
-                        await project.save()
-                    }
-                })();
             }
+            sourceFile.saveSync();
         });
     });
     await project.save()
