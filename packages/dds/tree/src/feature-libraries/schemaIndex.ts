@@ -12,14 +12,16 @@ import {
     IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Index, SummaryElement, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
+import { cachedValue, Dependee, Dependent, ICachedValue, recordDependency } from "../dependency-tracking";
 import { Delta } from "../tree";
 import {
     FieldKindIdentifier, FieldSchema, GlobalFieldKey, LocalFieldKey, Named,
-    SchemaData, StoredSchemaRepository, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    SchemaData, SchemaPolicy, StoredSchemaRepository, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    schemaDataIsEmpty,
 } from "../schema-stored";
-import { brand } from "../util";
+import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -257,21 +259,78 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
         }
 
         // After the awaits, validate that the schema is in a clean state.
-        // This detects any schema that could have been accidently added through
+        // This detects any schema that could have been accidentally added through
         // invalid means and are about to be overwritten.
-        assert(this.schema.treeSchema.size === 0,
-            0x3d9 /* there should not already be stored schema when loading stored schema */);
-        assert(this.schema.globalFieldSchema.size === 0,
-            0x3da /* there should not already be stored schema when loading stored schema */);
+        assert(schemaDataIsEmpty(this.schema), 0x3da /* there should not already be stored schema when loading stored schema */);
 
         const schemaString = bufferToString(schemaBuffer, "utf-8");
         const decoded = parseSchemaString(schemaString);
+        this.schema.update(decoded);
+    }
+}
 
-        for (const [name, schema] of decoded.globalFieldSchema) {
-            this.schema.updateFieldSchema(name, schema);
+interface SchemaOp {
+    readonly type: "SchemaOp",
+    readonly data: string,
+}
+
+/**
+ * Wraps a StoredSchemaRepository, adjusting its "update" function to hook into Fluid Ops.
+ *
+ * TODO: this should be more integrated with both SchemaIndex and transactions.
+ */
+export class SchemaEditor implements StoredSchemaRepository {
+    public constructor(public readonly inner: StoredSchemaRepository, private readonly submit: (op: SchemaOp) => void) {
+    }
+
+    /**
+     * @returns true if this is a schema op and was handled.
+     *
+     * TODO: Shared tree needs a pattern for handling non-changeset operations.
+     * See TODO on `SharedTree.processCore`.
+     */
+    tryHandleOp(message: ISequencedDocumentMessage): boolean {
+        const op: JsonCompatibleReadOnly = message.contents;
+        if (isJsonObject(op) && op.type === "SchemaOp") {
+            const data  = parseSchemaString(op.data as string);
+            // TODO: This does not correctly handle concurrency of schema edits.
+            this.inner.update(data);
+            return true;
         }
-        for (const [name, schema] of decoded.treeSchema) {
-            this.schema.updateTreeSchema(name, schema);
-        }
+        return false;
+    }
+
+    update(newSchema: SchemaData): void {
+        const op: SchemaOp = { type: "SchemaOp", data: getSchemaString(newSchema)}
+        this.submit(op);
+        this.inner.update(newSchema);
+    }
+
+    registerDependent(dependent: Dependent): boolean {
+        return this.inner.registerDependent(dependent);
+    }
+
+    removeDependent(dependent: Dependent): void {
+        return this.inner.removeDependent(dependent);
+    }
+
+    get computationName(): string {
+        return this.inner.computationName;
+    }
+
+    get listDependees(): undefined | (() => Iterable<Dependee>) {
+        return this.inner.listDependees?.bind(this.inner);
+    }
+
+    get policy(): SchemaPolicy {
+        return this.inner.policy;
+    }
+
+    get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
+        return this.inner.globalFieldSchema;
+    }
+
+    get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
+        return this.inner.treeSchema;
     }
 }

@@ -135,7 +135,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
 
         if (filter === undefined || isReleaseGroup(filter)) {
             this.log(`Collecting version data for release groups...`);
-            /* eslint-disable no-await-in-loop */
             for (const rg of context.repo.releaseGroups.keys()) {
                 if (filter !== undefined && filter !== rg) {
                     this.verbose(`Skipping '${rg} because it's excluded.`);
@@ -145,6 +144,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 const name = rg;
                 const repoVersion = context.getVersion(rg);
 
+                // eslint-disable-next-line no-await-in-loop
                 const data = await this.collectReleaseData(
                     context,
                     name,
@@ -173,6 +173,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 const name = pkg.name;
                 const repoVersion = pkg.version;
 
+                // eslint-disable-next-line no-await-in-loop
                 const data = await this.collectReleaseData(
                     context,
                     name,
@@ -184,7 +185,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                     versionData[name] = data;
                 }
             }
-            /* eslint-enable no-await-in-loop */
         }
 
         if (flags.all === true) {
@@ -660,6 +660,10 @@ function toReportKind(
             }
 
             break;
+        }
+
+        default: {
+            throw new Error(`Unexpected ReportKind: ${kind}`);
         }
     }
 

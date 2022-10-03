@@ -44,7 +44,9 @@ export abstract class StateMachineCommand<
         }),
     };
 
-    /** The state machine used by the command. */
+    /**
+     * The state machine used by the command.
+     */
     abstract get machine(): Machine<unknown>;
 
     /**
@@ -54,7 +56,9 @@ export abstract class StateMachineCommand<
     abstract get data(): unknown;
     abstract set data(d: unknown);
 
-    /** The {@link StateHandler} used by the command. Subclasses should set this in their init() method. */
+    /**
+     * The {@link StateHandler} used by the command. Subclasses should set this in their init() method.
+     */
     abstract handler: StateHandler | undefined;
 
     async init(): Promise<void> {
@@ -62,7 +66,9 @@ export abstract class StateMachineCommand<
         await this.initMachineHooks();
     }
 
-    /** Wires up some hooks on the state machine to do machine-wide logging. */
+    /**
+     * Wires up some hooks on the state machine to do machine-wide logging.
+     */
     protected async initMachineHooks() {
         for (const state of this.machine.states()) {
             // Logs the entry into any terminal state, noting the source state and action that caused the transition.
@@ -137,7 +143,9 @@ export abstract class StateMachineCommand<
         }
     }
 
-    /** Runs the command by calling the (infinite) stateLoop method. */
+    /**
+     * Runs the command by calling the (infinite) stateLoop method.
+     */
     async run(): Promise<void> {
         await this.stateLoop();
     }

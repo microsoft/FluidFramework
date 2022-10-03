@@ -5,7 +5,6 @@
 
 import { FluidRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-// eslint-disable-next-line import/no-internal-modules
 import type { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import stripAnsi from "strip-ansi";
@@ -81,13 +80,14 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         },
     ];
 
-    /** An array of messages that will be shown after the command runs. */
+    /**
+     * An array of messages that will be shown after the command runs.
+     */
     private readonly finalMessages: string[] = [];
 
     /**
      * Runs the `bump deps` command.
      */
-    // eslint-disable-next-line complexity
     public async run(): Promise<void> {
         const args = this.processedArgs;
         const flags = this.processedFlags;
@@ -100,10 +100,14 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
             this.error("ERROR: No dependency provided.");
         }
 
-        /** The version range or bump type (depending on the CLI arguments) to set. */
+        /**
+         * The version range or bump type (depending on the CLI arguments) to set.
+         */
         const versionToSet = flags.updateType ?? "current";
 
-        /** A list of package names on which to update dependencies. */
+        /**
+         * A list of package names on which to update dependencies.
+         */
         const depsToUpdate: string[] = [];
 
         if (isReleaseGroup(args.package_or_release_group)) {
@@ -165,6 +169,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
                 ...new Set(
                     updatedPackages
                         .filter((p) => p.monoRepo !== undefined)
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         .map((p) => p.monoRepo!.kind),
                 ),
             ];
