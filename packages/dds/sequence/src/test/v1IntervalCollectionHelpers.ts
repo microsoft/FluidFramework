@@ -9,7 +9,7 @@ import {
     IChannelServices,
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { Client } from "@fluidframework/merge-tree";
 import { DefaultMap } from "../defaultMap";
 import { IValueFactory, IValueOpEmitter, IValueType, IValueOperation } from "../defaultMapInterfaces";
 import {
@@ -27,6 +27,7 @@ import { pkgVersion } from "../packageVersion";
 import { SharedString } from "../sharedString";
 
 export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
+    client: Client;
     savedSerializedIntervals?: ISerializedInterval[];
     localCollection: LocalIntervalCollection<SequenceInterval>;
     getNextLocalSeq(): number;
@@ -35,21 +36,6 @@ export interface IntervalCollectionInternals<TInterval extends ISerializableInte
 export class V1IntervalCollection<TInterval extends ISerializableInterval>
  extends IntervalCollection<SequenceInterval> {
     casted = (this as unknown as IntervalCollectionInternals<SequenceInterval>);
-
-    /**
-     * @internal
-     */
-    // actually returns an ISerializedInterval[], but it is cast as an ISerializableIntervalCollectionV2
-     public override serializeInternal(): ISerializedIntervalCollectionV2 {
-        if (!this.attached) {
-            throw new LoggingError("attachSequence must be called");
-        }
-        return this.casted.localCollection.serialize(false);
-        // const intervals = this.casted.savedSerializedIntervals;
-
-        // // Cast intervals as the new document format so the return type matches but we have the old format's type
-        // return (intervals as unknown as ISerializedIntervalCollectionV2);
-    }
 }
 
 class V1SequenceIntervalCollectionFactory
@@ -66,7 +52,8 @@ class V1SequenceIntervalCollectionFactory
     }
     public store(value: V1IntervalCollection<SequenceInterval>):
     ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-        return value.serializeInternal();
+        return Array.from(value, (interval) => interval?.serialize(value.casted.client)) as unknown as
+        ISerializedIntervalCollectionV2;
     }
 }
 

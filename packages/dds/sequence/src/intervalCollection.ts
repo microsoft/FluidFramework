@@ -856,14 +856,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return newInterval;
     }
 
-    public serialize(snapshotIsNormalized: boolean): ISerializedIntervalCollectionV2 {
+    public serialize(): ISerializedIntervalCollectionV2 {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
-        return snapshotIsNormalized ? {
+        return {
             label: this.label,
             intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
             version: 2,
-        } : intervals.map((interval) => interval.serialize(client)) as unknown as ISerializedIntervalCollectionV2;
+        };
     }
 
     private addIntervalListeners(interval: TInterval) {
@@ -902,7 +902,7 @@ class SequenceIntervalCollectionFactory
     }
 
     public store(value: IntervalCollection<SequenceInterval>): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-        return value.serializeInternal(true);
+        return value.serializeInternal();
     }
 }
 
@@ -956,7 +956,7 @@ class IntervalCollectionFactory
     }
 
     public store(value: IntervalCollection<Interval>): ISerializedIntervalCollectionV2 {
-        return value.serializeInternal(true);
+        return value.serializeInternal();
     }
 }
 
@@ -1651,12 +1651,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     /**
      * @internal
      */
-    public serializeInternal(snapshotIsNormalized: boolean): ISerializedIntervalCollectionV2 {
+    public serializeInternal(): ISerializedIntervalCollectionV2 {
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
         }
 
-        return this.localCollection.serialize(snapshotIsNormalized);
+        return this.localCollection.serialize();
     }
 
     public [Symbol.iterator](): IntervalCollectionIterator<TInterval> {

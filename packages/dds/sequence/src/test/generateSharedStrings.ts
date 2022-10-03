@@ -27,6 +27,17 @@ export const supportedVersions = new Map<string, any>([
     ["v1Intervals", {}],
 ]);
 
+function createIntervals(sharedString) {
+    const rand = new Random(Random.engines.mt19937().seed(0));
+    const collection1 = sharedString.getIntervalCollection("collection1");
+    collection1.add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+
+    const collection2 = sharedString.getIntervalCollection("collection2");
+    for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
+        collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+    }
+}
+
 export function* generateStrings(): Generator<{
     snapshotPath: string;
     expected: SharedString;
@@ -114,32 +125,17 @@ export function* generateStrings(): Generator<{
             sharedString.insertText(0, `${insertText}${i}`);
         }
 
-        let rand = new Random(Random.engines.mt19937().seed(0));
-        let collection1 = sharedString.getIntervalCollection("collection1");
-        collection1.add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
-
-        let collection2 = sharedString.getIntervalCollection("collection2");
-        for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
-            collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
-        }
+        createIntervals(sharedString);
 
         yield { snapshotPath: `${version}/withIntervals`, expected: sharedString, snapshotIsNormalized: normalized };
 
-        sharedString = createNewV1SharedString();
-        // SharedString with V1 intervals
-        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; i++) {
-            sharedString.insertText(0, `${insertText}${i}`);
-        }
-
         if (version === "v1Intervals") {
-            rand = new Random(Random.engines.mt19937().seed(0));
-            collection1 = (sharedString as SharedStringWithV1IntervalCollection).getIntervalCollection("collection1");
-            (collection1).add(1, 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
-
-            collection2 = (sharedString as SharedStringWithV1IntervalCollection).getIntervalCollection("collection2");
-            for (let i = 0; i < sharedString.getLength() - 5; i += 100) {
-                collection2.add(i, i + 5, IntervalType.SlideOnRemove, { intervalId: rand.uuid4() });
+            sharedString = createNewV1SharedString();
+            // SharedString with V1 intervals
+            for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; i++) {
+                sharedString.insertText(0, `${insertText}${i}`);
             }
+            createIntervals(sharedString);
 
             yield {
                 snapshotPath: `${version}/withV1Intervals`,

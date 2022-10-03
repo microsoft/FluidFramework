@@ -184,7 +184,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     removeIntervalById(id: string): TInterval;
     // @internal (undocumented)
-    serializeInternal(snapshotIsNormalized: boolean): ISerializedIntervalCollectionV2;
+    serializeInternal(): ISerializedIntervalCollectionV2;
 }
 
 // @public (undocumented)

@@ -117,9 +117,9 @@ describe("SharedString Snapshot Version", () => {
 
     function generateSnapshotRebuildTests() {
         describe("Snapshot rebuild", () => {
-            for (const str of generateStrings()) {
-                if (str.snapshotIsNormalized || str.snapshotPath === "v1Intervals/withV1Intervals") {
-                    generateSnapshotRebuildTest(str.snapshotPath, str.expected, str.snapshotIsNormalized);
+            for (const { snapshotPath, expected, snapshotIsNormalized } of generateStrings()) {
+                if (snapshotIsNormalized || snapshotPath === "v1Intervals/withV1Intervals") {
+                    generateSnapshotRebuildTest(snapshotPath, expected, snapshotIsNormalized);
                 }
             }
         });

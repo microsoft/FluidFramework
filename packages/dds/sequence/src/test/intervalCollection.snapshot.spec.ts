@@ -17,10 +17,6 @@ import {
     intervalLocatorFromEndpoint,
     IntervalType, SequenceInterval,
 } from "../intervalCollection";
-import {
-    SharedStringWithV1IntervalCollection,
-    V1IntervalCollectionSharedStringFactory,
-} from "./v1IntervalCollectionHelpers";
 
 const assertIntervals = (
     sharedString: SharedString,
@@ -63,30 +59,6 @@ async function loadSharedString(
     return sharedString;
 }
 
-async function testLoadSharedString(
-    containerRuntimeFactory: MockContainerRuntimeFactory,
-    id: string,
-    summary: ISummaryTree,
-): Promise<SharedStringWithV1IntervalCollection> {
-    const dataStoreRuntime = new MockFluidDataStoreRuntime();
-    const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-    dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
-    const services = {
-        deltaConnection: containerRuntime.createDeltaConnection(),
-        objectStorage: MockStorage.createFromSummary(summary),
-    };
-    const sharedString = new SharedStringWithV1IntervalCollection(
-        dataStoreRuntime,
-        id,
-        V1IntervalCollectionSharedStringFactory.Attributes,
-    );
-    await sharedString.load(services);
-    await sharedString.loaded;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return sharedString;
-    // eslint-enable-next-line @typescript-eslint/no-unsafe-return
-}
-
 async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq: number; }> {
     const containerRuntimeFactory = new MockContainerRuntimeFactory();
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -118,15 +90,6 @@ describe("IntervalCollection snapshotting", () => {
     beforeEach(() => {
         containerRuntimeFactory = new MockContainerRuntimeFactory();
         containerRuntimeFactory.sequenceNumber = seq;
-    });
-
-    // **** don't exactly know what to do with this? ****
-    it("loads the old interval format", async () => {
-        // Right now, this checks the setup for any errors instead of asserting anything useful.
-        const sharedString = await testLoadSharedString(containerRuntimeFactory, "1", summary);
-        const collection = sharedString.getIntervalCollection("test");
-
-        assertIntervals(sharedString, collection, [{ start: 0, end: 2 }]);
     });
 
     it("creates the correct reference type on reload", async () => {
