@@ -5,11 +5,15 @@
 import * as fs from "node:fs";
 
 import * as yaml from "js-yaml";
+import { v4 as uuid } from "uuid";
+
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
 import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner";
 import { DocCreatorConfig, DocCreatorRunner } from "./DocCreatorRunner";
 import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner";
 import { IRunner } from "./interface";
+import { getLogger } from "./logger";
 
 export interface IStageParams {
     [key: string]: unknown;
@@ -60,20 +64,19 @@ export interface IStageStatus {
 }
 
 export class TestOrchestrator {
+    private readonly runId = uuid();
     private runStatus: RunStatus = "notstarted";
-    private doc: RunConfig | undefined;
+    private readonly doc: RunConfig;
     private readonly env = new Map<string, unknown>();
     private readonly stageStatus = new Map<number, IStageStatus>();
-    private readonly c: TestOrchestratorConfig;
-
-    constructor(config: TestOrchestratorConfig) {
-        this.c = config;
+    constructor(private readonly c: TestOrchestratorConfig) {
+        this.doc = TestOrchestrator.getConfig(this.c.version);
     }
 
     public static getConfigs(): VersionedRunConfig[] {
         return [
             { version: "v1", config: this.getConfig("v1") },
-            { version: "v2", config: this.getConfig("v2") }
+            { version: "v2", config: this.getConfig("v2") },
         ];
     }
 
@@ -83,8 +86,27 @@ export class TestOrchestrator {
 
     public async run(): Promise<void> {
         this.runStatus = "running";
-        console.log("running config version:", this.c.version);
-        this.doc = TestOrchestrator.getConfig(this.c.version);
+        const logger = await getLogger({
+            runId: this.runId,
+            scenarioName: this.doc?.title,
+            namespace: "scenario:runner",
+        });
+
+        await PerformanceEvent.timedExecAsync(
+            logger,
+            { eventName: "RunStages" },
+            async () => {
+                await this.execRun();
+            },
+            { start: true, end: true, cancel: "generic" },
+        );
+        this.runStatus = "done";
+    }
+
+    private async execRun(): Promise<void> {
+        if (!this.doc) {
+            throw new Error("Invalid config.");
+        }
 
         for (const key of Object.keys(this.doc.env)) {
             this.env.set(`\${${key}}`, this.doc.env[key]);
@@ -103,17 +125,17 @@ export class TestOrchestrator {
                     console.log("done with stage", stage.name);
                     this.stageStatus.set(stage.id, {
                         id: stage.id,
+                        status: "success",
                         title: stage.name,
                         description: stage.description,
-                        status: "success",
                         details: {},
                     });
                 } catch (error) {
                     this.stageStatus.set(stage.id, {
                         id: stage.id,
+                        status: "error",
                         title: stage.name,
                         description: error as string,
-                        status: "error",
                         details: {},
                     });
                     console.log("stage existed with error:", stage.name, error);
@@ -121,7 +143,6 @@ export class TestOrchestrator {
                 }
             }
         }
-        this.runStatus = "done";
     }
 
     public getStatus(): IRunStatus {
@@ -190,7 +211,10 @@ export class TestOrchestrator {
         });
 
         // exec
-        return runner.run();
+        return runner.run({
+            runId: this.runId,
+            scenarioName: this.doc?.title ?? "",
+        });
     }
 
     private static getConfigFileName(version: string): string {

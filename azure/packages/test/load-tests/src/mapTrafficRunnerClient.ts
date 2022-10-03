@@ -11,11 +11,13 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ContainerFactorySchema } from "./interface";
-import { createAzureClient, delay, loadInitialObjSchema } from "./utils";
 import { getLogger } from "./logger";
+import { createAzureClient, delay, loadInitialObjSchema } from "./utils";
 
 export interface MapTrafficRunnerConfig {
-    runId: number;
+    runId: string;
+    scenarioName: string;
+    clientId: number;
     docId: string;
     writeRatePerMin: number;
     totalWriteCount: number;
@@ -35,11 +37,9 @@ async function main() {
         .version("0.0.1")
         .requiredOption("-d, --docId <docId>", "Document ID to target")
         .requiredOption("-s, --schema <schema>", "Container Schema")
-        .requiredOption(
-            "-r, --runId <runId>",
-            "run a child process with the given id. Requires --url option.",
-            parseIntArg,
-        )
+        .requiredOption("-r, --runId <runId>", "orchestrator run id.")
+        .requiredOption("-s, --scenarioName <scenarioName>", "scenario name.")
+        .requiredOption("-c, --childId <childId>", "id of this node client.", parseIntArg)
         .requiredOption("-wr, --writeRatePerMin <writeRatePerMin>", "Rate of writes", parseIntArg)
         .requiredOption(
             "-wc, --totalWriteCount <totalWriteCount>",
@@ -58,6 +58,8 @@ async function main() {
 
     const config = {
         runId: commander.runId,
+        scenarioName: commander.scenarioName,
+        clientId: commander.clientId,
         docId: commander.docId,
         writeRatePerMin: commander.writeRatePerMin,
         totalWriteCount: commander.totalWriteCount,
@@ -78,15 +80,15 @@ async function main() {
     const logger = await getLogger({
         runId: config.runId,
         scenarioName: "test",
-        namespace: "hey:"
-    })
+        namespace: "hey:",
+    });
 
     const ac = await createAzureClient({
         userId: "testUserId",
         userName: "testUserName",
         connType: config.connType,
         connEndpoint: config.connEndpoint,
-        logger
+        logger,
     });
     const s = loadInitialObjSchema(JSON.parse(commander.schema) as ContainerFactorySchema);
     await delay(2000);
@@ -102,9 +104,9 @@ async function execRun(container: IFluidContainer, config: MapTrafficRunnerConfi
 
     const logger = await getLogger({
         runId: config.runId,
-        scenarioName: "test",
-        namespace: "myspace"
-    })
+        scenarioName: config.scenarioName,
+        namespace: "scenario:runner:maptraffic:client",
+    });
 
     for (let i = 0; i < config.totalWriteCount; i++) {
         await delay(msBetweenWrites);
@@ -114,14 +116,15 @@ async function execRun(container: IFluidContainer, config: MapTrafficRunnerConfi
 
     await PerformanceEvent.timedExecAsync(
         logger,
-        { eventName: "SomeRandomEvent" },
+        { eventName: "CatchupEvent", clientId: config.clientId },
         async (_event) => {
             await timeoutPromise((resolve) => container.once("saved", () => resolve()), {
                 durationMs: 20000,
                 errorMsg: "datastoreSaveAfterAttach timeout",
             });
         },
-        { start: true, end: true, cancel: "generic" });
+        { start: true, end: true, cancel: "generic" },
+    );
 
     console.log("flag cleared", container.isDirty);
 }

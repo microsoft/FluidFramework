@@ -5,8 +5,10 @@
 import child_process from "child_process";
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
-import { IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
+import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
+import { getLogger } from "./logger";
 import { delay } from "./utils";
 
 export interface AzureClientConfig {
@@ -38,19 +40,42 @@ export class MapTrafficRunner extends TypedEventEmitter<IRunnerEvents> implement
         super();
     }
 
-    public async run(): Promise<void> {
+    public async run(config: IRunConfig): Promise<void> {
+        const logger = await getLogger({
+            runId: config.runId,
+            scenarioName: config.scenarioName,
+            namespace: "scenario:runner:maptraffic",
+        });
+        this.status = "running";
+
+        await PerformanceEvent.timedExecAsync(
+            logger,
+            { eventName: "RunStage" },
+            async () => {
+                return this.execRun(config);
+            },
+            { start: true, end: true, cancel: "generic" },
+        );
+        this.status = "success";
+    }
+
+    public async execRun(config: IRunConfig): Promise<void> {
         this.status = "running";
         const runnerArgs: string[][] = [];
         for (let i = 0; i < this.c.numClients; i++) {
             const connection = this.c.connectionConfig;
             const childArgs: string[] = [
                 "./dist/mapTrafficRunnerClient.js",
+                "--runId",
+                config.runId,
+                "--scenarioName",
+                config.scenarioName,
+                "--childId",
+                i.toString(),
                 "--docId",
                 this.c.docId,
                 "--schema",
                 JSON.stringify(this.c.schema),
-                "--runId",
-                i.toString(),
                 "--writeRatePerMin",
                 this.c.writeRatePerMin.toString(),
                 "--totalWriteCount",

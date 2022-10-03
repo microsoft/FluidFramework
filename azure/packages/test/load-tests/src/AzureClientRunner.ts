@@ -4,8 +4,10 @@
  */
 import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
-import { IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
+import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
+import { getLogger } from "./logger";
 import { createAzureClient } from "./utils";
 
 export interface ICustomUserDetails {
@@ -30,14 +32,27 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
         super();
     }
 
-    public async run(): Promise<AzureClient | undefined> {
-        this.status = "running";
-        const ac = await createAzureClient({
-            connType: this.c.connectionConfig.type,
-            connEndpoint: this.c.connectionConfig.endpoint,
-            userId: this.c.userId ?? "testUserId",
-            userName: this.c.userName ?? "testUserId",
+    public async run(config: IRunConfig): Promise<AzureClient | undefined> {
+        const logger = await getLogger({
+            runId: config.runId,
+            scenarioName: config.scenarioName,
+            namespace: "scenario:runner:acrunner",
         });
+        this.status = "running";
+
+        const ac = await PerformanceEvent.timedExecAsync(
+            logger,
+            { eventName: "RunStage" },
+            async () => {
+                return createAzureClient({
+                    connType: this.c.connectionConfig.type,
+                    connEndpoint: this.c.connectionConfig.endpoint,
+                    userId: this.c.userId ?? "testUserId",
+                    userName: this.c.userName ?? "testUserId",
+                });
+            },
+            { start: true, end: true, cancel: "generic" },
+        );
         this.status = "success";
         return ac;
     }

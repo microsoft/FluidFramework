@@ -15,7 +15,7 @@ import { pkgName, pkgVersion } from "./packageVersion";
 export interface LoggerConfig {
     scenarioName?: string;
     namespace?: string;
-    runId?: number;
+    runId?: string;
 }
 
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
