@@ -33,6 +33,7 @@ export function loadInitialObjSchema(source: ContainerFactorySchema): ContainerS
     };
 
     for (const k of Object.keys(source.initialObjects)) {
+        // Todo: more DDS types to add.
         if (source.initialObjects[k] === "SharedMap") {
             schema.initialObjects[k] = SharedMap;
         }
@@ -45,7 +46,6 @@ export function createAzureTokenProvider(
     userID?: string,
     userName?: string,
 ): AzureFunctionTokenProvider {
-    // const fnUrl = process.env.azure__fluid__relay__service__function__url as string;
     return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
         userId: userID ?? "foo",
         userName: userName ?? "bar",
@@ -77,10 +77,6 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
 
     const tenantId = useAzure ? (frsConfig.tenantId as string) : "frs-client-tenant";
     const fnUrl = useAzure ? (frsConfig.fnUrl as string) : "";
-
-    // use AzureClient remote mode will run against live Azure Fluid Relay.
-    // Default to running Tinylicious for PR validation
-    // and local testing so it's not hindered by service availability
     const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
         ? {
               tenantId,
@@ -90,7 +86,7 @@ export async function createAzureClient(config: AzureClientConfig): Promise<Azur
           }
         : {
               tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
-              endpoint: config.connEndpoint, // "http://localhost:7070",
+              endpoint: config.connEndpoint,
               type: "local",
           };
 

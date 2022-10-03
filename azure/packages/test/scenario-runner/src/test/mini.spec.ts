@@ -7,8 +7,8 @@ import child_process from "child_process";
 import assert from "assert";
 
 const childArgs: string[] = [
-    "./dist/nodeStressTest.js",
-    "--driver", "tinylicious",
+    "./dist/orchestratorRunner.js",
+    "--config", "v1",
     "--profile", "mini",
 ];
 

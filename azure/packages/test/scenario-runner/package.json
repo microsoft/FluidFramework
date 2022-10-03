@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/azure-load-tests",
+  "name": "@fluidframework/azure-scenario-runner",
   "version": "1.1.0",
   "description": "Azure client end to end tests",
   "homepage": "https://fluidframework.com",
