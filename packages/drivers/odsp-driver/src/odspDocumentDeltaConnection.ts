@@ -112,9 +112,10 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
         SocketReference.socketIoSockets.set(key, this);
 
-        // The server always closes the socket after sending this message
-        // fully remove the socket reference now
-        socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+        // Server sends this event when it wants to disconnect a particular client in which case the client id would
+        // be present or if it wants to disconnect all the clients. The server always closes the socket in case all
+        // clients needs to be disconnected. So fully remove the socket reference in this case.
+        socket.on("server_disconnect", (socketError: IOdspSocketError, clientId?: string) => {
             // Treat all errors as recoverable, and rely on joinSession / reconnection flow to
             // filter out retryable vs. non-retryable cases.
             const error = errorObjectFromSocketError(socketError, "server_disconnect");
@@ -125,9 +126,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            // Explicitly cast error to the specified event args type to ensure type compatibility
-            this.emit("server_disconnect", error);
-            this.closeSocket();
+            this.emit("server_disconnect", error, clientId);
         });
     }
 
@@ -438,9 +437,21 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         return this.flushDeferred.promise;
     }
 
-    protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError) => {
-        this.logger.sendTelemetryEvent({ eventName: "ServerDisconnect", clientId: this.clientId }, error);
-        this.disposeSocket(error);
+    protected serverDisconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string) => {
+        // Don't dispose the socket in case a single client needs to be disconnected.
+        if (clientId === undefined) {
+            this.logger.sendTelemetryEvent({
+                eventName: "ServerDisconnect",
+                clientId: this.clientId,
+            }, error);
+            this.disposeSocket(error);
+        } else if (this.clientId === clientId) {
+            this.logger.sendTelemetryEvent({
+                eventName: "ServerDisconnect",
+                clientId: this.clientId,
+            }, error);
+            this.disposeCore(error);
+        }
     };
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
