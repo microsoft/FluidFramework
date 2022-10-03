@@ -5,12 +5,15 @@
 import { fail, strict as assert } from "assert";
 import { FieldKinds, singleTextCursor, anchorSymbol, isUnwrappedNode, valueSymbol } from "../../feature-libraries";
 import { brand } from "../../util";
-import { detachedFieldAsKey, rootFieldKey, TreeValue } from "../../tree";
+import { detachedFieldAsKey, rootFieldKey, symbolFromKey, TreeValue } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
-import { fieldSchema, namedTreeSchema } from "../../schema-stored";
+import { fieldSchema, GlobalFieldKey, namedTreeSchema } from "../../schema-stored";
+
+const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
+const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
 
 describe("SharedTree", () => {
     it("reads only one node", async () => {
@@ -100,6 +103,73 @@ describe("SharedTree", () => {
             assert.equal(getTestValue(tree2), undefined);
         });
 
+        // TODO: Add global field representation in changesets and delta
+        it.skip("can edit a global field", async () => {
+            const provider = await TestTreeProvider.create(2);
+            const [tree1, tree2] = provider.trees;
+
+            // Insert root node
+            initializeTestTreeWithValue(tree1, 42);
+            
+            // Insert child in global field
+            tree1.runTransaction((forest, editor) => {
+                const writeCursor = singleTextCursor({ type: brand("TestValue"), value: 43 });
+                editor.insert({
+                    parent: {
+                        parent: undefined,
+                        parentField: detachedFieldAsKey(forest.rootField),
+                        parentIndex: 0,
+                    },
+                    parentField: globalFieldKeySymbol,
+                    parentIndex: 0,
+                }, writeCursor);
+        
+                return TransactionResult.Apply;
+            });
+
+            await provider.ensureSynchronized();
+
+            // Validate insertion
+            {
+                const readCursor = tree2.forest.allocateCursor();
+                const destination = tree2.forest.root(tree2.forest.rootField);
+                const cursorResult1 = tree2.forest.tryMoveCursorTo(destination, readCursor);
+                assert.equal(cursorResult1, TreeNavigationResult.Ok);
+                const cursorResult2 = readCursor.down(globalFieldKeySymbol, 0);
+                assert.equal(cursorResult2, TreeNavigationResult.Ok);
+                const { value } = readCursor;
+                assert.equal(value, 43);
+                readCursor.free();
+                tree2.forest.forgetAnchor(destination);
+            }
+
+            // Delete node
+            tree2.runTransaction((forest, editor) => {
+                editor.delete({
+                    parent: {
+                        parent: undefined,
+                        parentField: detachedFieldAsKey(forest.rootField),
+                        parentIndex: 0,
+                    },
+                    parentField: globalFieldKeySymbol,
+                    parentIndex: 0,
+                }, 1);
+                return TransactionResult.Apply;
+            });
+
+            await provider.ensureSynchronized();
+
+            // Validate deletion
+            {
+                const readCursor = tree2.forest.allocateCursor();
+                const destination = tree2.forest.root(tree2.forest.rootField);
+                const cursorResult1 = tree2.forest.tryMoveCursorTo(destination, readCursor);
+                assert.equal(cursorResult1, TreeNavigationResult.Ok);
+                const cursorResult2 = readCursor.down(globalFieldKeySymbol, 0);
+                assert.equal(cursorResult2, TreeNavigationResult.NotFound);
+            }
+        });
+
         it("can insert multiple nodes", async () => {
             const provider = await TestTreeProvider.create(2);
             const [tree1, tree2] = provider.trees;
@@ -183,14 +253,17 @@ describe("SharedTree", () => {
  */
 function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
     const rootFieldSchema = fieldSchema(FieldKinds.value);
+    const globalFieldSchema = fieldSchema(FieldKinds.value);
     const rootNodeSchema = namedTreeSchema({
         name: brand("TestValue"),
-        extraLocalFields: fieldSchema(FieldKinds.sequence)
+        extraLocalFields: fieldSchema(FieldKinds.sequence),
+        globalFields: [globalFieldKey],
     })
 
     // TODO: schema should be added via Fluid operations so all clients receive them.
     tree.forest.schema.updateTreeSchema(rootNodeSchema.name, rootNodeSchema);
     tree.forest.schema.updateFieldSchema(rootFieldKey, rootFieldSchema);
+    tree.forest.schema.updateFieldSchema(globalFieldKey, globalFieldSchema);
 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
