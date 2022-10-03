@@ -4,7 +4,16 @@
  */
 
 import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+    IRequest,
+    IResponse,
+    IFluidHandle,
+    IFluidRouter,
+    FluidObject,
+    IFluidLoadable,
+    IProvideFluidLoadable,
+    IProvideFluidRouter,
+} from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, FluidDataStoreRuntime, mixinRequestHandler } from "@fluidframework/datastore";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
 import {
@@ -21,7 +30,7 @@ import { ITestFluidObject } from "./interfaces";
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
  */
-export class TestFluidObject implements ITestFluidObject {
+export class TestFluidObject implements ITestFluidObject, IFluidRouter {
     public static async load(
         runtime: IFluidDataStoreRuntime,
         channel: IFluidDataStoreChannel,
@@ -40,6 +49,10 @@ export class TestFluidObject implements ITestFluidObject {
     }
 
     public get IFluidLoadable() {
+        return this;
+    }
+
+    public get IFluidRouter() {
         return this;
     }
 
@@ -169,13 +182,11 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt: FluidDataStoreRuntime) => {
-                // TestFluidObject doesn't actually implement IFluidRouter, it just has a request method,
-                // so we don't try to discover it like FluidObject<IFluidRouter>. This factory knows that
-                // the entrypoint on the data stores it creates is an object of that type because it passed
-                // it in (see the call to new runtimeClass(...) below), so it can cast safely here.
-                const router: TestFluidObject = ((await rt.IFluidLoadable?.handle?.get()) as TestFluidObject);
-                assert(router !== undefined, "Entrypoint should have initialized by now");
-                return router.request(request);
+                const maybeIFluidLoadable: FluidObject<IProvideFluidLoadable> = rt;
+                const maybeRouter: FluidObject<IProvideFluidRouter> & IFluidLoadable | undefined
+                    = await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
+                assert(maybeRouter?.IFluidRouter !== undefined, "Entrypoint should have been initialized by now");
+                return maybeRouter.IFluidRouter.request(request);
             });
 
         const runtime = new runtimeClass(

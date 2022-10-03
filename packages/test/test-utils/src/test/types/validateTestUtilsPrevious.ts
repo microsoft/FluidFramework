@@ -503,6 +503,7 @@ declare function get_old_ClassDeclaration_TestFluidObject():
 declare function use_current_ClassDeclaration_TestFluidObject(
     use: TypeOnly<current.TestFluidObject>);
 use_current_ClassDeclaration_TestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestFluidObject());
 
 /*

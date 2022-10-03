@@ -6,8 +6,8 @@
 import {
     FluidObject,
     IFluidLoadable,
-    IFluidRouter,
     IProvideFluidLoadable,
+    IProvideFluidRouter,
     IRequest,
 } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
@@ -59,11 +59,8 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
     ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest, rt: FluidDataStoreRuntime) => {
-                // This factory knows that the entrypoint on the data stores it creates is a LazyLoadedDataObject
-                // (or child of it) because it passed it in (see the call to new runtimeClass(...) below), so it
-                // can cast safely here.
                 const maybeIFluidLoadable: FluidObject<IProvideFluidLoadable> = rt;
-                const maybeRouter: FluidObject<IFluidRouter> & IFluidLoadable | undefined
+                const maybeRouter: FluidObject<IProvideFluidRouter> & IFluidLoadable | undefined
                     = await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
                 assert(maybeRouter?.IFluidRouter !== undefined, "Entrypoint should have been initialized by now");
                 return maybeRouter.IFluidRouter.request(request);
