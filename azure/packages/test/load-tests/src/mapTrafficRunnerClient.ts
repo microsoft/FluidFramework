@@ -79,8 +79,11 @@ async function main() {
 
     const logger = await getLogger({
         runId: config.runId,
-        scenarioName: "test",
-    });
+        scenarioName: config.scenarioName,
+    }, [
+        "scenario:runner",
+        "fluid:telemetry:OpPerf"
+    ]);
 
     const ac = await createAzureClient({
         userId: "testUserId",
@@ -132,8 +135,6 @@ async function execRun(ac: AzureClient, config: MapTrafficRunnerConfig): Promise
         },
         { start: true, end: true, cancel: "generic" },
     );
-
-    console.log("flag cleared", container.isDirty);
 }
 
 main().catch((error) => {

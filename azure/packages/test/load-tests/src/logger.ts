@@ -5,7 +5,7 @@
 import crypto from "crypto";
 import fs from "fs";
 
-import { ITelemetryBaseEvent, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { LazyPromise, assert } from "@fluidframework/common-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
@@ -21,15 +21,15 @@ export interface LoggerConfig {
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private error: boolean = false;
     private readonly schema = new Map<string, number>();
-    private targetEvents = new Set<ITelemetryGenericEvent>();
+    private targetEvents: string[] = [];
     private logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
         super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
     }
 
-    public registerExpectedEvent(orderedExpectedEvents: ITelemetryGenericEvent[]) {
-        this.targetEvents = new Set(orderedExpectedEvents);
+    public registerExpectedEvent(expectedEventNames: string[]) {
+        this.targetEvents = expectedEventNames;
     }
 
     async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
@@ -62,7 +62,13 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     }
 
     send(event: ITelemetryBaseEvent): void {
-        console.log("event----", event, this.targetEvents);
+        if (this.targetEvents.length > 0) {
+            const found = this.targetEvents.find((a) => event.eventName.startsWith(a));
+            if (!found) {
+                return;
+            }
+        }
+
         if (typeof event.testCategoryOverride === "string") {
             event.category = event.testCategoryOverride;
         } else if (
@@ -94,8 +100,11 @@ export const loggerP = new LazyPromise<FileLogger>(async () => {
     }
 });
 
-export async function getLogger(config: LoggerConfig): Promise<TelemetryLogger> {
+export async function getLogger(config: LoggerConfig, events?: string[]): Promise<TelemetryLogger> {
     const baseLogger = await loggerP;
+    if(events) {
+        baseLogger.registerExpectedEvent(events);
+    }
     return ChildLogger.create(baseLogger, config.namespace, {
         all: {
             runId: config.runId,
