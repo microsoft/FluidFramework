@@ -74,16 +74,8 @@ export class SweepReadyUsageDetectionHandler {
         localStorageOverride?: Pick<Storage, "getItem" | "setItem">,
     ) {
         const noopStorage = { getItem: () => null, setItem: () => {} };
-        if (localStorageOverride !== undefined) {
-            this.localStorage = localStorageOverride;
-        } else {
-            try {
-                // localStorage is not defined in Node environment so this throws
-                this.localStorage = localStorage ?? noopStorage;
-            } catch (error) {
-                this.localStorage = noopStorage;
-            }
-        }
+        // localStorage is not defined in Node environment, so fall back to noopStorage if needed.
+        this.localStorage = localStorageOverride ?? globalThis.localStorage ?? noopStorage;
 
         if (this.localStorage === noopStorage) {
             // This means the Skip Closure Period logic will not work.

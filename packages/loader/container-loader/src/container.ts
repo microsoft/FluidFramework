@@ -64,7 +64,6 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-    ISignalClient,
     ISignalMessage,
     ISnapshotTree,
     ISummaryContent,
@@ -412,7 +411,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
-    private _initialClients: ISignalClient[] | undefined;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -633,7 +631,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectionStateHandler = createConnectionStateHandler(
             {
                 logger: this.mc.logger,
-                quorumClients: () => this._protocolHandler?.quorum,
                 connectionStateChanged: (value, oldState, reason) => {
                     if (value === ConnectionState.Connected) {
                         this._clientId = this.connectionStateHandler.pendingClientId;
@@ -1181,12 +1178,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // ...load in the existing quorum
         // Initialize the protocol handler
-        this._protocolHandler = pendingLocalState === undefined
-            ? await this.initializeProtocolStateFromSnapshot(
+        if (pendingLocalState === undefined) {
+            await this.initializeProtocolStateFromSnapshot(
                 attributes,
                 this.storageService,
-                snapshot,
-            ) : await this.initializeProtocolState(
+                snapshot);
+        } else {
+            this.initializeProtocolState(
                 attributes,
                 {
                     members: pendingLocalState.protocol.members,
@@ -1194,6 +1192,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     values: pendingLocalState.protocol.values,
                 }, // pending IQuorumSnapshot
             );
+        }
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
@@ -1268,7 +1267,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         const qValues = initQuorumValuesFromCodeDetails(source);
-        this._protocolHandler = await this.initializeProtocolState(
+        this.initializeProtocolState(
             attributes,
             {
                 members: [],
@@ -1305,15 +1304,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             baseTree.blobs.quorumValues,
         );
         const codeDetails = getCodeDetailsFromQuorumValues(qValues);
-        this._protocolHandler =
-            await this.initializeProtocolState(
-                attributes,
-                {
-                    members: [],
-                    proposals: [],
-                    values: codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
-                }, // IQuorumSnapShot
-            );
+        this.initializeProtocolState(
+            attributes,
+            {
+                members: [],
+                proposals: [],
+                values: codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
+            }, // IQuorumSnapShot
+        );
 
         await this.instantiateContextDetached(
             true, // existing
@@ -1354,7 +1352,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
-    ): Promise<IProtocolHandler> {
+    ): Promise<void> {
         const quorumSnapshot: IQuorumSnapshot = {
             members: [],
             proposals: [],
@@ -1370,24 +1368,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ]);
         }
 
-        const protocolHandler = await this.initializeProtocolState(attributes, quorumSnapshot);
-        return protocolHandler;
+        this.initializeProtocolState(attributes, quorumSnapshot);
     }
 
-    private async initializeProtocolState(
+    private initializeProtocolState(
         attributes: IDocumentAttributes,
         quorumSnapshot: IQuorumSnapshot,
-    ): Promise<IProtocolHandler> {
+    ): void {
         const protocolHandlerBuilder =
             this.protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
         const protocol = protocolHandlerBuilder(
             attributes,
             quorumSnapshot,
             (key, value) => this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
-            this._initialClients ?? [],
         );
-
-        this._initialClients = undefined;
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1419,8 +1413,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     });
                 }
             });
-
-        return protocol;
+        // we need to make sure this member get set in a synchronous context,
+        // or other things can happen after the object that will be set is created, but not yet set
+        // this was breaking this._initialClients handling
+        //
+        this._protocolHandler = protocol;
     }
 
     private captureProtocolSummary(): ISummaryTree {
@@ -1510,20 +1507,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.inboundSignal.pause();
 
         deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
-            if (this._protocolHandler === undefined) {
-                // Store the initial clients so that they can be submitted to the
-                // protocol handler when it is created.
-                this._initialClients = details.initialClients;
-            } else {
-                // When reconnecting, the protocol handler is already created,
-                // so we can update the audience right now.
-                this._protocolHandler.audience.clear();
-
-                for (const priorClient of details.initialClients ?? []) {
-                    this._protocolHandler.audience.addMember(priorClient.clientId, priorClient.client);
-                }
-            }
-
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,

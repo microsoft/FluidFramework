@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-inspector-table",
-  "version": "2.0.0-internal.1.2.0",
+  "version": "2.0.0-internal.1.3.0",
   "description": "Property Inspector Table component",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -21,10 +21,11 @@
   ],
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext npm:webpack:svgs",
+    "build:compile": "concurrently npm:tsc npm:build:esnext npm:build:webpack",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:webpack": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -34,8 +35,7 @@
     "test": "npm run test:jest",
     "test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit",
     "test:jest": "jest",
-    "tsc": "tsc",
-    "webpack:svgs": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\""
+    "tsc": "tsc"
   },
   "dependencies": {
     "@hig/fonts": "^1.0.2",
@@ -52,12 +52,12 @@
     "react-virtualized-auto-sizer": "^1.0.2"
   },
   "devDependencies": {
-    "@fluid-experimental/property-binder": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluid-experimental/property-changeset": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluid-experimental/property-dds": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluid-experimental/property-properties": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluid-experimental/property-proxy": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-binder": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-changeset": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-dds": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-properties": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-experimental/property-proxy": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
+    "@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluidframework/build-common": "^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@storybook/addon-actions": "^6.4.22",

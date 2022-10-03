@@ -10,6 +10,7 @@ import {
 import { brand } from "../../util";
 import {
     FieldSchema, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema,
+    lookupGlobalFieldSchema, lookupTreeSchema,
 } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
@@ -30,10 +31,15 @@ export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarge
  */
 export const getTypeSymbol: unique symbol = Symbol("editable-tree:getType()");
 
- /**
+/**
  * A symbol to get the value of a node in contexts where string keys are already in use for fields.
  */
 export const valueSymbol: unique symbol = Symbol("editable-tree:value");
+
+/**
+ * A symbol to get the anchor of a node in contexts where string keys are already in use for fields.
+ */
+export const anchorSymbol: unique symbol = Symbol("editable-tree:anchor");
 
 /**
  * A tree which can be traversed and edited.
@@ -68,6 +74,16 @@ export interface EditableTree {
      * but the presence of this symbol can be used to separate EditableTrees from other types.
      */
     readonly [proxyTargetSymbol]: object;
+
+    /**
+     * Anchor to this node.
+     * Valid as long as this EditableTree's context is not freed.
+     * Might not point to any node if this node is deleted from the document.
+     *
+     * TODO: When a proper editing API is exposed on EditableTree directly,
+     * this should become an implementation detail and rbe removed from this API surface.
+     */
+    readonly [anchorSymbol]: Anchor;
 
     /**
      * Fields of this node, indexed by their field keys (as strings).
@@ -124,6 +140,21 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | readonl
  */
 export interface EditableTreeContext {
     /**
+     * Gets a Javascript Proxy providing a JavaScript object like API for interacting with the tree.
+     *
+     * Use built-in JS functions to get more information about the data stored e.g.
+     * ```
+     * for (const key of Object.keys(context.root)) { ... }
+     * // OR
+     * if ("foo" in data) { ... }
+     * context.free();
+     * ```
+     *
+     * Not (yet) supported: create properties, set values and delete properties.
+     */
+    readonly root: UnwrappedEditableField;
+
+    /**
      * Call before editing.
      *
      * Note that after performing edits, EditableTrees for nodes that no longer exist are invalid to use.
@@ -142,6 +173,7 @@ export interface EditableTreeContext {
 class ProxyContext implements EditableTreeContext {
     public readonly withCursors: Set<ProxyTarget> = new Set();
     public readonly withAnchors: Set<ProxyTarget> = new Set();
+
     constructor(public readonly forest: IEditableForest) {}
 
     public prepareForEdit(): void {
@@ -150,6 +182,7 @@ class ProxyContext implements EditableTreeContext {
         }
         assert(this.withCursors.size === 0, 0x3c0 /* prepareForEdit should remove all cursors */);
     }
+
     public free(): void {
         for (const target of this.withCursors) {
             target.free();
@@ -159,6 +192,22 @@ class ProxyContext implements EditableTreeContext {
         }
         assert(this.withCursors.size === 0, 0x3c1 /* free should remove all cursors */);
         assert(this.withAnchors.size === 0, 0x3c2 /* free should remove all anchors */);
+    }
+
+    public get root(): UnwrappedEditableField {
+        const cursor = this.forest.allocateCursor();
+        const destination = this.forest.root(this.forest.rootField);
+        const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
+        const targets: ProxyTarget[] = [];
+        if (cursorResult === TreeNavigationResult.Ok) {
+            do {
+                targets.push(new ProxyTarget(this, cursor));
+            } while (cursor.seek(1) === TreeNavigationResult.Ok);
+        }
+        cursor.free();
+        this.forest.anchors.forget(destination);
+        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
+        return proxifyField(getFieldKind(rootSchema), targets);
     }
 }
 
@@ -184,11 +233,16 @@ class ProxyTarget {
         }
     }
 
-    public prepareForEdit(): void {
+    public getAnchor(): Anchor {
         if (this.anchor === undefined) {
             this.anchor = this.lazyCursor.buildAnchor();
             this.context.withAnchors.add(this);
         }
+        return this.anchor;
+    }
+
+    public prepareForEdit(): void {
+        this.getAnchor();
         this.lazyCursor.clear();
         this.context.withCursors.delete(this);
     }
@@ -216,7 +270,7 @@ class ProxyTarget {
             return typeName;
         }
         if (typeName) {
-            return this.context.forest.schema.lookupTreeSchema(typeName);
+            return lookupTreeSchema(this.context.forest.schema, typeName);
         }
         return undefined;
     }
@@ -302,6 +356,9 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
             }
             case proxyTargetSymbol: {
                 return target;
+            }
+            case anchorSymbol: {
+                return target.getAnchor()
             }
             default:
                 return undefined;
@@ -412,37 +469,25 @@ function proxifyField(fieldKind: FieldKind, childTargets: ProxyTarget[]): Unwrap
 }
 
 /**
- * A simple API for a Forest to showcase basic interaction scenarios.
+ * A simple API for a Forest to interact with the tree.
  *
- * This function returns an instance of a JS Proxy typed as an EditableTree.
- * Use built-in JS functions to get more information about the data stored e.g.
- * ```
- * const [context, data] = getEditableTree(forest);
- * for (const key of Object.keys(data)) { ... }
- * // OR
- * if ("foo" in data) { ... }
- * context.free();
- * ```
- *
- * Not (yet) supported: create properties, set values and delete properties.
- *
- * @returns {@link EditableTree} for the given {@link IEditableForest}.
- * Also returns an {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
+ * @returns {@link EditableTreeContext} which is used manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
-export function getEditableTree(forest: IEditableForest): [EditableTreeContext, UnwrappedEditableField] {
-    const context = new ProxyContext(forest);
-    const cursor = forest.allocateCursor();
-    const destination = forest.root(forest.rootField);
-    const cursorResult = forest.tryMoveCursorTo(destination, cursor);
-    const targets: ProxyTarget[] = [];
-    if (cursorResult === TreeNavigationResult.Ok) {
-        do {
-            targets.push(new ProxyTarget(context, cursor));
-        } while (cursor.seek(1) === TreeNavigationResult.Ok);
-    }
-    cursor.free();
-    forest.anchors.forget(destination);
-    const rootSchema = forest.schema.lookupGlobalFieldSchema(rootFieldKey);
-    return [context, proxifyField(getFieldKind(rootSchema), targets)];
+export function getEditableTreeContext(forest: IEditableForest): EditableTreeContext {
+    return new ProxyContext(forest);
+}
+
+/**
+ * Checks the type of an UnwrappedEditableField.
+ */
+export function isArrayField(field: UnwrappedEditableField): field is UnwrappedEditableTree[] {
+    return Array.isArray(field);
+}
+
+/**
+ * Checks the type of an UnwrappedEditableField.
+ */
+export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree {
+    return typeof field === "object" && !isArrayField(field);
 }
