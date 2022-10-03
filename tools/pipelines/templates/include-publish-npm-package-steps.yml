@@ -70,6 +70,7 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
+      set -x
       tag="--tag canary"
       if [[ "$(release)" == "release" ]]; then
         if [ "$(isLatest)" = "true" ]; then
