@@ -18,7 +18,11 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0-internal.1.3.0
 
 ## 2.0.0-internal.1.3.0 Upcoming changes
+- [Deprecate existing flag in IContainerContext](#deprecate-existing-flag-in-runtime)
 - [Add fluidInvalidSchema errorType to DriverErrorType enum](#Add-fluidInvalidSchema-errorType-to-DriverErrorType-enum)
+
+### Deprecate existing flag in runtime
+`existing` flag in runtime has been deprecated and will be removed in a future breaking change.
 
 ### Add fluidInvalidSchema errorType to DriverErrorType enum
 Added fluidInvalidSchema errorType in DriverErrorType enum. This error happens when non-fluid file
@@ -42,7 +46,7 @@ This is not breaking change yet. But if clients do not add handling for this err
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
 ### Remove ShareLinkTypes interface
-`ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Singnature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
+`ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Signature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
 ```diff
     function createOdspCreateContainerRequest(
         siteUrl: string,
