@@ -216,7 +216,7 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
-// @public
+// @public @deprecated
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
     readonly errorType: string;
