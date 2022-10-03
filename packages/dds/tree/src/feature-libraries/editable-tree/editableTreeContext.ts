@@ -116,6 +116,8 @@ export class ProxyContext implements EditableTreeContext {
         const cursorResult = this.forest.tryMoveCursorTo(destination, cursor);
         const targets: ProxyTarget[] = [];
         if (cursorResult === TreeNavigationResult.Ok) {
+            this.emptyNode?.free();
+            this.emptyNode = undefined;
             do {
                 targets.push(this.createTarget(cursor));
             } while (cursor.seek(1) === TreeNavigationResult.Ok);

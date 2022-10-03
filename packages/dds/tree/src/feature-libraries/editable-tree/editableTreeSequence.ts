@@ -9,7 +9,7 @@ import { ITreeCursor, ITreeSubscriptionCursor, TreeNavigationResult } from "../.
 import { LocalFieldKey, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier } from "../../schema-stored";
 import { Anchor, UpPath, Value } from "../../tree";
 import {
-    FieldlessEditableTree, getTypeSymbol, inProxyOrUnwrap, ProxyTarget, proxyTargetSymbol,
+    FieldlessEditableTree, getTypeSymbol, inProxyOrUnwrap, insertRootSymbol, ProxyTarget, proxyTargetSymbol,
     UnwrappedEditableTree, valueSymbol,
 } from "./editableTree";
 import { ProxyContext } from "./editableTreeContext";
@@ -81,6 +81,10 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
 
     public get primaryKey(): LocalFieldKey | undefined {
         return this.target.getPrimaryArrayKey();
+    }
+
+    public isEmpty(): boolean {
+        return this.target.isEmpty();
     }
 
     public get length(): number {
@@ -254,6 +258,10 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
         ProxyTarget[] {
         throw new Error("Not implemented");
     }
+
+    public getInsertRoot() {
+        return this.target.insertRoot.bind(this.target);
+    }
 }
 
 /**
@@ -262,6 +270,18 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
  */
 export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, UnwrappedEditableSequence> = {
     get: (target: ProxyTargetSequence, key: string | symbol, receiver: object): unknown => {
+        if (target.isEmpty()) {
+            switch (key) {
+                case insertRootSymbol:
+                    return target.getInsertRoot();
+                case proxyTargetSymbol:
+                    return target;
+                case "length":
+                    return 0;
+                default:
+                    return undefined;
+            }
+        }
         if (typeof key === "string") {
             const reflected = Reflect.get(target, key);
             if (typeof reflected === "function") {
@@ -322,10 +342,13 @@ export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, Unwrappe
         if (typeof key === "symbol") {
             switch (key) {
                 case proxyTargetSymbol:
+                    return true;
                 case getTypeSymbol:
                 case valueSymbol:
                 case appendNodeSymbol:
-                    return true;
+                    return !target.isEmpty();
+                case insertRootSymbol:
+                    return target.isEmpty();
                 default:
                     return Reflect.has(target, key);
             }
@@ -337,13 +360,21 @@ export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, Unwrappe
         // but it is a TypeError to return non-configurable for properties that do not exist on target,
         // so they must return true.
         if (typeof key === "symbol") {
-            // eslint-disable-next-line unicorn/prefer-switch
-            if (key === proxyTargetSymbol || key === valueSymbol) {
-                return { configurable: true, enumerable: false, value: target, writable: false };
-            } else if (key === getTypeSymbol) {
-                return { configurable: true, enumerable: false, value: target.getType.bind(target), writable: false };
-            } else if (key === appendNodeSymbol) {
-                return { configurable: true, enumerable: false, value: target.appendNode.bind(target), writable: false };
+            if (target.isEmpty()) {
+                return key === insertRootSymbol
+                    ? { configurable: true, enumerable: false, value: target.getInsertRoot(), writable: false }
+                    : key === proxyTargetSymbol
+                        ? { configurable: true, enumerable: false, value: target, writable: false }
+                        : undefined;
+            } else {
+                // eslint-disable-next-line unicorn/prefer-switch
+                if (key === proxyTargetSymbol || key === valueSymbol) {
+                    return { configurable: true, enumerable: false, value: target, writable: false };
+                } else if (key === getTypeSymbol) {
+                    return { configurable: true, enumerable: false, value: target.getType.bind(target), writable: false };
+                } else if (key === appendNodeSymbol) {
+                    return { configurable: true, enumerable: false, value: target.appendNode.bind(target), writable: false };
+                }
             }
         }
         return Reflect.getOwnPropertyDescriptor(target, key);

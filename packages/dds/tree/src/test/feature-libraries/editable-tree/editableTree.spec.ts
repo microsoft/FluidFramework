@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-import { fail, strict as assert } from "assert";
+import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
     StoredSchemaRepository, fieldSchema, SchemaData,
@@ -15,15 +15,15 @@ import { JsonableTree, EmptyKey, Value, rootFieldKey } from "../../../tree";
 import { clone } from "../../../util";
 import {
     defaultSchemaPolicy, getEditableTreeContext, EditableTree, buildForest, getTypeSymbol, UnwrappedEditableField,
-    proxyTargetSymbol, FieldKinds, valueSymbol, EditableTreeOrPrimitive, isPrimitiveValue, Multiplicity, singleTextCursorNew,
+    proxyTargetSymbol, FieldKinds, valueSymbol, EditableTreeOrPrimitive, isPrimitiveValue, singleTextCursorNew,
     isEmptyTree, isEditableFieldSequence, isUnwrappedNode,
 } from "../../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
-import { getFieldKind, getFieldSchema, getPrimaryField } from "../../../feature-libraries/editable-tree/utilities";
+import { getPrimaryField } from "../../../feature-libraries/editable-tree/utilities";
 import {
     fullSchemaData, PersonType, schemaMap, personSchema, addressSchema, ComplexPhoneType, complexPhoneSchema,
-    stringSchema, phonesSchema, optionalChildSchema, int32Schema, personData, emptyNode,
+    stringSchema, phonesSchema, optionalChildSchema, int32Schema, personData, emptyNode, expectTreeEquals, expectTreeSequence,
 } from "./mocks";
 
 function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
@@ -43,61 +43,6 @@ function buildTestProxy(data: JsonableTree): UnwrappedEditableField {
 function buildTestPerson(): PersonType {
     const proxy = buildTestProxy(personData);
     return proxy as PersonType;
-}
-
-function expectTreeEquals(inputField: UnwrappedEditableField, expected: JsonableTree): void {
-    assert(inputField !== undefined);
-    const expectedType = schemaMap.get(expected.type) ?? fail("missing type");
-    const primary = getPrimaryField(expectedType);
-    if (primary !== undefined) {
-        assert(isEditableFieldSequence(inputField));
-        // Handle inlined primary fields
-        const expectedNodes = expected.fields?.[primary.key];
-        if (expectedNodes === undefined) {
-            assert.equal(inputField.length, 0);
-            return;
-        }
-        expectTreeSequence(inputField, expectedNodes);
-        return;
-    }
-    assert(!isEmptyTree(inputField));
-    // Above assert fails to narrow type to exclude readonly arrays, so cast manually here:
-    const node = inputField as EditableTreeOrPrimitive;
-    if (isPrimitiveValue(node)) {
-        // UnwrappedEditableTree loses type information (and any children),
-        // so this is really all we can compare:
-        assert.equal(node, expected.value);
-        return;
-    }
-    // Confirm we have an EditableTree object.
-    assert(node[proxyTargetSymbol] !== undefined);
-    assert.equal(node[valueSymbol], expected.value);
-    const type = node[getTypeSymbol]();
-    assert.equal(type, expectedType);
-    for (const key of Object.keys(node)) {
-        const subNode: UnwrappedEditableField = node[key];
-        assert(subNode !== undefined, key);
-        const fields = expected.fields ?? {};
-        assert.equal(key in fields, true);
-        const field: JsonableTree[] = fields[key];
-        const isSequence = getFieldKind(getFieldSchema(type, key)).multiplicity === Multiplicity.Sequence;
-        // implicit sequence
-        if (isSequence) {
-            expectTreeSequence(subNode, field);
-        } else {
-            assert.equal(field.length, 1);
-            expectTreeEquals(subNode, field[0]);
-        }
-    }
-}
-
-function expectTreeSequence(field: UnwrappedEditableField, expected: JsonableTree[]): void {
-    assert(isEditableFieldSequence(field));
-    assert(Array.isArray(expected));
-    assert.equal(field.length, expected.length);
-    for (let index = 0; index < field.length; index++) {
-        expectTreeEquals(field[index], expected[index]);
-    }
 }
 
 describe("editable-tree", () => {

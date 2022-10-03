@@ -4,21 +4,21 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { SchemaData } from "../../../schema-stored";
+import { fieldSchema, SchemaData } from "../../../schema-stored";
 import { JsonableTree, EmptyKey, rootFieldKey } from "../../../tree";
 import { ISharedTree } from "../../../shared-tree";
 import { brand } from "../../../util";
 import {
     singleTextCursor, getTypeSymbol, isEmptyTree, insertRootSymbol, insertNodeSymbol, appendNodeSymbol,
-    isEditableFieldSequence, isUnwrappedNode,
+    isEditableFieldSequence, isUnwrappedNode, FieldKinds,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
-    addressSchema, complexPhoneSchema, ComplexPhoneType, fullSchemaData, Int32,
-    int32Schema, personData, PersonType, phonesSchema, PhonesType, stringSchema,
+    addressSchema, complexPhoneSchema, ComplexPhoneType, emptyNode, expectTreeSequence, fullSchemaData, Int32,
+    int32Schema, optionalChildSchema, personData, PersonType, phonesSchema, PhonesType, schemaMap, stringSchema,
 } from "./mocks";
 
-async function createSharedTrees(schema: SchemaData, data: JsonableTree, nofTrees = 1):
+async function createSharedTrees(schema: SchemaData, data?: JsonableTree, nofTrees = 1):
     Promise<readonly [ITestTreeProvider, readonly ISharedTree[]]> {
     const provider = await TestTreeProvider.create(nofTrees);
     for (const tree of provider.trees) {
@@ -30,8 +30,10 @@ async function createSharedTrees(schema: SchemaData, data: JsonableTree, nofTree
         }
     }
     assert(isEmptyTree(provider.trees[0].root));
-    provider.trees[0].root[insertRootSymbol](singleTextCursor(data));
-    await provider.ensureSynchronized();
+    if (data) {
+        provider.trees[0].root[insertRootSymbol](singleTextCursor(data));
+        await provider.ensureSynchronized();
+    }
     return [provider, provider.trees];
 }
 
@@ -122,9 +124,25 @@ describe("editing with editable-tree", () => {
     })
 
     describe("Sequences", () => {
+        it("Root as implicit sequence", async () => {
+            const rootSchema = fieldSchema(FieldKinds.sequence, [optionalChildSchema.name]);
+            const schemaData: SchemaData = {
+                treeSchema: schemaMap,
+                globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
+            };
+            const [provider, trees] = await createSharedTrees(schemaData);
+            const tree = trees[0].root;
+            assert(isEmptyTree(tree));
+            expectTreeSequence(tree, []); 
+            const roots = tree[insertRootSymbol](singleTextCursor(emptyNode));
+            assert(isEditableFieldSequence(roots));
+            expectTreeSequence(roots, [emptyNode]);
+            trees[0].context.free();
+        });
+
         it("Implicit sequence", async () => {
             const expectedPhones = ["113", "114"];
-            const [provider, trees] = await createSharedTrees(fullSchemaData, personData, 1);
+            const [provider, trees] = await createSharedTrees(fullSchemaData, personData);
             const person = trees[0].root as PersonType;
             assert(isEditableFieldSequence(person.address.sequencePhones));
             for (let i = 0; i < person.address.sequencePhones.length; i++) {
@@ -150,7 +168,7 @@ describe("editing with editable-tree", () => {
         });
     
         it("add property", async () => {
-            const [provider, trees] = await createSharedTrees(fullSchemaData, personData, 1);
+            const [provider, trees] = await createSharedTrees(fullSchemaData, personData);
             const person = trees[0].root as PersonType;
             assert(isEditableFieldSequence(person.address.simplePhones));
             assert.equal(person.address.simplePhones[getTypeSymbol](undefined, true), "Test:SimplePhones-1.0.0")
@@ -169,7 +187,7 @@ describe("editing with editable-tree", () => {
         });
     
         it("delete property", async () => {
-            const [provider, trees] = await createSharedTrees(fullSchemaData, personData, 1);
+            const [provider, trees] = await createSharedTrees(fullSchemaData, personData);
             const person = trees[0].root as PersonType;
             delete person.address.phones;
             assert.equal(person.address.phones, undefined);

@@ -105,7 +105,7 @@ export interface FieldlessEditableTree {
  * By calling a function associated with `insertRootSymbol` is converted into EditableTree.
  */
 export interface EmptyEditableTree {
-    readonly [insertRootSymbol]: (root: ITreeCursor) => UnwrappedEditableTree;
+    readonly [insertRootSymbol]: (root: ITreeCursor) => EditableTree | UnwrappedEditableSequence;
     /**
      * Stores the target for the proxy which implements reading and writing for this node.
      * The details of this object are implementation details,
@@ -357,18 +357,14 @@ export class ProxyTarget {
         return this.anchor === NeverAnchor;
     }
 
-    public insertRoot(rootCursor: ITreeCursor): EditableTree {
+    public insertRoot(rootCursor: ITreeCursor): EditableTree | UnwrappedEditableSequence {
         const forest = this.context.forest;
         this.context.insertNode({
             parent: undefined,
             parentField: detachedFieldAsKey(forest.rootField),
             parentIndex: 0,
         }, rootCursor);
-        const cursor = forest.allocateCursor();
-        forest.tryMoveCursorTo(forest.root(forest.rootField), cursor);
-        const editableTree = inProxyOrUnwrap(this.context, this.context.createTarget(cursor)) as EditableTree;
-        cursor.free();
-        return editableTree;
+        return this.context.root as EditableTree | UnwrappedEditableSequence;
     }
 }
 
@@ -379,7 +375,11 @@ export class ProxyTarget {
 const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
     get: (target: ProxyTarget, key: string | symbol, receiver: unknown): unknown => {
         if (target.isEmpty()) {
-            return key === insertRootSymbol ? target.insertRoot.bind(target) : key === proxyTargetSymbol ? target : undefined;
+            return key === insertRootSymbol
+                ? target.insertRoot.bind(target)
+                : key === proxyTargetSymbol
+                    ? target
+                    : undefined;
         }
         if (typeof key === "string") {
             // All string keys are fields
@@ -433,14 +433,14 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         if (typeof key === "symbol") {
             switch (key) {
                 case proxyTargetSymbol:
-                case getTypeSymbol:
                     return true;
+                case insertRootSymbol:
+                    return target.isEmpty();
                 case valueSymbol:
                     // Could do `target.value !== ValueSchema.Nothing`
                     // instead if values which could be modified should report as existing.
-                    return target.value !== undefined;
-                case insertRootSymbol:
-                    return target.isEmpty();
+                    return !target.isEmpty() && target.value !== undefined;
+                case getTypeSymbol:
                 case insertNodeSymbol:
                 case deleteNodeSymbol:
                 case setValueSymbol:
@@ -461,33 +461,31 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         // but it is an TypeError to return non-configurable for properties that do not exist on target,
         // so they must return true.
         if (typeof key === "symbol") {
-            switch (key) {
-                case proxyTargetSymbol:
-                    return { configurable: true, enumerable: false, value: target, writable: false };
-                case getTypeSymbol:
-                    return { configurable: true, enumerable: false, value: target.getType.bind(target), writable: false };
-                case valueSymbol:
-                    return { configurable: true, enumerable: false, value: target.value, writable: false };
-                case insertRootSymbol:
-                    return target.isEmpty()
-                        ? { configurable: true, enumerable: false, value: target.insertRoot.bind(target), writable: false }
+            if (target.isEmpty()) {
+                return key === insertRootSymbol
+                    ? { configurable: true, enumerable: false, value: target.insertRoot.bind(target), writable: false }
+                    : key === proxyTargetSymbol
+                        ? { configurable: true, enumerable: false, value: target, writable: false }
                         : undefined;
-                case insertNodeSymbol:
-                    return !target.isEmpty()
-                        ? { configurable: true, enumerable: false, value: target.insertNode.bind(target), writable: false }
-                        : undefined;
-                case setValueSymbol:
-                    return !target.isEmpty()
-                        ? { configurable: true, enumerable: false, value: target.setValue.bind(target), writable: false }
-                        : undefined;
-                case deleteNodeSymbol:
-                    return !target.isEmpty()
-                        ? { configurable: true, enumerable: false, value: target.deleteNode.bind(target), writable: false }
-                        : undefined;
-                default:
-                    return undefined;
+            } else {
+                switch (key) {
+                    case proxyTargetSymbol:
+                        return { configurable: true, enumerable: false, value: target, writable: false };
+                    case getTypeSymbol:
+                        return { configurable: true, enumerable: false, value: target.getType.bind(target), writable: false };
+                    case valueSymbol:
+                        return { configurable: true, enumerable: false, value: target.value, writable: false };
+                    case insertNodeSymbol:
+                        return { configurable: true, enumerable: false, value: target.insertNode.bind(target), writable: false };
+                    case setValueSymbol:
+                        return { configurable: true, enumerable: false, value: target.setValue.bind(target), writable: false };
+                    case deleteNodeSymbol:
+                        return { configurable: true, enumerable: false, value: target.deleteNode.bind(target), writable: false };
+                    default:
+                        return undefined;
+                }
             }
-        } else {
+        } else if (!target.isEmpty()) {
             if (target.has(key)) {
                 return {
                     configurable: true,
@@ -561,5 +559,9 @@ export function isUnwrappedNode(field: UnwrappedEditableField): field is Editabl
  * Checks if the root node exists.
  */
 export function isEmptyTree(field: UnwrappedEditableField): field is EmptyEditableTree {
-    return isUnwrappedNode(field) && (field[proxyTargetSymbol] as ProxyTarget).isEmpty();
+    return typeof field === "object" && (
+        Array.isArray(field)
+        ? field[proxyTargetSymbol] as ProxyTargetSequence
+        : field[proxyTargetSymbol] as ProxyTarget
+    ).isEmpty();
 }

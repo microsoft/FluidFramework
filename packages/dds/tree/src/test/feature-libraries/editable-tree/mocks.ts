@@ -3,10 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { emptyField, FieldKinds, EditableTree, UnwrappedEditableSequence } from "../../../feature-libraries";
+import { strict as assert } from "assert";
+import { emptyField, FieldKinds, EditableTree, UnwrappedEditableSequence, EditableTreeOrPrimitive, getTypeSymbol,
+    isEditableFieldSequence, isEmptyTree, isPrimitiveValue, Multiplicity, proxyTargetSymbol, UnwrappedEditableField,
+    valueSymbol,
+} from "../../../feature-libraries";
 import { namedTreeSchema, ValueSchema, fieldSchema, NamedTreeSchema, TreeSchemaIdentifier, SchemaData } from "../../../schema-stored";
 import { EmptyKey, rootFieldKey, JsonableTree } from "../../../tree";
-import { brand, Brand } from "../../../util";
+import { brand, Brand, fail } from "../../../util";
+// eslint-disable-next-line import/no-internal-modules
+import { getPrimaryField, getFieldKind, getFieldSchema } from "../../../feature-libraries/editable-tree/utilities";
 
 // TODO: Use typed schema (ex: typedTreeSchema), here, and derive the types below from them programmatically.
 
@@ -192,3 +198,58 @@ export const personData: JsonableTree = {
         }],
     },
 };
+
+export function expectTreeEquals(inputField: UnwrappedEditableField, expected: JsonableTree): void {
+    assert(inputField !== undefined);
+    const expectedType = schemaMap.get(expected.type) ?? fail("missing type");
+    const primary = getPrimaryField(expectedType);
+    if (primary !== undefined) {
+        assert(isEditableFieldSequence(inputField));
+        // Handle inlined primary fields
+        const expectedNodes = expected.fields?.[primary.key];
+        if (expectedNodes === undefined) {
+            assert.equal(inputField.length, 0);
+            return;
+        }
+        expectTreeSequence(inputField, expectedNodes);
+        return;
+    }
+    assert(!isEmptyTree(inputField));
+    // Above assert fails to narrow type to exclude readonly arrays, so cast manually here:
+    const node = inputField as EditableTreeOrPrimitive;
+    if (isPrimitiveValue(node)) {
+        // UnwrappedEditableTree loses type information (and any children),
+        // so this is really all we can compare:
+        assert.equal(node, expected.value);
+        return;
+    }
+    // Confirm we have an EditableTree object.
+    assert(node[proxyTargetSymbol] !== undefined);
+    assert.equal(node[valueSymbol], expected.value);
+    const type = node[getTypeSymbol]();
+    assert.equal(type, expectedType);
+    for (const key of Object.keys(node)) {
+        const subNode: UnwrappedEditableField = node[key];
+        assert(subNode !== undefined, key);
+        const fields = expected.fields ?? {};
+        assert.equal(key in fields, true);
+        const field: JsonableTree[] = fields[key];
+        const isSequence = getFieldKind(getFieldSchema(type, key)).multiplicity === Multiplicity.Sequence;
+        // implicit sequence
+        if (isSequence) {
+            expectTreeSequence(subNode, field);
+        } else {
+            assert.equal(field.length, 1);
+            expectTreeEquals(subNode, field[0]);
+        }
+    }
+}
+
+export function expectTreeSequence(field: UnwrappedEditableField, expected: JsonableTree[]): void {
+    assert(isEditableFieldSequence(field));
+    assert(Array.isArray(expected));
+    assert.equal(field.length, expected.length);
+    for (let index = 0; index < field.length; index++) {
+        expectTreeEquals(field[index], expected[index]);
+    }
+}
