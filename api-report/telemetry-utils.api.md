@@ -170,6 +170,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     getTelemetryProperties(): ITelemetryProperties;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;
+    static typeCheck(object: unknown): object is LoggingError;
 }
 
 // @public
@@ -210,6 +211,9 @@ export class MultiSinkLogger extends TelemetryLogger {
     protected loggers: ITelemetryBaseLogger[];
     send(event: ITelemetryBaseEvent): void;
 }
+
+// @public
+export const NORMALIZED_ERROR_TYPE = "genericError";
 
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;

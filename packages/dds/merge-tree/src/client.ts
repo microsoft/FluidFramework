@@ -67,10 +67,11 @@ function elapsedMicroseconds(trace: Trace) {
     return trace.trace().duration * 1000;
 }
 
+// Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
+// ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
+// they need for rebasing their ops on reconnection.
 /**
- * @internal - Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
- * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
- * they need for rebasing their ops on reconnection.
+ * @internal
  */
 export type IClientEvents = (event: "normalize", listener: () => void) => void;
 
