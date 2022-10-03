@@ -125,7 +125,6 @@ describe("Odsp Error", () => {
             },
         };
         const networkError = errorObjectFromSocketError(socketError, "error");
-        console.log(networkError);
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         } else {
