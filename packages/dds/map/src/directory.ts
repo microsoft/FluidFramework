@@ -698,18 +698,27 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         return this.localValueMaker.fromSerializable(serializable);
     }
 
-    private getParentDirectory(relativePath: string): IDirectory | undefined {
+    /**
+     * Gets the parent directory of a sub directory.
+     * @param relativePath - path of sub directory of which parent needs to be find out.
+     */
+    private getParentDirectory(relativePath: string): SubDirectory | undefined {
         const absolutePath = this.makeAbsolute(relativePath);
-        const subdirs = absolutePath.substr(1).split(posix.sep);
-        if (subdirs.length === 0) {
+        if (absolutePath === posix.sep) {
             return undefined;
         }
-        subdirs.pop();
-        return this.getWorkingDirectory(subdirs.join(posix.sep));
+        const index = absolutePath.lastIndexOf(posix.sep);
+        const parentAbsPath = absolutePath.substring(0, index);
+        return this.getWorkingDirectory(parentAbsPath) as SubDirectory;
     }
 
+    /**
+     * This checks if there is pending delete op for local delete for a subdirectory.
+     * @param relativePath - path of sub directory.
+     * @returns - true if there is pending delete.
+     */
     private isSubDirectoryDeletePending(relativePath: string): boolean {
-        const parentSubDir = this.getParentDirectory(relativePath) as SubDirectory | undefined;
+        const parentSubDir = this.getParentDirectory(relativePath);
         const index = relativePath.lastIndexOf(posix.sep);
         const dirName = relativePath.substring(index + 1);
         return !!(parentSubDir?.isSubDirectoryDeletePending(dirName));
@@ -724,7 +733,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             {
                 process: (msg: ISequencedDocumentMessage, op: IDirectoryClearOperation, local, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    if (subdir) {
+                    // If there is pending delete op for this subDirectory, then don't apply the this op as we are going
+                    // to delete this subDirectory.
+                    if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
                         subdir.processClearMessage(msg, op, local, localOpMetadata);
                     }
                 },
@@ -1119,9 +1130,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
 
         // Create the sub directory locally first.
-        const isNew = this.createSubDirectoryCore(subdirName, true, -1, this.directory.isAttached() ?
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.runtime.clientId! : "detached");
+        const isNew = this.createSubDirectoryCore(subdirName, true, -1, this.runtime.clientId ?? "detached");
         const subDir = this._subdirectories.get(subdirName);
         assert(subDir !== undefined, "subdirectory should exist after creation");
 
@@ -1806,6 +1815,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         return !local;
     }
 
+    /**
+     * This return true if the message is for the current instance of this sub directory. As the sub directory
+     * can be deleted and created again, then this finds if the message is for current instance of directory or not.
+     * @param msg - message for the directory
+     */
     private isMessageForCurrentInstanceOfSubDirectory(msg: ISequencedDocumentMessage) {
         // If the message is either from the creator of directory or this directory was created when
         // container was detached or in case this directory is already live(known to other clients)
@@ -1949,6 +1963,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Create subdirectory implementation used for both locally sourced creation as well as incoming remote creation.
      * @param subdirName - The name of the subdirectory being created
      * @param local - Whether the message originated from the local client
+     * @param seq - Sequence number at which this directory is created
+     * @param clientId - Id of client which created this directory.
      * @returns - True if is newly created, false if it already existed.
      */
     private createSubDirectoryCore(subdirName: string, local: boolean, seq: number, clientId: string): boolean {
