@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { TypedJsonCursor } from "../../domains";
 import { ITreeCursor, ITreeSubscriptionCursor, TreeNavigationResult } from "../../forest";
-import { LocalFieldKey, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier } from "../../schema-stored";
+import { LocalFieldKey, NamedTreeSchema, TreeSchema, TreeSchemaIdentifier, lookupTreeSchema } from "../../schema-stored";
 import { Anchor, UpPath, Value } from "../../tree";
 import {
     FieldlessEditableTree, getTypeSymbol, inProxyOrUnwrap, insertRootSymbol, ProxyTarget, proxyTargetSymbol,
@@ -118,7 +118,7 @@ export class ProxyTargetSequence extends Array<ProxyTarget | ProxyTargetSequence
             return typeName;
         }
         if (typeName) {
-            return this.context.forest.schema.lookupTreeSchema(typeName);
+            return lookupTreeSchema(this.context.forest.schema, typeName);
         }
         return undefined;
     }
@@ -327,7 +327,7 @@ export const sequenceHandler: AdaptingProxyHandler<ProxyTargetSequence, Unwrappe
             assert(fieldSchema.types !== undefined && fieldSchema.types.size === 1,
                 "Cannot resolve a field type, use 'insertNodeSymbol' instead");
             const name = [...fieldSchema.types][0];
-            const type: NamedTreeSchema = { name, ...target.context.forest.schema.lookupTreeSchema(name) };
+            const type: NamedTreeSchema = { name, ...lookupTreeSchema(target.context.forest.schema, name) };
             const jsonValue = isPrimitiveValue(value) ? value : value as object;
             const schemaCursor = new TypedJsonCursor(target.context.forest.schema, type, jsonValue);
             return target.appendNode(schemaCursor);

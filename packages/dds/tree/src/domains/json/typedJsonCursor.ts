@@ -5,7 +5,7 @@
 
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { SynchronousNavigationResult, TreeNavigationResult } from "../../forest";
-import { NamedTreeSchema, StoredSchemaRepository, ValueSchema } from "../../schema-stored";
+import { lookupGlobalFieldSchema, lookupTreeSchema, NamedTreeSchema, StoredSchemaRepository, ValueSchema } from "../../schema-stored";
 import { FieldKey, keyFromSymbol, TreeType } from "../../tree";
 import { brand } from "../../util";
 import { isPrimitive } from "../../feature-libraries";
@@ -64,10 +64,10 @@ export class TypedJsonCursor<T> extends JsonCursor<T> {
 
     private tryFindTypeForJsonable(parentType: NamedTreeSchema, key: FieldKey, value: Jsonable<T>): NamedTreeSchema {
         const fieldSchema = typeof key === "symbol"
-            ? this.schema.lookupGlobalFieldSchema(keyFromSymbol(key))
+            ? lookupGlobalFieldSchema(this.schema, keyFromSymbol(key))
             : parentType.localFields.get(key) ?? parentType.extraLocalFields;
         for (const type of fieldSchema.types ?? []) {
-            const treeSchema = this.schema.lookupTreeSchema(type);
+            const treeSchema = lookupTreeSchema(this.schema, type);
             if (isPrimitive(treeSchema)) {
                 if (
                     (typeof value === "number" && treeSchema.value === ValueSchema.Number) ||

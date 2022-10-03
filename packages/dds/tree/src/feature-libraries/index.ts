@@ -6,7 +6,7 @@
 export * from "./object-forest";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
-export { SchemaIndex } from "./schemaIndex";
+export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
 export * from "./treeTextCursorLegacy";
 export {
 	singleTextCursor as singleTextCursorNew,

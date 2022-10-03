@@ -13,24 +13,40 @@ import { CommandLogger } from "./logging";
  * section is meant to be shown sequentially to provide step-by-step instructions.
  */
 export interface InstructionalPrompt {
-    /** The title of the prompt. */
+    /**
+     * The title of the prompt.
+     */
     title: string;
 
-    /** An array of sections that comprise the prompt. */
+    /**
+     * An array of sections that comprise the prompt.
+     */
     sections: Section[];
 }
 
+/**
+ * A section of an {@link InstructionalPrompt}.
+ */
 interface Section {
-    /** The title of the section. */
+    /**
+     * The title of the section.
+     */
     title: string;
 
-    /** The instructional message to be displayed in the section. */
+    /**
+     * The instructional message to be displayed in the section.
+     */
     message: string;
 
-    /** An optional command string that will be displayed with the instructions. */
+    /**
+     * An optional command string that will be displayed with the instructions.
+     */
     cmd?: string;
 }
 
+/**
+ * An abstract base class for classes that write {@link InstructionalPrompt}s to the terminal.
+ */
 export abstract class InstructionalPromptWriter {
     protected abstract get log(): CommandLogger;
 
@@ -58,6 +74,9 @@ export abstract class InstructionalPromptWriter {
         return b.toString();
     }
 
+    /**
+     * Writes the prompt to the terminal.
+     */
     public async writePrompt(data: InstructionalPrompt) {
         const prompt = await this.formatPrompt(data);
 
@@ -67,6 +86,9 @@ export abstract class InstructionalPromptWriter {
     }
 }
 
+/**
+ * A simple concrete implementation of {@link InstructionalPromptWriter}.
+ */
 export class PromptWriter extends InstructionalPromptWriter {
     public constructor(public log: CommandLogger) {
         super();

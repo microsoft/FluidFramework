@@ -10,7 +10,7 @@ import {
 } from "../../forest";
 import { brand } from "../../util";
 import {
-    FieldSchema, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema, NamedTreeSchema,
+    FieldSchema, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema, NamedTreeSchema, lookupTreeSchema,
 } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import { TypedJsonCursor } from "../../domains";
@@ -252,7 +252,7 @@ export class ProxyTarget {
             return typeName;
         }
         if (typeName) {
-            return this.context.forest.schema.lookupTreeSchema(typeName);
+            return lookupTreeSchema(this.context.forest.schema, typeName);
         }
         return undefined;
     }
@@ -313,7 +313,7 @@ export class ProxyTarget {
      * This is correct only if sequence fields are handled with {@link UnwrappedEditableSequence}.
      */
     public setValue(key: string, value: Value, typeName: TreeSchemaIdentifier): boolean {
-        const type = { name: typeName, ...this.context.forest.schema.lookupTreeSchema(typeName) };
+        const type = { name: typeName, ...lookupTreeSchema(this.context.forest.schema, typeName) };
         assert(isPrimitive(type), "Cannot set value of a non-primitive field");
         const target = mapCursorField(this.cursor, brand(key), (c) => this.context.createTarget(c))[0];
         const path = target.getPath();
@@ -417,7 +417,7 @@ const handler: AdaptingProxyHandler<ProxyTarget, EditableTree> = {
         assert(fieldSchema.types !== undefined && fieldSchema.types.size === 1,
             "Cannot resolve a field type, use 'insertNodeSymbol' instead");
         const name = [...fieldSchema.types][0];
-        const type: NamedTreeSchema = { name, ...target.context.forest.schema.lookupTreeSchema(name) };
+        const type: NamedTreeSchema = { name, ...lookupTreeSchema(target.context.forest.schema, name) };
         const jsonValue = isPrimitiveValue(value) ? value : value as object;
         const schemaCursor = new TypedJsonCursor(target.context.forest.schema, type, jsonValue);
         return target.insertNode(key, schemaCursor as ITreeCursor);

@@ -501,6 +501,7 @@ export function isEmptyTree(field: UnwrappedEditableField): field is EmptyEditab
 export interface ISharedTree extends ICheckout<SequenceEditBuilder>, ISharedObject, AnchorLocator {
     readonly context: EditableTreeContext;
     readonly root: UnwrappedEditableField;
+    readonly storedSchema: StoredSchemaRepository;
 }
 
 // @public (undocumented)
@@ -637,10 +638,10 @@ export const jsonNumber: NamedTreeSchema;
 export const jsonObject: NamedTreeSchema;
 
 // @public (undocumented)
-export const jsonString: NamedTreeSchema;
+export const jsonSchemaData: SchemaData;
 
 // @public (undocumented)
-export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema>;
+export const jsonString: NamedTreeSchema;
 
 // @public (undocumented)
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
@@ -653,6 +654,9 @@ function lastWriteWinsRebaser<TChange>(data: {
 
 // @public
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
+
+// @public (undocumented)
+export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeSchema;
 
 // @public
 export interface MakeNominal {
@@ -946,7 +950,7 @@ export interface RootField {
 export const rootFieldKey: GlobalFieldKey;
 
 // @public
-export interface SchemaData extends SchemaDataReader {
+export interface SchemaData {
     // (undocumented)
     readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
     // (undocumented)
@@ -954,11 +958,8 @@ export interface SchemaData extends SchemaDataReader {
 }
 
 // @public
-export interface SchemaDataReader {
-    // (undocumented)
-    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
-    // (undocumented)
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy> extends SchemaData {
+    readonly policy: TPolicy;
 }
 
 // @public
@@ -1027,30 +1028,9 @@ export type Skip = number;
 // @public
 type Skip_2 = number;
 
-// @public @sealed
-export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends SimpleDependee implements SchemaData {
-    constructor(policy: TPolicy, data?: SchemaData);
-    // (undocumented)
-    clone(): StoredSchemaRepository;
-    // (undocumented)
-    readonly computationName: string;
-    // (undocumented)
-    protected readonly data: {
-        treeSchema: Map<TreeSchemaIdentifier, TreeSchema>;
-        globalFieldSchema: Map<GlobalFieldKey, FieldSchema>;
-    };
-    // (undocumented)
-    get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema>;
-    // (undocumented)
-    lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema;
-    // (undocumented)
-    lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema;
-    // (undocumented)
-    readonly policy: TPolicy;
-    // (undocumented)
-    get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
-    updateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): void;
-    updateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): void;
+// @public
+export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, SchemaDataAndPolicy<TPolicy> {
+    update(newSchema: SchemaData): void;
 }
 
 // @public (undocumented)

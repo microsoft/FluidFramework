@@ -32,9 +32,9 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
 
 export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
-    FieldSchema, ValueSchema, TreeSchema,
+    FieldSchema, ValueSchema, TreeSchema, lookupTreeSchema,
     StoredSchemaRepository, FieldKindIdentifier,
-    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+    TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataAndPolicy,
 } from "./schema-stored";
 
 export {
@@ -78,8 +78,8 @@ export {
 export {
     cursorToJsonObject,
     JsonCursor,
-    jsonTypeSchema,
     jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+    jsonSchemaData,
 } from "./domains";
 
 export {

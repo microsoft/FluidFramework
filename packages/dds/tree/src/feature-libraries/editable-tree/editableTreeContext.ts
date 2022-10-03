@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/common-utils";
 import { TransactionResult } from "../../checkout";
 import { Dependent, SimpleObservingDependent, InvalidationToken } from "../../dependency-tracking";
 import { IEditableForest, ITreeSubscriptionCursor, ITreeCursor, IForestSubscription, TreeNavigationResult } from "../../forest";
+import { lookupGlobalFieldSchema } from "../../schema-stored";
 import { ISharedTree } from "../../shared-tree";
 import { Delta, rootFieldKey, UpPath, Value } from "../../tree";
 import { Brand } from "../../util";
@@ -124,7 +125,7 @@ export class ProxyContext implements EditableTreeContext {
         }
         cursor.free();
         this.forest.anchors.forget(destination);
-        const rootSchema = this.forest.schema.lookupGlobalFieldSchema(rootFieldKey);
+        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         const fieldKind = getFieldKind(rootSchema);
         if (targets.length === 0 && fieldKind.multiplicity !== Multiplicity.Sequence) {
             targets.push(this.createEmptyTarget());

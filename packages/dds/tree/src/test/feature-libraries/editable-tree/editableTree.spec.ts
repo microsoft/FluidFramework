@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-    StoredSchemaRepository, fieldSchema, SchemaData,
+    InMemoryStoredSchemaRepository, fieldSchema, SchemaData,
 } from "../../../schema-stored";
 import { IEditableForest, initializeForest } from "../../../forest";
 import { JsonableTree, EmptyKey, Value, rootFieldKey } from "../../../tree";
@@ -27,7 +27,7 @@ import {
 } from "./mocks";
 
 function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
-    const schemaRepo = new StoredSchemaRepository(defaultSchemaPolicy, schema);
+    const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
     const forest = buildForest(schemaRepo);
     initializeForest(forest, data.map(singleTextCursorNew));
     return forest;

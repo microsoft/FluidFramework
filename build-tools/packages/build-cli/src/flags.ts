@@ -115,7 +115,8 @@ export const versionSchemeFlag = Flags.build({
     },
 });
 
-/** Reusable flags for cases where a command typically checks something before taking action. They default to true, but
+/**
+ * Reusable flags for cases where a command typically checks something before taking action. They default to true, but
  * can be negated with `--no-<flag>`. Intended to be used with {@link skipCheckFlag}.
  *
  * @remarks

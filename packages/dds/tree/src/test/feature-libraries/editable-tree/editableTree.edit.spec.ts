@@ -4,7 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { fieldSchema, SchemaData } from "../../../schema-stored";
+import { fieldSchema, InMemoryStoredSchemaRepository, SchemaData } from "../../../schema-stored";
 import { JsonableTree, EmptyKey, rootFieldKey } from "../../../tree";
 import { ISharedTree } from "../../../shared-tree";
 import { brand } from "../../../util";
@@ -18,15 +18,16 @@ import {
     int32Schema, optionalChildSchema, personData, PersonType, phonesSchema, PhonesType, schemaMap, stringSchema,
 } from "./mocks";
 
-async function createSharedTrees(schema: SchemaData, data?: JsonableTree, nofTrees = 1):
+async function createSharedTrees(schemaData: SchemaData, data?: JsonableTree, nofTrees = 1):
     Promise<readonly [ITestTreeProvider, readonly ISharedTree[]]> {
     const provider = await TestTreeProvider.create(nofTrees);
     for (const tree of provider.trees) {
         assert(tree.isAttached());
         const forest = tree.forest;
-        forest.schema.updateFieldSchema(rootFieldKey, schema.globalFieldSchema.get(rootFieldKey) ?? fail("oops"));
-        for (const [key, value] of schema.treeSchema) {
-            forest.schema.updateTreeSchema(key, value);
+        const schema = forest.schema as InMemoryStoredSchemaRepository;
+        schema.updateFieldSchema(rootFieldKey, schemaData.globalFieldSchema.get(rootFieldKey) ?? fail("oops"));
+        for (const [key, value] of schemaData.treeSchema) {
+            schema.updateTreeSchema(key, value);
         }
     }
     assert(isEmptyTree(provider.trees[0].root));

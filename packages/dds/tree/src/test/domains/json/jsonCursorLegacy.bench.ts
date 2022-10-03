@@ -11,15 +11,15 @@ import {
     ITreeCursor,
     jsonableTreeFromCursor,
     singleTextCursor,
-    jsonTypeSchema,
     EmptyKey,
+    jsonSchemaData,
 } from "../../..";
 import { initializeForest, TreeNavigationResult } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { defaultSchemaPolicy, singleTextCursorNew } from "../../../feature-libraries";
-import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
+import { InMemoryStoredSchemaRepository } from "../../../schema-stored";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum } from "./benchmarksLegacy";
 import { generateTwitterJsonByByteSize, TwitterStatus } from "./twitter";
@@ -65,11 +65,7 @@ function bench(
     for (const { name, getJson, dataConsumer } of data) {
         const json = getJson();
         const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
-        const schemaData: SchemaData = {
-                globalFieldSchema: new Map(),
-                treeSchema: jsonTypeSchema,
-        };
-        const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
+        const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData);
 
         benchmark({
             type: BenchmarkType.Measurement,
