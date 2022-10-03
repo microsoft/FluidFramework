@@ -74,8 +74,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
     /**
-     * @deprecated - Going forward the data object will be accessible as the entrypoint of the data store runtime. To
-     * access it use "(runtime as FluidObject<IProvideFluidLoadable>).IFluidLoadable?.handle?.get() as PureDataObject"
+     * @deprecated - Going forward the data object will be accessible as the entrypoint of the data store runtime.
+     * To access it use
+     * "(await (runtime as FluidObject<IProvideFluidLoadable>).IFluidLoadable?.handle?.get()) as PureDataObject"
      * instead of this method. That code is a temporary workaround with discovery of properties through FluidObject
      * until we expose entrypoints more directly.
      */
