@@ -30,7 +30,7 @@ export interface IFluidContainerEvents extends IEvent {
      * Disposed event is raised when container is closed. If container was closed due to error
      * (vs explicit **dispose** action), optional argument contains further details about the error.
      */
-    (event: "disposed", listener: (error?: ICriticalContainerError) => void);
+    (event: "dispose", listener: (error?: ICriticalContainerError) => void);
 
     /**
      * Emitted when the {@link IFluidContainer} becomes disconnected from the Fluid service.
@@ -182,7 +182,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
     private readonly disconnectedHandler = () => this.emit("disconnected");
-    private readonly disposedHandler = (error?: ICriticalContainerError) => this.emit("disposed", error);
+    private readonly disposedHandler = (error?: ICriticalContainerError) => this.emit("dispose", error);
     private readonly savedHandler = () => this.emit("saved");
     private readonly dirtyHandler = () => this.emit("dirty");
 

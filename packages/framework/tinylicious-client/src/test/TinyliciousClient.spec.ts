@@ -24,7 +24,7 @@ const runtimeOf = (dataObject: TestDataObject): IContainerRuntime =>
     (dataObject as any).context.containerRuntime as IContainerRuntime;
 
 const allDataCorruption = async (containers: IFluidContainer[]) => Promise.all(
-    containers.map(async (c) => new Promise<boolean>((resolve) => c.once("disposed", (error) => {
+    containers.map(async (c) => new Promise<boolean>((resolve) => c.once("dispose", (error) => {
         resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
     })))).then((all) => !all.includes(false));
 
