@@ -10,6 +10,7 @@ import {
     IConfigProviderBase,
     inMemoryConfigProvider,
 } from "../config";
+import { pkgVersion } from "../packageVersion";
 
 describe("Config", () => {
     const getMockStore = ((settings: Record<string, string>): Storage => {
@@ -19,7 +20,6 @@ describe("Config", () => {
                 ops.push(key);
                 return settings[key];
             },
-            getOps: (): Readonly<string[]> => ops,
             length: Object.keys(settings).length,
             clear: () => { },
             key: (_index: number): string | null => null,
@@ -176,6 +176,23 @@ describe("Config", () => {
         assert.equal(config2.getNumber("number2"), 4); // from settings3
         assert.equal(config2.getNumber("number3"), 4); // from settings3
         assert.equal(config1.getBoolean("featureEnabled"), false); // from settings1.BreakGlass
+    });
+
+    it("Versioned entries", () => {
+        const settings1 = {
+            entry: "1",
+            entry_1: "2",
+            entry2: "2",
+            entry2_1: "3",
+        };
+        settings1[`entry_${pkgVersion}`] = "3";
+
+        const config1 = new CachedConfigProvider(
+            inMemoryConfigProvider(getMockStore(settings1)),
+            );
+
+        assert.equal(config1.getNumber("entry"), 3); // from settings1
+        assert.equal(config1.getNumber("entry2"), 2); // from settings1
     });
 
     // #region SettingsProvider
