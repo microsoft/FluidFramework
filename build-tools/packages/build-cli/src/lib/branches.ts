@@ -2,22 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { PackageName } from "@rushstack/node-core-library";
+import * as semver from "semver";
 
 import { Context, MonoRepoKind } from "@fluidframework/build-tools";
+
 import {
+    ReleaseVersion,
+    VersionBumpType,
+    VersionBumpTypeExtended,
+    VersionScheme,
     bumpVersionScheme,
     detectVersionScheme,
     fromInternalScheme,
     fromVirtualPatchScheme,
-    ReleaseVersion,
     toVirtualPatchScheme,
-    VersionBumpType,
-    VersionBumpTypeExtended,
-    VersionScheme,
 } from "@fluid-tools/version-tools";
-import { PackageName } from "@rushstack/node-core-library";
-import * as semver from "semver";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage, ReleaseSource } from "../releaseGroups";
+
+import { ReleaseGroup, ReleasePackage, ReleaseSource, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
 
 /**
