@@ -160,8 +160,8 @@ Bumps the version of a release group or package to the next minor, major, or pat
 
 ```
 USAGE
-  $ flub bump [PACKAGE_OR_RELEASE_GROUP] -t major|minor|patch [--scheme semver|internal|virtualPatch] [-x
-    | --install | --commit |  |  | ] [-v]
+  $ flub bump [PACKAGE_OR_RELEASE_GROUP] -t major|minor|patch [-v] [--scheme semver|internal|virtualPatch]
+    [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
@@ -197,8 +197,8 @@ Update the dependency version of a specified package or release group. That is, 
 
 ```
 USAGE
-  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-p -t latest|newest|greatest|minor|patch|@next|@canary]
-    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit |  |  | ] [-v]
+  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-v] [-p -t latest|newest|greatest|minor|patch|@next|@canary]
+    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
@@ -246,7 +246,7 @@ Checks that the dependencies between Fluid Framework packages are properly layer
 
 ```
 USAGE
-  $ flub check layers [--md <value>] [--dot <value>] [--info <value>] [--logtime] [-v]
+  $ flub check layers [-v] [--md <value>] [--dot <value>] [--info <value>] [--logtime]
 
 FLAGS
   -v, --verbose   Verbose logging.
@@ -265,7 +265,7 @@ Checks and applies policies to the files in the repository, such as ensuring a c
 
 ```
 USAGE
-  $ flub check policy -e <value> [-f] [-d <value>] [-p <value>] [--stdin] [-v]
+  $ flub check policy -e <value> [-v] [-f] [-d <value>] [-p <value>] [--stdin]
 
 FLAGS
   -d, --handler=<value>     Filter handler names by <regex>
@@ -318,8 +318,8 @@ This command is used to compute the version number of Fluid packages. The releas
 
 ```
 USAGE
-  $ flub generate buildVersion --build <value> [--testBuild <value>] [--release release|none] [--patch <value>] [--base
-    <value>] [--tag <value>] [-i <value>] [-v]
+  $ flub generate buildVersion --build <value> [-v] [--testBuild <value>] [--release release|none] [--patch <value>]
+    [--base <value>] [--tag <value>] [-i <value>]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
@@ -348,7 +348,7 @@ Find all bundle analysis artifacts and copy them into a central location to uplo
 
 ```
 USAGE
-  $ flub generate bundleStats [--smallestAssetSize <value>] [-v]
+  $ flub generate bundleStats [-v] [--smallestAssetSize <value>]
 
 FLAGS
   -v, --verbose                Verbose logging.
@@ -428,7 +428,7 @@ DESCRIPTION
   Display help for flub.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.12/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.14/src/commands/help.ts)_
 
 ## `flub info`
 
@@ -436,7 +436,7 @@ Get info about the repo, release groups, and packages.
 
 ```
 USAGE
-  $ flub info [-g client|server|azure|build-tools] [-p] [-v]
+  $ flub info [-v] [-g client|server|azure|build-tools] [-p]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
@@ -456,8 +456,8 @@ Releases a package or release group.
 
 ```
 USAGE
-  $ flub release [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-x | --install |
-    --commit | --branchCheck | --updateCheck | --policyCheck] [-v]
+  $ flub release [-v] [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-x |
+    --install | --commit | --branchCheck | --updateCheck | --policyCheck]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
@@ -496,8 +496,8 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [--json] [--days <value>] [-s | -r] [-g client|server|azure|build-tools [--all | -o
-    <value>]] [-p <value> ] [--limit <value> ] [-v]
+  $ flub release report [-v] [--json] [--days <value>] [-s | -r] [-g client|server|azure|build-tools [--all | -o
+    <value>]] [-p <value> ] [--limit <value> ]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
@@ -528,6 +528,10 @@ DESCRIPTION
   Using the --all flag, you can list all the releases for a given release group or package.
 
 EXAMPLES
+  Output all release report files to the current directory.
+
+    $ flub release report -o .
+
   Generate a minimal release report and display it in the terminal.
 
     $ flub release report
@@ -535,14 +539,6 @@ EXAMPLES
   Generate a minimal release report and output it to stdout as JSON.
 
     $ flub release report --json
-
-  Output a release report to 'report.json'.
-
-    $ flub release report -o report.json
-
-  Output a full release report to 'report.json'.
-
-    $ flub release report -f -o report.json
 
   List all the releases of the azure release group.
 
@@ -559,7 +555,7 @@ Generate a report from input bundle stats collected through the collect bundleSt
 
 ```
 USAGE
-  $ flub run bundleStats [--dirname <value>] [-v]
+  $ flub run bundleStats [-v] [--dirname <value>]
 
 FLAGS
   -v, --verbose      Verbose logging.
