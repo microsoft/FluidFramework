@@ -10,7 +10,8 @@ import { IKafkaSubscriber } from "./interfaces";
 
 /**
  * A subscription for a single lambda
- *  todo: use context checkpoints
+ *
+ * @privateRemarks TODO: use context checkpoints
  */
 export class LocalKafkaSubscription extends EventEmitter {
     public queueOffset: number = 0;

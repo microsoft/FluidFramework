@@ -146,7 +146,7 @@ const treeFactories: ITestTreeFactory[] = [
                 remove,
                 UniversalSequenceNumber,
                 localClientId,
-                UnassignedSequenceNumber,
+                UniversalSequenceNumber,
                 false,
                 undefined as any);
             initialText = initialText.substring(remove);
@@ -157,7 +157,7 @@ const treeFactories: ITestTreeFactory[] = [
                 initialText.length,
                 UniversalSequenceNumber,
                 localClientId,
-                UnassignedSequenceNumber,
+                UniversalSequenceNumber,
                 false,
                 undefined as any);
             initialText = initialText.substring(0, initialText.length - remove);

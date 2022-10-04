@@ -15,6 +15,8 @@
  */
 
 export {
+    DocAlert,
+    DocAlertType,
     DocEmphasisSpan,
     DocHeading,
     DocList,
@@ -22,6 +24,7 @@ export {
     DocTable,
     DocTableCell,
     DocTableRow,
+    IDocAlertParameters,
     IDocHeadingParameters,
     IDocListParameters,
     ListKind,
@@ -32,9 +35,10 @@ export * from "./utilities";
 export * from "./Heading";
 export * from "./Link";
 export * from "./LoadModel";
+export * from "./Logging";
 export * from "./MarkdownDocument";
 export * from "./MarkdownDocumenter";
-export * from "./MarkdownDocumenterConfiguration";
+export * from "./Configuration";
 export * from "./MarkdownEmitter";
 export * from "./Policies";
 

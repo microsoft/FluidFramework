@@ -12,6 +12,7 @@
  * implementation, but is not the desired long-term solution of this library.
  */
 
+export * from "./DocAlert";
 export * from "./DocHeading";
 export * from "./DocList";
 export * from "./CustomDocNodeKind";

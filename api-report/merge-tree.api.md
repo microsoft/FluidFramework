@@ -15,6 +15,9 @@ import { ITelemetryLogger } from '@fluidframework/common-definitions';
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
+// @alpha
+export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
+
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
@@ -290,6 +293,9 @@ export interface Dictionary<TKey, TData> {
     remove(key: TKey): void;
 }
 
+// @alpha
+export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
+
 // @public (undocumented)
 export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, combiningOp?: ICombiningOp, seq?: number): MapLike<T>;
 
@@ -336,7 +342,9 @@ export interface IHierBlock extends IMergeBlock {
     rightmostTiles: MapLike<ReferencePosition>;
 }
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "IIntegerRange" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal @deprecated
 export interface IIntegerRange {
     // (undocumented)
     end: number;
@@ -687,9 +695,9 @@ export class LocalReferenceCollection {
     // @internal
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
-    // (undocumented)
+    // @internal (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    // (undocumented)
+    // @internal (undocumented)
     addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
     // @internal (undocumented)
     addLocalRef(lref: LocalReferencePosition, offset: number): void;
@@ -708,15 +716,19 @@ export class LocalReferenceCollection {
     // @internal (undocumented)
     hierRefCount: number;
     // @internal (undocumented)
+    isAfterTombstone(lref: LocalReferencePosition): boolean;
+    // @internal (undocumented)
     removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // @internal
     split(offset: number, splitSeg: ISegment): void;
+    // @internal (undocumented)
+    walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
 
 // @public @sealed (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
-    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
 }
@@ -813,6 +825,19 @@ export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | t
 // @public (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
+// @alpha
+export type MergeTreeDeltaRevertible = {
+    operation: typeof MergeTreeDeltaType.INSERT;
+    trackingGroup: TrackingGroup;
+} | {
+    operation: typeof MergeTreeDeltaType.REMOVE;
+    trackingGroup: TrackingGroup;
+} | {
+    operation: typeof MergeTreeDeltaType.ANNOTATE;
+    trackingGroup: TrackingGroup;
+    propertyDeltas: PropertySet;
+};
+
 // @public (undocumented)
 export const MergeTreeDeltaType: {
     readonly INSERT: 0;
@@ -837,6 +862,27 @@ export const MergeTreeMaintenanceType: {
 
 // @public (undocumented)
 export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
+
+// @alpha
+export interface MergeTreeRevertibleDriver {
+    // (undocumented)
+    annotateRange(start: number, end: number, props: PropertySet): any;
+    // (undocumented)
+    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    // (undocumented)
+    getContainingSegment(pos: number): {
+        segment: ISegment | undefined;
+        offset: number | undefined;
+    };
+    // (undocumented)
+    getPosition(segment: ISegment): number;
+    // (undocumented)
+    insertFromSpec(pos: number, spec: IJSONSegment): any;
+    // (undocumented)
+    localReferencePositionToPosition(lref: LocalReferencePosition): number;
+    // (undocumented)
+    removeRange(start: number, end: number): any;
+}
 
 // @public (undocumented)
 export interface MergeTreeStats {
@@ -1091,6 +1137,9 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 // @public (undocumented)
 export const reservedTileLabelsKey = "referenceTileLabels";
 
+// @alpha
+export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
+
 // @public (undocumented)
 export interface SearchResult {
     // (undocumented)
@@ -1125,8 +1174,6 @@ export interface SegmentGroup {
     localSeq: number;
     // (undocumented)
     previousProps?: PropertySet[];
-    // (undocumented)
-    removedReferences?: LocalReferencePosition[];
     // (undocumented)
     segments: ISegment[];
 }
@@ -1163,23 +1210,43 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 }
 
 // @public
-export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> {
+export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<T, string> {
     // (undocumented)
-    addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => T): void;
+    protected findItemPosition(item: T): {
+        exists: boolean;
+        index: number;
+    };
     // (undocumented)
-    has(item: T): boolean;
-    // (undocumented)
-    get items(): readonly T[];
-    // (undocumented)
-    remove(item: T): boolean;
-    // (undocumented)
-    get size(): number;
+    protected getKey(item: T): string;
 }
 
 // @public (undocumented)
 export type SortedSegmentSetItem = ISegment | LocalReferencePosition | {
     readonly segment: ISegment;
 };
+
+// @public (undocumented)
+export abstract class SortedSet<T, U extends string | number> {
+    // (undocumented)
+    addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void;
+    // (undocumented)
+    protected findItemPosition(item: T): {
+        exists: boolean;
+        index: number;
+    };
+    // (undocumented)
+    protected abstract getKey(t: T): U;
+    // (undocumented)
+    has(item: T): boolean;
+    // (undocumented)
+    get items(): readonly T[];
+    // (undocumented)
+    protected readonly keySortedItems: T[];
+    // (undocumented)
+    remove(item: T): boolean;
+    // (undocumented)
+    get size(): number;
+}
 
 // @public (undocumented)
 export class Stack<T> {
@@ -1249,7 +1316,7 @@ export class TrackingGroup {
     // (undocumented)
     get tracked(): readonly Trackable[];
     // (undocumented)
-    unlink(segment: Trackable): void;
+    unlink(trackable: Trackable): boolean;
 }
 
 // @public (undocumented)
@@ -1266,7 +1333,7 @@ export class TrackingGroupCollection {
     // (undocumented)
     readonly trackingGroups: Set<TrackingGroup>;
     // (undocumented)
-    unlink(trackingGroup: TrackingGroup): void;
+    unlink(trackingGroup: TrackingGroup): boolean;
 }
 
 // @public (undocumented)

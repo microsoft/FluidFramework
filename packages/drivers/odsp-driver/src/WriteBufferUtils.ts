@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import {
     BlobCore,
@@ -143,56 +143,66 @@ const boolToCodeMap = [
 /**
  * Implementation of serialization of blobs in buffer with Marker Codes etc.
  * @param buffer - Buffer to serialize to.
+ * @param content - string to be serialized.
+ * @param dictionary - Const strings dictionary to be used while serializing.
+ */
+ function serializeDictionaryString(buffer: WriteBuffer, content: string, dictionary: Map<string, number>) {
+    let id = dictionary.get(content);
+    let idLength: number;
+    if (id === undefined) {
+        const data = IsoBuffer.from(content, "utf8");
+        const lengthOfDataLen = calcLength(data.length);
+
+        id = dictionary.size + 1;
+        idLength = calcLength(id);
+        dictionary.set(content, id);
+        const code = lengthOfDataLen > 1 || idLength > 1
+            ? MarkerCodes.ConstStringDeclareBig
+            : MarkerCodes.ConstStringDeclare;
+        // Write marker code for const string.
+        buffer.write(code);
+        const bytes = getValueSafely(codeToBytesMap, code);
+        assert(bytes >= lengthOfDataLen, 0x283 /* "Length of data len should fit in the bytes from the map" */);
+        assert(bytes >= idLength, 0x284 /* "Length of id should fit in the bytes from the map" */);
+        // Assign and write id for const string.
+        buffer.write(id, bytes);
+        // Write length of const string.
+        buffer.write(data.length, bytes);
+        // Write const string data.
+        for (const element of data) {
+            buffer.write(element);
+        }
+    } else {
+        idLength = calcLength(id);
+    }
+    // Write Marker Code
+    buffer.write(getValueSafely(constStringBytesToCodeMap, idLength));
+    // Write id of const string
+    buffer.write(id, idLength);
+}
+
+function serializeString(buffer: WriteBuffer, content: string, codeMap = binaryBytesToCodeMap) {
+    serializeBlob(
+        buffer,
+        IsoBuffer.from(content, "utf8"),
+        utf8StringBytesToCodeMap);
+}
+
+/**
+ * Implementation of serialization of blobs in buffer with Marker Codes etc.
+ * @param buffer - Buffer to serialize to.
  * @param blob - blob to be serialized.
  * @param dictionary - Const strings dictionary to be used while serializing.
  */
-function serializeBlob(buffer: WriteBuffer, blob: BlobCore, dictionary: Map<string, number>) {
-    const data = blob.buffer;
+function serializeBlob(buffer: WriteBuffer, data: Uint8Array, codeMap: Record<number, number> = binaryBytesToCodeMap) {
     const lengthOfDataLen = calcLength(data.length);
-    if (blob.constString) {
-        const content = blob.toString();
-        let id = dictionary.get(content);
-        let idLength: number;
-        if (id === undefined) {
-            id = dictionary.size + 1;
-            idLength = calcLength(id);
-            dictionary.set(content, id);
-            let code: number;
-            if (lengthOfDataLen > 1 || idLength > 1) {
-                code = MarkerCodes.ConstStringDeclareBig;
-            } else {
-                code = MarkerCodes.ConstStringDeclare;
-            }
-            // Write marker code for const string.
-            buffer.write(code);
-            const bytes = getValueSafely(codeToBytesMap, code);
-            assert(bytes >= lengthOfDataLen, 0x283 /* "Length of data len should fit in the bytes from the map" */);
-            assert(bytes >= idLength, 0x284 /* "Length of id should fit in the bytes from the map" */);
-            // Assign and write id for const string.
-            buffer.write(id, bytes);
-            // Write length of const string.
-            buffer.write(data.length, bytes);
-            // Write const string data.
-            for (const element of data) {
-                buffer.write(element);
-            }
-        } else {
-            idLength = calcLength(id);
-        }
-        // Write Marker Code
-        buffer.write(getValueSafely(constStringBytesToCodeMap, idLength));
-        // Write id of const string
-        buffer.write(id, idLength);
-    } else {
-        // Write Marker code.
-        buffer.write(blob.useUtf8Code ? getValueSafely(utf8StringBytesToCodeMap, lengthOfDataLen)
-            : getValueSafely(binaryBytesToCodeMap, lengthOfDataLen));
-        // Write actual data if length greater than 0, otherwise Marker Code is enough.
-        if (lengthOfDataLen > 0) {
-            buffer.write(data.length, lengthOfDataLen);
-            for (const element of data) {
-                buffer.write(element);
-            }
+    // Write Marker code.
+    buffer.write(getValueSafely(codeMap, lengthOfDataLen));
+    // Write actual data if length greater than 0, otherwise Marker Code is enough.
+    if (lengthOfDataLen > 0) {
+        buffer.write(data.length, lengthOfDataLen);
+        for (const element of data) {
+            buffer.write(element);
         }
     }
 }
@@ -215,7 +225,7 @@ function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore, dictionary: 
             serializeNodeCore(buffer, child, dictionary);
             buffer.write(endCode);
         } else if (child instanceof BlobCore) {
-            serializeBlob(buffer, child, dictionary);
+            serializeBlob(buffer, child.buffer);
         } else if (typeof child === "number") {
             // Calculate length in which integer will be stored
             const len = calcLength(child);
@@ -228,7 +238,12 @@ function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore, dictionary: 
         } else if (typeof child === "boolean") {
             buffer.write(boolToCodeMap[child ? 1 : 0]);
         } else {
-            unreachableCase(child, "Unsupported node type");
+            assert(child._stringElement, "Unsupported node type");
+            if (child.dictionary) {
+                serializeDictionaryString(buffer, child.content, dictionary);
+            } else {
+                serializeString(buffer, child.content);
+            }
         }
     }
 }

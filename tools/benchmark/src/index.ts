@@ -10,7 +10,7 @@
  */
 
 /**
- * This file represents the public API. Consumers of this package will not see exported modules unless
+ * This file represents the public API. Consumers of this library will not see exported modules unless
  * they are enumerated here.  Removing / editing existing exports here will often indicate a breaking
  * change, so please be cognizant of changes made here.
  */

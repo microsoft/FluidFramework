@@ -36,6 +36,7 @@ import {
     RangeStackMap,
     ReferencePosition,
     ReferenceType,
+    MergeTreeRevertibleDriver,
     SegmentGroup,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -66,7 +67,7 @@ const contentPath = "content";
 /**
  * Events emitted in response to changes to the sequence data.
  *
- *  @remarks
+ * @remarks
  *
  * The following is the list of events emitted.
  *
@@ -106,7 +107,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 export abstract class SharedSegmentSequence<T extends ISegment>
     extends SharedObject<ISharedSegmentSequenceEvents>
-    implements ISharedIntervalCollection<SequenceInterval> {
+    implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
     }
@@ -433,6 +434,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             this.submitSequenceMessage(insertOp);
         }
     }
+    /**
+     * Inserts a segment
+     * @param start - The position to insert the segment at
+     * @param spec - The segment to inserts spec
+     */
+    public insertFromSpec(pos: number, spec: IJSONSegment) {
+        const segment = this.segmentFromSpec(spec);
+        const insertOp = this.client.insertSegmentLocal(pos, segment);
+        if (insertOp) {
+            this.submitSequenceMessage(insertOp);
+        }
+    }
 
     /**
      * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
@@ -443,12 +456,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     }
 
     /**
-     * @returns an iterable object that enumerates the IntervalCollection labels
-     * Usage:
+     * @returns An iterable object that enumerates the IntervalCollection labels.
+     *
+     * @example
+     * ```typescript
      * const iter = this.getIntervalCollectionKeys();
      * for (key of iter)
      *     const collection = this.getIntervalCollection(key);
      *     ...
+     * ```
     */
     public getIntervalCollectionLabels(): IterableIterator<string> {
         return this.intervalCollections.keys();

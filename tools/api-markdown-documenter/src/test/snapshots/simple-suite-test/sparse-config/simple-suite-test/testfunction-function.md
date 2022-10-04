@@ -16,8 +16,8 @@ This is a test [link](docs/simple-suite-test/testinterface-interface) to another
 
 |  Parameter | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  testParameter |  | TTypeParameter | A test parameter |
-|  testOptionalParameter | optional | TTypeParameter |  |
+|  testParameter | 📝 | TTypeParameter | A test parameter |
+|  testOptionalParameter | optional | TTypeParameter | 📝 |
 
 ## Returns {#testfunction-returns}
 

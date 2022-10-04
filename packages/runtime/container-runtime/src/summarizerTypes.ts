@@ -25,16 +25,16 @@ import { SummarizeReason } from "./summaryGenerator";
 import { ISummaryConfigurationHeuristics } from ".";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated This will be removed in a later release.
  */
 export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
 
 /**
- * @deprecated - This will be removed in a later release.
+ * @deprecated This will be removed in a later release.
  */
 export interface IProvideSummarizer {
     /**
-     * @deprecated - This will be removed in a later release.
+     * @deprecated This will be removed in a later release.
      */
     readonly ISummarizer: ISummarizer;
 }
@@ -139,6 +139,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     /** If specified, The summarize attempt will not occur until after this sequence number. */
     readonly afterSequenceNumber?: number;
+
     /**
      * True to override the existing enqueued summarize attempt if there is one.
      * This will guarantee that this attempt gets enqueued. If override is false,
@@ -213,11 +214,16 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
  * The result consists of 4 possible stages, each with its own data.
  * The data is cumulative, so each stage will contain the data from the previous stages.
  * If the final "submitted" stage is not reached, the result may contain the error object.
+ *
  * Stages:
- *  1. "base" - stopped before the summary tree was even generated, and the result only contains the base data
- *  2. "generate" - the summary tree was generated, and the result will contain that tree + stats
- *  3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
- *  4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
+ *
+ * 1. "base" - stopped before the summary tree was even generated, and the result only contains the base data
+ *
+ * 2. "generate" - the summary tree was generated, and the result will contain that tree + stats
+ *
+ * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
+ *
+ * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
  */
 export type SubmitSummaryResult =
     | IBaseSummarizeResult
@@ -466,8 +472,10 @@ type SummaryGeneratorOptionalTelemetryProperties =
     "opsSinceLastAttempt" |
     /** Delta between the current reference sequence number and the reference sequence number of the last summary */
     "opsSinceLastSummary" |
-    /** Delta in sum of op sizes between the current reference sequence number and the reference
-     *  sequence number of the last summary */
+    /**
+     * Delta in sum of op sizes between the current reference sequence number and the reference
+     * sequence number of the last summary
+     */
     "opsSizesSinceLastSummary" |
     /** Delta between the number of non-runtime ops since the last summary */
     "nonRuntimeOpsSinceLastSummary" |

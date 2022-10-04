@@ -38,14 +38,14 @@
     "@fluidframework/local-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/protocol-definitions": "^1.0.0",
     "@fluidframework/routerlicious-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/server-local-server": "^0.1037.1000",
+    "@fluidframework/server-local-server": "^0.1037.2000-91174",
     "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "@fluidframework/tinylicious-driver": ">=2.0.0-internal.1.2.0 <2.0.0-internal.2.0.0",
     "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@fluidframework/build-common": "^1.0.0",
+    "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",

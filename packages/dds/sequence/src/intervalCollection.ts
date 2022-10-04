@@ -48,6 +48,7 @@ const reservedIntervalIdKey = "intervalId";
 export enum IntervalType {
     Simple = 0x0,
     Nest = 0x1,
+
     /**
      * SlideOnRemove indicates that the ends of the interval will slide if the segment
      * they reference is removed and acked.
@@ -55,17 +56,18 @@ export enum IntervalType {
      * SlideOnRemove is the default interval behavior and does not need to be specified.
      */
     SlideOnRemove = 0x2, // SlideOnRemove is default behavior - all intervals are SlideOnRemove
+
     /**
-     * @internal
      * A temporary interval, used internally
+     * @internal
      */
     Transient = 0x4,
 }
 
 /**
- * @internal
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
+ * @internal
  */
 export interface ISerializedInterval {
     /**
@@ -87,9 +89,9 @@ export interface ISerializedInterval {
 }
 
 /**
- * @internal
  * Represents a change that should be applied to an existing interval.
  * Changes can modify any of start/end/properties, with `undefined` signifying no change should be made.
+ * @internal
  */
 export type SerializedIntervalDelta =
     Omit<ISerializedInterval, "start" | "end" | "properties">
@@ -251,8 +253,8 @@ export class Interval implements ISerializableInterval {
     }
 
     /**
-     * @internal
      * {@inheritDoc ISerializableInterval.serialize}
+     * @internal
      */
     public serialize(): ISerializedInterval {
         const serializedInterval: ISerializedInterval = {
@@ -418,8 +420,8 @@ export class SequenceInterval implements ISerializableInterval {
     private callbacks?: Record<"beforePositionChange" | "afterPositionChange", () => void>;
 
     /**
-     * @internal
      * Subscribes to position change events on this interval if there are no current listeners.
+     * @internal
      */
     public addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void {
         if (this.callbacks === undefined) {
@@ -436,8 +438,8 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     /**
-     * @internal
      * Removes the currently subscribed position change listeners.
+     * @internal
      */
     public removePositionChangeListeners(): void {
         if (this.callbacks) {
@@ -448,8 +450,8 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     /**
-     * @internal
      * {@inheritDoc ISerializableInterval.serialize}
+     * @internal
      */
     public serialize(): ISerializedInterval {
         const startPosition = this.client.localReferencePositionToPosition(this.start);
@@ -1327,12 +1329,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     ) {
         super();
 
-        if (Array.isArray(serializedIntervals)) {
-            this.savedSerializedIntervals = serializedIntervals;
-        } else {
-            this.savedSerializedIntervals =
-                serializedIntervals.intervals.map((i) => decompressInterval(i, serializedIntervals.label));
-        }
+        this.savedSerializedIntervals = Array.isArray(serializedIntervals)
+            ? serializedIntervals
+            : serializedIntervals.intervals.map((i) => decompressInterval(i, serializedIntervals.label));
     }
 
     /** @internal */
@@ -1728,11 +1727,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     /**
-     * @internal
-     *
      * Returns new interval after rebasing. If undefined, the interval was
      * deleted as a result of rebasing. This can occur if the interval applies
      * to a range that no longer exists, and the interval was unable to slide.
+     *
+     * @internal
      */
     public rebaseLocalInterval(
         opName: string,
@@ -1809,6 +1808,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new LoggingError("client does not exist");
         }
         const segoff = { segment: lref.getSegment(), offset: lref.getOffset() };
+        if (segoff.segment?.localRefs?.has(lref) !== true) {
+            return undefined;
+        }
         const newSegoff = this.client.getSlideToSegment(segoff);
         const value: { segment: ISegment | undefined; offset: number | undefined; } | undefined
             = (segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset) ? undefined : newSegoff;
