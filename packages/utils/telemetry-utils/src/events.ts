@@ -27,12 +27,13 @@ export function raiseConnectedEvent(
     logger: ITelemetryLogger,
     emitter: EventEmitter,
     connected: boolean,
-    clientId?: string) {
+    clientId?: string,
+    disconnectedReason?: string) {
     try {
         if (connected) {
             emitter.emit(connectedEventName, clientId);
         } else {
-            emitter.emit(disconnectedEventName);
+            emitter.emit(disconnectedEventName, disconnectedReason);
         }
     } catch (error) {
         logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
