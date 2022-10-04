@@ -10,27 +10,28 @@ import { FieldKey } from "../../../tree";
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { brand } from "../../../util";
+import { testCursors } from "../../cursorLegacy.spec";
+
+const testCases = [
+    ["null", [null]],
+    ["boolean", [true, false]],
+    ["integer", [Number.MIN_SAFE_INTEGER - 1, 0, Number.MAX_SAFE_INTEGER + 1]],
+    ["finite", [-Number.MAX_VALUE, -Number.MIN_VALUE, -0, Number.MIN_VALUE, Number.MAX_VALUE]],
+    ["non-finite", [NaN, -Infinity, +Infinity]],
+    ["string", ["", "\\\"\b\f\n\r\t", "😀"]],
+    ["object", [{}, { one: "field" }, { nested: { depth: 1 } }]],
+    ["array", [[], ["oneItem"], [["nested depth 1"]]]],
+    ["composite", [
+        { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [] }] },
+        [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", {}] }],
+    ]],
+];
 
 describe("JsonCursor", () => {
     // This tests that test data roundtrips via extract.
     // This tests a lot of the API, but does not include some things (like "keys" on non-object nodes).
     describe("extract roundtrip", () => {
-        const tests = [
-            ["null", [null]],
-            ["boolean", [true, false]],
-            ["integer", [Number.MIN_SAFE_INTEGER - 1, 0, Number.MAX_SAFE_INTEGER + 1]],
-            ["finite", [-Number.MAX_VALUE, -Number.MIN_VALUE, -0, Number.MIN_VALUE, Number.MAX_VALUE]],
-            ["non-finite", [NaN, -Infinity, +Infinity]],
-            ["string", ["", "\\\"\b\f\n\r\t", "😀"]],
-            ["object", [{}, { one: "field" }, { nested: { depth: 1 } }]],
-            ["array", [[], ["oneItem"], [["nested depth 1"]]]],
-            ["composite", [
-                { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [] }] },
-                [null, true, 0, "", { n: null, b: true, i: 0, s: "", a2: [null, true, 0, "", {}] }],
-            ]],
-        ];
-
-        for (const [name, testValues] of tests) {
+        for (const [name, testValues] of testCases) {
             for (const expected of testValues) {
                 it(`${name}: ${JSON.stringify(expected)}`, () => {
                     const cursor = new JsonCursor(expected);
@@ -194,3 +195,16 @@ describe("JsonCursor", () => {
         });
     });
 });
+
+const cursors: { cursorName: string; cursor: ITreeCursor; }[] = [];
+
+for (const [name, testValues] of testCases) {
+    for (const data of testValues) {
+        cursors.push({
+            cursorName: `${name}: ${JSON.stringify(data)}`,
+            cursor: new JsonCursor(data),
+        });
+    }
+}
+
+testCursors("JsonCursor", cursors);

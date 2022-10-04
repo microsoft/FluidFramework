@@ -78,7 +78,7 @@
     "@fluid-internal/test-dds-utils": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",
     "@fluid-tools/benchmark": "^0.43.0",
     "@fluidframework/build-common": "^1.0.0",
-    "@fluidframework/build-tools": "^0.4.4000",
+    "@fluidframework/build-tools": "^0.4.6000",
     "@fluidframework/eslint-config-fluid": "^1.0.0",
     "@fluidframework/map-previous": "npm:@fluidframework/map@^1.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.3.0 <2.0.0-internal.2.0.0",

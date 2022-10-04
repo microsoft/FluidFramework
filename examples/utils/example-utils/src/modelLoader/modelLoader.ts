@@ -6,10 +6,10 @@
 import type { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
-import type { IModelLoader, ModelMakerCallback } from "./interfaces";
+import { create404Response, requestFluidObject } from "@fluidframework/runtime-utils";
+import type { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
 
 // This ModelLoader works on a convention, that the container it will load a model for must respond to a specific
 // request format with the model object.  Here we export a helper function for those container authors to align to
@@ -23,14 +23,15 @@ import type { IModelLoader, ModelMakerCallback } from "./interfaces";
  * @returns A request handler that can be provided to the container runtime factory
  */
 export const makeModelRequestHandler = <ModelType>(modelMakerCallback: ModelMakerCallback<ModelType>) => {
-    return async (request: RequestParser, runtime: IContainerRuntime) => {
+    return async (request: IRequest, runtime: IContainerRuntime): Promise<IResponse> => {
         // The model request format is for an empty path (i.e. "") and passing a reference to the container in the
         // header as containerRef.
-        if (request.pathParts.length === 0 && request.headers?.containerRef !== undefined) {
+        if (request.url === "" && request.headers?.containerRef !== undefined) {
             const container: IContainer = request.headers.containerRef;
             const model = await modelMakerCallback(runtime, container);
             return { status: 200, mimeType: "fluid/object", value: model };
         }
+        return create404Response(request);
     };
 };
 
@@ -58,7 +59,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
         // To answer the question of whether we support a given version, we would need to query the codeLoader
         // to see if it thinks it can load the requested version.  But for now, ICodeDetailsLoader doesn't have
         // a supports() method.  We could attempt a load and catch the error, but it might not be desirable to
-        // load code just to check.  It might be desirable to add such a method to that interface.
+        // load code just to check.  It might be desirable to add a supports() method to ICodeDetailsLoader.
         return true;
     }
 
@@ -67,6 +68,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
      * interface.  This demo uses a convention of requesting the default path and passing the container reference
      * in the request header.  It does this with the expectation that the model has been bundled with the container
      * code along with a request handler that will recognize this request format and return the model.
+     * makeModelRequestHandler is provide to create exactly that request handler that the container author needs.
      *
      * Other strategies to obtain the wrapping model could also work fine here - for example a standalone model code
      * loader that separately fetches model code and wraps the container from the outside.
@@ -80,7 +82,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 
     // It would be preferable for attaching to look more like service.attach(model) rather than returning an attach
     // callback here, but this callback at least allows us to keep the method off the model interface.
-    public async createDetached(version: string): Promise<{ model: ModelType; attach: () => Promise<string>; }> {
+    public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
         const container = await this.loader.createDetachedContainer({ package: version });
         const model = await this.getModelFromContainer(container);
         // The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,

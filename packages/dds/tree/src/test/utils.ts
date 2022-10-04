@@ -180,7 +180,7 @@ export function spyOnMethod(methodClass: Function, methodName: string, spy: () =
 /**
  * Assert two MarkList are equal, handling cursors.
  */
- export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
+export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
     const aTree = mapMarkList(a, mapTreeFromCursor);
     const bTree = mapMarkList(b, mapTreeFromCursor);
     assert.deepStrictEqual(aTree, bTree);

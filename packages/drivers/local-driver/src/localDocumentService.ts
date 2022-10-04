@@ -3,9 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluidframework/driver-definitions";
+import {
+    IDocumentDeltaConnection,
+    IDocumentDeltaStorageService,
+    IDocumentService,
+    IDocumentServicePolicies,
+    IDocumentStorageService,
+    IResolvedUrl,
+} from "@fluidframework/driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-import * as socketStorage from "@fluidframework/routerlicious-driver";
+import {
+    DocumentStorageService,
+    ITokenProvider,
+} from "@fluidframework/routerlicious-driver";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -15,7 +25,7 @@ import { LocalDeltaStorageService, LocalDocumentDeltaConnection } from ".";
 /**
  * Basic implementation of a document service for local use.
  */
-export class LocalDocumentService implements api.IDocumentService {
+export class LocalDocumentService implements IDocumentService {
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
      * @param tokenProvider - token provider
@@ -23,14 +33,14 @@ export class LocalDocumentService implements api.IDocumentService {
      * @param documentId - ID of document
      */
     constructor(
-        public readonly resolvedUrl: api.IResolvedUrl,
+        public readonly resolvedUrl: IResolvedUrl,
         private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
-        private readonly tokenProvider: socketStorage.ITokenProvider,
+        private readonly tokenProvider: ITokenProvider,
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
-        public readonly policies: api.IDocumentServicePolicies = {},
-        private readonly innerDocumentService?: api.IDocumentService,
+        public readonly policies: IDocumentServicePolicies = {},
+        private readonly innerDocumentService?: IDocumentService,
     ) { }
 
     public dispose() { }
@@ -38,8 +48,8 @@ export class LocalDocumentService implements api.IDocumentService {
     /**
      * Creates and returns a document storage service for local use.
      */
-    public async connectToStorage(): Promise<api.IDocumentStorageService> {
-        return new socketStorage.DocumentStorageService(
+    public async connectToStorage(): Promise<IDocumentStorageService> {
+        return new DocumentStorageService(
             this.documentId,
             new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)),
             new TelemetryNullLogger(),
@@ -53,7 +63,7 @@ export class LocalDocumentService implements api.IDocumentService {
     /**
      * Creates and returns a delta storage service for local use.
      */
-    public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+    public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         if (this.innerDocumentService) {
             return this.innerDocumentService.connectToDeltaStorage();
         }
@@ -67,7 +77,7 @@ export class LocalDocumentService implements api.IDocumentService {
      * Creates and returns a delta stream for local use.
      * @param client - client data
      */
-    public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         if (this.policies.storageOnly === true) {
             throw new Error("can't connect to delta stream in storage-only mode");
         }
@@ -107,14 +117,14 @@ export class LocalDocumentService implements api.IDocumentService {
  * @param documentId - ID of document
  */
 export function createLocalDocumentService(
-    resolvedUrl: api.IResolvedUrl,
+    resolvedUrl: IResolvedUrl,
     localDeltaConnectionServer: ILocalDeltaConnectionServer,
-    tokenProvider: socketStorage.ITokenProvider,
+    tokenProvider: ITokenProvider,
     tenantId: string,
     documentId: string,
     documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
-    policies?: api.IDocumentServicePolicies,
-    innerDocumentService?: api.IDocumentService): api.IDocumentService {
+    policies?: IDocumentServicePolicies,
+    innerDocumentService?: IDocumentService): IDocumentService {
     return new LocalDocumentService(
         resolvedUrl,
         localDeltaConnectionServer,

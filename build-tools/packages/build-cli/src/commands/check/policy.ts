@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { Flags } from "@oclif/core";
+import * as childProcess from "child_process";
 import * as fs from "fs";
 import { EOL as newline } from "os";
-import * as childProcess from "child_process";
-// eslint-disable-next-line unicorn/import-style
-import * as path from "path";
-import { Flags } from "@oclif/core";
+import path from "path";
+
 import { policyHandlers, readJsonAsync } from "@fluidframework/build-tools";
+
 import { BaseCommand } from "../../base";
 
 const readStdin: () => Promise<string | undefined> = async () => {

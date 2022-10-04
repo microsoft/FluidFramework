@@ -6,6 +6,22 @@
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
+/**
+ * Object returned from calling IModelLoader.createDetached().
+ */
+export interface IDetachedModel<ModelType> {
+    /**
+     * The newly created, detached model object.
+     */
+    model: ModelType;
+    /**
+     * A function that will attach the model object to the service when called.
+     * @returns a Promise that will resolve after attach completes with the container ID of the newly attached
+     * container.
+     */
+    attach: () => Promise<string>;
+}
+
 export interface IModelLoader<ModelType> {
     /**
      * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
@@ -21,7 +37,7 @@ export interface IModelLoader<ModelType> {
      * returns a promise that will resolve after attach has completed with the id of the container.
      * @param version - the container code version to create a model for
      */
-    createDetached(version: string): Promise<{ model: ModelType; attach: () => Promise<string>; }>;
+    createDetached(version: string): Promise<IDetachedModel<ModelType>>;
 
     /**
      * Load a model for the container with the given id.
