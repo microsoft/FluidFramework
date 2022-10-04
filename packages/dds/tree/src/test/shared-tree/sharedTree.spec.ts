@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 import { fail, strict as assert } from "assert";
-import { FieldKinds, singleTextCursor, anchorSymbol, isUnwrappedNode, valueSymbol } from "../../feature-libraries";
+import {
+    FieldKinds, singleTextCursor, anchorSymbol, isUnwrappedNode, valueSymbol, getSchemaString
+} from "../../feature-libraries";
 import { brand } from "../../util";
 import { detachedFieldAsKey, rootFieldKey, symbolFromKey, TreeValue } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
 import { ISharedTree } from "../../shared-tree";
 import { TransactionResult } from "../../checkout";
-import { fieldSchema, GlobalFieldKey, namedTreeSchema } from "../../schema-stored";
+import { fieldSchema, GlobalFieldKey, namedTreeSchema, SchemaData } from "../../schema-stored";
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
@@ -47,18 +49,24 @@ describe("SharedTree", () => {
         assert(provider.trees[1].isAttached());
 
         const value = "42";
+        const expectedSchema = getSchemaString(testSchema);
 
         // Apply an edit to the first tree which inserts a node with a value
         initializeTestTreeWithValue(provider.trees[0], value);
 
         // Ensure that the first tree has the state we expect
         assert.equal(getTestValue(provider.trees[0]), value);
+        assert.equal(getSchemaString(provider.trees[0].storedSchema), expectedSchema);
         // Ensure that the second tree receives the expected state from the first tree
         await provider.ensureSynchronized();
         assert.equal(getTestValue(provider.trees[1]), value);
+        // Ensure second tree got the schema from initialization:
+        assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
         // Ensure that a tree which connects after the edit has already happened also catches up
         const joinedLaterTree = await provider.createTree();
         assert.equal(getTestValue(joinedLaterTree), value);
+        // Ensure schema catchup works:
+        assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
     });
 
     it("can summarize and load", async () => {
@@ -71,6 +79,7 @@ describe("SharedTree", () => {
         await provider.ensureSynchronized();
         const loadingTree = await provider.createTree();
         assert.equal(getTestValue(loadingTree), value);
+        assert.equal(getSchemaString(loadingTree.storedSchema), getSchemaString(testSchema));
     });
 
     describe("Editing", () => {
@@ -247,23 +256,27 @@ describe("SharedTree", () => {
     });
 });
 
+const rootFieldSchema = fieldSchema(FieldKinds.value);
+const globalFieldSchema = fieldSchema(FieldKinds.value);
+const rootNodeSchema = namedTreeSchema({
+    name: brand("TestValue"),
+    extraLocalFields: fieldSchema(FieldKinds.sequence),
+    globalFields: [globalFieldKey],
+})
+const testSchema: SchemaData = {
+    treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
+    globalFieldSchema: new Map([
+        [rootFieldKey, rootFieldSchema],
+        [globalFieldKey, globalFieldSchema],
+    ]),
+};
+
 /**
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link getTestValue} to read the value.
  */
 function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
-    const rootFieldSchema = fieldSchema(FieldKinds.value);
-    const globalFieldSchema = fieldSchema(FieldKinds.value);
-    const rootNodeSchema = namedTreeSchema({
-        name: brand("TestValue"),
-        extraLocalFields: fieldSchema(FieldKinds.sequence),
-        globalFields: [globalFieldKey],
-    })
-
-    // TODO: schema should be added via Fluid operations so all clients receive them.
-    tree.forest.schema.updateTreeSchema(rootNodeSchema.name, rootNodeSchema);
-    tree.forest.schema.updateFieldSchema(rootFieldKey, rootFieldSchema);
-    tree.forest.schema.updateFieldSchema(globalFieldKey, globalFieldSchema);
+    tree.storedSchema.update(testSchema)
 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {

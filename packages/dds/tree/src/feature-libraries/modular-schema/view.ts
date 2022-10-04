@@ -6,10 +6,11 @@
 import { fail } from "../../util";
 import {
     FieldSchema, LocalFieldKey, TreeSchema,
-    TreeSchemaIdentifier, StoredSchemaRepository,
+    TreeSchemaIdentifier,
     SchemaData,
     FieldKindIdentifier,
     GlobalFieldKey,
+    InMemoryStoredSchemaRepository,
 } from "../../schema-stored";
 import { Adapters, ViewSchemaData, AdaptedViewSchema, Compatibility, FieldAdapter } from "../../schema-view";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
@@ -106,7 +107,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
                 fail(`tree adapter for stored ${adapter.output} should not be never`);
             }
         }
-        const adapted = new StoredSchemaRepository(this.policy);
+        const adapted = new InMemoryStoredSchemaRepository(this.policy);
         for (const [key, schema] of stored.globalFieldSchema) {
             const adaptedField = this.adaptField(schema, this.adapters.fieldAdapters?.get(key));
             adapted.updateFieldSchema(key, adaptedField);
