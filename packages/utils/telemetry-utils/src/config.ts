@@ -4,6 +4,7 @@
  */
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Lazy } from "@fluidframework/common-utils";
+import { pkgVersion } from "./packageVersion";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -199,18 +200,21 @@ export class CachedConfigProvider implements IConfigProvider {
     }
 
     private getCacheEntry(name: string): StronglyTypedValue | undefined {
-        if (!this.configCache.has(name)) {
+        // Generate version specific name by appending package version.
+        const versionSpecificConfigName = `${name}-${pkgVersion}`;
+        if (!this.configCache.has(versionSpecificConfigName)) {
             for (const provider of this.orderedBaseProviders) {
-                const parsed = stronglyTypedParse(provider?.getRawConfig(name));
+                const parsed = stronglyTypedParse(provider?.getRawConfig(versionSpecificConfigName) ??
+                    provider?.getRawConfig(name));
                 if (parsed !== undefined) {
-                    this.configCache.set(name, parsed);
+                    this.configCache.set(versionSpecificConfigName, parsed);
                     return parsed;
                 }
             }
             // configs are immutable, if the first lookup returned no results, all lookups should
-            this.configCache.set(name, { raw: undefined });
+            this.configCache.set(versionSpecificConfigName, { raw: undefined });
         }
-        return this.configCache.get(name);
+        return this.configCache.get(versionSpecificConfigName);
     }
 }
 

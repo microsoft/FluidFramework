@@ -10,6 +10,7 @@ import {
     IConfigProviderBase,
     inMemoryConfigProvider,
 } from "../config";
+import { pkgVersion } from "../packageVersion";
 
 describe("Config", () => {
     const getMockStore = ((settings: Record<string, string>): Storage => {
@@ -120,6 +121,27 @@ describe("Config", () => {
         assert.deepEqual(config.getBooleanArray("booleanArray"), [true, false, true]);
         assert.equal(config.getBooleanArray("badBooleanArray"), undefined);
         assert.equal(config.getBooleanArray("badBooleanArray2"), undefined);
+    });
+
+    it("Typing - custom provider - With version", () => {
+        const settings = {};
+        settings[`number-${pkgVersion}`] = 1;
+        settings[`string-${pkgVersion}`] = "string";
+        // eslint-disable-next-line @typescript-eslint/dot-notation
+        settings[`string`] = "string1";
+        // eslint-disable-next-line @typescript-eslint/dot-notation
+        settings["boolean"] = true;
+
+        const mockStore = untypedProvider(settings);
+        const config = new CachedConfigProvider(mockStore);
+
+        assert.equal(config.getNumber("number"), 1);
+
+        assert.equal(config.getString("string"), "string");
+        assert.equal(config.getString("badString"), undefined);
+
+        assert.equal(config.getBoolean("boolean"), true);
+        assert.equal(config.getBoolean("badBoolean"), undefined);
     });
 
     it("Void provider", () => {
@@ -254,6 +276,26 @@ describe("Config", () => {
         assert.deepEqual(config.getBooleanArray("booleanArray"), [true, false, true]);
         assert.equal(config.getBooleanArray("badBooleanArray"), undefined);
         assert.equal(config.getBooleanArray("badBooleanArray2"), undefined);
+    });
+
+    it("Typing - SettingsProvider - With version", () => {
+        const settings = {};
+        settings[`number-${pkgVersion}`] = 1;
+        settings[`string-${pkgVersion}`] = "string";
+        // eslint-disable-next-line @typescript-eslint/dot-notation
+        settings[`string`] = "string1";
+        // eslint-disable-next-line @typescript-eslint/dot-notation
+        settings["boolean"] = true;
+
+        const config = new CachedConfigProvider(new HybridSettingsProvider(settings));
+
+        assert.equal(config.getNumber("number"), 1);
+
+        assert.equal(config.getString("string"), "string");
+        assert.equal(config.getString("badString"), undefined);
+
+        assert.equal(config.getBoolean("boolean"), true);
+        assert.equal(config.getBoolean("badBoolean"), undefined);
     });
 
     // #endregion SettingsProvider
