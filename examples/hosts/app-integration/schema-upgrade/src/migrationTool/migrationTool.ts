@@ -107,7 +107,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     }
 
     public completeMigrationTask(): void {
-        return this.taskManager.complete(migrateTaskName);
+        this.taskManager.complete(migrateTaskName);
     }
 
     protected async initializingFirstTime() {
