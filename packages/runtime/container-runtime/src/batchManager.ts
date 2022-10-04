@@ -28,9 +28,13 @@ export class BatchManager {
     // - we do not stringify final op, thus we do not know how much escaping will be added.
     private static readonly hardLimit = 950 * 1024;
 
+    /**
+     * Returns the reference sequence number of the first op in the batch.
+     */
     public get pendingBatchBaseline(): number | undefined {
-        return this.pendingBatch[this.pendingBatch.length - 1]?.referenceSequenceNumber;
+        return this.pendingBatch[0]?.referenceSequenceNumber;
     }
+
     public get length() { return this.pendingBatch.length; }
     public get limit() { return BatchManager.hardLimit; }
     public static get limit() { return BatchManager.hardLimit; }
