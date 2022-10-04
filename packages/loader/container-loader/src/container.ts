@@ -631,13 +631,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectionStateHandler = createConnectionStateHandler(
             {
                 logger: this.mc.logger,
-                connectionStateChanged: (value, oldState, disconnectedReason) => {
+                connectionStateChanged: (value, oldState, reason) => {
                     if (value === ConnectionState.Connected) {
                         this._clientId = this.connectionStateHandler.pendingClientId;
                     }
-                    this.logConnectionStateChangeTelemetry(value, oldState, disconnectedReason);
+                    this.logConnectionStateChangeTelemetry(value, oldState, reason);
                     if (this._lifecycleState === "loaded") {
-                        this.propagateConnectionState(false /* initial transition */, disconnectedReason);
+                        this.propagateConnectionState(
+                            false /* initial transition */,
+                            value === ConnectionState.Disconnected ? reason : undefined /* disconnectedReason */,
+                        );
                     }
                 },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
