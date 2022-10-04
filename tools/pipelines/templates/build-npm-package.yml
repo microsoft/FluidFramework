@@ -199,7 +199,7 @@ stages:
           inputs:
             version: 14.x
         - task: Bash@3
-          displayName: npm ci (or equivalent)
+          displayName: Install dependencies
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
