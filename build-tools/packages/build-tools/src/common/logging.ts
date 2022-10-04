@@ -42,6 +42,12 @@ export interface Logger {
 
     /**
      * Logs an error message.
+     *
+     * @remarks
+     *
+     * This method is not named 'error' because it conflicts with the method that oclif has on its Command class.
+     * That method exits the process in addition to logging, so this method exists to differentiate, and provide
+     * error logging that doesn't exit the process.
      */
     errorLog: ErrorLoggingFunction;
 
