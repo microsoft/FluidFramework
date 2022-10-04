@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { existsSync, readFileSync } from "fs";
+import * as JSON5 from "json5";
+import * as path from "path";
 
 import { LeafTask } from "./leafTask";
 import { TscDependentTask } from "./tscTask";
-import { existsSync, readFileSync } from "fs";
-import * as path from "path";
-import * as JSON5 from "json5";
 
 abstract class LintBaseTask extends TscDependentTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) {
@@ -28,11 +28,11 @@ export class TsLintTask extends LintBaseTask {
 }
 
 export class EsLintTask extends LintBaseTask {
-    private _configFileFullPath: string | undefined
+    private _configFileFullPath: string | undefined;
     protected get configFileFullPath() {
         if (!this._configFileFullPath) {
             // TODO: we currently don't support .yaml and .yml, or config in package.json
-            const possibleConfig = [".eslintrc.js",  ".eslintrc.cjs", ".eslintrc.json", ".eslintrc"];
+            const possibleConfig = [".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", ".eslintrc"];
             for (const configFile of possibleConfig) {
                 const configFileFullPath = this.getPackageFileFullPath(configFile);
                 if (existsSync(configFileFullPath)) {
@@ -62,15 +62,18 @@ export class EsLintTask extends LintBaseTask {
                 }
             }
         } catch (e) {
-            throw new Error(`Unable to parse options from ${this.configFileFullPath}. ${e}`)
+            throw new Error(`Unable to parse options from ${this.configFileFullPath}. ${e}`);
         }
         if (config.parserOptions?.project) {
             // parserOptions.project is type string | string[]
-            const projectArray = typeof config.parserOptions.project === "string"
-                ? [config.parserOptions.project]
-                : config.parserOptions.project;
+            const projectArray =
+                typeof config.parserOptions.project === "string"
+                    ? [config.parserOptions.project]
+                    : config.parserOptions.project;
             for (const tsConfigPath of projectArray) {
-                this.addTscTask(dependentTasks, { tsConfig: this.getPackageFileFullPath(tsConfigPath) });
+                this.addTscTask(dependentTasks, {
+                    tsConfig: this.getPackageFileFullPath(tsConfigPath),
+                });
             }
         }
         super.addDependentTasks(dependentTasks);
