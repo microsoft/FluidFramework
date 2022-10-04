@@ -68,11 +68,11 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@oclif/core": "~1.9.5",
+    "@oclif/core": "^1.16.4",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
-    "@oclif/plugin-not-found": "^2.3.1",
-    "@oclif/plugin-plugins": "^2.0.1",
+    "@oclif/plugin-not-found": "^2.3.3",
+    "@oclif/plugin-plugins": "^2.1.1",
     "@oclif/test": "^2",
     "chalk": "^2.4.2",
     "semver": "^7.3.7",
