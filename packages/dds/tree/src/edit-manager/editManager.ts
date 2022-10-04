@@ -44,7 +44,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         private readonly localSessionId: SessionId,
         public readonly changeFamily: TChangeFamily,
         public readonly anchors?: AnchorSet,
-    ) { }
+    ) {}
 
     public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
         return this.trunk;
@@ -119,7 +119,10 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         return this.changeFamily.intoDelta(change);
     }
 
-    private rebaseChangeFromBranchToTrunk(commitToRebase: Commit<TChangeset>, branch: Branch<TChangeset>): TChangeset {
+    private rebaseChangeFromBranchToTrunk(
+        commitToRebase: Commit<TChangeset>,
+        branch: Branch<TChangeset>,
+    ): TChangeset {
         if (!branch.isDivergent && commitToRebase.sessionId === this.getLastCommit()?.sessionId) {
             // The new commit is not divergent and therefore doesn't need to be rebased.
             return commitToRebase.changeset;
@@ -127,7 +130,10 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 
         const changeRebasedToRef = branch.localChanges.reduceRight(
             (newChange, branchCommit) =>
-                this.changeFamily.rebaser.rebase(newChange, this.changeFamily.rebaser.invert(branchCommit.changeset)),
+                this.changeFamily.rebaser.rebase(
+                    newChange,
+                    this.changeFamily.rebaser.invert(branchCommit.changeset),
+                ),
             commitToRebase.changeset,
         );
 
@@ -201,7 +207,10 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     private rebaseOverCommits(changeToRebase: TChangeset, commits: Commit<TChangeset>[]) {
-        return this.rebaseChange(changeToRebase, commits.map((commit) => commit.changeset));
+        return this.rebaseChange(
+            changeToRebase,
+            commits.map((commit) => commit.changeset),
+        );
     }
 
     private rebaseChange(changeToRebase: TChangeset, changesToRebaseOver: TChangeset[]) {
@@ -217,7 +226,10 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
      * @returns The trunk commits with sequence numbers greater than `pred` and smaller or equal to `last`,
      * ordered in sequencing order.
      */
-    private getCommitsAfterAndUpToInclusive(pred: SeqNumber, last: SeqNumber): Commit<TChangeset>[] {
+    private getCommitsAfterAndUpToInclusive(
+        pred: SeqNumber,
+        last: SeqNumber,
+    ): Commit<TChangeset>[] {
         // This check is just a fast-path for the common case where no concurrent edits occurred.
         if (pred === last) {
             return [];

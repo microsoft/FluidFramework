@@ -116,7 +116,8 @@ export function sequenceFieldToDelta<TNodeChange>(
                     // They have no impact on the current state.
                     break;
                 }
-                default: unreachableCase(type);
+                default:
+                    unreachableCase(type);
             }
         }
     }
