@@ -25,7 +25,6 @@ export {
     DefaultSummaryConfiguration,
     ICompressionRuntimeOptions,
 } from "./containerRuntime";
-export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
     gcBlobPrefix,
@@ -39,7 +38,6 @@ export {
     IPendingMessage,
     IPendingState,
 } from "./pendingStateManager";
-export { ScheduleManager } from "./scheduleManager";
 export { Summarizer } from "./summarizer";
 export {
     EnqueueSummarizeResult,
