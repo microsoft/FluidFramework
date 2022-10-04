@@ -20,7 +20,7 @@ export interface IConnectionStateHandlerInputs {
     logger: ITelemetryLogger;
     /** Log to telemetry any change in state, included to Connecting */
     connectionStateChanged:
-        (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void;
+        (value: ConnectionState, oldState: ConnectionState, disconnectedReason?: string | undefined) => void;
     /** Whether to expect the client to join in write mode on next connection */
     shouldClientJoinWrite: () => boolean;
     /** (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again */
@@ -109,9 +109,9 @@ class ConnectionStateHandlerPassThrough implements IConnectionStateHandler, ICon
     public connectionStateChanged(
         value: ConnectionState,
         oldState: ConnectionState,
-        reason?: string | undefined,
+        disconnectedReason?: string | undefined,
     ) {
-        return this.inputs.connectionStateChanged(value, oldState, reason);
+        return this.inputs.connectionStateChanged(value, oldState, disconnectedReason);
     }
     public shouldClientJoinWrite() { return this.inputs.shouldClientJoinWrite(); }
     public get maxClientLeaveWaitTime() { return this.inputs.maxClientLeaveWaitTime; }
@@ -141,7 +141,11 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
         return this._connectionState;
     }
 
-    public connectionStateChanged(value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) {
+    public connectionStateChanged(
+        value: ConnectionState,
+        oldState: ConnectionState,
+        disconnectedReason?: string | undefined,
+    ) {
         switch (value) {
             case ConnectionState.Connected:
                 assert(this._connectionState === ConnectionState.CatchingUp, 0x3e1 /* connectivity transitions */);
@@ -164,7 +168,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
             default:
         }
         this._connectionState = value;
-        this.inputs.connectionStateChanged(value, oldState, reason);
+        this.inputs.connectionStateChanged(value, oldState, disconnectedReason);
     }
 
     private readonly transitionToConnectedState = () => {
