@@ -10,6 +10,7 @@ import {
 import { brand } from "../../util";
 import {
     FieldSchema, LocalFieldKey, TreeSchemaIdentifier, TreeSchema, ValueSchema,
+    lookupGlobalFieldSchema, lookupTreeSchema,
 } from "../../schema-stored";
 import { FieldKind, Multiplicity } from "../modular-schema";
 import {
@@ -205,7 +206,7 @@ class ProxyContext implements EditableTreeContext {
         }
         cursor.free();
         this.forest.anchors.forget(destination);
-        const rootSchema = this.forest.schema.lookupGlobalFieldSchema(rootFieldKey);
+        const rootSchema = lookupGlobalFieldSchema(this.forest.schema, rootFieldKey);
         return proxifyField(getFieldKind(rootSchema), targets);
     }
 }
@@ -269,7 +270,7 @@ class ProxyTarget {
             return typeName;
         }
         if (typeName) {
-            return this.context.forest.schema.lookupTreeSchema(typeName);
+            return lookupTreeSchema(this.context.forest.schema, typeName);
         }
         return undefined;
     }

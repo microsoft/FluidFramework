@@ -138,3 +138,11 @@ export type JsonCompatibleReadOnly =
     | null
     | readonly JsonCompatibleReadOnly[]
     | { readonly [P in string]: JsonCompatibleReadOnly | undefined; };
+
+/**
+ * Returns if a particular json compatible value is an object.
+ * Does not include `null` or arrays.
+ */
+export function isJsonObject(value: JsonCompatibleReadOnly): value is { readonly [P in string]: JsonCompatibleReadOnly | undefined; } {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}

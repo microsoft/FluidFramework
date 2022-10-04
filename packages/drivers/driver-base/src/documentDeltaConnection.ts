@@ -310,17 +310,25 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
+     * Disconnect from the websocket and close the websocket too.
      */
-    public dispose() {
-        this.disposeCore(
-            false, // socketProtocolError
-            createGenericNetworkError(
-                // pre-0.58 error message: clientClosingConnection
-                "Client closing delta connection", { canRetry: true }, { driverVersion }));
+    protected closeSocket(error: IAnyDriverError) {
+        this.disconnect(error);
     }
 
-    protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError) {
+    /**
+     * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection and close the socket.
+     * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
+     * multiplexing here, so we need to close the socket here.
+     */
+    public dispose() {
+        this.disconnect(createGenericNetworkError(
+            // pre-0.58 error message: clientClosingConnection
+            "Client closing delta connection", { canRetry: true }, { driverVersion }),
+        );
+    }
+
+    protected disconnect(err: IAnyDriverError) {
         // Can't check this.disposed here, as we get here on socket closure,
         // so _disposed & socket.connected might be not in sync while processing
         // "dispose" event.
@@ -335,17 +343,23 @@ export class DocumentDeltaConnection
         // to prevent normal messages from being emitted.
         this._disposed = true;
 
+        // Let user of connection object know about disconnect. This has to happen in betwee setting _disposed and
+        // removing all listeners!
+        this.emit("disconnect", err);
+
+        // user of DeltaConnection should have processed "disconnect" event and removed all listeners. Not clear
+        // if we want to enforce that, as some users (like LocalDocumentService) do not unregister any handlers
+        // assert(this.listenerCount("disconnect") === 0, "'disconnect` events should be processed synchronously");
+
         this.removeTrackedListeners();
-        this.disconnect(socketProtocolError, err);
+        this.disconnectCore();
     }
 
     /**
      * Disconnect from the websocket.
-     * @param socketProtocolError - true if error happened on socket / socket.io protocol level
-     * (not on Fluid protocol level)
      * @param reason - reason for disconnect
      */
-    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
+    protected disconnectCore() {
         this.socket.disconnect();
     }
 
@@ -364,11 +378,15 @@ export class DocumentDeltaConnection
             getMaxInternalSocketReconnectionAttempts() + 1;
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
-            const fail = (socketProtocolError: boolean, err: IAnyDriverError) => {
-                this.disposeCore(socketProtocolError, err);
+            const failAndCloseSocket = (err: IAnyDriverError) => {
+                this.closeSocket(err);
                 reject(err);
             };
 
+            const failConnection = (err: IAnyDriverError) => {
+                this.disconnect(err);
+                reject(err);
+            };
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
                 internalSocketConnectionFailureCount++;
@@ -406,12 +424,12 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                fail(true, this.createErrorObject("connect_error", error));
+                failAndCloseSocket(this.createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                fail(true, this.createErrorObject("connect_timeout"));
+                failAndCloseSocket(this.createErrorObject("connect_timeout"));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -430,7 +448,7 @@ export class DocumentDeltaConnection
                     // The only time we expect a mismatch in requested/actual is if we lack write permissions
                     // In this case we will get "read", even if we requested "write"
                     if (actualMode !== requestedMode) {
-                        fail(false, this.createErrorObject(
+                        failConnection(this.createErrorObject(
                             "connect_document_success",
                             "Connected in a different mode than was requested",
                             false,
@@ -439,7 +457,7 @@ export class DocumentDeltaConnection
                     }
                 } else {
                     if (actualMode === "write") {
-                        fail(false, this.createErrorObject(
+                        failConnection(this.createErrorObject(
                             "connect_document_success",
                             "Connected in write mode without write permissions",
                             false,
@@ -460,7 +478,7 @@ export class DocumentDeltaConnection
             this.addTrackedListener("disconnect", (reason) => {
                 const err = this.createErrorObject("disconnect", reason);
                 this.emit("disconnect", err);
-                fail(true, err);
+                failAndCloseSocket(err);
             });
 
             this.addTrackedListener("error", ((error) => {
@@ -469,7 +487,7 @@ export class DocumentDeltaConnection
                 const err = this.createErrorObject("error", error, error !== "Invalid namespace");
                 this.emit("error", err);
                 // Disconnect socket - required if happened before initial handshake
-                fail(true, err);
+                failAndCloseSocket(err);
             }));
 
             this.addConnectionListener("connect_document_error", ((error) => {
@@ -482,14 +500,14 @@ export class DocumentDeltaConnection
 
                 // This is not an socket.io error - it's Fluid protocol error.
                 // In this case fail connection and indicate that we were unable to create connection
-                fail(false, this.createErrorObject("connect_document_error", error));
+                failConnection(this.createErrorObject("connect_document_error", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
             this.socketConnectionTimeout = setTimeout(() => {
-                fail(false, this.createErrorObject("orderingServiceHandshakeTimeout"));
+                failConnection(this.createErrorObject("orderingServiceHandshakeTimeout"));
             }, timeout + 2000);
         });
 

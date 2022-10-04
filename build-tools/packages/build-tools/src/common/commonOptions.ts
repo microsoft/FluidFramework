@@ -11,18 +11,17 @@ interface CommonOptions {
     verbose: boolean;
 }
 
-export const commonOptions : CommonOptions = {
+export const commonOptions: CommonOptions = {
     defaultRoot: process.env["_FLUID_DEFAULT_ROOT_"],
     root: process.env["_FLUID_ROOT_"],
     timer: false,
     logtime: false,
     verbose: false,
-}
+};
 
 // This string is duplicated in the readme (multiple times): update readme if changing this.
 
-export const commonOptionString =
-`     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
+export const commonOptionString = `     --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
      --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
      --timer          Measure elapsed time of each step
      --logtime        Display the current time on every status message for logging

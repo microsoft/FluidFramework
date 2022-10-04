@@ -2,31 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { Flags } from "@oclif/core";
 import { strict as assert } from "assert";
+import chalk from "chalk";
+import { differenceInBusinessDays, formatDistanceToNow, formatISO9075 } from "date-fns";
+import { writeJson } from "fs-extra";
+import inquirer from "inquirer";
 import path from "path";
+import sortJson from "sort-json";
+import { table } from "table";
+
 import { Context } from "@fluidframework/build-tools";
+
 import {
+    ReleaseVersion,
+    VersionBumpType,
+    VersionScheme,
     detectBumpType,
     detectVersionScheme,
     getVersionRange,
     isVersionBumpType,
-    ReleaseVersion,
-    VersionBumpType,
-    VersionScheme,
 } from "@fluid-tools/version-tools";
-import { Flags } from "@oclif/core";
-import chalk from "chalk";
-import { differenceInBusinessDays, formatDistanceToNow, formatISO9075 } from "date-fns";
-import inquirer from "inquirer";
-import sortJson from "sort-json";
-import { table } from "table";
-import { writeJson } from "fs-extra";
+
 import { BaseCommand } from "../../base";
-import { filterVersionsOlderThan, getAllVersions, sortVersions, VersionDetails } from "../../lib";
-import { isReleaseGroup, ReleaseGroup, ReleasePackage } from "../../releaseGroups";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
+import { VersionDetails, filterVersionsOlderThan, getAllVersions, sortVersions } from "../../lib";
 import { CommandLogger } from "../../logging";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 
 const MAX_BUSINESS_DAYS_TO_CONSIDER_RECENT = 10;
 const DEFAULT_MIN_VERSION = "0.0.0";
@@ -135,7 +137,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
 
         if (filter === undefined || isReleaseGroup(filter)) {
             this.log(`Collecting version data for release groups...`);
-            /* eslint-disable no-await-in-loop */
             for (const rg of context.repo.releaseGroups.keys()) {
                 if (filter !== undefined && filter !== rg) {
                     this.verbose(`Skipping '${rg} because it's excluded.`);
@@ -145,6 +146,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 const name = rg;
                 const repoVersion = context.getVersion(rg);
 
+                // eslint-disable-next-line no-await-in-loop
                 const data = await this.collectReleaseData(
                     context,
                     name,
@@ -173,6 +175,7 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                 const name = pkg.name;
                 const repoVersion = pkg.version;
 
+                // eslint-disable-next-line no-await-in-loop
                 const data = await this.collectReleaseData(
                     context,
                     name,
@@ -184,7 +187,6 @@ export default class ReleaseReportCommand extends BaseCommand<typeof ReleaseRepo
                     versionData[name] = data;
                 }
             }
-            /* eslint-enable no-await-in-loop */
         }
 
         if (flags.all === true) {
@@ -660,6 +662,10 @@ function toReportKind(
             }
 
             break;
+        }
+
+        default: {
+            throw new Error(`Unexpected ReportKind: ${kind}`);
         }
     }
 

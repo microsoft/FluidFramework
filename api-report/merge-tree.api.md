@@ -999,6 +999,7 @@ export class MergeTree {
     clone(): void;
     // (undocumented)
     readonly collabWindow: CollaborationWindow;
+    computeLocalPartials(refSeq: number): void;
     // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     findTile(startPos: number, clientId: number, tileLabel: string, tilePrecedesPos?: boolean): {

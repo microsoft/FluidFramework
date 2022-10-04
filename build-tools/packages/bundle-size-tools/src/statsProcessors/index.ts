@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from './bundleBuddyConfigProcessor';
-export * from './entryStatsProcessor';
-export * from './totalSizeStatsProcessor';
+export * from "./bundleBuddyConfigProcessor";
+export * from "./entryStatsProcessor";
+export * from "./totalSizeStatsProcessor";

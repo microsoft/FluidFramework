@@ -2,12 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import type { SortedReadonlyArray, Diagnostic } from "typescript";
+import type { Diagnostic, SortedReadonlyArray } from "typescript";
 import * as tsLib from "typescript";
-import type { WorkerMessage, WorkerExecResult } from "./worker";
-import { getTscUtil } from "../../tscUtils";
 
+import { getTscUtil } from "../../tscUtils";
+import type { WorkerExecResult, WorkerMessage } from "./worker";
 
 export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
     const { command, cwd } = msg;
@@ -19,11 +18,15 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
     const TscUtils = getTscUtil(ts);
     function convertDiagnostics(diagnostics: SortedReadonlyArray<Diagnostic>) {
         const messages: string[] = [];
-        diagnostics.forEach(diagnostic => {
+        diagnostics.forEach((diagnostic) => {
             if (diagnostic.file) {
-                const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
+                const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
+                    diagnostic.start!,
+                );
                 const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
-                messages.push(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
+                messages.push(
+                    `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`,
+                );
             } else {
                 messages.push(ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
             }
@@ -37,16 +40,13 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
     if (commandLine) {
         const configFileName = TscUtils.findConfigFile(cwd, commandLine);
         if (configFileName) {
-            commandLine = ts.getParsedCommandLineOfConfigFile(
-                configFileName,
-                commandLine.options,
-                {
-                    ...ts.sys,
-                    getCurrentDirectory: () => cwd,
-                    onUnRecoverableConfigFileDiagnostic: (diagnostic: Diagnostic) => {
-                        diagnostics.push(diagnostic);
-                    }
-                })!;
+            commandLine = ts.getParsedCommandLineOfConfigFile(configFileName, commandLine.options, {
+                ...ts.sys,
+                getCurrentDirectory: () => cwd,
+                onUnRecoverableConfigFileDiagnostic: (diagnostic: Diagnostic) => {
+                    diagnostics.push(diagnostic);
+                },
+            })!;
         } else {
             throw new Error("Unknown config file in commane line");
         }
@@ -60,9 +60,7 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
             options: TscUtils.convertToOptionsWithAbsolutePath(commandLine.options, cwd),
             projectReferences: commandLine.projectReferences,
         };
-        const program = incremental ?
-            ts.createIncrementalProgram(param) :
-            ts.createProgram(param);
+        const program = incremental ? ts.createIncrementalProgram(param) : ts.createProgram(param);
 
         diagnostics.push(...program.getConfigFileParsingDiagnostics());
         diagnostics.push(...program.getSyntacticDiagnostics());
@@ -74,7 +72,10 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
         diagnostics.push(...emitResult.diagnostics);
 
         if (!emitResult.emitSkipped) {
-            code = diagnostics.length !== 0 ? ts.ExitStatus.DiagnosticsPresent_OutputsGenerated : ts.ExitStatus.Success;
+            code =
+                diagnostics.length !== 0
+                    ? ts.ExitStatus.DiagnosticsPresent_OutputsGenerated
+                    : ts.ExitStatus.Success;
         }
     }
 

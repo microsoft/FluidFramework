@@ -9,4 +9,3 @@ The entry point is `getEditableTree` which returns an `EditableTree` which allow
 Currently implementation uses a JavaScript proxy and is focused on reading the tree: support for editing is not yet implemented.
 
 Write operations will require a schema-based data format conversion to be implemented.
-
