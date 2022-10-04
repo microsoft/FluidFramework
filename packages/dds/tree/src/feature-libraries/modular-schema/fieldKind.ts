@@ -23,7 +23,7 @@ import { FieldChangeHandler } from "./fieldChangeHandler";
  *
  * @sealed
  */
-export class FieldKind {
+export class FieldKind<TEditor = unknown> {
     /**
      * @param identifier - Globally scoped identifier.
      * @param multiplicity - bound on the number of children that fields of this kind may have.
@@ -42,7 +42,7 @@ export class FieldKind {
     public constructor(
         public readonly identifier: FieldKindIdentifier,
         public readonly multiplicity: Multiplicity,
-        public readonly changeHandler: FieldChangeHandler<any>,
+        public readonly changeHandler: FieldChangeHandler<any, TEditor>,
         private readonly allowsTreeSupersetOf:
             (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean,
         public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,

@@ -29,7 +29,7 @@ import {
 import { jsonableTreeFromCursor } from "./treeTextCursorLegacy";
 import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { applyModifyToTree } from "./deltaUtils";
-import { sequenceFieldChangeHandler } from "./sequence-field";
+import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 
 /**
  * Encoder for changesets which carry no information.
@@ -307,7 +307,7 @@ const valueFieldEditor: ValueFieldEditor = {
     set: (newValue: ITreeCursor) => ({ value: jsonableTreeFromCursor(newValue) }),
 };
 
-const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
+const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> = {
     rebaser: valueRebaser,
     encoder: valueFieldEncoder,
     editor: valueFieldEditor,
@@ -340,7 +340,7 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset> = {
 /**
 * Exactly one item.
 */
-export const value: FieldKind = new FieldKind(
+export const value: FieldKind<ValueFieldEditor> = new FieldKind(
     brand("Value"),
     Multiplicity.Value,
     valueChangeHandler,
@@ -542,7 +542,7 @@ function deltaFromInsertAndChange(
 /**
 * 0 or 1 items.
 */
-export const optional: FieldKind = new FieldKind(
+export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
     brand("Optional"),
     Multiplicity.Optional,
     {
@@ -576,7 +576,7 @@ export const optional: FieldKind = new FieldKind(
 /**
  * 0 or more items.
  */
-export const sequence: FieldKind = new FieldKind(
+export const sequence: FieldKind<SequenceFieldEditor> = new FieldKind(
     brand("Sequence"),
     Multiplicity.Sequence,
     sequenceFieldChangeHandler,

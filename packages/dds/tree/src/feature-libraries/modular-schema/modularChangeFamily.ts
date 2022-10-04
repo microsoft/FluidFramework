@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder } from "../../change-family";
+import { ChangeEncoder, ChangeFamily, ProgressiveEditBuilder, ProgressiveEditBuilderBase } from "../../change-family";
 import { ChangeRebaser } from "../../rebase";
 import { FieldKindIdentifier } from "../../schema-stored";
 import { AnchorSet, Delta, FieldKey, UpPath, Value } from "../../tree";
@@ -192,7 +192,7 @@ export class ModularChangeFamily implements
     }
 
     buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchors: AnchorSet): ModularEditBuilder {
-        return new ModularEditBuilder(this, deltaReceiver, anchors);
+        return new ModularEditBuilder(this, this.fieldKinds, deltaReceiver, anchors);
     }
 }
 
@@ -290,16 +290,20 @@ interface EncodedFieldChange {
 /**
  * @sealed
  */
-export class ModularEditBuilder extends ProgressiveEditBuilder<FieldChangeMap> {
+export class ModularEditBuilder
+    extends ProgressiveEditBuilderBase<FieldChangeMap>
+    implements ProgressiveEditBuilder<FieldChangeMap>
+{
     private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 
     constructor(
-        family: ModularChangeFamily,
+        family: ChangeFamily<unknown, FieldChangeMap>,
+        fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
         deltaReceiver: (delta: Delta.Root) => void,
         anchors: AnchorSet,
     ) {
         super(family, deltaReceiver, anchors);
-        this.fieldKinds = family.fieldKinds;
+        this.fieldKinds = fieldKinds;
     }
 
     /**
