@@ -28,7 +28,7 @@ export function safeRaiseEvent(
  * @param logger - The logger to log telemetry
  * @param emitter - The event emitter instance
  * @param connected - A boolean tracking whether the connection was in a connected state or not
- * @param clientId - The ID of the client
+ * @param clientId - The connected/disconnected clientId
  * @param disconnectedReason - The reason for the connection to be disconnected (Used for telemetry purposes only)
  */
 export function raiseConnectedEvent(

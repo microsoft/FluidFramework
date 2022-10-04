@@ -631,13 +631,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectionStateHandler = createConnectionStateHandler(
             {
                 logger: this.mc.logger,
-                connectionStateChanged: (value, oldState, reason) => {
+                connectionStateChanged: (value, oldState, disconnectedReason) => {
                     if (value === ConnectionState.Connected) {
                         this._clientId = this.connectionStateHandler.pendingClientId;
                     }
-                    this.logConnectionStateChangeTelemetry(value, oldState, reason);
+                    this.logConnectionStateChangeTelemetry(value, oldState, disconnectedReason);
                     if (this._lifecycleState === "loaded") {
-                        this.propagateConnectionState(false /* initial transition */, reason);
+                        this.propagateConnectionState(false /* initial transition */, disconnectedReason);
                     }
                 },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
@@ -1610,7 +1610,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private propagateConnectionState(initialTransition: boolean, reason?: string) {
+    private propagateConnectionState(initialTransition: boolean, disconnectedReason?: string) {
         // When container loaded, we want to propagate initial connection state.
         // After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
         // This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
@@ -1633,7 +1633,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.setContextConnectedState(state, this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false);
         this.protocolHandler.setConnectionState(state, this.clientId);
-        raiseConnectedEvent(this.mc.logger, this, state, this.clientId, reason);
+        raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
 
         if (logOpsOnReconnect) {
             this.mc.logger.sendTelemetryEvent(
