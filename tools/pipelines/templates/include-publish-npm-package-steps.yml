@@ -97,26 +97,6 @@ steps:
         fi
         if [[ $f != "" ]]; then
           echo "Passed"
-          # checkVersion=${f##*/}
-
-          # echo "File Name: " $f
-          # echo "checkVersion BEFORE : " $checkVersion
-
-          # checkVersion=${checkVersion:0:-4}
-          # checkVersion=$(echo $checkVersion | sed -r 's/\*\*\*/fluid/g')
-
-          # if [[ $checkVersion == *"fluidframework"* ]]; then
-          #   checkVersion=$(echo $checkVersion | sed 's/-/\/''/1')
-          # else
-          #   checkVersion=$(echo $checkVersion | sed 's/-/\/''/2')
-          # fi
-
-          # checkVersion=@$(echo $checkVersion | sed -E 's/-([0-9])/@\1/')
-
-          # echo "checkVersion AFTER : " $checkVersion
-
-          npm view @fluid-tools/fluidapp-odsp-urlresolver@0.0.0-96564-test
-
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
           then
