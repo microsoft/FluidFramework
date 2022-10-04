@@ -11,7 +11,7 @@ import { isSkipMark } from "./utils";
  * Dummy value used in place of the actual tag.
  * TODO: give `invert` access real tag data.
  */
- export const DUMMY_INVERT_TAG: F.ChangesetTag = "Dummy Invert Changeset Tag";
+export const DUMMY_INVERT_TAG: F.ChangesetTag = "Dummy Invert Changeset Tag";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -63,34 +63,43 @@ function invertMark<TNodeChange>(
         switch (mark.type) {
             case "Insert":
             case "MInsert": {
-                return [{
-                    type: "Delete",
-                    id: mark.id,
-                    count: mark.type === "Insert" ? mark.content.length : 1,
-                }];
+                return [
+                    {
+                        type: "Delete",
+                        id: mark.id,
+                        count: mark.type === "Insert" ? mark.content.length : 1,
+                    },
+                ];
             }
             case "Delete": {
-                return [{
-                    type: "Revive",
-                    id: mark.id,
-                    tomb: opIdToTag(mark.id),
-                    count: mark.count,
-                }];
+                return [
+                    {
+                        type: "Revive",
+                        id: mark.id,
+                        tomb: opIdToTag(mark.id),
+                        count: mark.count,
+                    },
+                ];
             }
             case "Revive": {
-                return [{
-                    type: "Delete",
-                    id: mark.id,
-                    count: mark.count,
-                }];
+                return [
+                    {
+                        type: "Delete",
+                        id: mark.id,
+                        count: mark.count,
+                    },
+                ];
             }
             case "Modify": {
-                return [{
-                    type: "Modify",
-                    changes: invertChild(mark.changes),
-                }];
+                return [
+                    {
+                        type: "Modify",
+                        changes: invertChild(mark.changes),
+                    },
+                ];
             }
-            default: fail("Not implemented");
+            default:
+                fail("Not implemented");
         }
     }
 }

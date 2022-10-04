@@ -4,7 +4,12 @@
  */
 import { fail, strict as assert } from "assert";
 import {
-    FieldKinds, singleTextCursor, anchorSymbol, isUnwrappedNode, valueSymbol, getSchemaString
+    FieldKinds,
+    singleTextCursor,
+    anchorSymbol,
+    isUnwrappedNode,
+    valueSymbol,
+    getSchemaString,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { detachedFieldAsKey, rootFieldKey, TreeValue } from "../../tree";
@@ -21,11 +26,14 @@ describe("SharedTree", () => {
         const provider = await TestTreeProvider.create(1);
         provider.trees[0].runTransaction((f, editor) => {
             const writeCursor = singleTextCursor({ type: brand("LonelyNode") });
-            editor.insert({
-                parent: undefined,
-                parentField: detachedFieldAsKey(f.rootField),
-                parentIndex: 0,
-            }, writeCursor);
+            editor.insert(
+                {
+                    parent: undefined,
+                    parentField: detachedFieldAsKey(f.rootField),
+                    parentIndex: 0,
+                },
+                writeCursor,
+            );
 
             return TransactionResult.Apply;
         });
@@ -95,11 +103,14 @@ describe("SharedTree", () => {
 
             // Delete node
             tree1.runTransaction((forest, editor) => {
-                editor.delete({
-                    parent: undefined,
-                    parentField: detachedFieldAsKey(forest.rootField),
-                    parentIndex: 0,
-                }, 1);
+                editor.delete(
+                    {
+                        parent: undefined,
+                        parentField: detachedFieldAsKey(forest.rootField),
+                        parentIndex: 0,
+                    },
+                    1,
+                );
                 return TransactionResult.Apply;
             });
 
@@ -115,20 +126,26 @@ describe("SharedTree", () => {
 
             // Insert nodes
             tree1.runTransaction((forest, editor) => {
-                editor.insert({
-                    parent: undefined,
-                    parentField: detachedFieldAsKey(forest.rootField),
-                    parentIndex: 0,
-                }, singleTextCursor({ type: brand("Test"), value: 1 }));
+                editor.insert(
+                    {
+                        parent: undefined,
+                        parentField: detachedFieldAsKey(forest.rootField),
+                        parentIndex: 0,
+                    },
+                    singleTextCursor({ type: brand("Test"), value: 1 }),
+                );
                 return TransactionResult.Apply;
             });
 
             tree1.runTransaction((forest, editor) => {
-                editor.insert({
-                    parent: undefined,
-                    parentField: detachedFieldAsKey(forest.rootField),
-                    parentIndex: 1,
-                }, singleTextCursor({ type: brand("Test"), value: 2 }));
+                editor.insert(
+                    {
+                        parent: undefined,
+                        parentField: detachedFieldAsKey(forest.rootField),
+                        parentIndex: 1,
+                    },
+                    singleTextCursor({ type: brand("Test"), value: 2 }),
+                );
                 return TransactionResult.Apply;
             });
 
@@ -170,14 +187,14 @@ describe("SharedTree", () => {
         // Perform an edit
         sharedTree.runTransaction((forest, editor) => {
             // Perform an edit
-            const path = sharedTree.locate(anchor)??fail("anchor should exist");
-            sharedTree.context.prepareForEdit()
+            const path = sharedTree.locate(anchor) ?? fail("anchor should exist");
+            sharedTree.context.prepareForEdit();
             editor.setValue(path, 2);
 
             // Check that the edit is reflected in the EditableTree
             assert.equal(editable[valueSymbol], 2);
 
-            sharedTree.context.prepareForEdit()
+            sharedTree.context.prepareForEdit();
             return TransactionResult.Apply;
         });
 
@@ -189,11 +206,11 @@ describe("SharedTree", () => {
 const rootFieldSchema = fieldSchema(FieldKinds.value);
 const rootNodeSchema = namedTreeSchema({
     name: brand("TestValue"),
-    extraLocalFields: fieldSchema(FieldKinds.sequence)
-})
+    extraLocalFields: fieldSchema(FieldKinds.sequence),
+});
 const testSchema: SchemaData = {
     treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-    globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]])
+    globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
 };
 
 /**
@@ -201,17 +218,19 @@ const testSchema: SchemaData = {
  * Use {@link getTestValue} to read the value.
  */
 function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
-
-    tree.storedSchema.update(testSchema)
+    tree.storedSchema.update(testSchema);
 
     // Apply an edit to the tree which inserts a node with a value
     tree.runTransaction((forest, editor) => {
         const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-        editor.insert({
-            parent: undefined,
-            parentField: detachedFieldAsKey(forest.rootField),
-            parentIndex: 0,
-        }, writeCursor);
+        editor.insert(
+            {
+                parent: undefined,
+                parentField: detachedFieldAsKey(forest.rootField),
+                parentIndex: 0,
+            },
+            writeCursor,
+        );
 
         return TransactionResult.Apply;
     });

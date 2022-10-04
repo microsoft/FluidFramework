@@ -5,14 +5,22 @@
 
 import { fail } from "../../util";
 import {
-    FieldSchema, LocalFieldKey, TreeSchema,
+    FieldSchema,
+    LocalFieldKey,
+    TreeSchema,
     TreeSchemaIdentifier,
     SchemaData,
     FieldKindIdentifier,
     GlobalFieldKey,
     InMemoryStoredSchemaRepository,
 } from "../../schema-stored";
-import { Adapters, ViewSchemaData, AdaptedViewSchema, Compatibility, FieldAdapter } from "../../schema-view";
+import {
+    Adapters,
+    ViewSchemaData,
+    AdaptedViewSchema,
+    Compatibility,
+    FieldAdapter,
+} from "../../schema-view";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
 import { allowsRepoSuperset, isNeverTree } from "./comparison";
 
@@ -38,9 +46,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
      * TODO: this API violates the parse don't validate design philosophy.
      * It should be wrapped with (or replaced by) a parse style API.
      */
-    public checkCompatibility(
-        stored: SchemaData,
-    ): {
+    public checkCompatibility(stored: SchemaData): {
         read: Compatibility;
         write: Compatibility;
         writeAllowingStoredSchemaUpdates: Compatibility;
@@ -57,8 +63,8 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
         const write = allowsRepoSuperset(this.policy, this.schema, stored)
             ? Compatibility.Compatible
             : allowsRepoSuperset(this.policy, this.schema, adapted.adaptedForViewSchema)
-            // TODO: IThis assumes adapters are bidirectional.
-            ? Compatibility.RequiresAdapters
+            ? // TODO: IThis assumes adapters are bidirectional.
+              Compatibility.RequiresAdapters
             : Compatibility.Incompatible;
 
         // TODO: compute this properly (and maybe include the set of schema changes needed for it?).
@@ -70,13 +76,13 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
             // TODO: This should consider just the updates needed
             // (ex: when view covers a subset of stored after stored has a update to that subset).
             allowsRepoSuperset(this.policy, stored, this.schema)
-            ? Compatibility.Compatible
-            // TODO: this assumes adapters can translate in both directions. In general this will not be true.
-            // TODO: this also assumes that schema updates to the adapted repo would translate to
-            // updates on the stored schema, which is also likely untrue.
-            : allowsRepoSuperset(this.policy, adapted.adaptedForViewSchema, this.schema)
-            ? Compatibility.RequiresAdapters // Requires schema updates. TODO: consider adapters that can update writes.
-            : Compatibility.Incompatible;
+                ? Compatibility.Compatible
+                : // TODO: this assumes adapters can translate in both directions. In general this will not be true.
+                // TODO: this also assumes that schema updates to the adapted repo would translate to
+                // updates on the stored schema, which is also likely untrue.
+                allowsRepoSuperset(this.policy, adapted.adaptedForViewSchema, this.schema)
+                ? Compatibility.RequiresAdapters // Requires schema updates. TODO: consider adapters that can update writes.
+                : Compatibility.Incompatible;
 
         // Since the above does not consider partial updates,
         // we can improve the tolerance a bit by considering the op-op update:
@@ -102,7 +108,8 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
                 isNeverTree(
                     this.policy,
                     this.schema,
-                    this.schema.treeSchema.get(adapter.output) ?? this.policy.defaultTreeSchema)
+                    this.schema.treeSchema.get(adapter.output) ?? this.policy.defaultTreeSchema,
+                )
             ) {
                 fail(`tree adapter for stored ${adapter.output} should not be never`);
             }
@@ -124,10 +131,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
     /**
      * Adapt original such that it allows member types which can be adapted to its specified types.
      */
-    private adaptField(
-        original: FieldSchema,
-        adapter: FieldAdapter | undefined,
-    ): FieldSchema {
+    private adaptField(original: FieldSchema, adapter: FieldAdapter | undefined): FieldSchema {
         if (original.types) {
             const types: Set<TreeSchemaIdentifier> = new Set(original.types);
             for (const treeAdapter of this.adapters?.tree ?? []) {
@@ -137,7 +141,9 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
                 }
             }
 
-            return adapter?.convert?.({ kind: original.kind, types }) ?? { kind: original.kind, types };
+            return (
+                adapter?.convert?.({ kind: original.kind, types }) ?? { kind: original.kind, types }
+            );
         }
         return adapter?.convert?.(original) ?? original;
     }
@@ -161,7 +167,7 @@ export interface TreeViewSchema extends TreeSchema {}
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  */
- export class FieldTypeView<Kind extends FieldKind = FieldKind> implements FieldSchema {
+export class FieldTypeView<Kind extends FieldKind = FieldKind> implements FieldSchema {
     public readonly types?: ReadonlySet<TreeSchemaIdentifier>;
 
     get kind(): FieldKindIdentifier {
