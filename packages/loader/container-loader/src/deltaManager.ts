@@ -42,7 +42,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     NonRetryableError,
-    isClientMessage,
+    isRuntimeMessage,
+    MessageType2,
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
@@ -70,6 +71,25 @@ export interface IConnectionArgs {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
+}
+
+/**
+ * Determines if message was sent by client, not service
+ */
+function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
+    if (isRuntimeMessage(message)) {
+        return true;
+    }
+    switch (message.type) {
+        case MessageType.Propose:
+        case MessageType.Reject:
+        case MessageType.NoOp:
+        case MessageType2.Accept:
+        case MessageType.Summarize:
+            return true;
+        default:
+            return false;
+    }
 }
 
 /**
@@ -217,6 +237,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (message === undefined) {
             return -1;
         }
+
+        assert(isClientMessage(message), "client sends non-client message");
 
         if (contents !== undefined) {
             this.opsSize += contents.length;
@@ -797,11 +819,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // All non-system messages are coming from some client, and should have clientId
         // System messages may have no clientId (but some do, like propose, noop, summarize)
-        assert(
-            message.clientId !== undefined
-            || !(isClientMessage(message)),
-            0x0ed /* "non-system message have to have clientId" */,
-        );
+        // Note: we can see such message.type as "attach" or "chunkedOp" for legacy files before RTM
+        // But these types are no longer supported as they are rolled into "op" by container runtime.
+        if ((message.clientId === null) === isClientMessage(message)) {
+            throw new DataCorruptionError("Mismatch in clientId",
+                { ...extractSafePropertiesFromMessage(message), messageType: message.type });
+        }
 
         // TODO Remove after SPO picks up the latest build.
         if (
@@ -822,6 +845,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 clientId: this.connectionManager.clientId,
             });
         }
+
+        // Client ops: MSN has to be lower than sequence #, as client can continue to send ops with same
+        // reference sequence number as this op.
+        // System ops (when no clients are connected) are the only ops where equation is possible.
+        const diff = message.sequenceNumber - message.minimumSequenceNumber;
+        if (diff < 0 || diff === 0 && message.clientId !== null) {
+            throw new DataCorruptionError("MSN has to be lower than sequence #",
+                extractSafePropertiesFromMessage(message));
+        }
+
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
