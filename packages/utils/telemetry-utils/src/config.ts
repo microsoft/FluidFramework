@@ -199,11 +199,10 @@ export class CachedConfigProvider implements IConfigProvider {
         return this.getCacheEntry(name).raw;
     }
 
-    private getCacheEntryCore(name: string): StronglyTypedValue | undefined {
+    private getEntry(name: string): StronglyTypedValue | undefined {
         for (const provider of this.orderedBaseProviders) {
             const parsed = stronglyTypedParse(provider?.getRawConfig(name));
             if (parsed !== undefined) {
-                this.configCache.set(name, parsed);
                 return parsed;
             }
         }
@@ -214,10 +213,10 @@ export class CachedConfigProvider implements IConfigProvider {
         let parsed = this.configCache.get(name);
         if (parsed === undefined) {
             // Try first versioned key
-            parsed = this.getCacheEntryCore(`${name}_${pkgVersion}`);
+            parsed = this.getEntry(`${name}_${pkgVersion}`);
+            // If no hit, try non-versioned key
             if (parsed === undefined) {
-                // If no hit, try non-versioned key
-                parsed = this.getCacheEntryCore(name);
+                parsed = this.getEntry(name);
             }
             // configs are immutable, if the first lookup returned no results, all lookups should
             if (parsed === undefined) {
