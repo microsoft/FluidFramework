@@ -128,12 +128,6 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
         const maybeIFluidLoadable: IDataStore & FluidObject<IProvideFluidLoadable> = dataStore;
         const entrypoint = await maybeIFluidLoadable.IFluidLoadable?.handle?.get();
-        // In general we try to avoid instanceof for validation since it has caveats like being risky when objects
-        // are being passed between frames (or in general "JS realms"), or serialized/deserialized. Here it's safe
-        // because we're validating the object just created in the previous line, so these two lines will always share
-        // the same JS realm (i.e. we're not trying to validate an object that was passed in and we don't know
-        // where/how it was originally created).
-        assert(entrypoint instanceof DataObject, "The data store's handle is not of the correct type!");
         return entrypoint as unknown as T;
     }
 
