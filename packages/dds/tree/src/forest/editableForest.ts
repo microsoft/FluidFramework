@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { AnchorSet, FieldKey, DetachedField, Delta, detachedFieldAsKey, Anchor, ITreeCursorSynchronous } from "../tree";
+import {
+    AnchorSet,
+    FieldKey,
+    DetachedField,
+    Delta,
+    detachedFieldAsKey,
+    Anchor,
+    ITreeCursorSynchronous,
+} from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
 /**
@@ -39,7 +47,7 @@ export function initializeForest(forest: IEditableForest, content: ITreeCursorSy
 /**
  * Ways to refer to a node in an IEditableForest.
  */
- export type ForestLocation = ITreeSubscriptionCursor | Anchor;
+export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 export interface TreeLocation {
     readonly range: FieldLocation | DetachedField;
@@ -54,6 +62,6 @@ export function isFieldLocation(range: FieldLocation | DetachedField): range is 
  * Wrapper around DetachedField that can be detected at runtime.
  */
 export interface FieldLocation {
-	readonly key: FieldKey;
+    readonly key: FieldKey;
     readonly parent: ForestLocation;
 }

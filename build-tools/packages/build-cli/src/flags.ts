@@ -2,15 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Flags } from "@oclif/core";
+import * as semver from "semver";
+
+import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 
 import {
     isVersionBumpType,
     isVersionBumpTypeExtended,
     isVersionScheme,
 } from "@fluid-tools/version-tools";
-import { supportedMonoRepoValues } from "@fluidframework/build-tools";
-import { Flags } from "@oclif/core";
-import * as semver from "semver";
+
 import { DependencyUpdateType } from "./lib";
 import { isReleaseGroup } from "./releaseGroups";
 

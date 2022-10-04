@@ -92,10 +92,7 @@ describe("SequenceField - Rebase", () => {
             4,
             { type: "Modify", changes: TestChange.mint([0], 3) },
         ];
-        const deletion: TestChangeset = [
-            1,
-            { type: "Delete", id: 1, count: 3 },
-        ];
+        const deletion: TestChangeset = [1, { type: "Delete", id: 1, count: 3 }];
         const actual = rebase(mods, deletion);
         const expected: TestChangeset = [
             // Set at an earlier index is unaffected by a delete at a later index
@@ -116,10 +113,7 @@ describe("SequenceField - Rebase", () => {
             4,
             { type: "Insert", id: 3, content: [{ type, value: 3 }] },
         ];
-        const deletion: TestChangeset = [
-            1,
-            { type: "Delete", id: 1, count: 3 },
-        ];
+        const deletion: TestChangeset = [1, { type: "Delete", id: 1, count: 3 }];
         const actual = rebase(insert, deletion);
         const expected: TestChangeset = [
             // Earlier insert is unaffected
@@ -140,10 +134,7 @@ describe("SequenceField - Rebase", () => {
             4,
             { type: "Revive", id: 3, count: 1, tomb },
         ];
-        const deletion: TestChangeset = [
-            1,
-            { type: "Delete", id: 1, count: 3 },
-        ];
+        const deletion: TestChangeset = [1, { type: "Delete", id: 1, count: 3 }];
         const actual = rebase(revive, deletion);
         const expected: TestChangeset = [
             // Earlier revive is unaffected
@@ -158,10 +149,7 @@ describe("SequenceField - Rebase", () => {
 
     it("delete ↷ overlapping delete", () => {
         // Deletes ---DEFGH--
-        const deleteA: TestChangeset = [
-            3,
-            { type: "Delete", id: 2, count: 5 },
-        ];
+        const deleteA: TestChangeset = [3, { type: "Delete", id: 2, count: 5 }];
         // Deletes --CD-F-HI
         const deleteB: TestChangeset = [
             2,
@@ -173,42 +161,26 @@ describe("SequenceField - Rebase", () => {
         ];
         const actual = rebase(deleteA, deleteB);
         // Deletes --E-G
-        const expected: TestChangeset = [
-            2,
-            { type: "Delete", id: 2, count: 2 },
-        ];
+        const expected: TestChangeset = [2, { type: "Delete", id: 2, count: 2 }];
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ earlier delete", () => {
         // Deletes ---DE
-        const deleteA: TestChangeset = [
-            3,
-            { type: "Delete", id: 2, count: 2 },
-        ];
+        const deleteA: TestChangeset = [3, { type: "Delete", id: 2, count: 2 }];
         // Deletes AB--
-        const deleteB: TestChangeset = [
-            { type: "Delete", id: 1, count: 2 },
-        ];
+        const deleteB: TestChangeset = [{ type: "Delete", id: 1, count: 2 }];
         const actual = rebase(deleteA, deleteB);
         // Deletes -DE
-        const expected: TestChangeset = [
-            1,
-            { type: "Delete", id: 2, count: 2 },
-        ];
+        const expected: TestChangeset = [1, { type: "Delete", id: 2, count: 2 }];
         assert.deepEqual(actual, expected);
     });
 
     it("delete ↷ later delete", () => {
         // Deletes AB--
-        const deleteA: TestChangeset = [
-            { type: "Delete", id: 1, count: 2 },
-        ];
+        const deleteA: TestChangeset = [{ type: "Delete", id: 1, count: 2 }];
         // Deletes ---DE
-        const deleteB: TestChangeset = [
-            2,
-            { type: "Delete", id: 2, count: 2 },
-        ];
+        const deleteB: TestChangeset = [2, { type: "Delete", id: 2, count: 2 }];
         const actual = rebase(deleteA, deleteB);
         assert.deepEqual(actual, deleteA);
     });
@@ -219,10 +191,7 @@ describe("SequenceField - Rebase", () => {
             2,
             { type: "Modify", changes: TestChange.mint([0], 2) },
         ];
-        const insert: TestChangeset = [
-            2,
-            { type: "Insert", id: 1, content: [{ type, value: 2 }] },
-        ];
+        const insert: TestChangeset = [2, { type: "Insert", id: 1, content: [{ type, value: 2 }] }];
         const expected: TestChangeset = [
             // Modify at earlier index is unaffected
             { type: "Modify", changes: TestChange.mint([0], 1) },
@@ -244,10 +213,7 @@ describe("SequenceField - Rebase", () => {
             { type: "Delete", id: 1, count: 1 },
         ];
         // Inserts between C and D
-        const insert: TestChangeset = [
-            3,
-            { type: "Insert", id: 1, content: [{ type, value: 2 }] },
-        ];
+        const insert: TestChangeset = [3, { type: "Insert", id: 1, content: [{ type, value: 2 }] }];
         const expected: TestChangeset = [
             // Delete with earlier index is unaffected
             { type: "Delete", id: 1, count: 1 },
@@ -312,10 +278,7 @@ describe("SequenceField - Rebase", () => {
             2,
             { type: "Modify", changes: TestChange.mint([0], 2) },
         ];
-        const revive: TestChangeset = [
-            2,
-            { type: "Revive", id: 1, count: 1, tomb },
-        ];
+        const revive: TestChangeset = [2, { type: "Revive", id: 1, count: 1, tomb }];
         const expected: TestChangeset = [
             // Modify at earlier index is unaffected
             { type: "Modify", changes: TestChange.mint([0], 1) },
@@ -337,10 +300,7 @@ describe("SequenceField - Rebase", () => {
             { type: "Delete", id: 1, count: 1 },
         ];
         // Revives content between C and D
-        const revive: TestChangeset = [
-            3,
-            { type: "Revive", id: 1, count: 1, tomb },
-        ];
+        const revive: TestChangeset = [3, { type: "Revive", id: 1, count: 1, tomb }];
         const expected: TestChangeset = [
             // Delete with earlier index is unaffected
             { type: "Delete", id: 1, count: 1 },
@@ -362,10 +322,7 @@ describe("SequenceField - Rebase", () => {
             2,
             { type: "Insert", id: 2, content: [{ type, value: 2 }] },
         ];
-        const revive: TestChangeset = [
-            1,
-            { type: "Revive", id: 1, count: 1, tomb },
-        ];
+        const revive: TestChangeset = [1, { type: "Revive", id: 1, count: 1, tomb }];
         const actual = rebase(insert, revive);
         const expected: TestChangeset = [
             { type: "Insert", id: 1, content: [{ type, value: 1 }] },
@@ -383,10 +340,7 @@ describe("SequenceField - Rebase", () => {
             2,
             { type: "Revive", id: 3, count: 1, tomb },
         ];
-        const reviveB: TestChangeset = [
-            2,
-            { type: "Revive", id: 1, count: 1, tomb },
-        ];
+        const reviveB: TestChangeset = [2, { type: "Revive", id: 1, count: 1, tomb }];
         const actual = rebase(reviveA, reviveB);
         const expected: TestChangeset = [
             { type: "Revive", id: 1, count: 1, tomb },

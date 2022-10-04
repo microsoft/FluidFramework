@@ -2,18 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import { VersionBag, ReferenceVersionBag } from "./versionBag";
+
 import { commonOptions } from "../common/commonOptions";
-import { Timer } from "../common/timer";
-import { getPackageManifest } from "../common/fluidUtils";
 import { FluidRepo, IPackageManifest } from "../common/fluidRepo";
-import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { getPackageManifest } from "../common/fluidUtils";
+import { Logger, defaultLogger } from "../common/logging";
+import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
-import { defaultLogger, Logger } from "../common/logging";
+import { Timer } from "../common/timer";
 import { GitRepo } from "./gitRepo";
 import { fatal, prereleaseSatisfies } from "./utils";
+import { ReferenceVersionBag, VersionBag } from "./versionBag";
 
 /**
  * Context provides access to data about the Fluid repo, and exposes methods to interrogate the repo state.
@@ -59,7 +59,7 @@ export class Context {
         }
         const versions = new VersionBag();
 
-        this.repo.packages.packages.forEach(pkg => {
+        this.repo.packages.packages.forEach((pkg) => {
             if (pkg.packageJson.private && pkg.monoRepo === undefined) {
                 return;
             }
@@ -69,11 +69,16 @@ export class Context {
         return versions;
     }
 
-    public async collectVersionInfo(releaseGroup: MonoRepoKind | string): Promise<ReferenceVersionBag> {
+    public async collectVersionInfo(
+        releaseGroup: MonoRepoKind | string,
+    ): Promise<ReferenceVersionBag> {
         this.logger.info("  Resolving published dependencies");
 
-        const depVersions =
-            new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
+        const depVersions = new ReferenceVersionBag(
+            this.repo.resolvedRoot,
+            this.fullPackageMap,
+            this.collectVersions(),
+        );
         const pendingDepCheck: Package[] = [];
         const processMonoRepo = (monoRepo: MonoRepo) => {
             pendingDepCheck.push(...monoRepo.packages);
@@ -85,7 +90,10 @@ export class Context {
         if (isMonoRepoKind(releaseGroup)) {
             const repoKind = releaseGroup;
             if (repoKind === MonoRepoKind.Server) {
-                assert(this.repo.serverMonoRepo, "Attempted to collect server info on a Fluid repo with no server directory");
+                assert(
+                    this.repo.serverMonoRepo,
+                    "Attempted to collect server info on a Fluid repo with no server directory",
+                );
             }
             processMonoRepo(this.repo.monoRepos.get(repoKind)!);
         } else {
@@ -117,10 +125,24 @@ export class Context {
                         // If it is the same repo, there are all related, and we would have added them to the pendingDepCheck as a set already.
                         // Just verify that the two package has the same version and the dependency has the same version
                         if (pkg.version !== depBuildPackage.version) {
-                            fatal(`Inconsistent package version within ${pkg.monoRepo!.kind} monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep}@${depBuildPackage.version}`);
+                            fatal(
+                                `Inconsistent package version within ${
+                                    pkg.monoRepo!.kind
+                                } monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep}@${
+                                    depBuildPackage.version
+                                }`,
+                            );
                         }
                         if (version !== `^${depBuildPackage.version}`) {
-                            fatal(`Inconsistent version dependency within ${pkg.monoRepo!.kind} monorepo in ${pkg.name}\n  actual: ${dep}@${version}\n  expected: ${dep}@^${depBuildPackage.version}`);
+                            fatal(
+                                `Inconsistent version dependency within ${
+                                    pkg.monoRepo!.kind
+                                } monorepo in ${
+                                    pkg.name
+                                }\n  actual: ${dep}@${version}\n  expected: ${dep}@^${
+                                    depBuildPackage.version
+                                }`,
+                            );
                         }
                         continue;
                     }
@@ -130,7 +152,9 @@ export class Context {
 
                     if (prereleaseSatisfies(depBuildPackage.version, version)) {
                         if (!depVersions.get(depBuildPackage)) {
-                            this.logger.verbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`);
+                            this.logger.verbose(
+                                `${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`,
+                            );
                             if (depBuildPackage.monoRepo) {
                                 pendingDepCheck.push(...depBuildPackage.monoRepo.packages);
                             } else {
@@ -139,7 +163,14 @@ export class Context {
                         }
                         depVersions.add(depBuildPackage, depVersion, dev, reference);
                     } else {
-                        publishedPackageDependenciesPromises.push(depVersions.collectPublishedPackageDependencies(depBuildPackage, version, dev, reference));
+                        publishedPackageDependenciesPromises.push(
+                            depVersions.collectPublishedPackageDependencies(
+                                depBuildPackage,
+                                version,
+                                dev,
+                                reference,
+                            ),
+                        );
                     }
                 }
             }
@@ -161,7 +192,7 @@ export class Context {
 
     public async createBranch(branchName: string) {
         if (await this.gitRepo.getShaForBranch(branchName)) {
-            fatal(`${branchName} already exists. Failed to create.`)
+            fatal(`${branchName} already exists. Failed to create.`);
         }
         await this.gitRepo.createBranch(branchName);
         this.newBranches.push(branchName);
@@ -184,7 +215,7 @@ export class Context {
      * @returns An array of packages that belong to the release group
      */
     public packagesInReleaseGroup(releaseGroup: MonoRepoKind): Package[] {
-        const packages = this.packages.filter(pkg => pkg.monoRepo?.kind === releaseGroup);
+        const packages = this.packages.filter((pkg) => pkg.monoRepo?.kind === releaseGroup);
         return packages;
     }
 
@@ -196,10 +227,10 @@ export class Context {
      */
     public packagesNotInReleaseGroup(releaseGroup: MonoRepoKind | Package): Package[] {
         let packages: Package[];
-        if(releaseGroup instanceof Package) {
-            packages = this.packages.filter(p => p.name !== releaseGroup.name);
+        if (releaseGroup instanceof Package) {
+            packages = this.packages.filter((p) => p.name !== releaseGroup.name);
         } else {
-            packages = this.packages.filter(pkg => pkg.monoRepo?.kind !== releaseGroup);
+            packages = this.packages.filter((pkg) => pkg.monoRepo?.kind !== releaseGroup);
         }
 
         return packages;
@@ -209,7 +240,7 @@ export class Context {
      * @returns An array of packages in the repo that are not associated with a release group.
      */
     public get independentPackages(): Package[] {
-        const packages = this.packages.filter(pkg => pkg.monoRepo === undefined);
+        const packages = this.packages.filter((pkg) => pkg.monoRepo === undefined);
         return packages;
     }
 
@@ -226,10 +257,7 @@ export class Context {
      *
      * @returns A version string.
      */
-    public getVersion(
-        key: MonoRepoKind | string,
-        versionBag?: VersionBag,
-    ): string {
+    public getVersion(key: MonoRepoKind | string, versionBag?: VersionBag): string {
         let ver = "";
         if (versionBag !== undefined && !versionBag.isEmpty()) {
             ver = versionBag.get(key);

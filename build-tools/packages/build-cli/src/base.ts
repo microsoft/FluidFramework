@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { Context, getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
 import {
     FlagInput,
@@ -12,6 +10,9 @@ import {
     PrettyPrintableError,
 } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
+
+import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+
 import { rootPathFlag } from "./flags";
 import { indentString } from "./lib";
 import { CommandLogger } from "./logging";
