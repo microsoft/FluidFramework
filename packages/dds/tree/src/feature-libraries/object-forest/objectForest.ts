@@ -220,6 +220,9 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     private beforeChange(): void {
+        // TODO: two lines below have been swapped.
+        // Currently it is more a workaround for that there is no other way to inform involved parties
+        // that they should prepare (i.e. at least clear cursors) for upcoming changes from within a SharedTree etc.
         this.invalidateDependents();
         assert(this.currentCursors.size === 0, 0x374 /* No cursors can be current when modifying forest */);
     }
