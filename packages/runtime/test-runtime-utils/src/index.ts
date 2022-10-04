@@ -3,11 +3,24 @@
  * Licensed under the MIT License.
  */
 
-export * from "./insecureTokenProvider";
-export * from "./mocksDataStoreContext";
-export * from "./mockDeltas";
-export * from "./mockHandle";
-export * from "./mocks";
-export * from "./mocksForReconnection";
-export * from "./mockStorage";
-export * from "./validateAssertionError";
+export { InsecureTokenProvider } from "./insecureTokenProvider";
+export { MockFluidDataStoreContext } from "./mocksDataStoreContext";
+export { MockDeltaQueue, MockDeltaManager } from "./mockDeltas";
+export { MockHandle } from "./mockHandle";
+export {
+    MockDeltaConnection,
+    IMockContainerRuntimePendingMessage,
+    MockContainerRuntime,
+    MockContainerRuntimeFactory,
+    MockQuorumClients,
+    MockFluidDataStoreRuntime,
+    MockEmptyDeltaConnection,
+    MockObjectStorageService,
+    MockSharedObjectServices,
+} from "./mocks";
+export {
+    MockContainerRuntimeForReconnection,
+    MockContainerRuntimeFactoryForReconnection,
+} from "./mocksForReconnection";
+export { MockStorage } from "./mockStorage";
+export { validateAssertionError } from "./validateAssertionError";

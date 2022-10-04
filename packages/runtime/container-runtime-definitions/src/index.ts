@@ -3,4 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerRuntime";
+export {
+    IDataStoreWithBindToContext_Deprecated,
+    IContainerRuntime,
+    IProvideContainerRuntime,
+    IContainerRuntimeEvents,
+    IContainerRuntimeBaseWithCombinedEvents,
+} from "./containerRuntime";

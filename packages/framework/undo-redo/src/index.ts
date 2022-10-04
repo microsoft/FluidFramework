@@ -91,6 +91,6 @@
 * @packageDocumentation
 */
 
-export * from "./undoRedoStackManager";
-export * from "./mapHandler";
-export * from "./sequenceHandler";
+export { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
+export { SharedMapUndoRedoHandler, SharedMapRevertible } from "./mapHandler";
+export { SharedSegmentSequenceUndoRedoHandler, SharedSegmentSequenceRevertible } from "./sequenceHandler";

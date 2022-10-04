@@ -4,8 +4,8 @@
  */
 
 export { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle";
-export * from "./exportFile";
+export { exportFile, createContainerAndExecute, IExportFileResponse } from "./exportFile";
 export { fluidRunner } from "./fluidRunner";
 // eslint-disable-next-line import/no-internal-modules
-export * from "./logger/FileLogger";
-export * from "./parseBundleAndExportFile";
+export { createLogger, getTelemetryFileValidationError, FileLogger } from "./logger/FileLogger";
+export { parseBundleAndExportFile } from "./parseBundleAndExportFile";

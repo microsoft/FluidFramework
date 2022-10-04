@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./replayArgs";
-export * from "./helpers";
-export * from "./replayMessages";
+export { ReplayArgs } from "./replayArgs";
+export { getNormalizedFileSnapshot, compareWithReferenceSnapshot, loadContainer, uploadSummary } from "./helpers";
+export { ReplayTool } from "./replayMessages";

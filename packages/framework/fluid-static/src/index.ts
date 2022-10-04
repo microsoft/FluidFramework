@@ -9,7 +9,19 @@
  * @packageDocumentation
  */
 
-export * from "./fluidContainer";
-export * from "./rootDataObject";
-export * from "./serviceAudience";
-export * from "./types";
+export { IFluidContainerEvents, IFluidContainer, FluidContainer } from "./fluidContainer";
+export { RootDataObjectProps, RootDataObject, DOProviderContainerRuntimeFactory } from "./rootDataObject";
+export { ServiceAudience } from "./serviceAudience";
+export {
+    LoadableObjectRecord,
+    LoadableObjectClassRecord,
+    LoadableObjectClass,
+    DataObjectClass,
+    SharedObjectClass,
+    LoadableObjectCtor,
+    ContainerSchema,
+    IServiceAudienceEvents,
+    IServiceAudience,
+    IConnection,
+    IMember,
+} from "./types";

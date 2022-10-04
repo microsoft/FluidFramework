@@ -29,18 +29,73 @@ export {
     IDocListParameters,
     ListKind,
 } from "./doc-nodes";
-export * from "./rendering";
-export * from "./utilities";
+export {
+    DefaultRenderingPolicies,
+    RenderingHelpers,
+    renderModelDocument,
+    renderPackageDocument,
+    renderApiItemDocument,
+    RenderApiItemWithChildren,
+    RenderApiItemWithoutChildren,
+    RenderSectionWithInnerContent,
+    RenderingPolicies,
+    defaultRenderingPolicies,
+} from "./rendering";
+export { getQualifiedApiItemName,
+    getFirstAncestorWithOwnDocument,
+    getLinkForApiItem,
+    getLinkUrlForApiItem,
+    getUnscopedPackageName,
+    getFilePathForApiItem,
+    getFileNameForApiItem,
+    getHeadingForApiItem,
+    getHeadingIdForApiItem,
+    getFilteredParent,
+    getAncestralHierarchy,
+    doesItemKindRequireOwnDocument,
+    doesItemRequireOwnDocument,
+    doesItemKindGenerateHierarchy,
+    doesItemGenerateHierarchy,
+    filterByKind,
+    getExampleBlocks,
+    getThrowsBlocks,
+    getSeeBlocks,
+    getDefaultValueBlock,
+    getReturnsBlock,
+    getDeprecatedBlock,
+    isDeprecated,
+    isOptional,
+    isReadonly,
+    isStatic,
+    getModifiers,
+    ApiMemberKind,
+    ApiFunctionLike,
+    ApiSignatureLike,
+    ApiModuleLike,
+    ApiModifier,
+    mergeSections,
+} from "./utilities";
 
-export * from "./Heading";
-export * from "./Link";
-export * from "./LoadModel";
-export * from "./Logging";
-export * from "./MarkdownDocument";
-export * from "./MarkdownDocumenter";
-export * from "./Configuration";
-export * from "./MarkdownEmitter";
-export * from "./Policies";
+export { Heading } from "./Heading";
+export { Link } from "./Link";
+export { loadModel } from "./LoadModel";
+export { LoggingFunction, Logger, defaultConsoleLogger, verboseConsoleLogger } from "./Logging";
+export { MarkdownDocument } from "./MarkdownDocument";
+export { renderDocuments, renderFiles, getDocumentItems } from "./MarkdownDocumenter";
+export { markdownDocumenterConfigurationWithDefaults, MarkdownDocumenterConfiguration } from "./Configuration";
+export { emitMarkdown, maxHeadingLevel, EmitterOptions, EmitterContext, MarkdownEmitter } from "./MarkdownEmitter";
+export {
+    DocumentBoundaries,
+    HierarchyBoundaries,
+    FileNamePolicy,
+    UriBaseOverridePolicy,
+    HeadingTitlePolicy,
+    LinkTextPolicy,
+    PackageFilterPolicy,
+    PolicyOptions,
+    DefaultPolicies,
+    defaultPolicyOptions,
+} from "./Policies";
 
 // Conveinence re-exports of API model types
 export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

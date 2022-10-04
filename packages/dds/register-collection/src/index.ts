@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export * from "./consensusRegisterCollection";
-export * from "./consensusRegisterCollectionFactory";
-export * from "./interfaces";
+export { ConsensusRegisterCollection } from "./consensusRegisterCollection";
+export { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
+export {
+    IConsensusRegisterCollectionFactory,
+    IConsensusRegisterCollectionEvents,
+    IConsensusRegisterCollection,
+    ReadPolicy,
+} from "./interfaces";

@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./documentDeltaConnection";
+export { DocumentDeltaConnection } from "./documentDeltaConnection";

@@ -35,12 +35,30 @@ export {
     IMapMessageLocalMetadata,
     IValueOpEmitter,
 } from "./defaultMapInterfaces";
-export * from "./sharedString";
-export * from "./sequence";
-export * from "./sequenceFactory";
-export * from "./sequenceDeltaEvent";
-export * from "./sharedSequence";
-export * from "./sharedObjectSequence";
-export * from "./sharedNumberSequence";
-export * from "./sparsematrix";
-export * from "./sharedIntervalCollection";
+export { getTextAndMarkers, ISharedString, SharedStringSegment, SharedString } from "./sharedString";
+export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
+export { SharedStringFactory, SharedObjectSequenceFactory, SharedNumberSequenceFactory } from "./sequenceFactory";
+export { SequenceEvent, SequenceDeltaEvent, SequenceMaintenanceEvent, ISequenceDeltaRange } from "./sequenceDeltaEvent";
+export { IJSONRunSegment, SubSequence, SharedSequence } from "./sharedSequence";
+export { SharedObjectSequence } from "./sharedObjectSequence";
+export { SharedNumberSequence } from "./sharedNumberSequence";
+export {
+    positionToRowCol,
+    PaddingSegment,
+    SparseMatrixItem,
+    RunSegment,
+    MatrixSegment,
+    maxCol,
+    maxCols,
+    maxRow,
+    maxRows,
+    maxCellPosition,
+    rowColToPosition,
+    SparseMatrix,
+    SparseMatrixFactory,
+} from "./sparsematrix";
+export {
+    SharedIntervalCollectionFactory,
+    ISharedIntervalCollection,
+    SharedIntervalCollection,
+} from "./sharedIntervalCollection";

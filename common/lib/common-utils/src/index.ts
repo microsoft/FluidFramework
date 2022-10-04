@@ -9,23 +9,23 @@
  * @packageDocumentation
  */
 
-export * from "./assert";
-export * from "./indexNode";
-export * from "./base64Encoding";
-export * from "./disposal";
-export * from "./eventForwarder";
-export * from "./heap";
-export * from "./logger";
-export * from "./promiseCache";
-export * from "./promises";
-export * from "./rangeTracker";
-export * from "./rateLimiter";
-export * from "./safeParser";
-export * from "./timer";
-export * from "./trace";
-export * from "./typedEventEmitter";
-export * from "./unreachable";
-export * from "./lazy";
-export * from "./performanceIsomorphic";
-export * from "./delay";
-export * from "./bufferShared";
+export { assert } from "./assert";
+export { Uint8ArrayToString, stringToBuffer, Buffer, IsoBuffer, bufferToString, hashFile, gitHashFile, performance } from "./indexNode";
+export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
+export { doIfNotDisposed } from "./disposal";
+export { EventForwarder } from "./eventForwarder";
+export { IComparer, NumberComparer, IHeapNode, Heap } from "./heap";
+export { BaseTelemetryNullLogger, TelemetryNullLogger } from "./logger";
+export { PromiseCacheExpiry, PromiseCacheOptions, PromiseCache } from "./promiseCache";
+export { Deferred, LazyPromise } from "./promises";
+export { IRange, IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
+export { RateLimiter } from "./rateLimiter";
+export { safelyParseJSON } from "./safeParser";
+export { setLongTimeout, ITimer, Timer, IPromiseTimerResult, IPromiseTimer, PromiseTimer } from "./timer";
+export { Trace, ITraceEvent } from "./trace";
+export { EventEmitterEventType, TypedEventTransform, TypedEventEmitter } from "./typedEventEmitter";
+export { unreachableCase } from "./unreachable";
+export { Lazy } from "./lazy";
+export { IsomorphicPerformance } from "./performanceIsomorphic";
+export { delay } from "./delay";
+export { Uint8ArrayToArrayBuffer } from "./bufferShared";
