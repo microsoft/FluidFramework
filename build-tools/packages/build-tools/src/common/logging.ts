@@ -6,29 +6,82 @@ import chalk from "chalk";
 
 import { commonOptions } from "./commonOptions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/**
+ * A function that logs an Error or error message.
+ */
 export type ErrorLoggingFunction = (msg: string | Error | undefined, ...args: any[]) => void;
 
+/**
+ * A function that logs an error message.
+ */
 export type LoggingFunction = (message?: string, ...args: any[]) => void;
 
+/**
+ * A general-purpose logger object.
+ *
+ * @remarks
+ *
+ * The `log` method is the primary logging function. The other functions can be used to support logging at different
+ * levels. Methods other than `log` may modify the error message in some way (e.g. by prepending some text to it).
+ */
 export interface Logger {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    /**
+     * Logs an error message as-is.
+     */
     log: LoggingFunction;
+
+    /**
+     * Logs an informational message.
+     */
     info: ErrorLoggingFunction;
+
+    /**
+     * Logs a warning message.
+     */
     warning: ErrorLoggingFunction;
+
+    /**
+     * Logs an error message.
+     */
     errorLog: ErrorLoggingFunction;
+
+    /**
+     * Logs a verbose message.
+     */
     verbose: ErrorLoggingFunction;
 }
 
+/**
+ * A {@link Logger} that logs directly to the console.
+ */
 export const defaultLogger: Logger = {
-    log: console.log,
+    /**
+     * {@inheritDoc Logger.log}
+     */
+    log,
+
+    /**
+     * {@inheritDoc Logger.info}
+     */
     info,
+
+    /**
+     * {@inheritDoc Logger.warning}
+     */
     warning,
+
+    /**
+     * {@inheritDoc Logger.errorLog}
+     */
     errorLog,
+
+    /**
+     * {@inheritDoc Logger.verbose}
+     */
     verbose,
 };
 
-function log(msg: string | Error | undefined, logFunc: ErrorLoggingFunction) {
+function logWithTime(msg: string | Error | undefined, logFunc: ErrorLoggingFunction) {
     if (!commonOptions.logtime) {
         logFunc(msg);
         return;
@@ -49,20 +102,24 @@ function log(msg: string | Error | undefined, logFunc: ErrorLoggingFunction) {
     logFunc(chalk.yellow(`[${hours}:${mins}:${secs}] `) + msg);
 }
 
+function log(msg: string | undefined): void {
+    logWithTime(msg, console.log);
+}
+
 function info(msg: string | Error | undefined) {
-    log(`INFO: ${msg}`, console.log);
+    logWithTime(`INFO: ${msg}`, console.log);
 }
 
 function verbose(msg: string | Error | undefined) {
     if (commonOptions.verbose) {
-        log(msg, console.log);
+        logWithTime(`VERBOSE: ${msg}`, console.log);
     }
 }
 
 function warning(msg: string | Error | undefined) {
-    log(`${chalk.yellow(`WARNING`)}: ${msg}`, console.log);
+    logWithTime(`${chalk.yellow(`WARNING`)}: ${msg}`, console.log);
 }
 
 function errorLog(msg: string | Error | undefined) {
-    log(`${chalk.red(`ERROR`)}: ${msg}`, console.error);
+    logWithTime(`${chalk.red(`ERROR`)}: ${msg}`, console.error);
 }
