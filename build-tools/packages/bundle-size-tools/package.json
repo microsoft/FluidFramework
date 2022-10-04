@@ -17,7 +17,6 @@
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:compile": "concurrently npm:tsc npm:build:copy",
     "build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
-    "build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
     "build:docs": "api-extractor run --local",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
