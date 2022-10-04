@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITaskManager } from "@fluid-experimental/task-manager";
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
 /**
@@ -16,7 +15,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/common-definitions"
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 export interface IMigrationToolEvents extends IEvent {
-    (event: "stopping" | "migrating" | "migrated", listener: () => void);
+    (event: "stopping" | "migrating" | "migrated" | "connected", listener: () => void);
 }
 
 export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
@@ -36,11 +35,6 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
     finalizeMigration(id: string): Promise<void>;
 
     /**
-     * TaskManager DDS to facilitate the migration execution.
-     */
-    readonly taskManager: ITaskManager;
-
-    /**
      * The version string of the proposed new version to use, if one has been proposed.
      */
     readonly proposedVersion: string | undefined;
@@ -56,12 +50,18 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
 
     /**
      * Volunteer to perform the migration.
-     * @returns A promise which resolves when the local client has been selected to perform the migration.  The
-     * migration may have already been completed prior to being selected.
+     * @returns A promise which resolves true when the local client has been selected to perform the migration.
+     * resolves false if the migration was already completed by another client.
      */
     volunteerForMigration(): Promise<boolean>;
+
     /**
      * Whether the local client is selected to perform the migration.
      */
     haveMigrationTask(): boolean;
+
+    /**
+     * Completes the migration task to indicate to other clients the migration is complete.
+     */
+    completeMigrationTask(): void;
 }

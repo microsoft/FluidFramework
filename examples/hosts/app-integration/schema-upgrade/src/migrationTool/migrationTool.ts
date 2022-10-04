@@ -37,7 +37,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         return this._crc;
     }
 
-    public get taskManager() {
+    private get taskManager() {
         if (this._taskManager === undefined) {
             throw new Error("Couldn't retrieve the TaskManager");
         }
@@ -106,6 +106,10 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         return this.taskManager.assigned(migrateTaskName);
     }
 
+    public completeMigrationTask(): void {
+        return this.taskManager.complete(migrateTaskName);
+    }
+
     protected async initializingFirstTime() {
         const quorum = Quorum.create(this.runtime);
         const crc = ConsensusRegisterCollection.create(this.runtime);
@@ -138,6 +142,10 @@ export class MigrationTool extends DataObject implements IMigrationTool {
             if (key === newContainerIdKey) {
                 this.emit("migrated");
             }
+        });
+
+        this.runtime.on("connected", () => {
+            this.emit("connected");
         });
 
         const taskManagerHandle = this.root.get<IFluidHandle<ITaskManager>>(taskManagerKey);
