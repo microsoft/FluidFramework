@@ -8,9 +8,6 @@
     "url": "https://github.com/microsoft/FluidFramework.git",
     "directory": "build-tools/packages/build-tools"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",
