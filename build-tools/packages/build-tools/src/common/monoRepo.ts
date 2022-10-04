@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { readFileSync } from "fs-extra";
 import * as path from "path";
 import YAML from "yaml";
+
 import { fatal } from "../bumpVersion/utils";
 import { Logger, defaultLogger } from "./logging";
 import { Package, Packages } from "./npmPackage";
