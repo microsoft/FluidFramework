@@ -10,7 +10,7 @@ module.exports = {
     },
     rules: {
         // This library is used in the browser, so we don't want dependencies on most node libraries.
-        "import/no-nodejs-modules": ["error", { allow: ["events"] }],
+        "import/no-nodejs-modules": ["error", { allow: ["events", "url"] }],
     },
     overrides: [
         {
@@ -20,7 +20,7 @@ module.exports = {
                 // Test files are run in node only so additional node libraries can be used.
                 "import/no-nodejs-modules": [
                     "error",
-                    { allow: ["assert", "events"] },
+                    { allow: ["assert", "events", "url"] },
                 ],
             },
         },
