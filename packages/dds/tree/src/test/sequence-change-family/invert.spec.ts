@@ -27,7 +27,9 @@ describe("SequenceChangeFamily - Invert", () => {
         describe(nest ? "Nested" : "Root", () => {
             function asForest(markList: T.MarkList): SequenceChangeset {
                 return {
-                    marks: { root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList },
+                    marks: {
+                        root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList,
+                    },
                 };
             }
 
@@ -39,9 +41,7 @@ describe("SequenceChangeFamily - Invert", () => {
             });
 
             it("set value => set value", () => {
-                const input = asForest([
-                    { type: "Modify", value: { id: 1, value: 42 } },
-                ]);
+                const input = asForest([{ type: "Modify", value: { id: 1, value: 42 } }]);
                 const expected = asForest([
                     { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
                 ]);
@@ -54,7 +54,10 @@ describe("SequenceChangeFamily - Invert", () => {
                     {
                         type: "Insert",
                         id: 1,
-                        content: [{ type, value: 42 }, { type, value: 43 }],
+                        content: [
+                            { type, value: 42 },
+                            { type, value: 43 },
+                        ],
                     },
                 ]);
                 const expected = asForest([

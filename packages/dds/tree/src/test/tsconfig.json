@@ -1,21 +1,16 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "noImplicitAny": true,
-        "noUnusedLocals": false,
-        "rootDir": "./",
-        "outDir": "../../dist/test",
-        "types": [
-            "node",
-            "mocha"
-        ],
+  "extends": "@fluidframework/build-common/ts-common-config.json",
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "noUnusedLocals": false,
+    "rootDir": "./",
+    "outDir": "../../dist/test",
+    "types": ["node", "mocha"],
+  },
+  "include": ["./**/*"],
+  "references": [
+    {
+      "path": "../..",
     },
-    "include": [
-        "./**/*"
-    ],
-    "references": [
-        {
-            "path": "../.."
-        }
-    ]
+  ],
 }

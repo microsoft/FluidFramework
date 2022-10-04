@@ -38,11 +38,6 @@ export const string: TreeSchema = {
     globalFields: emptySet,
     extraLocalFields: emptyField,
     extraGlobalFields: false,
-    localFields: new Map([
-        [
-            brand("children"),
-            fieldSchema(FieldKinds.sequence, [codePoint.name]),
-        ],
-    ]),
+    localFields: new Map([[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])]]),
     value: ValueSchema.Nothing,
 };

@@ -13,15 +13,15 @@ import {
     TreeNavigationResult,
     SynchronousNavigationResult,
 } from "../../forest";
-import {
-    EmptyKey,
-    FieldKey,
-    TreeType,
-    Value,
-} from "../../tree";
+import { EmptyKey, FieldKey, TreeType, Value } from "../../tree";
 
 import {
-    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+    jsonArray,
+    jsonBoolean,
+    jsonNull,
+    jsonNumber,
+    jsonObject,
+    jsonString,
 } from "./jsonDomainSchema";
 
 /**
@@ -35,11 +35,11 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     //       This design was advantageous in a similar tree visitor, but should
     //       be measured again to see if this still provides an advantage.
 
-    private currentNode: JsonCompatible;   // The node currently being visited.
-    private currentKey?: FieldKey;  // The parent key used to navigate to this node.
-    private currentIndex: number;   // The parent index used to navigate to this node.
+    private currentNode: JsonCompatible; // The node currently being visited.
+    private currentKey?: FieldKey; // The parent key used to navigate to this node.
+    private currentIndex: number; // The parent index used to navigate to this node.
 
-    private readonly parentStack: JsonCompatible[] = [];  // Ancestors traversed to visit this node.
+    private readonly parentStack: JsonCompatible[] = []; // Ancestors traversed to visit this node.
 
     // Keys/indices traversed to visit the current node, excluding the most recent,
     // which are maintained in the current key/index fields.
@@ -72,8 +72,10 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
         if (newChild === undefined) {
             // In JSON, arrays must be dense and may not contain 'undefined' values
             // ('undefined' items are implicitly coerced to 'null' by stringify()).
-            assert(0 > newIndex || newIndex >= parent.length,
-                0x35f /* JSON arrays must be dense / contain no 'undefined' items. */);
+            assert(
+                0 > newIndex || newIndex >= parent.length,
+                0x35f /* JSON arrays must be dense / contain no 'undefined' items. */,
+            );
 
             return TreeNavigationResult.NotFound;
         } else {
@@ -163,7 +165,7 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
                     return Object.keys(node as object) as Iterable<FieldKey>;
                 }
             default:
-               return [];
+                return [];
         }
     }
 
@@ -176,16 +178,16 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
         }
 
         return (node as JsonCompatibleObject)[key as LocalFieldKey] === undefined
-            ? 0     // A field with an undefined value has 0 length
-            : 1;    // All other fields have a length of 1
+            ? 0 // A field with an undefined value has 0 length
+            : 1; // All other fields have a length of 1
     }
 
     public get value(): Value {
         const node = this.currentNode;
 
-        return typeof (node) === "object"
-            ? undefined     // null, arrays, and objects have no defined value
-            : node;         // boolean, numbers, and strings are their own value
+        return typeof node === "object"
+            ? undefined // null, arrays, and objects have no defined value
+            : node; // boolean, numbers, and strings are their own value
     }
 }
 
@@ -208,7 +210,10 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
         case jsonObject.name: {
             const result: JsonCompatible = {};
             for (const key of reader.keys) {
-                assert(reader.down(key, 0) === TreeNavigationResult.Ok, 0x360 /* expected navigation ok */);
+                assert(
+                    reader.down(key, 0) === TreeNavigationResult.Ok,
+                    0x360 /* expected navigation ok */,
+                );
                 result[key as LocalFieldKey] = cursorToJsonObject(reader);
                 assert(reader.up() === TreeNavigationResult.Ok, 0x361 /* expected navigation ok */);
             }
