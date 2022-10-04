@@ -3,21 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { getSessionStorageContainer } from "@fluid-experimental/get-container";
-import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import { renderContactCollection } from "../src/view";
-import { ContactCollectionContainerRuntimeFactory } from "../src/containerCode";
-import { IContactCollection } from "../src/dataObject";
-
-// Since this is a single page Fluid application we are generating a new document id
-// if one was not provided
-let createNew = false;
-if (window.location.hash.length === 0) {
-    createNew = true;
-    window.location.hash = Date.now().toString();
-}
-const documentId = window.location.hash.substring(1);
+import { ContactCollectionContainerRuntimeFactory, IContactCollectionAppModel } from "../src/containerCode";
 
 const getContactUrl = (contactId: string): string => {
     const contactUrl = new URL(location.toString());
@@ -29,16 +18,33 @@ const getContactUrl = (contactId: string): string => {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
-    // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
-    // to store ops.
-    const container = await getSessionStorageContainer(documentId, ContactCollectionContainerRuntimeFactory, createNewFlag);
+export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+    const sessionStorageModelLoader = new SessionStorageModelLoader<IContactCollectionAppModel>(
+        new StaticCodeLoader(new ContactCollectionContainerRuntimeFactory()),
+    );
 
-    // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<IContactCollection>(container);
+    let id: string;
+    let model: IContactCollectionAppModel;
+
+    if (location.hash.length === 0) {
+        // Normally our code loader is expected to match up with the version passed here.
+        // But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
+        // the version doesn't actually matter.
+        const createResponse = await sessionStorageModelLoader.createDetached("1.0");
+        model = createResponse.model;
+        id = await createResponse.attach();
+    } else {
+        id = location.hash.substring(1);
+        model = await sessionStorageModelLoader.loadExisting(id);
+    }
+
+    // update the browser URL and the window title with the actual container ID
+    location.hash = id;
+    document.title = id;
+
 
     // Given an IContactCollection, we can render its data using the view we've created in our app.
-    renderContactCollection(defaultObject, getContactUrl, element);
+    renderContactCollection(model.contactCollection, getContactUrl, element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation
@@ -53,13 +59,12 @@ async function setup() {
     if (leftElement === null) {
         throw new Error("sbs-left does not exist");
     }
-    await createContainerAndRenderInElement(leftElement, createNew);
+    await createContainerAndRenderInElement(leftElement);
     const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
     if (rightElement === null) {
         throw new Error("sbs-right does not exist");
     }
-    // The second time we don't need to createNew because we know a Container exists.
-    await createContainerAndRenderInElement(rightElement, false);
+    await createContainerAndRenderInElement(rightElement);
 }
 
 setup().catch((e)=> {

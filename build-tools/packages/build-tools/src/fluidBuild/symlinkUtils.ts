@@ -2,31 +2,31 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import * as fs from "fs";
 import * as path from "path";
-import { Package } from "../common/npmPackage";
+import * as semver from "semver";
+
 import { defaultLogger } from "../common/logging";
+import { MonoRepo } from "../common/monoRepo";
+import { Package } from "../common/npmPackage";
 import {
     existsSync,
-    mkdirAsync,
-    writeFileAsync,
-    unlinkAsync,
-    symlinkAsync,
-    renameAsync,
     lstatAsync,
+    mkdirAsync,
     realpathAsync,
+    renameAsync,
+    symlinkAsync,
+    unlinkAsync,
+    writeFileAsync,
 } from "../common/utils";
 import { FluidRepoBuild } from "./fluidRepoBuild";
-import * as semver from "semver";
-import * as fs from "fs";
-import { MonoRepo } from "../common/monoRepo";
 
-const {verbose} = defaultLogger;
+const { verbose } = defaultLogger;
 
 async function writeAndReplace(outFile: string, bakFile: string, content: string) {
     verbose(`Writing ${outFile}`);
     if (existsSync(`${outFile}`)) {
-        await renameAsync(`${outFile}`, `${bakFile}`)
+        await renameAsync(`${outFile}`, `${bakFile}`);
     }
     return writeFileAsync(`${outFile}`, content);
 }
@@ -36,8 +36,7 @@ async function writeBin(dir: string, binName: string, pkgName: string, binPath: 
     const bakFile = path.normalize(`${dir}/node_modules/.bin/_${binName}`);
     if (process.platform === "win32") {
         const winpath = `%~dp0\\..\\${path.normalize(pkgName)}\\${path.normalize(binPath)}`;
-        const cmd =
-            `@IF EXIST "%~dp0\\node.exe" (
+        const cmd = `@IF EXIST "%~dp0\\node.exe" (
   "%~dp0\\node.exe"  "${winpath}" %*
 ) ELSE (
   @SETLOCAL
@@ -47,7 +46,9 @@ async function writeBin(dir: string, binName: string, pkgName: string, binPath: 
         await writeAndReplace(`${outFile}.cmd`, `${bakFile}.cmd`, cmd);
     }
 
-    const posixpath = `$basedir/../${path.posix.normalize(pkgName)}/${path.posix.normalize(binPath)}`;
+    const posixpath = `$basedir/../${path.posix.normalize(pkgName)}/${path.posix.normalize(
+        binPath,
+    )}`;
     const sh = `#!/bin/sh
 basedir=$(dirname "$(echo "$0" | sed -e 's,\\\\,/,g')")
 
@@ -81,11 +82,19 @@ async function revertBin(dir: string, binName: string) {
     }
 }
 
-async function fixSymlink(stat: fs.Stats | undefined, symlinkPath: string, pkg: Package, depBuildPackage: Package) {
+async function fixSymlink(
+    stat: fs.Stats | undefined,
+    symlinkPath: string,
+    pkg: Package,
+    depBuildPackage: Package,
+) {
     // Fixing the symlink
     verbose(`${pkg.nameColored}: Fixing symlink ${symlinkPath}`);
     if (stat) {
-        await renameAsync(symlinkPath, path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`));
+        await renameAsync(
+            symlinkPath,
+            path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`),
+        );
     } else {
         // Ensure the directory exist
         const symlinkDir = path.join(symlinkPath, "..");
@@ -98,13 +107,17 @@ async function fixSymlink(stat: fs.Stats | undefined, symlinkPath: string, pkg: 
 
     if (depBuildPackage.packageJson.bin) {
         for (const name of Object.keys(depBuildPackage.packageJson.bin)) {
-            await writeBin(pkg.directory, name, depBuildPackage.name, depBuildPackage.packageJson.bin[name]);
+            await writeBin(
+                pkg.directory,
+                name,
+                depBuildPackage.name,
+                depBuildPackage.packageJson.bin[name],
+            );
         }
     }
 }
 
 async function revertSymlink(symlinkPath: string, pkg: Package, depBuildPackage: Package) {
-
     await unlinkAsync(symlinkPath);
     const origPath = path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`);
     if (existsSync(origPath)) {
@@ -126,14 +139,19 @@ export interface ISymlinkOptions {
     fullSymlink: boolean | undefined;
 }
 
-export async function symlinkPackage(repo: FluidRepoBuild, pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
+export async function symlinkPackage(
+    repo: FluidRepoBuild,
+    pkg: Package,
+    buildPackages: Map<string, Package>,
+    options: ISymlinkOptions,
+) {
     let count = 0;
     const monoRepoNodeModulePath = pkg.monoRepo?.getNodeModulePath();
 
     if (monoRepoNodeModulePath && !existsSync(monoRepoNodeModulePath)) {
         // If the node_modules isn't install at all, just don't check
         if (options.symlink) {
-            console.warn(`${pkg.nameColored}: node_modules not installed.  Can't fix symlink.`)
+            console.warn(`${pkg.nameColored}: node_modules not installed.  Can't fix symlink.`);
         }
         return { pkg, count };
     }
@@ -145,15 +163,23 @@ export async function symlinkPackage(repo: FluidRepoBuild, pkg: Package, buildPa
         if (depBuildPackage) {
             const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
             const satisfied = semver.satisfies(depBuildPackage.version, version);
-            verbose(`${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${depBuildPackage.version} ${satisfied? "satisfied": "not satisfied"} by range ${version}`);
+            verbose(
+                `${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${
+                    depBuildPackage.version
+                } ${satisfied ? "satisfied" : "not satisfied"} by range ${version}`,
+            );
             if (!satisfied) {
                 if (sameMonoRepo) {
-                    console.warn(`${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`)
+                    console.warn(
+                        `${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`,
+                    );
                 }
                 continue;
             }
             const localSymlinkPath = path.join(pkg.directory, "node_modules", dep);
-            const monoRepoSymlinkPath = monoRepoNodeModulePath ? path.join(monoRepoNodeModulePath, dep) : undefined;
+            const monoRepoSymlinkPath = monoRepoNodeModulePath
+                ? path.join(monoRepoNodeModulePath, dep)
+                : undefined;
 
             try {
                 let stat: fs.Stats | undefined;
@@ -180,13 +206,17 @@ export async function symlinkPackage(repo: FluidRepoBuild, pkg: Package, buildPa
                                         await revertSymlink(symlinkPath, pkg, depBuildPackage);
                                         count++;
                                     } else {
-                                        console.warn(`${pkg.nameColored}: warning: dependent package ${depBuildPackage.nameColored} linked. Use --symlink to fix`);
+                                        console.warn(
+                                            `${pkg.nameColored}: warning: dependent package ${depBuildPackage.nameColored} linked. Use --symlink to fix`,
+                                        );
                                     }
                                 }
                             }
                             continue;
                         }
-                        verbose(`${pkg.nameColored}: Symlink found ${symlinkPath} @${realPath}, expects ${depBuildPackage.directory}`);
+                        verbose(
+                            `${pkg.nameColored}: Symlink found ${symlinkPath} @${realPath}, expects ${depBuildPackage.directory}`,
+                        );
                     }
                 }
 
@@ -201,7 +231,9 @@ export async function symlinkPackage(repo: FluidRepoBuild, pkg: Package, buildPa
                 }
 
                 if (!options.symlink) {
-                    console.warn(`${pkg.nameColored}: warning: dependent package ${depBuildPackage.nameColored} not linked. Use --symlink or --symlink:full to fix.`);
+                    console.warn(
+                        `${pkg.nameColored}: warning: dependent package ${depBuildPackage.nameColored} not linked. Use --symlink or --symlink:full to fix.`,
+                    );
                     continue;
                 }
 
