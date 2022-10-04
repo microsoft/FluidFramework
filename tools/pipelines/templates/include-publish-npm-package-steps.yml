@@ -111,6 +111,13 @@ steps:
           fi
 
           echo "Extract File Name III: " $checkVersion
+          npm view fluidframework/tinylicious-client@0.0.0-96564-test
+
+          npm view fluidframework/tinylicious-client@1.0.0-96564-test
+          if grep -q "npm ERR!"
+          then
+            echo "Error Raised"
+          fi
 
           npm view $checkVersion
 
