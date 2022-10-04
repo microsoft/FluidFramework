@@ -11,6 +11,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import {
     IBlob,
+    ISequencedDocumentMessage,
     ISnapshotTree,
     ISummaryBlob,
     SummaryType,
@@ -341,6 +342,23 @@ describe("Data Store Context Tests", () => {
                 localDataStoreContext.updateUsedRoutes([""]);
                 assert.strictEqual(
                     dataStoreSummarizerNode?.isReferenced(), true, "Data store should now be referenced");
+            });
+
+            it("cannot tombstone a local datastore", async () => {
+                localDataStoreContext = new LocalFluidDataStoreContext({
+                    id: dataStoreId,
+                    pkg: ["TestComp", "SubComp"],
+                    runtime: containerRuntime,
+                    storage,
+                    scope,
+                    createSummarizerNodeFn,
+                    makeLocallyVisibleFn,
+                    snapshotTree: undefined,
+                    isRootDataStore: false,
+                    writeGCDataAtRoot: true,
+                });
+
+                await assert.rejects(localDataStoreContext.tombstone(), `Local dataStores should throw on tombstone`);
             });
         });
     });
@@ -715,6 +733,78 @@ describe("Data Store Context Tests", () => {
                     summaryFormatVersion: 2,
                 };
                 updateReferencedStateTest();
+            });
+
+            function setupTombStoneTest() {
+                const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+                const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
+                const snapshotTree: ISnapshotTree = {
+                    id: "dummy",
+                    blobs: { [".component"]: "fluidDataStoreAttributes" },
+                    trees: {},
+                };
+
+                remoteDataStoreContext = new RemoteFluidDataStoreContext({
+                    id: dataStoreId,
+                    snapshotTree,
+                    getBaseGCDetails: async () => undefined,
+                    runtime: containerRuntime,
+                    storage: new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                    scope,
+                    createSummarizerNodeFn,
+                    writeGCDataAtRoot: true,
+                });
+            }
+
+            it("can successfully tombstone a datastore", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    isRootDataStore: false,
+                };
+                setupTombStoneTest();
+                assert.doesNotThrow(async () => {
+                    await remoteDataStoreContext.tombstone();
+                }, `Should be able to tombstone a non-root remote datastore!`);
+            });
+
+            it("cannot successfully tombstone a root datastore", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    isRootDataStore: true,
+                };
+                setupTombStoneTest();
+                await assert.rejects(remoteDataStoreContext.tombstone(), `Root dataStores should throw on tombstone`);
+            });
+
+            it("cannot successfully tombstone a realized datastore", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    isRootDataStore: false,
+                };
+                setupTombStoneTest();
+                await remoteDataStoreContext.realize();
+                await assert.rejects(remoteDataStoreContext.tombstone(), `Realized dataStores should throw on tombstone`);
+            });
+
+            it("cannot successfully tombstone a datastore with pending ops", async () => {
+                dataStoreAttributes = {
+                    pkg: JSON.stringify(["TestDataStore1"]),
+                    isRootDataStore: false,
+                };
+                setupTombStoneTest();
+                const message: ISequencedDocumentMessage = {
+                    clientId: remoteDataStoreContext.clientId ?? "",
+                    sequenceNumber: 0,
+                    term: undefined,
+                    minimumSequenceNumber: 0,
+                    clientSequenceNumber: 0,
+                    referenceSequenceNumber: 0,
+                    type: "",
+                    contents: undefined,
+                    timestamp: 0,
+                };
+                remoteDataStoreContext.process(message, false, undefined);
+                await assert.rejects(remoteDataStoreContext.tombstone(), `Cannot tombstone datastores with pending ops`);
             });
         });
     });

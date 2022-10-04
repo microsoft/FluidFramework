@@ -39,6 +39,7 @@
         "multinomial",
         "nonfinite",
         "pseudorandomly",
+        "tombstoned",
         "unaugmented"
     ],
     "editor.detectIndentation": true,

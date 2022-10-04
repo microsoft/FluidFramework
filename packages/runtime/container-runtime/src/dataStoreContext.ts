@@ -193,6 +193,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
+    private _tombstoned = false;
+    public get tombstoned() { return this._tombstoned; }
+
     public get attachState(): AttachState {
         return this._attachState;
     }
@@ -308,6 +311,25 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 runtime.dispose();
             }).catch((error) => {});
         }
+    }
+
+    public async tombstone() {
+        this.verifyNotClosed();
+        if (this.tombstoned) {
+            return;
+        }
+
+        await this.getInitialSnapshotDetails();
+        const path = `${JSON.stringify(this.packagePath)}`;
+        assert(!(await this.isRoot()), `Tombstone should not be called on root datastores! ${path}`);
+        assert(!this.isLocalDataStore, `Local data for ${path} should have been wiped before tombstone is called!`);
+
+        // Note loaded and channel !== undefined are the same thing as you are only loaded if the channel is defined
+        assert(!this.loaded || this.channel === undefined, `Cannot tombstone a loaded datastore. ${path}`);
+        assert(this.pending === undefined || this.pending.length === 0,
+            `Cannot tombstone a datastore with pending ops! ${path}`);
+
+        this._tombstoned = true;
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
