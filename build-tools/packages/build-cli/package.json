@@ -102,6 +102,7 @@
     "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/chai": "^4",
     "@types/chai-arrays": "^2.0.0",
+    "@types/fs-extra": "^8.1.0",
     "@types/inquirer": "^8.2.1",
     "@types/mocha": "^9.0.0",
     "@types/node": "^14.18.0",
