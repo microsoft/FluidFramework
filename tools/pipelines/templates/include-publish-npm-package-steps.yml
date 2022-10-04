@@ -111,14 +111,19 @@ steps:
           fi
 
           echo "Extract File Name III: " $checkVersion
-          npm view fluidframework/tinylicious-client@0.0.0-96564-test
 
-          npm view fluidframework/tinylicious-client@1.0.0-96564-test
+          npm view @fluidframework/tinylicious-client@0.0.0-96564-test
+
+          echo "1----------------------------------"
+
+          npm view @fluidframework/tinylicious-client@1.0.0-96564-test
           if grep -q "npm ERR!"
           then
             echo "Error Raised"
           fi
 
+          checkVersion=@$(echo $checkVersion | sed -E 's/-([0-9])/@\1/')
+          echo "2----------------------------------"
           npm view $checkVersion
 
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
