@@ -100,7 +100,7 @@ steps:
           echo "Extract File Name I: " $checkVersion
 
           checkVersion=${checkVersion:0:-4}
-          checkVersion=$(echo $checkVersion | sed -r 's/\*\*\*/fluid/g')
+          checkVersion=$(echo $checkVersion | sed -r "s/[*]{3}/fluid/g")
 
           echo "Extract File Name II: " $checkVersion
 
