@@ -36,8 +36,16 @@ export interface IConnect {
 
     /**
      * Semver list of protocol versions supported by the client ordered in priority of use
+     * @deprecated This is not used on server or client, so it will be removed in future. Server
+     * will be using the driver version to block/allow features.
      */
     versions: string[];
+
+    /**
+     * Version of the driver which is connecting. It can be used at server to record in telemetry or
+     * to block/allow specific driver version for specific features.
+     */
+    driverVersion?: string;
 
     /**
      * Connection mode of client.

@@ -111,6 +111,7 @@ export type ICommittedProposal = {
 // @public
 export interface IConnect {
     client: IClient;
+    driverVersion?: string;
     epoch?: string;
     id: string;
     mode: ConnectionMode;
@@ -119,6 +120,7 @@ export interface IConnect {
     supportedFeatures?: Record<string, any>;
     tenantId: string;
     token: string | null;
+    // @deprecated
     versions: string[];
 }
 
