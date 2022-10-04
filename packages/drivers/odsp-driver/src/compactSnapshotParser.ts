@@ -28,6 +28,9 @@ interface ISnapshotSection {
     sequenceNumber: number;
 }
 
+let fastBlobPath = 0;
+let slowBlobPath = 0;
+
 /**
  * Recreates blobs section of the tree.
  * @param node - tree node to read blob section from
@@ -47,12 +50,14 @@ function readBlobSection(node: NodeTypes) {
             // "id": <node name>
             // "data": <blob>
             blobs.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
+            fastBlobPath += 1;
             continue;
         }
 
         /**
          * More generalized workflow
          */
+        slowBlobPath += 1;
         const records = getNodeProps(blob);
         assertBlobCoreInstance(records.data, "data should be of BlobCore type");
         const id = getStringInstance(records.id, "blob id should be string");
@@ -79,6 +84,9 @@ function readOpsSection(node: NodeTypes) {
     return ops;
 }
 
+let fastTreePath = 0;
+let slowTreePath = 0;
+
 /**
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
@@ -104,12 +112,14 @@ function readTreeSection(node: NodeCore) {
                 // "name": <node name>
                 // "children": <blob id>
                 if (content === "children") {
+                    fastTreePath += 1;
                     trees[treeNode.getString(1)] = readTreeSection(treeNode.getNode(3));
                     continue;
                 }
                 // "name": <node name>
                 // "value": <blob id>
                 if (content === "value") {
+                    fastTreePath += 1;
                     snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
                     continue;
                 }
@@ -122,6 +132,7 @@ function readTreeSection(node: NodeCore) {
                     treeNode.getMaybeString(2) === "nodeType" &&
                     treeNode.getMaybeString(4) === "value") {
                 snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
+                fastTreePath += 1;
                 continue;
             }
 
@@ -134,6 +145,7 @@ function readTreeSection(node: NodeCore) {
                 trees[treeNode.getString(1)] = readTreeSection(treeNode.getNode(5));
                 assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
                 snapshotTree.unreferenced = true;
+                fastTreePath += 1;
                 continue;
             }
         }
@@ -141,6 +153,7 @@ function readTreeSection(node: NodeCore) {
         /**
          * More generalized workflow
          */
+        slowTreePath += 1;
         const records = getNodeProps(treeNode);
 
         if (records.unreferenced !== undefined) {
@@ -206,9 +219,19 @@ export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITeleme
     assert(currentReadVersion === cv,
         0x2c2 /* "Create Version should be equal to currentReadVersion" */);
 
+    const blobs = readBlobSection(records.blobs);
+    const snapshotSection = readSnapshotSection(records.snapshot);
+    // If more than 10% of flow is through slow parsing blobs/trees path, then record an event.
+    if ((slowBlobPath * 100) / (slowBlobPath + fastBlobPath) > 10) {
+        logger.sendErrorEvent({ eventName: "UnwantedBlobsStructure", fastBlobPath, slowBlobPath });
+    }
+
+    if ((slowTreePath * 100) / (slowTreePath + fastTreePath) > 10) {
+        logger.sendErrorEvent({ eventName: "UnwantedTreesStructure", fastTreePath, slowTreePath });
+    }
     return {
-        ...readSnapshotSection(records.snapshot),
-        blobs: readBlobSection(records.blobs),
+        ...snapshotSection,
+        blobs,
         ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
         latestSequenceNumber: records.lsn,
     };
