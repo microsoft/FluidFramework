@@ -206,17 +206,6 @@ export interface ContainerRuntimeMessage {
 // @public (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
-// @public
-export class DeltaScheduler {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger);
-    // (undocumented)
-    batchBegin(message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    batchEnd(message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    static readonly processingTime = 50;
-}
-
 // @public (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly alreadyEnqueued?: undefined;
@@ -679,17 +668,6 @@ export enum RuntimeMessage {
     Operation = "op",
     // (undocumented)
     Rejoin = "rejoin"
-}
-
-// @public
-export class ScheduleManager {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, getClientId: () => string | undefined, logger: ITelemetryLogger);
-    // (undocumented)
-    afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    beforeOpProcessing(message: ISequencedDocumentMessage): void;
-    // (undocumented)
-    readonly getClientId: () => string | undefined;
 }
 
 // @public

@@ -72,6 +72,7 @@ It's not a breaking change, but worth noting: we are now also exposing optional 
 ## 3.0.0 Breaking changes
 - [Remove ISummaryConfigurationHeuristics.idleTime](#Remove-ISummaryConfigurationHeuristicsidleTime)
 - [Remove `IContainerRuntime.flush`](#remove-icontainerruntimeflush)
+- [Remove `ScheduleManager` and `DeltaScheduler`](#remove-schedulemanager-and-deltascheduler)
 
 ### Remove ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been removed. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -79,6 +80,9 @@ Please move all usage to the new `minIdleTime` and `maxIdleTime` properties in `
 
 ### Remove `IContainerRuntime.flush`
 `IContainerRuntime.flush` has been removed. If a more manual/ensured flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
+### Remove `ScheduleManager` and `DeltaScheduler`
+`ScheduleManager` and `DeltaScheduler` have been removed from the `@fluidframework/container-runtime` package as they are Fluid internal classes which should not be used.
 
 # 2.0.0
 

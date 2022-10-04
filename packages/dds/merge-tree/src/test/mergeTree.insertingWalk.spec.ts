@@ -149,29 +149,25 @@ const treeFactories: ITestTreeFactory[] = [
 
             const remove = Math.round(initialText.length / 4);
             // remove from start
-            markRangeRemoved({
-                mergeTree,
-                start: 0,
-                end: remove,
-                refSeq: UniversalSequenceNumber,
-                clientId: localClientId,
-                seq: UnassignedSequenceNumber,
-                overwrite: false,
-                opArgs: undefined as any,
-            });
+            mergeTree.markRangeRemoved(
+                0,
+                remove,
+                UniversalSequenceNumber,
+                localClientId,
+                UniversalSequenceNumber,
+                false,
+                undefined as any);
             initialText = initialText.substring(remove);
 
             // remove from end
-            markRangeRemoved({
-                mergeTree,
-                start: initialText.length - remove,
-                end: initialText.length,
-                refSeq: UniversalSequenceNumber,
-                clientId: localClientId,
-                seq: UnassignedSequenceNumber,
-                overwrite: false,
-                opArgs: undefined as any,
-            });
+            mergeTree.markRangeRemoved(
+                initialText.length - remove,
+                initialText.length,
+                UniversalSequenceNumber,
+                localClientId,
+                UniversalSequenceNumber,
+                false,
+                undefined as any);
             initialText = initialText.substring(0, initialText.length - remove);
 
             mergeTree.startCollaboration(

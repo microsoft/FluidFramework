@@ -164,6 +164,14 @@
       "TypeAliasDeclaration_SummarizerStopReason": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "RemovedClassDeclaration_DeltaScheduler": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_ScheduleManager": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
