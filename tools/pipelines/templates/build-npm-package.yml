@@ -85,6 +85,10 @@ parameters:
   type: string
   default: repo
 
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
+
 trigger: none
 
 variables:
@@ -194,13 +198,12 @@ stages:
           displayName: Use Node 14.x
           inputs:
             version: 14.x
-        - task: Npm@1
-          displayName: npm ci
+        - task: Bash@3
+          displayName: npm ci (or equivalent)
           inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'ci --unsafe-perm'
-            customRegistry: 'useNpmrc'
+            targetType: 'inline'
+            script: |
+              ${{ parameters.packageManagerInstallCommand }}
 
         # Set version
         - template: include-set-package-version.yml
